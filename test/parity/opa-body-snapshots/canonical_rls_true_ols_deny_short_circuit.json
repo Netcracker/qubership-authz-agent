@@ -1,0 +1,19 @@
+{
+  "input": {
+    "authorizationToken": "Bearer <test-jwt-for-guestUser1>",
+    "authorizationType": "",
+    "requestHeaders": {},
+    "resources": [
+      {
+        "resourceType": "Customer",
+        "operation": "READ",
+        "resource": {
+          "id": "cust-4",
+          "ownerId": "user-1"
+        }
+      }
+    ],
+    "subject": "Bearer <test-jwt-for-guestUser1>",
+    "ignoreRls": false
+  }
+}

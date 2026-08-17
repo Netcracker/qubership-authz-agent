@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 53, rewritten per OQ-SUITE-6: legacy grammar has no parenthesized NOT expression, so the parity case uses the equivalent archived != true spelling.",
+    "component": "PARITY",
+    "reason": "CLANG not / not-equals rewrite",
+    "resourceType": "PARITY_SUITE_CLANG_NOT",
+    "operation": "READ",
+    "condition": "resource.archived != true",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c05"
+  }
+]

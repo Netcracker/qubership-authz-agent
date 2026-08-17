@@ -1,0 +1,26 @@
+{
+  "ols": {
+    "CUSTOMER": {
+      "READ": [
+        "ROLE_VIEWER"
+      ]
+    }
+  },
+  "rls": {
+    "CUSTOMER": {
+      "READ": {
+        "ROLE_VIEWER": [
+          {
+            "condition": true,
+            "predicates": [
+              {
+                "predicate": "customerId==${subject.id}",
+                "type": "rsql"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

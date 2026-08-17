@@ -1,0 +1,358 @@
+#!/usr/bin/env python3
+"""Consolidated OPA benchmark report generator.
+
+Runs `opa bench` for every profiler scenario, selects the best run, and emits
+a Markdown report with methodology explanation and a results table.
+
+Usage:
+    bench-report [--runs N]
+
+Options:
+    --runs N    Number of independent OPA bench invocations per scenario (default: 10).
+                Use --runs 1 for a quick smoke test.
+"""
+import argparse
+import datetime
+import json
+import os
+import re
+import subprocess
+import sys
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SVT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+PROFILER_DIR = os.path.join(SVT_DIR, "profiler")
+REPO_ROOT = os.path.abspath(os.path.join(SVT_DIR, "..", ".."))
+POLICIES_DIR = os.path.join(REPO_ROOT, "image", "deployments", "opa", "policies")
+ARTIFACTS_DIR = os.path.join(PROFILER_DIR, "artifacts")
+CANONICAL_REPORT = os.path.join(REPO_ROOT, "docs", "ai", "reports", "bench-report-latest.md")
+
+# fmt: off
+SCENARIOS = [
+    # (display_name, directory_name, group)
+    # OLS
+    ("ols-single",              "ols-single",              "OLS"),
+    ("ols-single-10roles",      "ols-single-10roles",      "OLS"),
+    ("ols-single-20roles",      "ols-single-20roles",      "OLS"),
+    ("ols-single-30roles",      "ols-single-30roles",      "OLS"),
+    ("ols-single-50roles",      "ols-single-50roles",      "OLS"),
+    ("ols-single-100roles",     "ols-single-100roles",     "OLS"),
+    ("ols-bulk-50",             "ols-bulk-50",             "OLS"),
+    ("ols-bulk-100",            "ols-bulk-100",            "OLS"),
+    ("ols-bulk-1000",           "ols-bulk-1000",           "OLS"),
+    # RLS condition
+    ("rls-condition-1-expression", "rls-condition",        "RLS-condition"),
+    ("rls-condition-2-expression", "rls-condition-2-expression", "RLS-condition"),
+    ("rls-condition-3-expression", "rls-condition-3-expression", "RLS-condition"),
+    ("rls-condition-5-expression", "rls-condition-5-expression", "RLS-condition"),
+    # RLS predicate
+    ("rls-predicate",                            "rls-predicate",                            "RLS-predicate"),
+    ("rls-predicate-summary-2-predicates",       "rls-predicate-summary-2-predicates",       "RLS-predicate"),
+    ("rls-predicate-summary-3-predicates",       "rls-predicate-summary-3-predicates",       "RLS-predicate"),
+    ("rls-predicate-summary-4-predicates",       "rls-predicate-summary-4-predicates",       "RLS-predicate"),
+    ("rls-predicate-summary-5-predicates",       "rls-predicate-summary-5-predicates",       "RLS-predicate"),
+    ("rls-predicate-summary-10-predicates",      "rls-predicate-summary-10-predicates",      "RLS-predicate"),
+    # RLS predicate-pips
+    ("rls-predicate-pips-1-token-pip",           "rls-predicate-pips-1-token-pip",           "RLS-predicate-pips"),
+    ("rls-predicate-pips-2-token-pip",           "rls-predicate-pips-2-token-pip",           "RLS-predicate-pips"),
+    ("rls-predicate-pips-3-token-pip",           "rls-predicate-pips-3-token-pip",           "RLS-predicate-pips"),
+    ("rls-predicate-pips-1-header-pip",          "rls-predicate-pips-1-header-pip",          "RLS-predicate-pips"),
+    ("rls-predicate-pips-2-header-pip",          "rls-predicate-pips-2-header-pip",          "RLS-predicate-pips"),
+    ("rls-predicate-pips-3-header-pip",          "rls-predicate-pips-3-header-pip",          "RLS-predicate-pips"),
+    ("rls-predicate-summary-10-predicates-3-token-pip", "rls-predicate-summary-10-predicates-3-token-pip", "RLS-predicate-pips"),
+    # Wildcard
+    ("wildcard-all-single",     "wildcard-all-single",     "Wildcard"),
+    ("wildcard-mixed-bulk",     "wildcard-mixed-bulk",     "Wildcard"),
+]
+# fmt: on
+
+
+def find_opa():
+    """Locate the OPA binary."""
+    repo_opa = os.path.join(REPO_ROOT, "tests", "tools", "opa", "opa")
+    if os.path.isfile(repo_opa) and os.access(repo_opa, os.X_OK):
+        return repo_opa
+    # Fall back to PATH
+    for p in os.environ.get("PATH", "").split(os.pathsep):
+        candidate = os.path.join(p, "opa")
+        if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    print("error: OPA binary not found", file=sys.stderr)
+    sys.exit(1)
+
+
+def parse_multi_json(text):
+    """Parse multiple concatenated JSON objects from opa bench --count N output."""
+    decoder = json.JSONDecoder()
+    results = []
+    idx = 0
+    while idx < len(text):
+        # Skip whitespace
+        while idx < len(text) and text[idx] in " \t\n\r":
+            idx += 1
+        if idx >= len(text):
+            break
+        obj, end = decoder.raw_decode(text, idx)
+        results.append(obj)
+        idx = end
+    return results
+
+
+def run_bench(opa_bin, scenario_dir):
+    """Run a single opa bench invocation, return the best of --count 5 results or None."""
+    cmd = [
+        opa_bin, "bench", "--format", "json", "--count", "5",
+        "-d", POLICIES_DIR,
+        "-d", os.path.join(scenario_dir, "data.json"),
+        "-d", os.path.join(scenario_dir, "data-real-token.json"),
+        "-i", os.path.join(scenario_dir, "input-real-token.json"),
+        "data.authorize.result",
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    except subprocess.TimeoutExpired:
+        return None
+    if result.returncode != 0:
+        print(f"    opa stderr: {result.stderr[:300]}", file=sys.stderr)
+        return None
+    try:
+        objects = parse_multi_json(result.stdout)
+        if not objects:
+            return None
+        # Return the result with the lowest p95
+        best = min(objects, key=lambda o: o.get("Extra", {}).get(
+            "histogram_timer_rego_query_eval_ns_95%", float("inf")))
+        return best
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
+def extract_metrics(bench_result):
+    """Extract key metrics from OPA bench JSON output."""
+    extra = bench_result.get("Extra", {})
+    n = bench_result.get("N", 0)
+    if n == 0:
+        return None
+    return {
+        "N": n,
+        "p95_ns": extra.get("histogram_timer_rego_query_eval_ns_95%", 0),
+        "p99_ns": extra.get("histogram_timer_rego_query_eval_ns_99%", 0),
+        "mean_ns": extra.get("histogram_timer_rego_query_eval_ns_mean", 0),
+        "median_ns": extra.get("histogram_timer_rego_query_eval_ns_median", 0),
+        "allocs_per_op": bench_result.get("MemAllocs", 0) / n,
+        "bytes_per_op": bench_result.get("MemBytes", 0) / n,
+    }
+
+
+def ns_to_us(ns):
+    """Convert nanoseconds to microseconds, rounded."""
+    return round(ns / 1000)
+
+
+def generate_methodology():
+    """Return the methodology section as a string."""
+    return """## Methodology
+
+- **Tool**: `opa bench --format json --count 5`, with multiple independent invocations per scenario.
+- **Best run selection**: from all invocations, the one with the lowest
+  `histogram_timer_rego_query_eval_ns` 95th-percentile value is selected.
+- **Deviation calculation**: `((worst_p95 - best_p95) / best_p95) * 100` — shows the spread
+  between the best and worst run as a percentage.
+
+### Benchmark groups
+
+- **ols-single / ols-single-Nroles**: single-resource OLS authorization, varying the number of
+  subject roles to isolate role-cardinality cost.
+- **ols-bulk-N**: bulk OLS authorization with N resources in one request.
+- **rls-condition-N-expression**: RLS with N `conditionAst` expressions (abstract AST evaluation,
+  no predicate generation).
+- **rls-predicate**: single RLS predicate generation (1 RSQL predicate, 1 token PIP).
+- **rls-predicate-summary-N-predicates**: RLS with N independent predicate objects per
+  resource-type/operation (measures predicate aggregation and substitution scaling).
+- **rls-predicate-pips-N-token-pip / N-header-pip**: single RLS predicate with varying numbers
+  of token-claim or header-derived PIP references (measures PIP resolution scaling).
+- **rls-predicate-summary-10-predicates-3-token-pip**: combined stress scenario — 10 predicates
+  and 3 token PIPs.
+- **wildcard-all-single**: global wildcard access short-circuit (single resource).
+- **wildcard-mixed-bulk**: mixed wildcard + exact OLS in one bulk request.
+"""
+
+
+def generate_report(results, runs_per_scenario):
+    """Generate the full Markdown report."""
+    now = datetime.datetime.now(datetime.timezone.utc)
+    lines = []
+    lines.append(f"# OPA Benchmark Report")
+    lines.append("")
+    lines.append(f"Generated: {now.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    lines.append(f"Runs per scenario: {runs_per_scenario}")
+    lines.append("")
+    lines.append(generate_methodology())
+    lines.append("## Results")
+    lines.append("")
+    lines.append("| Scenario | N (iterations) | p95 (µs) | mean (µs) | median (µs) | p99 (µs) | allocs/op | B/op | deviation % |")
+    lines.append("|----------|---------------|-----------|-----------|-------------|----------|-----------|------|-------------|")
+
+    prev_group = None
+    for name, _, group in SCENARIOS:
+        if prev_group is not None and group != prev_group:
+            lines.append("| | | | | | | | | |")
+        prev_group = group
+
+        entry = results.get(name)
+        if entry is None:
+            lines.append(f"| {name} | — | — | — | — | — | — | — | — |")
+            continue
+
+        best = entry["best"]
+        deviation = entry["deviation"]
+        lines.append(
+            f"| {name} "
+            f"| {best['N']} "
+            f"| {ns_to_us(best['p95_ns'])} "
+            f"| {ns_to_us(best['mean_ns'])} "
+            f"| {ns_to_us(best['median_ns'])} "
+            f"| {ns_to_us(best['p99_ns'])} "
+            f"| {round(best['allocs_per_op'])} "
+            f"| {round(best['bytes_per_op'])} "
+            f"| {deviation} |"
+        )
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def parse_report_p95(report_path):
+    """Parse p95 values from an existing Markdown report. Returns {scenario_name: p95_us}."""
+    if not os.path.isfile(report_path):
+        return None
+    p95_map = {}
+    with open(report_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("|") or "Scenario" in line or "---" in line:
+                continue
+            cells = [c.strip() for c in line.split("|")]
+            # cells[0] is empty (before first |), cells[1] is scenario name
+            if len(cells) < 9:
+                continue
+            scenario = cells[1].strip()
+            p95_str = cells[3].strip()
+            if scenario and p95_str and p95_str != "—":
+                try:
+                    p95_map[scenario] = int(p95_str)
+                except ValueError:
+                    pass
+    return p95_map if p95_map else None
+
+
+def compare_and_promote(new_report_path, new_results):
+    """Compare new results against canonical baseline and promote if equal or better."""
+    os.makedirs(os.path.dirname(CANONICAL_REPORT), exist_ok=True)
+
+    old_p95 = parse_report_p95(CANONICAL_REPORT)
+    if old_p95 is None:
+        # No existing baseline — promote unconditionally
+        print("No existing baseline found. Promoting new report.", file=sys.stderr)
+        with open(new_report_path) as f:
+            content = f.read()
+        with open(CANONICAL_REPORT, "w") as f:
+            f.write(content)
+        print(f"Canonical report written to {CANONICAL_REPORT}", file=sys.stderr)
+        return
+
+    # Build new p95 map
+    new_p95 = {}
+    for name in new_results:
+        entry = new_results[name]
+        if entry is not None:
+            new_p95[name] = ns_to_us(entry["best"]["p95_ns"])
+
+    # Compare
+    regressed = []
+    for scenario, old_val in old_p95.items():
+        if scenario not in new_p95:
+            continue  # scenario missing from new run — ignore
+        new_val = new_p95[scenario]
+        threshold = old_val * 1.05
+        if new_val > threshold:
+            regressed.append((scenario, old_val, new_val))
+
+    if regressed:
+        print("WARNING: Regressions detected — canonical report NOT updated:", file=sys.stderr)
+        for scenario, old_val, new_val in regressed:
+            pct = round(((new_val - old_val) / old_val) * 100, 1)
+            print(f"  {scenario}: {old_val}µs → {new_val}µs (+{pct}%)", file=sys.stderr)
+    else:
+        print("All scenarios equal or better. Promoting new report.", file=sys.stderr)
+        with open(new_report_path) as f:
+            content = f.read()
+        with open(CANONICAL_REPORT, "w") as f:
+            f.write(content)
+        print(f"Canonical report updated: {CANONICAL_REPORT}", file=sys.stderr)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="OPA benchmark report generator")
+    parser.add_argument("--runs", type=int, default=10, help="Number of bench invocations per scenario")
+    args = parser.parse_args()
+
+    opa_bin = find_opa()
+    total = len(SCENARIOS)
+    results = {}
+
+    for idx, (name, directory, _group) in enumerate(SCENARIOS, 1):
+        scenario_dir = os.path.join(PROFILER_DIR, directory)
+        if not os.path.isdir(scenario_dir):
+            print(f"[{idx}/{total}] {name}: directory not found, skipping", file=sys.stderr)
+            continue
+
+        # Check required files exist
+        required = ["data.json", "data-real-token.json", "input-real-token.json"]
+        missing = [f for f in required if not os.path.isfile(os.path.join(scenario_dir, f))]
+        if missing:
+            print(f"[{idx}/{total}] {name}: missing {missing}, skipping", file=sys.stderr)
+            continue
+
+        all_metrics = []
+        for run_num in range(1, args.runs + 1):
+            print(f"[{idx}/{total}] {name} run {run_num}/{args.runs}", file=sys.stderr)
+            bench_data = run_bench(opa_bin, scenario_dir)
+            if bench_data is None:
+                print(f"  ERROR: opa bench failed for {name} run {run_num}, skipping run", file=sys.stderr)
+                continue
+            metrics = extract_metrics(bench_data)
+            if metrics:
+                all_metrics.append(metrics)
+
+        if not all_metrics:
+            print(f"[{idx}/{total}] {name}: all runs failed, skipping", file=sys.stderr)
+            continue
+
+        # Select best (lowest p95) and worst (highest p95)
+        best = min(all_metrics, key=lambda m: m["p95_ns"])
+        worst = max(all_metrics, key=lambda m: m["p95_ns"])
+        if best["p95_ns"] > 0:
+            deviation = round(((worst["p95_ns"] - best["p95_ns"]) / best["p95_ns"]) * 100, 1)
+        else:
+            deviation = 0.0
+
+        results[name] = {"best": best, "worst": worst, "deviation": deviation}
+
+    # Generate report
+    report = generate_report(results, args.runs)
+
+    # Write timestamped report
+    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    report_path = os.path.join(ARTIFACTS_DIR, f"bench-report-{timestamp}.md")
+    with open(report_path, "w") as f:
+        f.write(report)
+    print(f"\nReport written to {report_path}", file=sys.stderr)
+
+    # Compare and possibly promote
+    compare_and_promote(report_path, results)
+
+
+if __name__ == "__main__":
+    main()

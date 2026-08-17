@@ -1,0 +1,20 @@
+{
+  "providers": [
+    {
+      "id": "keycloak-runtime",
+      "issuer": "http://keycloak:8080/auth/realms/authz-test",
+      "audiences": [
+        "authz-agent"
+      ],
+      "required": true
+    },
+    {
+      "id": "keycloak-runtime-cloud-common",
+      "issuer": "http://keycloak:8080/auth/realms/cloud-common",
+      "audiences": [
+        "test-app"
+      ],
+      "required": true
+    }
+  ]
+}

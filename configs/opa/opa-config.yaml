@@ -1,0 +1,33 @@
+# OPA runtime configuration for authz-agent.
+# Enables decision log shipping to the internal pap-client ingest endpoint.
+# OPA POSTs batched decision events to {services.pap-client.url}/logs.
+# Top-level runtime flag (NOT a decision_logs sub-key — OPA silently ignores it
+# there): enables the non-deterministic builtins cache so OPA records every
+# http.send (PIP) request+response natively in each decision-log event — see
+# authz-agent-ADR-0063. Replaces the retired `pipTrace` response field; PIP
+# context now lives only in the log, never in the client response, with no
+# recompute (honours ADR-0052).
+nd_builtin_cache: true
+
+decision_logs:
+  service: pap-client
+  reporting:
+    # Cadence tuned for ≤5 ms p95 decision-time target — see
+    # authz-agent-ADR-0057 (decision-log-flush-cadence). Halves the
+    # worst-case batch JSON size and the queue-mutex hold during flush
+    # at sustained 1000 RPS. Integer-typed fields.
+    min_delay_seconds: 0
+    max_delay_seconds: 1
+    # 64 KB — doubles OPA's 32 KB default to give the now-larger
+    # nd_builtin_cache-bearing events headroom (authz-agent-ADR-0063).
+    # Per-flush-chunk limit batching multiple events, not per-request.
+    upload_size_limit_bytes: 65536
+  request_context:
+    http:
+      headers:
+        - x-request-id
+        - x-authz-original-path
+
+services:
+  pap-client:
+    url: http://127.0.0.1:8182

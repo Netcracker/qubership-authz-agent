@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "GENERAL-PIP dict-return RLS row: PARITY_SUITE_DICT READ, granted to ROLE_PARITY_READER, gated on direct leaf aliases extracted from the dict-returning GENERAL PIP declared in suite-pips.json. Legacy simplified-policy validation accepts direct aliases such as subject.parityMetaDepartment / subject.parityMetaMaxAmount, but rejects nested-property syntax off a JSON-object alias.",
+    "component": "PARITY",
+    "reason": "GENERAL PIP dict scenario: extracted department and budget leaves must match the resource",
+    "resourceType": "PARITY_SUITE_DICT",
+    "operation": "READ",
+    "condition": "resource.department == subject.parityMetaDepartment AND resource.amount <= subject.parityMetaMaxAmount",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b30"
+  }
+]

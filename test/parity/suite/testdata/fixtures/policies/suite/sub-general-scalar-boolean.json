@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "SUB row 70: scalar-boolean substitution into an RSQL template.",
+    "component": "PARITY",
+    "reason": "SUB scalar-boolean substitution",
+    "resourceType": "PARITY_SUITE_SCALAR_BOOLEAN",
+    "operation": "LIST",
+    "rsqlPredicate": "archived==${subject.parityArchivedScalar}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b42"
+  }
+]

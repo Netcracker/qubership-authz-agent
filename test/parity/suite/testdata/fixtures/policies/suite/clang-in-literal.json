@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 54: literal-collection IN. Verified from test data: 'subject.roles CONTAINS ANY 'A', 'B'' pattern — comma-separated single-quoted strings, no parens. Sub-cases: status=OPEN/PENDING/REVIEW (true), status=CLOSED (false).",
+    "component": "PARITY",
+    "reason": "CLANG IN literal collection",
+    "resourceType": "PARITY_SUITE_CLANG_IN",
+    "operation": "READ",
+    "condition": "resource.status IN 'OPEN', 'PENDING', 'REVIEW'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c06"
+  }
+]

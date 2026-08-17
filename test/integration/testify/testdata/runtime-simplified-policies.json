@@ -1,0 +1,112 @@
+[
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "ORDER",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"]
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "ORDER",
+    "operation": "READ",
+    "roles": ["ROLE_ORDER_MANAGEMENT_RO_USER"],
+    "condition": "resource.ownerId == subject.id",
+    "rsqlPredicate": "ownerId==${subject.id}"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "ATTACHMENT",
+    "operation": "READ",
+    "roles": ["ROLE_ORDER_MANAGEMENT_RO_USER"]
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "ATTACHMENT",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"]
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "PUBLIC_DOC",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "rsqlPredicate": "subjectId==${subject.id}"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "CUSTOMER",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "condition": "resource.customerId IN subject.allowedCustomers",
+    "rsqlPredicate": "customerId=in=(${subject.allowedCustomers})"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "BULK_OPEN",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"]
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "DOCUMENT",
+    "operation": "READ",
+    "roles": ["ROLE_ORDER_MANAGEMENT_RO_USER"],
+    "rsqlPredicate": "ownerId==${subject.id}"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "DOCUMENT",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"]
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "PIP_FAIL_TEST",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "condition": "resource.ownerId == subject.brokenPip",
+    "rsqlPredicate": "ownerId==${subject.brokenPip}"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "ATTR_MISS_TEST",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "condition": "resource.ownerId == subject.nonExistentAttr",
+    "rsqlPredicate": "ownerId==${subject.nonExistentAttr}"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "MULTI_FRAG_ITEM",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "rsqlPredicate": "dept==engineering"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "MULTI_FRAG_ITEM",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "rsqlPredicate": "dept==management"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "WC_EXACT_ONLY",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"]
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "TOKEN_PIP_POSITIVE",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "rsqlPredicate": "ownerEmail==${subject.emailFromToken}"
+  },
+  {
+    "component": "RUNTIME_TESTS",
+    "resourceType": "TOKEN_PIP_DEFAULT",
+    "operation": "READ",
+    "roles": ["ROLE_ADMINISTRATOR"],
+    "rsqlPredicate": "dept==${subject.deptFromToken}"
+  }
+]

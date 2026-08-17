@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "SUB row 74: two placeholders in one template, one TOKEN PIP and one GENERAL scalar-number PIP.",
+    "component": "PARITY",
+    "reason": "SUB multi-pip one template",
+    "resourceType": "PARITY_SUITE_MULTI_PIP",
+    "operation": "LIST",
+    "rsqlPredicate": "tier==${subject.parityTier};amount=lt=${subject.parityMaxAmountScalar}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b43"
+  }
+]

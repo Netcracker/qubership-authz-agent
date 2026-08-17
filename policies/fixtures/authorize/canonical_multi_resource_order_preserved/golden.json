@@ -1,0 +1,16 @@
+{
+  "rlsIgnored": true,
+  "results": [
+    {
+      "resourceType": "Customer",
+      "operation": "READ",
+      "isAllowed": true
+    },
+    {
+      "resourceType": "Invoice",
+      "operation": "READ",
+      "isAllowed": false,
+      "reason": "No user roles associated with resource and operation"
+    }
+  ]
+}

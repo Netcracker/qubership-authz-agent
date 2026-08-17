@@ -1,0 +1,17 @@
+{
+  "input": {
+    "authorizationToken": "Bearer <test-jwt-for-viewerUser1>",
+    "authorizationType": "",
+    "requestHeaders": {},
+    "resources": [
+      {
+        "resourceType": "Customer",
+        "operation": "READ",
+        "resource": {
+          "id": "cust-1"
+        }
+      }
+    ],
+    "subject": "Bearer <test-jwt-for-viewerUser1>"
+  }
+}

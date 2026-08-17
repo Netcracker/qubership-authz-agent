@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 51: boolean AND truth table on two boolean resource attributes.",
+    "component": "PARITY",
+    "reason": "CLANG boolean AND",
+    "resourceType": "PARITY_SUITE_CLANG_AND",
+    "operation": "READ",
+    "condition": "resource.active == true AND resource.verified == true",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c03"
+  }
+]

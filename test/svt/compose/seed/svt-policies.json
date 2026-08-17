@@ -1,0 +1,700 @@
+[
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR",
+      "ROLE_SVT_VIEWER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_RESTRICTED"
+    ],
+    "condition": "resource.ownerId == subject.emailFromToken",
+    "rsqlPredicate": "ownerId==${subject.emailFromToken}"
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_RESTRICTED"
+    ],
+    "condition": "resource.ownerId == subject.emailFromToken",
+    "rsqlPredicate": "ownerId==${subject.emailFromToken}"
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_RESTRICTED"
+    ],
+    "rsqlPredicate": "ownerId==${subject.emailFromToken}"
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "EXPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "IMPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "APPROVE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "REJECT",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "ARCHIVE",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR",
+      "ROLE_SVT_VIEWER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_RESTRICTED"
+    ],
+    "condition": "resource.regionId == subject.emailFromToken",
+    "rsqlPredicate": "regionId==${subject.emailFromToken}"
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_RESTRICTED"
+    ],
+    "condition": "resource.regionId == subject.emailFromToken",
+    "rsqlPredicate": "regionId==${subject.emailFromToken}"
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_RESTRICTED"
+    ],
+    "rsqlPredicate": "regionId==${subject.emailFromToken}"
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "EXPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "IMPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "APPROVE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "REJECT",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "ARCHIVE",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR",
+      "ROLE_SVT_VIEWER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_OPERATOR"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "EXPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "IMPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "APPROVE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "REJECT",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "PRODUCT",
+    "operation": "ARCHIVE",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_VIEWER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "EXPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "IMPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "APPROVE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "REJECT",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "INVOICE",
+    "operation": "ARCHIVE",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER",
+      "ROLE_SVT_VIEWER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "EXPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "IMPORT",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "APPROVE",
+    "roles": [
+      "ROLE_SVT_ADMIN",
+      "ROLE_SVT_MANAGER"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "REJECT",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "DOCUMENT",
+    "operation": "ARCHIVE",
+    "roles": [
+      "ROLE_SVT_ADMIN"
+    ]
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "ORDER",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "CREATE",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "READ",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "UPDATE",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "DELETE",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  },
+  {
+    "component": "SVT",
+    "resourceType": "CUSTOMER",
+    "operation": "LIST",
+    "roles": [
+      "ROLE_SVT_01",
+      "ROLE_SVT_02",
+      "ROLE_SVT_03",
+      "ROLE_SVT_04",
+      "ROLE_SVT_05",
+      "ROLE_SVT_06",
+      "ROLE_SVT_07",
+      "ROLE_SVT_08",
+      "ROLE_SVT_09",
+      "ROLE_SVT_10"
+    ],
+    "applicableForFrontend": false
+  }
+]

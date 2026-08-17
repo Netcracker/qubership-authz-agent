@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "TOKEN-PIP RLS row: PARITY_SUITE_TOKEN READ, granted to ROLE_PARITY_READER, gated on the subject's department JWT claim (surfaced via subject.parityDepartment PIP declaration in suite-pips.json). Uses the condition AST form — check/resource collapses the RLS check to a Boolean.",
+    "component": "PARITY",
+    "reason": "TOKEN PIP scenario: department claim must equal 'finance'",
+    "resourceType": "PARITY_SUITE_TOKEN",
+    "operation": "READ",
+    "condition": "subject.parityDepartment == 'finance'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b10"
+  }
+]

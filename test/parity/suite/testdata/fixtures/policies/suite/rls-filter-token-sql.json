@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE row 06: filter endpoint renders a TOKEN-PIP-backed SQL predicate template by substituting the department JWT claim exposed as subject.parityDepartment. The template wraps the placeholder in single quotes; the SQL formatter produces 'finance', yielding the double-single-quote form department=''finance'' that access-control emits. Covers TestRow06CheckFilterV1TokenScalarIntoSQL.",
+    "component": "PARITY",
+    "reason": "TOKEN PIP SQL scalar filter rendering",
+    "resourceType": "PARITY_SUITE_TOKEN_SQL",
+    "operation": "LIST",
+    "sqlPredicate": "department='${subject.parityDepartment}'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000e22"
+  }
+]

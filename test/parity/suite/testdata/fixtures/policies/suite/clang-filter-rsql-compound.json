@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 60: compound RSQL string with semicolon-AND and in-list membership. Returned verbatim by check/filter.",
+    "component": "PARITY",
+    "reason": "CLANG compound RSQL filter",
+    "resourceType": "PARITY_SUITE_CLANG_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "amount=lt=1000;status=in=(OPEN,PENDING)",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c12"
+  }
+]

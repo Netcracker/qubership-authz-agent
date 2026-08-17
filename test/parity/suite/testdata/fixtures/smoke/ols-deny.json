@@ -1,0 +1,12 @@
+[
+  {
+    "_comment": "OLS deny - proves row 2 returns false when the subject lacks the role for the (resourceType, operation). No policy grants PARITY_CUSTOMER WRITE, so any role but the nonexistent ROLE_PARITY_NOBODY denies. This fixture adds a DELETE grant for the reader role so we can deny WRITE explicitly and prove policy parsing is not a no-op.",
+    "component": "PARITY",
+    "reason": "PARITY_DENY setup: only DELETE granted, so WRITE denies",
+    "resourceType": "PARITY_CUSTOMER",
+    "operation": "DELETE",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000000a2"
+  }
+]

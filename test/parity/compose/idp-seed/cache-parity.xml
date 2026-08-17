@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Parity stack infinispan config: a stripped clone of stock Keycloak 26
+  cache-ispn.xml (no JGroups transport, single-node).
+
+  NOTE: This file was used when the parity IdP was a custom Keycloak fork that
+  required an extra licenseStateCache entry for an internal startup action. The
+  current parity stack uses vanilla quay.io/keycloak/keycloak with -cache=local,
+  which does not read this file. It is kept here for reference.
+-->
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:15.0 http://www.infinispan.org/schemas/infinispan-config-15.0.xsd"
+        xmlns="urn:infinispan:config:15.0">
+
+    <cache-container name="keycloak">
+        <transport lock-timeout="60000"/>
+        <local-cache name="realms" simple-cache="true">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <memory max-count="10000"/>
+        </local-cache>
+        <local-cache name="users" simple-cache="true">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <memory max-count="10000"/>
+        </local-cache>
+        <distributed-cache name="sessions" owners="1">
+            <expiration lifespan="-1"/>
+            <memory max-count="10000"/>
+        </distributed-cache>
+        <distributed-cache name="authenticationSessions" owners="2">
+            <expiration lifespan="-1"/>
+        </distributed-cache>
+        <distributed-cache name="offlineSessions" owners="1">
+            <expiration lifespan="-1"/>
+            <memory max-count="10000"/>
+        </distributed-cache>
+        <distributed-cache name="clientSessions" owners="1">
+            <expiration lifespan="-1"/>
+            <memory max-count="10000"/>
+        </distributed-cache>
+        <distributed-cache name="offlineClientSessions" owners="1">
+            <expiration lifespan="-1"/>
+            <memory max-count="10000"/>
+        </distributed-cache>
+        <distributed-cache name="loginFailures" owners="2">
+            <expiration lifespan="-1"/>
+        </distributed-cache>
+        <local-cache name="authorization" simple-cache="true">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <memory max-count="10000"/>
+        </local-cache>
+        <replicated-cache name="work">
+            <expiration lifespan="-1"/>
+        </replicated-cache>
+        <local-cache name="keys" simple-cache="true">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <expiration max-idle="3600000"/>
+            <memory max-count="1000"/>
+        </local-cache>
+        <local-cache name="crl" simple-cache="true">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <expiration lifespan="-1"/>
+            <memory max-count="1000"/>
+        </local-cache>
+        <distributed-cache name="actionTokens" owners="2">
+            <encoding>
+                <key media-type="application/x-java-object"/>
+                <value media-type="application/x-java-object"/>
+            </encoding>
+            <expiration max-idle="-1" lifespan="-1" interval="300000"/>
+            <memory max-count="-1"/>
+        </distributed-cache>
+        <local-cache name="licenseStateCache" simple-cache="true">
+            <expiration lifespan="-1"/>
+        </local-cache>
+    </cache-container>
+</infinispan>

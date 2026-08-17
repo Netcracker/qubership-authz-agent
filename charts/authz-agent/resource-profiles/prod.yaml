@@ -1,0 +1,39 @@
+# Prod resource profile for authz-agent.
+#
+# Until this file was fixed it was a byte-for-byte copy of dev.yaml (100m CPU /
+# 100Mi RAM everywhere) while its own header promised several CPUs — installing
+# "prod" silently got you the dev sizing, and 100m CPU means permanent
+# throttling under any real traffic.
+#
+# The numbers below are the SVT sizing: what the service under test is given on
+# the load stand, with requests deliberately below limits so a run can push the
+# containers into their limits and CPU throttling stays observable. They are a
+# starting point derived from the compose SVT reference
+# (tests/svt/common/compose/docker-compose.yml: backend `cpus: 8`,
+# `mem_limit: 8g`), not a measurement — re-derive them from the first real SVT
+# run before this profile is used for a production install.
+ENVOY_CPU_REQUEST: "2"
+ENVOY_CPU_LIMIT: "4"
+ENVOY_MEM_REQUEST: 512Mi
+ENVOY_MEM_LIMIT: 1Gi
+
+BACKEND_CPU_REQUEST: "4"
+BACKEND_CPU_LIMIT: "8"
+BACKEND_MEM_REQUEST: 2Gi
+BACKEND_MEM_LIMIT: 8Gi
+
+COLLECTOR_CPU_REQUEST: "1"
+COLLECTOR_CPU_LIMIT: "2"
+COLLECTOR_MEM_REQUEST: 512Mi
+COLLECTOR_MEM_LIMIT: 3Gi
+
+# authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
+# stub replaces access-control and its control surface is unauthenticated by
+# default (authz-agent-ADR-0073). These numbers exist so that a staging or
+# demo namespace installed with the prod profile still renders sane limits; the
+# stub only serves a few megabytes of JSON, so it does not follow the backend's
+# sizing.
+AUTHZ_POLICY_ADMIN_CPU_REQUEST: 100m
+AUTHZ_POLICY_ADMIN_CPU_LIMIT: 500m
+AUTHZ_POLICY_ADMIN_MEM_REQUEST: 128Mi
+AUTHZ_POLICY_ADMIN_MEM_LIMIT: 512Mi

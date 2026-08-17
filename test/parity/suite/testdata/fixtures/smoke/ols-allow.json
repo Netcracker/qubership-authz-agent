@@ -1,0 +1,12 @@
+[
+  {
+    "_comment": "OLS allow - proves row 2 (POST /access/v1/check/resource) returns true for the allowed role/operation. Bespoke per D-E of 20260413-access-control-reference-stack-task.md.",
+    "component": "PARITY",
+    "reason": "PARITY_ALLOW policy: CUSTOMER READ for ROLE_PARITY_READER",
+    "resourceType": "PARITY_CUSTOMER",
+    "operation": "READ",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000000a1"
+  }
+]

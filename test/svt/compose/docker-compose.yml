@@ -1,0 +1,207 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--health-enabled=true"]
+    ports:
+      - "${SVT_KC_PORT:-25556}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: kcadmin
+      KC_HOSTNAME: http://keycloak:8080
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 15s
+    volumes:
+      - ./keycloak/svt-realm.json:/opt/keycloak/data/import/svt-realm.json:ro
+
+  # ── split topology: envoy + opa-bootstrap + opa + pap-client + collector ──
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    depends_on:
+      pap-client:
+        condition: service_healthy
+      decision-log-collector:
+        condition: service_healthy
+    ports:
+      - "${SVT_AUTHZ_PORT:-28080}:8080"
+      - "${SVT_AUTHZ_ADMIN_PORT:-29901}:9901"
+    volumes:
+      - ../../../test/.runtime-configs/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - ../../../configs/envoy/lua:/etc/envoy/lua:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "warn", "--service-cluster", "authz-agent"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9901/ready || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  # opa-bootstrap: one-shot JWKS bootstrap before OPA starts.
+  opa-bootstrap:
+    build:
+      context: ../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    command: ["bootstrap"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: 2
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    volumes:
+      - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - svt-opa-data:/etc/opa/data
+      - svt-authz-run:/var/run/authz
+
+  # opa: vanilla upstream OPA (no Netcracker code).
+  # Reads JWKS and data written by opa-bootstrap and pap-client from the
+  # svt-opa-data volume.
+  opa:
+    image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    depends_on:
+      opa-bootstrap:
+        condition: service_completed_successfully
+    # cpus: 8
+    # mem_limit: 8g
+    command:
+      - run
+      - --server
+      - --addr
+      - "0.0.0.0:8181"
+      - --ignore=..*
+      - --config-file
+      - /etc/opa/opa-config.yaml
+      - /etc/opa/policies
+      - /etc/opa/data
+    healthcheck:
+      # OPA v1.x removed the `opa health` subcommand; use eval + http.send.
+      test: ["CMD", "/opa", "eval", "--fail", "http.send({\"method\":\"GET\",\"url\":\"http://localhost:8181/health\"}).status_code == 200"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    volumes:
+      - svt-opa-data:/etc/opa/data:ro
+      - ../../../test/.runtime-configs/opa/opa-config.yaml:/etc/opa/opa-config.yaml:ro
+      - ../../../charts/authz-agent/files/opa/policies:/etc/opa/policies:ro
+
+  # pap-client: Policy Administration Point client.
+  # Shares OPA's network namespace via network_mode: "service:opa".
+  pap-client:
+    build:
+      context: ../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    network_mode: "service:opa"
+    depends_on:
+      opa:
+        condition: service_healthy
+      opa-bootstrap:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_PAP_CLIENT_ADDR: "0.0.0.0:8182"
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: 2
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    healthcheck:
+      test: ["CMD", "pap-client", "healthcheck"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - svt-opa-data:/etc/opa/data
+      - svt-authz-run:/var/run/authz
+
+  decision-log-collector:
+    build:
+      context: ../../..
+      dockerfile: build/collector/Dockerfile
+    pull_policy: build
+    image: decision-log-collector:local
+    depends_on:
+      opa:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8183/healthz || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    ports:
+      - "${SVT_CADVISOR_PORT:-28888}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    ports:
+      - "${SVT_PROMETHEUS_PORT:-29090}:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-admin-api"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - svt-prometheus-data:/prometheus
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "${SVT_GRAFANA_PORT:-23000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ../grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ../grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - svt-grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  jmeter:
+    image: justb4/jmeter:5.5
+    profiles: ["run"]
+    volumes:
+      - ../jmeter/plans:/plans:ro
+      - ../jmeter/data:/data:ro
+    depends_on:
+      envoy:
+        condition: service_healthy
+
+volumes:
+  # svt-opa-data: shared between opa-bootstrap (write), opa (read), and
+  # pap-client (write). Covers the full OPA data directory.
+  svt-opa-data: {}
+  # svt-authz-run: shared between opa-bootstrap and pap-client for
+  # bootstrap-status.json and pull-status.json.
+  svt-authz-run: {}
+  svt-prometheus-data: {}
+  svt-grafana-data: {}

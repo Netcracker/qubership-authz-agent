@@ -1,0 +1,43 @@
+{
+  "trustedProviders": {
+    "byId": {
+      "test-idp": {
+        "id": "test-idp",
+        "audiences": [
+          "authz-agent"
+        ],
+        "required": true
+      },
+      "other-idp": {
+        "id": "other-idp",
+        "audiences": [
+          "authz-agent"
+        ]
+      }
+    }
+  },
+  "jwksByKid": {
+    "test-idp-k1": [
+      {
+        "providerId": "test-idp",
+        "alg": "RS256",
+        "kty": "RSA",
+        "jwksJson": "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"alg\":\"RS256\",\"kid\":\"test-idp-k1\",\"n\":\"rrwjq3AVBN4OTsEFG6Kd8qFRgQdJ266X5ROmpDye128V-bhCZdA31r5jZkO3p0wgPqH6U-kqJeF0Lg8HXZbgpY9Ks2fjeX1_Plxz9zS2VX75-o0kX0gOsGSISIbA6GSdpsdT6vFc5tycw_dG7B5rY1QllBuoSJgSp87DZltzxrlro9aR6p3vZQZz1EqW4yRSmlI8hloacYTEG92iw14R5YO-a-JPTxKjY4ayh3oU9O0sqfYIsulSLFzP7Sbr3SsbMbk20_48Ih-6nzVNojTiz6c_Tah7lUBcnI5Z8L8V4iDSsWHcNKEqW9Z1y3tGeh9BaX5yX2O8u6Y5w_xSCXKJ1w\",\"e\":\"AQAB\"}]}"
+      },
+      {
+        "providerId": "other-idp",
+        "alg": "RS256",
+        "kty": "RSA",
+        "jwksJson": "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"alg\":\"RS256\",\"kid\":\"test-idp-k1\",\"n\":\"iDSIYndYGqCzuhyn0a7EjI4P-O4alfOIfgI2rE9e1ZbiE0x3dwnVoC0tsj0YvuRRo9ABQuXwMqVdSI6IVTzy4BIpRxyjwIZZnCDzhVjxIS8XKNGYsmSEck3_smSdTb4zsJESvgnA5P_RA86bg04DAiOZywmrRUrpwxb2rtNlGGUG5ZaqnTBPgAtwYCnjKq5yssdgV777zxaslMs66-KOEkgbm0gFil_b3LK_wG7jc4lgPn3TNjrO50LzdFhwb4ywKDwZvqEIdKy-ayiPutII7NHPmkVXMOvuc-Ka0vxXqfPBlKFzLhdp-ta19RVfdT-bMNJtqHNSEv_hBcxoXqO4Sw\",\"e\":\"AQAB\"}]}"
+      }
+    ],
+    "test-idp-k2": [
+      {
+        "providerId": "test-idp",
+        "alg": "RS256",
+        "kty": "RSA",
+        "jwksJson": "{\"keys\":[{\"kty\":\"RSA\",\"use\":\"sig\",\"alg\":\"RS256\",\"kid\":\"test-idp-k2\",\"n\":\"vjumDIZoGqoAMUz7GWRsQAqVhgL4uw8_XLz_CTMyTrE4TEMSxX0vtwuIIwaiP0TSf2OW6DwzOShYdSqREt3L8LXtT6aWKehEWSFwCRVZsBd5TA-257G9zyvjwW96bL9hO6rm9Be0Tu_sDMtD71HjH7s1nQvwVNjEnHhH3Pv5kLT1aL6bC-csViKkMc1mq5-tP-Za-1pIFIq60QDSfZCJ2dJJ8nSPINSH5csuipK5lwuYItEpt83UVY-8rrvQYLV3NO6f63vs8Zmb5K9YlQOsMgAJ2_B1rCt_epBAd_9-Rr6_fMk56pnnMYV8g4kfHMobav9w5q_J9ZGgRSTNKdIovQ\",\"e\":\"AQAB\"}]}"
+      }
+    ]
+  }
+}

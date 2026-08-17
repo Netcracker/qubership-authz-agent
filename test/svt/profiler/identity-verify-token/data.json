@@ -1,0 +1,23 @@
+{
+  "authn": {
+    "verifiedTokens": {
+      "svt-profiler-token": {
+        "subject": {
+          "id": "svt-profiler-user",
+          "name": "svt-profiler-user",
+          "type": "USER",
+          "roles": [
+            "ROLE_SVT_ADMIN"
+          ],
+          "scopes": [
+            "email",
+            "openid",
+            "profile"
+          ]
+        }
+      }
+    }
+  },
+  "policies": {},
+  "pips": {}
+}

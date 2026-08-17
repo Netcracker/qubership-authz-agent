@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 52: boolean OR. resource.priority == 'HIGH' OR resource.escalated == true. Sub-cases: (HIGH, true)→T, (HIGH, false)→T, (LOW, true)→T, (LOW, false)→F.",
+    "component": "PARITY",
+    "reason": "CLANG boolean OR",
+    "resourceType": "PARITY_SUITE_CLANG_OR",
+    "operation": "READ",
+    "condition": "resource.priority == 'HIGH' OR resource.escalated == true",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c04"
+  }
+]

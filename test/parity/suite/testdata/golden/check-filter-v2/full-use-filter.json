@@ -1,0 +1,8 @@
+{
+  "calculationResult": "USE_FILTER_CONDITION",
+  "filterCondition": "PARITY_SUITE_FULL_FILTER.ownerId.eq(\"00000000-0000-0000-0000-000000000101\")",
+  "mongodbFilterCondition": "{ { \"ownerId\": \"00000000-0000-0000-0000-000000000101\" } }",
+  "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
+  "sqlFilterCondition": "owner_id=00000000-0000-0000-0000-000000000101",
+  "customFilterCondition": null
+}

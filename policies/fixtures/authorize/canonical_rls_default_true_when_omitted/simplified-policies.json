@@ -1,0 +1,14 @@
+{
+  "simplifiedPolicies": [
+    {
+      "component": "TEST_SUITE",
+      "reason": "CANONICAL_RLS_DEFAULT_TRUE_WHEN_OMITTED",
+      "resourceType": "Customer",
+      "operation": "READ",
+      "roles": [
+        "ROLE_VIEWER"
+      ],
+      "rsqlPredicate": "ownerId==${subject.id}"
+    }
+  ]
+}

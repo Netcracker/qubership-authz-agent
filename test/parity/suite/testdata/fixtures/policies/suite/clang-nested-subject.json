@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 59 after the leaf-alias fix: direct comparison against the department leaf extracted from the dict-returning GENERAL PIP.",
+    "component": "PARITY",
+    "reason": "CLANG direct subject leaf from dict-returning PIP",
+    "resourceType": "PARITY_SUITE_CLANG_NESTED",
+    "operation": "READ",
+    "condition": "resource.department == subject.parityMetaDepartment",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c11"
+  }
+]

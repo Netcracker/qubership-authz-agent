@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 56: CONTAINS ANY set-intersection. Verified pattern from legacy test data: 'subject.roles CONTAINS ANY 'ROLE_TENANT-ADMIN', 'ROLE_CONTENT-MANAGER''. Sub-cases: tags=['red','green'] (true, intersects 'red'), tags=['yellow','purple'] (false, no intersect).",
+    "component": "PARITY",
+    "reason": "CLANG CONTAINS ANY",
+    "resourceType": "PARITY_SUITE_CLANG_CANY",
+    "operation": "READ",
+    "condition": "resource.tags CONTAINS ANY 'red', 'blue'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c07"
+  }
+]

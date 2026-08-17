@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 50: compound numeric relational with AND. Verified: resource.field >= N AND resource.field < M (numeric literals, > < operators, AND combinator). Sub-cases: amount=50 (false, below), amount=500 (true, in-range), amount=1500 (false, above).",
+    "component": "PARITY",
+    "reason": "CLANG number relational range",
+    "resourceType": "PARITY_SUITE_CLANG_NUM",
+    "operation": "READ",
+    "condition": "resource.amount >= 100 AND resource.amount < 1000",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c02"
+  }
+]

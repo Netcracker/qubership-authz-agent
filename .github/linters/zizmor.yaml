@@ -1,0 +1,12 @@
+rules:
+  archived-uses:
+    ignore:
+      # contributor-assistant/github-action is archived upstream but is the
+      # organisation-standard CLA flow shipped by the repository template.
+      - cla.yaml
+  dangerous-triggers:
+    ignore:
+      - cla.yaml
+      - pr-assigner.yml
+  secrets-outside-env:
+    disable: true

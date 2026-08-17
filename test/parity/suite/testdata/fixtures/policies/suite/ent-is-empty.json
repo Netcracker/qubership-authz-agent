@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "ENT rows 80/83: direct emptiness check over the entitlement-derived Owner set.",
+    "component": "PARITY",
+    "reason": "ENT is empty",
+    "resourceType": "PARITY_SUITE_ENT_EMPTY",
+    "operation": "READ",
+    "condition": "subject.entitledResources.of('PARITY_CONTRACT').as('Owner') IS EMPTY",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000d05"
+  }
+]

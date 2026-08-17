@@ -1,0 +1,120 @@
+{
+  "realm": "svt-test",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 1800,
+  "roles": {
+    "realm": [
+      { "name": "ROLE_SVT_ADMIN", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_MANAGER", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_OPERATOR", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_VIEWER", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_RESTRICTED", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_01", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_02", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_03", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_04", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_05", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_06", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_07", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_08", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_09", "composite": false, "clientRole": false },
+      { "name": "ROLE_SVT_10", "composite": false, "clientRole": false }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "authz-agent",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "authz-agent-secret",
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "authz-agent-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "authz-agent",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "svt-admin",
+      "email": "svt-admin@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Admin",
+      "credentials": [{ "type": "password", "value": "password", "temporary": false }],
+      "realmRoles": ["ROLE_SVT_ADMIN"]
+    },
+    {
+      "username": "svt-manager",
+      "email": "svt-manager@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Manager",
+      "credentials": [{ "type": "password", "value": "password", "temporary": false }],
+      "realmRoles": ["ROLE_SVT_MANAGER"]
+    },
+    {
+      "username": "svt-operator",
+      "email": "svt-operator@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Operator",
+      "credentials": [{ "type": "password", "value": "password", "temporary": false }],
+      "realmRoles": ["ROLE_SVT_OPERATOR"]
+    },
+    {
+      "username": "svt-viewer",
+      "email": "svt-viewer@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Viewer",
+      "credentials": [{ "type": "password", "value": "password", "temporary": false }],
+      "realmRoles": ["ROLE_SVT_VIEWER"]
+    },
+    {
+      "username": "svt-restricted",
+      "email": "svt-restricted@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Restricted",
+      "credentials": [{ "type": "password", "value": "password", "temporary": false }],
+      "realmRoles": ["ROLE_SVT_RESTRICTED"]
+    },
+    {
+      "username": "svt-multirole",
+      "email": "svt-multirole@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "MultiRole",
+      "credentials": [{ "type": "password", "value": "password", "temporary": false }],
+      "realmRoles": ["ROLE_SVT_01", "ROLE_SVT_02", "ROLE_SVT_03", "ROLE_SVT_04", "ROLE_SVT_05", "ROLE_SVT_06", "ROLE_SVT_07", "ROLE_SVT_08", "ROLE_SVT_09", "ROLE_SVT_10"]
+    }
+  ]
+}

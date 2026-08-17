@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+exec python3 "${SVT_DIR}/common/tools/svt_individual_matrix.py" run-matrix "$@"

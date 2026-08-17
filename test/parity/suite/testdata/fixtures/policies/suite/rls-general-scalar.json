@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "SUB row 68: PARITY_SUITE_SCALAR LIST, rsqlPredicate template contains ${subject.parityStatusScalar} which the legacy engine substitutes server-side during predicate rendering. Mock returns a scalar JSON string (e.g. 'OPEN') so the rendered predicate becomes 'status==OPEN'.",
+    "component": "PARITY",
+    "reason": "SUB scalar-string substitution scenario",
+    "resourceType": "PARITY_SUITE_SCALAR",
+    "operation": "LIST",
+    "rsqlPredicate": "status==${subject.parityStatusScalar}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b40"
+  }
+]

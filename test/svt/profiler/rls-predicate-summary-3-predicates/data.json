@@ -1,0 +1,4941 @@
+{
+  "authn": {
+    "verifiedTokens": {
+      "svt-profiler-token": {
+        "subject": {
+          "id": "svt-profiler-user",
+          "name": "svt-profiler-user",
+          "type": "USER",
+          "roles": [
+            "ROLE_SVT_ADMIN"
+          ],
+          "scopes": [
+            "email",
+            "openid",
+            "profile"
+          ]
+        }
+      }
+    }
+  },
+  "policies": {
+    "ols": {
+      "SVT_RT_01": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_02": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_03": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_04": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_05": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_06": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_07": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_08": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_09": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_10": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      }
+    },
+    "refIndex": {
+      "subjectRefsByResourceTypeOperation": {
+        "SVT_RT_01": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_02": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_03": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_04": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_05": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_06": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_07": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_08": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_09": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        },
+        "SVT_RT_10": {
+          "OP_01": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_02": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_03": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_04": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_05": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_06": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_07": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_08": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_09": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ],
+          "OP_10": [
+            "emailFromToken",
+            "departmentFromToken",
+            "regionFromToken"
+          ]
+        }
+      }
+    },
+    "rls": {
+      "SVT_RT_01": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_02": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_03": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_04": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_05": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_06": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_07": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_08": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_09": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_10": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "ownerId==${subject.emailFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "emailFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "departmentId==${subject.departmentFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "departmentFromToken"
+                  ]
+                }
+              ]
+            },
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromToken}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromToken"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "pips": {
+    "activation": {
+      "generalByResourceTypeOperation": {}
+    },
+    "byName": {
+      "subject.emailFromToken": {
+        "alias": "emailFromToken",
+        "name": "subject.emailFromToken",
+        "pipType": "TOKEN"
+      },
+      "subject.departmentFromToken": {
+        "alias": "departmentFromToken",
+        "name": "subject.departmentFromToken",
+        "pipType": "TOKEN"
+      },
+      "subject.regionFromToken": {
+        "alias": "regionFromToken",
+        "name": "subject.regionFromToken",
+        "pipType": "TOKEN"
+      }
+    },
+    "local": {
+      "header": {},
+      "token": {
+        "subject.emailFromToken": {
+          "alias": "emailFromToken",
+          "claim": "email",
+          "name": "subject.emailFromToken"
+        },
+        "subject.departmentFromToken": {
+          "alias": "departmentFromToken",
+          "claim": "department",
+          "name": "subject.departmentFromToken"
+        },
+        "subject.regionFromToken": {
+          "alias": "regionFromToken",
+          "claim": "region",
+          "name": "subject.regionFromToken"
+        }
+      }
+    },
+    "remote": {
+      "general": {}
+    },
+    "aliasSet": {
+      "emailFromToken": true,
+      "departmentFromToken": true,
+      "regionFromToken": true
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "input": {
+    "authorizationToken": "Bearer <test-jwt-for-admin>",
+    "authorizationType": "",
+    "requestHeaders": {},
+    "resources": [
+      {
+        "resourceType": "CUSTOMER",
+        "operation": "READ",
+        "resource": {
+          "customerId": "C1"
+        }
+      }
+    ],
+    "subject": "Bearer <test-jwt-for-admin>",
+    "ignoreRls": false
+  }
+}

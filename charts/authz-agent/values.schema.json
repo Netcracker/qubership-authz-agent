@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "PAAS_PLATFORM":                          { "type": "string" },
+    "PAAS_VERSION":                           { "type": "string" },
+    "NAMESPACE":                              { "type": "string" },
+    "ARTIFACT_DESCRIPTOR_VERSION":            { "type": "string" },
+    "TAG":                                    { "type": "string" },
+    "IMAGE_REPOSITORY":                       { "type": "string" },
+    "SERVICE_NAME":                           { "type": "string" },
+    "DEPLOYMENT_RESOURCE_NAME":               { "type": "string" },
+    "DEPLOYMENT_VERSION":                     { "type": "string" },
+    "MONITORING_ENABLED":                     { "type": "boolean" },
+    "TRACING_ENABLED":                        { "type": "boolean" },
+    "EXECUTION_MODE":                         { "type": "string" },
+    "READONLY_CONTAINER_FILE_SYSTEM_ENABLED": { "type": "boolean" },
+    "CERTIFICATE_BUNDLE_MD5SUM":              { "type": "string" },
+    "SSL_SECRET":                             { "type": "string" },
+    "MANAGED_BY":                             { "type": "string" },
+    "DEPLOYMENT_SESSION_ID":                  { "type": "string" },
+    "MESH_ROUTES_ENABLED":                    { "type": "boolean" },
+
+    "ENVOY_IMAGE":          { "type": "string" },
+    "COLLECTOR_IMAGE":      { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_IMAGE":        { "type": "string" },
+    "TOKEN_FETCHER_IMAGE":  { "type": "string" },
+
+    "KUBERNETES_M2M_ENABLED":     { "type": "boolean" },
+
+    "IMAGE_PULL_POLICY": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] },
+
+    "AUTHZ_TRUSTED_PROVIDERS_FILE":    { "type": "string" },
+    "AUTHZ_DECISION_LOG_PATH":         { "type": "string" },
+
+    "IDENTITY_PROVIDER_URL":    { "type": "string" },
+    "AUTHZ_TENANT_MANAGER_URL": { "type": "string" },
+    "AUTHZ_IDP_REALMS": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+      "uniqueItems": true
+    },
+
+    "AUTHZ_TRUSTED_PROVIDERS": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id":              { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+          "issuer":          { "type": "string", "minLength": 1 },
+          "jwksUri":         { "type": "string", "minLength": 1 },
+          "audiences":       { "type": "array", "items": { "type": "string" } },
+          "required":        { "type": "boolean" },
+          "allowMissingAud": { "type": "boolean" }
+        },
+        "oneOf": [
+          { "required": ["issuer"],  "not": { "required": ["jwksUri"] } },
+          { "required": ["jwksUri"], "not": { "required": ["issuer"] } }
+        ]
+      }
+    },
+
+    "AUTHZ_JWKS_BOOTSTRAP_REQUIRED":            { "type": "boolean" },
+    "AUTHZ_JWKS_HTTP_TIMEOUT":                  { "type": "integer", "minimum": 1 },
+    "AUTHZ_JWKS_HTTP_RETRIES":                  { "type": "integer", "minimum": 1 },
+    "AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL":  { "type": "integer", "minimum": 0 },
+
+    "AUTHZ_PAP_CLIENT_SOURCE_URL":      { "type": "string" },
+    "AUTHZ_PAP_CLIENT_PULL_INTERVAL":  { "type": "integer", "minimum": 0 },
+    "AUTHZ_PAP_CLIENT_TOKEN_FILE":     { "type": "string" },
+    "AUTHZ_POLICY_CONFIGMAP":   { "type": "string" },
+
+    "AUTHZ_POLICY_ADMIN_ENABLED":        { "type": "boolean" },
+    "AUTHZ_POLICY_ADMIN_PORT":           { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "AUTHZ_POLICY_ADMIN_DATA_DIR":       { "type": "string", "minLength": 1 },
+    "AUTHZ_POLICY_ADMIN_STORAGE_SIZE":   { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_STORAGE_CLASS":  { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_STORAGE_RETAIN": { "type": "boolean" },
+
+    "HPA_ENABLED":                  { "type": "boolean" },
+    "HPA_MIN_REPLICAS":             { "type": "integer" },
+    "HPA_MAX_REPLICAS":             { "type": "integer" },
+    "HPA_AVERAGE_CPU_UTILIZATION":  { "type": "integer" },
+
+    "ENVOY_CPU_REQUEST":     { "type": "string" },
+    "ENVOY_CPU_LIMIT":       { "type": "string" },
+    "ENVOY_MEM_REQUEST":     { "type": "string" },
+    "ENVOY_MEM_LIMIT":       { "type": "string" },
+    "BACKEND_CPU_REQUEST":   { "type": "string" },
+    "BACKEND_CPU_LIMIT":     { "type": "string" },
+    "BACKEND_MEM_REQUEST":   { "type": "string" },
+    "BACKEND_MEM_LIMIT":     { "type": "string" },
+    "COLLECTOR_CPU_REQUEST": { "type": "string" },
+    "COLLECTOR_CPU_LIMIT":   { "type": "string" },
+    "COLLECTOR_MEM_REQUEST": { "type": "string" },
+    "COLLECTOR_MEM_LIMIT":   { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_CPU_REQUEST":   { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_CPU_LIMIT":     { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_MEM_REQUEST":   { "type": "string" },
+    "AUTHZ_POLICY_ADMIN_MEM_LIMIT":     { "type": "string" }
+  }
+}

@@ -1,0 +1,414 @@
+#!/usr/bin/env python3
+"""Latency attribution profile for a single (scenario, RPS) cell.
+
+For each replicate:
+  1. Reset Envoy admin counters so histograms cover only this cell.
+  2. Run the existing per-scenario harness on one scenario + one RPS
+     (it restarts OPA, warms the Rego cache with 50 calls, runs JMeter
+     for 15 s, writes window.json + results.jtl).
+  3. After the cell finishes, wait for the OPA decision-log batch
+     (max_delay=10 s) and pull the windowed records from the
+     decision-log-collector via its /internal/v1/decision-logs endpoint.
+  4. Snapshot Envoy /stats?format=json (histograms).
+  5. Parse JMeter results.jtl.
+  6. Print one row of the attribution table.
+
+Output dir: tests/svt/load-tests/per-scenario/artifacts/profile-<ts>/
+
+This script does NOT modify the canonical baseline.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+HARNESS = REPO_ROOT / "tests" / "svt" / "scripts" / "per-scenario-decision-time"
+ARTIFACTS_DIR = REPO_ROOT / "tests" / "svt" / "load-tests" / "per-scenario" / "artifacts"
+ENVOY_ADMIN = "http://localhost:29901"
+COLLECTOR_INTERNAL_URL = "http://localhost:8183/internal/v1/decision-logs"
+COMPOSE_PROJECT = "authz-svt"
+COLLECTOR_SVC = "decision-log-collector"
+DECISION_LOG_BATCH_MAX = 12  # seconds; OPA decision_logs.max_delay_seconds = 10
+
+
+def log(msg: str) -> None:
+    print(f"[profile] {msg}", flush=True)
+
+
+def percentile(values, p):
+    if not values:
+        return None
+    s = sorted(values)
+    if len(s) == 1:
+        return s[0]
+    idx = (p / 100.0) * (len(s) - 1)
+    lo = int(idx)
+    hi = min(lo + 1, len(s) - 1)
+    frac = idx - lo
+    return s[lo] * (1 - frac) + s[hi] * frac
+
+
+def summarize_ms(name: str, values_ms):
+    if not values_ms:
+        return {"name": name, "n": 0, "p50": None, "p95": None, "p99": None, "max": None}
+    return {
+        "name": name,
+        "n": len(values_ms),
+        "p50": percentile(values_ms, 50),
+        "p95": percentile(values_ms, 95),
+        "p99": percentile(values_ms, 99),
+        "max": max(values_ms),
+    }
+
+
+# ── Envoy admin ────────────────────────────────────────────────────────────
+
+
+def reset_envoy_counters() -> None:
+    r = subprocess.run(
+        ["curl", "-sS", "-X", "POST", f"{ENVOY_ADMIN}/reset_counters"],
+        capture_output=True, text=True, timeout=10,
+    )
+    if r.returncode != 0:
+        log(f"WARN: envoy reset_counters failed: {r.stderr.strip()}")
+
+
+def restart_envoy_for_clean_histograms() -> None:
+    """Envoy /reset_counters does NOT reset histograms — they are cumulative for
+    the lifetime of the process. To make the histogram cover only this replicate,
+    restart the Envoy container, wait for /ready, and continue."""
+    log("restarting envoy container (clean histograms)")
+    subprocess.run(
+        ["docker", "compose", "-p", COMPOSE_PROJECT, "restart", "envoy"],
+        capture_output=True, text=True, timeout=60,
+    )
+    # poll /ready
+    for _ in range(60):
+        r = subprocess.run(
+            ["curl", "-sf", f"{ENVOY_ADMIN}/ready"],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode == 0:
+            log("envoy ready")
+            return
+        time.sleep(1)
+    raise RuntimeError("envoy did not become ready within 60s after restart")
+
+
+def snapshot_envoy_histograms() -> dict:
+    r = subprocess.run(
+        ["curl", "-sS", f"{ENVOY_ADMIN}/stats?format=json&type=Histograms"],
+        capture_output=True, text=True, timeout=15,
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"envoy stats fetch failed: {r.stderr.strip()}")
+    return json.loads(r.stdout)
+
+
+def envoy_histogram_percentiles(hist_json: dict, target_names: list[str]) -> dict[str, dict]:
+    """Return {name: {p50, p95, p99}} (ms) for the named histograms.
+
+    Envoy /stats?format=json&type=Histograms returns:
+      {"stats": [{"histograms": {
+          "supported_quantiles": [0, 25, 50, 75, 90, 95, 99, 99.5, 99.9, 100],
+          "computed_quantiles": [{"name": "<n>", "values": [{"cumulative": x, "interval": y}, ...]}, ...]
+      }}]}
+    `interval` is None when no flush has happened yet — we fall back to cumulative.
+    Envoy histograms are NOT reset by /reset_counters; we report cumulative,
+    which (since the Envoy process started recently) is dominated by the load test.
+    """
+    out: dict[str, dict] = {}
+    stats_arr = hist_json.get("stats", [])
+    if not stats_arr:
+        return out
+    hs = stats_arr[0].get("histograms")
+    if not isinstance(hs, dict):
+        return out
+    supported_q = hs.get("supported_quantiles", [])
+    for h in hs.get("computed_quantiles", []):
+        name = h.get("name")
+        if name not in target_names:
+            continue
+        values = h.get("values", [])
+        qmap = {}
+        for q, v in zip(supported_q, values):
+            interval = v.get("interval")
+            cumulative = v.get("cumulative")
+            pick = interval if (interval is not None) else cumulative
+            qmap[q] = pick
+        out[name] = {
+            "p50": qmap.get(50),
+            "p95": qmap.get(95),
+            "p99": qmap.get(99),
+            "p99_9": qmap.get(99.9),
+            "max": qmap.get(100),
+        }
+    return out
+
+
+# ── Decision-log collector ─────────────────────────────────────────────────
+
+
+def fetch_decision_logs() -> list[dict]:
+    """Pull NDJSON from the collector via `docker exec`. The collector's
+    HTTP port is not host-mapped."""
+    r = subprocess.run(
+        ["docker", "compose", "-p", COMPOSE_PROJECT, "exec", "-T",
+         COLLECTOR_SVC, "wget", "-qO-", COLLECTOR_INTERNAL_URL],
+        capture_output=True, text=True, timeout=60,
+    )
+    if r.returncode != 0:
+        raise RuntimeError(f"decision-log fetch failed: {r.stderr.strip()}")
+    out = []
+    for line in r.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+def filter_records_for_window(records: list[dict], start_iso: str, end_iso: str) -> list[dict]:
+    keep = []
+    for r in records:
+        ts = r.get("timestamp", "")
+        if not ts:
+            continue
+        if start_iso <= ts <= end_iso:
+            keep.append(r)
+    return keep
+
+
+# ── JMeter JTL ─────────────────────────────────────────────────────────────
+
+
+def parse_jtl_elapsed_ms(jtl_path: Path) -> list[int]:
+    vals = []
+    with jtl_path.open(newline="", encoding="utf-8", errors="replace") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                vals.append(int(row["elapsed"]))
+            except (KeyError, TypeError, ValueError):
+                continue
+    return vals
+
+
+def find_cell_artifacts_dir(scenario: str, rps: int, since_epoch_ms: int) -> Path:
+    """Find the canonical-<ts>/<scenario>/<rps>rps/ subdir that was created
+    after `since_epoch_ms`. Prefer the newest matching sweep dir."""
+    candidates = []
+    for sweep in ARTIFACTS_DIR.glob("canonical-*"):
+        if not sweep.is_dir():
+            continue
+        if int(sweep.stat().st_mtime * 1000) < since_epoch_ms - 1000:
+            continue
+        cell = sweep / scenario / f"{rps}rps"
+        if cell.is_dir():
+            candidates.append((sweep.stat().st_mtime, cell))
+    if not candidates:
+        raise RuntimeError(f"no cell artifact found for {scenario}@{rps} since {since_epoch_ms}")
+    candidates.sort(reverse=True)
+    return candidates[0][1]
+
+
+# ── attribution ────────────────────────────────────────────────────────────
+
+
+def compute_attribution(jmeter_summary, envoy_downstream, envoy_opa, opa_handler, opa_rego) -> list[dict]:
+    """All inputs are {p50,p95,p99} dicts in ms (or None).
+    Returns ordered list of rows for display."""
+    rows = [
+        ("JMeter elapsed (total)", jmeter_summary),
+        ("  A. JMeter↔Envoy + scheduling", subtract(jmeter_summary, envoy_downstream)),
+        ("  Envoy downstream_rq_time", envoy_downstream),
+        ("    B. Envoy filter overhead", subtract(envoy_downstream, envoy_opa)),
+        ("    cluster.opa upstream_rq_time", envoy_opa),
+        ("      C. Wire + OPA HTTP framing", subtract(envoy_opa, opa_handler)),
+        ("      D. OPA timer_server_handler", opa_handler),
+        ("        D-E. OPA non-Rego (decoders + dlog)", subtract(opa_handler, opa_rego)),
+        ("        E. OPA timer_rego_query_eval", opa_rego),
+    ]
+    return [{"name": n, **(v or {})} for n, v in rows]
+
+
+def subtract(a, b):
+    if not a or not b:
+        return None
+    return {
+        "p50": _safe_sub(a.get("p50"), b.get("p50")),
+        "p95": _safe_sub(a.get("p95"), b.get("p95")),
+        "p99": _safe_sub(a.get("p99"), b.get("p99")),
+    }
+
+
+def _safe_sub(x, y):
+    if x is None or y is None:
+        return None
+    return x - y
+
+
+def render_table(rows: list[dict]) -> str:
+    lines = []
+    header = f"{'segment':<46}{'p50':>10}{'p95':>10}{'p99':>10}"
+    lines.append(header)
+    lines.append("─" * len(header))
+    for r in rows:
+        name = r.get("name") or ""
+        def fmt(k):
+            v = r.get(k)
+            return "—".rjust(10) if v is None else f"{v:>10.2f}"
+        lines.append(f"{name:<46}{fmt('p50')}{fmt('p95')}{fmt('p99')}")
+    return "\n".join(lines)
+
+
+# ── main ───────────────────────────────────────────────────────────────────
+
+
+def run_one_replicate(scenario: str, rps: int, replicate: int, out_dir: Path) -> dict:
+    rep_dir = out_dir / f"rep{replicate:02d}"
+    rep_dir.mkdir(parents=True, exist_ok=True)
+    log(f"replicate {replicate}: restart envoy + reset counters for clean histograms")
+    restart_envoy_for_clean_histograms()
+    reset_envoy_counters()
+    t0_wall = time.time()
+    t0_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000000Z")
+
+    log(f"replicate {replicate}: running harness {scenario}@{rps} (with internal OPA restart + warm)")
+    cmd = [
+        str(HARNESS),
+        "--mode", "canonical",
+        "--scenarios", scenario,
+        "--rps", str(rps),
+        "--skip-promote",
+    ]
+    completed = subprocess.run(cmd, cwd=str(REPO_ROOT))
+    if completed.returncode != 0:
+        raise RuntimeError(f"harness exit {completed.returncode}")
+
+    t1_wall = time.time()
+    log(f"replicate {replicate}: harness done ({t1_wall - t0_wall:.1f}s); waiting {DECISION_LOG_BATCH_MAX}s for decision-log batch")
+    time.sleep(DECISION_LOG_BATCH_MAX)
+    t1_iso = (datetime.now(timezone.utc) + timedelta(seconds=5)).strftime("%Y-%m-%dT%H:%M:%S.999999Z")
+
+    # Envoy histogram snapshot
+    envoy_raw = snapshot_envoy_histograms()
+    (rep_dir / "envoy-histograms.json").write_text(json.dumps(envoy_raw))
+    envoy_perc = envoy_histogram_percentiles(envoy_raw, [
+        "http.ingress_http.downstream_rq_time",
+        "cluster.opa_cluster.upstream_rq_time",
+    ])
+
+    # Decision logs
+    all_records = fetch_decision_logs()
+    window_records = filter_records_for_window(all_records, t0_iso, t1_iso)
+    # only count authorize/result decisions (skip /health, etc.)
+    window_records = [r for r in window_records if r.get("path") == "authorize/result"]
+    (rep_dir / "decision-logs-window.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in window_records) + ("\n" if window_records else "")
+    )
+    server_ms = [r["metrics"]["timer_server_handler_ns"] / 1e6 for r in window_records if r.get("metrics", {}).get("timer_server_handler_ns") is not None]
+    rego_ms = [r["metrics"]["timer_rego_query_eval_ns"] / 1e6 for r in window_records if r.get("metrics", {}).get("timer_rego_query_eval_ns") is not None]
+
+    # JMeter JTL
+    cell_dir = find_cell_artifacts_dir(scenario, rps, int(t0_wall * 1000))
+    jtl_path = cell_dir / "results.jtl"
+    if not jtl_path.exists():
+        raise RuntimeError(f"results.jtl not found at {jtl_path}")
+    jmeter_elapsed = parse_jtl_elapsed_ms(jtl_path)
+    jmeter_summary_ms = {
+        "p50": percentile(jmeter_elapsed, 50),
+        "p95": percentile(jmeter_elapsed, 95),
+        "p99": percentile(jmeter_elapsed, 99),
+        "n": len(jmeter_elapsed),
+    }
+
+    # Build attribution rows
+    envoy_downstream = envoy_perc.get("http.ingress_http.downstream_rq_time")
+    envoy_opa = envoy_perc.get("cluster.opa_cluster.upstream_rq_time")
+    opa_handler = summarize_ms("opa_server", server_ms)
+    opa_rego = summarize_ms("opa_rego", rego_ms)
+
+    result = {
+        "scenario": scenario,
+        "rps": rps,
+        "replicate": replicate,
+        "t0": t0_iso,
+        "t1": t1_iso,
+        "harness_seconds": t1_wall - t0_wall,
+        "cell_dir": str(cell_dir),
+        "jmeter": jmeter_summary_ms,
+        "envoy": envoy_perc,
+        "opa_server_ms": {"n": len(server_ms), "p50": percentile(server_ms, 50), "p95": percentile(server_ms, 95), "p99": percentile(server_ms, 99)},
+        "opa_rego_ms": {"n": len(rego_ms), "p50": percentile(rego_ms, 50), "p95": percentile(rego_ms, 95), "p99": percentile(rego_ms, 99)},
+    }
+    rows = compute_attribution(
+        jmeter_summary_ms,
+        envoy_downstream,
+        envoy_opa,
+        result["opa_server_ms"],
+        result["opa_rego_ms"],
+    )
+    result["table_rows"] = rows
+    (rep_dir / "result.json").write_text(json.dumps(result, indent=2))
+    log(f"replicate {replicate}: attribution\n" + render_table(rows))
+    return result
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--scenario", default="ols-single")
+    p.add_argument("--rps", type=int, default=1000)
+    p.add_argument("--replicates", type=int, default=3)
+    p.add_argument("--out", default=None)
+    args = p.parse_args()
+
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    out_dir = Path(args.out) if args.out else ARTIFACTS_DIR / f"profile-{ts}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log(f"output dir: {out_dir.relative_to(REPO_ROOT)}")
+
+    results = []
+    for i in range(1, args.replicates + 1):
+        results.append(run_one_replicate(args.scenario, args.rps, i, out_dir))
+
+    # Summary across replicates: median of per-replicate p95
+    log("=" * 80)
+    log(f"summary across {args.replicates} replicates ({args.scenario} @ {args.rps} RPS)")
+    log("=" * 80)
+    # Build composite by computing median p95 across replicates for each row name
+    if results:
+        n_rows = len(results[0]["table_rows"])
+        composite = []
+        for i in range(n_rows):
+            name = results[0]["table_rows"][i]["name"]
+            p50s = [r["table_rows"][i].get("p50") for r in results if r["table_rows"][i].get("p50") is not None]
+            p95s = [r["table_rows"][i].get("p95") for r in results if r["table_rows"][i].get("p95") is not None]
+            p99s = [r["table_rows"][i].get("p99") for r in results if r["table_rows"][i].get("p99") is not None]
+            composite.append({
+                "name": name,
+                "p50": sorted(p50s)[len(p50s) // 2] if p50s else None,
+                "p95": sorted(p95s)[len(p95s) // 2] if p95s else None,
+                "p99": sorted(p99s)[len(p99s) // 2] if p99s else None,
+            })
+        print(render_table(composite))
+        (out_dir / "composite.json").write_text(json.dumps(composite, indent=2))
+
+    (out_dir / "all-replicates.json").write_text(json.dumps(results, indent=2))
+    log(f"all artifacts in {out_dir.relative_to(REPO_ROOT)}")
+
+
+if __name__ == "__main__":
+    main()

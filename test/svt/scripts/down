@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# SVT environment teardown — stops the local load-testing stack and removes
+# the Compose resources created by tests/svt/scripts/up.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+PROJECT_NAME="${PROJECT_NAME:-authz-svt}"
+SVT_KC_PORT="${SVT_KC_PORT:-25556}"
+SVT_AUTHZ_PORT="${SVT_AUTHZ_PORT:-28080}"
+SVT_AUTHZ_ADMIN_PORT="${SVT_AUTHZ_ADMIN_PORT:-29901}"
+SVT_CADVISOR_PORT="${SVT_CADVISOR_PORT:-28888}"
+SVT_PROMETHEUS_PORT="${SVT_PROMETHEUS_PORT:-29090}"
+SVT_GRAFANA_PORT="${SVT_GRAFANA_PORT:-23000}"
+REMOVE_VOLUMES="${REMOVE_VOLUMES:-0}"
+
+export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT SVT_AUTHZ_ADMIN_PORT
+export SVT_CADVISOR_PORT SVT_PROMETHEUS_PORT SVT_GRAFANA_PORT
+
+COMPOSE_CMD=(docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml")
+
+log() { echo "[svt-down] $*"; }
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "error: required command not found: $1" >&2
+    exit 1
+  fi
+}
+
+require_cmd docker
+
+DOWN_ARGS=(down)
+if [ "${REMOVE_VOLUMES}" = "1" ]; then
+  DOWN_ARGS+=(-v)
+fi
+
+log "stopping SVT environment (project=${PROJECT_NAME})"
+if [ "${REMOVE_VOLUMES}" = "1" ]; then
+  log "volumes will also be removed"
+fi
+
+"${COMPOSE_CMD[@]}" "${DOWN_ARGS[@]}"
+
+log "environment stopped"

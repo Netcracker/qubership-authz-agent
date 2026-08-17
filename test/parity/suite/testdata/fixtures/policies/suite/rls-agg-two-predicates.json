@@ -1,0 +1,24 @@
+[
+  {
+    "_comment": "AGG row 63 part A: PARITY_SUITE_AGG_PRED LIST, rsqlPredicate 'ownerId==${subject.id}'. Two RLS rows on the same (resourceType, operation, role) locator — the legacy engine ORs their rendered predicates into a single filter string. See EvaluationResultBuilder.java:72-93 for the combining logic.",
+    "component": "PARITY",
+    "reason": "AGG predicate-union row A (ownerId clause)",
+    "resourceType": "PARITY_SUITE_AGG_PRED",
+    "operation": "LIST",
+    "rsqlPredicate": "ownerId==${subject.id}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b50"
+  },
+  {
+    "_comment": "AGG predicate-union row B — same locator as row A, different rsqlPredicate. Legacy aggregator OR-joins the two.",
+    "component": "PARITY",
+    "reason": "AGG predicate-union row B (status clause)",
+    "resourceType": "PARITY_SUITE_AGG_PRED",
+    "operation": "LIST",
+    "rsqlPredicate": "status==PUBLIC",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b51"
+  }
+]

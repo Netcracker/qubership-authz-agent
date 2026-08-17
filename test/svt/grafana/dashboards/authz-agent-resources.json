@@ -1,0 +1,300 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "CPU Usage — envoy",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\".*envoy.*\"}[30s])",
+          "legendFormat": "{{cpu}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "CPU Usage — opa",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\".*-opa-.*\"}[30s])",
+          "legendFormat": "{{cpu}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "CPU Usage — decision-log-collector",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\".*decision-log-collector.*\"}[30s])",
+          "legendFormat": "{{cpu}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Memory Usage — envoy",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{name=~\".*envoy.*\"}",
+          "legendFormat": "usage",
+          "refId": "A"
+        },
+        {
+          "expr": "container_memory_working_set_bytes{name=~\".*envoy.*\"}",
+          "legendFormat": "working set",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Memory Usage — opa",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{name=~\".*-opa-.*\"}",
+          "legendFormat": "usage",
+          "refId": "A"
+        },
+        {
+          "expr": "container_memory_working_set_bytes{name=~\".*-opa-.*\"}",
+          "legendFormat": "working set",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Memory Usage — decision-log-collector",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "container_memory_usage_bytes{name=~\".*decision-log-collector.*\"}",
+          "legendFormat": "usage",
+          "refId": "A"
+        },
+        {
+          "expr": "container_memory_working_set_bytes{name=~\".*decision-log-collector.*\"}",
+          "legendFormat": "working set",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "CPU Throttling — opa",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_cfs_throttled_periods_total{name=~\".*-opa-.*\"}[30s])",
+          "legendFormat": "throttled periods/s",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_cpu_cfs_periods_total{name=~\".*-opa-.*\"}[30s])",
+          "legendFormat": "total periods/s",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Network I/O — all measured",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_network_receive_bytes_total{name=~\".*envoy.*|.*-opa-.*|.*decision-log-collector.*\"}[30s])",
+          "legendFormat": "{{name}} rx",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_network_transmit_bytes_total{name=~\".*envoy.*|.*-opa-.*|.*decision-log-collector.*\"}[30s])",
+          "legendFormat": "{{name}} tx",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "File System I/O — envoy",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_fs_reads_bytes_total{name=~\".*envoy.*\"}[30s])",
+          "legendFormat": "read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_fs_writes_bytes_total{name=~\".*envoy.*\"}[30s])",
+          "legendFormat": "write",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "File System I/O — opa",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_fs_reads_bytes_total{name=~\".*-opa-.*\"}[30s])",
+          "legendFormat": "read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_fs_writes_bytes_total{name=~\".*-opa-.*\"}[30s])",
+          "legendFormat": "write",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "File System I/O — decision-log-collector",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "drawStyle": "line", "fillOpacity": 10 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_fs_reads_bytes_total{name=~\".*decision-log-collector.*\"}[30s])",
+          "legendFormat": "read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(container_fs_writes_bytes_total{name=~\".*decision-log-collector.*\"}[30s])",
+          "legendFormat": "write",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "All Containers CPU Overview",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "custom": { "drawStyle": "line", "fillOpacity": 5 }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "rate(container_cpu_usage_seconds_total{name=~\".+\",name!~\".*cadvisor.*|.*prometheus.*|.*grafana.*\"}[30s])",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["svt", "authz-agent"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Authz Agent — SVT Resources",
+  "uid": "authz-svt-resources",
+  "version": 3
+}

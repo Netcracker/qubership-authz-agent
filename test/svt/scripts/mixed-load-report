@@ -1,0 +1,573 @@
+#!/usr/bin/env python3
+"""Mixed-flow consolidated CPU / memory / IO report generator.
+
+Drives the six-RPS mixed-flow sweep (handover 20260518) in a single
+process: idle-before baseline → restart-OPA-per-RPS load loop → idle-after
+baseline → consolidated Markdown report → optional auto-promote to the
+canonical baseline file under ``docs/reports/``.
+
+Two modes, independent baselines:
+
+    tests/svt/scripts/mixed-load-report --mode canonical
+    tests/svt/scripts/mixed-load-report --mode legacy
+
+Mirrors the structure of ``tests/svt/scripts/bench-report`` (timestamped
+staging under ``tests/svt/load-tests/mixed-flow/artifacts/<ts>``,
+±5%% peak gate on CPU + memory, IO rendered for visibility but not gated).
+
+Python 3 standard library only — no pip install.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SVT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+REPO_ROOT = os.path.abspath(os.path.join(SVT_DIR, "..", ".."))
+
+MIXED_FLOW_DIR = os.path.join(SVT_DIR, "load-tests", "mixed-flow")
+ARTIFACTS_ROOT = os.path.join(MIXED_FLOW_DIR, "artifacts")
+REPORTS_DIR = os.path.join(REPO_ROOT, "docs", "reports")
+
+RPS_LEVELS = (100, 200, 300, 400, 500, 1000)
+
+SERVICES = ("envoy", "opa", "decision-log-collector")
+
+# Per-RPS thread count (per thread group). Mirrors the values committed in
+# tests/svt/load-tests/mixed-flow/<rps>rps/config.env.
+THREADS_FOR_RPS = {100: 5, 200: 10, 300: 15, 400: 20, 500: 25, 1000: 50}
+
+IDLE_WINDOW_SECONDS = 30
+LOAD_DURATION_SECONDS = 60
+RAMP_SECONDS = 5
+# Wall-clock gap between the last RPS load window and the idle-after
+# sampling window (D-8). Lets post-load transients (Envoy connection
+# pool teardown, OPA request cleanup, decision-log-collector flush)
+# drop out of the sample so idle-after reflects steady idle rather
+# than a tail of the load window. Intentionally shorter than the
+# typical collector flush interval so a slice of drain activity still
+# lands in idle-after.
+COOLDOWN_SECONDS = 20
+
+PROM_STEP_SECONDS = 5
+SVT_PROMETHEUS_PORT = int(os.environ.get("SVT_PROMETHEUS_PORT", "29090"))
+
+# PromQL templates per (service, resource). `name=~` matches Docker
+# container names cAdvisor exposes; the SVT compose uses the project
+# prefix `authz-svt-` for every container, so a substring regex is
+# enough.
+PROM_QUERIES = {
+    "cpu": 'sum(rate(container_cpu_usage_seconds_total{{name=~".*{svc}.*"}}[30s]))',
+    "mem": 'sum(container_memory_working_set_bytes{{name=~".*{svc}.*"}})',
+    "io_net": (
+        'sum(rate(container_network_receive_bytes_total{{name=~".*{svc}.*"}}[30s]))'
+        ' + sum(rate(container_network_transmit_bytes_total{{name=~".*{svc}.*"}}[30s]))'
+    ),
+    "io_fs": (
+        'sum(rate(container_fs_reads_bytes_total{{name=~".*{svc}.*"}}[30s]))'
+        ' + sum(rate(container_fs_writes_bytes_total{{name=~".*{svc}.*"}}[30s]))'
+    ),
+}
+
+# Resources we report on per (RPS, service). IO is reported as both the
+# network slice and the fs slice; some hosts have unreliable fs sampling
+# on cgroup v2 (OQ-2), so the fs column may show 0 — that is documented
+# in the report's Notes section.
+RESOURCES = ("cpu", "mem", "io_net", "io_fs")
+
+CANONICAL_REPORT_FOR_MODE = {
+    "canonical": os.path.join(REPORTS_DIR, "mixed-load-report-canonical-latest.md"),
+    "legacy": os.path.join(REPORTS_DIR, "mixed-load-report-legacy-latest.md"),
+}
+
+
+# ── helpers ────────────────────────────────────────────────────────────────
+
+
+def now_timestamp() -> str:
+    return time.strftime("%Y%m%d-%H%M%S", time.localtime())
+
+
+def log(message: str) -> None:
+    print(f"[mixed-load-report] {message}", file=sys.stderr, flush=True)
+
+
+def http_get_json(url: str, timeout: int = 60) -> dict:
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def prom_query_range(query: str, start_s: float, end_s: float) -> dict:
+    params = urllib.parse.urlencode({
+        "query": query,
+        "start": f"{start_s:.3f}",
+        "end": f"{end_s:.3f}",
+        "step": str(PROM_STEP_SECONDS),
+    })
+    url = f"http://localhost:{SVT_PROMETHEUS_PORT}/api/v1/query_range?{params}"
+    return http_get_json(url)
+
+
+def summarize_series(payload: dict) -> tuple[float | None, float | None]:
+    """Return (peak, avg) across all data points of all series. None if empty."""
+    values: list[float] = []
+    data = payload.get("data", {}) if isinstance(payload, dict) else {}
+    result = data.get("result", []) if isinstance(data, dict) else []
+    for series in result:
+        for sample in series.get("values", []):
+            if isinstance(sample, list) and len(sample) == 2:
+                try:
+                    values.append(float(sample[1]))
+                except (TypeError, ValueError):
+                    continue
+    if not values:
+        return (None, None)
+    return (max(values), sum(values) / len(values))
+
+
+def collect_metrics(start_ms: int, end_ms: int, output_dir: str) -> dict:
+    """Query Prometheus for every (service, resource) over the given window.
+
+    Writes the raw Prometheus payload to ``output_dir`` (one JSON per
+    query) and returns a flat summary dict keyed by ``<svc>__<resource>``.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    summary: dict[str, dict[str, float | None]] = {}
+    start_s = start_ms / 1000.0
+    end_s = end_ms / 1000.0
+    if end_s <= start_s:
+        for svc in SERVICES:
+            for res in RESOURCES:
+                summary[f"{svc}__{res}"] = {"peak": None, "avg": None}
+        return summary
+
+    for svc in SERVICES:
+        for res in RESOURCES:
+            query = PROM_QUERIES[res].format(svc=svc)
+            payload = prom_query_range(query, start_s, end_s)
+            with open(os.path.join(output_dir, f"{svc}__{res}.json"), "w", encoding="utf-8") as f:
+                json.dump({
+                    "query": query, "start": start_s, "end": end_s,
+                    "step_seconds": PROM_STEP_SECONDS, "response": payload,
+                }, f)
+            peak, avg = summarize_series(payload)
+            summary[f"{svc}__{res}"] = {"peak": peak, "avg": avg}
+    return summary
+
+
+def run_subprocess(cmd: list[str], extra_env: dict | None = None) -> None:
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
+    log(f"running: {' '.join(cmd)}")
+    completed = subprocess.run(cmd, env=env, cwd=REPO_ROOT)
+    if completed.returncode != 0:
+        log(f"ERROR: command failed with exit code {completed.returncode}")
+        sys.exit(completed.returncode)
+
+
+def read_window_ms(window_json_path: str) -> tuple[int, int]:
+    with open(window_json_path, encoding="utf-8") as f:
+        payload = json.load(f)
+    return int(payload["start_ms"]), int(payload["end_ms"])
+
+
+# ── formatting ─────────────────────────────────────────────────────────────
+
+
+def fmt_value(resource: str, value: float | None) -> str:
+    if value is None:
+        return "—"
+    if resource == "cpu":
+        return f"{value:.3f}"  # fractional cores
+    if resource == "mem":
+        return f"{value / (1024 * 1024):.1f} MiB"
+    # io_net, io_fs in B/s — render as MiB/s for readability
+    return f"{value / (1024 * 1024):.2f} MiB/s"
+
+
+def fmt_resource(name: str) -> str:
+    return {
+        "cpu": "CPU (cores)",
+        "mem": "Memory",
+        "io_net": "IO (net)",
+        "io_fs": "IO (fs)",
+    }.get(name, name)
+
+
+def render_idle_table(idle_before: dict, idle_after: dict) -> list[str]:
+    lines = [
+        "## Idle baselines",
+        "",
+        "| service | resource | idle-before-avg | idle-after-avg |",
+        "|---------|----------|-----------------|----------------|",
+    ]
+    for svc in SERVICES:
+        for res in RESOURCES:
+            key = f"{svc}__{res}"
+            b = idle_before.get(key, {}).get("avg")
+            a = idle_after.get(key, {}).get("avg")
+            lines.append(
+                f"| {svc} | {fmt_resource(res)} | {fmt_value(res, b)} | {fmt_value(res, a)} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_per_rps_table(rps: int, summary: dict) -> list[str]:
+    lines = [
+        f"### {rps} RPS",
+        "",
+        "| service | resource | load-peak | load-avg |",
+        "|---------|----------|-----------|----------|",
+    ]
+    for svc in SERVICES:
+        for res in RESOURCES:
+            cell = summary.get(f"{svc}__{res}", {})
+            lines.append(
+                f"| {svc} | {fmt_resource(res)} "
+                f"| {fmt_value(res, cell.get('peak'))} "
+                f"| {fmt_value(res, cell.get('avg'))} |"
+            )
+    lines.append("")
+    return lines
+
+
+def render_summary_table(summaries: dict[int, dict], resource: str, title: str) -> list[str]:
+    header = "| service | " + " | ".join(f"{rps}" for rps in RPS_LEVELS) + " |"
+    sep = "|---------|" + "|".join(["------"] * len(RPS_LEVELS)) + "|"
+    lines = [f"### Peak {title} by RPS", "", header, sep]
+    for svc in SERVICES:
+        cells = []
+        for rps in RPS_LEVELS:
+            peak = summaries.get(rps, {}).get(f"{svc}__{resource}", {}).get("peak")
+            cells.append(fmt_value(resource, peak))
+        lines.append(f"| {svc} | " + " | ".join(cells) + " |")
+    lines.append("")
+    return lines
+
+
+def render_methodology(mode: str, host_baseline_text: str) -> list[str]:
+    other_mode = "legacy" if mode == "canonical" else "canonical"
+    return [
+        "## Methodology",
+        "",
+        f"- **Mode**: `{mode}` — "
+        + ("requests traverse Envoy → OPA → decision-log-collector via "
+           "`POST /access/v1/authorize`."
+           if mode == "canonical"
+           else "requests traverse Envoy → Lua mapping → OPA → decision-log-collector "
+                "via the legacy compatibility endpoints (`/access/v1/check/resource`, "
+                "`/access/v1/check/resource/bulk`, `/access/v1/check/filter`)."),
+        "- **Scenarios (8, share sums to 100%)**: 20% `ols-single-10roles`, "
+        "5% `rls-predicate`, 5% `rls-condition`, 5% `ols-bulk-100`, "
+        "25% `rls-condition-2-expression`, 25% `rls-predicate-summary-2-predicates`, "
+        "10% `rls-predicate-pips-2-token-pip`, 5% `wildcard-all-single`. "
+        "Request shapes copied from "
+        "`tests/svt/profiler/<scenario>/input-real-token.json`; tokens are "
+        "live Keycloak tokens issued for `svt-mixed-001..008` (see "
+        "[handover 20260518](../handovers/20260518-mixed-load-report-task.md)).",
+        f"- **RPS levels**: {', '.join(str(r) for r in RPS_LEVELS)}. "
+        f"OPA is restarted before every level (cold-cache per RPS).",
+        f"- **Load window per RPS**: {LOAD_DURATION_SECONDS}s, "
+        f"{RAMP_SECONDS}s ramp, no cooldown inside the plan.",
+        f"- **Idle baselines**: one `idle-before` + one `idle-after` window "
+        f"({IDLE_WINDOW_SECONDS}s each), captured once per sweep at the "
+        "sweep boundaries (per D-5; OPA-restart-per-RPS makes a per-RPS "
+        "idle window identical by construction). Idle-after starts "
+        f"{COOLDOWN_SECONDS}s after the last load window ends (D-8 "
+        "wall-clock cooldown gap) so post-load transients (Envoy "
+        "connection-pool teardown, OPA request cleanup, "
+        "decision-log-collector flush) drop out before sampling.",
+        f"- **Bulk slot accounting**: 1 HTTP request = 1 RPS. At 1000 RPS the "
+        "`ols-bulk-100` thread group fires 50 req/s, each carrying 100 "
+        "resources internally.",
+        "- **PromQL** — CPU: `sum(rate(container_cpu_usage_seconds_total"
+        "{name=~\".*<svc>.*\"}[30s]))`; "
+        "Memory: `sum(container_memory_working_set_bytes{name=~\".*<svc>.*\"})`; "
+        "IO net: receive + transmit `bytes_total` rate; "
+        "IO fs: reads + writes `bytes_total` rate.",
+        f"- **Auto-promote gate**: any peak CPU or peak memory cell "
+        f"exceeding the baseline by more than 5% blocks the canonical "
+        f"file update. IO columns are rendered for visibility but **not** "
+        f"gated (cAdvisor fs sampling is noisy on cgroup v2 — see Notes).",
+        "- **Host baseline**: " + host_baseline_text,
+        f"- **Other-mode report**: see "
+        f"[mixed-load-report-{other_mode}-latest.md]"
+        f"(mixed-load-report-{other_mode}-latest.md) (independent baseline, "
+        "no cross-mode gating per D-1).",
+        "",
+    ]
+
+
+HOST_BASELINE_REF = (
+    "Ubuntu 24.04.4 LTS, AMD Ryzen 9 8945HS (16 logical / 8 physical), "
+    "92 GiB RAM, Docker 29.3.1, Compose v5.1.1, OPA limits 8 CPU / 8G RAM "
+    "(see [tests/svt/README.md §Host Baseline](../../tests/svt/README.md#host-baseline-first-stage))."
+)
+
+
+def render_report(
+    mode: str,
+    sweep_timestamp: str,
+    idle_before: dict,
+    per_rps_summary: dict[int, dict],
+    idle_after: dict,
+    notes: list[str],
+) -> str:
+    now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    lines: list[str] = [
+        f"# Mixed-Flow Load-Test Report — {mode}",
+        "",
+        f"Generated: {now}",
+        f"Sweep timestamp: {sweep_timestamp}",
+        "",
+    ]
+    lines.extend(render_methodology(mode, HOST_BASELINE_REF))
+    lines.extend(render_idle_table(idle_before, idle_after))
+
+    lines.append("## Results")
+    lines.append("")
+    for rps in RPS_LEVELS:
+        lines.extend(render_per_rps_table(rps, per_rps_summary.get(rps, {})))
+
+    lines.append("## Peak summary across RPS")
+    lines.append("")
+    lines.extend(render_summary_table(per_rps_summary, "cpu", "CPU (cores)"))
+    lines.extend(render_summary_table(per_rps_summary, "mem", "Memory"))
+
+    lines.append("## Notes")
+    lines.append("")
+    if notes:
+        for n in notes:
+            lines.append(f"- {n}")
+    else:
+        lines.append("- Clean run, no anomalies observed.")
+    lines.append("")
+    return "\n".join(lines)
+
+
+# ── promotion gate (±5% on peak CPU + peak memory) ─────────────────────────
+
+CELL_RE = re.compile(
+    r"^\|\s*(?P<service>[^|]+?)\s*\|\s*(?P<resource>[^|]+?)\s*"
+    r"\|\s*(?P<peak>[^|]+?)\s*\|\s*(?P<avg>[^|]+?)\s*\|$"
+)
+RPS_HEADER_RE = re.compile(r"^###\s+(\d+)\s+RPS")
+
+
+def parse_peak_cells_from_report(path: str) -> dict[tuple[int, str, str], float]:
+    """Parse {(rps, service, resource): peak_value} from a results report."""
+    if not os.path.isfile(path):
+        return {}
+    out: dict[tuple[int, str, str], float] = {}
+    current_rps: int | None = None
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip()
+            m_hdr = RPS_HEADER_RE.match(line)
+            if m_hdr:
+                current_rps = int(m_hdr.group(1))
+                continue
+            if current_rps is None or not line.startswith("|"):
+                continue
+            m_cell = CELL_RE.match(line)
+            if not m_cell:
+                continue
+            svc = m_cell.group("service").strip()
+            res = m_cell.group("resource").strip()
+            peak_raw = m_cell.group("peak").strip()
+            if svc == "service" or "---" in res:
+                continue
+            value = _parse_metric_string(res, peak_raw)
+            if value is not None:
+                out[(current_rps, svc, _resource_key(res))] = value
+    return out
+
+
+def _resource_key(res_label: str) -> str:
+    if res_label.startswith("CPU"):
+        return "cpu"
+    if res_label.startswith("Memory"):
+        return "mem"
+    if res_label == "IO (net)":
+        return "io_net"
+    if res_label == "IO (fs)":
+        return "io_fs"
+    return res_label
+
+
+def _parse_metric_string(res_label: str, raw: str) -> float | None:
+    if raw == "—" or raw == "":
+        return None
+    raw = raw.strip()
+    if res_label.startswith("CPU"):
+        try:
+            return float(raw)
+        except ValueError:
+            return None
+    # Memory / IO render as "<num> MiB" or "<num> MiB/s" — parse the number.
+    m = re.match(r"([0-9]+(?:\.[0-9]+)?)", raw)
+    if not m:
+        return None
+    try:
+        return float(m.group(1))
+    except ValueError:
+        return None
+
+
+def compare_and_promote(report_path: str, canonical_path: str) -> None:
+    os.makedirs(os.path.dirname(canonical_path), exist_ok=True)
+    if not os.path.isfile(canonical_path):
+        log(f"no existing baseline at {canonical_path}; promoting unconditionally")
+        with open(report_path, encoding="utf-8") as src, open(canonical_path, "w", encoding="utf-8") as dst:
+            dst.write(src.read())
+        return
+
+    old = parse_peak_cells_from_report(canonical_path)
+    new = parse_peak_cells_from_report(report_path)
+    regressions: list[tuple[tuple[int, str, str], float, float]] = []
+    for key, new_val in new.items():
+        # Only gate CPU + memory (per D-6).
+        if key[2] not in ("cpu", "mem"):
+            continue
+        old_val = old.get(key)
+        if old_val is None or old_val == 0:
+            continue
+        if new_val > old_val * 1.05:
+            regressions.append((key, old_val, new_val))
+
+    if regressions:
+        log("REGRESSION DETECTED — canonical report NOT updated:")
+        for (rps, svc, res), old_val, new_val in regressions:
+            pct = (new_val - old_val) / old_val * 100
+            log(f"  {rps}RPS {svc}/{res}: {old_val:.3f} → {new_val:.3f} (+{pct:.1f}%)")
+        return
+
+    log("all peak CPU + memory cells within ±5%; promoting")
+    with open(report_path, encoding="utf-8") as src, open(canonical_path, "w", encoding="utf-8") as dst:
+        dst.write(src.read())
+    log(f"canonical report updated: {canonical_path}")
+
+
+# ── sweep driver ───────────────────────────────────────────────────────────
+
+
+def drive_sweep(mode: str, sweep_dir: str) -> tuple[dict, dict[int, dict], dict, list[str]]:
+    os.makedirs(sweep_dir, exist_ok=True)
+    notes: list[str] = []
+
+    # idle-before
+    log(f"capturing idle-before baseline ({IDLE_WINDOW_SECONDS}s)")
+    idle_before_dir = os.path.join(sweep_dir, "idle-before")
+    os.makedirs(idle_before_dir, exist_ok=True)
+    start_ms = int(time.time() * 1000)
+    time.sleep(IDLE_WINDOW_SECONDS)
+    end_ms = int(time.time() * 1000)
+    with open(os.path.join(idle_before_dir, "window.json"), "w", encoding="utf-8") as f:
+        json.dump({"label": "before", "start_ms": start_ms, "end_ms": end_ms,
+                   "window_seconds": IDLE_WINDOW_SECONDS}, f)
+    idle_before_summary = collect_metrics(start_ms, end_ms,
+                                          os.path.join(idle_before_dir, "prometheus"))
+
+    # per-RPS load loops
+    per_rps_summary: dict[int, dict] = {}
+    last_load_end_ms = 0
+    for rps in RPS_LEVELS:
+        log(f"=== {rps} RPS ===")
+        rps_artifacts = os.path.join(sweep_dir, f"{rps}rps")
+        os.makedirs(rps_artifacts, exist_ok=True)
+        # Invoke the per-RPS run script with MODE + ARTIFACTS_DIR overrides.
+        per_rps_run = os.path.join(MIXED_FLOW_DIR, f"{rps}rps", "run")
+        env = {
+            "MODE": mode,
+            "ARTIFACTS_DIR": rps_artifacts,
+        }
+        run_subprocess([per_rps_run], extra_env=env)
+        # The runner writes window.json under ARTIFACTS_DIR.
+        win_start_ms, win_end_ms = read_window_ms(os.path.join(rps_artifacts, "window.json"))
+        last_load_end_ms = win_end_ms
+        prom_dir = os.path.join(rps_artifacts, "prometheus")
+        per_rps_summary[rps] = collect_metrics(win_start_ms, win_end_ms, prom_dir)
+
+    # D-8 wall-clock cooldown gap before sampling idle-after. Wait until
+    # last_load_end_ms + COOLDOWN_SECONDS, then sample idle-after for
+    # IDLE_WINDOW_SECONDS starting at that boundary.
+    cooldown_until_ms = last_load_end_ms + COOLDOWN_SECONDS * 1000
+    now_ms = int(time.time() * 1000)
+    cooldown_sleep_s = max(0.0, (cooldown_until_ms - now_ms) / 1000.0)
+    if cooldown_sleep_s > 0:
+        log(f"D-8 cooldown: sleeping {cooldown_sleep_s:.1f}s (until last_load_end_ms + {COOLDOWN_SECONDS}s)")
+        time.sleep(cooldown_sleep_s)
+    else:
+        log(f"D-8 cooldown already elapsed by {-cooldown_sleep_s:.1f}s; sampling idle-after immediately")
+
+    # idle-after (drain window, decision-log-collector keeps flushing).
+    # start_ms is read after the cooldown wake-up so the recorded window
+    # reflects actual wall-clock, robust to system suspend/skew.
+    log(f"capturing idle-after baseline ({IDLE_WINDOW_SECONDS}s)")
+    idle_after_dir = os.path.join(sweep_dir, "idle-after")
+    os.makedirs(idle_after_dir, exist_ok=True)
+    start_ms = int(time.time() * 1000)
+    time.sleep(IDLE_WINDOW_SECONDS)
+    end_ms = int(time.time() * 1000)
+    with open(os.path.join(idle_after_dir, "window.json"), "w", encoding="utf-8") as f:
+        json.dump({"label": "after", "start_ms": start_ms, "end_ms": end_ms,
+                   "window_seconds": IDLE_WINDOW_SECONDS,
+                   "cooldown_seconds": COOLDOWN_SECONDS,
+                   "last_load_end_ms": last_load_end_ms}, f)
+    idle_after_summary = collect_metrics(start_ms, end_ms,
+                                         os.path.join(idle_after_dir, "prometheus"))
+
+    # OQ-2 — if every io_fs cell across the sweep is None / 0, note the gap.
+    fs_seen = any(
+        (per_rps_summary[rps].get(f"{svc}__io_fs", {}).get("peak") or 0) > 0
+        for rps in RPS_LEVELS for svc in SERVICES
+    )
+    if not fs_seen:
+        notes.append(
+            "`container_fs_*` cAdvisor counters reported 0 across the whole "
+            "sweep — likely cgroup v2 sampling gap on this host (OQ-2). "
+            "IO totals therefore reflect only the network slice."
+        )
+
+    return idle_before_summary, per_rps_summary, idle_after_summary, notes
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Mixed-flow load-test report generator")
+    parser.add_argument("--mode", choices=("canonical", "legacy"), default="canonical")
+    parser.add_argument("--skip-promote", action="store_true",
+                        help="Generate the timestamped report only; do not touch the canonical file.")
+    args = parser.parse_args()
+
+    timestamp = now_timestamp()
+    sweep_dir = os.path.join(ARTIFACTS_ROOT, f"{args.mode}-{timestamp}")
+
+    idle_before, per_rps, idle_after, notes = drive_sweep(args.mode, sweep_dir)
+
+    report_md = render_report(args.mode, timestamp, idle_before, per_rps, idle_after, notes)
+    report_path = os.path.join(sweep_dir, f"mixed-load-report-{args.mode}-{timestamp}.md")
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report_md)
+    log(f"report written: {report_path}")
+
+    if not args.skip_promote:
+        compare_and_promote(report_path, CANONICAL_REPORT_FOR_MODE[args.mode])
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

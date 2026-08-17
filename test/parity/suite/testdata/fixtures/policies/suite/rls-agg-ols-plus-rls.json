@@ -1,0 +1,23 @@
+[
+  {
+    "_comment": "AGG row 64 part A: pure-OLS row (no condition, no rsqlPredicate) on PARITY_SUITE_AGG_MIXED LIST / ROLE_PARITY_READER. Per the agent's finding on EvaluationResultBuilder.java:72-93, a pure-OLS row that matches produces calculationResult=PERMIT with filterCondition=null — the RLS row B below is absorbed.",
+    "component": "PARITY",
+    "reason": "AGG OLS+RLS part A (unconditional allow)",
+    "resourceType": "PARITY_SUITE_AGG_MIXED",
+    "operation": "LIST",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b60"
+  },
+  {
+    "_comment": "AGG OLS+RLS part B: RLS row on the same locator with a restrictive rsqlPredicate. The legacy aggregator is expected to pick the unconditional OLS row and drop this one from the result.",
+    "component": "PARITY",
+    "reason": "AGG OLS+RLS part B (restrictive predicate)",
+    "resourceType": "PARITY_SUITE_AGG_MIXED",
+    "operation": "LIST",
+    "rsqlPredicate": "ownerId==${subject.id}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b61"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "input": {
+    "authorizationToken": "Bearer <test-jwt-for-editorUser1>",
+    "authorizationType": "",
+    "requestHeaders": {},
+    "resources": [
+      {
+        "resourceType": "Customer",
+        "operation": "UPDATE",
+        "resource": {
+          "id": "cust-2",
+          "ownerId": "user-1"
+        }
+      }
+    ],
+    "subject": "Bearer <test-jwt-for-editorUser1>",
+    "ignoreRls": false
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "resources": [
+    {
+      "resourceType": "Customer",
+      "operation": "READ",
+      "resource": {
+        "id": "cust-5"
+      }
+    },
+    {
+      "resourceType": "Invoice",
+      "operation": "READ",
+      "resource": {
+        "id": "inv-1"
+      }
+    }
+  ],
+  "subjectTokenRef": "viewerUser2",
+  "ignoreRls": true
+}

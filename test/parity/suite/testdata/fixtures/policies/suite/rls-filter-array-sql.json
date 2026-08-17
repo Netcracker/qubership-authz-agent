@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE row 06: filter endpoint renders a GENERAL-PIP-backed SQL predicate template by substituting the allowed-ids array exposed as subject.parityAllowed. The SQL formatter produces each element in single quotes: 'row6-sql-1', 'row6-sql-2', filling the IN clause. Covers TestRow06CheckFilterV1GeneralArrayIntoSQL.",
+    "component": "PARITY",
+    "reason": "GENERAL PIP SQL array filter rendering",
+    "resourceType": "PARITY_SUITE_ARRAY_SQL",
+    "operation": "LIST",
+    "sqlPredicate": "id IN (${subject.parityAllowed})",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000e42"
+  }
+]

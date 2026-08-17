@@ -1,0 +1,1066 @@
+#!/usr/bin/env python3
+"""Per-scenario end-to-end decision-time report generator.
+
+Drives the per-scenario sweep (handover 20260518-per-scenario) in a
+single process: scenario-major loop over the 28 bench-report scenarios,
+inner loop over six RPS levels (100/200/300/400/500/1000), capturing
+end-to-end response-time stats from `results.jtl` plus CPU / memory /
+IO-net per service from Prometheus. Renders one consolidated Markdown
+report per mode and a shared three-sheet xlsx workbook. Auto-promotes
+when every per-(scenario, RPS) p95 cell stays within ±5 % of the
+existing baseline.
+
+Three modes, independent baselines (D-15 of the parent task):
+
+    tests/svt/scripts/per-scenario-decision-time --mode canonical
+    tests/svt/scripts/per-scenario-decision-time --mode legacy
+    tests/svt/scripts/per-scenario-decision-time --mode opa-direct
+
+The `opa-direct` mode bypasses Envoy and hits OPA directly at
+`POST /v1/data/authorize` on `opa:8181`. Decision-log-collector
+stays attached (D-5 of the opa-direct task); the column shape is
+identical across the three modes (envoy columns show idle values when
+in `opa-direct` mode, since the request never traverses Envoy).
+
+Mirrors `tests/svt/scripts/mixed-load-report` in shape, but the report
+contains one H3 sub-section per scenario (six-row RPS table per
+sub-section) and the xlsx is a flat mega-sheet (168 rows × 25 columns
+per sheet).
+
+Python 3 standard library plus `openpyxl` (already installed on the
+reference SVT host because `docs/reports/mixed-load-report.xlsx` is
+authored with it).
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import datetime
+import importlib.util
+import json
+import os
+import re
+import statistics
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SVT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+REPO_ROOT = os.path.abspath(os.path.join(SVT_DIR, "..", ".."))
+
+PER_SCENARIO_DIR = os.path.join(SVT_DIR, "load-tests", "per-scenario")
+ARTIFACTS_ROOT = os.path.join(PER_SCENARIO_DIR, "artifacts")
+REPORTS_DIR = os.path.join(REPO_ROOT, "docs", "reports")
+BENCH_REPORT_LATEST = os.path.join(REPORTS_DIR, "bench-report-latest.md")
+
+RPS_LEVELS = (100, 200, 300, 400, 500, 1000)
+
+SERVICES = ("envoy", "opa", "decision-log-collector")
+SERVICE_SHORT = {
+    "envoy": "envoy",
+    "opa": "opa",
+    "decision-log-collector": "dlc",
+}
+
+# D-20 (2026-05-18 refinement): load window is 15 s with 3 s ramp
+# (mixed-flow ships 60 s + 5 s; the per-scenario sweep overrides to
+# compress 336 runs into ~2–3 h per mode). Values are kept here only
+# for the methodology text — the per-RPS `config.env` files own the
+# runtime numbers JMeter actually sees.
+LOAD_DURATION_SECONDS = 15
+RAMP_SECONDS = 3
+# D-21 (2026-05-18 refinement): 5 s wall-clock break between adjacent
+# scenario blocks so Prometheus/cAdvisor surfaces a clean visual
+# boundary between scenarios. Skipped after the final scenario in
+# the inventory.
+INTER_SCENARIO_GAP_SECONDS = 5
+
+PROM_STEP_SECONDS = 5
+SVT_PROMETHEUS_PORT = int(os.environ.get("SVT_PROMETHEUS_PORT", "29090"))
+
+# PromQL templates per (service, resource) — same as mixed-load-report.
+# `io_fs` is intentionally omitted (D-12: cAdvisor filesystem sampling
+# is noisy on cgroup v2 and not part of this report's column layout).
+#
+# Rate lookback is `[10s]` (matches twice the cAdvisor 5 s scrape
+# cadence). A wider window like `[30s]` would reach back across the
+# inter-cell boundary into the previous (scenario, RPS) tuple — at
+# ~9 s of restart+gap+ramp between cells, [30s] picks up the previous
+# cell's load tail and contaminates the early samples of the new cell
+# (most visible at 100 RPS following a 1000 RPS predecessor).
+PROM_RATE_WINDOW = "10s"
+PROM_QUERIES = {
+    "cpu": 'sum(rate(container_cpu_usage_seconds_total{{name=~".*{svc}.*"}}[' + PROM_RATE_WINDOW + ']))',
+    "mem": 'sum(container_memory_working_set_bytes{{name=~".*{svc}.*"}})',
+    "io_net": (
+        'sum(rate(container_network_receive_bytes_total{{name=~".*{svc}.*"}}[' + PROM_RATE_WINDOW + ']))'
+        ' + sum(rate(container_network_transmit_bytes_total{{name=~".*{svc}.*"}}[' + PROM_RATE_WINDOW + ']))'
+    ),
+}
+RESOURCES = ("cpu", "mem", "io_net")
+
+CANONICAL_REPORT_FOR_MODE = {
+    "canonical": os.path.join(REPORTS_DIR, "per-scenario-decision-time-canonical-latest.md"),
+    "legacy": os.path.join(REPORTS_DIR, "per-scenario-decision-time-legacy-latest.md"),
+    "opa-direct": os.path.join(REPORTS_DIR, "per-scenario-decision-time-opa-direct-latest.md"),
+}
+CANONICAL_XLSX = os.path.join(REPORTS_DIR, "per-scenario-decision-time.xlsx")
+XLSX_SHEET_NAMES = ("canonical", "legacy", "opa-direct")
+
+HOST_BASELINE_REF = (
+    "Ubuntu 24.04.4 LTS, AMD Ryzen 9 8945HS (16 logical / 8 physical), "
+    "92 GiB RAM, Docker 29.3.1, Compose v5.1.1, OPA limits 8 CPU / 8G RAM "
+    "(see [tests/svt/README.md §Host Baseline](../../tests/svt/README.md#host-baseline-first-stage))."
+)
+
+SEEDS_PATH = os.path.join(SCRIPT_DIR, "build-per-scenario-seeds.py")
+
+
+# ── helpers ────────────────────────────────────────────────────────────────
+
+
+def now_timestamp() -> str:
+    return time.strftime("%Y%m%d-%H%M%S", time.localtime())
+
+
+def log(message: str) -> None:
+    print(f"[per-scenario-decision-time] {message}", file=sys.stderr, flush=True)
+
+
+def load_scenario_inventory() -> list[dict]:
+    """Load the shared inventory from build-per-scenario-seeds.py."""
+    spec = importlib.util.spec_from_file_location("seeds_mod", SEEDS_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.SCENARIOS
+
+
+def read_bench_report_inventory() -> list[str]:
+    """Re-derive the scenario list from the live bench-report. Returns
+    the order in which scenarios appear in the markdown — D-9 says the
+    per-scenario sweep follows the bench-report. Falls back silently to
+    the seed inventory when the bench-report is missing or unparseable.
+    """
+    if not os.path.isfile(BENCH_REPORT_LATEST):
+        return []
+    out: list[str] = []
+    with open(BENCH_REPORT_LATEST, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line.startswith("|"):
+                continue
+            # First column = scenario name; skip the header / divider /
+            # group-spacer rows (those have an empty leading cell).
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            if not cells or not cells[0]:
+                continue
+            if cells[0] in ("Scenario", ":---"):
+                continue
+            if set(cells[0]) <= set("-:"):
+                continue
+            out.append(cells[0])
+    return out
+
+
+def select_scenarios(seed_inventory: list[dict],
+                     scenarios_arg: str | None) -> list[dict]:
+    """Resolve the inventory used by this run. If `--scenarios` is set,
+    the comma-separated list filters the seed inventory in that order;
+    otherwise the live bench-report drives the order (D-9), and any
+    bench-report scenario absent from the seed inventory is flagged so
+    the operator can refresh the seeds."""
+    seed_by_name = {s["scenario"]: s for s in seed_inventory}
+    if scenarios_arg:
+        names = [n.strip() for n in scenarios_arg.split(",") if n.strip()]
+        unknown = [n for n in names if n not in seed_by_name]
+        if unknown:
+            raise SystemExit(
+                f"unknown scenarios (not in seed inventory): {unknown}")
+        return [seed_by_name[n] for n in names]
+    bench_order = read_bench_report_inventory()
+    if not bench_order:
+        log("WARNING: could not read bench-report inventory — falling "
+            "back to seed inventory order")
+        return list(seed_inventory)
+    resolved: list[dict] = []
+    missing: list[str] = []
+    for name in bench_order:
+        if name in seed_by_name:
+            resolved.append(seed_by_name[name])
+        else:
+            missing.append(name)
+    if missing:
+        log("WARNING: bench-report scenarios missing from seed inventory "
+            f"— skipping until seeds regenerate: {missing}")
+    return resolved
+
+
+def http_get_json(url: str, timeout: int = 60) -> dict:
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def prom_query_range(query: str, start_s: float, end_s: float) -> dict:
+    params = urllib.parse.urlencode({
+        "query": query,
+        "start": f"{start_s:.3f}",
+        "end": f"{end_s:.3f}",
+        "step": str(PROM_STEP_SECONDS),
+    })
+    url = f"http://localhost:{SVT_PROMETHEUS_PORT}/api/v1/query_range?{params}"
+    return http_get_json(url)
+
+
+def summarize_series(payload: dict) -> tuple[float | None, float | None]:
+    values: list[float] = []
+    data = payload.get("data", {}) if isinstance(payload, dict) else {}
+    result = data.get("result", []) if isinstance(data, dict) else []
+    for series in result:
+        for sample in series.get("values", []):
+            if isinstance(sample, list) and len(sample) == 2:
+                try:
+                    values.append(float(sample[1]))
+                except (TypeError, ValueError):
+                    continue
+    if not values:
+        return (None, None)
+    return (max(values), sum(values) / len(values))
+
+
+def collect_metrics(start_ms: int, end_ms: int, output_dir: str) -> dict:
+    """Query Prometheus for every (service, resource) over the window;
+    write raw payloads under `output_dir/<svc>__<resource>.json` and
+    return a flat summary dict keyed by `<svc>__<resource>`."""
+    os.makedirs(output_dir, exist_ok=True)
+    summary: dict[str, dict[str, float | None]] = {}
+    start_s = start_ms / 1000.0
+    end_s = end_ms / 1000.0
+    if end_s <= start_s:
+        for svc in SERVICES:
+            for res in RESOURCES:
+                summary[f"{svc}__{res}"] = {"peak": None, "avg": None}
+        return summary
+
+    for svc in SERVICES:
+        for res in RESOURCES:
+            query = PROM_QUERIES[res].format(svc=svc)
+            payload = prom_query_range(query, start_s, end_s)
+            with open(os.path.join(output_dir, f"{svc}__{res}.json"), "w", encoding="utf-8") as f:
+                json.dump({
+                    "query": query, "start": start_s, "end": end_s,
+                    "step_seconds": PROM_STEP_SECONDS, "response": payload,
+                }, f)
+            peak, avg = summarize_series(payload)
+            summary[f"{svc}__{res}"] = {"peak": peak, "avg": avg}
+    return summary
+
+
+def run_subprocess(cmd: list[str], extra_env: dict | None = None) -> None:
+    env = os.environ.copy()
+    if extra_env:
+        env.update(extra_env)
+    log(f"running: {' '.join(cmd)}")
+    completed = subprocess.run(cmd, env=env, cwd=REPO_ROOT)
+    if completed.returncode != 0:
+        log(f"ERROR: command failed with exit code {completed.returncode}")
+        sys.exit(completed.returncode)
+
+
+def read_window_ms(window_json_path: str) -> tuple[int, int]:
+    with open(window_json_path, encoding="utf-8") as f:
+        payload = json.load(f)
+    return int(payload["start_ms"]), int(payload["end_ms"])
+
+
+# ── JMeter post-processing ────────────────────────────────────────────────
+
+# Summariser tail line:
+#   `summary =   5963 in 00:01:00 =   99.1/s Avg:     4 Min:     2 Max:    65 Err:     0 (0.00%)`
+SUMMARISER_TAIL_RE = re.compile(
+    r"summary\s*=\s*(?P<count>\d+)\s+in\s+\S+\s*=\s*(?P<rate>[\d.]+)/s",
+    re.IGNORECASE,
+)
+
+
+def parse_achieved_rps(jmeter_log_path: str) -> tuple[float | None, int | None]:
+    """Return (achieved_rps, total_samples) from the LAST `summary =`
+    line in the JMeter log (the cumulative one)."""
+    if not os.path.isfile(jmeter_log_path):
+        return (None, None)
+    achieved: float | None = None
+    count: int | None = None
+    with open(jmeter_log_path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            m = SUMMARISER_TAIL_RE.search(line)
+            if m:
+                achieved = float(m.group("rate"))
+                count = int(m.group("count"))
+    return (achieved, count)
+
+
+def parse_response_time_stats(jtl_path: str) -> dict[str, float | None]:
+    """Parse the JMeter `results.jtl` CSV and compute avg / median /
+    p95 / p99 of the `elapsed` column (per-sample wall-clock ms). The
+    JMeter CSV writes one row per request — fine for 60s × 100..1000 RPS
+    (60k..600k rows max, ~tens of MB)."""
+    if not os.path.isfile(jtl_path):
+        return {"avg": None, "median": None, "p95": None, "p99": None}
+    elapsed: list[int] = []
+    with open(jtl_path, encoding="utf-8", errors="replace", newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            try:
+                elapsed.append(int(row["elapsed"]))
+            except (KeyError, ValueError):
+                continue
+    if not elapsed:
+        return {"avg": None, "median": None, "p95": None, "p99": None}
+    elapsed_sorted = sorted(elapsed)
+    n = len(elapsed_sorted)
+    def pct(p: float) -> float:
+        # Nearest-rank percentile. p in [0, 100]. Matches the
+        # convention used by JMeter dashboards.
+        if n == 0:
+            return float("nan")
+        k = max(0, min(n - 1, int(round(p / 100 * (n - 1)))))
+        return float(elapsed_sorted[k])
+    return {
+        "avg": sum(elapsed_sorted) / n,
+        "median": pct(50),
+        "p95": pct(95),
+        "p99": pct(99),
+    }
+
+
+# ── formatting ─────────────────────────────────────────────────────────────
+
+
+def fmt_resource_value(resource: str, value: float | None) -> str:
+    if value is None:
+        return "—"
+    if resource == "cpu":
+        return f"{value:.3f}"
+    if resource == "mem":
+        return f"{value / (1024 * 1024):.1f} MiB"
+    return f"{value / (1024 * 1024):.2f} MiB/s"
+
+
+def fmt_ms(value: float | None) -> str:
+    if value is None:
+        return "—"
+    return f"{value:.1f}"
+
+
+def fmt_achieved_rps(achieved: float | None, target: int,
+                     under_threshold: float = 0.9) -> str:
+    if achieved is None:
+        return "—"
+    text = f"{achieved:.1f}"
+    if achieved < target * under_threshold:
+        text += "*"
+    return text
+
+
+def render_methodology(mode: str) -> list[str]:
+    other_modes = [m for m in XLSX_SHEET_NAMES if m != mode]
+    rps_str = ", ".join(str(r) for r in RPS_LEVELS)
+    if mode == "canonical":
+        mode_desc = ("requests traverse Envoy → OPA → decision-log-collector "
+                     "via `POST /access/v1/authorize`.")
+    elif mode == "legacy":
+        mode_desc = ("requests traverse Envoy → Lua mapping → OPA → "
+                     "decision-log-collector via the legacy compatibility "
+                     "endpoints (`/access/v1/check/resource`, "
+                     "`/access/v1/check/resource/bulk`, "
+                     "`/access/v1/check/filter`).")
+    else:  # opa-direct
+        mode_desc = ("requests bypass Envoy and hit OPA directly via "
+                     "`POST /v1/data/authorize` on `opa:8181` "
+                     "(decision-log-collector remains attached per D-5 "
+                     "of the opa-direct task, so OPA's decision-log push "
+                     "pressure is part of the cost surface). Envoy is "
+                     "running but idle; envoy CPU/RAM/IO columns reflect "
+                     "that idle state, not a workload path.")
+    return [
+        "## Methodology",
+        "",
+        f"- **Mode**: `{mode}` — " + mode_desc,
+        "- **Scenarios**: every benchmark in "
+        "[docs/reports/bench-report-latest.md](bench-report-latest.md). "
+        "The inventory below is re-derived at sweep time. Request shapes "
+        "are copied from the profiler `tests/svt/profiler/<scenario>/input.json` "
+        "files; tokens are issued by Keycloak for the matching "
+        "`svt-bench-<scenario>` user.",
+        f"- **RPS levels**: {rps_str}. OPA is restarted before every "
+        "(scenario, RPS) tuple (cold-cache per run).",
+        f"- **Load window per run**: {LOAD_DURATION_SECONDS}s with "
+        f"{RAMP_SECONDS}s ramp (per D-20, shortened from the mixed-flow "
+        "default of 60 s + 5 s so the 336-run sweep fits in ~2–3 h per mode).",
+        f"- **Inter-scenario gap**: {INTER_SCENARIO_GAP_SECONDS}s "
+        "wall-clock break between adjacent scenario blocks (D-21) so "
+        "Prometheus/cAdvisor exposes a clean visual boundary in "
+        "Grafana time-series.",
+        "- **No idle baselines.** Per owner decision on `2026-05-18`, "
+        "the per-scenario sweep is too long (168 runs × 2 modes) for "
+        "idle windows to pay back the runtime. "
+        "[mixed-load-report-canonical-latest.md](mixed-load-report-canonical-latest.md) "
+        "publishes the canonical idle baseline for the three services.",
+        "- **Bulk slot accounting**: 1 HTTP request = 1 RPS. At 1000 "
+        "RPS, `ols-bulk-1000` fires 1000 req/s × 1000 resources ≈ 10⁶ "
+        "decisions/s; the host saturates and the row is flagged in "
+        "Notes.",
+        "- **PromQL** — CPU: `sum(rate(container_cpu_usage_seconds_total"
+        f"{{name=~\".*<svc>.*\"}}[{PROM_RATE_WINDOW}]))`; "
+        "Memory: `sum(container_memory_working_set_bytes{name=~\".*<svc>.*\"})`; "
+        "IO net: receive + transmit `bytes_total` rate. Rate window is "
+        f"`[{PROM_RATE_WINDOW}]` (≈ 2× the cAdvisor 5 s scrape cadence) "
+        "so the lookback does not cross the previous-cell boundary at "
+        "the start of each (scenario, RPS) tuple.",
+        "- **Response-time stats** (per row): avg / median / p95 / p99 "
+        "of the JMeter `elapsed` column from `results.jtl`. "
+        "Nearest-rank percentile.",
+        "- **Achieved RPS**: cumulative `summary =` rate from the JMeter "
+        "Summariser tail. Rows where `achieved_rps < 0.9 × target_rps` "
+        "are marked with `*` and listed in Notes.",
+        "- **Auto-promote gate**: any per-(scenario, RPS) response-time "
+        "**p95** cell exceeding the baseline by more than 5 % blocks "
+        "promotion. CPU / memory / IO are rendered for visibility but "
+        "**not** gated (D-12).",
+        f"- **Host baseline**: {HOST_BASELINE_REF}",
+        "- **Other-mode reports**: "
+        + ", ".join(
+            f"[per-scenario-decision-time-{m}-latest.md]"
+            f"(per-scenario-decision-time-{m}-latest.md)"
+            for m in other_modes
+        )
+        + " (independent baselines, no cross-mode gating per D-15).",
+        f"- **Companion xlsx**: [per-scenario-decision-time.xlsx]"
+        f"(per-scenario-decision-time.xlsx), `{mode}` sheet (168 rows × "
+        "25 cols, header row sortable).",
+        "",
+    ]
+
+
+def render_inventory_table(scenarios: list[dict]) -> list[str]:
+    lines = [
+        "## Scenario inventory",
+        "",
+        "| Scenario | Group | Legacy endpoint |",
+        "|----------|-------|-----------------|",
+    ]
+    for spec in scenarios:
+        lines.append(
+            f"| `{spec['scenario']}` | {spec['group']} "
+            f"| `{spec['legacy_endpoint']}` |"
+        )
+    lines.append("")
+    return lines
+
+
+def render_scenario_section(spec: dict, rows: list[dict]) -> list[str]:
+    """Render the H3 section + six-row RPS table for one scenario."""
+    lines = [
+        f"### `{spec['scenario']}`",
+        "",
+        f"_Group_: {spec['group']}. "
+        f"_Canonical endpoint_: `/access/v1/authorize`. "
+        f"_Legacy endpoint_: `{spec['legacy_endpoint']}`.",
+        "",
+        "| RPS | achieved | envoy CPU peak | envoy CPU avg | envoy RAM peak | envoy RAM avg "
+        "| envoy IO peak | envoy IO avg | opa CPU peak | opa CPU avg | opa RAM peak | opa RAM avg "
+        "| opa IO peak | opa IO avg | dlc CPU peak | dlc CPU avg | dlc RAM peak | dlc RAM avg "
+        "| dlc IO peak | dlc IO avg | rt avg | rt median | rt p95 | rt p99 |",
+        "|----:|---------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|",
+    ]
+    for row in rows:
+        cells = [
+            str(row["target_rps"]),
+            fmt_achieved_rps(row.get("achieved_rps"), row["target_rps"]),
+        ]
+        for svc in SERVICES:
+            for res in RESOURCES:
+                m = row["metrics"].get(f"{svc}__{res}", {})
+                cells.append(fmt_resource_value(res, m.get("peak")))
+                cells.append(fmt_resource_value(res, m.get("avg")))
+        rt = row.get("rt_stats", {})
+        cells.append(fmt_ms(rt.get("avg")))
+        cells.append(fmt_ms(rt.get("median")))
+        cells.append(fmt_ms(rt.get("p95")))
+        cells.append(fmt_ms(rt.get("p99")))
+        lines.append("| " + " | ".join(cells) + " |")
+    lines.append("")
+    return lines
+
+
+def collect_opa_direct_5ms_misses(
+        rows_by_scenario: dict[str, list[dict]]) -> list[dict]:
+    """For opa-direct: list non-bulk scenarios whose 1000-RPS p95 exceeds
+    the 5 ms stretch target (D-7 of the opa-direct task). Bulk scenarios
+    are out of scope per D-4 — they multiplex many decisions per HTTP
+    request and cannot collapse below 5 ms without changing semantics."""
+    misses: list[dict] = []
+    for scenario, rows in rows_by_scenario.items():
+        if "bulk" in scenario:
+            continue
+        for row in rows:
+            if row.get("target_rps") != 1000:
+                continue
+            p95 = (row.get("rt_stats") or {}).get("p95")
+            if p95 is not None and p95 > 5:
+                misses.append({"scenario": scenario, "p95": p95})
+    return misses
+
+
+def render_notes(notes: list[str], flagged: list[dict],
+                 mode: str,
+                 rows_by_scenario: dict[str, list[dict]]) -> list[str]:
+    lines = ["## Notes", ""]
+    if flagged:
+        lines.append(
+            "- The following (scenario, RPS) rows under-delivered "
+            "(`achieved_rps < 0.9 × target_rps`) and are marked with `*` "
+            "in the tables above (D-18). The promote-gate still applies "
+            "to these rows — saturation shows up as a stable high p95 "
+            "rather than dropped rows:")
+        for row in flagged:
+            lines.append(
+                f"  - `{row['scenario']}` at {row['target_rps']} RPS "
+                f"— achieved {row['achieved_rps']:.1f}/s")
+    if mode == "opa-direct":
+        misses = collect_opa_direct_5ms_misses(rows_by_scenario)
+        if misses:
+            lines.append(
+                "- Non-bulk rows exceeding the 5 ms p95 stretch target at "
+                "1000 RPS (D-7 of the opa-direct task). The 5 ms target is "
+                "**not** a promote gate (D-7); these rows are the input "
+                "list for follow-up tuning handovers (D-8). Bulk rows are "
+                "excluded per D-4:")
+            for m in misses:
+                lines.append(
+                    f"  - `{m['scenario']}` — p95 {m['p95']:.0f} ms at "
+                    "1000 RPS")
+        else:
+            lines.append(
+                "- All non-bulk rows hit the 5 ms p95 stretch target at "
+                "1000 RPS (D-7 of the opa-direct task). No follow-up "
+                "tuning handovers required from this run.")
+    if notes:
+        for n in notes:
+            lines.append(f"- {n}")
+    if not flagged and not notes and mode != "opa-direct":
+        lines.append("- Clean run, no anomalies observed.")
+    lines.append("")
+    return lines
+
+
+def render_report(mode: str, sweep_timestamp: str,
+                  scenarios: list[dict],
+                  rows_by_scenario: dict[str, list[dict]],
+                  notes: list[str], flagged: list[dict]) -> str:
+    now = datetime.datetime.now(datetime.timezone.utc).strftime(
+        "%Y-%m-%d %H:%M:%S UTC")
+    out: list[str] = [
+        f"# Per-Scenario Decision-Time Report — {mode}",
+        "",
+        f"Generated: {now}",
+        f"Sweep timestamp: {sweep_timestamp}",
+        "",
+    ]
+    out.extend(render_methodology(mode))
+    out.extend(render_inventory_table(scenarios))
+    out.append("## Results")
+    out.append("")
+    for spec in scenarios:
+        out.extend(render_scenario_section(spec, rows_by_scenario[spec["scenario"]]))
+    out.extend(render_notes(notes, flagged, mode, rows_by_scenario))
+    return "\n".join(out)
+
+
+# ── xlsx renderer ──────────────────────────────────────────────────────────
+
+
+XLSX_HEADERS = (
+    "scenario", "RPS", "achieved_rps",
+    "envoy CPU peak", "envoy CPU avg",
+    "envoy RAM peak", "envoy RAM avg",
+    "envoy IO-net peak", "envoy IO-net avg",
+    "opa CPU peak", "opa CPU avg",
+    "opa RAM peak", "opa RAM avg",
+    "opa IO-net peak", "opa IO-net avg",
+    "dlc CPU peak", "dlc CPU avg",
+    "dlc RAM peak", "dlc RAM avg",
+    "dlc IO-net peak", "dlc IO-net avg",
+    "rt avg (ms)", "rt median (ms)", "rt p95 (ms)", "rt p99 (ms)",
+)
+
+
+def _row_to_xlsx(row: dict) -> list:
+    """Convert one (scenario, RPS) row dict to a 25-column xlsx list.
+    Numeric cells are floats (None → empty); the achieved_rps cell
+    carries a trailing `*` when the row is flagged per D-18 so the
+    Excel reader sees the same flagging the markdown shows."""
+    cells: list = [row["scenario"], row["target_rps"]]
+    achieved = row.get("achieved_rps")
+    if achieved is None:
+        cells.append(None)
+    else:
+        text = f"{achieved:.2f}"
+        if achieved < row["target_rps"] * 0.9:
+            text += "*"
+        cells.append(text)
+    for svc in SERVICES:
+        for res in RESOURCES:
+            m = row["metrics"].get(f"{svc}__{res}", {})
+            peak = m.get("peak")
+            avg = m.get("avg")
+            # Convert mem / io_net to display units so the xlsx mirrors
+            # the markdown.
+            if res == "cpu":
+                cells.append(peak)
+                cells.append(avg)
+            elif res == "mem":
+                cells.append(None if peak is None else peak / (1024 * 1024))
+                cells.append(None if avg is None else avg / (1024 * 1024))
+            else:  # io_net
+                cells.append(None if peak is None else peak / (1024 * 1024))
+                cells.append(None if avg is None else avg / (1024 * 1024))
+    rt = row.get("rt_stats", {})
+    cells.append(rt.get("avg"))
+    cells.append(rt.get("median"))
+    cells.append(rt.get("p95"))
+    cells.append(rt.get("p99"))
+    return cells
+
+
+def write_xlsx(mode: str, rows: list[dict], xlsx_path: str) -> None:
+    """Write or merge the per-scenario xlsx. Three-sheet shape:
+    `canonical` + `legacy` + `opa-direct` (D-2 of the opa-direct task).
+    Each invocation only touches its own sheet; the other two sheets are
+    preserved as-is. Sortable filter applied to the header row.
+
+    openpyxl is the dependency. The reference SVT host has it
+    pre-installed (used by `docs/reports/mixed-load-report.xlsx`); if
+    missing on a downstream host, install with `pip install openpyxl`
+    before re-running."""
+    try:
+        from openpyxl import Workbook, load_workbook
+    except ImportError as e:
+        raise SystemExit(
+            "openpyxl not installed — required for xlsx output. "
+            "Install with `pip install openpyxl` or invoke the sweep "
+            f"runner with --skip-xlsx (parameter not present yet; "
+            f"original error: {e})."
+        )
+
+    if os.path.isfile(xlsx_path):
+        wb = load_workbook(xlsx_path)
+    else:
+        wb = Workbook()
+        # Drop the default 'Sheet' once we know which sheets we want;
+        # they're added in a stable order below.
+        default = wb.active
+        if default is not None and default.title in ("Sheet", "default"):
+            wb.remove(default)
+
+    for sheet_name in XLSX_SHEET_NAMES:
+        if sheet_name not in wb.sheetnames:
+            wb.create_sheet(title=sheet_name)
+
+    ws = wb[mode]
+    # Wipe the sheet content before rewriting so a re-run never appends.
+    ws.delete_rows(1, ws.max_row + 1)
+    ws.append(list(XLSX_HEADERS))
+    for row in rows:
+        ws.append(_row_to_xlsx(row))
+    # Auto-filter on the header row so Excel users can sort/filter
+    # right away. End column = number of headers.
+    last_col_letter = chr(ord("A") + len(XLSX_HEADERS) - 1)
+    ws.auto_filter.ref = f"A1:{last_col_letter}{ws.max_row}"
+    # Freeze the header.
+    ws.freeze_panes = "A2"
+
+    wb.save(xlsx_path)
+
+
+# ── promote gate (p95 only, ±5 %) ──────────────────────────────────────────
+
+
+P95_HEADER_RE = re.compile(r"^###\s+`(?P<scenario>[^`]+)`")
+# RPS row regex: catches the FIRST cell (RPS integer) and the LAST four
+# numeric / dash cells (rt avg/median/p95/p99). The pipe count varies
+# with markdown padding; we anchor on `| <int>` at the start and pull
+# the trailing four columns before `|`.
+RPS_ROW_RE = re.compile(r"^\|\s*(?P<rps>\d+)\s*\|")
+
+
+def parse_p95_cells_from_report(path: str) -> dict[tuple[str, int], float]:
+    """Walk a per-scenario report and return {(scenario, RPS): p95}."""
+    if not os.path.isfile(path):
+        return {}
+    out: dict[tuple[str, int], float] = {}
+    current_scenario: str | None = None
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip()
+            m_hdr = P95_HEADER_RE.match(line)
+            if m_hdr:
+                current_scenario = m_hdr.group("scenario")
+                continue
+            if current_scenario is None:
+                continue
+            if not line.startswith("|"):
+                continue
+            m_rps = RPS_ROW_RE.match(line)
+            if not m_rps:
+                continue
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            # p95 is the third-from-last cell.
+            if len(cells) < 4:
+                continue
+            try:
+                rps = int(cells[0])
+                p95 = float(cells[-2])
+            except ValueError:
+                continue
+            out[(current_scenario, rps)] = p95
+    return out
+
+
+def compare_and_promote_markdown(report_path: str, canonical_path: str) -> bool:
+    """Promote `report_path` to `canonical_path` when every p95 cell is
+    within ±5 % of the existing baseline. Return True on promotion."""
+    os.makedirs(os.path.dirname(canonical_path), exist_ok=True)
+    if not os.path.isfile(canonical_path):
+        log(f"no existing baseline at {canonical_path}; promoting unconditionally")
+        with open(report_path, encoding="utf-8") as src, \
+             open(canonical_path, "w", encoding="utf-8") as dst:
+            dst.write(src.read())
+        return True
+    old = parse_p95_cells_from_report(canonical_path)
+    new = parse_p95_cells_from_report(report_path)
+    regressions: list[tuple[tuple[str, int], float, float]] = []
+    for key, new_val in new.items():
+        old_val = old.get(key)
+        if old_val is None or old_val == 0:
+            continue
+        if new_val > old_val * 1.05:
+            regressions.append((key, old_val, new_val))
+    if regressions:
+        log("REGRESSION DETECTED — canonical report NOT updated:")
+        for (scenario, rps), old_val, new_val in regressions:
+            pct = (new_val - old_val) / old_val * 100
+            log(f"  {scenario} @ {rps} RPS: p95 {old_val:.1f} → {new_val:.1f} (+{pct:.1f}%)")
+        return False
+    log("all p95 cells within ±5%; promoting markdown")
+    with open(report_path, encoding="utf-8") as src, \
+         open(canonical_path, "w", encoding="utf-8") as dst:
+        dst.write(src.read())
+    log(f"canonical markdown updated: {canonical_path}")
+    return True
+
+
+def promote_xlsx_sheet(staged_xlsx: str, canonical_xlsx: str, mode: str) -> None:
+    """Copy the freshly-rendered `mode` sheet from `staged_xlsx` into
+    `canonical_xlsx`. The other two sheets are preserved as-is (D-2 /
+    D-9 of the opa-direct task — no comparative-delta sheet)."""
+    try:
+        from openpyxl import Workbook, load_workbook
+    except ImportError:
+        log("openpyxl missing — skipping xlsx promotion")
+        return
+    if os.path.isfile(canonical_xlsx):
+        wb = load_workbook(canonical_xlsx)
+    else:
+        wb = Workbook()
+        default = wb.active
+        if default is not None and default.title in ("Sheet", "default"):
+            wb.remove(default)
+    for sheet_name in XLSX_SHEET_NAMES:
+        if sheet_name not in wb.sheetnames:
+            wb.create_sheet(title=sheet_name)
+    src_wb = load_workbook(staged_xlsx)
+    src_ws = src_wb[mode]
+    dst_ws = wb[mode]
+    dst_ws.delete_rows(1, dst_ws.max_row + 1)
+    for row in src_ws.iter_rows(values_only=True):
+        dst_ws.append(list(row))
+    last_col_letter = chr(ord("A") + len(XLSX_HEADERS) - 1)
+    dst_ws.auto_filter.ref = f"A1:{last_col_letter}{dst_ws.max_row}"
+    dst_ws.freeze_panes = "A2"
+    wb.save(canonical_xlsx)
+    log(f"canonical xlsx `{mode}` sheet updated: {canonical_xlsx}")
+
+
+# ── sweep driver ───────────────────────────────────────────────────────────
+
+
+def drive_sweep(mode: str, scenarios: list[dict], rps_levels: list[int],
+                sweep_dir: str) -> tuple[dict[str, list[dict]], list[str], list[dict]]:
+    """Outer loop: scenarios. Inner loop: rps_levels. Per tuple:
+    svt_restart_opa (inside the per-RPS `run`) → JMeter → Prometheus
+    range → results.jtl parse. Returns the rows grouped by scenario,
+    plus a notes list and a flagged-rows list (D-18)."""
+    rows_by_scenario: dict[str, list[dict]] = {}
+    notes: list[str] = []
+    flagged: list[dict] = []
+    os.makedirs(sweep_dir, exist_ok=True)
+
+    for scenario_index, spec in enumerate(scenarios):
+        scenario = spec["scenario"]
+        log(f"=== scenario `{scenario}` ===")
+        # D-21: insert 5 s break between adjacent scenario blocks so
+        # Prometheus/cAdvisor surfaces a visible gap. Skipped before
+        # the very first scenario.
+        if scenario_index > 0 and INTER_SCENARIO_GAP_SECONDS > 0:
+            log(f"  inter-scenario gap: sleeping {INTER_SCENARIO_GAP_SECONDS}s (D-21)")
+            time.sleep(INTER_SCENARIO_GAP_SECONDS)
+        rows_by_scenario.setdefault(scenario, [])
+        for rps in rps_levels:
+            log(f"  -- {rps} RPS --")
+            rps_artifacts = os.path.join(sweep_dir, scenario, f"{rps}rps")
+            os.makedirs(rps_artifacts, exist_ok=True)
+            per_rps_run = os.path.join(
+                PER_SCENARIO_DIR, scenario, f"{rps}rps", "run")
+            if not os.path.isfile(per_rps_run):
+                raise SystemExit(
+                    f"missing per-RPS runner: {per_rps_run} — re-run "
+                    "`tests/svt/scripts/build-per-scenario-jmx.py` to "
+                    "regenerate the JMX layout."
+                )
+            env = {"MODE": mode, "ARTIFACTS_DIR": rps_artifacts}
+            run_subprocess([per_rps_run], extra_env=env)
+            win_start_ms, win_end_ms = read_window_ms(
+                os.path.join(rps_artifacts, "window.json"))
+            prom_dir = os.path.join(rps_artifacts, "prometheus")
+            metrics = collect_metrics(win_start_ms, win_end_ms, prom_dir)
+            achieved, _count = parse_achieved_rps(
+                os.path.join(rps_artifacts, "jmeter.log"))
+            rt_stats = parse_response_time_stats(
+                os.path.join(rps_artifacts, "results.jtl"))
+            row = {
+                "scenario": scenario,
+                "target_rps": rps,
+                "achieved_rps": achieved,
+                "metrics": metrics,
+                "rt_stats": rt_stats,
+            }
+            rows_by_scenario[scenario].append(row)
+            if achieved is not None and achieved < rps * 0.9:
+                flagged.append(row)
+            with open(os.path.join(rps_artifacts, "summary.json"), "w",
+                      encoding="utf-8") as f:
+                json.dump(row, f, indent=2)
+
+    return rows_by_scenario, notes, flagged
+
+
+def load_existing_sweep(sweep_dir: str, scenarios: list[dict],
+                        rps_levels: list[int]
+                        ) -> tuple[dict[str, list[dict]], list[str], list[dict]]:
+    """Load previously-recorded summary.json rows from an existing sweep
+    directory. Used by `--rebuild-from` to re-render markdown + xlsx
+    without re-running JMeter — useful when the report format changes
+    (e.g. a new Notes flag added after the baseline ran)."""
+    rows_by_scenario: dict[str, list[dict]] = {}
+    notes: list[str] = []
+    flagged: list[dict] = []
+    for spec in scenarios:
+        scenario = spec["scenario"]
+        rows_by_scenario.setdefault(scenario, [])
+        for rps in rps_levels:
+            sj = os.path.join(sweep_dir, scenario, f"{rps}rps", "summary.json")
+            if not os.path.isfile(sj):
+                raise SystemExit(
+                    f"missing artifact: {sj} — cannot rebuild report "
+                    f"without the original summary.json for ({scenario}, "
+                    f"{rps} RPS).")
+            with open(sj, encoding="utf-8") as f:
+                row = json.load(f)
+            rows_by_scenario[scenario].append(row)
+            achieved = row.get("achieved_rps")
+            if achieved is not None and achieved < rps * 0.9:
+                flagged.append(row)
+    return rows_by_scenario, notes, flagged
+
+
+def resummarize_metrics(sweep_dir: str, scenarios: list[dict],
+                        rps_levels: list[int]) -> None:
+    """Re-query Prometheus for every (scenario, RPS, service, resource)
+    using the current `PROM_QUERIES` templates over the **same** time
+    window recorded in the original `prometheus/<svc>__<resource>.json`,
+    overwrite that raw payload, and rewrite `summary.json` with the
+    refreshed peak/avg figures.
+
+    Used when the rate-window template changes (e.g. the May-2026 fix
+    that narrowed `[30s]` to `[10s]` after discovering the wider window
+    pulled the previous cell's load tail into the early samples of
+    every cell, contaminating the 100 RPS CPU column). Requires the
+    SVT Prometheus container to still hold counter samples from the
+    original sweep — verify retention before invoking on stale runs.
+    """
+    for spec in scenarios:
+        scenario = spec["scenario"]
+        for rps in rps_levels:
+            cell_dir = os.path.join(sweep_dir, scenario, f"{rps}rps")
+            prom_dir = os.path.join(cell_dir, "prometheus")
+            sj_path = os.path.join(cell_dir, "summary.json")
+            if not os.path.isdir(prom_dir) or not os.path.isfile(sj_path):
+                raise SystemExit(
+                    f"missing artifact under {cell_dir}: cannot "
+                    "re-summarise — expected prometheus/ and summary.json")
+            # Pull the original window from any existing prom JSON.
+            anchor = os.path.join(prom_dir, f"{SERVICES[0]}__cpu.json")
+            with open(anchor, encoding="utf-8") as f:
+                anchor_payload = json.load(f)
+            start_s = float(anchor_payload["start"])
+            end_s = float(anchor_payload["end"])
+            metrics: dict[str, dict[str, float | None]] = {}
+            for svc in SERVICES:
+                for res in RESOURCES:
+                    query = PROM_QUERIES[res].format(svc=svc)
+                    payload = prom_query_range(query, start_s, end_s)
+                    with open(os.path.join(prom_dir, f"{svc}__{res}.json"),
+                              "w", encoding="utf-8") as f:
+                        json.dump({
+                            "query": query, "start": start_s, "end": end_s,
+                            "step_seconds": PROM_STEP_SECONDS,
+                            "response": payload,
+                        }, f)
+                    peak, avg = summarize_series(payload)
+                    metrics[f"{svc}__{res}"] = {"peak": peak, "avg": avg}
+            with open(sj_path, encoding="utf-8") as f:
+                row = json.load(f)
+            row["metrics"] = metrics
+            with open(sj_path, "w", encoding="utf-8") as f:
+                json.dump(row, f, indent=2)
+            log(f"resummarized: {scenario} @ {rps} RPS "
+                f"(window {start_s:.0f}..{end_s:.0f})")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Per-scenario end-to-end decision-time report generator")
+    parser.add_argument("--mode", choices=XLSX_SHEET_NAMES,
+                        default="canonical")
+    parser.add_argument("--scenarios", default=None,
+                        help="Comma-separated subset of scenario names. "
+                             "Defaults to every scenario in bench-report-latest.md.")
+    parser.add_argument("--rps", default=None,
+                        help="Comma-separated subset of RPS levels. "
+                             "Defaults to 100,200,300,400,500,1000.")
+    parser.add_argument("--skip-promote", action="store_true",
+                        help="Render the staged report + xlsx; do not "
+                             "touch the canonical files.")
+    parser.add_argument("--rebuild-from", default=None, metavar="SWEEP_DIR",
+                        help="Skip JMeter execution and re-render the "
+                             "markdown + xlsx from the summary.json files "
+                             "already present in SWEEP_DIR. Useful when "
+                             "the report format gains a new Notes flag or "
+                             "column after the baseline ran. The original "
+                             "sweep timestamp is preserved (parsed from "
+                             "the directory name suffix).")
+    parser.add_argument("--resummarize-metrics", action="store_true",
+                        help="When used with --rebuild-from, re-query the "
+                             "SVT Prometheus tsdb for every cell's "
+                             "(service, resource) pair using the current "
+                             "PROM_QUERIES templates over the same time "
+                             "window recorded by the original sweep. "
+                             "Rewrites prometheus/<svc>__<resource>.json "
+                             "and the metrics block in summary.json. "
+                             "Requires Prometheus to still hold counter "
+                             "samples from the original sweep window.")
+    args = parser.parse_args()
+
+    seed_inventory = load_scenario_inventory()
+    scenarios = select_scenarios(seed_inventory, args.scenarios)
+    if not scenarios:
+        log("no scenarios resolved — aborting")
+        return 1
+
+    if args.rps:
+        try:
+            rps_levels = [int(x.strip()) for x in args.rps.split(",") if x.strip()]
+        except ValueError:
+            log(f"invalid --rps value: {args.rps!r}")
+            return 1
+    else:
+        rps_levels = list(RPS_LEVELS)
+
+    if args.rebuild_from:
+        sweep_dir = os.path.abspath(args.rebuild_from)
+        if not os.path.isdir(sweep_dir):
+            log(f"--rebuild-from path is not a directory: {sweep_dir}")
+            return 1
+        # Recover the original timestamp from the directory suffix
+        # (e.g. opa-direct-20260521-052521 → 20260521-052521).
+        dir_name = os.path.basename(sweep_dir.rstrip(os.sep))
+        prefix = f"{args.mode}-"
+        if not dir_name.startswith(prefix):
+            log(f"--rebuild-from dir name {dir_name!r} does not match the "
+                f"expected '{prefix}<timestamp>' shape for mode "
+                f"{args.mode!r}.")
+            return 1
+        timestamp = dir_name[len(prefix):]
+        log(f"rebuild-from: reusing sweep_dir={sweep_dir}, "
+            f"timestamp={timestamp}")
+        if args.resummarize_metrics:
+            log("--resummarize-metrics: re-querying Prometheus over the "
+                "original per-cell windows with the current PROM_QUERIES "
+                f"templates (rate window {PROM_RATE_WINDOW})")
+            resummarize_metrics(sweep_dir, scenarios, rps_levels)
+        rows_by_scenario, notes, flagged = load_existing_sweep(
+            sweep_dir, scenarios, rps_levels)
+    elif args.resummarize_metrics:
+        log("--resummarize-metrics requires --rebuild-from to point at "
+            "an existing sweep directory")
+        return 1
+    else:
+        timestamp = now_timestamp()
+        sweep_dir = os.path.join(ARTIFACTS_ROOT, f"{args.mode}-{timestamp}")
+        os.makedirs(sweep_dir, exist_ok=True)
+        rows_by_scenario, notes, flagged = drive_sweep(
+            args.mode, scenarios, rps_levels, sweep_dir)
+
+    # Flatten for xlsx.
+    flat_rows: list[dict] = []
+    for spec in scenarios:
+        flat_rows.extend(rows_by_scenario[spec["scenario"]])
+
+    # Markdown.
+    report_md = render_report(args.mode, timestamp, scenarios,
+                              rows_by_scenario, notes, flagged)
+    report_path = os.path.join(
+        sweep_dir,
+        f"per-scenario-decision-time-{args.mode}-{timestamp}.md",
+    )
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report_md)
+    log(f"markdown written: {report_path}")
+
+    # Xlsx — staged under the sweep dir.
+    staged_xlsx = os.path.join(
+        sweep_dir,
+        f"per-scenario-decision-time-{args.mode}-{timestamp}.xlsx",
+    )
+    write_xlsx(args.mode, flat_rows, staged_xlsx)
+    log(f"xlsx written: {staged_xlsx}")
+
+    if not args.skip_promote:
+        promoted = compare_and_promote_markdown(
+            report_path, CANONICAL_REPORT_FOR_MODE[args.mode])
+        if promoted:
+            promote_xlsx_sheet(staged_xlsx, CANONICAL_XLSX, args.mode)
+        else:
+            log("xlsx sheet NOT promoted because markdown was held back")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

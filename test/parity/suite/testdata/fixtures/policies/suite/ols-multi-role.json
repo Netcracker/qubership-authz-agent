@@ -1,0 +1,22 @@
+[
+  {
+    "_comment": "AGG row 61/62: two pure-OLS rows on the same (PARITY_SUITE_MULTI, READ) locator. Row A grants via ROLE_PARITY_READER, row B grants via ROLE_PARITY_REVIEWER. A subject holding EITHER role passes OLS; parity-multi-role user holds both and also passes. parity-other user holds neither and denies.",
+    "component": "PARITY",
+    "reason": "AGG multi-role row A (reader)",
+    "resourceType": "PARITY_SUITE_MULTI",
+    "operation": "READ",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b01"
+  },
+  {
+    "_comment": "AGG multi-role row B (reviewer) — same locator as row A, different role.",
+    "component": "PARITY",
+    "reason": "AGG multi-role row B (reviewer)",
+    "resourceType": "PARITY_SUITE_MULTI",
+    "operation": "READ",
+    "roles": ["ROLE_PARITY_REVIEWER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b02"
+  }
+]

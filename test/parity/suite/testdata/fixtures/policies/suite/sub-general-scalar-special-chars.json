@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "SUB row 75: captures the legacy rendering when the substituted scalar contains characters with meaning in RSQL.",
+    "component": "PARITY",
+    "reason": "SUB scalar-string special characters",
+    "resourceType": "PARITY_SUITE_TAG_SCALAR",
+    "operation": "LIST",
+    "rsqlPredicate": "tag==${subject.parityTagScalar}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b44"
+  }
+]

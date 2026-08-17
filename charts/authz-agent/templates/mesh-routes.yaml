@@ -1,0 +1,211 @@
+{{- if .Values.MESH_ROUTES_ENABLED }}
+# Service-mesh route registration (authz-agent-ADR-0074).
+#
+# Declarative CRs picked up by core-operator, which pushes them into the mesh
+# control plane. This mirrors how access-control registers the same APIs — see
+# its helm-templates/access-control/templates/routeconfiguration-mesh.yaml — so
+# that a consumer calling the check API through a gateway reaches this agent by
+# the same URL it used before.
+#
+# Only the access-control APIs this agent actually implements are registered.
+# The whole management surface of access-control (/access/v1/policies,
+# /access/v1/config, /template/v1/..., /api/v1/access-control/...) is absent
+# here, because this agent does not serve it.
+#
+# Registering the same prefixes on the same gateway from two releases is a
+# conflict: if access-control and authz-agent run in one namespace, only one of
+# them can own these routes. Set MESH_ROUTES_ENABLED to false on whichever is
+# not meant to serve them.
+apiVersion: core.netcracker.com/v1
+kind: Mesh
+subKind: RouteConfiguration
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-internal-routes'
+  namespace: '{{ .Values.NAMESPACE }}'
+  labels:
+    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+spec:
+  gateways:
+    - internal-gateway-service
+  # The agent serves plain HTTP only — it has no TLS listener, so there is no
+  # tlsEndpoint to advertise. This must stay false until it grows one.
+  tlsSupported: false
+  virtualServices:
+    - name: internal-gateway-service
+      hosts: [ "*" ]
+      routeConfiguration:
+        {{- if .Values.DEPLOYMENT_VERSION }}
+        version: '{{ .Values.DEPLOYMENT_VERSION }}'
+        {{- end }}
+        routes:
+          - destination:
+              cluster: '{{ .Values.SERVICE_NAME }}'
+              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8080'
+            rules:
+              {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
+              # Record-level filtering is internal-only in access-control too:
+              # it is absent from its public and private gateway registrations.
+              - match:
+                  prefix: /access/v1/check/filter
+              - match:
+                  prefix: /access/v2/check/filter
+          # The canonical authorize API goes straight to OPA, skipping the Envoy
+          # container. It is the one route in the Envoy config with no per-route
+          # Lua filter — a pure path rewrite to /v1/data/authorize with a 30s
+          # timeout — so the gateway can do that rewrite itself and save a hop.
+          # Byte-identity of the two transports is what authz-agent-ADR-0062
+          # locks in.
+          #
+          # A prefix, not an exact path — the mesh cannot express an exact match.
+          # This rule originally used `match.path`, which the control plane
+          # rejects with CORE-MESH-CP-4001 "has empty prefix field", taking the
+          # WHOLE CR down with it: one bad rule and none of this gateway's routes
+          # are registered. Supplying `path` and `prefix` together is accepted but
+          # pointless — the control plane drops `path` and builds a prefix route
+          # anyway, plus an auto-generated `/`-suffixed twin.
+          #
+          # The cost is that `/access/v1/authorize/<x>` rewrites to
+          # `/v1/data/authorize/<x>` and returns a sub-document of the decision
+          # rather than 404. That is a shape nobody asks for and OPA answers it
+          # with an empty document, so it is noise rather than exposure.
+          - destination:
+              cluster: '{{ .Values.SERVICE_NAME }}-opa'
+              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8181'
+            rules:
+              - match:
+                  prefix: /access/v1/authorize
+                prefixRewrite: /v1/data/authorize
+                timeout: 30000
+{{- if .Values.AUTHZ_POLICY_ADMIN_ENABLED }}
+---
+# authz-policy-admin northbound API (authz-agent-ADR-0073, ADR-0074).
+#
+# The stub serves access-control's own simplified-policy paths, prefix included,
+# so this registers exactly what access-control registers on this gateway:
+# `/access/v1/simplifiedPolicies`. A caller that loaded policies into
+# access-control keeps working against the stub with no URL change.
+#
+# Internal gateway only. access-control also exposes this prefix on its private
+# gateway and two GET-only sub-paths on its public one; a policy-authoring
+# surface with no authentication does not belong on either.
+#
+# The v3 config API (`/access/v3/config/*`) is deliberately NOT registered: the
+# agent's PolicyPuller reaches the stub directly by Service DNS inside the
+# namespace, so a gateway route would add no reachability while exposing the whole
+# policy set for reading.
+#
+# In a namespace that also runs access-control this prefix is already taken by it
+# — that is the conflict MESH_ROUTES_ENABLED exists to resolve. Being the same
+# prefix is the point: the stub replaces access-control, it does not sit beside it.
+#
+# These are unauthenticated policy writes, and the gateway does not change that:
+# on the R&D cluster the internal gateway's ext_authz filter was observed passing
+# requests with no Authorization header through to upstreams. Anything that can
+# reach `internal-gateway-service` can therefore replace the policy set — which is
+# acceptable only because the stub itself is a development and test component
+# (ADR-0073).
+apiVersion: core.netcracker.com/v1
+kind: Mesh
+subKind: RouteConfiguration
+metadata:
+  name: '{{ include "authz-agent.authzPolicyAdminName" . }}-internal-routes'
+  namespace: '{{ .Values.NAMESPACE }}'
+  labels:
+    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+spec:
+  gateways:
+    - internal-gateway-service
+  tlsSupported: false
+  virtualServices:
+    - name: internal-gateway-service
+      hosts: [ "*" ]
+      routeConfiguration:
+        {{- if .Values.DEPLOYMENT_VERSION }}
+        version: '{{ .Values.DEPLOYMENT_VERSION }}'
+        {{- end }}
+        routes:
+          - destination:
+              cluster: '{{ include "authz-agent.authzPolicyAdminName" . }}'
+              endpoint: 'http://{{ include "authz-agent.authzPolicyAdminName" . }}:{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
+            rules:
+              # GET/PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}
+              # and .../domainPIPs/{domain}. The stub answers 405 on the verbs
+              # access-control supports and it does not (POST, PATCH, DELETE).
+              - match:
+                  prefix: /access/v1/simplifiedPolicies
+{{- end }}
+---
+apiVersion: core.netcracker.com/v1
+kind: Mesh
+subKind: RouteConfiguration
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-private-routes'
+  namespace: '{{ .Values.NAMESPACE }}'
+  labels:
+    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+spec:
+  gateways:
+    - private-gateway-service
+  tlsSupported: false
+  virtualServices:
+    - name: private-gateway-service
+      hosts: [ "*" ]
+      routeConfiguration:
+        {{- if .Values.DEPLOYMENT_VERSION }}
+        version: '{{ .Values.DEPLOYMENT_VERSION }}'
+        {{- end }}
+        routes:
+          - destination:
+              cluster: '{{ .Values.SERVICE_NAME }}'
+              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8080'
+            rules:
+              {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
+---
+apiVersion: core.netcracker.com/v1
+kind: Mesh
+subKind: RouteConfiguration
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-public-routes'
+  namespace: '{{ .Values.NAMESPACE }}'
+  labels:
+    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+spec:
+  gateways:
+    - public-gateway-service
+  tlsSupported: false
+  virtualServices:
+    - name: public-gateway-service
+      hosts: [ "*" ]
+      routeConfiguration:
+        {{- if .Values.DEPLOYMENT_VERSION }}
+        version: '{{ .Values.DEPLOYMENT_VERSION }}'
+        {{- end }}
+        routes:
+          - destination:
+              cluster: '{{ .Values.SERVICE_NAME }}'
+              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8080'
+            rules:
+              {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
+          # The canonical authorize API, same destination and rewrite as on the
+          # internal gateway: straight to OPA on 8181, bypassing Envoy.
+          #
+          # This is the one route in this chart that puts a PUBLIC gateway in
+          # front of OPA's data API. It is deliberately narrow — the rewrite
+          # pins the upstream path to `/v1/data/authorize`, so a caller cannot
+          # reach another data document through it — but it is also
+          # unauthenticated at the HTTP layer: OPA answers 200 and the decision
+          # itself carries the auth outcome, because there is no Envoy hop and
+          # therefore no ext_authz. A caller with no token gets a decision
+          # object saying so, not a 401.
+          #
+          # Widening this rule, or changing the rewrite, exposes more of
+          # `/v1/data` to the public internet. Treat it as security-relevant.
+          - destination:
+              cluster: '{{ .Values.SERVICE_NAME }}-opa'
+              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8181'
+            rules:
+              - match:
+                  prefix: /access/v1/authorize
+                prefixRewrite: /v1/data/authorize
+                timeout: 30000
+{{- end }}

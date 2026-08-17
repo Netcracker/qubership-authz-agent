@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE rows 27/45: filter endpoint renders a GENERAL-PIP-backed list template through the existing subject.parityAllowed alias.",
+    "component": "PARITY",
+    "reason": "GENERAL PIP list filter rendering",
+    "resourceType": "PARITY_SUITE_LIST_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "id=in=(${subject.parityAllowed})",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b83"
+  }
+]

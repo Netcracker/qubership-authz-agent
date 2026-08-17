@@ -1,0 +1,492 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# SVT environment bootstrap — starts/updates the local load-testing stack
+# and seeds policies so that the 'run' script can execute immediately.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ROOT_DIR="$(cd "${SVT_DIR}/../.." && pwd)"
+
+# ── tunables ─────────────────────────────────────────────────────────────────
+PROJECT_NAME="${PROJECT_NAME:-authz-svt}"
+SVT_KC_PORT="${SVT_KC_PORT:-25556}"
+SVT_AUTHZ_PORT="${SVT_AUTHZ_PORT:-28080}"
+SVT_AUTHZ_ADMIN_PORT="${SVT_AUTHZ_ADMIN_PORT:-29901}"
+SVT_CADVISOR_PORT="${SVT_CADVISOR_PORT:-28888}"
+SVT_PROMETHEUS_PORT="${SVT_PROMETHEUS_PORT:-29090}"
+SVT_GRAFANA_PORT="${SVT_GRAFANA_PORT:-23000}"
+SVT_AUTHZ_POLICY_ADMIN_PORT="${SVT_AUTHZ_POLICY_ADMIN_PORT:-28093}"
+# Domain the seed data is filed under in the stub. The stub serves
+# access-control's own per-domain paths (authz-agent-ADR-0073) and its v3
+# export is the union of every domain, so any single name works — it just
+# has to match what the re-seed helpers in common/scripts/lib/svt-lib.sh use.
+SVT_AUTHZ_POLICY_ADMIN_DOMAIN="${SVT_AUTHZ_POLICY_ADMIN_DOMAIN:-SVT}"
+SVT_PAP_PULL_INTERVAL="${SVT_PAP_PULL_INTERVAL:-2}"
+# One full pull tick plus a margin, derived from the interval the stack
+# runs with rather than hardcoded.
+SVT_PULL_WAIT_SECONDS=$((SVT_PAP_PULL_INTERVAL + 2))
+
+export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT SVT_AUTHZ_ADMIN_PORT
+export SVT_CADVISOR_PORT SVT_PROMETHEUS_PORT SVT_GRAFANA_PORT SVT_AUTHZ_POLICY_ADMIN_PORT SVT_AUTHZ_POLICY_ADMIN_DOMAIN
+export SVT_PAP_PULL_INTERVAL SVT_PULL_WAIT_SECONDS
+
+COMPOSE_CMD=(docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml")
+
+log() { echo "[svt-up] $*"; }
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "error: required command not found: $1" >&2
+    exit 1
+  fi
+}
+
+require_cmd docker
+require_cmd curl
+require_cmd jq
+
+# ── render runtime configs (single-source templates in
+#     charts/authz-agent/files/...) ────────────────────────────────────
+log "rendering runtime configs for Compose split topology"
+"${ROOT_DIR}/test/scripts/render-runtime-configs.sh"
+
+# ── bring up the stack ───────────────────────────────────────────────────────
+log "starting SVT environment (project=${PROJECT_NAME})"
+log "  envoy       : http://localhost:${SVT_AUTHZ_PORT}"
+log "  keycloak    : http://localhost:${SVT_KC_PORT}"
+log "  cadvisor    : http://localhost:${SVT_CADVISOR_PORT}"
+log "  prometheus  : http://localhost:${SVT_PROMETHEUS_PORT}"
+log "  grafana     : http://localhost:${SVT_GRAFANA_PORT}"
+
+# Start keycloak, then pap-client (which pulls in opa-bootstrap → opa →
+# pap-client via depends_on), then the rest of the stack. cadvisor,
+# prometheus, and grafana have no depends_on so they come up in parallel.
+"${COMPOSE_CMD[@]}" up -d --build keycloak pap-client decision-log-collector envoy cadvisor prometheus grafana
+
+# ── wait for Keycloak ────────────────────────────────────────────────────────
+log "waiting for Keycloak to become ready..."
+KC_READY=false
+for i in $(seq 1 120); do
+  if curl -sf "http://localhost:${SVT_KC_PORT}/realms/svt-test/.well-known/openid-configuration" >/dev/null 2>&1; then
+    KC_READY=true
+    break
+  fi
+  sleep 1
+done
+if [ "${KC_READY}" != "true" ]; then
+  log "ERROR: Keycloak did not become ready within 120 s"
+  exit 1
+fi
+log "Keycloak ready"
+
+# ── wait for envoy readiness (Envoy admin) ──────────────────────────────────
+log "waiting for envoy readiness..."
+ENVOY_READY=false
+for i in $(seq 1 90); do
+  if curl -sf "http://localhost:${SVT_AUTHZ_ADMIN_PORT}/ready" >/dev/null 2>&1; then
+    ENVOY_READY=true
+    break
+  fi
+  sleep 1
+done
+if [ "${ENVOY_READY}" != "true" ]; then
+  log "ERROR: envoy did not become ready within 90 s"
+  exit 1
+fi
+log "envoy ready"
+
+# ── wait for backend health (via Envoy) ─────────────────────────────────────
+log "waiting for backend health..."
+AGENT_READY=false
+for i in $(seq 1 90); do
+  if curl -sf "http://localhost:${SVT_AUTHZ_PORT}/health" >/dev/null 2>&1; then
+    AGENT_READY=true
+    break
+  fi
+  sleep 1
+done
+if [ "${AGENT_READY}" != "true" ]; then
+  log "ERROR: backend did not become healthy within 90 s"
+  exit 1
+fi
+log "backend healthy"
+
+# ── seed policies (base + mixed-flow + per-scenario) ────────────────────────
+# The mixed-flow report task (handover 20260518) ships a second committed
+# seed file alongside the hand-authored svt-policies.json so the 8
+# profiler-aligned scenarios can resolve at runtime. The per-scenario
+# decision-time report (handover 20260518-per-scenario) ships a third
+# seed file with the 28 bench-report scenarios. All three files are
+# concatenated via jq before upload because the policy-admin endpoint
+# does a full replace (no append). Missing optional files are skipped
+# gracefully — existing test suites stay unaffected.
+log "uploading seed policies (base + mixed-flow + per-scenario, where present)..."
+SEED_POLICIES_BASE="${SVT_DIR}/common/compose/seed/svt-policies.json"
+SEED_POLICIES_MIXED="${SVT_DIR}/common/compose/seed/svt-mixed-flow-policies.json"
+SEED_POLICIES_PERSCENARIO="${SVT_DIR}/common/compose/seed/svt-per-scenario-policies.json"
+SEED_POLICY_SOURCES=("${SEED_POLICIES_BASE}")
+[ -f "${SEED_POLICIES_MIXED}" ] && SEED_POLICY_SOURCES+=("${SEED_POLICIES_MIXED}")
+[ -f "${SEED_POLICIES_PERSCENARIO}" ] && SEED_POLICY_SOURCES+=("${SEED_POLICIES_PERSCENARIO}")
+if [ "${#SEED_POLICY_SOURCES[@]}" -eq 1 ]; then
+  MERGED_POLICIES=$(cat "${SEED_POLICIES_BASE}")
+else
+  MERGED_POLICIES=$(jq -s 'add' "${SEED_POLICY_SOURCES[@]}")
+fi
+HTTP_CODE=$(printf '%s' "${MERGED_POLICIES}" | curl -s -o /dev/null -w "%{http_code}" -X PUT \
+  -H "Content-Type: application/json" \
+  --data-binary @- \
+  "http://localhost:${SVT_AUTHZ_POLICY_ADMIN_PORT}/access/v1/simplifiedPolicies/domainPolicies/${SVT_AUTHZ_POLICY_ADMIN_DOMAIN}")
+
+if [ "${HTTP_CODE}" != "200" ]; then
+  log "ERROR: policy upload to authz-policy-admin failed (HTTP ${HTTP_CODE})"
+  exit 1
+fi
+log "policies seeded into authz-policy-admin"
+
+# ── seed PIPs (base + mixed-flow + per-scenario) ────────────────────────────
+# Required so that simplified-policy conditions referencing
+# subject.emailFromToken (and the mixed-flow subject.departmentFromToken,
+# the per-scenario subject.regionFromToken et al.) can be evaluated;
+# without these PIPs every RLS rule that gates on such claims
+# short-circuits to DENY and the JMeter load suite fails its
+# expectedDecision / expectedFilterResult assertions on every RLS row.
+log "uploading seed PIPs (base + mixed-flow + per-scenario, where present)..."
+SEED_PIPS_BASE="${SVT_DIR}/common/compose/seed/svt-pips.json"
+SEED_PIPS_MIXED="${SVT_DIR}/common/compose/seed/svt-mixed-flow-pips.json"
+SEED_PIPS_PERSCENARIO="${SVT_DIR}/common/compose/seed/svt-per-scenario-pips.json"
+SEED_PIP_SOURCES=("${SEED_PIPS_BASE}")
+[ -f "${SEED_PIPS_MIXED}" ] && SEED_PIP_SOURCES+=("${SEED_PIPS_MIXED}")
+[ -f "${SEED_PIPS_PERSCENARIO}" ] && SEED_PIP_SOURCES+=("${SEED_PIPS_PERSCENARIO}")
+if [ "${#SEED_PIP_SOURCES[@]}" -eq 1 ]; then
+  MERGED_PIPS=$(cat "${SEED_PIPS_BASE}")
+else
+  MERGED_PIPS=$(jq -s 'add | unique_by(.name)' "${SEED_PIP_SOURCES[@]}")
+fi
+HTTP_CODE=$(printf '%s' "${MERGED_PIPS}" | curl -s -o /dev/null -w "%{http_code}" -X PUT \
+  -H "Content-Type: application/json" \
+  --data-binary @- \
+  "http://localhost:${SVT_AUTHZ_POLICY_ADMIN_PORT}/access/v1/simplifiedPolicies/domainPIPs/${SVT_AUTHZ_POLICY_ADMIN_DOMAIN}")
+
+if [ "${HTTP_CODE}" != "200" ]; then
+  log "ERROR: PIP upload to authz-policy-admin failed (HTTP ${HTTP_CODE})"
+  exit 1
+fi
+log "PIPs seeded into authz-policy-admin"
+
+# ── wait for pull loop to apply seeded data ──────────────────────────────────
+log "waiting ${SVT_PULL_WAIT_SECONDS}s for OPA pull loop to apply seeded policies + PIPs..."
+sleep "${SVT_PULL_WAIT_SECONDS}"
+
+# ── verify with a quick smoke ────────────────────────────────────────────────
+log "acquiring smoke token (svt-admin)..."
+SMOKE_TOKEN=$(curl -sf -X POST \
+  "http://localhost:${SVT_KC_PORT}/realms/svt-test/protocol/openid-connect/token" \
+  -d "grant_type=password" \
+  -d "client_id=authz-agent" \
+  -d "client_secret=authz-agent-secret" \
+  -d "username=svt-admin" \
+  -d "password=password" \
+  -d "scope=openid" | jq -r '.access_token')
+
+if [ -z "${SMOKE_TOKEN}" ] || [ "${SMOKE_TOKEN}" = "null" ]; then
+  log "ERROR: could not acquire smoke token"
+  exit 1
+fi
+
+log "verifying svt-multirole user availability..."
+MULTIROLE_TOKEN=$(curl -sf -X POST \
+  "http://localhost:${SVT_KC_PORT}/realms/svt-test/protocol/openid-connect/token" \
+  -d "grant_type=password" \
+  -d "client_id=authz-agent" \
+  -d "client_secret=authz-agent-secret" \
+  -d "username=svt-multirole" \
+  -d "password=password" \
+  -d "scope=openid" 2>/dev/null | jq -r '.access_token // empty' 2>/dev/null) || true
+
+if [ -z "${MULTIROLE_TOKEN}" ]; then
+  log "svt-multirole not found — provisioning via Keycloak Admin API..."
+  KC_ADMIN_TOKEN=$(curl -sf -X POST \
+    "http://localhost:${SVT_KC_PORT}/realms/master/protocol/openid-connect/token" \
+    -d "grant_type=password" \
+    -d "client_id=admin-cli" \
+    -d "username=kcadmin" \
+    -d "password=kcadmin" | jq -r '.access_token')
+
+  if [ -z "${KC_ADMIN_TOKEN}" ] || [ "${KC_ADMIN_TOKEN}" = "null" ]; then
+    log "WARNING: could not acquire Keycloak admin token — svt-multirole will be missing"
+  else
+    KC_API="http://localhost:${SVT_KC_PORT}/admin/realms/svt-test"
+
+    for i in $(seq -w 1 10); do
+      ROLE_NAME="ROLE_SVT_${i}"
+      curl -sf -o /dev/null -X POST "${KC_API}/roles" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\":\"${ROLE_NAME}\"}" 2>/dev/null || true
+    done
+
+    curl -sf -o /dev/null -X POST "${KC_API}/users" \
+      -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "username":"svt-multirole","email":"svt-multirole@example.com",
+        "enabled":true,"emailVerified":true,
+        "firstName":"SVT","lastName":"MultiRole",
+        "credentials":[{"type":"password","value":"password","temporary":false}]
+      }' 2>/dev/null || true
+
+    MR_USER_ID=$(curl -sf "${KC_API}/users?username=svt-multirole&exact=true" \
+      -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" | jq -r '.[0].id // empty') || true
+
+    if [ -n "${MR_USER_ID}" ]; then
+      ROLE_REPS="[]"
+      for i in $(seq -w 1 10); do
+        ROLE_NAME="ROLE_SVT_${i}"
+        ROLE_OBJ=$(curl -sf "${KC_API}/roles/${ROLE_NAME}" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" 2>/dev/null) || true
+        if [ -n "${ROLE_OBJ}" ]; then
+          ROLE_REPS=$(echo "${ROLE_REPS}" | jq --argjson r "${ROLE_OBJ}" '. + [$r]')
+        fi
+      done
+      curl -sf -o /dev/null -X POST "${KC_API}/users/${MR_USER_ID}/role-mappings/realm" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${ROLE_REPS}" 2>/dev/null || true
+      log "svt-multirole provisioned via Admin API"
+    else
+      log "WARNING: could not find svt-multirole user after creation"
+    fi
+  fi
+else
+  log "svt-multirole user verified"
+fi
+
+log "verifying svt-mixed-NNN users availability (mixed-flow report task)..."
+KC_API="http://localhost:${SVT_KC_PORT}/admin/realms/svt-test"
+MIXED_MISSING_USERS=()
+for i in 001 002 003 004 005 006 007 008; do
+  USERNAME="svt-mixed-${i}"
+  MIXED_TOKEN=$(curl -sf -X POST \
+    "http://localhost:${SVT_KC_PORT}/realms/svt-test/protocol/openid-connect/token" \
+    -d "grant_type=password" \
+    -d "client_id=authz-agent" \
+    -d "client_secret=authz-agent-secret" \
+    -d "username=${USERNAME}" \
+    -d "password=password" \
+    -d "scope=openid" 2>/dev/null | jq -r '.access_token // empty' 2>/dev/null) || true
+  if [ -z "${MIXED_TOKEN}" ]; then
+    MIXED_MISSING_USERS+=("${USERNAME}")
+  fi
+done
+
+if [ ${#MIXED_MISSING_USERS[@]} -gt 0 ]; then
+  log "svt-mixed users missing (${MIXED_MISSING_USERS[*]}) — provisioning via Keycloak Admin API..."
+  KC_ADMIN_TOKEN=$(curl -sf -X POST \
+    "http://localhost:${SVT_KC_PORT}/realms/master/protocol/openid-connect/token" \
+    -d "grant_type=password" \
+    -d "client_id=admin-cli" \
+    -d "username=kcadmin" \
+    -d "password=kcadmin" | jq -r '.access_token')
+
+  if [ -z "${KC_ADMIN_TOKEN}" ] || [ "${KC_ADMIN_TOKEN}" = "null" ]; then
+    log "WARNING: could not acquire Keycloak admin token — svt-mixed users will be missing"
+  else
+    # Ensure ROLE_SVT_ADMIN + ROLE_SVT_01..10 roles exist (idempotent).
+    for r in ROLE_SVT_ADMIN ROLE_SVT_01 ROLE_SVT_02 ROLE_SVT_03 ROLE_SVT_04 ROLE_SVT_05 \
+             ROLE_SVT_06 ROLE_SVT_07 ROLE_SVT_08 ROLE_SVT_09 ROLE_SVT_10; do
+      curl -sf -o /dev/null -X POST "${KC_API}/roles" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\":\"${r}\"}" 2>/dev/null || true
+    done
+
+    # Roles + attributes per mixed user (mirrors svt-realm.json).
+    declare -A MIXED_ROLES MIXED_ATTRS
+    MIXED_ROLES[001]='ROLE_SVT_01 ROLE_SVT_02 ROLE_SVT_03 ROLE_SVT_04 ROLE_SVT_05 ROLE_SVT_06 ROLE_SVT_07 ROLE_SVT_08 ROLE_SVT_09 ROLE_SVT_10'
+    MIXED_ROLES[002]='ROLE_SVT_ADMIN'
+    MIXED_ROLES[003]='ROLE_SVT_ADMIN'
+    MIXED_ROLES[004]='ROLE_SVT_ADMIN'
+    MIXED_ROLES[005]='ROLE_SVT_ADMIN'
+    MIXED_ROLES[006]='ROLE_SVT_ADMIN'
+    MIXED_ROLES[007]='ROLE_SVT_ADMIN'
+    MIXED_ROLES[008]='ROLE_SVT_ADMIN'
+    MIXED_ATTRS[005]='dept-01'
+    MIXED_ATTRS[006]='dept-01'
+    MIXED_ATTRS[007]='dept-01'
+
+    for i in 001 002 003 004 005 006 007 008; do
+      USERNAME="svt-mixed-${i}"
+      ATTR="${MIXED_ATTRS[$i]:-}"
+      if [ -n "${ATTR}" ]; then
+        USER_JSON="{\"username\":\"${USERNAME}\",\"email\":\"${USERNAME}@example.com\",\"enabled\":true,\"emailVerified\":true,\"firstName\":\"SVT\",\"lastName\":\"Mixed${i}\",\"attributes\":{\"department\":[\"${ATTR}\"]},\"credentials\":[{\"type\":\"password\",\"value\":\"password\",\"temporary\":false}]}"
+      else
+        USER_JSON="{\"username\":\"${USERNAME}\",\"email\":\"${USERNAME}@example.com\",\"enabled\":true,\"emailVerified\":true,\"firstName\":\"SVT\",\"lastName\":\"Mixed${i}\",\"credentials\":[{\"type\":\"password\",\"value\":\"password\",\"temporary\":false}]}"
+      fi
+      curl -sf -o /dev/null -X POST "${KC_API}/users" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${USER_JSON}" 2>/dev/null || true
+
+      USER_ID=$(curl -sf "${KC_API}/users?username=${USERNAME}&exact=true" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" | jq -r '.[0].id // empty') || true
+      if [ -z "${USER_ID}" ]; then
+        log "WARNING: could not find ${USERNAME} after creation"
+        continue
+      fi
+
+      ROLE_REPS="[]"
+      for r in ${MIXED_ROLES[$i]}; do
+        ROLE_OBJ=$(curl -sf "${KC_API}/roles/${r}" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" 2>/dev/null) || true
+        if [ -n "${ROLE_OBJ}" ]; then
+          ROLE_REPS=$(echo "${ROLE_REPS}" | jq --argjson r "${ROLE_OBJ}" '. + [$r]')
+        fi
+      done
+      curl -sf -o /dev/null -X POST "${KC_API}/users/${USER_ID}/role-mappings/realm" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "${ROLE_REPS}" 2>/dev/null || true
+    done
+    log "svt-mixed-001..008 provisioned via Admin API"
+  fi
+else
+  log "svt-mixed-001..008 users verified"
+fi
+
+# ── svt-bench-* users (per-scenario decision-time task) ─────────────────────
+# The per-scenario decision-time sweep adds one Keycloak user per
+# bench-report scenario. Their full definition (roles + attributes)
+# lives in `svt-realm.json` and is imported on a fresh Keycloak boot;
+# this block is the Admin-API fallback for an existing Keycloak volume
+# that pre-dates the bench users. Definitions are sourced directly from
+# `svt-realm.json` so the fallback never drifts from the realm import.
+BENCH_REALM_JSON="${SVT_DIR}/common/compose/keycloak/svt-realm.json"
+if [ -f "${BENCH_REALM_JSON}" ]; then
+  log "verifying svt-bench-* users availability (per-scenario task)..."
+  BENCH_USERNAMES=$(jq -r '.users[] | select(.username|startswith("svt-bench-")) | .username' "${BENCH_REALM_JSON}")
+  BENCH_MISSING_USERS=()
+  while read -r USERNAME; do
+    [ -z "${USERNAME}" ] && continue
+    BENCH_TOKEN=$(curl -sf -X POST \
+      "http://localhost:${SVT_KC_PORT}/realms/svt-test/protocol/openid-connect/token" \
+      -d "grant_type=password" \
+      -d "client_id=authz-agent" \
+      -d "client_secret=authz-agent-secret" \
+      -d "username=${USERNAME}" \
+      -d "password=password" \
+      -d "scope=openid" 2>/dev/null | jq -r '.access_token // empty' 2>/dev/null) || true
+    if [ -z "${BENCH_TOKEN}" ]; then
+      BENCH_MISSING_USERS+=("${USERNAME}")
+    fi
+  done <<< "${BENCH_USERNAMES}"
+
+  if [ ${#BENCH_MISSING_USERS[@]} -gt 0 ]; then
+    log "svt-bench-* users missing (${#BENCH_MISSING_USERS[@]}) — provisioning via Keycloak Admin API..."
+    KC_ADMIN_TOKEN=$(curl -sf -X POST \
+      "http://localhost:${SVT_KC_PORT}/realms/master/protocol/openid-connect/token" \
+      -d "grant_type=password" \
+      -d "client_id=admin-cli" \
+      -d "username=kcadmin" \
+      -d "password=kcadmin" | jq -r '.access_token')
+
+    if [ -z "${KC_ADMIN_TOKEN}" ] || [ "${KC_ADMIN_TOKEN}" = "null" ]; then
+      log "WARNING: could not acquire Keycloak admin token — svt-bench users will be missing"
+    else
+      # First, ensure every PS_*_ROLE_* realm role exists. Pulled from
+      # the same realm.json so we don't enumerate hundreds of names by
+      # hand. Idempotent — POST returns 409 if the role already exists.
+      while read -r ROLE_NAME; do
+        [ -z "${ROLE_NAME}" ] && continue
+        curl -sf -o /dev/null -X POST "${KC_API}/roles" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "{\"name\":\"${ROLE_NAME}\"}" 2>/dev/null || true
+      done < <(jq -r '.roles.realm[] | select(.name|startswith("PS_")) | .name' "${BENCH_REALM_JSON}")
+
+      # Then, ensure each `oidc-usermodel-attribute-mapper` exists on
+      # the authz-agent client. Use the same mapper-name list the realm
+      # carries; idempotency is on the (name, protocol) pair.
+      EXISTING_MAPPERS=$(curl -sf "${KC_API}/clients" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        | jq -r '.[] | select(.clientId=="authz-agent") | .id') || true
+      if [ -n "${EXISTING_MAPPERS}" ]; then
+        CLIENT_ID="${EXISTING_MAPPERS}"
+        EXISTING_MAPPER_NAMES=$(curl -sf "${KC_API}/clients/${CLIENT_ID}/protocol-mappers/models" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+          | jq -r '.[].name' 2>/dev/null) || true
+        # Emit one POST per mapper that's in realm.json but not on the
+        # live client.
+        while read -r MAPPER_JSON; do
+          [ -z "${MAPPER_JSON}" ] && continue
+          MAPPER_NAME=$(echo "${MAPPER_JSON}" | jq -r '.name')
+          if echo "${EXISTING_MAPPER_NAMES}" | grep -Fxq "${MAPPER_NAME}"; then
+            continue
+          fi
+          curl -sf -o /dev/null -X POST \
+            "${KC_API}/clients/${CLIENT_ID}/protocol-mappers/models" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "${MAPPER_JSON}" 2>/dev/null || true
+        done < <(jq -c '.clients[] | select(.clientId=="authz-agent") | .protocolMappers[]' "${BENCH_REALM_JSON}")
+      fi
+
+      # Finally, create every missing svt-bench-* user with the exact
+      # role list and attribute map declared in the realm import.
+      for USERNAME in "${BENCH_MISSING_USERS[@]}"; do
+        USER_BODY=$(jq -c --arg u "${USERNAME}" '.users[] | select(.username==$u) | del(.realmRoles)' "${BENCH_REALM_JSON}")
+        if [ -z "${USER_BODY}" ]; then
+          log "WARNING: ${USERNAME} not found in realm.json — skipping"
+          continue
+        fi
+        curl -sf -o /dev/null -X POST "${KC_API}/users" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "${USER_BODY}" 2>/dev/null || true
+
+        USER_ID=$(curl -sf "${KC_API}/users?username=${USERNAME}&exact=true" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+          | jq -r '.[0].id // empty') || true
+        if [ -z "${USER_ID}" ]; then
+          log "WARNING: could not find ${USERNAME} after creation"
+          continue
+        fi
+
+        # Assemble the role-representation list for the user's
+        # realmRoles entry from realm.json.
+        ROLE_REPS="[]"
+        while read -r ROLE_NAME; do
+          [ -z "${ROLE_NAME}" ] && continue
+          ROLE_OBJ=$(curl -sf "${KC_API}/roles/${ROLE_NAME}" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" 2>/dev/null) || true
+          if [ -n "${ROLE_OBJ}" ]; then
+            ROLE_REPS=$(echo "${ROLE_REPS}" | jq --argjson r "${ROLE_OBJ}" '. + [$r]')
+          fi
+        done < <(jq -r --arg u "${USERNAME}" '.users[] | select(.username==$u) | .realmRoles[]?' "${BENCH_REALM_JSON}")
+        curl -sf -o /dev/null -X POST "${KC_API}/users/${USER_ID}/role-mappings/realm" \
+          -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "${ROLE_REPS}" 2>/dev/null || true
+      done
+      log "svt-bench-* users provisioned via Admin API"
+    fi
+  else
+    log "svt-bench-* users verified"
+  fi
+fi
+
+log "running smoke check (check/resource ORDER READ)..."
+SMOKE_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${SMOKE_TOKEN}" \
+  -d '{"type":"ORDER","operation":"READ","resource":{}}' \
+  "http://localhost:${SVT_AUTHZ_PORT}/access/v1/check/resource")
+
+if [ "${SMOKE_CODE}" != "200" ]; then
+  log "ERROR: smoke check failed (HTTP ${SMOKE_CODE})"
+  exit 1
+fi
+log "smoke check passed"
+
+log "environment ready — run 'test/svt/scripts/run' or 'test/svt/scripts/run-opa-direct' to start a load test"

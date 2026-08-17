@@ -1,0 +1,24 @@
+[
+  {
+    "_comment": "AGG rows 65/66 part A: first condition branch for GOLD tier. Matching any row on the same locator is sufficient for allow.",
+    "component": "PARITY",
+    "reason": "AGG condition OR row A",
+    "resourceType": "PARITY_SUITE_AGG_COND",
+    "operation": "READ",
+    "condition": "resource.tier == 'GOLD'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b62"
+  },
+  {
+    "_comment": "AGG rows 65/66 part B: second condition branch for SILVER tier.",
+    "component": "PARITY",
+    "reason": "AGG condition OR row B",
+    "resourceType": "PARITY_SUITE_AGG_COND",
+    "operation": "READ",
+    "condition": "resource.tier == 'SILVER'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b63"
+  }
+]

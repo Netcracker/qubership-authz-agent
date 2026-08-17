@@ -1,0 +1,18 @@
+{
+  "authorizationToken": "Bearer svt-profiler-token",
+  "authorizationType": "",
+  "requestHeaders": {},
+  "decisionLogPipTrace": true,
+  "resources": [
+    {
+      "resourceType": "SVT_RT_01",
+      "operation": "OP_01",
+      "resource": {
+        "ownerId": "svt-matrix-001@example.com",
+        "departmentId": "dept-01"
+      }
+    }
+  ],
+  "subject": "Bearer svt-profiler-token",
+  "ignoreRls": false
+}

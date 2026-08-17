@@ -1,0 +1,12 @@
+{
+  "providers": [
+    {
+      "id": "keycloak-svt",
+      "issuer": "http://keycloak:8080/realms/svt-test",
+      "audiences": [
+        "authz-agent"
+      ],
+      "required": true
+    }
+  ]
+}

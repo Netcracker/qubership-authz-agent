@@ -1,0 +1,155 @@
+{{- if .Values.AUTHZ_POLICY_ADMIN_ENABLED }}
+# Optional access-control stub (authz-agent-ADR-0073).
+#
+# Serves the access-control v3 config API from policies uploaded over its own
+# control surface, so a team with no access-control installation can still feed
+# authz-agent through the production pull path. The whole file is gated by
+# AUTHZ_POLICY_ADMIN_ENABLED (default false); with the stub disabled the chart renders
+# exactly what it rendered before this feature existed.
+#
+# NOT a production component: the control surface has no authentication at all,
+# so anything able to reach this Service — or the internal gateway the chart
+# registers it on — can replace the authorization policy set of every agent
+# pulling from it.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: '{{ include "authz-agent.authzPolicyAdminName" . }}-data'
+  labels:
+    {{- include "authz-agent.authzPolicyAdminLabels" . | nindent 4 }}
+  {{- if .Values.AUTHZ_POLICY_ADMIN_STORAGE_RETAIN }}
+  annotations:
+    # The volume is the ONLY copy of the uploaded policies — the chart creates no
+    # seed ConfigMap — so it outlives `helm uninstall` and an accidental
+    # AUTHZ_POLICY_ADMIN_ENABLED=false. Removing it is a deliberate
+    # `kubectl delete pvc {{ include "authz-agent.authzPolicyAdminName" . }}-data`.
+    helm.sh/resource-policy: keep
+  {{- end }}
+spec:
+  accessModes:
+    # ReadWriteOnce and a single replica are the same decision: the stub's state
+    # is local files with no coordination between processes.
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: '{{ .Values.AUTHZ_POLICY_ADMIN_STORAGE_SIZE }}'
+  {{- if .Values.AUTHZ_POLICY_ADMIN_STORAGE_CLASS }}
+  # Rendered only when non-empty. `storageClassName: ""` is NOT the same as an
+  # absent key: the empty string disables dynamic provisioning and leaves the
+  # claim Pending forever on a cluster that has a default class.
+  storageClassName: '{{ .Values.AUTHZ_POLICY_ADMIN_STORAGE_CLASS }}'
+  {{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "authz-agent.authzPolicyAdminName" . }}'
+  labels:
+    {{- include "authz-agent.authzPolicyAdminLabels" . | nindent 4 }}
+spec:
+  # Exactly one Pod, by design. The uploaded policies live on the Pod's volume
+  # with no replication, so a second Pod would serve different content and a
+  # different hash, and the agent's pull loop would flap between them. Scaling
+  # this Deployment up is never correct.
+  replicas: 1
+  strategy:
+    # Recreate, not RollingUpdate: a surge Pod cannot attach the same
+    # ReadWriteOnce volume, so a rolling update would deadlock on the attach.
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "authz-agent.authzPolicyAdminSelector" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "authz-agent.authzPolicyAdminLabels" . | nindent 8 }}
+    spec:
+      # No serviceAccountName: the stub calls no Kubernetes API, and it must not
+      # inherit the agent's projected M2M token.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        # Makes the mounted volume group-writable for the runtime user. Some CSI
+        # and NFS provisioners ignore fsGroup; the container then fails its
+        # startup write probe and reports the directory and uid in its logs.
+        fsGroup: 65534
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: '{{ include "authz-agent.authzPolicyAdminName" . }}-data'
+      containers:
+        - name: authz-policy-admin
+          image: '{{ include "authz-agent.authzPolicyAdminImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          ports:
+            - name: web
+              containerPort: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+              protocol: TCP
+          env:
+            - name: AUTHZ_POLICY_ADMIN_PORT
+              value: '{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
+            # Uploaded policies and PIPs are written here as policies.json /
+            # pips.json and reloaded at startup.
+            - name: AUTHZ_POLICY_ADMIN_DATA_DIR
+              value: '{{ .Values.AUTHZ_POLICY_ADMIN_DATA_DIR }}'
+          volumeMounts:
+            - name: data
+              mountPath: '{{ .Values.AUTHZ_POLICY_ADMIN_DATA_DIR }}'
+          # An unwritable volume makes the process exit at startup. The startup
+          # probe turns that into a fast, obvious CrashLoopBackOff instead of a
+          # liveness-driven restart storm.
+          startupProbe:
+            httpGet:
+              path: /authz-policy-admin/hash
+              port: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+            periodSeconds: 2
+            failureThreshold: 15
+          readinessProbe:
+            httpGet:
+              path: /authz-policy-admin/hash
+              port: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /authz-policy-admin/hash
+              port: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: '{{ .Values.AUTHZ_POLICY_ADMIN_CPU_REQUEST }}'
+              memory: '{{ .Values.AUTHZ_POLICY_ADMIN_MEM_REQUEST }}'
+            limits:
+              cpu: '{{ .Values.AUTHZ_POLICY_ADMIN_CPU_LIMIT }}'
+              memory: '{{ .Values.AUTHZ_POLICY_ADMIN_MEM_LIMIT }}'
+          securityContext:
+            allowPrivilegeEscalation: false
+            # Safe at any value: every write lands on the mounted volume.
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "authz-agent.authzPolicyAdminName" . }}'
+  labels:
+    {{- include "authz-agent.authzPolicyAdminLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "authz-agent.authzPolicyAdminSelector" . | nindent 4 }}
+  ports:
+    # Service port equals the container port on purpose: every curl example in
+    # the READMEs and both Compose stacks use 18090, so
+    # `kubectl port-forward svc/{{ include "authz-agent.authzPolicyAdminName" . }} 18090:18090`
+    # makes them apply verbatim.
+    - name: web
+      port: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+      targetPort: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+      protocol: TCP
+{{- end }}

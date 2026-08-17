@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "GENERAL URL-based PIP for the PARITY_PAYMENT fixture. The URL hardcodes the mock service DNS name on the Compose network per D-E; no URL rewrite is performed. The mock service path matches a default route already served by tests/integration/pipstub/main.go ('/api/v1/pip/allowed'), which returns a JSON array of ids. Legacy access-control issues POST with JSON body containing userId + processed requestAttributes (see GeneralInformationPointLoader.java:71-85); the pipstub is method-agnostic and body-agnostic so no extension is required per D-D. `cacheable: false` disables legacy's per-session PIP cache so parity goldens captured via PARITY_GOLDEN_RECORD=1 reflect per-test fresh-resolution output per ADR-0052.",
+    "name": "subject.parityAllowed",
+    "url": "http://pip-mock:8090/api/v1/pip/allowed",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "requestAttributes": {
+      "resourceType": "PARITY_PAYMENT"
+    },
+    "cacheable": false
+  }
+]

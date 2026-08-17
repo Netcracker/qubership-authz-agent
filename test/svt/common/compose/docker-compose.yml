@@ -1,0 +1,268 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--health-enabled=true"]
+    ports:
+      - "${SVT_KC_PORT:-25556}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: kcadmin
+      KC_HOSTNAME: http://keycloak:8080
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 15s
+    volumes:
+      - ./keycloak/svt-realm.json:/opt/keycloak/data/import/svt-realm.json:ro
+
+  authz-policy-admin:
+    build:
+      context: ../../../..
+      dockerfile: build/authz-policy-admin/Dockerfile
+    pull_policy: build
+    image: authz-policy-admin:local
+    ports:
+      - "${SVT_AUTHZ_POLICY_ADMIN_PORT:-28093}:18090"
+    environment:
+      AUTHZ_POLICY_ADMIN_PORT: "18090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:18090/authz-policy-admin/hash || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  # ── split topology: envoy + opa-bootstrap + opa + pap-client + collector ──
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    depends_on:
+      pap-client:
+        condition: service_healthy
+      decision-log-collector:
+        condition: service_healthy
+    ports:
+      - "${SVT_AUTHZ_PORT:-28080}:8080"
+      - "${SVT_AUTHZ_ADMIN_PORT:-29901}:9901"
+    volumes:
+      - ../../../../test/.runtime-configs/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      - ../../../../configs/envoy/lua:/etc/envoy/lua:ro
+    # `--concurrency 4` pins Envoy to 4 worker threads instead of the
+    # auto-detected default (= number of hardware threads, 16 on the
+    # reference host). 4 workers absorb the in-flight request budget at
+    # 1000 RPS × ~5 ms p95 target while avoiding cache-thrashing and
+    # scheduler noise that 16 workers introduce on the same physical
+    # cores. See authz-agent-ADR-0056.
+    command: ["-c", "/etc/envoy/envoy.yaml", "--concurrency", "4", "--log-level", "warn", "--service-cluster", "authz-agent"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9901/ready || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  # opa-bootstrap: one-shot JWKS bootstrap before OPA starts.
+  # Runs `pap-client bootstrap` which fetches JWKS from each trusted IdP
+  # and writes them to the svt-common-opa-data volume (/etc/opa/data/authn/).
+  # Exits 0 when done. OPA and pap-client both depend on this completing.
+  opa-bootstrap:
+    build:
+      context: ../../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    command: ["bootstrap"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: 2
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    volumes:
+      - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - svt-common-opa-data:/etc/opa/data
+      - svt-common-authz-run:/var/run/authz
+
+  # opa: vanilla upstream Open Policy Agent (no Netcracker code).
+  # Reads JWKS and data written by opa-bootstrap and pap-client from the
+  # svt-common-opa-data volume.
+  # Restart survival: on OPA container restart, OPA re-reads all JSON files
+  # from /etc/opa/data, so push-written documents are immediately available
+  # without a re-push (restart survival).
+  opa:
+    image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    depends_on:
+      opa-bootstrap:
+        condition: service_completed_successfully
+    # cpus: 8
+    # mem_limit: 8g
+    command:
+      - run
+      - --server
+      - --addr
+      - "0.0.0.0:8181"
+      - --ignore=..*
+      - --config-file
+      - /etc/opa/opa-config.yaml
+      - /etc/opa/policies
+      - /etc/opa/data
+    healthcheck:
+      # OPA v1.x removed the `opa health` subcommand; use eval + http.send.
+      test: ["CMD", "/opa", "eval", "--fail", "http.send({\"method\":\"GET\",\"url\":\"http://localhost:8181/health\"}).status_code == 200"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    volumes:
+      - svt-common-opa-data:/etc/opa/data:ro
+      - ../../../../test/.runtime-configs/opa/opa-config.yaml:/etc/opa/opa-config.yaml:ro
+      - ../../../../charts/authz-agent/files/opa/policies:/etc/opa/policies:ro
+
+  # pap-client: Policy Administration Point client.
+  # Pulls policies and PIPs from authz-policy-admin, writes them to the
+  # svt-common-opa-data volume (for restart survival), and pushes them into
+  # OPA's Data API. Shares OPA's network namespace via network_mode: "service:opa"
+  # so it reaches OPA on 127.0.0.1:8181 (loopback).
+  pap-client:
+    build:
+      context: ../../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    network_mode: "service:opa"
+    depends_on:
+      opa:
+        condition: service_healthy
+      opa-bootstrap:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      authz-policy-admin:
+        condition: service_healthy
+    environment:
+      AUTHZ_PAP_CLIENT_ADDR: "0.0.0.0:8182"
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: 2
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+      # Pull loop: fetch policies from the authz-policy-admin on its container port.
+      # The cadence comes from SVT_PAP_PULL_INTERVAL so the host-side waits after
+      # a re-seed and the puller's actual interval cannot drift apart.
+      AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
+      AUTHZ_PAP_CLIENT_PULL_INTERVAL: "${SVT_PAP_PULL_INTERVAL:-2}"
+      # Token file: a static dummy token so authz-policy-admin's Authorization check passes.
+      AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
+    healthcheck:
+      test: ["CMD", "pap-client", "healthcheck"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - ./keycloak/ac-pull-token:/etc/authz/ac-pull-token:ro
+      # svt-common-opa-data: read-write for pap-client (writes policies.json,
+      # pips.json, m2m.json for restart survival).
+      - svt-common-opa-data:/etc/opa/data
+      - svt-common-authz-run:/var/run/authz
+
+  decision-log-collector:
+    build:
+      context: ../../../..
+      dockerfile: build/collector/Dockerfile
+    pull_policy: build
+    image: decision-log-collector:local
+    depends_on:
+      opa:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8183/healthz || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    ports:
+      - "${SVT_CADVISOR_PORT:-28888}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    ports:
+      - "${SVT_PROMETHEUS_PORT:-29090}:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-admin-api"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - svt-prometheus-data:/prometheus
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "${SVT_GRAFANA_PORT:-23000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ../grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ../grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - svt-grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  jmeter:
+    image: justb4/jmeter:5.5
+    profiles: ["run"]
+    volumes:
+      - ../jmeter/data:/data:ro
+    depends_on:
+      envoy:
+        condition: service_healthy
+
+  # Host-networked JMeter for Envoy-boundary tests where one
+  # Docker-bridge hop matters at high RPS. Used by
+  # `svt_run_jmeter_mixed_flow` (per-scenario + mixed-flow harness).
+  # OPA-direct tests still use the bridged `jmeter` service above
+  # because OPA's port 8181 is not exposed to the host. See
+  # authz-agent-ADR-0056.
+  jmeter-host:
+    image: justb4/jmeter:5.5
+    profiles: ["run"]
+    network_mode: host
+    volumes:
+      - ../jmeter/data:/data:ro
+    depends_on:
+      envoy:
+        condition: service_healthy
+
+volumes:
+  # svt-common-opa-data: shared between opa-bootstrap (write), opa (read), and
+  # pap-client (write). Covers the full OPA data directory so
+  # pap-client's restart-survival writes (policies.json, pips.json, m2m.json)
+  # are also persisted for OPA to reload on container restart.
+  svt-common-opa-data: {}
+  # svt-common-authz-run: shared between opa-bootstrap (writes bootstrap-status.json)
+  # and pap-client (reads bootstrap-status.json, writes pull-status.json).
+  svt-common-authz-run: {}
+  svt-prometheus-data: {}
+  svt-grafana-data: {}

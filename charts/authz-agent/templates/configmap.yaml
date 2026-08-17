@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-runtime'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+data:
+  envoy.yaml: |
+    {{- $envoyTmpl := .Files.Get "files/envoy/envoy.yaml.tmpl" -}}
+    {{- $envoyTmpl = $envoyTmpl | replace "__PAP_CLIENT_HOST__" "127.0.0.1" -}}
+    {{- $envoyTmpl = $envoyTmpl | replace "__OPA_HOST__"          "127.0.0.1" -}}
+    {{- $envoyTmpl = $envoyTmpl | replace "__COLLECTOR_HOST__"    "127.0.0.1" -}}
+    {{- $envoyTmpl | nindent 4 }}
+  opa-config.yaml: |
+    {{- $opaTmpl := .Files.Get "files/opa/opa-config.yaml.tmpl" -}}
+    {{- $opaTmpl = $opaTmpl | replace "__COLLECTOR_HOST__" "127.0.0.1" -}}
+    {{- $opaTmpl | nindent 4 }}
+---
+# Trusted token providers live in their own ConfigMap, separate from the
+# runtime config above, because this one is meant to be edited on a live
+# installation: `pap-client` watches the mounted file and republishes
+# `data.authn` into OPA without a Pod restart (authz-agent-ADR-0070). Keeping
+# it apart from envoy.yaml / opa-config.yaml — which do need a restart to take
+# effect — makes "editable at runtime" a property of the object, not a footnote.
+#
+# The Deployment mounts this ConfigMap as a directory and NOT with `subPath`:
+# the kubelet never updates a subPath mount, so a subPath'd file would leave
+# every edit invisible inside the container until the Pod was recreated.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+data:
+  trusted-providers.json: |-
+{{ (dict "providers" (include "authz-agent.trustedProviders" . | fromJsonArray)) | toPrettyJson | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-policies'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+data:
+{{ (.Files.Glob "files/opa/policies/*.rego").AsConfig | indent 2 }}
+---
+# ServiceAccount that pap-client uses to obtain a projected Kubernetes
+# service-account token.  The token is sent as a Bearer credential on every
+# request to access-control's v3 config API; access-control recognises it as
+# an M2M principal via the `kubernetes.io` claim check in isM2M().
+# The ServiceAccount itself needs no RBAC — the projected token is sufficient.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}

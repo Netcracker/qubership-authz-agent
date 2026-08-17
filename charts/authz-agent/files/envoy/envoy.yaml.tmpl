@@ -1,0 +1,261 @@
+static_resources:
+  listeners:
+    - name: listener_http
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 8080
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: ingress_http
+                normalize_path: true
+                merge_slashes: true
+                route_config:
+                  name: local_route
+                  virtual_hosts:
+                    - name: authz_agent
+                      domains: ["*"]
+                      routes:
+                        - match:
+                            path: /internal/v1/decision-logs
+                          route:
+                            cluster: decision_log_cluster
+                            timeout: 30s
+                        - match:
+                            path: /access/v1/authorize
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                        - match:
+                            path: /access/v1/check/resource/bulk/operations
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource_bulk_operations
+                        - match:
+                            path: /preview/v1/check/resource/bulk/operations
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource_bulk_operations
+                        - match:
+                            path: /access/v1/check/resource/bulk
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource_bulk
+                        - match:
+                            path: /access/v1/check/resource
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource
+                        - match:
+                            path: /access/v1/check/filter
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_filter
+                        - match:
+                            path: /access/v2/check/resource/bulk/operations
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource_bulk_operations_v2
+                        - match:
+                            path: /preview/v2/check/resource/bulk/operations
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource_bulk_operations_v2
+                        - match:
+                            path: /access/v2/check/resource
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_resource_v2
+                        - match:
+                            path: /access/v2/check/filter
+                          route:
+                            cluster: opa_cluster
+                            prefix_rewrite: /v1/data/authorize
+                            timeout: 30s
+                          typed_per_filter_config:
+                            envoy.filters.http.lua:
+                              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+                              name: check_filter
+                        - match:
+                            path: /api-version
+                          direct_response:
+                            status: 200
+                            body:
+                              inline_string: '{"specs":[{"specRootUrl":"/access","major":3,"minor":0,"supportedMajors":[1,2,3]},{"specRootUrl":"/api","major":1,"minor":1,"supportedMajors":[1]},{"specRootUrl":"/template","major":1,"minor":0,"supportedMajors":[1]},{"specRootUrl":"/preview","major":2,"minor":0,"supportedMajors":[1,2]}]}'
+                          response_headers_to_add:
+                            - header:
+                                key: content-type
+                                value: application/json
+                              append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                        - match:
+                            path: /health
+                          route:
+                            cluster: pap_client_cluster
+                            timeout: 5s
+                        - match:
+                            prefix: /
+                          direct_response:
+                            status: 404
+                            body:
+                              inline_string: '{"message":"not found"}'
+                http_filters:
+                  - name: envoy.filters.http.lua
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+                      default_source_code:
+                        inline_string: |
+                          function envoy_on_request(request_handle)
+                          end
+
+                          function envoy_on_response(response_handle)
+                          end
+                      source_codes:
+                        check_resource:
+                          filename: /etc/envoy/lua/check_resource.lua
+                        check_resource_bulk:
+                          filename: /etc/envoy/lua/check_resource_bulk.lua
+                        check_resource_bulk_operations:
+                          filename: /etc/envoy/lua/check_resource_bulk_operations.lua
+                        check_resource_v2:
+                          filename: /etc/envoy/lua/check_resource_v2.lua
+                        check_resource_bulk_operations_v2:
+                          filename: /etc/envoy/lua/check_resource_bulk_operations_v2.lua
+                        check_filter:
+                          filename: /etc/envoy/lua/check_filter.lua
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: pap_client_cluster
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: pap_client_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: __PAP_CLIENT_HOST__
+                      port_value: 8182
+    - name: opa_cluster
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      # HTTP/1.1 keepalive tuning toward OPA.
+      #
+      # h2c was tried on 2026-05-19 with OPA `--h2c` flag enabled
+      # and Envoy `http2_protocol_options` on this cluster. The
+      # wire path works end-to-end (5/5 smoke 200,
+      # `upstream_cx_http2_total > 0`, pending queue collapsed
+      # from 9 128 to 39). A clean-host latency re-evaluation
+      # the same day (load avg ≤ 1) showed h2c is neutral on the
+      # OPA-light paths (ols-single, ols-single-10roles within
+      # ±1 ms) and regresses heavy-Rego scenarios
+      # (ols-single-100roles @ 500 RPS, 9 → 12 ms p95, +33 %).
+      # We stay on HTTP/1.1 keepalive. See authz-agent-ADR-0056.
+      #
+      # HTTP/1.1 keepalive tuning:
+      #   * `max_requests_per_connection: 0` — never cycle a healthy
+      #     keepalive connection (default = 0 already, set explicit so
+      #     it survives any upstream default change).
+      #   * `common_http_protocol_options.idle_timeout: 5 min` — keep
+      #     pooled sockets warm between bursts; default 1 h is fine,
+      #     but pin so OPA restarts do not trigger a `Connection: close`
+      #     storm on the next workload.
+      #   * `circuit_breakers.max_pending_requests: 4096` (vs. default
+      #     1024) — widen the queue limit so short JMeter ramp-in
+      #     bursts at 1000 RPS do not surface as 503s; pair with
+      #     `max_connections: 4096`, `max_requests: 65536`,
+      #     `max_retries: 3` for the same reason.
+      # See authz-agent-ADR-0056.
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          common_http_protocol_options:
+            idle_timeout: 300s
+            max_requests_per_connection: 0
+          explicit_http_config:
+            http_protocol_options: {}
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 4096
+            max_pending_requests: 4096
+            max_requests: 65536
+            max_retries: 3
+      load_assignment:
+        cluster_name: opa_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: __OPA_HOST__
+                      port_value: 8181
+    - name: decision_log_cluster
+      connect_timeout: 1s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: decision_log_cluster
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: __COLLECTOR_HOST__
+                      port_value: 8183
+
+admin:
+  access_log_path: /dev/stdout
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901

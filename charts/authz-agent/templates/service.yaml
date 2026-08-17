@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    name: '{{ include "authz-agent.serviceName" . }}'
+  ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: opa
+      port: 8181
+      targetPort: 8181
+      protocol: TCP

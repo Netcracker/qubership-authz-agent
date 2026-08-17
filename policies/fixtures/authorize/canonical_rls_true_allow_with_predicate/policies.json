@@ -1,0 +1,46 @@
+{
+  "ols": {
+    "CUSTOMER": {
+      "UPDATE": [
+        "ROLE_EDITOR"
+      ]
+    }
+  },
+  "rls": {
+    "CUSTOMER": {
+      "UPDATE": {
+        "ROLE_EDITOR": [
+          {
+            "conditionAst": {
+              "op": "eq",
+              "args": [
+                {
+                  "ref": {
+                    "scope": "resource",
+                    "path": [
+                      "ownerId"
+                    ]
+                  }
+                },
+                {
+                  "ref": {
+                    "scope": "subject",
+                    "path": [
+                      "id"
+                    ]
+                  }
+                }
+              ]
+            },
+            "predicates": [
+              {
+                "predicate": "ownerId==${subject.id}",
+                "type": "rsql"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

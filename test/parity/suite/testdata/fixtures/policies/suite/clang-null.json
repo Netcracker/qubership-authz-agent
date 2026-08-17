@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 58: null handling. Grammar exposes 'IS NULL' and 'IS NOT NULL' via nullOperator. Sub-cases: ownerId=42 (true, not null), ownerId omitted (false).",
+    "component": "PARITY",
+    "reason": "CLANG IS NOT NULL",
+    "resourceType": "PARITY_SUITE_CLANG_NULL",
+    "operation": "READ",
+    "condition": "resource.ownerId IS NOT NULL",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c09"
+  }
+]

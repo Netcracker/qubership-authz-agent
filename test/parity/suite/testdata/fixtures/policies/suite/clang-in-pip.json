@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 55: resource.status IN subject.parityStatusAllowed, where the RHS collection comes from a GENERAL PIP rather than a literal list.",
+    "component": "PARITY",
+    "reason": "CLANG IN with PIP-backed collection",
+    "resourceType": "PARITY_SUITE_CLANG_IN_PIP",
+    "operation": "READ",
+    "condition": "resource.status IN subject.parityStatusAllowed",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c08"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "AGG row 67: only READ has a matching rule; WRITE is intentionally absent so the bulk-operations response must keep the operation buckets independent.",
+    "component": "PARITY",
+    "reason": "AGG per-operation independence",
+    "resourceType": "PARITY_SUITE_AGG_OPS",
+    "operation": "READ",
+    "condition": "resource.status == 'PUBLIC'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b64"
+  }
+]

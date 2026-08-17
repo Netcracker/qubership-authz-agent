@@ -1,0 +1,890 @@
+{
+  "info": {
+    "_postman_id": "c4a8a215-4d43-40c7-a2ae-b2f7b930fc3f",
+    "name": "Authz Agent Runtime (docker-compose)",
+    "description": "Collection for the runtime stack from tests/integration/runtime/docker-compose.yml. Includes token acquisition, policy upload, authorization endpoints, and not-yet-wired compatibility endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Setup",
+      "item": [
+        {
+          "name": "Get Token (order-reader)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"order_reader_access_token\", json.access_token || \"\");",
+                  "pm.environment.set(\"order_reader_bearer\", json.access_token ? `Bearer ${json.access_token}` : \"\");",
+                  "pm.test(\"access_token present\", function () {",
+                  "  pm.expect(json.access_token).to.be.a(\"string\").and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{keycloak_scope}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{order_reader_username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{user_password}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{keycloak_client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{keycloak_client_secret}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{keycloak_base_url}}/protocol/openid-connect/token",
+            "description": "Password-grant token for order-reader user."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Token (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.environment.set(\"admin_access_token\", json.access_token || \"\");",
+                  "pm.environment.set(\"admin_bearer\", json.access_token ? `Bearer ${json.access_token}` : \"\");",
+                  "pm.test(\"access_token present\", function () {",
+                  "  pm.expect(json.access_token).to.be.a(\"string\").and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "password",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "{{keycloak_scope}}",
+                  "type": "text"
+                },
+                {
+                  "key": "username",
+                  "value": "{{admin_username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{user_password}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{keycloak_client_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{keycloak_client_secret}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{keycloak_base_url}}/protocol/openid-connect/token",
+            "description": "Password-grant token for admin user."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. Canonical /access/v1/authorize",
+      "item": [
+        {
+          "name": "ORDER READ, ignoreRls=false (order-reader, expected DENY)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{order_reader_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\",\n        \"resource\": {\n          \"id\": \"order-1\",\n          \"ownerId\": \"order-reader-1\"\n        }\n      }\n    ],\n    \"subject\": \"{{order_reader_bearer}}\",\n    \"ignoreRls\": false\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "ADR-0062: canonical body is wrapped in {\"input\": ...} and carries authorizationToken in the body (NOT the HTTP Authorization header)."
+          },
+          "response": []
+        },
+        {
+          "name": "PUBLIC_DOC READ, ignoreRls omitted (admin, expected ALLOW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"PUBLIC_DOC\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"{{admin_bearer}}\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize"
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER READ, ignoreRls=true (order-reader, OLS-only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{order_reader_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\",\n        \"resource\": {\n          \"id\": \"order-1\",\n          \"ownerId\": \"order-reader-1\"\n        }\n      }\n    ],\n    \"subject\": \"{{order_reader_bearer}}\",\n    \"ignoreRls\": true\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize"
+          },
+          "response": []
+        },
+        {
+          "name": "Multi-resource order preserved",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{order_reader_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      },\n      {\n        \"resourceType\": \"ATTACHMENT\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"{{order_reader_bearer}}\",\n    \"ignoreRls\": false\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing admission token (expected 200 with result.authError)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "ADR-0062 Decision 11 admission failure: empty body.authorizationToken → HTTP 200 with result.authError.{status: 401, reason: \"Authorization token is missing\"} (not a 4xx; the OPA Data API always answers 200). (Pre-ADR-0062 this was signalled by a missing HTTP Authorization header.)"
+          },
+          "response": []
+        },
+        {
+          "name": "Invalid admission token (expected 200 with result.authError)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"Bearer invalid.jwt.token\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"{{order_reader_bearer}}\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "ADR-0062 Decision 11 admission failure: invalid body.authorizationToken → HTTP 200 with result.authError.{status: 401, reason: \"Token is not a valid JWT\"} (not a 4xx; the OPA Data API always answers 200)."
+          },
+          "response": []
+        },
+        {
+          "name": "Valid admission token, invalid subject (expected 200 DENY with reason)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"Bearer invalid.jwt.token\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "Admission passes (valid body.authorizationToken), subject invalid → 200 with decision=DENY and reason in each result."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Legacy /access/v1/check/resource",
+      "item": [
+        {
+          "name": "Authorization header (order-reader)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "{{order_reader_bearer}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORDER\",\n  \"operation\": \"READ\",\n  \"resource\": {\n    \"id\": \"order-1\",\n    \"ownerId\": \"order-reader-1\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Authorization header (admin, ALLOW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "{{admin_bearer}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ATTACHMENT\",\n  \"operation\": \"READ\",\n  \"resource\": {}\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Incoming-Token ignored (Authorization used, expected success)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Incoming-Token", "value": "Bearer expired-token-ignored"},
+              {"key": "Authorization", "value": "{{order_reader_bearer}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORDER\",\n  \"operation\": \"READ\",\n  \"resource\": {\n    \"id\": \"order-1\",\n    \"ownerId\": \"order-reader-1\"\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}",
+            "description": "Incoming-Token is silently ignored; only Authorization is used (ADR-0021)"
+          },
+          "response": []
+        },
+        {
+          "name": "No token (expected 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ATTACHMENT\",\n  \"operation\": \"READ\",\n  \"resource\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Legacy /access/v1/check/resource/bulk",
+      "item": [
+        {
+          "name": "Owner mismatch denied (expected [])",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{order_reader_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": \"item-1\",\n    \"type\": \"ORDER\",\n    \"operation\": \"READ\",\n    \"resource\": {\n      \"ownerId\": \"no-match\"\n    }\n  },\n  {\n    \"id\": \"item-2\",\n    \"type\": \"ORDER\",\n    \"operation\": \"READ\",\n    \"resource\": {\n      \"ownerId\": \"also-no\"\n    }\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource/bulk?tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Admin allow sample",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": \"item-1\",\n    \"type\": \"ORDER\",\n    \"operation\": \"READ\",\n    \"resource\": {}\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource/bulk?tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Empty array",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource/bulk?tenant_id={{tenant_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Legacy /access/v1/check/filter",
+      "item": [
+        {
+          "name": "ORDER READ (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/filter?resourceType=ORDER&operation=READ&tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Unknown resource type (expected DENY)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/filter?resourceType=NONEXISTENT&operation=READ&tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing operation (still returns calculationResult)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{order_reader_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/filter?resourceType=ATTACHMENT&tenant_id={{tenant_id}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Missing resourceType (expected 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/filter?operation=READ&tenant_id={{tenant_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. DENY Reason Scenarios (PIP failure / missing attr)",
+      "item": [
+        {
+          "name": "PIP resolution failure (expected DENY with reason)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"PIP_FAIL_TEST\",\n        \"operation\": \"READ\",\n        \"resource\": {\"ownerId\": \"X\"}\n      }\n    ],\n    \"subject\": \"{{admin_bearer}}\",\n    \"ignoreRls\": false\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "PIP for brokenPip fails → DENY with reason containing 'PIP resolution failed: brokenPip'. Requires broken PIP to be uploaded first."
+          },
+          "response": []
+        },
+        {
+          "name": "Missing subject attribute (expected DENY with reason)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ATTR_MISS_TEST\",\n        \"operation\": \"READ\",\n        \"resource\": {\"ownerId\": \"X\"}\n      }\n    ],\n    \"subject\": \"{{admin_bearer}}\",\n    \"ignoreRls\": false\n  }\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "Policy references subject.nonExistentAttr which is not a PIP and not in JWT → DENY with reason containing 'subject attribute not found: nonExistentAttr'"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Predicate Substitution",
+      "item": [
+        {
+          "name": "Subject attribute substitution (PUBLIC_DOC/READ → subjectId resolved)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('decision is ALLOW', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.result.results[0].decision).to.eql('ALLOW');",
+                  "});",
+                  "pm.test('rlsPredicate has substituted subject.id', function () {",
+                  "  const pred = pm.response.json().result.results[0].rlsPredicate || '';",
+                  "  pm.expect(pred).to.match(/^subjectId==/);",
+                  "  pm.expect(pred).to.not.include('${subject.');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [{\"resourceType\": \"PUBLIC_DOC\", \"operation\": \"READ\"}],\n    \"subject\": \"{{admin_bearer}}\",\n    \"ignoreRls\": false\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "Verifies that ${subject.id} in predicate is substituted with actual JWT sub claim value."
+          },
+          "response": []
+        },
+        {
+          "name": "PIP value substitution (CUSTOMER/READ → allowedCustomers resolved)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('decision is ALLOW', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.result.results[0].decision).to.eql('ALLOW');",
+                  "});",
+                  "pm.test('rlsPredicate has substituted PIP value', function () {",
+                  "  const pred = pm.response.json().result.results[0].rlsPredicate || '';",
+                  "  pm.expect(pred).to.eql('customerId=in=(C1,C2,C3)');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [{\"resourceType\": \"CUSTOMER\", \"operation\": \"READ\"}],\n    \"subject\": \"{{admin_bearer}}\",\n    \"ignoreRls\": false\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{authz_base_url}}/access/v1/authorize",
+            "description": "Verifies that ${subject.allowedCustomers} in predicate is substituted with PIP-resolved value from pip-stub (C1,C2,C3). Requires PIP config uploaded beforehand."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Contract Endpoints (not wired, expected 404)",
+      "item": [
+        {
+          "name": "GET /api-version",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{authz_base_url}}/api-version"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /access/v1/check/resource/bulk/operations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": \"some-id\",\n    \"operations\": [\"READ\"],\n    \"type\": \"ORDER\",\n    \"resource\": {}\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v1/check/resource/bulk/operations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /preview/v1/check/resource/bulk/operations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"id\": \"some-id\",\n    \"operations\": [\"READ\"],\n    \"type\": \"ORDER\",\n    \"resource\": {}\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/preview/v1/check/resource/bulk/operations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /access/v2/check/resource",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORDER\",\n  \"operation\": \"READ\",\n  \"resource\": {}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v2/check/resource"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /access/v2/check/resource/bulk/operations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORDER\",\n  \"resources\": [\n    {\n      \"id\": \"some-id\",\n      \"operations\": [\"READ\"],\n      \"resource\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v2/check/resource/bulk/operations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /preview/v2/check/resource/bulk/operations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"ORDER\",\n  \"resources\": [\n    {\n      \"id\": \"some-id\",\n      \"operations\": [\"READ\"],\n      \"resource\": {}\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/preview/v2/check/resource/bulk/operations"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /access/v2/check/filter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "{{admin_bearer}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/access/v2/check/filter?resourceType=ORDER&operation=READ&tenant_id={{tenant_id}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. Hidden/Internal (expected 404 on public Envoy)",
+      "item": [
+        {
+          "name": "POST /authorize",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"{{admin_bearer}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/authorize"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /v1/data/authorize",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"{{admin_bearer}}\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{authz_base_url}}/v1/data/authorize"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

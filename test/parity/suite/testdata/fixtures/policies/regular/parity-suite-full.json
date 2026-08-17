@@ -1,0 +1,109 @@
+[
+  {
+    "policySetId": "00000000-0000-0000-0000-000000000e10",
+    "name": "Parity full-policy use-filter bundle",
+    "status": "ACTIVE",
+    "target": "resourceType == 'PARITY_SUITE_FULL_FILTER'",
+    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+    "policies": [
+      {
+        "policyId": "00000000-0000-0000-0000-000000000e11",
+        "name": "Reader full filter bundle policy",
+        "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "rules": [
+          {
+            "ruleId": "00000000-0000-0000-0000-000000000e12",
+            "name": "LIST full filter bundle rule",
+            "target": "operation == 'LIST'",
+            "condition": "true",
+            "effect": "ALLOW",
+            "predicate": "${resourceType}.ownerId.eq(\"${subject.id}\")",
+            "mongodbPredicate": "{ \"ownerId\": \"${subject.id}\" }",
+            "rsqlPredicate": "ownerId==${subject.id}",
+            "sqlPredicate": "owner_id=${subject.id}"
+          }
+        ]
+      }
+    ],
+    "policySets": []
+  },
+  {
+    "policySetId": "00000000-0000-0000-0000-000000000e20",
+    "name": "Parity full-policy token to SQL",
+    "status": "ACTIVE",
+    "target": "resourceType == 'PARITY_SUITE_TOKEN_SQL'",
+    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+    "policies": [
+      {
+        "policyId": "00000000-0000-0000-0000-000000000e21",
+        "name": "Reader token sql policy",
+        "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "rules": [
+          {
+            "ruleId": "00000000-0000-0000-0000-000000000e22",
+            "name": "LIST token sql rule",
+            "target": "operation == 'LIST'",
+            "condition": "true",
+            "effect": "ALLOW",
+            "sqlPredicate": "department='${subject.parityDepartment}'"
+          }
+        ]
+      }
+    ],
+    "policySets": []
+  },
+  {
+    "policySetId": "00000000-0000-0000-0000-000000000e30",
+    "name": "Parity full-policy header to MongoDB",
+    "status": "ACTIVE",
+    "target": "resourceType == 'PARITY_SUITE_HEADER_MONGO'",
+    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+    "policies": [
+      {
+        "policyId": "00000000-0000-0000-0000-000000000e31",
+        "name": "Reader header mongo policy",
+        "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "rules": [
+          {
+            "ruleId": "00000000-0000-0000-0000-000000000e32",
+            "name": "LIST header mongo rule",
+            "target": "operation == 'LIST'",
+            "condition": "true",
+            "effect": "ALLOW",
+            "mongodbPredicate": "{ \"region\": \"${subject.parityHeaderAttr}\" }"
+          }
+        ]
+      }
+    ],
+    "policySets": []
+  },
+  {
+    "policySetId": "00000000-0000-0000-0000-000000000e40",
+    "name": "Parity full-policy array to SQL",
+    "status": "ACTIVE",
+    "target": "resourceType == 'PARITY_SUITE_ARRAY_SQL'",
+    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+    "policies": [
+      {
+        "policyId": "00000000-0000-0000-0000-000000000e41",
+        "name": "Reader array sql policy",
+        "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "rules": [
+          {
+            "ruleId": "00000000-0000-0000-0000-000000000e42",
+            "name": "LIST array sql rule",
+            "target": "operation == 'LIST'",
+            "condition": "true",
+            "effect": "ALLOW",
+            "sqlPredicate": "id IN (${subject.parityAllowed})"
+          }
+        ]
+      }
+    ],
+    "policySets": []
+  }
+]

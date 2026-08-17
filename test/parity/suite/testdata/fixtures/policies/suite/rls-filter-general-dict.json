@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE rows 28/46: filter endpoint renders a multi-leaf GENERAL-PIP dict template through the direct aliases extracted by jsonPath from the mocked JSON object.",
+    "component": "PARITY",
+    "reason": "GENERAL PIP dict filter rendering",
+    "resourceType": "PARITY_SUITE_DICT_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "id=in=(${subject.parityMetaIds});amount=le=${subject.parityMetaMaxAmount}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b84"
+  }
+]

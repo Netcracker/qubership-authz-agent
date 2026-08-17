@@ -1,0 +1,16 @@
+{
+  "rlsIgnored": false,
+  "results": [
+    {
+      "resourceType": "Customer",
+      "operation": "UPDATE",
+      "isAllowed": true,
+      "predicates": [
+        {
+          "predicate": "ownerId==user-1",
+          "predicateType": "rsql"
+        }
+      ]
+    }
+  ]
+}

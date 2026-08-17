@@ -1,0 +1,392 @@
+# Cloud-Deployer-injected platform keys.
+PAAS_PLATFORM: "KUBERNETES"
+PAAS_VERSION: ''
+NAMESPACE: ''
+ARTIFACT_DESCRIPTOR_VERSION: ''
+TAG: ''
+IMAGE_REPOSITORY: ''
+SERVICE_NAME: "authz-agent"
+DEPLOYMENT_RESOURCE_NAME: "authz-agent"
+DEPLOYMENT_VERSION: ''
+# Injected by Cloud-Deployer; currently renders nothing. The ServiceMonitor
+# template it used to gate was removed because it scraped /stats/prometheus on
+# the `web` port (8080), where Envoy proxies the service API and serves no
+# statistics — an integration that silently produced zero metrics. It will come
+# back pointed at Envoy's admin port (9901).
+MONITORING_ENABLED: false
+TRACING_ENABLED: false
+EXECUTION_MODE: active
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
+CERTIFICATE_BUNDLE_MD5SUM: "d41d8cd98f00b204e9800998ecf8427e"
+SSL_SECRET: "defaultsslcertificate"
+# Written into the labels of the mesh route CRs. Cloud-Deployer overrides it
+# (argocd installs set `argocd`); the default matches the value the other
+# manifests already carry.
+MANAGED_BY: "saasDeployer"
+# Injected by Cloud-Deployer to tie every object of one install session
+# together. Empty (default) → the label is not rendered.
+DEPLOYMENT_SESSION_ID: ''
+
+# Service-mesh route registration (authz-agent-ADR-0074).
+#
+# Registers the access-control-compatible check API on the internal, private and
+# public gateways, and the canonical POST /access/v1/authorize on the internal
+# AND public gateways, routed straight to OPA. The CRs are
+# `core.netcracker.com/v1` `Mesh` objects handled by core-operator.
+#
+# The authorize route is the one place a PUBLIC gateway fronts OPA's data API.
+# It is pinned by rewrite to `/v1/data/authorize` and a decision still needs a
+# valid token in the body, but it has no HTTP-layer authentication — there is no
+# Envoy hop and therefore no ext_authz. See authz-agent-ADR-0074 §3.
+#
+# With AUTHZ_POLICY_ADMIN_ENABLED it also registers `/access/v1/simplifiedPolicies` — the
+# stub's policy-upload API, at access-control's own prefix — on the internal
+# gateway. That surface has no authentication (see AUTHZ_POLICY_ADMIN_ENABLED below), and in
+# a namespace that also runs access-control it takes that prefix over from it. The
+# stub's v3 config API is not registered: the agent reaches it directly by Service
+# DNS.
+#
+# Registering a prefix another service already serves is NOT a collision that
+# fails or resolves at random — verified on a live stand. The control plane keys a
+# route by prefix + virtual service + version, and the most recent registration
+# REPLACES the previous one. Installing authz-agent therefore takes the check API
+# over from access-control, which is the point; redeploying access-control takes
+# it back, because it then registers last. Neither side owns these routes
+# permanently, and a `RoutesDrop` would not change that — a drop applied earlier
+# loses to a registration applied later.
+#
+# One invalid rule invalidates the WHOLE CR for that gateway (CORE-MESH-CP-4001),
+# so a mistake here does not degrade one route, it un-registers every route the CR
+# carries. Check `status.phase` on the Mesh CRs after the first install.
+#
+# Set to false on a cluster without core-operator (a plain kubeadm or kind
+# cluster has no `meshes.core.netcracker.com` CRD, and `helm install` fails on
+# the unknown kind), and on whichever of access-control / authz-agent is not
+# meant to serve these routes when both run in one namespace.
+MESH_ROUTES_ENABLED: true
+
+# Per-image overrides. If empty, the deployment template falls back to:
+#   OPA:                  openpolicyagent/opa@sha256:<digest>  (OPA 1.14.0, pinned)
+#   pap-client:           {{ IMAGE_REPOSITORY }}/authz-agent-pap-client:{{ TAG }}
+#   envoy:                {{ IMAGE_REPOSITORY }}/authz-agent-envoy:{{ TAG }}
+#   collector:            {{ IMAGE_REPOSITORY }}/authz-agent-collector:{{ TAG }}
+#   token-fetcher:        {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}
+#   authz-policy-admin:   {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}
+#
+# Note: authz-policy-admin uses no authz-agent- prefix because it is a
+# standalone Deployment, not a container of the agent Pod (see .github/docker-dev-config.json).
+#
+# Cloud-Deployer can populate these from .Values.global.deployDescriptor
+# at install time.
+ENVOY_IMAGE: ''
+# OPA_IMAGE: override for the vanilla upstream OPA image.
+# Default is the pinned digest in _helpers.tpl (authz-agent.opaImage).
+# Only change this when a different OPA version is required.
+OPA_IMAGE: ''
+# pap-client runs in its own container from its own image
+# (authz-agent-pap-client); OPA runs as the vanilla upstream image.
+PAP_CLIENT_IMAGE: ''
+COLLECTOR_IMAGE: ''
+# TOKEN_FETCHER_IMAGE: override for the token-fetcher sidecar image.
+# Empty → {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}.
+# Only used when KUBERNETES_M2M_ENABLED=false.
+TOKEN_FETCHER_IMAGE: ''
+
+# Pull policy for all three containers. The default is IfNotPresent because the
+# pipeline tags images with an immutable pipeline id, so re-pulling an already
+# cached layer set buys nothing and makes every Pod restart depend on the
+# registry being reachable. Set to Always where a moving tag (`latest`) is
+# deliberately used and the newest build must win on restart.
+IMAGE_PULL_POLICY: IfNotPresent
+
+# authz-agent-specific runtime configuration.
+AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+
+# Base URL of the platform identity provider — the base only, no realm. This is
+# the same variable, with the same meaning and the same default, that every
+# platform backend already carries (EnvironmentVariables.java). With internal TLS
+# it is `https://identity-provider:8443`.
+#
+# Used only when AUTHZ_TRUSTED_PROVIDERS below is empty: the chart then composes
+# `<base>/auth/realms/<realm>` for each realm, exactly as the security libraries
+# do (authz-agent-ADR-0075).
+IDENTITY_PROVIDER_URL: http://identity-provider:8080
+# Realms to trust when the provider list is generated. `cloud-common` is the
+# platform M2M realm and is the one marked required — a Pod that cannot reach it
+# does not become Ready. The others are optional: most namespaces genuinely have
+# only some of them, and an absent realm logs one line rather than failing the
+# install.
+#
+# A realm name becomes the provider `id`, so it is constrained to the same
+# character set (`[A-Za-z0-9._-]`) and must be unique — the published index is
+# keyed by id, and two entries sharing one would collapse into a single slot.
+#
+# Setting this to `[]` means NO providers at all, which is a working way to say
+# "the agent trusts nobody yet" but leaves every token-bearing request rejected.
+AUTHZ_IDP_REALMS:
+  - cloud-common
+  - default
+  - cpq
+  - external
+
+# Trusted token providers, rendered into the `<name>-trusted-providers`
+# ConfigMap. See components/pap-client/internal/policyadmin/bootstrap.go TrustedProvider for the
+# Go-side contract.
+#
+# An entry takes one of two forms and never both (authz-agent-ADR-0075):
+#
+#   - discovery: `issuer` is resolved through
+#     `<issuer>/.well-known/openid-configuration` to a jwks_uri;
+#   - explicit: `jwksUri` is fetched directly, and `issuer` must be absent.
+#
+# `issuer` is an ADDRESS, not a matching rule. The `iss` claim is not validated:
+# tokens are matched to keys by `kid`, so a realm reached through a gateway
+# hostname verifies the same as one reached in-cluster. There is no `algorithms`
+# field — the algorithm comes from the key — and an entry still carrying one is
+# a startup error rather than a warning.
+#
+# `audiences` is optional; when absent, `aud` is not checked at all.
+# `allowMissingAud: true` matters only alongside `audiences`, where it also
+# accepts tokens carrying no aud claim (M2M tokens minted without an audience
+# mapper). Example:
+#
+#   AUTHZ_TRUSTED_PROVIDERS:
+#     - id: cloud-common
+#       issuer: http://identity-provider:8080/auth/realms/cloud-common
+#       audiences: ["account"]
+#       required: true
+#       allowMissingAud: true
+#
+# EMPTY (the default) does NOT mean "trust nobody": the chart generates the list
+# from IDENTITY_PROVIDER_URL and AUTHZ_IDP_REALMS above. Set this to take over.
+# (Emptying AUTHZ_IDP_REALMS as well *does* mean trust nobody.)
+#
+# This ConfigMap can also be edited on a running installation: pap-client
+# watches the mounted file and republishes the fetched keys into OPA without a
+# Pod restart (authz-agent-ADR-0070).
+AUTHZ_TRUSTED_PROVIDERS: []
+
+# Address of tenant-manager, used to resolve a realm named by its tenant DISPLAY
+# name. A tenant realm is created by identity-provider with a generated UUID as
+# its name and keeps the readable name only in Keycloak's `displayName`, so
+# `default` — the platform's default tenant — is not a realm anyone can address;
+# the addressable name is a UUID that differs per installation and cannot be
+# written into a chart.
+#
+# pap-client therefore asks tenant-manager
+# `GET /api/v4/tenant-manager/registration/tenants?dns=<name>`, which is
+# unauthenticated, and only AFTER discovery for the configured name has failed —
+# a realm name that works is never second-guessed. An unreachable or unhelpful
+# tenant-manager changes nothing: the provider fails exactly as it would have.
+#
+# Empty disables resolution, which is what a namespace with no tenant-manager
+# wants (authz-agent-ADR-0075).
+AUTHZ_TENANT_MANAGER_URL: http://tenant-manager:8080
+
+# Bootstrap threshold: true = every configured provider must be fetched for the
+# readiness probe to pass, false = one is enough. Applies only to an explicitly
+# configured AUTHZ_TRUSTED_PROVIDERS — a generated list forces `false`, because
+# it names four realms and a typical namespace has one; readiness for it is
+# carried by the `required` marker on cloud-common instead.
+#
+# Independently of this flag, every provider marked `required` must bootstrap for
+# the Pod to be Ready (authz-agent-ADR-0075).
+AUTHZ_JWKS_BOOTSTRAP_REQUIRED: true
+# Per-request timeout and retry count for OIDC discovery and JWKS fetches.
+AUTHZ_JWKS_HTTP_TIMEOUT: 5
+AUTHZ_JWKS_HTTP_RETRIES: 3
+# Seconds between checks of the mounted trusted-providers file. 0 turns the
+# watcher off, making provider changes require a Pod restart.
+AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
+
+# Identity mode for the policy pull loop (and PIP calls).
+#
+# The pod carries exactly one M2M identity; the two modes differ in how that
+# identity is provisioned:
+#
+#   KUBERNETES_M2M_ENABLED=true  (not default):
+#     A Kubernetes projected ServiceAccount token (audience=netcracker,
+#     ExpirationSeconds=600) is mounted into /etc/authz/ac-token/token by the
+#     kubelet and rotated automatically. pap-client re-reads it on every pull
+#     tick. No sidecar, no Secret dependency.
+#
+#   KUBERNETES_M2M_ENABLED=false (DEFAULT):
+#     A native Kubernetes sidecar (initContainers[*].restartPolicy: Always)
+#     runs token-fetcher, which obtains a Keycloak client_credentials token from
+#     the cloud-common realm and writes it atomically to the same path.
+#     token-fetcher refreshes the token before expiry; the pap-client container
+#     waits for the first successful write via a startupProbe on the marker file
+#     /var/run/authz/token-fetcher-ready.
+#
+# KEYCLOAK ROLES REQUIRED (deployer note — NOT a chart field):
+#   The Keycloak client for authz-agent must carry realm roles:
+#     ROLE_M2M
+#     ROLE_authz-agent
+#   Pattern matches access-control (ROLE_M2M + ROLE_<service-name>).
+#   These roles are provisioned by the Key Manager registration flow when it
+#   detects the client-credentials Secret — NOT by manual admin-API assignment
+#   (Netcracker's Keycloak level-SPI rejects that with "role levels mixed").
+#
+# SECRET PREREQUISITE (KUBERNETES_M2M_ENABLED=false — INSTALL PREREQUISITE):
+#   The Secret {{ .Values.SERVICE_NAME }}-client-credentials MUST exist before
+#   helm install / helm upgrade.  The chart only mounts this Secret; it does NOT
+#   create it.  If the Secret is missing the token-fetcher sidecar cannot start,
+#   its startupProbe never passes, and the Pod stays NotReady indefinitely.
+#
+#   HOW TO CREATE THE SECRET:
+#     The recommended path is Cloud Core security-scripts, which creates the
+#     Secret with label core.netcracker.com/secret-type=m2m.  Key Manager then
+#     watches for this label and asks Identity Provider to register the OAuth2
+#     client automatically (clientId from `username`, realm role ROLE_<name>
+#     from `name`, clientSecret from `password`).
+#     Alternatively: create the Secret manually with the label and Key Manager
+#     will still pick it up and register the client.
+#
+#   WHY THE CHART DOES NOT CREATE THE SECRET:
+#     The platform renders Helm charts through ArgoCD, which uses `helm template`
+#     (no live cluster connection).  Helm's `lookup` function is a no-op in
+#     `helm template`, so any password generated in the chart would be a fresh
+#     randAlphaNum on every ArgoCD sync — making the app permanently OutOfSync
+#     and causing Key Manager to re-register (and rotate) the client secret on
+#     every sync.  Existing M2M secrets on the stand (access-control, tenant-manager,
+#     etc.) carry no ArgoCD tracking annotations; the platform intentionally keeps
+#     them outside Helm-managed resources for exactly this reason.
+#
+#   See docs/architecture.md § "M2M Identity and Token Delivery".
+KUBERNETES_M2M_ENABLED: false
+
+# Policy delivery configuration (authz-agent-ADR-0071).
+#
+# Pull mode (default): pap-client fetches simplified policies and PIPs from
+# access-control's v3 config API on a configurable interval and publishes them
+# into OPA without a Pod restart.  The Bearer token comes from AUTHZ_PAP_CLIENT_TOKEN_FILE
+# (written by the kubelet in KUBERNETES_M2M_ENABLED=true mode, or by the
+# token-fetcher sidecar in KUBERNETES_M2M_ENABLED=false mode).
+#
+# Mount mode: set AUTHZ_POLICY_CONFIGMAP to the name of an ALREADY-EXISTING
+# ConfigMap in the same namespace.  The chart mounts it as a directory at
+# /etc/authz/policies and sets AUTHZ_POLICY_MOUNT_DIR accordingly; pap-client
+# detects the directory at startup and switches to mount-watcher mode
+# automatically.  The operator is responsible for creating and managing the
+# ConfigMap — the chart never creates it.
+#
+# AUTHZ_PAP_CLIENT_SOURCE_URL: base URL of the access-control service.
+#   Empty (default) → pull disabled, UNLESS AUTHZ_POLICY_ADMIN_ENABLED is true, in which
+#   case the chart points the agent at the in-namespace stub Service. A value
+#   set here always wins over the stub.
+AUTHZ_PAP_CLIENT_SOURCE_URL: ''
+# AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables both pull and
+#   mount-watcher.  Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
+AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
+# AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the Bearer token written by the kubelet
+#   (KUBERNETES_M2M_ENABLED=true) or the token-fetcher sidecar (false).
+AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
+# AUTHZ_POLICY_CONFIGMAP: name of an existing ConfigMap to mount as policy data
+#   (mount mode, authz-agent-ADR-0071). Empty (default) → pull mode; no volume,
+#   no volumeMount, and AUTHZ_POLICY_MOUNT_DIR is not set in the Deployment.
+AUTHZ_POLICY_CONFIGMAP: ''
+
+# Optional access-control stub (authz-agent-ADR-0073).
+#
+# For teams that do not run access-control at all. When enabled, the chart
+# deploys a single-Pod stub that serves the same v3 config API the PolicyPuller
+# reads, and wires AUTHZ_PAP_CLIENT_SOURCE_URL to it. Policies are loaded at runtime
+# through the stub's own control surface and stored on its volume:
+#
+#   kubectl port-forward svc/<release>-authz-policy-admin 18090:18090
+#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPolicies/BSS -d @policies.json
+#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPIPs/BSS     -d @pips.json
+#
+# Those are access-control's own paths: the stub serves the endpoints it supports
+# at the URLs access-control serves them at, per domain, and its v3 export is the
+# union of every domain. With MESH_ROUTES_ENABLED the same paths are reachable
+# through the internal gateway, so a CI job needs no port-forward.
+#
+# The agent picks the change up within AUTHZ_PAP_CLIENT_PULL_INTERVAL seconds (30 by
+# default), so "I uploaded and nothing happened" is expected for up to half a
+# minute.
+#
+# NOT for production. The control surface has no authentication, so any workload
+# that can reach the Service — or, with MESH_ROUTES_ENABLED, the internal gateway
+# — can replace the authorization policy set of every agent pulling from it. The
+# internal gateway does not add authentication: its ext_authz filter was observed
+# passing unauthenticated requests through to upstreams. Enable this in
+# development and test namespaces only.
+#
+# Mutually exclusive with AUTHZ_POLICY_CONFIGMAP: mount mode disables the pull
+# loop, so the combination is rejected at template time.
+AUTHZ_POLICY_ADMIN_ENABLED: false
+# Per-image override. Empty → {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.
+# Note: authz-policy-admin is a standalone Deployment, so it does not carry the
+# authz-agent- prefix used by Pod containers (authz-agent-envoy, -pap-client, etc.).
+AUTHZ_POLICY_ADMIN_IMAGE: ''
+# HTTP port, used for the container port, the Service port, and the generated
+# AUTHZ_PAP_CLIENT_SOURCE_URL. 18090 matches the test stacks and every documented curl.
+AUTHZ_POLICY_ADMIN_PORT: 18090
+# Where the stub keeps policies.json / pips.json. Must stay inside the volume
+# mount — it is the mount path.
+AUTHZ_POLICY_ADMIN_DATA_DIR: /var/lib/authz-policy-admin
+# Volume holding the uploaded policies. It is the only copy: the chart creates
+# no seed ConfigMap.
+AUTHZ_POLICY_ADMIN_STORAGE_SIZE: 1Gi
+# Empty → the cluster's default StorageClass (the key is not rendered at all,
+# which is different from rendering an empty string).
+AUTHZ_POLICY_ADMIN_STORAGE_CLASS: ''
+# Keep the volume when the release is uninstalled or the stub is disabled.
+# Cleanup is then a manual `kubectl delete pvc <release>-authz-policy-admin-data`.
+AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
+
+# Decision-log collector writes to ephemeral container storage. Lost on Pod
+# restart. See the handover Next Steps "decision-log collector sink
+# productionisation" before any production deploy.
+AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
+
+# HPA gating (default off; toggle on per environment if needed).
+HPA_ENABLED: false
+HPA_MIN_REPLICAS: 1
+HPA_MAX_REPLICAS: 1
+HPA_AVERAGE_CPU_UTILIZATION: 75
+
+# Per-container resource baselines.
+# Defaults below mirror `resource-profiles/dev.yaml` so that a plain
+# `helm install` on a dev / sandbox cluster (no profile selection, no
+# operator overrides) schedules cleanly on a small node. For production
+# installs, pass `-f resource-profiles/prod.yaml` or set the deployer's
+# PROFILE parameter to `prod`.
+ENVOY_CPU_REQUEST: 100m
+ENVOY_CPU_LIMIT: 100m
+ENVOY_MEM_REQUEST: 100Mi
+ENVOY_MEM_LIMIT: 100Mi
+
+# OPA container (vanilla upstream image, stateless policy engine).
+# OPA is memory-light for typical policy datasets: the data volume comes from
+# the pap-client container's normalisation, not from OPA's evaluation.
+OPA_CPU_REQUEST: 50m
+OPA_CPU_LIMIT: 100m
+OPA_MEM_REQUEST: 64Mi
+OPA_MEM_LIMIT: 200Mi
+
+# pap-client container.
+# 300Mi, not 100Mi: pap-client parses a real access-control dataset
+# (1294 policy sets / 2207 rules, 1.9 MB re-parsed every pull tick)
+# which peaks at ~134 MiB. At 100Mi it was OOMKilled into CrashLoopBackOff on
+# cloud-platform-security-dev-4. Keep this in step with resource-profiles/dev.yaml.
+#
+# GOMEMLIMIT is not set — the limit is a cliff, not a ceiling. Installations
+# with materially more policies will exceed it.
+PAP_CLIENT_CPU_REQUEST: 100m
+PAP_CLIENT_CPU_LIMIT: 100m
+PAP_CLIENT_MEM_REQUEST: 100Mi
+PAP_CLIENT_MEM_LIMIT: 300Mi
+
+COLLECTOR_CPU_REQUEST: 100m
+COLLECTOR_CPU_LIMIT: 100m
+COLLECTOR_MEM_REQUEST: 100Mi
+COLLECTOR_MEM_LIMIT: 100Mi
+
+# Only used when AUTHZ_POLICY_ADMIN_ENABLED is true. The stub serves a few megabytes of
+# JSON from memory; it does not need the backend's sizing.
+AUTHZ_POLICY_ADMIN_CPU_REQUEST: 50m
+AUTHZ_POLICY_ADMIN_CPU_LIMIT: 100m
+AUTHZ_POLICY_ADMIN_MEM_REQUEST: 64Mi
+AUTHZ_POLICY_ADMIN_MEM_LIMIT: 128Mi

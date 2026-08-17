@@ -1,0 +1,16 @@
+[
+  {
+    "_comment": "PSUITE rows 06/10: filter endpoint renders all four predicate types (RSQL, querydsl, MongoDB, SQL) from subject.id for the Reader role. Covers TestRow06CheckFilterV1FullUseFilter and TestRow10CheckFilterV2FullUseFilter. The mongodb template uses the double-brace outer wrapper that access-control emits from its simplified-policy path.",
+    "component": "PARITY",
+    "reason": "Full predicate bundle: all four typed predicates from subject.id",
+    "resourceType": "PARITY_SUITE_FULL_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "ownerId==${subject.id}",
+    "querydslPredicate": "PARITY_SUITE_FULL_FILTER.ownerId.eq(\"${subject.id}\")",
+    "mongodbPredicate": "{ { \"ownerId\": \"${subject.id}\" } }",
+    "sqlPredicate": "owner_id=${subject.id}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000e12"
+  }
+]

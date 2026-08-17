@@ -1,0 +1,4 @@
+# Parity mismatch evidence files written by compare.go when the agent response
+# diverges from the golden. These are run artifacts, not goldens; they must
+# never be committed alongside the expected files they diagnose.
+*.observed.json

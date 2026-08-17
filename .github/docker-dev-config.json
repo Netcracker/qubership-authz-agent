@@ -1,0 +1,10 @@
+{
+  "components": [
+    { "name": "authz-agent-pap-client",    "file": "./build/pap-client/Dockerfile",         "context": "." },
+    { "name": "authz-agent-envoy",         "file": "./build/envoy/Dockerfile",              "context": "." },
+    { "name": "authz-agent-collector",     "file": "./build/collector/Dockerfile",          "context": "." },
+    { "name": "authz-agent-token-fetcher", "file": "./build/token-fetcher/Dockerfile",      "context": "." },
+    { "name": "authz-policy-admin",        "file": "./build/authz-policy-admin/Dockerfile", "context": "." }
+  ],
+  "platforms": "linux/amd64,linux/arm64"
+}

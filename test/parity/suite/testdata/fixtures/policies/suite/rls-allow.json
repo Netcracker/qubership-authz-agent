@@ -1,0 +1,12 @@
+[
+  {
+    "_comment": "Pure-OLS row for PARITY_SUITE_ALLOW LIST / ROLE_PARITY_READER. No condition, no rsqlPredicate — the legacy engine renders calculationResult=PERMIT with filterCondition=null, exercising the 'ALLOW without filter' baseline for row 21 (PSUITE-6-allow-incoming).",
+    "component": "PARITY",
+    "reason": "Pure OLS allow baseline for check/filter",
+    "resourceType": "PARITY_SUITE_ALLOW",
+    "operation": "LIST",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b70"
+  }
+]

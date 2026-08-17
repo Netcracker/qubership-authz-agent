@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "ENT row 79: non-empty set intersection between the entitlement-derived Owner set and a resource-side relatedIds array.",
+    "component": "PARITY",
+    "reason": "ENT contains any",
+    "resourceType": "PARITY_SUITE_ENT_ANY",
+    "operation": "READ",
+    "condition": "subject.entitledResources.of('PARITY_CONTRACT').as('Owner') CONTAINS ANY resource.relatedIds",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000d04"
+  }
+]

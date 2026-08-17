@@ -1,0 +1,33 @@
+{
+  "realm": "cloud-common",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 900,
+  "clients": [
+    {
+      "clientId": "parity-m2m",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "secret": "ParityM2MSecret1!@#",
+      "defaultClientScopes": ["basic", "web-origins", "profile", "roles", "email"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "parity-netcracker-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "netcracker",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ]
+}

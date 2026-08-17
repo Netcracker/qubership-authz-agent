@@ -1,0 +1,37 @@
+# Dev resource profile for authz-agent.
+# Keep the dev install small:
+#   envoy:      100Mi RAM / 100m CPU
+#   opa:         64Mi RAM /  50m CPU (vanilla OPA, stateless; data loaded from volume)
+#   pap-client: 100Mi RAM / 100m CPU
+#   collector:  100Mi RAM / 100m CPU
+ENVOY_CPU_REQUEST: 100m
+ENVOY_CPU_LIMIT: 100m
+ENVOY_MEM_REQUEST: 100Mi
+ENVOY_MEM_LIMIT: 100Mi
+
+OPA_CPU_REQUEST: 50m
+OPA_CPU_LIMIT: 100m
+OPA_MEM_REQUEST: 64Mi
+OPA_MEM_LIMIT: 200Mi
+
+PAP_CLIENT_CPU_REQUEST: 100m
+PAP_CLIENT_CPU_LIMIT: 100m
+# 100Mi was OOMKilled into CrashLoopBackOff on cloud-platform-security-dev-4 once
+# the access-control converter started producing policies instead of dropping
+# them (authz-agent-ADR-0078). Measured there over ~40 pull cycles: 141 MiB
+# high-water, 110-130 MiB anon sawtooth, of which ~100 MiB is the data OPA holds
+# for 1294 policy sets / 2207 rules. 300Mi is roughly 2x the measured peak.
+# An installation with materially more policies needs more — see ADR-0079.
+PAP_CLIENT_MEM_REQUEST: 100Mi
+PAP_CLIENT_MEM_LIMIT: 300Mi
+
+COLLECTOR_CPU_REQUEST: 100m
+COLLECTOR_CPU_LIMIT: 100m
+COLLECTOR_MEM_REQUEST: 100Mi
+COLLECTOR_MEM_LIMIT: 100Mi
+
+# Only applied when AUTHZ_POLICY_ADMIN_ENABLED is true (authz-agent-ADR-0073).
+AUTHZ_POLICY_ADMIN_CPU_REQUEST: 50m
+AUTHZ_POLICY_ADMIN_CPU_LIMIT: 100m
+AUTHZ_POLICY_ADMIN_MEM_REQUEST: 64Mi
+AUTHZ_POLICY_ADMIN_MEM_LIMIT: 128Mi

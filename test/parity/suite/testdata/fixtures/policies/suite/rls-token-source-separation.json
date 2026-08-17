@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE row 47: both parity-reader and parity-reviewer satisfy the roles target, but only parity-reader's subject.id matches the fixed end-user UUID. This proves the decision uses the Incoming-Token identity rather than the M2M bearer.",
+    "component": "PARITY",
+    "reason": "Incoming-Token subject source separation",
+    "resourceType": "PARITY_SUITE_TOKEN_SOURCE",
+    "operation": "READ",
+    "condition": "subject.id == '00000000-0000-0000-0000-000000000101'",
+    "roles": ["ROLE_PARITY_READER", "ROLE_PARITY_REVIEWER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b85"
+  }
+]

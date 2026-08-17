@@ -1,0 +1,2530 @@
+{
+  "authn": {
+    "verifiedTokens": {
+      "svt-profiler-token": {
+        "subject": {
+          "id": "svt-profiler-user",
+          "name": "svt-profiler-user",
+          "type": "USER",
+          "roles": [
+            "ROLE_SVT_ADMIN"
+          ],
+          "scopes": [
+            "email",
+            "openid",
+            "profile"
+          ]
+        }
+      }
+    }
+  },
+  "policies": {
+    "ols": {
+      "SVT_RT_01": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_02": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_03": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_04": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_05": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_06": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_07": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_08": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_09": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_10": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      }
+    },
+    "refIndex": {
+      "subjectRefsByResourceTypeOperation": {
+        "SVT_RT_01": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_02": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_03": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_04": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_05": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_06": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_07": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_08": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_09": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        },
+        "SVT_RT_10": {
+          "OP_01": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_02": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_03": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_04": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_05": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_06": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_07": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_08": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_09": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ],
+          "OP_10": [
+            "regionFromHeader",
+            "countryFromHeader"
+          ]
+        }
+      }
+    },
+    "rls": {
+      "SVT_RT_01": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_02": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_03": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_04": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_05": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_06": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_07": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_08": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_09": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_10": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "regionId==${subject.regionFromHeader};countryId==${subject.countryFromHeader}",
+                  "type": "rsql",
+                  "placeholderKeys": [
+                    "regionFromHeader",
+                    "countryFromHeader"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "pips": {
+    "activation": {
+      "generalByResourceTypeOperation": {}
+    },
+    "byName": {
+      "subject.regionFromHeader": {
+        "alias": "regionFromHeader",
+        "name": "subject.regionFromHeader",
+        "pipType": "HEADER"
+      },
+      "subject.countryFromHeader": {
+        "alias": "countryFromHeader",
+        "name": "subject.countryFromHeader",
+        "pipType": "HEADER"
+      }
+    },
+    "local": {
+      "header": {
+        "subject.regionFromHeader": {
+          "alias": "regionFromHeader",
+          "header": "X-SVT-Region",
+          "name": "subject.regionFromHeader"
+        },
+        "subject.countryFromHeader": {
+          "alias": "countryFromHeader",
+          "header": "X-SVT-Country",
+          "name": "subject.countryFromHeader"
+        }
+      },
+      "token": {}
+    },
+    "remote": {
+      "general": {}
+    },
+    "aliasSet": {
+      "regionFromHeader": true,
+      "countryFromHeader": true
+    }
+  }
+}

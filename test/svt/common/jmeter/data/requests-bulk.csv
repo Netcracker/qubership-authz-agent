@@ -1,0 +1,11 @@
+username,batchId,requestClass,expectedDecision
+svt-admin,A1,OLS,ALLOW
+svt-admin,A2,OLS,ALLOW
+svt-manager,M1,OLS,ALLOW
+svt-manager,M2,OLS,ALLOW
+svt-operator,O1,OLS,ALLOW
+svt-viewer,V1,OLS,ALLOW
+svt-restricted,R1,RLS,ALLOW
+svt-restricted,R2,RLS,ALLOW
+svt-viewer,VD1,OLS,DENY
+svt-operator,OD1,OLS,DENY

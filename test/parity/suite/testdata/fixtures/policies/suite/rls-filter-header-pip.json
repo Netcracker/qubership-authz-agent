@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE rows 26/44: filter endpoint renders a HEADER-PIP-backed rsqlPredicate template by substituting the x-parity-pip-attribute header exposed as subject.parityHeaderAttr.",
+    "component": "PARITY",
+    "reason": "HEADER PIP filter rendering",
+    "resourceType": "PARITY_SUITE_HEADER_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "region==${subject.parityHeaderAttr}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b82"
+  }
+]

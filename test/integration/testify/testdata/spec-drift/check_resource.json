@@ -1,0 +1,20 @@
+{
+  "_comment": "Captured exchange for POST /access/v1/check/resource. Used by spec_drift_test.go to verify that the kin-openapi validator catches both request-direction and response-direction drift after the spec is mutated in memory. Captured request body matches the runtime suite's TestCheckResource happy path; captured response is the literal JSON boolean false (the legacy v1 wire shape).",
+  "method": "POST",
+  "path": "/access/v1/check/resource",
+  "query": "tenant_id=default",
+  "requestHeaders": {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer fixture.placeholder.token"
+  },
+  "requestBody": {
+    "type": "ORDER",
+    "operation": "READ",
+    "resource": {}
+  },
+  "statusCode": 200,
+  "responseHeaders": {
+    "Content-Type": "application/json"
+  },
+  "responseBody": false
+}

@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "id": "parity-realm",
+      "issuer": "http://idp:8080/auth/realms/parity",
+      "audiences": [
+        "netcracker"
+      ],
+      "required": true,
+      "allowMissingAud": true
+    }
+  ]
+}

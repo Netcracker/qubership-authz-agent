@@ -1,0 +1,2529 @@
+{
+  "realm": "svt-test",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 1800,
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_SVT_ADMIN",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_MANAGER",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_OPERATOR",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_VIEWER",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_RESTRICTED",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_02",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_03",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_04",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_05",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_06",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_07",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_08",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_09",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_SVT_10",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_02",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_03",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_04",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_05",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_06",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_07",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_08",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_09",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_10ROLES_ROLE_10",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_02",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_03",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_04",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_05",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_06",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_07",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_08",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_09",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_10",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_11",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_12",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_13",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_14",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_15",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_16",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_17",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_18",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_19",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_20ROLES_ROLE_20",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_02",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_03",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_04",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_05",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_06",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_07",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_08",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_09",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_10",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_11",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_12",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_13",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_14",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_15",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_16",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_17",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_18",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_19",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_20",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_21",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_22",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_23",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_24",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_25",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_26",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_27",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_28",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_29",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_30ROLES_ROLE_30",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_02",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_03",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_04",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_05",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_06",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_07",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_08",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_09",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_10",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_11",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_12",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_13",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_14",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_15",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_16",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_17",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_18",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_19",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_20",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_21",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_22",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_23",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_24",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_25",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_26",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_27",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_28",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_29",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_30",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_31",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_32",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_33",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_34",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_35",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_36",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_37",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_38",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_39",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_40",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_41",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_42",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_43",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_44",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_45",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_46",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_47",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_48",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_49",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_50ROLES_ROLE_50",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_02",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_03",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_04",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_05",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_06",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_07",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_08",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_09",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_10",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_11",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_12",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_13",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_14",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_15",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_16",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_17",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_18",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_19",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_20",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_21",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_22",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_23",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_24",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_25",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_26",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_27",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_28",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_29",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_30",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_31",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_32",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_33",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_34",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_35",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_36",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_37",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_38",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_39",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_40",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_41",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_42",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_43",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_44",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_45",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_46",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_47",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_48",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_49",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_50",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_51",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_52",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_53",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_54",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_55",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_56",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_57",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_58",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_59",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_60",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_61",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_62",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_63",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_64",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_65",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_66",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_67",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_68",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_69",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_70",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_71",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_72",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_73",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_74",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_75",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_76",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_77",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_78",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_79",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_80",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_81",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_82",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_83",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_84",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_85",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_86",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_87",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_88",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_89",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_90",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_91",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_92",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_93",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_94",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_95",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_96",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_97",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_98",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_99",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_SINGLE_100ROLES_ROLE_100",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_BULK_50_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_BULK_100_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_OLS_BULK_1000_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_CONDITION_1_EXPRESSION_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_CONDITION_2_EXPRESSION_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_CONDITION_3_EXPRESSION_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_CONDITION_5_EXPRESSION_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_SUMMARY_2_PREDICATES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_SUMMARY_3_PREDICATES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_SUMMARY_4_PREDICATES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_SUMMARY_5_PREDICATES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_SUMMARY_10_PREDICATES_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_PIPS_1_TOKEN_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_PIPS_2_TOKEN_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_PIPS_3_TOKEN_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_PIPS_1_HEADER_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_PIPS_2_HEADER_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_PIPS_3_HEADER_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_RLS_PREDICATE_SUMMARY_10_PREDICATES_3_TOKEN_PIP_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_WILDCARD_ALL_SINGLE_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "PS_WILDCARD_MIXED_BULK_ROLE_01",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "authz-agent",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "authz-agent-secret",
+      "publicClient": false,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "authz-agent-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "authz-agent",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "department",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "department",
+            "claim.name": "department",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "region",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "region",
+            "claim.name": "region",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "country",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "country",
+            "claim.name": "country",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "division",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "division",
+            "claim.name": "division",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "field06",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "field06",
+            "claim.name": "field06",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "field07",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "field07",
+            "claim.name": "field07",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "field08",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "field08",
+            "claim.name": "field08",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "field09",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "field09",
+            "claim.name": "field09",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        },
+        {
+          "name": "field10",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "field10",
+            "claim.name": "field10",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "svt-admin",
+      "email": "svt-admin@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Admin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-manager",
+      "email": "svt-manager@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_MANAGER"
+      ]
+    },
+    {
+      "username": "svt-operator",
+      "email": "svt-operator@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Operator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_OPERATOR"
+      ]
+    },
+    {
+      "username": "svt-viewer",
+      "email": "svt-viewer@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Viewer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_VIEWER"
+      ]
+    },
+    {
+      "username": "svt-restricted",
+      "email": "svt-restricted@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Restricted",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_RESTRICTED"
+      ]
+    },
+    {
+      "username": "svt-multirole",
+      "email": "svt-multirole@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "MultiRole",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_01",
+        "ROLE_SVT_02",
+        "ROLE_SVT_03",
+        "ROLE_SVT_04",
+        "ROLE_SVT_05",
+        "ROLE_SVT_06",
+        "ROLE_SVT_07",
+        "ROLE_SVT_08",
+        "ROLE_SVT_09",
+        "ROLE_SVT_10"
+      ]
+    },
+    {
+      "username": "svt-mixed-001",
+      "email": "svt-mixed-001@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed001",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_01",
+        "ROLE_SVT_02",
+        "ROLE_SVT_03",
+        "ROLE_SVT_04",
+        "ROLE_SVT_05",
+        "ROLE_SVT_06",
+        "ROLE_SVT_07",
+        "ROLE_SVT_08",
+        "ROLE_SVT_09",
+        "ROLE_SVT_10"
+      ]
+    },
+    {
+      "username": "svt-mixed-002",
+      "email": "svt-mixed-002@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed002",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-mixed-003",
+      "email": "svt-mixed-003@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed003",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-mixed-004",
+      "email": "svt-mixed-004@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed004",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-mixed-005",
+      "email": "svt-mixed-005@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed005",
+      "attributes": {
+        "department": [
+          "dept-01"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-mixed-006",
+      "email": "svt-mixed-006@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed006",
+      "attributes": {
+        "department": [
+          "dept-01"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-mixed-007",
+      "email": "svt-mixed-007@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed007",
+      "attributes": {
+        "department": [
+          "dept-01"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-mixed-008",
+      "email": "svt-mixed-008@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Mixed008",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ROLE_SVT_ADMIN"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-single",
+      "email": "svt-bench-ols-single@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-single",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_SINGLE_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-single-10roles",
+      "email": "svt-bench-ols-single-10roles@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-single-10roles",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_SINGLE_10ROLES_ROLE_01",
+        "PS_OLS_SINGLE_10ROLES_ROLE_02",
+        "PS_OLS_SINGLE_10ROLES_ROLE_03",
+        "PS_OLS_SINGLE_10ROLES_ROLE_04",
+        "PS_OLS_SINGLE_10ROLES_ROLE_05",
+        "PS_OLS_SINGLE_10ROLES_ROLE_06",
+        "PS_OLS_SINGLE_10ROLES_ROLE_07",
+        "PS_OLS_SINGLE_10ROLES_ROLE_08",
+        "PS_OLS_SINGLE_10ROLES_ROLE_09",
+        "PS_OLS_SINGLE_10ROLES_ROLE_10"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-single-20roles",
+      "email": "svt-bench-ols-single-20roles@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-single-20roles",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_SINGLE_20ROLES_ROLE_01",
+        "PS_OLS_SINGLE_20ROLES_ROLE_02",
+        "PS_OLS_SINGLE_20ROLES_ROLE_03",
+        "PS_OLS_SINGLE_20ROLES_ROLE_04",
+        "PS_OLS_SINGLE_20ROLES_ROLE_05",
+        "PS_OLS_SINGLE_20ROLES_ROLE_06",
+        "PS_OLS_SINGLE_20ROLES_ROLE_07",
+        "PS_OLS_SINGLE_20ROLES_ROLE_08",
+        "PS_OLS_SINGLE_20ROLES_ROLE_09",
+        "PS_OLS_SINGLE_20ROLES_ROLE_10",
+        "PS_OLS_SINGLE_20ROLES_ROLE_11",
+        "PS_OLS_SINGLE_20ROLES_ROLE_12",
+        "PS_OLS_SINGLE_20ROLES_ROLE_13",
+        "PS_OLS_SINGLE_20ROLES_ROLE_14",
+        "PS_OLS_SINGLE_20ROLES_ROLE_15",
+        "PS_OLS_SINGLE_20ROLES_ROLE_16",
+        "PS_OLS_SINGLE_20ROLES_ROLE_17",
+        "PS_OLS_SINGLE_20ROLES_ROLE_18",
+        "PS_OLS_SINGLE_20ROLES_ROLE_19",
+        "PS_OLS_SINGLE_20ROLES_ROLE_20"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-single-30roles",
+      "email": "svt-bench-ols-single-30roles@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-single-30roles",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_SINGLE_30ROLES_ROLE_01",
+        "PS_OLS_SINGLE_30ROLES_ROLE_02",
+        "PS_OLS_SINGLE_30ROLES_ROLE_03",
+        "PS_OLS_SINGLE_30ROLES_ROLE_04",
+        "PS_OLS_SINGLE_30ROLES_ROLE_05",
+        "PS_OLS_SINGLE_30ROLES_ROLE_06",
+        "PS_OLS_SINGLE_30ROLES_ROLE_07",
+        "PS_OLS_SINGLE_30ROLES_ROLE_08",
+        "PS_OLS_SINGLE_30ROLES_ROLE_09",
+        "PS_OLS_SINGLE_30ROLES_ROLE_10",
+        "PS_OLS_SINGLE_30ROLES_ROLE_11",
+        "PS_OLS_SINGLE_30ROLES_ROLE_12",
+        "PS_OLS_SINGLE_30ROLES_ROLE_13",
+        "PS_OLS_SINGLE_30ROLES_ROLE_14",
+        "PS_OLS_SINGLE_30ROLES_ROLE_15",
+        "PS_OLS_SINGLE_30ROLES_ROLE_16",
+        "PS_OLS_SINGLE_30ROLES_ROLE_17",
+        "PS_OLS_SINGLE_30ROLES_ROLE_18",
+        "PS_OLS_SINGLE_30ROLES_ROLE_19",
+        "PS_OLS_SINGLE_30ROLES_ROLE_20",
+        "PS_OLS_SINGLE_30ROLES_ROLE_21",
+        "PS_OLS_SINGLE_30ROLES_ROLE_22",
+        "PS_OLS_SINGLE_30ROLES_ROLE_23",
+        "PS_OLS_SINGLE_30ROLES_ROLE_24",
+        "PS_OLS_SINGLE_30ROLES_ROLE_25",
+        "PS_OLS_SINGLE_30ROLES_ROLE_26",
+        "PS_OLS_SINGLE_30ROLES_ROLE_27",
+        "PS_OLS_SINGLE_30ROLES_ROLE_28",
+        "PS_OLS_SINGLE_30ROLES_ROLE_29",
+        "PS_OLS_SINGLE_30ROLES_ROLE_30"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-single-50roles",
+      "email": "svt-bench-ols-single-50roles@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-single-50roles",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_SINGLE_50ROLES_ROLE_01",
+        "PS_OLS_SINGLE_50ROLES_ROLE_02",
+        "PS_OLS_SINGLE_50ROLES_ROLE_03",
+        "PS_OLS_SINGLE_50ROLES_ROLE_04",
+        "PS_OLS_SINGLE_50ROLES_ROLE_05",
+        "PS_OLS_SINGLE_50ROLES_ROLE_06",
+        "PS_OLS_SINGLE_50ROLES_ROLE_07",
+        "PS_OLS_SINGLE_50ROLES_ROLE_08",
+        "PS_OLS_SINGLE_50ROLES_ROLE_09",
+        "PS_OLS_SINGLE_50ROLES_ROLE_10",
+        "PS_OLS_SINGLE_50ROLES_ROLE_11",
+        "PS_OLS_SINGLE_50ROLES_ROLE_12",
+        "PS_OLS_SINGLE_50ROLES_ROLE_13",
+        "PS_OLS_SINGLE_50ROLES_ROLE_14",
+        "PS_OLS_SINGLE_50ROLES_ROLE_15",
+        "PS_OLS_SINGLE_50ROLES_ROLE_16",
+        "PS_OLS_SINGLE_50ROLES_ROLE_17",
+        "PS_OLS_SINGLE_50ROLES_ROLE_18",
+        "PS_OLS_SINGLE_50ROLES_ROLE_19",
+        "PS_OLS_SINGLE_50ROLES_ROLE_20",
+        "PS_OLS_SINGLE_50ROLES_ROLE_21",
+        "PS_OLS_SINGLE_50ROLES_ROLE_22",
+        "PS_OLS_SINGLE_50ROLES_ROLE_23",
+        "PS_OLS_SINGLE_50ROLES_ROLE_24",
+        "PS_OLS_SINGLE_50ROLES_ROLE_25",
+        "PS_OLS_SINGLE_50ROLES_ROLE_26",
+        "PS_OLS_SINGLE_50ROLES_ROLE_27",
+        "PS_OLS_SINGLE_50ROLES_ROLE_28",
+        "PS_OLS_SINGLE_50ROLES_ROLE_29",
+        "PS_OLS_SINGLE_50ROLES_ROLE_30",
+        "PS_OLS_SINGLE_50ROLES_ROLE_31",
+        "PS_OLS_SINGLE_50ROLES_ROLE_32",
+        "PS_OLS_SINGLE_50ROLES_ROLE_33",
+        "PS_OLS_SINGLE_50ROLES_ROLE_34",
+        "PS_OLS_SINGLE_50ROLES_ROLE_35",
+        "PS_OLS_SINGLE_50ROLES_ROLE_36",
+        "PS_OLS_SINGLE_50ROLES_ROLE_37",
+        "PS_OLS_SINGLE_50ROLES_ROLE_38",
+        "PS_OLS_SINGLE_50ROLES_ROLE_39",
+        "PS_OLS_SINGLE_50ROLES_ROLE_40",
+        "PS_OLS_SINGLE_50ROLES_ROLE_41",
+        "PS_OLS_SINGLE_50ROLES_ROLE_42",
+        "PS_OLS_SINGLE_50ROLES_ROLE_43",
+        "PS_OLS_SINGLE_50ROLES_ROLE_44",
+        "PS_OLS_SINGLE_50ROLES_ROLE_45",
+        "PS_OLS_SINGLE_50ROLES_ROLE_46",
+        "PS_OLS_SINGLE_50ROLES_ROLE_47",
+        "PS_OLS_SINGLE_50ROLES_ROLE_48",
+        "PS_OLS_SINGLE_50ROLES_ROLE_49",
+        "PS_OLS_SINGLE_50ROLES_ROLE_50"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-single-100roles",
+      "email": "svt-bench-ols-single-100roles@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-single-100roles",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_SINGLE_100ROLES_ROLE_01",
+        "PS_OLS_SINGLE_100ROLES_ROLE_02",
+        "PS_OLS_SINGLE_100ROLES_ROLE_03",
+        "PS_OLS_SINGLE_100ROLES_ROLE_04",
+        "PS_OLS_SINGLE_100ROLES_ROLE_05",
+        "PS_OLS_SINGLE_100ROLES_ROLE_06",
+        "PS_OLS_SINGLE_100ROLES_ROLE_07",
+        "PS_OLS_SINGLE_100ROLES_ROLE_08",
+        "PS_OLS_SINGLE_100ROLES_ROLE_09",
+        "PS_OLS_SINGLE_100ROLES_ROLE_10",
+        "PS_OLS_SINGLE_100ROLES_ROLE_11",
+        "PS_OLS_SINGLE_100ROLES_ROLE_12",
+        "PS_OLS_SINGLE_100ROLES_ROLE_13",
+        "PS_OLS_SINGLE_100ROLES_ROLE_14",
+        "PS_OLS_SINGLE_100ROLES_ROLE_15",
+        "PS_OLS_SINGLE_100ROLES_ROLE_16",
+        "PS_OLS_SINGLE_100ROLES_ROLE_17",
+        "PS_OLS_SINGLE_100ROLES_ROLE_18",
+        "PS_OLS_SINGLE_100ROLES_ROLE_19",
+        "PS_OLS_SINGLE_100ROLES_ROLE_20",
+        "PS_OLS_SINGLE_100ROLES_ROLE_21",
+        "PS_OLS_SINGLE_100ROLES_ROLE_22",
+        "PS_OLS_SINGLE_100ROLES_ROLE_23",
+        "PS_OLS_SINGLE_100ROLES_ROLE_24",
+        "PS_OLS_SINGLE_100ROLES_ROLE_25",
+        "PS_OLS_SINGLE_100ROLES_ROLE_26",
+        "PS_OLS_SINGLE_100ROLES_ROLE_27",
+        "PS_OLS_SINGLE_100ROLES_ROLE_28",
+        "PS_OLS_SINGLE_100ROLES_ROLE_29",
+        "PS_OLS_SINGLE_100ROLES_ROLE_30",
+        "PS_OLS_SINGLE_100ROLES_ROLE_31",
+        "PS_OLS_SINGLE_100ROLES_ROLE_32",
+        "PS_OLS_SINGLE_100ROLES_ROLE_33",
+        "PS_OLS_SINGLE_100ROLES_ROLE_34",
+        "PS_OLS_SINGLE_100ROLES_ROLE_35",
+        "PS_OLS_SINGLE_100ROLES_ROLE_36",
+        "PS_OLS_SINGLE_100ROLES_ROLE_37",
+        "PS_OLS_SINGLE_100ROLES_ROLE_38",
+        "PS_OLS_SINGLE_100ROLES_ROLE_39",
+        "PS_OLS_SINGLE_100ROLES_ROLE_40",
+        "PS_OLS_SINGLE_100ROLES_ROLE_41",
+        "PS_OLS_SINGLE_100ROLES_ROLE_42",
+        "PS_OLS_SINGLE_100ROLES_ROLE_43",
+        "PS_OLS_SINGLE_100ROLES_ROLE_44",
+        "PS_OLS_SINGLE_100ROLES_ROLE_45",
+        "PS_OLS_SINGLE_100ROLES_ROLE_46",
+        "PS_OLS_SINGLE_100ROLES_ROLE_47",
+        "PS_OLS_SINGLE_100ROLES_ROLE_48",
+        "PS_OLS_SINGLE_100ROLES_ROLE_49",
+        "PS_OLS_SINGLE_100ROLES_ROLE_50",
+        "PS_OLS_SINGLE_100ROLES_ROLE_51",
+        "PS_OLS_SINGLE_100ROLES_ROLE_52",
+        "PS_OLS_SINGLE_100ROLES_ROLE_53",
+        "PS_OLS_SINGLE_100ROLES_ROLE_54",
+        "PS_OLS_SINGLE_100ROLES_ROLE_55",
+        "PS_OLS_SINGLE_100ROLES_ROLE_56",
+        "PS_OLS_SINGLE_100ROLES_ROLE_57",
+        "PS_OLS_SINGLE_100ROLES_ROLE_58",
+        "PS_OLS_SINGLE_100ROLES_ROLE_59",
+        "PS_OLS_SINGLE_100ROLES_ROLE_60",
+        "PS_OLS_SINGLE_100ROLES_ROLE_61",
+        "PS_OLS_SINGLE_100ROLES_ROLE_62",
+        "PS_OLS_SINGLE_100ROLES_ROLE_63",
+        "PS_OLS_SINGLE_100ROLES_ROLE_64",
+        "PS_OLS_SINGLE_100ROLES_ROLE_65",
+        "PS_OLS_SINGLE_100ROLES_ROLE_66",
+        "PS_OLS_SINGLE_100ROLES_ROLE_67",
+        "PS_OLS_SINGLE_100ROLES_ROLE_68",
+        "PS_OLS_SINGLE_100ROLES_ROLE_69",
+        "PS_OLS_SINGLE_100ROLES_ROLE_70",
+        "PS_OLS_SINGLE_100ROLES_ROLE_71",
+        "PS_OLS_SINGLE_100ROLES_ROLE_72",
+        "PS_OLS_SINGLE_100ROLES_ROLE_73",
+        "PS_OLS_SINGLE_100ROLES_ROLE_74",
+        "PS_OLS_SINGLE_100ROLES_ROLE_75",
+        "PS_OLS_SINGLE_100ROLES_ROLE_76",
+        "PS_OLS_SINGLE_100ROLES_ROLE_77",
+        "PS_OLS_SINGLE_100ROLES_ROLE_78",
+        "PS_OLS_SINGLE_100ROLES_ROLE_79",
+        "PS_OLS_SINGLE_100ROLES_ROLE_80",
+        "PS_OLS_SINGLE_100ROLES_ROLE_81",
+        "PS_OLS_SINGLE_100ROLES_ROLE_82",
+        "PS_OLS_SINGLE_100ROLES_ROLE_83",
+        "PS_OLS_SINGLE_100ROLES_ROLE_84",
+        "PS_OLS_SINGLE_100ROLES_ROLE_85",
+        "PS_OLS_SINGLE_100ROLES_ROLE_86",
+        "PS_OLS_SINGLE_100ROLES_ROLE_87",
+        "PS_OLS_SINGLE_100ROLES_ROLE_88",
+        "PS_OLS_SINGLE_100ROLES_ROLE_89",
+        "PS_OLS_SINGLE_100ROLES_ROLE_90",
+        "PS_OLS_SINGLE_100ROLES_ROLE_91",
+        "PS_OLS_SINGLE_100ROLES_ROLE_92",
+        "PS_OLS_SINGLE_100ROLES_ROLE_93",
+        "PS_OLS_SINGLE_100ROLES_ROLE_94",
+        "PS_OLS_SINGLE_100ROLES_ROLE_95",
+        "PS_OLS_SINGLE_100ROLES_ROLE_96",
+        "PS_OLS_SINGLE_100ROLES_ROLE_97",
+        "PS_OLS_SINGLE_100ROLES_ROLE_98",
+        "PS_OLS_SINGLE_100ROLES_ROLE_99",
+        "PS_OLS_SINGLE_100ROLES_ROLE_100"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-bulk-50",
+      "email": "svt-bench-ols-bulk-50@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-bulk-50",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_BULK_50_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-bulk-100",
+      "email": "svt-bench-ols-bulk-100@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-bulk-100",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_BULK_100_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-ols-bulk-1000",
+      "email": "svt-bench-ols-bulk-1000@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-ols-bulk-1000",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_OLS_BULK_1000_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-condition-1-expression",
+      "email": "svt-bench-rls-condition-1-expression@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-condition-1-expression",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_CONDITION_1_EXPRESSION_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-condition-2-expression",
+      "email": "svt-bench-rls-condition-2-expression@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-condition-2-expression",
+      "attributes": {
+        "department": [
+          "rls-condition-2-expression-department"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_CONDITION_2_EXPRESSION_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-condition-3-expression",
+      "email": "svt-bench-rls-condition-3-expression@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-condition-3-expression",
+      "attributes": {
+        "department": [
+          "rls-condition-3-expression-department"
+        ],
+        "region": [
+          "rls-condition-3-expression-region"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_CONDITION_3_EXPRESSION_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-condition-5-expression",
+      "email": "svt-bench-rls-condition-5-expression@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-condition-5-expression",
+      "attributes": {
+        "department": [
+          "rls-condition-5-expression-department"
+        ],
+        "region": [
+          "rls-condition-5-expression-region"
+        ],
+        "country": [
+          "rls-condition-5-expression-country"
+        ],
+        "division": [
+          "rls-condition-5-expression-division"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_CONDITION_5_EXPRESSION_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate",
+      "email": "svt-bench-rls-predicate@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-summary-2-predicates",
+      "email": "svt-bench-rls-predicate-summary-2-predicates@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-summary-2-predicates",
+      "attributes": {
+        "department": [
+          "rls-predicate-summary-2-predicates-department"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_SUMMARY_2_PREDICATES_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-summary-3-predicates",
+      "email": "svt-bench-rls-predicate-summary-3-predicates@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-summary-3-predicates",
+      "attributes": {
+        "department": [
+          "rls-predicate-summary-3-predicates-department"
+        ],
+        "region": [
+          "rls-predicate-summary-3-predicates-region"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_SUMMARY_3_PREDICATES_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-summary-4-predicates",
+      "email": "svt-bench-rls-predicate-summary-4-predicates@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-summary-4-predicates",
+      "attributes": {
+        "department": [
+          "rls-predicate-summary-4-predicates-department"
+        ],
+        "region": [
+          "rls-predicate-summary-4-predicates-region"
+        ],
+        "country": [
+          "rls-predicate-summary-4-predicates-country"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_SUMMARY_4_PREDICATES_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-summary-5-predicates",
+      "email": "svt-bench-rls-predicate-summary-5-predicates@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-summary-5-predicates",
+      "attributes": {
+        "department": [
+          "rls-predicate-summary-5-predicates-department"
+        ],
+        "region": [
+          "rls-predicate-summary-5-predicates-region"
+        ],
+        "country": [
+          "rls-predicate-summary-5-predicates-country"
+        ],
+        "division": [
+          "rls-predicate-summary-5-predicates-division"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_SUMMARY_5_PREDICATES_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-summary-10-predicates",
+      "email": "svt-bench-rls-predicate-summary-10-predicates@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-summary-10-predicates",
+      "attributes": {
+        "department": [
+          "rls-predicate-summary-10-predicates-department"
+        ],
+        "region": [
+          "rls-predicate-summary-10-predicates-region"
+        ],
+        "country": [
+          "rls-predicate-summary-10-predicates-country"
+        ],
+        "division": [
+          "rls-predicate-summary-10-predicates-division"
+        ],
+        "field06": [
+          "rls-predicate-summary-10-predicates-field06"
+        ],
+        "field07": [
+          "rls-predicate-summary-10-predicates-field07"
+        ],
+        "field08": [
+          "rls-predicate-summary-10-predicates-field08"
+        ],
+        "field09": [
+          "rls-predicate-summary-10-predicates-field09"
+        ],
+        "field10": [
+          "rls-predicate-summary-10-predicates-field10"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_SUMMARY_10_PREDICATES_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-pips-1-token-pip",
+      "email": "svt-bench-rls-predicate-pips-1-token-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-pips-1-token-pip",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_PIPS_1_TOKEN_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-pips-2-token-pip",
+      "email": "svt-bench-rls-predicate-pips-2-token-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-pips-2-token-pip",
+      "attributes": {
+        "department": [
+          "rls-predicate-pips-2-token-pip-department"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_PIPS_2_TOKEN_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-pips-3-token-pip",
+      "email": "svt-bench-rls-predicate-pips-3-token-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-pips-3-token-pip",
+      "attributes": {
+        "department": [
+          "rls-predicate-pips-3-token-pip-department"
+        ],
+        "region": [
+          "rls-predicate-pips-3-token-pip-region"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_PIPS_3_TOKEN_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-pips-1-header-pip",
+      "email": "svt-bench-rls-predicate-pips-1-header-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-pips-1-header-pip",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_PIPS_1_HEADER_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-pips-2-header-pip",
+      "email": "svt-bench-rls-predicate-pips-2-header-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-pips-2-header-pip",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_PIPS_2_HEADER_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-pips-3-header-pip",
+      "email": "svt-bench-rls-predicate-pips-3-header-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-pips-3-header-pip",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_PIPS_3_HEADER_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-rls-predicate-summary-10-predicates-3-token-pip",
+      "email": "svt-bench-rls-predicate-summary-10-predicates-3-token-pip@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-rls-predicate-summary-10-predicates-3-token-pip",
+      "attributes": {
+        "department": [
+          "rls-predicate-summary-10-predicates-3-token-pip-department"
+        ],
+        "region": [
+          "rls-predicate-summary-10-predicates-3-token-pip-region"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_RLS_PREDICATE_SUMMARY_10_PREDICATES_3_TOKEN_PIP_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-wildcard-all-single",
+      "email": "svt-bench-wildcard-all-single@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-wildcard-all-single",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_WILDCARD_ALL_SINGLE_ROLE_01"
+      ]
+    },
+    {
+      "username": "svt-bench-wildcard-mixed-bulk",
+      "email": "svt-bench-wildcard-mixed-bulk@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SVT",
+      "lastName": "Bench-wildcard-mixed-bulk",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "PS_WILDCARD_MIXED_BULK_ROLE_01"
+      ]
+    }
+  ]
+}

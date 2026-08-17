@@ -1,0 +1,523 @@
+{{- include "authz-agent.validateValues" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      name: '{{ include "authz-agent.serviceName" . }}'
+  template:
+    metadata:
+      labels:
+        {{- include "authz-agent.commonLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      volumes:
+        - name: runtime-config
+          configMap:
+            name: '{{ include "authz-agent.serviceName" . }}-runtime'
+        # Mounted as a directory, deliberately not with subPath: the kubelet
+        # propagates ConfigMap edits into a directory mount (atomic `..data`
+        # symlink swap) but never into a subPath'd file, and pap-client
+        # watches this file to reload providers without a restart
+        # (authz-agent-ADR-0070).
+        - name: trusted-providers
+          configMap:
+            name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+        - name: policies
+          configMap:
+            name: '{{ include "authz-agent.serviceName" . }}-policies'
+        - name: decision-logs
+          emptyDir: {}
+        # Writable scratch dirs for the pap-client bootstrap. The
+        # container image's /etc/opa and /var/run are root-owned and the
+        # Pod runs as uid 65534, so the bootstrap cannot create the JWKS
+        # and status sub-directories there without these emptyDir mounts.
+        # fsGroup=65534 (Pod-level securityContext) makes both volumes
+        # group-writable for the runtime user.
+        - name: opa-data
+          emptyDir: {}
+        - name: authz-run
+          emptyDir: {}
+        {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
+        # Mount-mode volume: references an ALREADY-EXISTING ConfigMap named
+        # by AUTHZ_POLICY_CONFIGMAP (authz-agent-ADR-0071). The chart never
+        # creates this ConfigMap; the operator is expected to create and manage
+        # it outside of this chart. Mounted as a directory (no subPath) so the
+        # kubelet propagates edits atomically via the `..data` symlink swap.
+        # When the directory exists at startup pap-client detects mount mode
+        # and disables the pull loop automatically.
+        - name: policy-data
+          configMap:
+            name: '{{ .Values.AUTHZ_POLICY_CONFIGMAP }}'
+        {{- end }}
+        {{- if .Values.KUBERNETES_M2M_ENABLED }}
+        # KUBERNETES_M2M_ENABLED=true: projected ServiceAccount token for
+        # access-control authentication. The kubelet rotates the file before
+        # expiry; pap-client re-reads it on every pull tick.
+        # Audience: netcracker, matching the access-control isM2M() check.
+        # expirationSeconds: 600. defaultMode: 292 = 0444.
+        - name: ac-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: netcracker
+                  expirationSeconds: 600
+            defaultMode: 292
+        {{- else }}
+        # KUBERNETES_M2M_ENABLED=false: the token-fetcher sidecar writes the
+        # Keycloak client_credentials token here. emptyDir Memory so the token
+        # never touches node disk. Same volume name and backend mount path as
+        # the projected variant above — PolicyPuller.readToken() is unchanged.
+        - name: ac-token
+          emptyDir:
+            medium: Memory
+        # Client credentials Secret: provisioned externally before helm install
+        # (by security-scripts or manual creation with label
+        # core.netcracker.com/secret-type=m2m; Key Manager then registers the
+        # OAuth2 client in Identity Provider automatically).
+        # Files: name (service name / role source), username (clientId),
+        # password (clientSecret).
+        # INSTALL PREREQUISITE: this Secret MUST exist before helm install;
+        # without it the token-fetcher startupProbe never passes.
+        - name: client-credentials
+          secret:
+            secretName: '{{ include "authz-agent.serviceName" . }}-client-credentials'
+        {{- end }}
+        # OPA internal write-path authentication token (authz-agent-ADR-0077).
+        # Helm generates this Secret via randAlphaNum 32 + lookup for stability
+        # across upgrades (see authz-agent.opaAuthToken helper). The bootstrap
+        # init container reads this file and writes {"opa_auth_secret":"<token>"}
+        # to the opa-data volume so system_authz.rego can load it as
+        # data.opa_auth_secret at OPA startup.
+        - name: opa-auth-token
+          secret:
+            secretName: '{{ include "authz-agent.serviceName" . }}-opa-auth'
+      # initContainers:
+      #   token-fetcher (when KUBERNETES_M2M_ENABLED=false): always runs first
+      #   bootstrap: runs after token-fetcher; writes JWKS + opa-auth-secret.json
+      #     to the opa-data shared volume before OPA starts.
+      initContainers:
+        {{- if not .Values.KUBERNETES_M2M_ENABLED }}
+        # Native Kubernetes sidecar (restartPolicy: Always, GA since k8s 1.29).
+        # The bootstrap init container (below) waits until this sidecar's
+        # startupProbe passes, which guarantees the first M2M token is on disk
+        # before pap-client starts its pull loop.
+        - name: token-fetcher
+          image: '{{ include "authz-agent.tokenFetcherImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          restartPolicy: Always
+          env:
+            - name: AUTHZ_M2M_CLIENT_ID_FILE
+              value: /etc/secret/username
+            - name: AUTHZ_M2M_CLIENT_SECRET_FILE
+              value: /etc/secret/password
+            - name: AUTHZ_M2M_TOKEN_URL
+              value: '{{ .Values.IDENTITY_PROVIDER_URL }}/auth/realms/cloud-common/protocol/openid-connect/token'
+            - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
+              value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
+            - name: AUTHZ_M2M_RENEW_BEFORE_SECONDS
+              value: "60"
+            - name: AUTHZ_M2M_MARKER_FILE
+              value: /var/run/authz/token-fetcher-ready
+          volumeMounts:
+            - name: ac-token
+              mountPath: /etc/authz/ac-token
+            - name: client-credentials
+              mountPath: /etc/secret
+              readOnly: true
+            - name: authz-run
+              mountPath: /var/run/authz
+          # startupProbe: blocks subsequent containers until the first token is
+          # on disk. Generous failureThreshold (30×10s = 5 min) to survive
+          # Keycloak being slow to become reachable at startup.
+          startupProbe:
+            exec:
+              command: ["test", "-f", "/var/run/authz/token-fetcher-ready"]
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 3
+          # readinessProbe: tracks ongoing health for Pod Ready condition.
+          readinessProbe:
+            exec:
+              command: ["test", "-f", "/var/run/authz/token-fetcher-ready"]
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL
+        {{- end }}
+        # bootstrap init container: runs `pap-client bootstrap`, which:
+        #   1. Fetches JWKS from each trusted IdP and writes them to the
+        #      shared opa-data volume (/etc/opa/data/authn/).
+        #   2. Writes {"opa_auth_secret":"<token>"} to opa-data/opa-auth-secret.json
+        #      from AUTHZ_OPA_AUTH_TOKEN_FILE (ADR-0077), so system_authz.rego
+        #      can load it as data.opa_auth_secret at OPA startup.
+        # Runs ONCE per Pod lifecycle (not a sidecar). OPA does not start until
+        # this container exits 0 (Kubernetes waits for all non-sidecar init
+        # containers to complete before starting regular containers).
+        - name: bootstrap
+          image: '{{ include "authz-agent.papClientImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          command: ["pap-client", "bootstrap"]
+          env:
+            - name: AUTHZ_TRUSTED_PROVIDERS_FILE
+              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE }}'
+            - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
+              value: '{{ include "authz-agent.jwksBootstrapRequired" . }}'
+            - name: AUTHZ_JWKS_HTTP_TIMEOUT
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT }}'
+            - name: AUTHZ_JWKS_HTTP_RETRIES
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_RETRIES }}'
+            - name: AUTHZ_TENANT_MANAGER_URL
+              value: '{{ .Values.AUTHZ_TENANT_MANAGER_URL }}'
+            # OPA auth secret write (ADR-0077): bootstrap reads this file and
+            # writes the token to opa-data/opa-auth-secret.json before OPA starts.
+            - name: AUTHZ_OPA_AUTH_TOKEN_FILE
+              value: /etc/authz/opa-auth/token
+          volumeMounts:
+            - name: trusted-providers
+              mountPath: /etc/authz
+              readOnly: true
+            # opa-data is read-write: bootstrap writes JWKS and opa-auth-secret.json
+            # here so OPA can load them at startup.
+            - name: opa-data
+              mountPath: /etc/opa/data
+            - name: authz-run
+              mountPath: /var/run/authz
+            - name: opa-auth-token
+              mountPath: /etc/authz/opa-auth
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+      containers:
+        - name: envoy
+          image: '{{ include "authz-agent.envoyImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          ports:
+            - name: web
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 9901
+              protocol: TCP
+          volumeMounts:
+            - name: runtime-config
+              mountPath: /etc/envoy/envoy.yaml
+              subPath: envoy.yaml
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 9901
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /server_info
+              port: 9901
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: '{{ .Values.ENVOY_CPU_REQUEST }}'
+              memory: '{{ .Values.ENVOY_MEM_REQUEST }}'
+            limits:
+              cpu: '{{ .Values.ENVOY_CPU_LIMIT }}'
+              memory: '{{ .Values.ENVOY_MEM_LIMIT }}'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL
+
+        # opa: vanilla upstream Open Policy Agent.
+        # Carries NO Netcracker code.  All data (policies, pips, m2m, authn,
+        # opa-auth-secret) is loaded from the shared opa-data volume that the
+        # bootstrap init container and the pap-client container write to.
+        # Restart survival: on OPA restart, OPA re-reads all JSON files from
+        # /etc/opa/data, so the documents that pap-client has already written
+        # are immediately available — no re-push needed (ADR-0077 §Restart).
+        - name: opa
+          image: '{{ include "authz-agent.opaImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          ports:
+            - name: opa
+              containerPort: 8181
+              protocol: TCP
+          # exec form — no shell, so --ignore=..* is passed as a literal
+          # string without glob expansion (the OPA binary handles it).
+          # Flags in order: network, hidden-dir filter, ADR-0077 auth,
+          # config file, Rego bundle path, data directory.
+          args:
+            - run
+            - --server
+            - --addr
+            - "0.0.0.0:8181"
+            - --ignore=..*
+            - --authorization=basic
+            - --authentication=token
+            - --config-file
+            - /etc/opa/opa-config.yaml
+            - /etc/opa/policies
+            - /etc/opa/data
+          volumeMounts:
+            - name: runtime-config
+              mountPath: /etc/opa/opa-config.yaml
+              subPath: opa-config.yaml
+              readOnly: true
+            - name: policies
+              mountPath: /etc/opa/policies
+              readOnly: true
+            # opa-data is read-only for OPA: pap-client and bootstrap write
+            # here; OPA only reads at startup.  Keeping OPA read-only prevents
+            # accidental writes from corrupting the shared volume.
+            - name: opa-data
+              mountPath: /etc/opa/data
+              readOnly: true
+          # ADR-0077 GET /health is explicitly allowed without a bearer token
+          # by the system_authz.rego policy, so httpGet probes work against
+          # the same 8181 port as the write-protected data API.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: '{{ .Values.OPA_CPU_REQUEST }}'
+              memory: '{{ .Values.OPA_MEM_REQUEST }}'
+            limits:
+              cpu: '{{ .Values.OPA_CPU_LIMIT }}'
+              memory: '{{ .Values.OPA_MEM_LIMIT }}'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL
+
+        # pap-client: Policy Administration Point client.
+        # Pulls / watches policies and PIPs, writes them to the shared
+        # opa-data volume (for restart survival), and pushes them into OPA's
+        # Data API on every change.  Runs in the same Pod as opa, so it
+        # reaches OPA on 127.0.0.1:8181 without an explicit OPA_ADDR.
+        - name: pap-client
+          image: '{{ include "authz-agent.papClientImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          env:
+            - name: AUTHZ_PAP_CLIENT_ADDR
+              value: "127.0.0.1:8182"
+            - name: AUTHZ_TRUSTED_PROVIDERS_FILE
+              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE }}'
+            # Bootstrap threshold. `true` (strict) means every configured
+            # provider must be fetched before the readiness probe passes, so a
+            # provider whose issuer is unreachable keeps the Pod out of the
+            # Service. `false` (permissive) needs one. An empty provider list
+            # needs none either way.
+            #
+            # A generated provider list renders `false` here whatever the value
+            # says: it names four platform realms and a typical namespace has
+            # one, so strict mode would hold every Pod NotReady over realms that
+            # were never expected. Readiness for a generated list rests on the
+            # `required` marker instead (authz-agent-ADR-0075), which is checked
+            # separately and is not subject to this flag.
+            - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
+              value: '{{ include "authz-agent.jwksBootstrapRequired" . }}'
+            # Resolves a realm named by its tenant display name; empty turns it
+            # off. See the AUTHZ_TENANT_MANAGER_URL comment in values.yaml.
+            - name: AUTHZ_TENANT_MANAGER_URL
+              value: '{{ .Values.AUTHZ_TENANT_MANAGER_URL }}'
+            - name: AUTHZ_JWKS_HTTP_TIMEOUT
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT }}'
+            - name: AUTHZ_JWKS_HTTP_RETRIES
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_RETRIES }}'
+            # Poll period for the mounted trusted-providers file. 0 disables
+            # the watcher and makes provider changes require a Pod restart.
+            - name: AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
+              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL }}'
+            # Policy delivery configuration (authz-agent-ADR-0071).
+            # Pull mode: fetch from access-control on AUTHZ_PAP_CLIENT_PULL_INTERVAL.
+            # Mount mode: detected automatically when AUTHZ_POLICY_MOUNT_DIR exists.
+            # Falls back to the in-namespace authz-policy-admin Service when AUTHZ_POLICY_ADMIN_ENABLED
+            # is set and no explicit URL is configured (authz-agent-ADR-0073).
+            - name: AUTHZ_PAP_CLIENT_SOURCE_URL
+              value: '{{ include "authz-agent.papSourceURL" . }}'
+            - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
+              value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
+            - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
+              value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
+            # OPA write-path auth token file (authz-agent-ADR-0077).
+            # pap-client reads this to authenticate its PUT/PATCH requests to OPA.
+            # Path MUST point inside the directory mounted below, NOT to the
+            # directory itself — see volumeMount comment for the reason.
+            - name: AUTHZ_OPA_AUTH_TOKEN_FILE
+              value: /etc/authz/opa-auth/token
+            {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
+            - name: AUTHZ_POLICY_MOUNT_DIR
+              value: /etc/authz/policies
+            {{- end }}
+          volumeMounts:
+            - name: trusted-providers
+              mountPath: /etc/authz
+              readOnly: true
+            # opa-data is read-write for pap-client: it writes pips.json,
+            # m2m.json, and policies.json here so OPA can reload them from
+            # disk after an OPA container restart without waiting for the
+            # next pull / watcher tick (restart survival).
+            - name: opa-data
+              mountPath: /etc/opa/data
+            - name: authz-run
+              mountPath: /var/run/authz
+            {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
+            # Mount-mode: simplified policy data from an operator-managed
+            # ConfigMap (ADR-0071). pap-client detects the directory at
+            # startup and switches to mount-watcher mode automatically.
+            - name: policy-data
+              mountPath: /etc/authz/policies
+              readOnly: true
+            {{- end }}
+            # Bearer token for access-control authentication. Written by the
+            # kubelet (KUBERNETES_M2M_ENABLED=true) or the token-fetcher sidecar
+            # (false). The mount path and volume name are identical in both modes
+            # so PolicyPuller.readToken() does not need a conditional.
+            - name: ac-token
+              mountPath: /etc/authz/ac-token
+              readOnly: true
+            # OPA write-path auth token (ADR-0077). Mounted as a DIRECTORY
+            # (no subPath), matching the ac-token pattern above.
+            # WHY NOT subPath: Kubernetes does not propagate Secret updates into
+            # a subPath-mounted file — the token would remain stale until the Pod
+            # restarts.  A directory mount receives atomic kubelet symlink-swap
+            # updates automatically.  Also, subPath requires the parent directory
+            # to exist in the container rootfs before the mount; when it does not,
+            # runc aborts container creation with "not a directory" (defect 7).
+            - name: opa-auth-token
+              mountPath: /etc/authz/opa-auth
+              readOnly: true
+          readinessProbe:
+            exec:
+              # --readiness adds the "policies loaded" gate on top of the liveness
+              # conditions (OPA ready + JWKS bootstrap).  The Pod is not Ready until
+              # PolicyPuller (or MountWatcher) has completed at least one successful
+              # pull.  The latch is never reset after first success, so a transient
+              # access-control failure does not remove the Pod from the Service while
+              # its cached policies are still valid.
+              # When pull is disabled (empty AUTHZ_PAP_CLIENT_SOURCE_URL, interval 0, or
+              # ConfigMap mount mode) the delivery component writes the latch
+              # immediately, so the probe does not block.
+              command: ["pap-client", "healthcheck", "--readiness"]
+            initialDelaySeconds: 10
+            # failureThreshold × periodSeconds = 60 s.  PolicyPuller runs an
+            # immediate pull at startup (before the first ticker fires), so normally
+            # the first success lands within a few seconds.  60 s of tolerance covers
+            # slow access-control startup on a fresh deploy (database initialising,
+            # image pull delay).  Increase if AUTHZ_PAP_CLIENT_PULL_INTERVAL > 30 s.
+            periodSeconds: 5
+            failureThreshold: 12
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              # Liveness checks OPA health and JWKS bootstrap ONLY — it must NOT
+              # depend on access-control reachability.  If pull fails after the first
+              # success the Pod is still alive and serving its cached policies.
+              # Adding the pull condition here would cause CrashLoopBackOff when
+              # access-control is temporarily down, evicting the Pod from the Service
+              # and making authorization unavailable across the board.
+              command: ["pap-client", "healthcheck"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: '{{ .Values.PAP_CLIENT_CPU_REQUEST }}'
+              memory: '{{ .Values.PAP_CLIENT_MEM_REQUEST }}'
+            limits:
+              cpu: '{{ .Values.PAP_CLIENT_CPU_LIMIT }}'
+              memory: '{{ .Values.PAP_CLIENT_MEM_LIMIT }}'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL
+
+        - name: collector
+          image: '{{ include "authz-agent.collectorImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          env:
+            - name: AUTHZ_DECISION_LOG_PATH
+              value: '{{ .Values.AUTHZ_DECISION_LOG_PATH }}'
+            # The collector binary reads DECISION_LOG_FILE (cmd/decision-log-collector
+            # /main.go) and defaults to /var/log/authz/decision-logs.jsonl, which the
+            # uid 65534 runtime user cannot create. Without this the sink is
+            # unwritable: every OPA decision-log upload answers 500 and OPA retries
+            # in a hot loop while the Pod stays Ready. Derived from
+            # AUTHZ_DECISION_LOG_PATH so the file always lands in the mounted volume.
+            - name: DECISION_LOG_FILE
+              value: '{{ printf "%s/decision-logs.jsonl" (trimSuffix "/" .Values.AUTHZ_DECISION_LOG_PATH) }}'
+          volumeMounts:
+            - name: decision-logs
+              mountPath: '{{ .Values.AUTHZ_DECISION_LOG_PATH }}'
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8183
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8183
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: '{{ .Values.COLLECTOR_CPU_REQUEST }}'
+              memory: '{{ .Values.COLLECTOR_MEM_REQUEST }}'
+            limits:
+              cpu: '{{ .Values.COLLECTOR_CPU_LIMIT }}'
+              memory: '{{ .Values.COLLECTOR_MEM_LIMIT }}'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL

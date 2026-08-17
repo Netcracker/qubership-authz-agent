@@ -1,0 +1,14 @@
+[
+  {
+    "_comment": "GENERAL-PIP scenario - proves row 2 returns true when the RLS predicate references a GENERAL (URL-based) PIP. The referenced PIP 'subject.parityAllowed' is declared in seed/policies/general-pip-pips.json and hardcodes the mock service URL http://pip-mock:8090/api/v1/pip/allowed directly (D-E: no URL rewrite). The smoke script pins the mock to return an allow set containing the acting subject id before issuing the check.",
+    "component": "PARITY",
+    "reason": "PARITY_PIP policy: PARITY_PAYMENT EXECUTE gated on subject.parityAllowed",
+    "resourceType": "PARITY_PAYMENT",
+    "operation": "EXECUTE",
+    "rsqlPredicate": "id=in=(${subject.parityAllowed})",
+    "condition": "resource.id IN subject.parityAllowed",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000000a4"
+  }
+]

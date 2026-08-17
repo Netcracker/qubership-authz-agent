@@ -1,0 +1,131 @@
+[
+  {
+    "_comment": "TOKEN PIP reading the 'department' claim emitted by the parity-end-user client protocol mapper. Bound to subject.parityDepartment so CLANG / RLS rows can reference it as a scalar string.",
+    "name": "subject.parityDepartment",
+    "type": "UUID",
+    "pipType": "TOKEN",
+    "claim": "department",
+    "defaultValue": "none",
+    "cacheable": false
+  },
+  {
+    "_comment": "TOKEN PIP reading the 'tier' claim emitted by the parity-end-user client protocol mapper. Bound to subject.parityTier.",
+    "name": "subject.parityTier",
+    "type": "UUID",
+    "pipType": "TOKEN",
+    "claim": "tier",
+    "defaultValue": "none",
+    "cacheable": false
+  },
+  {
+    "_comment": "HEADER PIP reading the 'x-parity-pip-attribute' custom header. Bound to subject.parityHeaderAttr. The header name is deliberately NOT in ProhibitedHeaders (ProhibitedHeaders.java:11-22) so HeadersFilter does not strip it in transit — the Go helper's filterCustomHeaders mirror test covers that separately (row 48).",
+    "name": "subject.parityHeaderAttr",
+    "type": "UUID",
+    "pipType": "HEADER",
+    "header": "x-parity-pip-attribute",
+    "defaultValue": "none",
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL PIP hitting the Compose-network pip-mock and returning a JSON object. Legacy simplified-policy validation resolves only direct PIP aliases in conditions, not nested property access off a JSON-object alias, so the suite extracts dict leaves into first-class subject attributes via jsonPath. This PIP extracts the 'department' string leaf from the dict-returning response.",
+    "name": "subject.parityMetaDepartment",
+    "url": "http://pip-mock:8090/api/v1/pip/meta",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.department",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_META"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "Second leaf-extraction alias for the same dict-returning GENERAL PIP. Extracts the numeric 'maxAmount' leaf so conditions can compare resource.amount against the mocked budget without using unsupported nested-property syntax.",
+    "name": "subject.parityMetaMaxAmount",
+    "url": "http://pip-mock:8090/api/v1/pip/meta",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.maxAmount",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_META"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "Third leaf-extraction alias for the same dict-returning GENERAL PIP. Extracts the ids array from the mocked JSON object so future filter/bulk rows can reuse the dict-returning endpoint while still referring to a direct PIP alias the simplified-policy validator accepts.",
+    "name": "subject.parityMetaIds",
+    "url": "http://pip-mock:8090/api/v1/pip/meta",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.ids",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_META"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL PIP returning a JSON object {\"value\":\"<status>\"}. The harness pins the mock to that exact shape and jsonPath=$.value extracts the inner string. Used by SUB row 68 via ${subject.parityStatusScalar} substitution into an rsqlPredicate template — the substituted rendered predicate becomes 'status==<value>'.",
+    "name": "subject.parityStatusScalar",
+    "url": "http://pip-mock:8090/api/v1/pip/status-scalar",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.value",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_STATUS_SCALAR"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL PIP returning a JSON array of status strings. Used by the CLANG row that exercises IN against a PIP-backed collection rather than a literal collection.",
+    "name": "subject.parityStatusAllowed",
+    "url": "http://pip-mock:8090/api/v1/pip/status-allowed",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_STATUS_ALLOWED"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL scalar-number PIP. The harness returns {\"value\":1000} and jsonPath extracts the number for numeric substitution into RSQL / SQL templates.",
+    "name": "subject.parityMaxAmountScalar",
+    "url": "http://pip-mock:8090/api/v1/pip/max-amount-scalar",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.value",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_MAX_AMOUNT_SCALAR"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL scalar-boolean PIP. The harness returns {\"value\":false} and jsonPath extracts the boolean for substitution into a predicate template.",
+    "name": "subject.parityArchivedScalar",
+    "url": "http://pip-mock:8090/api/v1/pip/archived-scalar",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.value",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_ARCHIVED_SCALAR"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL scalar-string PIP used specifically for the special-characters substitution case. The suite pins strings containing commas / semicolons / quotes and records the exact legacy rendering.",
+    "name": "subject.parityTagScalar",
+    "url": "http://pip-mock:8090/api/v1/pip/tag-scalar",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.value",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_TAG_SCALAR"
+    },
+    "cacheable": false
+  }
+]

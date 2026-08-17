@@ -1,0 +1,497 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--health-enabled=true"]
+    ports:
+      - "${KC_HTTP_PORT:-5556}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: kcadmin
+      KC_HOSTNAME: http://keycloak:8080/auth
+      JAVA_OPTS_APPEND: -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
+      KC_HTTP_RELATIVE_PATH: /auth
+    healthcheck:
+      # Use kcadm.sh to authenticate against the master realm. This verifies
+      # that Keycloak is not just listening on a port but actually capable of
+      # processing authentication requests (JVM warmed up, realms imported,
+      # DB connections ready). Equivalent to what the test suite does in its
+      # setup.token_acquire_expired step, so by the time compose declares
+      # Keycloak healthy the test's 10 s HTTP timeout is safely within budget.
+      test: ["CMD-SHELL", "/opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080/auth --realm master --user kcadmin --password kcadmin 2>/dev/null"]
+      interval: 5s
+      timeout: 15s
+      retries: 70
+      start_period: 30s
+    volumes:
+      - ./authn/keycloak/authz-test-realm.json:/opt/keycloak/data/import/authz-test-realm.json:ro
+      - ./authn/keycloak/cloud-common-realm.json:/opt/keycloak/data/import/cloud-common-realm.json:ro
+
+  authz-policy-admin:
+    build:
+      context: ../../..
+      dockerfile: build/authz-policy-admin/Dockerfile
+    pull_policy: build
+    image: authz-policy-admin:local
+    ports:
+      - "${AUTHZ_POLICY_ADMIN_PORT:-18090}:18090"
+    environment:
+      AUTHZ_POLICY_ADMIN_PORT: "18090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:18090/authz-policy-admin/hash || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  pip-stub:
+    build:
+      context: ../pipstub
+      dockerfile: Dockerfile
+    pull_policy: build
+    image: pip-stub:local
+    ports:
+      - "${PIP_STUB_PORT:-19999}:8090"
+    environment:
+      PIP_STUB_PORT: "8090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8090/pip-stub/calls || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  # D-AG-15 (Step 6 / ADR-0054) + D-AG-19: entitlements-mock is a
+  # first-class, always-up runtime service. The image is the same
+  # pip-stub:local binary; it exposes the control-plane pin API on a
+  # separate port so the runtime testify suite can pin per-user V3
+  # responses without colliding with the GENERAL-PIP stub.
+  # pap-client reaches it via the Compose DNS alias
+  # `entitlements-mock` on port 8090. No optional profile gate: the
+  # integration-suite entitlements coverage (D-AG-19) runs on every
+  # invocation and requires this service to be healthy.
+  entitlements-mock:
+    build:
+      context: ../pipstub
+      dockerfile: Dockerfile
+    pull_policy: build
+    image: pip-stub:local
+    ports:
+      - "${ENTITLEMENTS_STUB_PORT:-19998}:8090"
+    environment:
+      PIP_STUB_PORT: "8090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8090/pip-stub/calls || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  # ── test-only upstream capture (transparent OPA proxy) ────────────────────
+
+  upstream-capture:
+    build:
+      context: ../upstream-capture
+      dockerfile: Dockerfile
+    pull_policy: build
+    image: upstream-capture:local
+    depends_on:
+      pap-client:
+        condition: service_healthy
+    ports:
+      - "${UPSTREAM_CAPTURE_PORT:-19090}:9090"
+    environment:
+      CAPTURE_PORT: "9090"
+      CAPTURE_UPSTREAM: "http://opa:8181"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9090/capture/health || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  # ── split topology: envoy + opa + pap-client + decision-log-collector ────
+
+  # opa-bootstrap: one-shot init container equivalent in Compose.
+  # Runs `pap-client bootstrap` which:
+  #   1. Fetches JWKS from each trusted IdP and writes them to the opa-data
+  #      volume (/etc/opa/data/authn/jwks/).
+  #   2. Writes {"opa_auth_secret":"<token>"} to opa-data/opa-auth-secret.json
+  #      from AUTHZ_OPA_AUTH_TOKEN_FILE (ADR-0077), so system_authz.rego can
+  #      load it as data.opa_auth_secret at OPA startup.
+  #   3. Writes /var/run/authz/bootstrap-status.json that pap-client's /health
+  #      handler reads to report JWKS bootstrap success/failure.
+  # Exits 0 when done. OPA and pap-client both depend on this completing
+  # successfully before they start.
+  opa-bootstrap:
+    build:
+      context: ../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    command: ["bootstrap"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: 2
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+      # OPA auth secret write (ADR-0077): bootstrap writes this token to
+      # opa-data/opa-auth-secret.json before OPA starts.
+      AUTHZ_OPA_AUTH_TOKEN_FILE: /etc/authz/opa-auth/token
+    volumes:
+      - ./authn/keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - ./authn/opa-auth-token:/etc/authz/opa-auth/token:ro
+      # opa-data: bootstrap writes JWKS and opa-auth-secret.json here.
+      - opa-data:/etc/opa/data
+      # authz-run: bootstrap writes bootstrap-status.json here;
+      # pap-client reads it when /health is called.
+      - authz-run:/var/run/authz
+
+  # opa: vanilla upstream Open Policy Agent (no Netcracker code).
+  # Reads JWKS, opa-auth-secret, policies, pips, and m2m from the shared
+  # opa-data volume written by opa-bootstrap and pap-client.
+  # Restart survival: on OPA container restart, OPA re-reads all JSON files
+  # from /etc/opa/data, so push-written documents are immediately available
+  # without a re-push (restart survival).
+  opa:
+    image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    depends_on:
+      opa-bootstrap:
+        condition: service_completed_successfully
+    ports:
+      # authz-agent-ADR-0062 cross-transport parity: publish OPA-direct
+      # on the host so the testify suite can drive both Envoy and
+      # OPA-direct from the same process. Container port 8181 stays
+      # pinned (D4); the host alias is purely for the test harness.
+      - "${OPA_DIRECT_PORT:-18181}:8181"
+      # Publish pap-client's port (8182) here since pap-client shares this
+      # container's network namespace via network_mode: "service:opa".
+      # The test suite and degraded-agent health probes reach pap-client
+      # through this mapping.
+      - "${PAP_CLIENT_PORT:-18182}:8182"
+    # exec form: no shell, so --ignore=..* is passed as a literal string
+    # without glob expansion. OPA handles it as its own pattern.
+    command:
+      - run
+      - --server
+      - --addr
+      - "0.0.0.0:8181"
+      - --ignore=..*
+      - --authorization=basic
+      - --authentication=token
+      - --config-file
+      - /etc/opa/opa-config.yaml
+      - /etc/opa/policies
+      - /etc/opa/data
+    healthcheck:
+      # ADR-0077 GET /health is explicitly allowed without a bearer token
+      # by system_authz.rego. OPA v1.x removed the `opa health` subcommand;
+      # use `opa eval --fail` with http.send to probe the HTTP health endpoint.
+      # The OPA binary is the only tool available in this distroless image.
+      test: ["CMD", "/opa", "eval", "--fail", "http.send({\"method\":\"GET\",\"url\":\"http://localhost:8181/health\"}).status_code == 200"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    volumes:
+      - ../../../test/.runtime-configs/opa/opa-config.yaml:/etc/opa/opa-config.yaml:ro
+      - ../../../charts/authz-agent/files/opa/policies:/etc/opa/policies:ro
+      # opa-data is read-only for OPA: bootstrap and pap-client write here;
+      # OPA only reads at startup and after restart.
+      - opa-data:/etc/opa/data:ro
+
+  # pap-client: Policy Administration Point client.
+  # Pulls policies and PIPs, writes them to the shared opa-data volume
+  # (for restart survival), and pushes them into OPA's Data API.
+  # network_mode: "service:opa" shares OPA's network namespace so pap-client
+  # reaches OPA on 127.0.0.1:8181 (loopback) without any extra networking.
+  pap-client:
+    build:
+      context: ../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    # Share OPA's network namespace: pap-client reaches OPA on 127.0.0.1:8181.
+    # Port 8182 (pap-client HTTP server) is accessible via the opa service's
+    # port mapping above.
+    network_mode: "service:opa"
+    depends_on:
+      opa:
+        condition: service_healthy
+      opa-bootstrap:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      pip-stub:
+        condition: service_healthy
+      # D-AG-19: wait for entitlements-mock so the container-pinned ENT
+      # resolver always has its V3 endpoint available from the first
+      # authorize request onward.
+      entitlements-mock:
+        condition: service_healthy
+      # authz-policy-admin must be healthy before pap-client starts so the
+      # pull loop can fetch its first policy set immediately at startup.
+      authz-policy-admin:
+        condition: service_healthy
+    environment:
+      AUTHZ_PAP_CLIENT_ADDR: "0.0.0.0:8182"
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: 2
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+      AUTHZ_ENTITLEMENTS_URL: http://entitlements-mock:8090
+      AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT: 2
+      AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
+      # Pull loop: fetch policies from authz-policy-admin every 2 s (fast for tests).
+      AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
+      AUTHZ_PAP_CLIENT_PULL_INTERVAL: "2"
+      # Token file: a static dummy token so authz-policy-admin's Authorization check passes.
+      # In Kubernetes the kubelet rotates a real service-account token here;
+      # for local testing any non-empty file content is accepted by authz-policy-admin.
+      AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
+      # OPA write-path auth token (authz-agent-ADR-0077). pap-client reads
+      # this to authenticate PUT/PATCH requests to OPA's Data API.
+      AUTHZ_OPA_AUTH_TOKEN_FILE: /etc/authz/opa-auth/token
+    healthcheck:
+      test: ["CMD", "pap-client", "healthcheck"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - ./authn/keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - ./authn/ac-pull-token:/etc/authz/ac-pull-token:ro
+      - ./authn/opa-auth-token:/etc/authz/opa-auth/token:ro
+      # opa-data is read-write for pap-client: it writes pips.json, m2m.json,
+      # and policies.json here for restart survival.
+      - opa-data:/etc/opa/data
+      # authz-run is shared with opa-bootstrap: pap-client reads
+      # bootstrap-status.json written by bootstrap and writes pull-status.json.
+      - authz-run:/var/run/authz
+
+  envoy:
+    image: envoyproxy/envoy:v1.31-latest
+    depends_on:
+      pap-client:
+        condition: service_healthy
+      decision-log-collector:
+        condition: service_healthy
+      upstream-capture:
+        condition: service_healthy
+    ports:
+      - "${AUTHZ_AGENT_HTTP_PORT:-8080}:8080"  # Envoy public API
+      - "${AUTHZ_AGENT_ADMIN_PORT:-9901}:9901" # Envoy admin
+    volumes:
+      - ./envoy-capture.yaml:/etc/envoy/envoy.yaml:ro
+      - ../../../configs/envoy/lua:/etc/envoy/lua:ro
+    command: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "info", "--service-cluster", "authz-agent"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9901/ready || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+
+  decision-log-collector:
+    build:
+      context: ../../..
+      dockerfile: build/collector/Dockerfile
+    pull_policy: build
+    image: decision-log-collector:local
+    depends_on:
+      opa:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8183/healthz || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  # ── degraded agents (for health negative-scenario runtime coverage) ──────
+  # In split topology, each degraded agent is a group of three services:
+  #   - opa-X-bootstrap: one-shot JWKS bootstrap
+  #   - opa-X:           vanilla OPA (reads from opa-X-data volume)
+  #   - pap-client-X:    pap-client daemon (network_mode: service:opa-X)
+  # Tests probe pap-client health via host port published on opa-X.
+
+  # ── opa-partial-permissive: 2 providers (keycloak OK + broken-idp) ──────
+  # permissive mode (AUTHZ_JWKS_BOOTSTRAP_REQUIRED=false):
+  # bootstrap succeeds for keycloak → successCount=1, configuredCount=2 → GET /health → 200.
+
+  opa-partial-permissive-bootstrap:
+    build:
+      context: ../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    command: ["bootstrap"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_BOOTSTRAP_REQUIRED: "false"
+      AUTHZ_JWKS_HTTP_TIMEOUT: 5
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    volumes:
+      - ./authn/keycloak/trusted-providers-2idp.json:/etc/authz/trusted-providers.json:ro
+      - opa-partial-permissive-data:/etc/opa/data
+      - opa-partial-permissive-run:/var/run/authz
+
+  opa-partial-permissive:
+    image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    depends_on:
+      opa-partial-permissive-bootstrap:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+    # Publish pap-client's port (8182) here: pap-client-partial-permissive
+    # shares this container's network namespace via network_mode.
+    ports:
+      - "${AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT:-18081}:8182"
+    # No --authorization=basic --authentication=token for degraded agents:
+    # they only test JWKS bootstrap health, not OPA auth.
+    command:
+      - run
+      - --server
+      - --addr
+      - "0.0.0.0:8181"
+      - --ignore=..*
+      - --config-file
+      - /etc/opa/opa-config.yaml
+      - /etc/opa/policies
+      - /etc/opa/data
+    healthcheck:
+      test: ["CMD", "/opa", "eval", "--fail", "http.send({\"method\":\"GET\",\"url\":\"http://localhost:8181/health\"}).status_code == 200"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - opa-partial-permissive-data:/etc/opa/data:ro
+      - ../../../test/.runtime-configs/opa/opa-config.yaml:/etc/opa/opa-config.yaml:ro
+      - ../../../charts/authz-agent/files/opa/policies:/etc/opa/policies:ro
+
+  pap-client-partial-permissive:
+    image: authz-pap-client:local
+    network_mode: "service:opa-partial-permissive"
+    depends_on:
+      opa-partial-permissive:
+        condition: service_healthy
+      opa-partial-permissive-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      AUTHZ_PAP_CLIENT_ADDR: "0.0.0.0:8182"
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_BOOTSTRAP_REQUIRED: "false"
+      # Timeout/retries raised to tolerate Keycloak startup transients: port 9000
+      # may open just before the JVM finishes warming up, causing the first JWKS
+      # fetch to be slow. 20 retries × 5 s gives 100 s of tolerance.
+      AUTHZ_JWKS_HTTP_TIMEOUT: 5
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    healthcheck:
+      test: ["CMD", "pap-client", "healthcheck"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - ./authn/keycloak/trusted-providers-2idp.json:/etc/authz/trusted-providers.json:ro
+      - opa-partial-permissive-data:/etc/opa/data
+      - opa-partial-permissive-run:/var/run/authz
+
+  # ── opa-partial-strict: 2 providers (keycloak OK + broken-idp), strict mode ──
+  # bootstrap succeeds for keycloak only → successCount=1, configuredCount=2 < threshold → GET /health → 503.
+
+  opa-partial-strict-bootstrap:
+    build:
+      context: ../../..
+      dockerfile: build/pap-client/Dockerfile
+    pull_policy: build
+    image: authz-pap-client:local
+    command: ["bootstrap"]
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_BOOTSTRAP_REQUIRED: "true"
+      AUTHZ_JWKS_HTTP_TIMEOUT: 5
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    volumes:
+      - ./authn/keycloak/trusted-providers-2idp.json:/etc/authz/trusted-providers.json:ro
+      - opa-partial-strict-data:/etc/opa/data
+      - opa-partial-strict-run:/var/run/authz
+
+  opa-partial-strict:
+    image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    depends_on:
+      opa-partial-strict-bootstrap:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+    ports:
+      - "${AUTHZ_AGENT_PARTIAL_STRICT_PORT:-18082}:8182"
+    command:
+      - run
+      - --server
+      - --addr
+      - "0.0.0.0:8181"
+      - --ignore=..*
+      - --config-file
+      - /etc/opa/opa-config.yaml
+      - /etc/opa/policies
+      - /etc/opa/data
+    healthcheck:
+      test: ["CMD", "/opa", "eval", "--fail", "http.send({\"method\":\"GET\",\"url\":\"http://localhost:8181/health\"}).status_code == 200"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - opa-partial-strict-data:/etc/opa/data:ro
+      - ../../../test/.runtime-configs/opa/opa-config.yaml:/etc/opa/opa-config.yaml:ro
+      - ../../../charts/authz-agent/files/opa/policies:/etc/opa/policies:ro
+
+  pap-client-partial-strict:
+    image: authz-pap-client:local
+    network_mode: "service:opa-partial-strict"
+    depends_on:
+      opa-partial-strict:
+        condition: service_healthy
+      opa-partial-strict-bootstrap:
+        condition: service_completed_successfully
+    environment:
+      AUTHZ_PAP_CLIENT_ADDR: "0.0.0.0:8182"
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_BOOTSTRAP_REQUIRED: "true"
+      # Timeout/retries raised so keycloak-runtime succeeds: the test expects
+      # the 503 to be "threshold not met" (successCount=1 < configuredCount=2),
+      # NOT "required providers missing" (which would only appear if keycloak
+      # itself failed due to a startup transient). See opa-partial-permissive.
+      AUTHZ_JWKS_HTTP_TIMEOUT: 5
+      AUTHZ_JWKS_HTTP_RETRIES: 20
+    healthcheck:
+      test: ["CMD", "pap-client", "healthcheck"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    volumes:
+      - ./authn/keycloak/trusted-providers-2idp.json:/etc/authz/trusted-providers.json:ro
+      - opa-partial-strict-data:/etc/opa/data
+      - opa-partial-strict-run:/var/run/authz
+
+volumes:
+  # opa-data: shared between opa-bootstrap (write), opa (read), and
+  # pap-client (write). Holds JWKS, opa-auth-secret, policies, pips, m2m.
+  opa-data: {}
+  # authz-run: shared between opa-bootstrap (writes bootstrap-status.json)
+  # and pap-client (reads bootstrap-status.json, writes pull-status.json).
+  authz-run: {}
+  # Degraded agent volumes.
+  opa-partial-permissive-data: {}
+  opa-partial-permissive-run: {}
+  opa-partial-strict-data: {}
+  opa-partial-strict-run: {}

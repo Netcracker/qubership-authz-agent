@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+# pre-commit: local lint gate matching the CI super-linter checks.
+# Install: git config core.hooksPath .githooks
+# Or:      make install-hooks
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PASS=0
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+fail() { echo "FAIL [$1]"; PASS=1; }
+ok()   { echo "OK   [$1]"; }
+
+# Staged files (A/M only, no deletes)
+staged() { git diff --cached --name-only --diff-filter=AM; }
+
+# ── 1. Go — gofmt + golangci-lint ────────────────────────────────────────────
+GO_FILES=()
+while IFS= read -r f; do
+    [[ "$f" == *.go ]] && GO_FILES+=("$f")
+done < <(staged)
+
+if [[ ${#GO_FILES[@]} -gt 0 ]]; then
+    # gofmt on staged files only
+    UNFORMATTED=()
+    for f in "${GO_FILES[@]}"; do
+        result=$(gofmt -l "$REPO_ROOT/$f" 2>/dev/null)
+        [[ -n "$result" ]] && UNFORMATTED+=("$f")
+    done
+    if [[ ${#UNFORMATTED[@]} -gt 0 ]]; then
+        echo "gofmt: unformatted files:"
+        printf '  %s\n' "${UNFORMATTED[@]}"
+        fail "gofmt"
+    else
+        ok "gofmt"
+    fi
+
+    # golangci-lint: run per affected module root
+    declare -A MODULES_SEEN
+    MODULES=(
+        "."
+        "test/parity/suite"
+        "test/integration/testify"
+        "test/integration/pipstub"
+    )
+    for f in "${GO_FILES[@]}"; do
+        for mod in "${MODULES[@]}"; do
+            if [[ "$f" == "$mod"/* || "$mod" == "." ]]; then
+                MODULES_SEEN["$mod"]=1
+            fi
+        done
+    done
+
+    for mod in "${!MODULES_SEEN[@]}"; do
+        build_tags=""
+        [[ "$mod" == "test/integration/testify" ]] && build_tags="--build-tags integration"
+        pushd "$REPO_ROOT/$mod" > /dev/null
+        # shellcheck disable=SC2086
+        if golangci-lint run $build_tags ./... 2>&1; then
+            ok "golangci-lint ($mod)"
+        else
+            fail "golangci-lint ($mod)"
+        fi
+        popd > /dev/null
+    done
+fi
+
+# ── 2. Shell — shellcheck ─────────────────────────────────────────────────────
+SH_FILES=()
+while IFS= read -r f; do
+    [[ "$f" == *.sh ]] && SH_FILES+=("$REPO_ROOT/$f")
+done < <(staged)
+
+if [[ ${#SH_FILES[@]} -gt 0 ]]; then
+    if shellcheck --severity=error "${SH_FILES[@]}" 2>&1; then
+        ok "shellcheck"
+    else
+        fail "shellcheck"
+    fi
+fi
+
+# ── 3. YAML — yamllint ───────────────────────────────────────────────────────
+YAML_FILES=()
+while IFS= read -r f; do
+    if [[ "$f" == *.yml || "$f" == *.yaml ]]; then
+        # Skip Helm templates (Go template syntax conflicts with yamllint braces rule)
+        [[ "$f" == charts/*/templates/*.yaml ]] && continue
+        YAML_FILES+=("$REPO_ROOT/$f")
+    fi
+done < <(staged)
+
+if [[ ${#YAML_FILES[@]} -gt 0 ]]; then
+    YAMLLINT_BIN="${YAMLLINT_BIN:-yamllint}"
+    command -v "$YAMLLINT_BIN" > /dev/null 2>&1 || YAMLLINT_BIN="$HOME/.local/bin/yamllint"
+    if "$YAMLLINT_BIN" -c "$REPO_ROOT/.github/linters/.yaml-lint.yml" "${YAML_FILES[@]}" 2>&1; then
+        ok "yamllint"
+    else
+        fail "yamllint"
+    fi
+fi
+
+# ── 4. Markdown — markdownlint-cli2 ─────────────────────────────────────────
+MD_FILES=()
+while IFS= read -r f; do
+    [[ "$f" == *.md ]] && MD_FILES+=("$f")
+done < <(staged)
+
+if [[ ${#MD_FILES[@]} -gt 0 ]]; then
+    pushd "$REPO_ROOT" > /dev/null
+    if npx --yes markdownlint-cli2 --config .github/linters/.markdown-lint.yml "${MD_FILES[@]}" 2>&1; then
+        ok "markdownlint"
+    else
+        fail "markdownlint"
+    fi
+    popd > /dev/null
+fi
+
+# ── 5. XML — well-formed check ───────────────────────────────────────────────
+XML_FILES=()
+while IFS= read -r f; do
+    [[ "$f" == *.xml ]] && XML_FILES+=("$REPO_ROOT/$f")
+done < <(staged)
+
+if [[ ${#XML_FILES[@]} -gt 0 ]]; then
+    XML_FAIL=0
+    for f in "${XML_FILES[@]}"; do
+        if ! python3 -c "import xml.dom.minidom; xml.dom.minidom.parse('$f')" 2>&1; then
+            XML_FAIL=1
+        fi
+    done
+    if [[ $XML_FAIL -eq 0 ]]; then
+        ok "xml"
+    else
+        fail "xml"
+    fi
+fi
+
+# ── 6. GitHub Actions — zizmor + actionlint ──────────────────────────────────
+WF_FILES=()
+while IFS= read -r f; do
+    [[ "$f" == .github/workflows/*.yml || "$f" == .github/workflows/*.yaml ]] && WF_FILES+=("$REPO_ROOT/$f")
+done < <(staged)
+
+if [[ ${#WF_FILES[@]} -gt 0 ]]; then
+    ZIZMOR_BIN="${ZIZMOR_BIN:-zizmor}"
+    command -v "$ZIZMOR_BIN" > /dev/null 2>&1 || ZIZMOR_BIN="$HOME/.local/bin/zizmor"
+    if "$ZIZMOR_BIN" --config "$REPO_ROOT/.github/linters/zizmor.yaml" --format plain "${WF_FILES[@]}" 2>&1 | grep -q "^error"; then
+        fail "zizmor"
+    else
+        ok "zizmor"
+    fi
+
+    if command -v actionlint > /dev/null 2>&1; then
+        if actionlint "${WF_FILES[@]}" 2>&1; then
+            ok "actionlint"
+        else
+            fail "actionlint"
+        fi
+    fi
+fi
+
+# ── result ───────────────────────────────────────────────────────────────────
+if [[ $PASS -ne 0 ]]; then
+    echo ""
+    echo "Pre-commit checks FAILED. Fix the issues above and re-stage."
+    exit 1
+fi
+echo ""
+echo "All pre-commit checks passed."

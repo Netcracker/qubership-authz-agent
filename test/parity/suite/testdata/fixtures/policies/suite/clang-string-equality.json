@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 49: string equality. Verified spelling: resource.field == 'value' (single quotes, == operator). Sub-cases: category=PARITY_GOLD (true), category=PARITY_SILVER (false).",
+    "component": "PARITY",
+    "reason": "CLANG string equality",
+    "resourceType": "PARITY_SUITE_CLANG_EQ",
+    "operation": "READ",
+    "condition": "resource.category == 'PARITY_GOLD'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c01"
+  }
+]

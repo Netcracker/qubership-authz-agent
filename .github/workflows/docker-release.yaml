@@ -1,0 +1,95 @@
+---
+# Release workflow for qubership-authz-agent.
+#
+# Triggered manually (workflow_dispatch) when a release version is ready.
+# Performs the following steps:
+#   1. Tags the commit with the release version (checks for duplicate tags).
+#   2. Builds and publishes all five Docker images listed in docker-dev-config.json.
+#   3. Creates a GitHub release entry.
+#   4. On failure, deletes the tag to keep the tag list clean.
+#
+# This is a standalone product release, not the organisation's central bulk
+# release (go-bulk-release-core-services.yaml), which targets a different tier
+# of companion services with shared version lines.
+#
+# Required secrets (inherited):
+#   - GITHUB_TOKEN  — for tagging and creating the release
+#
+# Required vars: none beyond what the docker-publish workflow reads from the
+# repository's own container registry credentials.
+
+name: Release And Publish Docker Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        default: '1.0.0'
+        type: string
+        description: 'Release version (e.g., 1.0.0)'
+      dry-run:
+        required: false
+        type: boolean
+        default: false
+        description: 'Dry run (build and tag but do not push or create release)'
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Create Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@27fd7674286e5f561a6fd8277f2f389ff96ddb9e # v2.6.0
+        with:
+          ref: ${{ github.ref }}
+          tag-name: v${{ github.event.inputs.version }}
+          check-tag: true
+          dry-run: ${{ github.event.inputs.dry-run == 'true' }}
+
+  docker-build-publish:
+    needs: create-tag
+    permissions:
+      packages: write
+    uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@27fd7674286e5f561a6fd8277f2f389ff96ddb9e # v2.6.0
+    with:
+      ref: v${{ inputs.version }}
+      dry-run: ${{ github.event.inputs.dry-run == 'true' }}
+      # Five images: four agent-Pod containers (authz-agent-* prefix) and the
+      # standalone authz-policy-admin (no prefix — it is its own Deployment).
+      # arm64 is required; do not change platforms to amd64-only.
+      component: |
+        [
+          { "name": "authz-agent-pap-client",    "file": "./build/pap-client/Dockerfile",         "context": "." },
+          { "name": "authz-agent-envoy",         "file": "./build/envoy/Dockerfile",              "context": "." },
+          { "name": "authz-agent-collector",     "file": "./build/collector/Dockerfile",          "context": "." },
+          { "name": "authz-agent-token-fetcher", "file": "./build/token-fetcher/Dockerfile",      "context": "." },
+          { "name": "authz-policy-admin",        "file": "./build/authz-policy-admin/Dockerfile", "context": "." }
+        ]
+      platforms: linux/amd64,linux/arm64
+
+  cleanup-on-fail:
+    needs: docker-build-publish
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Delete Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@27fd7674286e5f561a6fd8277f2f389ff96ddb9e # v2.6.0
+        with:
+          ref: ${{ github.ref }}
+          tag-name: v${{ github.event.inputs.version }}
+          delete-tag: true
+          dry-run: ${{ github.event.inputs.dry-run == 'true' }}
+
+  github-release:
+    needs: docker-build-publish
+    if: ${{ github.event.inputs.dry-run == 'false' }}
+    permissions:
+      contents: write
+    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@27fd7674286e5f561a6fd8277f2f389ff96ddb9e # v2.6.0
+    with:
+      version: ${{ github.event.inputs.version }}
+      publish: false

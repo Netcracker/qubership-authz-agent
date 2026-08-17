@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "ENT rows 76/82/83 base condition: entitlement-derived Owner set contains the resource id.",
+    "component": "PARITY",
+    "reason": "ENT contains",
+    "resourceType": "PARITY_SUITE_ENT_CONTAINS",
+    "operation": "READ",
+    "condition": "subject.entitledResources.of('PARITY_CONTRACT').as('Owner') CONTAINS resource.id",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000d01"
+  }
+]

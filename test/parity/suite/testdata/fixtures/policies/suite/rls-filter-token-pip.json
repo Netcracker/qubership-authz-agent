@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "PSUITE rows 25/43: filter endpoint renders a TOKEN-PIP-backed rsqlPredicate template by substituting the department JWT claim exposed as subject.parityDepartment.",
+    "component": "PARITY",
+    "reason": "TOKEN PIP filter rendering",
+    "resourceType": "PARITY_SUITE_TOKEN_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "department==${subject.parityDepartment}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b81"
+  }
+]

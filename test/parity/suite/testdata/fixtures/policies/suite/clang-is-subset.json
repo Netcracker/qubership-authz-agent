@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "CLANG row 57 after grammar verification: legacy has IS SUBSET, not CONTAINS ALL. This case proves the accepted subset operator on array-valued resource attributes.",
+    "component": "PARITY",
+    "reason": "CLANG IS SUBSET",
+    "resourceType": "PARITY_SUITE_CLANG_SUBSET",
+    "operation": "READ",
+    "condition": "resource.tags IS SUBSET 'red', 'blue'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000c10"
+  }
+]

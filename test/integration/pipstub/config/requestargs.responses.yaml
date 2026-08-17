@@ -1,0 +1,70 @@
+# Static pip-stub rule config for the GENERAL PIP request-args parity/integration
+# cases (authz-agent-ADR-0066..0069). Loaded when PIP_STUB_CONFIG points here,
+# bind-mounted read-only into pip-mock. Rules are matched top-down; the first
+# rule whose `match` fully matches wins. `match` is AND over the listed fields;
+# omitted fields are wildcards. A query/header value of "*" means "present with
+# any value". Unmatched requests fall through to the legacy path routes, so
+# tests that still use PUT /pip-stub/configure keep working. There is
+# intentionally NO catch-all rule here.
+#
+# All rule paths are namespaced under /api/v1/pip/ra/ ("request-args") so they can
+# never shadow the existing suite/smoke GENERAL PIP paths (/api/v1/pip/allowed,
+# /meta, /status-scalar, ...) which are still driven by PUT /pip-stub/configure.
+version: 1
+rules:
+  # Echo: reply with the exact request the agent sent — the parity mechanism.
+  # Compare against what access-control sends for the same input.
+  - name: echo-parity
+    match: { path: /api/v1/pip/ra/echo }
+    respond: { status: 200, echo: true }
+
+  # Allowed customer ids for a Customer read, keyed on the substituted request
+  # (POST + tenant query + a requestAttributes body predicate).
+  - name: allowed-ids-for-customer-read
+    match:
+      method: POST
+      path: /api/v1/pip/ra/allowed
+      query: { tenant: "*" }
+      body:
+        - { jsonPath: $.requestAttributes.resourceType, equals: Customer }
+    respond:
+      status: 200
+      json: { data: { ids: [ { id: C1 }, { id: C2 }, { id: C3 } ] } }
+      headers: { Content-Type: application/json }
+
+  # Map-extract source: an object the policy reduces to subject.<alias>.{ids,count}.
+  - name: map-extract-source
+    match: { path: /api/v1/pip/ra/mapextract }
+    respond:
+      status: 200
+      json: { data: { ids: [ { id: C1 }, { id: C2 } ], total: 2 } }
+
+  # Whole-value array for an IN predicate.
+  - name: whole-value-array
+    match: { path: /api/v1/pip/ra/wholearray }
+    respond: { status: 200, json: { ids: [ C1, C2, C3 ] } }
+
+  # Slow upstream: still returns a valid body, but after a server-side delay —
+  # drives the per-request timeout case (set delayMs > the PIP's timeoutSeconds).
+  - name: slow-upstream
+    match: { path: /api/v1/pip/ra/slow }
+    respond: { status: 200, delayMs: 3000, json: { data: { ids: [ { id: C1 } ] } } }
+
+  # Hard http failure: non-200 with no defaultValue => operand-local hard failure
+  # (kind http_error). Drives the §D BranchFalse_OnPipFailure cases.
+  - name: broken-http-500
+    match: { path: /api/v1/pip/ra/broken }
+    respond: { status: 500, json: { error: upstream-down } }
+
+  # Stateful sequence (clamps to the last entry once exhausted) — a warmup 503
+  # then a steady 200; drives multi-call/retry scenarios.
+  - name: flaky-then-ok
+    match: { path: /api/v1/pip/ra/flaky }
+    respondSequence:
+      - { status: 503, json: { error: warmup } }
+      - { status: 200, json: [ X1, X2 ] }
+
+  # Non-JSON body to exercise the response parse-failure → onMissing path.
+  - name: not-json
+    match: { path: /api/v1/pip/ra/notjson }
+    respond: { status: 200, raw: "not-json" }

@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "ENT row 77: same membership semantics as ent-contains, but with IN on the left-hand resource id.",
+    "component": "PARITY",
+    "reason": "ENT in-rhs",
+    "resourceType": "PARITY_SUITE_ENT_IN",
+    "operation": "READ",
+    "condition": "resource.id IN subject.entitledResources.of('PARITY_CONTRACT').as('Owner')",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000d02"
+  }
+]

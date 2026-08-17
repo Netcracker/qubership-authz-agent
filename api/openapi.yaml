@@ -1,0 +1,1265 @@
+openapi: 3.0.3
+info:
+  title: Authz Agent
+  version: 0.0.1
+  description: |
+    HTTP contract served by the Authz Agent runtime.
+
+    The agent exposes a single Envoy listener on port 8080 carrying both the
+    public authorization surface (legacy v1 + v2 + preview + the canonical
+    `/access/v1/authorize`) and the internal admin surface
+    (`/internal/v1/decision-logs`). The `PUT /internal/v1/policies` and
+    `PUT /internal/v1/pips` upload endpoints have been removed (ADR-0071);
+    policy data is now delivered via the pull loop or a mounted ConfigMap
+    (ADR-0072). The internal admin endpoint is isolated by URL prefix only;
+    there is no separate listener port in the current runtime. The two
+    `servers` entries below distinguish the two intents.
+
+    Notation:
+      - `bearerAuth` covers the `Authorization: Bearer <jwt>` admission
+        token applied across the public surface. The legacy
+        `Incoming-Token` and `Authorization-Type` headers (ADR-0049) are
+        modelled as per-operation header parameters because they are
+        optional supplements, not standalone auth schemes.
+      - `additionalProperties` is set explicitly on every schema. Open
+        shapes (`additionalProperties: true`) are limited to the
+        per-resource attribute bag (`resource`) and to the response of
+        `GET /internal/v1/decision-logs`, which is a stream of OPA-emitted
+        objects whose internal layout is not part of this contract.
+      - `info.version` mirrors the authz-agent release version. The
+        canonical source-of-truth is
+        `charts/authz-agent/Chart.yaml` (`version` field). The
+        on-disk value is `0.0.1`; the build pipeline rewrites it for
+        release artefacts.
+servers:
+  - url: http://localhost:18080
+    description: Public authorization surface (host-published Envoy port, runtime integration suite).
+  - url: http://localhost:18080
+    description: Internal admin surface; same Envoy listener, segregated by the `/internal/v1/` URL prefix.
+tags:
+  - name: public
+    description: Authorization decision endpoints reachable by every workload via the public ingress.
+  - name: internal-admin
+    description: Operator/control-plane endpoints (policy upload, PIP upload, decision-log retrieval).
+  - name: meta
+    description: Service metadata endpoints (`/api-version`, `/health`).
+security:
+  - bearerAuth: []
+paths:
+  /access/v1/authorize:
+    post:
+      operationId: access_v1_authorize
+      tags: [public]
+      summary: Canonical authorization decision.
+      description: |
+        Returns an `AuthorizeResponseEnvelope` of the form
+        `{ "result": <AuthorizeResponse> }` describing the decision for one
+        or more `ResourceInput` entries. The canonical request body is the
+        `AuthorizeRequestEnvelope` — an OPA Data API envelope of the form
+        `{ "input": <AuthorizeRequest> }`. The same envelopes are the
+        contract on both transports: the Envoy mount at
+        `/access/v1/authorize` and the OPA-direct mount at
+        `/v1/data/authorize` accept and forward the bodies byte-identically
+        (authz-agent-ADR-0062). Admission and subject authentication
+        tokens live in `input.authorizationToken` and `input.subject` — no
+        HTTP-level `Authorization` / `Incoming-Token` / `Authorization-Type`
+        header is consulted on this route. Admission or subject
+        authentication failure is conveyed in-band, not as an HTTP error:
+        the route returns HTTP 200 with `result.authError.{ status,reason }`
+        (e.g. `status: 401`), identically via Envoy (routing-only) and
+        OPA-direct, because the OPA Data API always answers 200
+        (authz-agent-ADR-0062 Decision 11).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeRequestEnvelope'
+            examples:
+              rls_deny_short_circuit:
+                summary: OLS DENY short-circuits before RLS (no roles).
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-guestUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "READ", "resource": { "id": "cust-4", "ownerId": "user-1" } }], "subject": "Bearer <test-jwt-for-guestUser1>", "ignoreRls": false } }
+              multi_resource:
+                summary: Multiple resources, input order preserved, ignoreRls=true.
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-viewerUser2>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "READ", "resource": { "id": "cust-5" } }, { "resourceType": "Invoice", "operation": "READ", "resource": { "id": "inv-1" } }], "subject": "Bearer <test-jwt-for-viewerUser2>", "ignoreRls": true } }
+              rls_default_allow:
+                summary: ignoreRls omitted (RLS evaluated by default), ALLOW with predicate.
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-viewerUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "READ", "resource": { "id": "cust-1" } }], "subject": "Bearer <test-jwt-for-viewerUser1>" } }
+              allow_with_predicate:
+                summary: RLS ALLOW returning an ownership predicate.
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-editorUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "UPDATE", "resource": { "id": "cust-2", "ownerId": "user-1" } }], "subject": "Bearer <test-jwt-for-editorUser1>", "ignoreRls": false } }
+              ols_allow_rls_deny:
+                summary: OLS ALLOW but RLS DENY (ABAC validation failure).
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-editorUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "UPDATE", "resource": { "id": "cust-3", "ownerId": "user-999" } }], "subject": "Bearer <test-jwt-for-editorUser1>", "ignoreRls": false } }
+              pip_substitution:
+                summary: GENERAL PIP value substituted into the rendered predicate.
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-admin>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "CUSTOMER", "operation": "READ", "resource": { "customerId": "C1" } }], "subject": "Bearer <test-jwt-for-admin>", "ignoreRls": false } }
+              token_bound_alias:
+                summary: TOKEN PIP claim aliased into the predicate.
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-admin>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "TOKEN_PIP_POSITIVE", "operation": "READ" }], "subject": "Bearer <test-jwt-for-admin>", "ignoreRls": false } }
+              wildcard:
+                summary: Wildcard (all-resource-types/all-operations) ALLOW.
+                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-admin>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "UNKNOWN_TYPE", "operation": "DELETE" }], "subject": "Bearer <test-jwt-for-admin>", "ignoreRls": false } }
+              admission_failure:
+                summary: Empty admission token — produces HTTP 200 + result.authError.
+                value: { "input": { "authorizationToken": "", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "ORDER", "operation": "READ" }], "subject": "" } }
+      responses:
+        '200':
+          description: |
+            Decision returned. Admission or subject authentication failure is
+            also conveyed here as HTTP 200 with `result.authError`
+            (authz-agent-ADR-0062 Decision 11), never as a 4xx status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeResponseEnvelope'
+              examples:
+                rls_deny_short_circuit:
+                  summary: OLS DENY short-circuit, no roles.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "READ", "isAllowed": false, "reason": "No user roles associated with resource and operation" }] } }
+                multi_resource:
+                  summary: Per-resource decisions returned in input order.
+                  value: { "result": { "rlsIgnored": true, "results": [{ "resourceType": "Customer", "operation": "READ", "isAllowed": true }, { "resourceType": "Invoice", "operation": "READ", "isAllowed": false, "reason": "No user roles associated with resource and operation" }] } }
+                rls_default_allow:
+                  summary: RLS-by-default ALLOW with ownership predicate.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "READ", "isAllowed": true, "predicates": [{ "predicate": "ownerId==user-1", "predicateType": "rsql" }] }] } }
+                allow_with_predicate:
+                  summary: RLS ALLOW carrying an ownership predicate.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "UPDATE", "isAllowed": true, "predicates": [{ "predicate": "ownerId==user-1", "predicateType": "rsql" }] }] } }
+                ols_allow_rls_deny:
+                  summary: OLS ALLOW overturned by an RLS/ABAC DENY.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "UPDATE", "isAllowed": false, "reason": "ABAC validations failed for roles { ROLE_EDITOR }" }] } }
+                pip_substitution:
+                  summary: GENERAL PIP value substituted into an RSQL predicate.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "isAllowed": true, "operation": "READ", "predicates": [{ "predicate": "customerId=in=(\"C1\", \"C2\", \"C3\")", "predicateType": "rsql" }], "resourceType": "CUSTOMER" }] } }
+                token_bound_alias:
+                  summary: TOKEN PIP claim substituted into an RSQL predicate.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "isAllowed": true, "operation": "READ", "predicates": [{ "predicate": "ownerEmail==\"admin@example.com\"", "predicateType": "rsql" }], "resourceType": "TOKEN_PIP_POSITIVE" }] } }
+                wildcard:
+                  summary: Wildcard ALLOW with no predicates.
+                  value: { "result": { "rlsIgnored": false, "results": [{ "isAllowed": true, "operation": "DELETE", "resourceType": "UNKNOWN_TYPE" }] } }
+                admission_failure:
+                  summary: In-band admission failure — HTTP 200 + result.authError (status 401).
+                  value: { "result": { "authError": { "message": "Authorization token is missing", "reason": "Authorization token is missing", "status": 401 } } }
+  /access/v1/check/resource:
+    post:
+      operationId: access_v1_check_resource
+      tags: [public]
+      summary: Legacy v1 OLS single-resource check.
+      description: |
+        Returns a JSON boolean literal (`true` or `false`) reflecting the
+        OLS decision for a single `(type, operation, resource)`. The
+        `tenant_id` query parameter is accepted for legacy thin-client
+        compatibility but does not influence the decision.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckResourceRequest'
+            examples:
+              allow:
+                summary: Resource the subject may read.
+                value: { "type": "ATTACHMENT", "operation": "READ", "resource": {} }
+              deny:
+                summary: Resource the subject may not read.
+                value: { "type": "ORDER", "operation": "READ", "resource": { "id": "order-1", "ownerId": "order-reader-1" } }
+      responses:
+        '200':
+          description: Boolean OLS decision.
+          content:
+            application/json:
+              schema:
+                type: boolean
+              examples:
+                allow:
+                  summary: Permit.
+                  value: true
+                deny:
+                  summary: Reject.
+                  value: false
+        '400':
+          description: Malformed body or missing required field.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /access/v1/check/resource/bulk:
+    post:
+      operationId: access_v1_check_resource_bulk
+      tags: [public]
+      summary: Legacy v1 OLS bulk check.
+      description: |
+        Returns a JSON array of allowed resource ids in the same input
+        order. Items missing an `id` are silently dropped. Duplicate ids
+        within the request yield `400 { "message": "Duplicate resource id ..." }`.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CheckResourceBulkItem'
+            examples:
+              single_item:
+                summary: One entry to evaluate.
+                value: [{ "id": "item-1", "type": "ORDER", "operation": "READ", "resource": {} }]
+              empty:
+                summary: Empty batch.
+                value: []
+      responses:
+        '200':
+          description: Array of allowed ids (possibly empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                allowed:
+                  summary: Entry permitted.
+                  value: ["item-1"]
+                none:
+                  summary: No entry permitted.
+                  value: []
+        '400':
+          description: Malformed body, missing required field, or duplicate id.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                duplicate_id:
+                  value: { "message": "Duplicate resource id item-1" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /access/v1/check/resource/bulk/operations:
+    post:
+      operationId: access_v1_check_resource_bulk_operations
+      tags: [public]
+      summary: Legacy v1 bulk-operations check.
+      description: |
+        Each entry carries an explicit list of `operations`. The response
+        is a map keyed by operation name; each value is the list of ids
+        whose decision was `ALLOW` for that operation. Keys are
+        lexicographically sorted in the emitted JSON. An empty request
+        body produces `{}`.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CheckResourceBulkOperationsItemV1'
+            examples:
+              single_entry:
+                summary: One entry with one operation.
+                value: [{ "id": "some-id", "type": "ORDER", "operations": ["READ"], "resource": {} }]
+              empty:
+                summary: Empty batch (yields {}).
+                value: []
+      responses:
+        '200':
+          description: Per-operation allowed-id map.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResourceBulkOperationsResponseV1'
+              examples:
+                allowed:
+                  summary: Entry allowed for READ.
+                  value: { "READ": ["some-id"] }
+                denied:
+                  summary: Entry denied for READ.
+                  value: { "READ": [] }
+        '400':
+          description: Malformed body or missing required field on any entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /preview/v1/check/resource/bulk/operations:
+    post:
+      operationId: preview_v1_check_resource_bulk_operations
+      tags: [public]
+      summary: Preview v1 alias of `/access/v1/check/resource/bulk/operations`.
+      description: Same wire shape as the `/access/v1/...` route; preview mount exists for thin-client routing.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CheckResourceBulkOperationsItemV1'
+            examples:
+              single_entry:
+                summary: One entry with one operation.
+                value: [{ "id": "some-id", "type": "ORDER", "operations": ["READ"], "resource": {} }]
+              empty:
+                summary: Empty batch (yields {}).
+                value: []
+      responses:
+        '200':
+          description: Per-operation allowed-id map.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResourceBulkOperationsResponseV1'
+              examples:
+                allowed:
+                  summary: Entry allowed for READ.
+                  value: { "READ": ["some-id"] }
+                denied:
+                  summary: Entry denied for READ.
+                  value: { "READ": [] }
+        '400':
+          description: Malformed body or missing required field on any entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /access/v1/check/filter:
+    post:
+      operationId: access_v1_check_filter
+      tags: [public]
+      summary: Legacy v1 RLS filter / predicate.
+      description: |
+        Driven entirely by query parameters (`resourceType`, `operation`);
+        the JSON body is reserved for legacy back-compat and must be
+        present but is unused. Always returns the six-field
+        `CheckFilterResponse` shape on `200`. `customFilterCondition` is
+        JSON `null` on the simplified-policy path.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - name: resourceType
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: operation
+          in: query
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckFilterRequest'
+            examples:
+              empty_body:
+                summary: Body is present but unused; inputs come from the query string.
+                value: {}
+      responses:
+        '200':
+          description: Filter predicate decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckFilterResponse'
+              examples:
+                allow:
+                  summary: Unconditional ALLOW (no filter needed).
+                  value: { "calculationResult": "ALLOW", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "", "sqlFilterCondition": "", "customFilterCondition": null }
+                deny:
+                  summary: Unconditional DENY.
+                  value: { "calculationResult": "DENY", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "", "sqlFilterCondition": "", "customFilterCondition": null }
+                use_filter_condition:
+                  summary: ALLOW conditioned on a row-level RSQL predicate.
+                  value: { "calculationResult": "USE_FILTER_CONDITION", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "dept==engineering,dept==management", "sqlFilterCondition": "", "customFilterCondition": null }
+        '400':
+          description: Missing required parameter (`resourceType`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /access/v2/check/resource:
+    post:
+      operationId: access_v2_check_resource
+      tags: [public]
+      summary: v2 OLS single-resource check.
+      description: |
+        Same input shape as `/access/v1/check/resource`; the response
+        wraps the boolean in `{ "decision": <bool> }` to align with the v2
+        thin-client expectations. The `obligations` query parameter is
+        accepted but currently ignored.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/ObligationsQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckResourceRequest'
+            examples:
+              allow:
+                summary: Resource the subject may read.
+                value: { "type": "ATTACHMENT", "operation": "READ", "resource": {} }
+              deny:
+                summary: Resource the subject may not read.
+                value: { "type": "ORDER", "operation": "READ", "resource": {} }
+      responses:
+        '200':
+          description: Wrapped boolean OLS decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResourceV2Response'
+              examples:
+                allow:
+                  summary: Permit.
+                  value: { "decision": true }
+                deny:
+                  summary: Reject.
+                  value: { "decision": false }
+        '400':
+          description: Malformed body or missing required field.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /access/v2/check/resource/bulk/operations:
+    post:
+      operationId: access_v2_check_resource_bulk_operations
+      tags: [public]
+      summary: v2 bulk-operations check.
+      description: |
+        The v2 request groups the shared resource type at the top level
+        (`type`) and carries per-id entries in `entries`. The response
+        wraps the per-operation map in `{ "decision": { ... } }`.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/ObligationsQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckResourceBulkOperationsRequestV2'
+            examples:
+              single_entry:
+                summary: One resource type, one entry, one operation.
+                value: { "type": "ORDER", "entries": [{ "id": "some-id", "operations": ["READ"], "resource": {} }] }
+      responses:
+        '200':
+          description: Wrapped per-operation allowed-id map.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResourceBulkOperationsResponseV2'
+              examples:
+                allowed:
+                  summary: Entry allowed for READ.
+                  value: { "decision": { "READ": ["some-id"] } }
+                denied:
+                  summary: Entry denied for READ.
+                  value: { "decision": { "READ": [] } }
+        '400':
+          description: Malformed body or missing required field on any entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /preview/v2/check/resource/bulk/operations:
+    post:
+      operationId: preview_v2_check_resource_bulk_operations
+      tags: [public]
+      summary: Preview v2 alias of `/access/v2/check/resource/bulk/operations`.
+      description: Same wire shape as the `/access/v2/...` route; preview mount exists for thin-client routing.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/ObligationsQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckResourceBulkOperationsRequestV2'
+            examples:
+              single_entry:
+                summary: One resource type, one entry, one operation.
+                value: { "type": "ORDER", "entries": [{ "id": "some-id", "operations": ["READ"], "resource": {} }] }
+      responses:
+        '200':
+          description: Wrapped per-operation allowed-id map.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckResourceBulkOperationsResponseV2'
+              examples:
+                allowed:
+                  summary: Entry allowed for READ.
+                  value: { "decision": { "READ": ["some-id"] } }
+                denied:
+                  summary: Entry denied for READ.
+                  value: { "decision": { "READ": [] } }
+        '400':
+          description: Malformed body or missing required field on any entry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /access/v2/check/filter:
+    post:
+      operationId: access_v2_check_filter
+      tags: [public]
+      summary: v2 RLS filter / predicate.
+      description: Identical wire shape to `/access/v1/check/filter`; the v2 thin client differs only in the query string.
+      parameters:
+        - $ref: '#/components/parameters/IncomingTokenHeader'
+        - $ref: '#/components/parameters/AuthorizationTypeHeader'
+        - $ref: '#/components/parameters/TenantIdQuery'
+        - $ref: '#/components/parameters/ObligationsQuery'
+        - name: resourceType
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: operation
+          in: query
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckFilterRequest'
+            examples:
+              empty_body:
+                summary: Body is present but unused; inputs come from the query string.
+                value: {}
+      responses:
+        '200':
+          description: Filter predicate decision.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckFilterResponse'
+              examples:
+                allow:
+                  summary: Unconditional ALLOW (no filter needed).
+                  value: { "calculationResult": "ALLOW", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "", "sqlFilterCondition": "", "customFilterCondition": null }
+                deny:
+                  summary: Unconditional DENY.
+                  value: { "calculationResult": "DENY", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "", "sqlFilterCondition": "", "customFilterCondition": null }
+                use_filter_condition:
+                  summary: ALLOW conditioned on a row-level RSQL predicate.
+                  value: { "calculationResult": "USE_FILTER_CONDITION", "filterCondition": "", "mongodbFilterCondition": "", "rsqlFilterCondition": "dept==engineering,dept==management", "sqlFilterCondition": "", "customFilterCondition": null }
+        '400':
+          description: Missing required parameter (`resourceType`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                bad_request:
+                  value: { "message": "bad request" }
+        '401':
+          description: Authentication failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyErrorResponse'
+              examples:
+                missing_token:
+                  value: { "message": "Authorization token is missing" }
+  /api-version:
+    get:
+      operationId: api_version_get
+      tags: [meta]
+      summary: Spec-version advertisement consumed by the legacy thin client.
+      description: |
+        Served directly by Envoy as a static `direct_response`; never
+        reaches OPA. Re-introduced by ADR-0049 to drive the thin client's
+        interceptor selection (relay vs. forward).
+      security: []
+      responses:
+        '200':
+          description: Spec-version advertisement.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiVersionResponse'
+              examples:
+                advertised:
+                  summary: Static spec-version advertisement served by Envoy.
+                  value: { "specs": [{ "specRootUrl": "/access", "major": 3, "minor": 0, "supportedMajors": [1, 2, 3] }, { "specRootUrl": "/api", "major": 1, "minor": 1, "supportedMajors": [1] }, { "specRootUrl": "/template", "major": 1, "minor": 0, "supportedMajors": [1] }, { "specRootUrl": "/preview", "major": 2, "minor": 0, "supportedMajors": [1, 2] }] }
+  /health:
+    get:
+      operationId: health_get
+      tags: [meta]
+      summary: Liveness / readiness probe.
+      description: |
+        Returns `200 { "status": "healthy" }` once Envoy + OPA + the
+        pap-client bootstrap have all settled. A degraded strict-mode
+        agent that fails the JWKS bootstrap returns
+        `503 { "status": ..., "message": ... }`.
+      security: []
+      responses:
+        '200':
+          description: Healthy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthHealthyResponse'
+              examples:
+                healthy:
+                  value: { "status": "healthy" }
+        '503':
+          description: Unhealthy (degraded bootstrap).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthUnhealthyResponse'
+              examples:
+                bootstrap_threshold:
+                  summary: Strict-mode JWKS bootstrap threshold not met.
+                  value: { "message": "bootstrap threshold not met", "details": { "opaReady": true, "bootstrap": { "mode": "strict", "successCount": 0, "requiredCount": 1 } } }
+  /internal/v1/decision-logs:
+    get:
+      operationId: internal_v1_decision_logs_get
+      tags: [internal-admin]
+      summary: Download accumulated OPA decision logs.
+      description: |
+        Returns the NDJSON stream collected by the
+        decision-log-collector sidecar. The body may be empty when no
+        decisions have been emitted yet. The per-line object shape is
+        OPA-defined and not part of this contract.
+      security: []
+      responses:
+        '200':
+          description: NDJSON stream of decision events (possibly empty).
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+              examples:
+                sample_line:
+                  summary: One sanitized decision-log line (placeholder token).
+                  value: |
+                    { "decision_id":"a1b2c3d4-0000-0000-0000-000000000000","path":"authorize","input":{ "authorizationToken":"Bearer <test-jwt-for-admin>","resources":[{ "resourceType":"ATTACHMENT","operation":"READ" }] },"result":{ "rlsIgnored":false,"results":[{ "isAllowed":true,"operation":"READ","resourceType":"ATTACHMENT" }] },"nd_builtin_cache":true,"timestamp":"2026-06-08T00:00:00Z" }
+            text/plain:
+              schema:
+                type: string
+              examples:
+                empty:
+                  summary: No decisions emitted yet.
+                  value: ""
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IncomingTokenHeader:
+      name: Incoming-Token
+      in: header
+      required: false
+      description: |
+        Legacy subject-token relay (ADR-0049). On legacy routes this
+        header carries the end-user JWT and takes precedence over
+        `Authorization` for policy evaluation. Tolerated but ignored on
+        `/access/v1/authorize`.
+      schema:
+        type: string
+    AuthorizationTypeHeader:
+      name: Authorization-Type
+      in: header
+      required: false
+      description: |
+        Set to `anonymous` to signal that no subject token is present;
+        admission still requires a valid `Authorization` M2M token.
+      schema:
+        type: string
+        enum: [anonymous]
+    TenantIdQuery:
+      name: tenant_id
+      in: query
+      required: false
+      description: Accepted for legacy thin-client compatibility; does not influence the decision.
+      schema:
+        type: string
+    ObligationsQuery:
+      name: obligations
+      in: query
+      required: false
+      description: v2 thin-client flag; currently parsed and ignored by the runtime.
+      schema:
+        type: string
+  schemas:
+    AuthorizeRequestEnvelope:
+      type: object
+      additionalProperties: false
+      required: [input]
+      description: |
+        OPA Data API envelope wrapping the canonical authorize request.
+        The canonical client posts this envelope verbatim and the agent
+        accepts the same bytes on both transports (Envoy
+        `/access/v1/authorize` and OPA-direct `/v1/data/authorize`) per
+        authz-agent-ADR-0062.
+      properties:
+        input:
+          $ref: '#/components/schemas/AuthorizeRequest'
+    AuthorizeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - authorizationToken
+        - authorizationType
+        - requestHeaders
+        - resources
+        - subject
+      properties:
+        authorizationToken:
+          type: string
+          description: |
+            `Bearer <jwt>` admission token. Promoted into the canonical
+            wire-shape by authz-agent-ADR-0062 — replaces the inbound
+            `Authorization` HTTP header that the Envoy Lua filter used to
+            inject on the previous canonical wire. May be the empty
+            string when the caller has no admission token; the admission
+            gate then short-circuits as today.
+        authorizationType:
+          type: string
+          description: |
+            Selects the admission flow. The literal value `anonymous`
+            engages anonymous-mode subject identity (identity.rego); any
+            other value (including the empty string default) selects the
+            standard subject-token flow.
+        requestHeaders:
+          $ref: '#/components/schemas/RequestHeaders'
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceInput'
+        subject:
+          type: string
+          description: |
+            `Bearer <jwt>` of the end-user subject (or empty string for
+            the anonymous flow). Carries the same Bearer string as
+            `authorizationToken` in the standard flow — the runtime
+            short-circuits the second token validation when
+            `subject == authorizationToken`.
+        ignoreRls:
+          type: boolean
+          description: |
+            Opt-out switch for record-level security evaluation. When
+            `true`, the agent runs OLS only and skips RLS. When omitted,
+            RLS is evaluated (the safe-by-default behaviour preserved
+            from authz-agent-ADR-0015 under the new naming established in
+            authz-agent-ADR-0059).
+    RequestHeaders:
+      type: object
+      additionalProperties:
+        type: string
+      description: |
+        Lowercased non-secret HTTP request headers forwarded as the
+        inbound HEADER PIP source (pip.rego). The map MUST NOT carry the
+        inbound `Authorization` or `Incoming-Token` header values, even
+        empty, per the authz-agent-ADR-0049 token-isolation guard — the
+        SDK-side skip-list is the canonical enforcement point.
+    ResourceInput:
+      type: object
+      additionalProperties: false
+      required: [resourceType, operation]
+      properties:
+        resourceType:
+          type: string
+        operation:
+          type: string
+        resource:
+          $ref: '#/components/schemas/ResourceAttributes'
+    ResourceAttributes:
+      type: object
+      additionalProperties: true
+      description: Open attribute bag exercised by per-resource policy conditions.
+    AuthorizeResponseEnvelope:
+      type: object
+      additionalProperties: false
+      required: [result]
+      description: |
+        OPA Data API envelope wrapping the canonical authorize response.
+        The agent emits this envelope verbatim on both transports (Envoy
+        `/access/v1/authorize` and OPA-direct `/v1/data/authorize`) per
+        authz-agent-ADR-0062. SDK clients deserialize this wrapper, then
+        unwrap `result` to obtain the `AuthorizeResponse` shape.
+
+        OPA always injects a top-level `decision_id` alongside `result`
+        (UUID per evaluation, surfaced in decision logs). Optional metric
+        / provenance fields are not enabled in this build.
+      properties:
+        result:
+          $ref: '#/components/schemas/AuthorizeResponse'
+        decision_id:
+          type: string
+          description: |
+            OPA-injected per-evaluation decision identifier. Always present.
+            Surfaced unchanged from OPA's Data API response envelope.
+    AuthorizeResponse:
+      type: object
+      additionalProperties: false
+      description: |
+        Canonical authorize payload, polymorphic by branch.
+
+        On the success branch the object carries `rlsIgnored` and
+        `results`. PIP resolution context is no longer surfaced on the
+        response — it is captured only in the decision log via OPA-native
+        `nd_builtin_cache` (authz-agent-ADR-0063).
+        On the admission-failure branch the object carries only
+        `authError` — OPA never converts authentication failures into
+        an HTTP 401 because the canonical surface is the OPA Data API
+        envelope verbatim on both transports (authz-agent-ADR-0062).
+        Callers must inspect `authError` before treating the response
+        as a decision.
+      properties:
+        rlsIgnored:
+          type: boolean
+          description: |
+            Server-side state assertion: `true` iff the request carried
+            `ignoreRls=true` and the agent therefore evaluated OLS only.
+            Replaces the previous `rlsRequested` echo per
+            authz-agent-ADR-0059.
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorizeResult'
+        authError:
+          $ref: '#/components/schemas/AuthorizeAuthError'
+        requestId:
+          type: string
+          description: |
+            Correlation id echoed for this evaluation (authz-agent-ADR-0069).
+            OPA owns it: the inbound `x-request-id` when the request carried
+            one, else a generated `uuid.rfc4122` that is stable across every
+            PIP / entitlements call in the decision. Present on every branch
+            (success and admission-failure) so any decision is correlatable.
+    AuthorizeAuthError:
+      type: object
+      additionalProperties: false
+      required: [status, message, reason]
+      description: |
+        Embedded auth-failure marker. Present only when the canonical
+        authorize call could not be evaluated as a decision — e.g.
+        missing admission token, expired subject token, malformed
+        Bearer prefix. The wire HTTP status is 200 regardless
+        (authz-agent-ADR-0062); the embedded `status` carries the
+        semantic code the caller should surface to its own consumers.
+      properties:
+        status:
+          type: integer
+          description: Semantic HTTP-style status code (e.g. 401).
+        message:
+          type: string
+        reason:
+          type: string
+    AuthorizeResult:
+      type: object
+      additionalProperties: false
+      required: [isAllowed, resourceType, operation]
+      properties:
+        isAllowed:
+          type: boolean
+          description: Allow/deny outcome for this result item; true = allow, false = deny.
+        resourceType:
+          type: string
+        operation:
+          type: string
+        reason:
+          type: string
+          description: Present on isAllowed:false results; explains why authorization failed.
+        predicates:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorizePredicate'
+    AuthorizePredicate:
+      type: object
+      additionalProperties: false
+      required: [predicateType, predicate]
+      properties:
+        predicateType:
+          type: string
+          example: rsql
+        predicate:
+          type: string
+    CheckResourceRequest:
+      type: object
+      additionalProperties: false
+      required: [type, operation]
+      properties:
+        type:
+          type: string
+        operation:
+          type: string
+        resource:
+          $ref: '#/components/schemas/ResourceAttributes'
+    CheckResourceV2Response:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision:
+          type: boolean
+    CheckResourceBulkItem:
+      type: object
+      additionalProperties: false
+      required: [type, operation]
+      properties:
+        id:
+          type: string
+          description: Optional; entries missing an id are silently dropped from the response array.
+        type:
+          type: string
+        operation:
+          type: string
+        resource:
+          $ref: '#/components/schemas/ResourceAttributes'
+    CheckResourceBulkOperationsItemV1:
+      type: object
+      additionalProperties: false
+      required: [id, type, operations]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        operations:
+          type: array
+          items:
+            type: string
+        resource:
+          $ref: '#/components/schemas/ResourceAttributes'
+    CheckResourceBulkOperationsResponseV1:
+      type: object
+      description: Map keyed by operation name; each value is the list of ids whose decision was ALLOW.
+      additionalProperties:
+        type: array
+        items:
+          type: string
+    CheckResourceBulkOperationsRequestV2:
+      type: object
+      additionalProperties: false
+      required: [type, entries]
+      properties:
+        type:
+          type: string
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheckResourceBulkOperationsEntryV2'
+    CheckResourceBulkOperationsEntryV2:
+      type: object
+      additionalProperties: false
+      required: [id, operations]
+      properties:
+        id:
+          type: string
+        operations:
+          type: array
+          items:
+            type: string
+        resource:
+          $ref: '#/components/schemas/ResourceAttributes'
+    CheckResourceBulkOperationsResponseV2:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision:
+          $ref: '#/components/schemas/CheckResourceBulkOperationsResponseV1'
+    CheckFilterRequest:
+      type: object
+      description: |
+        Body must be present (legacy thin-client convention) but is
+        unused; all inputs come from query parameters.
+      additionalProperties: false
+    CheckFilterResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - calculationResult
+        - filterCondition
+        - mongodbFilterCondition
+        - rsqlFilterCondition
+        - sqlFilterCondition
+        - customFilterCondition
+      properties:
+        calculationResult:
+          type: string
+          enum: [ALLOW, DENY, USE_FILTER_CONDITION]
+        filterCondition:
+          type: string
+          description: Always empty on the simplified-policy path.
+        mongodbFilterCondition:
+          type: string
+        rsqlFilterCondition:
+          type: string
+        sqlFilterCondition:
+          type: string
+        customFilterCondition:
+          type: string
+          nullable: true
+          description: JSON `null` on the simplified-policy path; populated only by legacy full-policy custom-condition payloads.
+    ApiVersionResponse:
+      type: object
+      additionalProperties: false
+      required: [specs]
+      properties:
+        specs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiVersionSpec'
+    ApiVersionSpec:
+      type: object
+      additionalProperties: false
+      required: [specRootUrl, major, minor, supportedMajors]
+      properties:
+        specRootUrl:
+          type: string
+        major:
+          type: integer
+        minor:
+          type: integer
+        supportedMajors:
+          type: array
+          items:
+            type: integer
+    HealthHealthyResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+        policyConversion:
+          $ref: '#/components/schemas/PolicyConversionStats'
+    HealthUnhealthyResponse:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: |
+            Human-readable summary of the failed readiness criterion
+            (`OPA not ready`, `bootstrap status unavailable`,
+            `bootstrap threshold not met`).
+        details:
+          $ref: '#/components/schemas/HealthErrorDetails'
+    HealthErrorDetails:
+      type: object
+      additionalProperties: false
+      description: |
+        Diagnostic context for unhealthy responses. Fields are emitted
+        only when relevant — `opaReady` reflects the upstream OPA probe,
+        `bootstrap` is present when the failure was the JWKS bootstrap
+        threshold check, and `configError` is present when the
+        trusted-providers configuration file is unreadable or invalid
+        (authz-agent-ADR-0075).
+      properties:
+        opaReady:
+          type: boolean
+        configError:
+          type: string
+          description: |
+            Present when the trusted-providers configuration file could not
+            be read or parsed. A rejected config is surfaced here rather
+            than silently clearing thresholds (authz-agent-ADR-0075).
+        bootstrap:
+          $ref: '#/components/schemas/BootstrapHealthDetails'
+        policyConversion:
+          $ref: '#/components/schemas/PolicyConversionStats'
+    PolicyConversionStats:
+      type: object
+      additionalProperties: false
+      required: [policySets, policySetsSkipped, rules, rulesSkipped, rulesDenySkipped, policies]
+      description: |
+        Counts from the most recent conversion of the access-control policy
+        set into the OPA document, read from the pull-status file
+        (authz-agent-ADR-0078). Present only in pull mode and only after the
+        first successful pull; absent in ConfigMap-mount mode and before the
+        first pull completes.
+
+        The skipped counters are the load-bearing part. A pull that fetched
+        1294 policy sets and converted none of them succeeds by every other
+        measure — `status: healthy` and `policiesLoaded: true` both hold —
+        and from the outside it looks like an authorization outage, because
+        every decision denies. These counts are what distinguishes the two,
+        for an operator reading the body and for monitoring scraping it.
+
+        Readiness is deliberately NOT gated on them: a partial data problem
+        must not turn into an outage.
+      properties:
+        policySets:
+          type: integer
+          description: Policy sets present in the fetched payload.
+        policySetsSkipped:
+          type: integer
+          description: |
+            Policy sets from which no rule could be converted. Non-zero means
+            part of the authorization model is missing from OPA.
+        rules:
+          type: integer
+          description: Rules converted into the OPA document.
+        rulesSkipped:
+          type: integer
+          description: |
+            Rules dropped because their target did not parse. Fail-closed:
+            an unrecognised role target skips the policy rather than granting
+            open access (authz-agent-ADR-0078).
+        rulesDenySkipped:
+          type: integer
+          description: DENY-effect rules skipped; the converter emits ALLOW rules only.
+        policies:
+          type: integer
+          description: Simplified policies produced by the conversion.
+    BootstrapHealthDetails:
+      type: object
+      additionalProperties: false
+      required: [mode, successCount, requiredCount]
+      properties:
+        mode:
+          type: string
+          enum: [strict, permissive]
+        successCount:
+          type: integer
+        requiredCount:
+          type: integer
+        missingRequired:
+          type: array
+          items:
+            type: string
+          description: |
+            Names the identity providers marked `required: true` in the
+            trusted-providers file that did not bootstrap successfully.
+            Present only when at least one required provider is absent
+            (authz-agent-ADR-0075). Omitted when all required providers
+            are healthy.
+    LegacyErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        message:
+          type: string

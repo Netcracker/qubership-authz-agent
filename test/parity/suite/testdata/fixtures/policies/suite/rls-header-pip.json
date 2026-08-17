@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "HEADER-PIP RLS row: PARITY_SUITE_HEADER READ, granted to ROLE_PARITY_READER, gated on the x-parity-pip-attribute custom header (surfaced via subject.parityHeaderAttr PIP declaration). The header name is not in ProhibitedHeaders so HeadersFilter lets it through.",
+    "component": "PARITY",
+    "reason": "HEADER PIP scenario: custom header value must equal 'parity-allow'",
+    "resourceType": "PARITY_SUITE_HEADER",
+    "operation": "READ",
+    "condition": "subject.parityHeaderAttr == 'parity-allow'",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000b20"
+  }
+]

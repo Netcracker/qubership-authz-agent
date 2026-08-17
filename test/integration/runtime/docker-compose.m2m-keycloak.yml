@@ -1,0 +1,77 @@
+# Compose overlay: m2m-keycloak profile.
+#
+# Activate with:
+#   docker compose -f docker-compose.yml -f docker-compose.m2m-keycloak.yml ...
+#
+# Effect:
+#   - Adds the `token-fetcher` sidecar (authz-agent-token-fetcher:local).
+#   - Adds shared in-memory volumes (m2m-token, m2m-run) for the token file
+#     and the readiness marker.
+#   - Overrides `pap-client`'s AUTHZ_PAP_CLIENT_TOKEN_FILE so pap-client reads
+#     the Keycloak-issued token written by token-fetcher instead of the static
+#     dummy file used in the default profile.
+#   - Makes `pap-client` depend on `token-fetcher` being healthy (marker file
+#     present = first token written), ensuring the first pull-loop tick has a
+#     token.
+#
+# Credentials:
+#   Uses the pre-registered test-app-client (secret: test-app-secret) from the
+#   cloud-common realm imported by Keycloak at startup.
+#   Client supports serviceAccountsEnabled=true / client_credentials grant.
+
+services:
+  # ── Override pap-client service to use dynamic token from token-fetcher ────
+  pap-client:
+    environment:
+      # Override: pap-client reads the Keycloak-issued token written by
+      # token-fetcher instead of the static dummy file.
+      AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
+    volumes:
+      # Shared in-memory volume: token-fetcher writes here, pap-client reads.
+      - m2m-token:/etc/authz/ac-token
+    depends_on:
+      token-fetcher:
+        condition: service_healthy
+
+  # ── token-fetcher sidecar ──────────────────────────────────────────────────
+  token-fetcher:
+    build:
+      context: ../../..
+      dockerfile: build/token-fetcher/Dockerfile
+    pull_policy: build
+    image: authz-agent-token-fetcher:local
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      AUTHZ_M2M_CLIENT_ID_FILE: /etc/secret/username
+      AUTHZ_M2M_CLIENT_SECRET_FILE: /etc/secret/password
+      # cloud-common realm token endpoint (matches production default).
+      AUTHZ_M2M_TOKEN_URL: http://keycloak:8080/auth/realms/cloud-common/protocol/openid-connect/token
+      AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
+      AUTHZ_M2M_RENEW_BEFORE_SECONDS: "60"
+      AUTHZ_M2M_MARKER_FILE: /var/run/authz/token-fetcher-ready
+    volumes:
+      - ./authn/keycloak/m2m-credentials:/etc/secret:ro
+      - m2m-token:/etc/authz/ac-token
+      - m2m-run:/var/run/authz
+    healthcheck:
+      # Healthy when the marker file is present (= first token written).
+      test: ["CMD-SHELL", "test -f /var/run/authz/token-fetcher-ready"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+      start_period: 10s
+
+volumes:
+  # tmpfs: token never touches node disk.
+  m2m-token:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  m2m-run:
+    driver: local
+    driver_opts:
+      type: tmpfs
+      device: tmpfs

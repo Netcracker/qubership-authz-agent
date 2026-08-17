@@ -1,0 +1,64 @@
+---
+# Build workflow for qubership-authz-agent.
+#
+# Delegates to the shared Go build workflow in qubership-core-infra, which runs
+# go test, SonarQube analysis, and Docker image builds.
+#
+# Module configuration note
+# -------------------------
+# This repository has four Go modules:
+#   .                              — the product module (four binaries, zero external deps)
+#   test/parity/suite              — parity-replay test suite
+#   test/integration/testify       — Envoy/OPA integration suite (needs a running compose stack)
+#   test/integration/pipstub       — pip-stub service used by the integration suite
+#
+# The shared workflow takes a single go-module-dir and would only build and test
+# the product module.  The explicit go-module-configs list below makes all four
+# modules visible so CI does not silently skip the test suites.
+#
+# The integration suite (test/integration/testify) is wired here for compile-time
+# checking; its full run needs Docker Compose, Keycloak and authz-policy-admin, which
+# are not available in a standard GitHub Actions runner.  Integration tests carry a
+# //go:build integration tag and are skipped unless that tag is set, so the CI pass
+# here validates compilation and non-integration tests only.
+
+name: Build
+
+run-name: >
+  Build —
+  ${{ github.event_name == 'push' && format('push [{0}]', github.event.head_commit.message) || '' }}
+  ${{ github.event_name == 'pull_request' && format('PR ({0}) [{1}]', github.head_ref, github.event.pull_request.title) || '' }}
+
+on:
+  push:
+    branches:
+      - main
+      - 'lts/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    name: Build and test
+    # Explicit grant matching what generic-go-build.yaml declares for itself;
+    # a caller without a permissions block would hand over the default token.
+    permissions:
+      contents: read
+      pull-requests: write
+      packages: write
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@71206242f5967ac6691337913593f8623863f711 # v2.5.2
+    with:
+      sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+      # Explicit module list — see the comment at the top of this file for why
+      # these entries exist rather than relying on auto-discovery.
+      go-module-configs: |
+        [
+          {"dir": ".",                        "cover-packages": "./..."},
+          {"dir": "test/parity/suite",        "cover-packages": "./..."},
+          {"dir": "test/integration/testify", "cover-packages": "./..."},
+          {"dir": "test/integration/pipstub", "cover-packages": "./..."}
+        ]
+    # The shared workflow declares exactly one secret; pass it explicitly
+    # instead of `secrets: inherit` (zizmor: secrets-inherit).
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,0 +1,76 @@
+{
+  "realm": "cloud-common",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false,
+  "accessTokenLifespan": 1800,
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_ADMINISTRATOR",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_ORDER_MANAGEMENT_RO_USER",
+        "composite": false,
+        "clientRole": false
+      },
+      {
+        "name": "ROLE_M2M",
+        "composite": false,
+        "clientRole": false
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "test-app-client",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "test-app-secret",
+      "publicClient": false,
+      "directAccessGrantsEnabled": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "test-app-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "test-app",
+            "id.token.claim": "true",
+            "access.token.claim": "true"  
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@example.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ROLE_ADMINISTRATOR"]
+    }
+  ]
+}

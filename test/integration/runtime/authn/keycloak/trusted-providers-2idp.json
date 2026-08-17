@@ -1,0 +1,20 @@
+{
+  "providers": [
+    {
+      "id": "keycloak-runtime",
+      "issuer": "http://keycloak:8080/auth/realms/authz-test",
+      "audiences": [
+        "authz-agent"
+      ],
+      "required": true
+    },
+    {
+      "id": "broken-idp",
+      "issuer": "http://127.0.0.1:9999/realms/broken",
+      "audiences": [
+        "authz-agent"
+      ],
+      "required": false
+    }
+  ]
+}

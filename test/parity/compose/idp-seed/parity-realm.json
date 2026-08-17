@@ -1,0 +1,192 @@
+{
+  "realm": "parity",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 900,
+  "roles": {
+    "realm": [
+      {
+        "name": "ROLE_samples-repository",
+        "description": "Parity M2M role - matches ACCESS_CONTROL_POLICY_MANAGER_M2M_ROLE default on the legacy server"
+      },
+      {
+        "name": "ROLE_M2M",
+        "description": "Special M2M role (SpecialUserRoles.M2M_ROLE_NAME) - required in addition to ROLE_samples-repository for the BelongsToPolicyManager criterion to pass on /access/v1/simplifiedPolicies PUT"
+      },
+      {
+        "name": "ROLE_PARITY_READER",
+        "description": "Parity smoke role - granted OLS/RLS on PARITY_CUSTOMER/PARITY_ORDER/PARITY_PAYMENT via the bespoke seed policies"
+      },
+      {
+        "name": "ROLE_PARITY_REVIEWER",
+        "description": "Secondary parity role used by fixtures that need a distinct locator from ROLE_PARITY_READER (e.g. multi-role AGG rows, isolation rows where one user has both roles and another has only ROLE_PARITY_READER)"
+      },
+      {
+        "name": "ROLE_PARITY_OTHER",
+        "description": "Third parity role reserved for negative isolation tests - no seed policy grants anything to this role, so any check against it is a guaranteed DENY"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "parity-m2m",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "secret": "ParityM2MSecret1!@#",
+      "defaultClientScopes": ["basic", "web-origins", "profile", "roles", "email"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "parity-netcracker-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "netcracker",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "parity-end-user",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "secret": "ParityEndUserSecret1!@#",
+      "defaultClientScopes": ["basic", "web-origins", "profile", "roles", "email"],
+      "optionalClientScopes": [],
+      "protocolMappers": [
+        {
+          "name": "parity-department-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "department",
+            "claim.name": "department",
+            "jsonType.label": "String",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
+        },
+        {
+          "name": "parity-tier-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tier",
+            "claim.name": "tier",
+            "jsonType.label": "String",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "service-account-parity-m2m",
+      "enabled": true,
+      "serviceAccountClientId": "parity-m2m",
+      "realmRoles": ["ROLE_samples-repository", "ROLE_M2M"]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "username": "parity-reader",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Parity",
+      "lastName": "Reader",
+      "email": "parity-reader@example.test",
+      "credentials": [
+        { "type": "password", "value": "ParityPass1!@#", "temporary": false }
+      ],
+      "realmRoles": ["ROLE_PARITY_READER"],
+      "attributes": {
+        "department": ["finance"],
+        "tier": ["gold"]
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000102",
+      "username": "parity-reviewer",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Parity",
+      "lastName": "Reviewer",
+      "email": "parity-reviewer@example.test",
+      "credentials": [
+        { "type": "password", "value": "ParityPass1!@#", "temporary": false }
+      ],
+      "realmRoles": ["ROLE_PARITY_REVIEWER"],
+      "attributes": {
+        "department": ["compliance"],
+        "tier": ["silver"]
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000103",
+      "username": "parity-multi-role",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Parity",
+      "lastName": "MultiRole",
+      "email": "parity-multi-role@example.test",
+      "credentials": [
+        { "type": "password", "value": "ParityPass1!@#", "temporary": false }
+      ],
+      "realmRoles": ["ROLE_PARITY_READER", "ROLE_PARITY_REVIEWER"],
+      "attributes": {
+        "department": ["engineering"],
+        "tier": ["platinum"]
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000104",
+      "username": "parity-other",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Parity",
+      "lastName": "Other",
+      "email": "parity-other@example.test",
+      "credentials": [
+        { "type": "password", "value": "ParityPass1!@#", "temporary": false }
+      ],
+      "realmRoles": ["ROLE_PARITY_OTHER"],
+      "attributes": {
+        "department": ["sales"],
+        "tier": ["bronze"]
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000105",
+      "username": "parity-anon-baseline",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Parity",
+      "lastName": "AnonBaseline",
+      "email": "parity-anon-baseline@example.test",
+      "credentials": [
+        { "type": "password", "value": "ParityPass1!@#", "temporary": false }
+      ],
+      "realmRoles": [],
+      "attributes": {
+        "department": ["guest"],
+        "tier": ["none"]
+      }
+    }
+  ]
+}

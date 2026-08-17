@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Compatibility suite wrapper — delegates to tests/svt/load-tests/run so the
+# full load-test set executes in the documented deterministic order: all full
+# tests first, then all opa-direct tests.
+#
+# All tunables (THREADS, DURATION_SECONDS, TARGET_RPS, TESTS_CSV, etc.) are
+# forwarded as environment variables.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+exec "${SVT_DIR}/load-tests/run"

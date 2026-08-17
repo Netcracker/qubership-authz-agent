@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "RLS filter - proves row 6 (POST /access/v1/check/filter) returns a non-trivial EvaluationResultImpl with a calculationResult and at least one typed predicate. The rsqlPredicate references only the subject id, so no PIP is needed for this fixture.",
+    "component": "PARITY",
+    "reason": "PARITY_FILTER policy: PARITY_ORDER LIST filtered by ownerId==subject.id",
+    "resourceType": "PARITY_ORDER",
+    "operation": "LIST",
+    "rsqlPredicate": "ownerId==${subject.id}",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000000a3"
+  }
+]

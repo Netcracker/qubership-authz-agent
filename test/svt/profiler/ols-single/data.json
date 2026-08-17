@@ -1,0 +1,1628 @@
+{
+  "authn": {
+    "verifiedTokens": {
+      "svt-profiler-token": {
+        "subject": {
+          "id": "svt-profiler-user",
+          "name": "svt-profiler-user",
+          "type": "USER",
+          "roles": [
+            "ROLE_SVT_ADMIN"
+          ],
+          "scopes": [
+            "email",
+            "openid",
+            "profile"
+          ]
+        }
+      }
+    }
+  },
+  "policies": {
+    "ols": {
+      "SVT_RT_01": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_02": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_03": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_04": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_05": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_06": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_07": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_08": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_RT_09": {
+        "OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "OP_10": [
+          "ROLE_SVT_ADMIN"
+        ]
+      }
+    },
+    "refIndex": {
+      "subjectRefsByResourceTypeOperation": {
+        "SVT_RT_01": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_02": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_03": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_04": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_05": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_06": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_07": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_08": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        },
+        "SVT_RT_09": {
+          "OP_01": [],
+          "OP_02": [],
+          "OP_03": [],
+          "OP_04": [],
+          "OP_05": [],
+          "OP_06": [],
+          "OP_07": [],
+          "OP_08": [],
+          "OP_09": [],
+          "OP_10": []
+        }
+      }
+    },
+    "rls": {
+      "SVT_RT_01": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_02": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_03": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_04": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_05": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_06": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_07": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_08": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "SVT_RT_09": {
+        "OP_01": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_02": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_03": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_04": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_05": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_06": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_07": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_08": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_09": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        },
+        "OP_10": {
+          "ROLE_SVT_ADMIN": [
+            {
+              "condition": true,
+              "predicates": [
+                {
+                  "predicate": "true",
+                  "type": "rsql"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "pips": {
+    "activation": {
+      "generalByResourceTypeOperation": {}
+    },
+    "byName": {},
+    "local": {
+      "header": {},
+      "token": {}
+    },
+    "remote": {
+      "general": {}
+    }
+  }
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "ENT row 78: union across two entitlement names inside one as(...) selector.",
+    "component": "PARITY",
+    "reason": "ENT multi-as union",
+    "resourceType": "PARITY_SUITE_ENT_MULTI",
+    "operation": "READ",
+    "condition": "subject.entitledResources.of('PARITY_CONTRACT').as('Owner', 'Accountant') CONTAINS resource.id",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000d03"
+  }
+]

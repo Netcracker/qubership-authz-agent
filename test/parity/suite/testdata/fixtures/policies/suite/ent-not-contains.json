@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "ENT row 81: negated membership over the entitlement-derived Owner set.",
+    "component": "PARITY",
+    "reason": "ENT not contains",
+    "resourceType": "PARITY_SUITE_ENT_NOT",
+    "operation": "READ",
+    "condition": "subject.entitledResources.of('PARITY_CONTRACT').as('Owner') NOT CONTAINS resource.id",
+    "roles": ["ROLE_PARITY_READER"],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-000000000d06"
+  }
+]
