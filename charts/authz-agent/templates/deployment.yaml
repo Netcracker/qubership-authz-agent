@@ -152,13 +152,13 @@ spec:
             periodSeconds: 10
             failureThreshold: 30
             timeoutSeconds: 3
-          # readinessProbe: tracks ongoing health for Pod Ready condition.
-          readinessProbe:
-            exec:
-              command: ["test", "-f", "/var/run/authz/token-fetcher-ready"]
-            periodSeconds: 15
-            failureThreshold: 3
-            timeoutSeconds: 3
+          # No readinessProbe: the sidecar is intentionally fail-static. The
+          # marker never disappears after the first token, so an existence
+          # check could never fail; a freshness check would flip the whole Pod
+          # NotReady over a stale token while OPA still enforces the last
+          # loaded policies, which is strictly worse than serving with a stale
+          # pull loop. token-fetcher rewrites the marker on every successful
+          # refresh, so its mtime shows the last refresh time when debugging.
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
