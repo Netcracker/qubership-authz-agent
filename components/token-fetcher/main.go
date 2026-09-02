@@ -24,7 +24,9 @@
 //     startupProbe polls for its existence, so the pap-client container does
 //     not start before the first token is on disk; the marker's mtime records
 //     the time of the last successful refresh.
-//  5. Schedules the next refresh at expires_in - AUTHZ_M2M_RENEW_BEFORE_SECONDS.
+//  5. Schedules the next refresh at expires_in - AUTHZ_M2M_RENEW_BEFORE_SECONDS,
+//     or at half the token lifetime when that margin does not fit, never
+//     sooner than one second.
 //  6. On error: logs a warning, retries with exponential backoff; never exits.
 package main
 
@@ -123,13 +125,14 @@ func step(cfg config, client *http.Client, logger *log.Logger, backoff time.Dura
 	}
 
 	sleep = expiresIn - cfg.renewBefore
-	if sleep < time.Second {
-		// The renewBefore margin does not fit into this token's lifetime;
-		// refreshing at half-life keeps the request rate proportional to
-		// the lifetime instead of falling through to the 1-second floor.
-		logger.Printf("warn: renew_before=%s leaves no margin within token lifetime %s; refreshing at half-life",
+	if halfLife := expiresIn / 2; sleep < halfLife {
+		// Refreshing no later than half-life keeps the request rate
+		// proportional to the token lifetime; an absolute floor alone would
+		// let lifetimes just above the margin collapse into a one-second
+		// polling loop against the IdP.
+		logger.Printf("warn: renew_before=%s does not fit into token lifetime %s; ignoring the configured margin",
 			cfg.renewBefore, expiresIn)
-		sleep = expiresIn / 2
+		sleep = halfLife
 	}
 	if sleep < time.Second {
 		sleep = time.Second

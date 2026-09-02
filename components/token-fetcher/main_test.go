@@ -393,6 +393,9 @@ func TestStep_RefreshSchedule(t *testing.T) {
 		want        time.Duration
 	}{
 		{"normal margin", 300, 60 * time.Second, 240 * time.Second},
+		{"margin equals half-life: kept", 120, 60 * time.Second, 60 * time.Second},
+		{"margin leaves one second: half-life", 61, 60 * time.Second, 30500 * time.Millisecond},
+		{"margin leaves five seconds: half-life", 65, 60 * time.Second, 32500 * time.Millisecond},
 		{"margin equals lifetime: half-life", 60, 60 * time.Second, 30 * time.Second},
 		{"margin exceeds lifetime: half-life", 30, 60 * time.Second, 15 * time.Second},
 		{"tiny lifetime floors at one second", 1, 60 * time.Second, time.Second},
