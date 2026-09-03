@@ -14,7 +14,7 @@
 # No paths filter on purpose: ci-gate is meant to be a required check, and a
 # workflow skipped by a filter leaves a required check pending.
 
-name: Integration tests
+name: Integration
 
 run-name: "Ref: ${{ github.ref_name }}. On ${{ github.event_name }}"
 
@@ -76,7 +76,7 @@ jobs:
         run: bash test/scripts/test-chart-render.sh
 
   integration-compile:
-    name: Compile integration-tagged suites
+    name: Vet tagged suites
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

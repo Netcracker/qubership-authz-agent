@@ -59,7 +59,7 @@ are set for the organisation before the first CI run.
 Apply the organisation's standard branch-protection rule to `main`:
 
 - Require PR reviews (at least 1 approver from CODEOWNERS)
-- Require status checks to pass (`Build` from `go-build.yaml`)
+- Require status checks to pass (`CI gate` from `integration-tests.yaml`, `CI / Go` from `go-build.yaml`)
 - Require branches to be up to date before merging
 
 The organisation's `Netcracker/.github/config/Protect-main-branch.json` contains
