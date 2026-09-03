@@ -31,7 +31,8 @@ lint:
 	    -not -path './charts/*/templates/*.yaml' \
 	  | xargs $${YAMLLINT_BIN:-$${HOME}/.local/bin/yamllint} -c .github/linters/.yaml-lint.yml
 	@echo "[lint] Markdown"
-	npx --yes markdownlint-cli2 --config .github/linters/.markdown-lint.yml "**/*.md" "#node_modules"
+	npx --yes markdownlint-cli2 --config .github/linters/.markdown-lint.yml "**/*.md" "#node_modules" \
+	    "#apm_modules" "#.agents" "#.claude/rules" "#.claude/skills" "#.cursor/rules"
 	@echo "[lint] GitHub Actions (zizmor)"
 	$${ZIZMOR_BIN:-$${HOME}/.local/bin/zizmor} --config .github/linters/zizmor.yaml \
 	    .github/workflows/*.yaml .github/workflows/*.yml
