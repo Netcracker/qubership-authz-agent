@@ -1,0 +1,167 @@
+---
+# Integration tests for qubership-authz-agent.
+#
+# Everything the Build workflow (go-build.yaml) does not cover:
+#   rego                 Rego policy tests with the OPA CLI
+#   chart                helm lint plus the chart-render assertions
+#   integration-compile  go vet with -tags integration, so a broken integration
+#                        test file fails here instead of after a cluster boot
+#   kind-e2e             the Helm chart installed on a kind cluster and the
+#                        runtime suite run against it (Makefile e2e-* targets,
+#                        see test/k8s/README.md)
+#   ci-gate              one status check for branch protection
+#
+# No paths filter on purpose: ci-gate is meant to be a required check, and a
+# workflow skipped by a filter leaves a required check pending.
+
+name: Integration tests
+
+run-name: "Ref: ${{ github.ref_name }}. On ${{ github.event_name }}"
+
+on:
+  push:
+    branches:
+      - main
+      - 'lts/**'
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rego:
+    name: Rego policy tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Install OPA
+        run: bash test/scripts/install-opa.sh
+
+      - name: Run policy tests
+        run: bash test/scripts/test-opa.sh
+
+  chart:
+    name: Chart lint and render
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.17.0
+
+      - name: Lint the chart
+        run: helm lint charts/authz-agent -f test/k8s/values.yaml
+
+      - name: Render assertions
+        run: bash test/scripts/test-chart-render.sh
+
+  integration-compile:
+    name: Compile integration-tagged suites
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            test/integration/testify/go.sum
+            test/parity/suite/go.sum
+
+      - name: Vet the runtime suite
+        working-directory: test/integration/testify
+        run: go vet -tags integration ./...
+
+      - name: Vet the parity suite
+        working-directory: test/parity/suite
+        run: go vet -tags integration ./...
+
+  kind-e2e:
+    name: Kind end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.17.0
+
+      # The cluster name must match KIND_CLUSTER in the Makefile: the e2e
+      # targets address the cluster through the kind-authz-e2e context.
+      - name: Create kind cluster
+        uses: helm/kind-action@06c1ae10762d3b9c1644e7fe69596ae519e015a2 # v1.15.0
+        with:
+          cluster_name: authz-e2e
+
+      - name: Build and load images
+        run: make e2e-images
+
+      - name: Deploy the harness
+        run: make e2e-harness
+
+      - name: Install the chart
+        run: make e2e-install
+
+      - name: Run the runtime suite
+        run: make e2e-suite
+
+      - name: Collect logs
+        if: always()
+        run: make e2e-logs
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kind-e2e-logs
+          path: test/artifacts/kind
+          if-no-files-found: ignore
+
+  ci-gate:
+    name: CI gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    needs: [rego, chart, integration-compile, kind-e2e]
+    if: always()
+    steps:
+      - name: Check job results
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$RESULTS" | jq -e 'all(.[]; .result == "success")' >/dev/null

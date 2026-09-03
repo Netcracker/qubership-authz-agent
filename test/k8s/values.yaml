@@ -1,0 +1,28 @@
+# Chart values for the kind end-to-end harness in this directory. Not a
+# deployment profile: what the platform normally injects comes from the
+# harness Deployments instead, and they share one namespace with the chart, so
+# the plain Service names below resolve.
+
+# The images come from `make e2e-images`, which side-loads them into the kind
+# node. OPA keeps the chart's digest-pinned default and is pulled by the node.
+IMAGE_REPOSITORY: local
+TAG: ci
+
+# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.
+MESH_ROUTES_ENABLED: false
+
+# The harness Keycloak. The chart composes <base>/auth/realms/<realm> for each
+# realm: cloud-common is the M2M realm the token-fetcher sidecar uses,
+# authz-test is where the suite's users and clients live.
+IDENTITY_PROVIDER_URL: http://keycloak:8080
+AUTHZ_IDP_REALMS:
+  - cloud-common
+  - authz-test
+
+# No tenant-manager in the harness; an empty value disables realm resolution.
+AUTHZ_TENANT_MANAGER_URL: ""
+
+# The suite uploads policies and PIPs through the in-namespace stub.
+AUTHZ_POLICY_ADMIN_ENABLED: true
+# The suite waits one pull interval plus two seconds after each upload.
+AUTHZ_PAP_CLIENT_PULL_INTERVAL: 2

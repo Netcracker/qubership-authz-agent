@@ -121,6 +121,22 @@ bash test/scripts/test-envoy-runtime.sh
 Expected: ~164 PASS, 0 FAIL, 2 SKIP (m2m-keycloak tests require
 `RUN_M2M_KEYCLOAK_PROFILE=true`).
 
+### Kind end-to-end
+
+Installs the Helm chart on a kind cluster and runs the runtime suite against
+it from inside the cluster. This is the integration check CI runs
+(`.github/workflows/integration-tests.yaml`); the Compose stack above is the
+older local harness. Requires Docker, `kind`, `kubectl`, and `helm`.
+
+```sh
+make e2e          # cluster, images, harness, chart, suite
+make e2e-logs     # container logs, events, decision logs into test/artifacts/kind/
+make e2e-down     # delete the cluster
+```
+
+See [test/k8s/README.md](test/k8s/README.md) for the individual targets and
+for the suite groups the kind run does not cover yet.
+
 ### Parity replay
 
 Replays recorded HTTP requests against the agent and compares responses against
