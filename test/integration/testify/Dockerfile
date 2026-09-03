@@ -19,7 +19,8 @@ COPY test/integration/testify/ ./
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
     go test -c -tags integration -o /out/runtime.test .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
+# qubership-core-base 2.4.2
+FROM ghcr.io/netcracker/qubership-core-base@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
 
 # Read-only inputs stay root-owned and world-readable; only the binary is
 # given to the image's own uid.

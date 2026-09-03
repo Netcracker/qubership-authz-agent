@@ -22,6 +22,8 @@ spec:
       labels:
         app: keycloak
     spec:
+      # Keycloak calls no Kubernetes API.
+      automountServiceAccountToken: false
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.3.5
@@ -60,8 +62,12 @@ spec:
             requests:
               cpu: 500m
               memory: 768Mi
+              # The dev-mode H2 database and the realm imports live on the
+              # container filesystem.
+              ephemeral-storage: 512Mi
             limits:
               memory: 1536Mi
+              ephemeral-storage: 1Gi
           volumeMounts:
             - name: realms
               mountPath: /opt/keycloak/data/import

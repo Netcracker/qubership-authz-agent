@@ -21,6 +21,9 @@ spec:
         app: runtime-suite
     spec:
       restartPolicy: Never
+      # The suite drives the agent over HTTP only. Porting the Compose-bound
+      # groups will need a ServiceAccount with pods/exec, and a token with it.
+      automountServiceAccountToken: false
       containers:
         - name: runtime-suite
           image: local/authz-runtime-suite:ci
@@ -91,3 +94,11 @@ spec:
                 secretKeyRef:
                   name: authz-agent-opa-auth
                   key: token
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 128Mi
+            limits:
+              memory: 256Mi
+              ephemeral-storage: 256Mi

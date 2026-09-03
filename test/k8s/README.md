@@ -35,6 +35,11 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
 
 `KIND_CLUSTER`, `E2E_NAMESPACE`, and `E2E_ARTIFACTS` override the defaults.
+
+Re-running `e2e-harness` on its own replaces the Keycloak pod, and a dev-mode
+Keycloak mints new realm keys on every start. Restart the agent afterwards
+(`kubectl rollout restart deploy/authz-agent`) so its JWKS bootstrap picks the
+new keys up, or the suite fails at `setup.wait_for_agent`.
 The first run on a fresh cluster is slower: the node pulls Keycloak and OPA
 from their registries, later runs reuse them.
 
