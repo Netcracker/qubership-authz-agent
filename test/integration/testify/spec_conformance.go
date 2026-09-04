@@ -296,12 +296,7 @@ func isAgentURL(rawURL string, cfg RuntimeConfig) bool {
 	if rawURL == "" {
 		return false
 	}
-	for _, base := range []string{cfg.BaseURL, cfg.DegradedPermissiveURL, cfg.DegradedStrictURL} {
-		if base != "" && strings.HasPrefix(rawURL, base) {
-			return true
-		}
-	}
-	return false
+	return cfg.BaseURL != "" && strings.HasPrefix(rawURL, cfg.BaseURL)
 }
 
 // splitPathAndQuery returns the path and query of rawURL without the

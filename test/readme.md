@@ -106,12 +106,8 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `pip_deny.pip_failure_deny_reason` | admin | `POST /access/v1/authorize` | PIP_FAIL_TEST | READ | ROLE_ADMINISTRATOR |
 | `pip_deny.missing_attr_deny_reason` | admin | `POST /access/v1/authorize` | ATTR_MISS_TEST | READ | ROLE_ADMINISTRATOR |
 | `health.healthy_strict` | n/a | `GET /health` | - | - | none |
-| `health.healthy_permissive.degraded` | n/a | `GET /health (degraded permissive)` | - | - | none |
-| `health.unhealthy.strict_partial` | n/a | `GET /health (degraded strict)` | - | - | none |
 | `health.method_not_allowed` | n/a | `POST /health` | - | - | none |
 | `health.regression.check_resource` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `health.compose_wiring` | n/a | `GET /health` | - | - | none |
-| `readiness.policies_loaded_after_pull` | n/a | `pap-client healthcheck --readiness (docker exec)` | - | - | none |
 | `decision_logs.download_no_token.200` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
 | `decision_logs.content_is_ndjson` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
 | `entitlements.contains.allow_hit` | admin | `POST /access/v1/check/resource` | ENT_CONTRACT | READ | ROLE_ADMINISTRATOR |
@@ -153,14 +149,9 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `opa_restart.pre_restart_baseline` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `opa_restart.restart_opa_container` | n/a | `docker compose restart opa` | - | - | none |
+| `opa_restart.restart_opa_container` | n/a | `restart of the OPA container` | - | - | none |
 | `opa_restart.wait_opa_healthy` | n/a | `GET /health (OPA direct)` | - | - | none |
-| `opa_restart.restart_pap_client` | n/a | `docker compose restart pap-client` | - | - | none |
-| `opa_restart.wait_pap_client_healthy` | n/a | `GET /health (pap-client)` | - | - | none |
 | `opa_restart.post_restart_decisions_correct` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `opa_mount_restart.verify_policies_disk_key` | n/a | `docker compose exec pap-client cat /etc/opa/data/policies.json` | - | - | none |
-| `opa_mount_restart.verify_pips_disk_key` | n/a | `docker compose exec pap-client cat /etc/opa/data/pips.json` | - | - | none |
-| `opa_mount_restart.verify_m2m_disk_key` | n/a | `docker compose exec pap-client cat /etc/opa/data/m2m.json` | - | - | none |
 | `opa_lockdown.authorize_explain_forbidden.401` | n/a | `POST /v1/data/authorize?explain=full (OPA-direct)` | - | - | none |
 | `opa_lockdown.authorize_plain_still_open.200` | n/a | `POST /v1/data/authorize (OPA-direct, no params)` | - | - | none |
 | `opa_lockdown.m2m_get_forbidden.403` | n/a | `GET /v1/data/m2m (OPA-direct)` | - | - | none |

@@ -90,7 +90,7 @@ e2e-install: copy-policies
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 e2e-suite:
 	$(E2E_KUBECTL) delete job runtime-suite --ignore-not-found
-	$(E2E_KUBECTL) apply -f test/k8s/runtime-suite-job.yaml
+	$(E2E_KUBECTL) apply -f test/k8s/runtime-suite-rbac.yaml -f test/k8s/runtime-suite-job.yaml
 	$(E2E_KUBECTL) wait --for=condition=Ready pod -l job-name=runtime-suite --timeout=3m
 	$(E2E_KUBECTL) logs -f job/runtime-suite
 	$(E2E_KUBECTL) wait --for=condition=Complete job/runtime-suite --timeout=1m
