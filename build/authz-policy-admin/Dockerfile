@@ -5,7 +5,7 @@
 # deployment in the Helm chart (authz-agent-ADR-0073). The build context is the
 # repository root, like the other images.
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
