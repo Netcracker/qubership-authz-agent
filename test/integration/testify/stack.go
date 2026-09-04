@@ -48,7 +48,7 @@ func newStackDriver(cfg RuntimeConfig) (stackDriver, error) {
 	if cfg.RuntimeProfile == "kubernetes" {
 		return newKubeDriver(cfg)
 	}
-	return &composeDriver{project: cfg.ComposeProjectName, papClientHealthURL: cfg.PAPClientHealthURL}, nil
+	return newComposeDriver(cfg)
 }
 
 // waitForHTTP200 polls rawURL until it answers 200 or the timeout passes.
@@ -72,8 +72,23 @@ func waitForHTTP200(rawURL string, timeout time.Duration, what string) error {
 
 // composeDriver drives the Compose runtime stack through the docker CLI.
 type composeDriver struct {
+	docker             string // absolute path of the docker binary
 	project            string
 	papClientHealthURL string
+}
+
+// newComposeDriver resolves the docker binary once, so a missing CLI fails
+// the suite setup with a clear message instead of the first restart step.
+func newComposeDriver(cfg RuntimeConfig) (*composeDriver, error) {
+	docker, err := exec.LookPath("docker")
+	if err != nil {
+		return nil, fmt.Errorf("compose stack driver: docker CLI not found: %w", err)
+	}
+	return &composeDriver{
+		docker:             docker,
+		project:            cfg.ComposeProjectName,
+		papClientHealthURL: cfg.PAPClientHealthURL,
+	}, nil
 }
 
 // RestartOPA restarts the opa service and then pap-client as well: pap-client
@@ -83,7 +98,7 @@ type composeDriver struct {
 // the tests after this one with a working pull loop.
 func (d *composeDriver) RestartOPA() error {
 	for _, service := range []string{"opa", "pap-client"} {
-		out, err := exec.Command("docker", "compose", "-p", d.project, "restart", service).CombinedOutput()
+		out, err := exec.Command(d.docker, "compose", "-p", d.project, "restart", service).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("docker compose restart %s (project %s): %w: %s",
 				service, d.project, err, strings.TrimSpace(string(out)))
