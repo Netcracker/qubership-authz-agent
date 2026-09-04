@@ -159,7 +159,6 @@ var Catalog = []StepEntry{
 	{"decision_logs.legacy_path_header", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── opa_request_parity (ADR-0032) ───────────────────────────────────
-	{"parity.capture_reset", "n/a", "POST (upstream-capture reset)", "-", "-", "none"},
 	{"parity.single_resource", "admin", "POST /access/v1/authorize + POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"parity.bulk", "admin", "POST /access/v1/authorize + POST /access/v1/check/resource/bulk", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"parity.filter", "admin", "POST /access/v1/authorize + POST /access/v1/check/filter", "ORDER", "READ", "ROLE_ADMINISTRATOR"},

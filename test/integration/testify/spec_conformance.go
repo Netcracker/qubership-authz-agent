@@ -153,7 +153,7 @@ func exercisedResponseSet() map[responseTriple]bool {
 // assertConformsToSpec validates one request/response exchange against
 // the loaded OpenAPI document. Skips silently when:
 //   - The URL host is not the public Envoy listener (e.g. pip-stub,
-//     upstream-capture, Keycloak). The spec covers only the agent's
+//     Keycloak). The spec covers only the agent's
 //     surface; off-target probes belong to harness plumbing.
 //   - The router cannot match the path (e.g. intentional 404 probes in
 //     route_security_test.go).
@@ -291,7 +291,7 @@ func isProbablyJSONNumber(b []byte) bool {
 }
 
 // isAgentURL filters URLs that are part of the agent's HTTP surface,
-// versus harness-only endpoints (pip-stub, upstream-capture, Keycloak).
+// versus harness-only endpoints (pip-stub, Keycloak).
 func isAgentURL(rawURL string, cfg RuntimeConfig) bool {
 	if rawURL == "" {
 		return false

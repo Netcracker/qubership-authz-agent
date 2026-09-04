@@ -452,9 +452,9 @@ func catalogStepRejectedBeforeOPA(stepName string) bool {
 		"check_filter.missing_resource_type.400":
 		return true
 	default:
-		// Parity tests use custom X-Request-Id values (not the step name)
-		// for upstream-capture correlation, so they won't appear in decision
-		// logs under their catalog step name.
+		// Parity steps tag each request of a pair with its own X-Request-Id
+		// (not the step name) to tell the two decision-log events apart, so
+		// they never appear under their catalog step name.
 		if strings.HasPrefix(stepName, "parity.") {
 			return true
 		}
@@ -462,8 +462,9 @@ func catalogStepRejectedBeforeOPA(stepName string) bool {
 	}
 }
 
-// isParityTestRequestID returns true for X-Request-Id values used by parity
-// tests for upstream-capture correlation. These are not catalog step names.
+// isParityTestRequestID returns true for the X-Request-Id values the parity
+// steps use to tell a pair of decision-log events apart. These are not
+// catalog step names.
 func isParityTestRequestID(requestID string) bool {
 	return strings.HasPrefix(requestID, "parity-")
 }
