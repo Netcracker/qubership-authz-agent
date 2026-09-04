@@ -286,6 +286,25 @@ AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
 #   no volumeMount, and AUTHZ_POLICY_MOUNT_DIR is not set in the Deployment.
 AUTHZ_POLICY_CONFIGMAP: ''
 
+# Entitlements resolver (authz-agent-ADR-0054).
+#
+# The ENTITLEMENT PIP is container-pinned: it cannot arrive through the pull
+# loop or a ConfigMap mount, pap-client materialises it at startup from these
+# values. The Rego resolver then calls
+# `<AUTHZ_ENTITLEMENTS_URL>/api/v3/user-entitlements/user/<subject id>` once per
+# authorize request.
+#
+# Empty (default) leaves the resolver off. Policies that read
+# `entitledResources` then evaluate against an empty set, which is also what the
+# legacy service did with the aggregator unavailable: CONTAINS is false,
+# IS EMPTY is true. Nothing is logged for that, so set the URL wherever
+# entitlements-based policies are in use.
+AUTHZ_ENTITLEMENTS_URL: ''
+# Per-request timeout and retry count for the aggregator call. Same shape as
+# the AUTHZ_JWKS_HTTP_* knobs above.
+AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT: 5
+AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
+
 # Optional access-control stub (authz-agent-ADR-0073).
 #
 # For teams that do not run access-control at all. When enabled, the chart

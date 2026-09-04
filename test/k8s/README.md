@@ -57,6 +57,5 @@ to the installed chart. The rest needs work that is tracked separately:
 | `TestReadiness`, `TestOPAMountModeRestartDiskLayout` | Use `docker compose exec`; port to `kubectl exec` |
 | `TestOPARestart` | Uses `docker compose restart`; port to an ephemeral container that signals OPA |
 | `TestOPARequestParity` | Needs the capture Envoy config, which the chart does not ship |
-| `TestEntitlementsRuntime` | The chart has no `AUTHZ_ENTITLEMENTS_URL` value |
 | `TestDecisionLogs` | The collector leaks the M2M token through `nd_builtin_cache` keys; the suite rejects logs with full JWTs |
 | `TestZZDecisionLogsCatalogCoverage`, `TestZZZResponseReachabilityCoverage` | Assert coverage of the whole catalog; full runs only |
