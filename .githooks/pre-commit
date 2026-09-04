@@ -103,7 +103,10 @@ fi
 # ── 4. Markdown — markdownlint-cli2 ─────────────────────────────────────────
 MD_FILES=()
 while IFS= read -r f; do
-    [[ "$f" == *.md ]] && MD_FILES+=("$f")
+    [[ "$f" == *.md ]] || continue
+    # Skip generated APM agent assets; CI excludes them via FILTER_REGEX_EXCLUDE
+    [[ "$f" == .agents/* || "$f" == .claude/rules/* || "$f" == .claude/skills/* || "$f" == .cursor/rules/* ]] && continue
+    MD_FILES+=("$f")
 done < <(staged)
 
 if [[ ${#MD_FILES[@]} -gt 0 ]]; then

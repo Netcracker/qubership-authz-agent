@@ -1,0 +1,14 @@
+name: qubership-authz-agent
+version: 1.0.0
+description: APM agent packages for qubership-authz-agent
+dependencies:
+  apm:
+    - Netcracker/qubership-ai-packages/agent-packages/qubership-repo-essentials
+  mcp: []
+includes: auto
+scripts: {}
+
+targets:
+  - claude
+  - codex
+  - cursor
