@@ -309,9 +309,12 @@ func (s *RuntimeSuite) waitForDecisionLogs(wanted map[string]int) map[string]map
 
 // decisionLogInput returns the input OPA evaluated, without requestId: the
 // two requests of a pair carry different x-request-id values by
-// construction, and the Lua plumbs that header into the field.
-func decisionLogInput(event map[string]any) map[string]interface{} {
+// construction, and the Lua plumbs that header into the field. An event
+// without an input object fails the step, because comparing two empty maps
+// would pass without having compared anything.
+func (s *RuntimeSuite) decisionLogInput(event map[string]any, what string) map[string]interface{} {
 	input, _ := event["input"].(map[string]any)
+	s.Require().NotEmpty(input, "%s decision-log event carries no input object", what)
 	out := make(map[string]interface{}, len(input))
 	for k, v := range input {
 		out[k] = v
@@ -324,7 +327,7 @@ func decisionLogInput(event map[string]any) map[string]interface{} {
 // request: the inputs must match, the canonical route must not set
 // x-authz-original-path, and the legacy route must set it to its own path.
 func (s *RuntimeSuite) assertOPAInputParity(canonical, legacy map[string]any, legacyPath, what string) {
-	diffs := compareOPAInputs(decisionLogInput(canonical), decisionLogInput(legacy))
+	diffs := compareOPAInputs(s.decisionLogInput(canonical, "canonical"), s.decisionLogInput(legacy, "legacy"))
 	s.Assert().Empty(diffs, "OPA input must be identical for %s parity; diffs: %v", what, diffs)
 	s.Assert().Empty(decisionLogHeaderValues(canonical, "x-authz-original-path"),
 		"canonical route must not set x-authz-original-path")
