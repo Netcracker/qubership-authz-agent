@@ -4,9 +4,8 @@
 # test/integration/testify/Dockerfile and is side-loaded into kind.
 #
 # RUNTIME_SUITE_RUN lists the groups that work against the chart as installed.
-# Groups bound to the Compose topology (Health, Readiness, OPARestart,
-# OPAMountModeRestartDiskLayout, OPARequestParity) and the two whole-catalog
-# coverage checks stay out; see test/k8s/README.md.
+# OPARequestParity, which needs the capture Envoy config of the Compose stack,
+# and the two whole-catalog coverage checks stay out; see test/k8s/README.md.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -20,8 +19,9 @@ spec:
         app: runtime-suite
     spec:
       restartPolicy: Never
-      # The suite drives the agent over HTTP only. Porting the Compose-bound
-      # groups will need a ServiceAccount with pods/exec, and a token with it.
+      serviceAccountName: runtime-suite
+      # The token is mounted explicitly below, for the one thing the suite
+      # asks the API server for: restarting the OPA container.
       automountServiceAccountToken: false
       containers:
         - name: runtime-suite
@@ -39,7 +39,7 @@ spec:
             - $(RUNTIME_SUITE_RUN)
           env:
             - name: RUNTIME_SUITE_RUN
-              value: "^TestRuntimeSuite$/^(TestAuthorize|TestAuthorizeEnvoyOpaDirectParity|TestCheckResource|TestCheckResourceBulk|TestCheckFilter|TestEntitlementsRuntime|TestRouteSecurity|TestWildcardAccess|TestTokenPIPAuthorize|TestPIPDenyReason|TestPIPGeneralActivation|TestPIPJsonPathExtraction|TestDecisionLogs|TestOPALockdown|TestM2MKeycloak)$"
+              value: "^TestRuntimeSuite$/^(TestAuthorize|TestAuthorizeEnvoyOpaDirectParity|TestCheckResource|TestCheckResourceBulk|TestCheckFilter|TestEntitlementsRuntime|TestRouteSecurity|TestWildcardAccess|TestTokenPIPAuthorize|TestPIPDenyReason|TestPIPGeneralActivation|TestPIPJsonPathExtraction|TestDecisionLogs|TestOPALockdown|TestOPARestart|TestHealth|TestM2MKeycloak)$"
             # A filtered run: the catalog-completeness check only makes sense
             # for the full suite.
             - name: FULL_RUNTIME_SUITE
@@ -48,6 +48,19 @@ spec:
             # steps are real here rather than skipped.
             - name: M2M_KEYCLOAK_PROFILE
               value: "true"
+            # The stack driver (test/integration/testify/stack.go) restarts
+            # OPA through the API server: it needs the namespace, the agent
+            # Pod's label, and an image with `kill` for the ephemeral container.
+            - name: RUNTIME_PROFILE
+              value: kubernetes
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: K8S_AGENT_SELECTOR
+              value: name=authz-agent
+            - name: K8S_DEBUG_IMAGE
+              value: local/authz-agent-pap-client:ci
             - name: BASE_URL
               value: http://authz-agent:8080
             - name: OPA_DIRECT_URL
@@ -89,6 +102,10 @@ spec:
                 secretKeyRef:
                   name: authz-agent-opa-auth
                   key: token
+          volumeMounts:
+            - name: kube-api
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -97,3 +114,17 @@ spec:
             limits:
               memory: 256Mi
               ephemeral-storage: 256Mi
+      volumes:
+        # A short-lived token for the runtime-suite ServiceAccount plus the
+        # cluster CA, at the path the driver reads.
+        - name: kube-api
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+              - configMap:
+                  name: kube-root-ca.crt
+                  items:
+                    - key: ca.crt
+                      path: ca.crt

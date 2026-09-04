@@ -20,17 +20,18 @@ import (
 	"encoding/json"
 )
 
-// TestHealth covers the GET /health endpoint runtime integration scenarios.
-// Negative scenarios that require runtime state not achievable with the shared
-// Compose stack (OPA not ready, missing/invalid status, transition) are covered
-// exhaustively by unit tests in components/pap-client/internal/policyadmin/health_test.go.
+// TestHealth covers the GET /health endpoint runtime integration scenarios
+// that the agent under test answers itself. Scenarios that need a differently
+// configured agent or state the harness cannot produce (partial or failed JWKS
+// bootstrap in strict and permissive mode, OPA not ready, missing or invalid
+// status, transitions) are covered by the unit tests in
+// components/pap-client/internal/policyadmin/health_test.go.
 func (s *RuntimeSuite) TestHealth() {
 
 	// ── Scenario 1: Healthy strict ─────────────────────────────────────────
-	// The Compose stack starts authz-agent after keycloak is healthy and the
-	// JWKS bootstrap completes. The test suite itself runs only after
-	// setup.wait_for_agent passes, which implicitly validates service_healthy
-	// wiring (Scenario 10). A direct GET /health call confirms the endpoint.
+	// The stack starts the agent after Keycloak is up and the JWKS bootstrap
+	// completes, and the suite itself runs only after setup.wait_for_agent
+	// passes. A direct GET /health call confirms the endpoint.
 	s.Step("health.healthy_strict", func() {
 		code, body := s.get("/health", nil)
 		s.Require().Equal(200, code, "GET /health should return 200 when stack is ready; body: %s", string(body))
@@ -38,34 +39,6 @@ func (s *RuntimeSuite) TestHealth() {
 		var resp map[string]interface{}
 		s.Require().NoError(json.Unmarshal(body, &resp), "response should be valid JSON")
 		s.Require().Equal("healthy", resp["status"], "status field must be 'healthy'")
-	})
-
-	// ── Scenario 2: Healthy permissive (partial bootstrap) ─────────────────
-	// authz-agent-partial-permissive: 2 providers (keycloak OK + broken-idp),
-	// permissive mode (AUTHZ_JWKS_BOOTSTRAP_REQUIRED=false).
-	// Bootstrap: successCount=1, configuredCount=2, threshold=1 → healthy.
-	s.Step("health.healthy_permissive.degraded", func() {
-		code, body := s.doHTTPDirect("GET", s.cfg.DegradedPermissiveURL+"/health", nil, nil)
-		s.Require().Equal(200, code,
-			"permissive agent with ≥1 IdP success must return 200; body: %s", string(body))
-
-		var resp map[string]interface{}
-		s.Require().NoError(json.Unmarshal(body, &resp), "response should be valid JSON")
-		s.Require().Equal("healthy", resp["status"], "status field must be 'healthy'")
-	})
-
-	// ── Scenario 4: Unhealthy strict — partial bootstrap ───────────────────
-	// authz-agent-partial-strict: 2 providers (keycloak OK + broken-idp),
-	// strict mode (AUTHZ_JWKS_BOOTSTRAP_REQUIRED=true).
-	// Bootstrap: successCount=1, configuredCount=2, threshold=2 → not met → 503.
-	s.Step("health.unhealthy.strict_partial", func() {
-		code, body := s.doHTTPDirect("GET", s.cfg.DegradedStrictURL+"/health", nil, nil)
-		s.Require().Equal(503, code,
-			"strict agent with partial bootstrap must return 503; body: %s", string(body))
-
-		var resp map[string]interface{}
-		s.Require().NoError(json.Unmarshal(body, &resp), "response should be valid JSON")
-		s.Require().NotEmpty(resp["message"], "unhealthy response must include message")
 	})
 
 	// ── Method enforcement: POST /health → 405 ─────────────────────────────
@@ -90,15 +63,5 @@ func (s *RuntimeSuite) TestHealth() {
 		)
 		// Expect 200 (decision returned as boolean, not an HTTP error).
 		s.Require().Equal(200, code, "/access/v1/check/resource must still work after health route added; body: %s", string(body))
-	})
-
-	// ── Scenario 10: Compose wiring ────────────────────────────────────────
-	// Verified implicitly: the runtime test suite runs only after
-	// authz-agent passes the service_healthy condition (which uses GET /health).
-	// We add an explicit check here to confirm the health endpoint existed
-	// before any test ran, by verifying it still returns 200 at test-time.
-	s.Step("health.compose_wiring", func() {
-		code, body := s.get("/health", nil)
-		s.Require().Equal(200, code, "health endpoint must be reachable (Compose service_healthy already cleared); body: %s", string(body))
 	})
 }

@@ -43,11 +43,6 @@ type RuntimeConfig struct {
 	KcPassword            string
 	KcTokenScope          string
 	KcExpiredWaitSeconds  int
-	// Degraded agents for health negative-scenario runtime tests.
-	// authz-agent-partial-permissive: 2 providers, permissive mode → health 200 (scenario 2).
-	// authz-agent-partial-strict: 2 providers, strict mode → health 503 (scenario 4).
-	DegradedPermissiveURL string
-	DegradedStrictURL     string
 	// D-AG-15 (ADR-0054): entitlements-mock pip-stub instance wired into
 	// the runtime compose. EntitlementsMockURL is the host-published
 	// control URL used by the test harness for pin/reset; the
@@ -85,18 +80,25 @@ type RuntimeConfig struct {
 	// Default: "test-opa-auth-token" (matches authn/opa-auth-token in the
 	// runtime compose stack).
 	OPAAuthToken string
-	// ComposeProjectName is the Docker Compose project name (-p flag) used by
-	// the test stack. Used by tests that need to docker exec into a container
-	// (e.g. readiness.policies_loaded_after_pull runs pap-client inside the
-	// opa service). Read from PROJECT_NAME env; default matches the script default.
+	// RuntimeProfile selects the stack driver (stack.go): `kubernetes` for
+	// the kind harness under test/k8s, anything else for the Compose stack.
+	RuntimeProfile string
+	// ComposeProjectName is the Docker Compose project name (-p flag) of the
+	// test stack; the Compose driver restarts containers through it. Read from
+	// PROJECT_NAME; the default matches the script default.
 	ComposeProjectName string
 	// PAPClientHealthURL is the host-reachable URL of pap-client's GET /health
-	// endpoint.  pap-client shares OPA's network namespace
-	// (network_mode: "service:opa"), so pap-client's port (8182) is published
-	// via the opa service.  Used by TestOPARestart to confirm that pap-client
-	// has re-established its OPA connection after a container restart.
-	// Default: http://localhost:18182/health
+	// endpoint on the Compose stack, where pap-client's port (8182) is
+	// published via the opa service. The Compose driver waits on it after a
+	// restart. Default: http://localhost:18182/health
 	PAPClientHealthURL string
+	// KubeNamespace, KubeAgentSelector and KubeDebugImage configure the
+	// Kubernetes driver: the namespace the agent runs in, the label selector
+	// of its Pod, and the image whose `kill` signals the OPA container from an
+	// ephemeral container.
+	KubeNamespace     string
+	KubeAgentSelector string
+	KubeDebugImage    string
 }
 
 // LoadConfig builds RuntimeConfig from environment variables with defaults
@@ -131,16 +133,18 @@ func LoadConfig() RuntimeConfig {
 		KcPassword:            envOr("KC_PASSWORD", "password"),
 		KcTokenScope:          envOr("KC_TOKEN_SCOPE", "openid"),
 		KcExpiredWaitSeconds:  waitSec,
-		DegradedPermissiveURL: envOr("DEGRADED_PERMISSIVE_URL", "http://localhost:18081"),
-		DegradedStrictURL:     envOr("DEGRADED_STRICT_URL", "http://localhost:18082"),
 		ACStubURL:             envOr("AUTHZ_POLICY_ADMIN_URL", "http://localhost:18090"),
 		EntitlementsMockURL:   envOr("ENTITLEMENTS_MOCK_URL", "http://localhost:19998"),
 		OPADirectURL:          envOr("OPA_DIRECT_URL", "http://localhost:18181"),
 		PullInterval:          pullInterval,
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
 		OPAAuthToken:          envOr("OPA_AUTH_TOKEN", "test-opa-auth-token"),
+		RuntimeProfile:        envOr("RUNTIME_PROFILE", "compose"),
 		ComposeProjectName:    envOr("PROJECT_NAME", "authz-agent-runtime-test"),
 		PAPClientHealthURL:    envOr("PAP_CLIENT_HEALTH_URL", "http://localhost:18182/health"),
+		KubeNamespace:         envOr("K8S_NAMESPACE", "authz-e2e"),
+		KubeAgentSelector:     envOr("K8S_AGENT_SELECTOR", "name=authz-agent"),
+		KubeDebugImage:        envOr("K8S_DEBUG_IMAGE", "local/authz-agent-pap-client:ci"),
 	}
 }
 

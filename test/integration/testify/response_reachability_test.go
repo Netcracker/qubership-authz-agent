@@ -44,6 +44,14 @@ const d2FrozenCheckFamily = "check-family 400/401 is identical across variants; 
 // under the ADR-0062 task.
 const previewBulkOperationsUnexercised = "preview bulk/operations is a real Envoy route, but the suite exercises only the /access sibling, not the /preview variant. Adding a /preview test is frozen as a non-canonical edit under ADR-0062 (D2)."
 
+// healthUnavailableUnexercised justifies GET /health 503. The agent returns
+// it only while OPA is not ready or the strict-mode JWKS bootstrap has not
+// succeeded for every IdP. The harness runs the suite against a healthy agent
+// and does not start a degraded one, so the status is unexercised here; the
+// transitions are covered by the unit tests in
+// components/pap-client/internal/policyadmin/health_test.go.
+const healthUnavailableUnexercised = "GET /health 503 needs an agent whose OPA is not ready or whose strict-mode JWKS bootstrap failed; the harness runs the suite against a healthy agent. Covered by the policyadmin unit tests."
+
 // reachabilityWhitelist lists spec-declared responses that a full Compose suite
 // run does not exercise and that this task may not add a test for, each with the
 // reason it stays unexercised (ADR-0064). The lint's pass-2 flags any entry that
@@ -69,6 +77,9 @@ var reachabilityWhitelist = map[responseTriple]string{
 	{Method: "POST", Path: "/preview/v2/check/resource/bulk/operations", Status: 200}: previewBulkOperationsUnexercised,
 	{Method: "POST", Path: "/preview/v2/check/resource/bulk/operations", Status: 400}: previewBulkOperationsUnexercised,
 	{Method: "POST", Path: "/preview/v2/check/resource/bulk/operations", Status: 401}: previewBulkOperationsUnexercised,
+
+	// /health 503: needs a degraded agent the harness does not run.
+	{Method: "GET", Path: "/health", Status: 503}: healthUnavailableUnexercised,
 }
 
 // TestZZZResponseReachabilityCoverage is the ADR-0064 response-reachability

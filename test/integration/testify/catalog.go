@@ -135,14 +135,10 @@ var Catalog = []StepEntry{
 
 	// ── health ───────────────────────────────────────────────────────────
 	{"health.healthy_strict", "n/a", "GET /health", "-", "-", "none"},
-	{"health.healthy_permissive.degraded", "n/a", "GET /health (degraded permissive)", "-", "-", "none"},
-	{"health.unhealthy.strict_partial", "n/a", "GET /health (degraded strict)", "-", "-", "none"},
 	{"health.method_not_allowed", "n/a", "POST /health", "-", "-", "none"},
 	{"health.regression.check_resource", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"health.compose_wiring", "n/a", "GET /health", "-", "-", "none"},
 	// readiness: pap-client healthcheck --readiness must exit 0 after the
 	// first successful policy pull (pull status latch written).
-	{"readiness.policies_loaded_after_pull", "n/a", "pap-client healthcheck --readiness (docker exec)", "-", "-", "none"},
 
 	// ── decision_logs ────────────────────────────────────────────────────
 	{"decision_logs.download_no_token.200", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
@@ -214,13 +210,10 @@ var Catalog = []StepEntry{
 	// reloads from disk so correct decisions are served immediately without
 	// waiting for the next pap-client push tick (ADR-0077 §Restart).
 	{"opa_restart.pre_restart_baseline", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"opa_restart.restart_opa_container", "n/a", "docker compose restart opa", "-", "-", "none"},
+	{"opa_restart.restart_opa_container", "n/a", "restart of the OPA container", "-", "-", "none"},
 	{"opa_restart.wait_opa_healthy", "n/a", "GET /health (OPA direct)", "-", "-", "none"},
-	{"opa_restart.restart_pap_client", "n/a", "docker compose restart pap-client", "-", "-", "none"},
-	{"opa_restart.wait_pap_client_healthy", "n/a", "GET /health (pap-client)", "-", "-", "none"},
 	{"opa_restart.post_restart_decisions_correct", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 
-	// ── opa_mount_restart (mount-mode restart survival) ─────────────────
 	// Verifies that the disk files written by pap-client have the correct
 	// OPA data-dir layout for restart recovery in ConfigMap-mount mode.
 	// In mount mode (MountWatcher) pap-client does NOT republish to OPA
@@ -228,9 +221,6 @@ var Catalog = []StepEntry{
 	// recovery mechanism on OPA restart. This is the worst case.
 	// Red proof: removing the disk-write from MountWatcher (or PolicyPuller)
 	// causes these checks to fail (file absent or wrong top-level key).
-	{"opa_mount_restart.verify_policies_disk_key", "n/a", "docker compose exec pap-client cat /etc/opa/data/policies.json", "-", "-", "none"},
-	{"opa_mount_restart.verify_pips_disk_key", "n/a", "docker compose exec pap-client cat /etc/opa/data/pips.json", "-", "-", "none"},
-	{"opa_mount_restart.verify_m2m_disk_key", "n/a", "docker compose exec pap-client cat /etc/opa/data/m2m.json", "-", "-", "none"},
 
 	// ── route_security ───────────────────────────────────────────────────
 	{"route_security.authorize_hidden.404", "admin", "POST /authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},

@@ -11,6 +11,7 @@ apply them by hand. CI runs the same targets one step at a time.
 | `entitlements-mock.yaml` | A second stub instance for the entitlements endpoint |
 | `values.yaml` | Chart values that point the agent at the harness Services |
 | `runtime-suite-job.yaml` | The suite itself, built from `test/integration/testify/Dockerfile` |
+| `runtime-suite-rbac.yaml` | ServiceAccount and Role the suite uses to restart the OPA container |
 
 The ConfigMap with the realm imports and the M2M client-credentials Secret
 are generated from the files under `test/integration/runtime/authn/keycloak/`
@@ -67,8 +68,9 @@ to the installed chart. The rest needs work that is tracked separately:
 
 | Group | Blocker |
 | --- | --- |
-| `TestHealth` | Needs the degraded agent instances (two more releases) and drops the Compose wiring step |
-| `TestReadiness`, `TestOPAMountModeRestartDiskLayout` | Use `docker compose exec`; port to `kubectl exec` |
-| `TestOPARestart` | Uses `docker compose restart`; port to an ephemeral container that signals OPA |
 | `TestOPARequestParity` | Needs the capture Envoy config, which the chart does not ship |
 | `TestZZDecisionLogsCatalogCoverage`, `TestZZZResponseReachabilityCoverage` | Assert coverage of the whole catalog; full runs only |
+
+`TestOPARestart` restarts the OPA container through the API server: the Job
+runs as the `runtime-suite` ServiceAccount from `runtime-suite-rbac.yaml`,
+which may list Pods and add ephemeral containers to them, nothing more.
