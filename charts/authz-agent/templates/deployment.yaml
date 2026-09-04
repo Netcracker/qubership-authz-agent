@@ -382,7 +382,7 @@ spec:
               value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
-            # Entitlements resolver (authz-agent-ADR-0054). Container-pinned:
+            # Entitlements resolver. Container-pinned:
             # pap-client materialises the ENTITLEMENT PIP from these at startup,
             # and an empty URL leaves the resolver off.
             - name: AUTHZ_ENTITLEMENTS_URL

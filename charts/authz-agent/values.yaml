@@ -286,7 +286,7 @@ AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
 #   no volumeMount, and AUTHZ_POLICY_MOUNT_DIR is not set in the Deployment.
 AUTHZ_POLICY_CONFIGMAP: ''
 
-# Entitlements resolver (authz-agent-ADR-0054).
+# Entitlements resolver.
 #
 # The ENTITLEMENT PIP is container-pinned: it cannot arrive through the pull
 # loop or a ConfigMap mount, pap-client materialises it at startup from these
