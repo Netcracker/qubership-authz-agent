@@ -53,7 +53,8 @@ E2E_ARTIFACTS ?= test/artifacts/kind
 E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
 E2E_AUTHN := test/integration/runtime/authn/keycloak
 E2E_IMAGES := authz-agent-pap-client authz-agent-envoy authz-agent-collector \
-              authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite
+              authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite \
+              authz-parity-suite
 
 e2e: e2e-cluster e2e-images e2e-harness e2e-install e2e-suite
 
@@ -69,6 +70,7 @@ e2e-images:
 	docker build -t local/authz-policy-admin:ci        -f build/authz-policy-admin/Dockerfile .
 	docker build -t local/pip-stub:ci                  -f test/integration/pipstub/Dockerfile test/integration/pipstub
 	docker build -t local/authz-runtime-suite:ci       -f test/integration/testify/Dockerfile .
+	docker build -t local/authz-parity-suite:ci        -f test/parity/suite/Dockerfile test/parity/suite
 	kind load docker-image --name $(KIND_CLUSTER) $(addprefix local/,$(addsuffix :ci,$(E2E_IMAGES)))
 
 # Keycloak with the repository realm imports, the two stubs, and the M2M
@@ -104,4 +106,43 @@ e2e-logs:
 e2e-down:
 	kind delete cluster --name $(KIND_CLUSTER)
 
-.PHONY: copy-policies lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-logs e2e-down
+# ── parity replay on kind ────────────────────────────────────────────────────
+# The parity suite (test/parity) against the chart, in its own namespace so its
+# Keycloak realms and Service names match the Compose parity stack. Shares the
+# cluster and the images with the e2e targets above.
+PARITY_NAMESPACE ?= authz-parity
+PARITY_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(PARITY_NAMESPACE)
+PARITY_SEED := test/parity/compose/idp-seed
+
+parity: e2e-cluster e2e-images parity-harness parity-install parity-suite
+
+# Keycloak with the parity realm imports, the two stubs, and the M2M
+# client-credentials Secret for the parity-m2m client of the cloud-common realm.
+parity-harness:
+	kubectl --context kind-$(KIND_CLUSTER) create namespace $(PARITY_NAMESPACE) --dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
+	$(PARITY_KUBECTL) create configmap parity-realms --from-file=$(PARITY_SEED)/cloud-common-realm.json --from-file=$(PARITY_SEED)/parity-realm.json --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
+	$(PARITY_KUBECTL) create configmap pip-mock-config --from-file=test/integration/pipstub/config/requestargs.responses.yaml --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
+	$(PARITY_KUBECTL) create secret generic authz-agent-client-credentials --from-literal=username=parity-m2m '--from-literal=password=ParityM2MSecret1!@#' --from-literal=name=authz-agent --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
+	$(PARITY_KUBECTL) apply -f test/k8s/parity/keycloak.yaml -f test/k8s/parity/pip-mock.yaml -f test/k8s/parity/entitlements-mock.yaml
+	$(PARITY_KUBECTL) rollout status deploy/pip-mock --timeout=2m
+	$(PARITY_KUBECTL) rollout status deploy/entitlements-mock --timeout=2m
+	$(PARITY_KUBECTL) rollout status deploy/idp --timeout=10m
+
+parity-install: copy-policies
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m
+
+# Streams the suite log; the final wait turns the Job outcome into the exit code.
+parity-suite:
+	$(PARITY_KUBECTL) delete job parity-suite --ignore-not-found
+	$(PARITY_KUBECTL) apply -f test/k8s/parity/parity-suite-job.yaml
+	$(PARITY_KUBECTL) wait --for=condition=Ready pod -l job-name=parity-suite --timeout=3m
+	$(PARITY_KUBECTL) logs -f job/parity-suite
+	$(PARITY_KUBECTL) wait --for=condition=Complete job/parity-suite --timeout=1m
+
+parity-logs:
+	mkdir -p $(E2E_ARTIFACTS)/parity
+	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
+	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
+	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
+
+.PHONY: copy-policies lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-logs

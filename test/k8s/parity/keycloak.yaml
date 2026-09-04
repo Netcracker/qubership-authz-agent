@@ -1,26 +1,26 @@
-# Keycloak for the kind end-to-end run (`make e2e-harness`).
+# Keycloak for the parity replay on kind (`make parity-harness`).
 #
-# Same start-dev settings as the Compose runtime stack. The realm imports come
-# from test/integration/runtime/authn/keycloak/ and are packed into the
-# keycloak-realms ConfigMap by the script, so this file does not duplicate
-# them. KC_HOSTNAME must match the in-cluster Service name: the issuer and the
-# JWKS URI in the discovery document derive from it, and the agent fetches them
-# from inside the cluster.
+# The Compose parity stack runs Keycloak in production mode on Postgres; the
+# replay does not depend on persistence, so dev mode with the same two realm
+# imports is enough here. The realm files come from
+# test/parity/compose/idp-seed/ and are packed into the parity-realms ConfigMap
+# by the Makefile. The Service is named `idp` because that host is the issuer
+# in the trusted-providers entry and in KC_HOSTNAME.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: keycloak
+  name: idp
   labels:
-    app: keycloak
+    app: idp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: keycloak
+      app: idp
   template:
     metadata:
       labels:
-        app: keycloak
+        app: idp
     spec:
       # Keycloak calls no Kubernetes API.
       automountServiceAccountToken: false
@@ -33,19 +33,15 @@ spec:
           # credential the manifest does not hold cannot leak from it.
           env:
             - name: KC_HOSTNAME
-              value: http://keycloak:8080/auth
+              value: http://idp:8080/auth
             - name: KC_HTTP_RELATIVE_PATH
               value: /auth
-            - name: JAVA_OPTS_APPEND
-              value: -Dkeycloak.migration.strategy=OVERWRITE_EXISTING
           ports:
             - name: http
               containerPort: 8080
             - name: management
               containerPort: 9000
-          # KC_HTTP_RELATIVE_PATH prefixes the management endpoints too, so the
-          # health path carries /auth. Cold start with two realm imports takes
-          # about a minute; the startup probe allows five.
+          # KC_HTTP_RELATIVE_PATH prefixes the management endpoints too.
           startupProbe:
             httpGet:
               path: /auth/health/ready
@@ -61,8 +57,6 @@ spec:
             requests:
               cpu: 500m
               memory: 768Mi
-              # The dev-mode H2 database and the realm imports live on the
-              # container filesystem.
               ephemeral-storage: 512Mi
             limits:
               memory: 1536Mi
@@ -74,15 +68,15 @@ spec:
       volumes:
         - name: realms
           configMap:
-            name: keycloak-realms
+            name: parity-realms
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: keycloak
+  name: idp
 spec:
   selector:
-    app: keycloak
+    app: idp
   ports:
     - name: http
       port: 8080
