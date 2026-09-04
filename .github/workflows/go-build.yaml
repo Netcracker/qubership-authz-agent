@@ -9,23 +9,22 @@
 # This repository has four Go modules:
 #   .                              — the product module (four binaries, zero external deps)
 #   test/parity/suite              — parity-replay test suite
-#   test/integration/testify       — Envoy/OPA integration suite (needs a running compose stack)
+#   test/integration/testify       — Envoy/OPA integration suite (needs a running stack)
 #   test/integration/pipstub       — pip-stub service used by the integration suite
 #
 # The shared workflow takes a single go-module-dir and would only build and test
 # the product module.  The explicit go-module-configs list below makes all four
 # modules visible so CI does not silently skip the test suites.
 #
-# The integration suite (test/integration/testify) is wired here for compile-time
-# checking; its full run needs Docker Compose, Keycloak and authz-policy-admin, which
-# are not available in a standard GitHub Actions runner.  Integration tests carry a
-# //go:build integration tag and are skipped unless that tag is set, so the CI pass
-# here validates compilation and non-integration tests only.
+# The integration-tagged suites are not built here: without -tags integration
+# the compiler leaves those files out, so this workflow covers the non-integration
+# tests only.  integration-tests.yaml compiles the tagged suites and runs the
+# runtime suite against the Helm chart on a kind cluster.
 
-name: Build
+name: CI
 
 run-name: >
-  Build —
+  CI —
   ${{ github.event_name == 'push' && format('push [{0}]', github.event.head_commit.message) || '' }}
   ${{ github.event_name == 'pull_request' && format('PR ({0}) [{1}]', github.head_ref, github.event.pull_request.title) || '' }}
 
@@ -38,8 +37,12 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  # The name of this job and of the workflow are kept to one word each: the
+  # reusable workflows prepend their own job names, and the check ends up as
+  # "CI / Go / Build Docker image / Build Docker Images (<component>, ...)".
+  # Anything longer here pushes the component name out of view.
   build:
-    name: Build and test
+    name: Go
     # Explicit grant matching what generic-go-build.yaml declares for itself;
     # a caller without a permissions block would hand over the default token.
     permissions:
