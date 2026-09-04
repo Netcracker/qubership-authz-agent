@@ -16,11 +16,20 @@ The ConfigMap with the realm imports and the M2M client-credentials Secret
 are generated from the files under `test/integration/runtime/authn/keycloak/`
 by `make e2e-harness`, so they have no manifest of their own.
 
+`parity/` holds the same shape for the parity replay suite (`test/parity`):
+Keycloak as `idp` with the realm imports from `test/parity/compose/idp-seed/`,
+`pip-mock` with the request-args rule set, `entitlements-mock`, chart values
+with the parity realm as an explicit trusted provider, and the suite Job built
+from `test/parity/suite/Dockerfile`. It runs in its own namespace so its
+Service names match the Compose parity stack.
+
 ## Run
 
 ```bash
 make e2e          # cluster, images, harness, chart, suite
 make e2e-logs     # collect artifacts into test/artifacts/kind/
+make parity       # the parity replay: harness, chart, suite in namespace authz-parity
+make parity-logs  # its artifacts, into test/artifacts/kind/parity/
 make e2e-down     # delete the cluster
 ```
 
@@ -34,7 +43,12 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `values.yaml` and `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
 
-`KIND_CLUSTER`, `E2E_NAMESPACE`, and `E2E_ARTIFACTS` override the defaults.
+The parity targets mirror these: `parity-harness`, `parity-install`,
+`parity-suite`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
+cluster and image targets first, then the three.
+
+`KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`
+override the defaults.
 
 Re-running `e2e-harness` on its own replaces the Keycloak pod, and a dev-mode
 Keycloak mints new realm keys on every start. Restart the agent afterwards

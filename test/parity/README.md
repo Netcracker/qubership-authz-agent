@@ -158,6 +158,7 @@ test/parity/
 │   ├── idp-seed/                       (Keycloak realm import + cache config)
 │   └── pg-init/                        (postgres init script: two logical DBs)
 ├── suite/                              (Go/testify parity suite)
+│   ├── Dockerfile                      (suite image for the kind run)
 │   ├── config.go
 │   ├── compare.go                      (golden read/diff; no write/record path)
 │   ├── accepted_divergences.go
@@ -172,10 +173,18 @@ test/parity/
     └── run-parity-suite.sh             (compose up → healthy → go test)
 ```
 
-## Why this suite is not in CI
+## Running on kind
 
-The replay needs Docker Compose (Keycloak, OPA, Envoy, pap-client, authz-policy-admin
-containers). The organisation's shared Go build workflow runs unit-level `go test` only;
-Docker-based suites are run locally (`run-parity-suite.sh`) and from release validation,
-not from the pull-request workflow. This is the same treatment as the integration compose
-suite — see the comment in `.github/workflows/go-build.yaml`.
+CI runs the replay on a kind cluster against the Helm chart
+(`.github/workflows/integration-tests.yaml`, job `Parity on kind`); the Compose
+stack above is the local harness. The kind harness lives under
+`test/k8s/parity/` and reuses the realm imports from `compose/idp-seed/`, the
+pip-stub image, and the suite compiled into `suite/Dockerfile`:
+
+```bash
+make parity        # harness, chart, suite in namespace authz-parity
+make parity-logs   # artifacts into test/artifacts/kind/parity/
+```
+
+Keycloak runs in dev mode there; the Postgres of the Compose stack exists only
+to make that Keycloak persistent, which the replay does not need.

@@ -154,6 +154,12 @@ PARITY_PROFILE=authz-agent bash test/parity/scripts/run-parity-suite.sh
 
 Expected: 135/135 PASS.
 
+The same replay runs on kind against the Helm chart, which is what CI does:
+
+```sh
+make parity
+```
+
 ### Load harness smoke check
 
 ```sh

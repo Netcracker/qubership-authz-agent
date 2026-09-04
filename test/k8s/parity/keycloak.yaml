@@ -1,0 +1,87 @@
+# Keycloak for the parity replay on kind (`make parity-harness`).
+#
+# The Compose parity stack runs Keycloak in production mode on Postgres; the
+# replay does not depend on persistence, so dev mode with the same two realm
+# imports is enough here. The realm files come from
+# test/parity/compose/idp-seed/ and are packed into the parity-realms ConfigMap
+# by the Makefile. The Service is named `idp` because that host is the issuer
+# in the trusted-providers entry and in KC_HOSTNAME.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idp
+  labels:
+    app: idp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: idp
+  template:
+    metadata:
+      labels:
+        app: idp
+    spec:
+      # Keycloak calls no Kubernetes API.
+      automountServiceAccountToken: false
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.3.5
+          args: ["start-dev", "--import-realm", "--health-enabled=true"]
+          env:
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              value: kcbootstrap
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              value: KcBootstrap1!@#
+            - name: KC_HOSTNAME
+              value: http://idp:8080/auth
+            - name: KC_HTTP_RELATIVE_PATH
+              value: /auth
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: management
+              containerPort: 9000
+          # KC_HTTP_RELATIVE_PATH prefixes the management endpoints too.
+          startupProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: management
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /auth/health/ready
+              port: management
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 500m
+              memory: 768Mi
+              ephemeral-storage: 512Mi
+            limits:
+              memory: 1536Mi
+              ephemeral-storage: 1Gi
+          volumeMounts:
+            - name: realms
+              mountPath: /opt/keycloak/data/import
+              readOnly: true
+      volumes:
+        - name: realms
+          configMap:
+            name: parity-realms
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: idp
+spec:
+  selector:
+    app: idp
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+    - name: management
+      port: 9000
+      targetPort: management
