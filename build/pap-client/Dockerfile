@@ -27,7 +27,9 @@ RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
 # certificates, uid 10001 in the root group.
 FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
 
-COPY --chown=10001:0 --chmod=555 --from=pap_client_builder /out/pap-client /usr/local/bin/pap-client
+# Root-owned and read-only for everyone else: the runtime uid can execute the
+# binary but not modify it.
+COPY --chmod=555 --from=pap_client_builder /out/pap-client /usr/local/bin/pap-client
 
 # Pre-create the directories that are later mounted as Docker or Kubernetes
 # volumes. Docker copies the directory metadata from the image into a new named
