@@ -15,7 +15,7 @@ COPY internal/atomicfile/ internal/atomicfile/
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build \
     -o /out/token-fetcher ./components/token-fetcher
 
-FROM alpine:3.21
+FROM alpine:3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 
 RUN apk add --no-cache ca-certificates \
   && mkdir -p /etc/secret /var/run/authz /etc/authz/ac-token
