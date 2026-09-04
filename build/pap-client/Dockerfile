@@ -23,31 +23,29 @@ COPY internal/ internal/
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
     go build -o /out/pap-client ./components/pap-client
 
-FROM alpine:3.21
-RUN apk add --no-cache ca-certificates
+# The platform base image: CA bundle, entrypoint that loads extra
+# certificates, uid 10001 in the root group.
+FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
 
-COPY --from=pap_client_builder /out/pap-client /usr/local/bin/pap-client
+COPY --chown=10001:0 --chmod=555 --from=pap_client_builder /out/pap-client /usr/local/bin/pap-client
 
-# Pre-create the directories that are later bind-mounted as Docker or
-# Kubernetes volumes, and set them to uid 1000 while we are still root.
-# Docker copies the directory metadata from the image into a new named volume
-# on first mount, so the volume root inherits uid 1000 ownership rather than
-# root. Without this, Docker creates the mount point as root-owned (755) and
-# the non-root pap-client binary cannot write to it.
+# Pre-create the directories that are later mounted as Docker or Kubernetes
+# volumes. Docker copies the directory metadata from the image into a new named
+# volume on first mount, so the volume root inherits this ownership rather than
+# root's. Owner 10001 serves a plain Kubernetes install and Compose; group 0
+# with group write serves OpenShift, where the uid is arbitrary and the gid is 0.
 #
 # /etc/opa/data   — shared opa-data volume: policies, JWKS, opa-auth-secret.json
 # /var/run/authz  — authz-run volume: bootstrap-status.json
+USER root
 RUN mkdir -p /etc/opa/data /var/run/authz \
-    && chown 1000:1000 /etc/opa/data /var/run/authz
+    && chown 10001:0 /etc/opa/data /var/run/authz \
+    && chmod 775 /etc/opa/data /var/run/authz
+USER 10001:10001
 
-# Run as uid 1000 to match the OPA image's default uid. This lets the
-# shared opa-data emptyDir carry 0o600 files (opa-auth-secret.json) that
-# both containers read without relaxing permissions beyond the volume.
-USER 1000
-
-# Default entrypoint: running without args starts the pap-client HTTP server.
-# Subcommands:
+# The base image's entrypoint execs its arguments, so a subcommand is passed
+# with the binary rather than on its own:
 #   pap-client bootstrap   — writes JWKS and opa-auth-secret.json; used as init container.
 #   pap-client healthcheck — liveness check (OPA + JWKS bootstrap).
 #   pap-client healthcheck --readiness — adds the policiesLoaded latch gate.
-ENTRYPOINT ["/usr/local/bin/pap-client"]
+CMD ["pap-client"]

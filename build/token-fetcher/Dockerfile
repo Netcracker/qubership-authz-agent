@@ -15,11 +15,19 @@ COPY internal/atomicfile/ internal/atomicfile/
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build \
     -o /out/token-fetcher ./components/token-fetcher
 
-FROM alpine:3.21
+FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
 
-RUN apk add --no-cache ca-certificates \
-  && mkdir -p /etc/secret /var/run/authz /etc/authz/ac-token
+COPY --chown=10001:0 --chmod=555 --from=builder /out/token-fetcher /usr/local/bin/token-fetcher
 
-COPY --from=builder /out/token-fetcher /usr/local/bin/token-fetcher
+# Mount points, pre-created so a Docker named volume inherits their ownership:
+# /etc/secret        — client-credentials Secret (read-only)
+# /etc/authz/ac-token — the token file pap-client reads
+# /var/run/authz     — the startup marker the pap-client container waits for
+# Owner 10001 for Compose, group 0 with group write for OpenShift.
+USER root
+RUN mkdir -p /etc/secret /var/run/authz /etc/authz/ac-token \
+    && chown 10001:0 /etc/secret /var/run/authz /etc/authz/ac-token \
+    && chmod 775 /var/run/authz /etc/authz/ac-token
+USER 10001:10001
 
-ENTRYPOINT ["/usr/local/bin/token-fetcher"]
+CMD ["token-fetcher"]
