@@ -36,7 +36,12 @@ const (
 	defaultRequestLimit = 5 << 20 // 5 MiB
 )
 
-var bearerJWTValuePattern = regexp.MustCompile(`^Bearer ([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$`)
+// jwtPattern finds a complete JWT anywhere in a string: base64url header,
+// payload and signature separated by dots. Every JWT header starts with `{"`,
+// which is `eyJ` in base64url, so the prefix keeps the match away from other
+// dotted strings. A `Bearer ` prefix, when present, is not part of the match
+// and stays as it is.
+var jwtPattern = regexp.MustCompile(`\b(eyJ[A-Za-z0-9_-]*)\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)\b`)
 
 func main() {
 	logger := log.New(os.Stdout, "[decision-log-collector] ", log.LstdFlags)
@@ -113,25 +118,36 @@ func (s *logStore) readAll() ([]byte, error) {
 }
 
 // ── sanitization ───────────────────────────────────────────────────────────
+//
+// Decision-log events are audit material, and a JWT copied out of one would be
+// a working credential until it expires. The signature is dropped from every
+// JWT before an event is stored: header and payload stay readable, the token
+// is no longer usable. Tokens turn up in three places and all three are
+// covered: field values such as input.authorizationToken; longer strings that
+// embed a token, such as the serialised http.send arguments in
+// nd_builtin_cache; and map keys, because nd_builtin_cache keys every cached
+// call by its serialised arguments, so io.jwt.decode_verify entries are keyed
+// by the token itself.
+
+func sanitizeString(s string) string {
+	return jwtPattern.ReplaceAllString(s, "${1}.${2}")
+}
 
 func sanitizeValue(value any) any {
 	switch typed := value.(type) {
 	case map[string]any:
+		out := make(map[string]any, len(typed))
 		for key, nested := range typed {
-			typed[key] = sanitizeValue(nested)
+			out[sanitizeString(key)] = sanitizeValue(nested)
 		}
-		return typed
+		return out
 	case []any:
 		for i, nested := range typed {
 			typed[i] = sanitizeValue(nested)
 		}
 		return typed
 	case string:
-		matches := bearerJWTValuePattern.FindStringSubmatch(typed)
-		if len(matches) != 4 {
-			return typed
-		}
-		return "Bearer " + matches[1] + "." + matches[2]
+		return sanitizeString(typed)
 	default:
 		return value
 	}

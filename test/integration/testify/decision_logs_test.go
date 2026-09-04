@@ -24,7 +24,10 @@ import (
 	"time"
 )
 
-var fullBearerJWTPattern = regexp.MustCompile(`Bearer [A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
+// fullJWTPattern matches a complete JWT with or without a `Bearer ` prefix:
+// header, payload and signature. `eyJ` is base64url for `{"`, the start of
+// every JWT header. A logged token must have lost its signature.
+var fullJWTPattern = regexp.MustCompile(`eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
 
 func (s *RuntimeSuite) TestDecisionLogs() {
 	// Positive regression: GET /internal/v1/decision-logs with no
@@ -144,7 +147,7 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 		}
 
 		s.Require().NotEmpty(content, "decision log file remained empty before timeout")
-		s.Assert().NotRegexp(fullBearerJWTPattern, content, "decision logs must not contain reusable full Bearer JWTs")
+		s.Assert().NotRegexp(fullJWTPattern, content, "decision logs must not contain reusable full JWTs")
 
 		s.Require().Greater(authorizeEvents, 0, "expected at least one authorize decision log event")
 		for _, requestID := range requiredRequestIDs {

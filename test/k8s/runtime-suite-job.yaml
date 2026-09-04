@@ -5,8 +5,8 @@
 #
 # RUNTIME_SUITE_RUN lists the groups that work against the chart as installed.
 # Groups bound to the Compose topology (Health, Readiness, OPARestart,
-# OPAMountModeRestartDiskLayout, OPARequestParity), DecisionLogs (see below),
-# and the two whole-catalog coverage checks stay out; see test/k8s/README.md.
+# OPAMountModeRestartDiskLayout, OPARequestParity) and the two whole-catalog
+# coverage checks stay out; see test/k8s/README.md.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -38,12 +38,8 @@ spec:
             - -test.run
             - $(RUNTIME_SUITE_RUN)
           env:
-            # TestDecisionLogs is left out until the decision-log collector
-            # stops leaking the M2M token: with a real token-fetcher token the
-            # full JWT survives in the nd_builtin_cache http.send keys, which
-            # decision_logs.content_is_ndjson rejects. Put it back with the fix.
             - name: RUNTIME_SUITE_RUN
-              value: "^TestRuntimeSuite$/^(TestAuthorize|TestAuthorizeEnvoyOpaDirectParity|TestCheckResource|TestCheckResourceBulk|TestCheckFilter|TestEntitlementsRuntime|TestRouteSecurity|TestWildcardAccess|TestTokenPIPAuthorize|TestPIPDenyReason|TestPIPGeneralActivation|TestPIPJsonPathExtraction|TestOPALockdown|TestM2MKeycloak)$"
+              value: "^TestRuntimeSuite$/^(TestAuthorize|TestAuthorizeEnvoyOpaDirectParity|TestCheckResource|TestCheckResourceBulk|TestCheckFilter|TestEntitlementsRuntime|TestRouteSecurity|TestWildcardAccess|TestTokenPIPAuthorize|TestPIPDenyReason|TestPIPGeneralActivation|TestPIPJsonPathExtraction|TestDecisionLogs|TestOPALockdown|TestM2MKeycloak)$"
             # A filtered run: the catalog-completeness check only makes sense
             # for the full suite.
             - name: FULL_RUNTIME_SUITE
