@@ -6,7 +6,7 @@
 # This image stays on the upstream Envoy image rather than the platform base:
 # the Envoy binary links against glibc, and the platform base is Alpine.
 
-FROM envoyproxy/envoy:v1.31-latest
+FROM envoyproxy/envoy:v1.39-latest@sha256:57e14a549d7bd43c8d3f6d03e8cfa653e037d4b38e133acd9b54f38c524401b4
 
 COPY configs/envoy/lua /etc/envoy/lua
 
