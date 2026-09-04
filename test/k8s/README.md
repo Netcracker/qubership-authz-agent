@@ -61,15 +61,12 @@ from their registries, later runs reuse them.
 `make e2e-logs` writes every container log on the node (`kind export logs`),
 the namespace events, and the decision logs downloaded through Envoy.
 
-## What runs and what does not
+## What runs
 
-`runtime-suite-job.yaml` filters the suite to the groups that only talk HTTP
-to the installed chart. The rest needs work that is tracked separately:
-
-| Group | Blocker |
-| --- | --- |
-| `TestOPARequestParity` | Needs the capture Envoy config, which the chart does not ship |
-| `TestZZDecisionLogsCatalogCoverage`, `TestZZZResponseReachabilityCoverage` | Assert coverage of the whole catalog; full runs only |
+`runtime-suite-job.yaml` runs the whole Testify suite, including the two
+coverage checks that need a full run (`FULL_RUNTIME_SUITE=true`). Groups that
+inspect what OPA received, such as `TestOPARequestParity`, read the decision
+logs the collector serves through Envoy instead of a capture proxy.
 
 `TestOPARestart` restarts the OPA container through the API server: the Job
 runs as the `runtime-suite` ServiceAccount from `runtime-suite-rbac.yaml`,

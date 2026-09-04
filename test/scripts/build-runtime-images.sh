@@ -54,7 +54,6 @@ require_cmd docker
 # authz-pap-client:local           build/pap-client/Dockerfile                  . (repo root)
 # decision-log-collector:local     build/collector/Dockerfile                   . (repo root)
 # pip-stub:local                   test/integration/pipstub/Dockerfile          test/integration/pipstub
-# upstream-capture:local           test/integration/upstream-capture/Dockerfile test/integration/upstream-capture
 # authz-policy-admin:local         build/authz-policy-admin/Dockerfile          . (repo root)
 
 log "building authz-pap-client:local (pap-client binary) for ${DOCKER_PLATFORM}"
@@ -69,10 +68,6 @@ log "building pip-stub:local (also reused as entitlements-mock) for ${DOCKER_PLA
 docker build --platform "${DOCKER_PLATFORM}" -t pip-stub:local \
   -f test/integration/pipstub/Dockerfile test/integration/pipstub
 
-log "building upstream-capture:local for ${DOCKER_PLATFORM}"
-docker build --platform "${DOCKER_PLATFORM}" -t upstream-capture:local \
-  -f test/integration/upstream-capture/Dockerfile test/integration/upstream-capture
-
 log "building authz-policy-admin:local (policy-pull source) for ${DOCKER_PLATFORM}"
 docker build --platform "${DOCKER_PLATFORM}" -t authz-policy-admin:local \
   -f build/authz-policy-admin/Dockerfile .
@@ -85,4 +80,4 @@ log "pulling base image ${ENVOY_IMAGE} for ${DOCKER_PLATFORM}"
 docker pull --platform "${DOCKER_PLATFORM}" "${ENVOY_IMAGE}"
 
 log "done. local images:"
-docker images | grep -E 'authz-pap-client|decision-log-collector|pip-stub|upstream-capture|authz-policy-admin' || true
+docker images | grep -E 'authz-pap-client|decision-log-collector|pip-stub|authz-policy-admin' || true

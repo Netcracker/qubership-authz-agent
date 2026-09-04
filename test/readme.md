@@ -117,7 +117,6 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `decision_logs.catalog_coverage` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
 | `decision_logs.canonical_path_header` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `decision_logs.legacy_path_header` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `parity.capture_reset` | n/a | `POST (upstream-capture reset)` | - | - | none |
 | `parity.single_resource` | admin | `POST /access/v1/authorize + POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `parity.bulk` | admin | `POST /access/v1/authorize + POST /access/v1/check/resource/bulk` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `parity.filter` | admin | `POST /access/v1/authorize + POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |

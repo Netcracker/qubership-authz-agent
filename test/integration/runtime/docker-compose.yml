@@ -86,29 +86,6 @@ services:
       retries: 10
       start_period: 3s
 
-  # ── test-only upstream capture (transparent OPA proxy) ────────────────────
-
-  upstream-capture:
-    build:
-      context: ../upstream-capture
-      dockerfile: Dockerfile
-    pull_policy: build
-    image: upstream-capture:local
-    depends_on:
-      pap-client:
-        condition: service_healthy
-    ports:
-      - "${UPSTREAM_CAPTURE_PORT:-19090}:9090"
-    environment:
-      CAPTURE_PORT: "9090"
-      CAPTURE_UPSTREAM: "http://opa:8181"
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9090/capture/health || exit 1"]
-      interval: 2s
-      timeout: 2s
-      retries: 10
-      start_period: 3s
-
   # ── split topology: envoy + opa + pap-client + decision-log-collector ────
 
   # opa-bootstrap: one-shot init container equivalent in Compose.
@@ -280,13 +257,11 @@ services:
         condition: service_healthy
       decision-log-collector:
         condition: service_healthy
-      upstream-capture:
-        condition: service_healthy
     ports:
       - "${AUTHZ_AGENT_HTTP_PORT:-8080}:8080"  # Envoy public API
       - "${AUTHZ_AGENT_ADMIN_PORT:-9901}:9901" # Envoy admin
     volumes:
-      - ./envoy-capture.yaml:/etc/envoy/envoy.yaml:ro
+      - ./envoy.yaml:/etc/envoy/envoy.yaml:ro
       - ../../../configs/envoy/lua:/etc/envoy/lua:ro
     command: ["-c", "/etc/envoy/envoy.yaml", "--log-level", "info", "--service-cluster", "authz-agent"]
     healthcheck:

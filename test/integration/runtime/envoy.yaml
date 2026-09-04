@@ -195,8 +195,8 @@ static_resources:
               - endpoint:
                   address:
                     socket_address:
-                      address: upstream-capture
-                      port_value: 9090
+                      address: opa
+                      port_value: 8181
     - name: decision_log_cluster
       connect_timeout: 1s
       type: STRICT_DNS

@@ -17,7 +17,7 @@ from `go test` on the host.
 - It brings up the Compose stack defined in
   [test/integration/runtime/docker-compose.yml](../test/integration/runtime/docker-compose.yml):
   `keycloak`, `envoy`, `opa-bootstrap`, `opa`, `pap-client`, `decision-log-collector`,
-  `pip-stub`, `entitlements-mock`, `authz-policy-admin`, `upstream-capture`,
+  `pip-stub`, `entitlements-mock`, `authz-policy-admin`,
   `opa-partial-permissive-bootstrap`, `opa-partial-permissive`, `pap-client-partial-permissive`,
   `opa-partial-strict-bootstrap`, `opa-partial-strict`, `pap-client-partial-strict`.
 - Then, from the **host**, it runs the Go suite in
@@ -79,7 +79,6 @@ Make sure these are free, otherwise Compose won't come up:
 | 19999 | pip-stub |
 | 19998 | entitlements-mock |
 | 18090 | authz-policy-admin (policy-pull source) |
-| 19090 | upstream-capture |
 
 Every port can be overridden via an env var (see the top of
 [test-envoy-runtime.sh](../test/scripts/test-envoy-runtime.sh)), e.g.
@@ -99,7 +98,6 @@ two are **pulled** from public registries.
 | `authz-pap-client:local` | built | `build/pap-client/Dockerfile` | repo root (`.`) | `opa-bootstrap`, `opa`, `pap-client`, `opa-partial-*` |
 | `decision-log-collector:local` | built | `build/collector/Dockerfile` | repo root (`.`) | `decision-log-collector` |
 | `pip-stub:local` | built | `test/integration/pipstub/Dockerfile` | `test/integration/pipstub` | `pip-stub`, `entitlements-mock` |
-| `upstream-capture:local` | built | `test/integration/upstream-capture/Dockerfile` | `test/integration/upstream-capture` | `upstream-capture` |
 | `authz-policy-admin:local` | built | `build/authz-policy-admin/Dockerfile` | repo root (`.`) | `authz-policy-admin` |
 | `quay.io/keycloak/keycloak:26.0` | pulled | — | — | `keycloak` |
 | `envoyproxy/envoy:v1.31-latest` | pulled | — | — | `envoy` (stock image + mounted config/Lua) |
@@ -111,7 +109,7 @@ two are **pulled** from public registries.
 >
 > `build/envoy/Dockerfile` is the **production** Envoy image and is **not** used
 > by the integration stack — the test `envoy` service runs the stock upstream
-> image with a mounted [envoy-capture.yaml](../test/integration/runtime/envoy-capture.yaml)
+> image with a mounted [envoy.yaml](../test/integration/runtime/envoy.yaml)
 > and the Lua from `configs/envoy/lua/`.
 
 ### 4.1 One-call build script (recommended)
@@ -168,15 +166,11 @@ docker build -t decision-log-collector:local \
 docker build -t pip-stub:local \
   -f test/integration/pipstub/Dockerfile test/integration/pipstub
 
-# 4. Upstream capture.
-docker build -t upstream-capture:local \
-  -f test/integration/upstream-capture/Dockerfile test/integration/upstream-capture
-
-# 5. authz-policy-admin (the Policy Administration Point; policy-pull source for pap-client).
+# 4. authz-policy-admin (the Policy Administration Point; policy-pull source for pap-client).
 docker build -t authz-policy-admin:local \
   -f build/authz-policy-admin/Dockerfile .
 
-# 6. Pull the two base images.
+# 5. Pull the two base images.
 docker pull quay.io/keycloak/keycloak:26.0
 docker pull envoyproxy/envoy:v1.31-latest
 ```
@@ -184,7 +178,7 @@ docker pull envoyproxy/envoy:v1.31-latest
 ### 4.4 Verify the images exist
 
 ```bash
-docker images | grep -E 'authz-pap-client|decision-log-collector|pip-stub|upstream-capture|authz-policy-admin'
+docker images | grep -E 'authz-pap-client|decision-log-collector|pip-stub|authz-policy-admin'
 ```
 
 ---
@@ -253,7 +247,6 @@ BASE_URL=http://localhost:18080 \
   KC_CLIENT_ID=authz-agent \
   KC_CLIENT_SECRET=authz-agent-secret \
   PIP_STUB_URL=http://localhost:19999 \
-  UPSTREAM_CAPTURE_URL=http://localhost:19090 \
   go test -v -count=1 -timeout 600s -tags integration ./...
 
 # 3. Tear the stack down

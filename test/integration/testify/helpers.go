@@ -32,7 +32,6 @@ type RuntimeConfig struct {
 	BaseURL               string
 	PIPStubURL            string
 	PIPStubInternalURL    string
-	UpstreamCaptureURL    string
 	KcBaseURL             string
 	KcClientID            string
 	KcClientSecret        string
@@ -122,7 +121,6 @@ func LoadConfig() RuntimeConfig {
 		BaseURL:               envOr("BASE_URL", "http://localhost:18080"),
 		PIPStubURL:            envOr("PIP_STUB_URL", "http://localhost:19999"),
 		PIPStubInternalURL:    envOr("PIP_STUB_INTERNAL_URL", "http://pip-stub:8090"),
-		UpstreamCaptureURL:    envOr("UPSTREAM_CAPTURE_URL", "http://localhost:19090"),
 		KcBaseURL:             envOr("KC_BASE_URL", "http://localhost:15556/auth/realms/authz-test"),
 		KcClientID:            clientID,
 		KcClientSecret:        clientSecret,
@@ -332,42 +330,6 @@ func WaitForACStub(authzPolicyAdminURL string, timeout time.Duration, requestID 
 		time.Sleep(500 * time.Millisecond)
 	}
 	return fmt.Errorf("authz-policy-admin not ready at %s after %v", authzPolicyAdminURL, timeout)
-}
-
-// CapturedRequest mirrors the upstream-capture proxy response shape.
-type CapturedRequest struct {
-	Tag     string            `json:"tag"`
-	Method  string            `json:"method"`
-	Path    string            `json:"path"`
-	Headers map[string]string `json:"headers"`
-	Body    string            `json:"body"`
-}
-
-// ResetCapture clears all captured requests in the upstream-capture proxy.
-func ResetCapture(captureURL string) error {
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Post(captureURL+"/capture/reset", "", nil)
-	if err != nil {
-		return err
-	}
-	_ = resp.Body.Close()
-	return nil
-}
-
-// GetCapturedRequests returns captured requests filtered by tag (X-Request-Id).
-func GetCapturedRequests(captureURL, tag string) ([]CapturedRequest, error) {
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(captureURL + "/capture/requests?tag=" + url.QueryEscape(tag))
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	var result []CapturedRequest
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-	return result, nil
 }
 
 // DoHTTP executes an HTTP request and returns status code and body bytes.

@@ -3,9 +3,9 @@
 # name, so no port has to leave the cluster. The image comes from
 # test/integration/testify/Dockerfile and is side-loaded into kind.
 #
-# RUNTIME_SUITE_RUN lists the groups that work against the chart as installed.
-# OPARequestParity, which needs the capture Envoy config of the Compose stack,
-# and the two whole-catalog coverage checks stay out; see test/k8s/README.md.
+# RUNTIME_SUITE_RUN selects the whole suite: every group works against the
+# chart as installed, and FULL_RUNTIME_SUITE turns on the two coverage checks
+# that only make sense for a full run.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -39,11 +39,9 @@ spec:
             - $(RUNTIME_SUITE_RUN)
           env:
             - name: RUNTIME_SUITE_RUN
-              value: "^TestRuntimeSuite$/^(TestAuthorize|TestAuthorizeEnvoyOpaDirectParity|TestCheckResource|TestCheckResourceBulk|TestCheckFilter|TestEntitlementsRuntime|TestRouteSecurity|TestWildcardAccess|TestTokenPIPAuthorize|TestPIPDenyReason|TestPIPGeneralActivation|TestPIPJsonPathExtraction|TestDecisionLogs|TestOPALockdown|TestOPARestart|TestHealth|TestM2MKeycloak)$"
-            # A filtered run: the catalog-completeness check only makes sense
-            # for the full suite.
+              value: "^TestRuntimeSuite$"
             - name: FULL_RUNTIME_SUITE
-              value: "false"
+              value: "true"
             # The chart runs token-fetcher by default, so the m2m_keycloak
             # steps are real here rather than skipped.
             - name: M2M_KEYCLOAK_PROFILE

@@ -36,7 +36,6 @@ PIP_STUB_PORT="${PIP_STUB_PORT:-19999}"
 ENTITLEMENTS_STUB_PORT="${ENTITLEMENTS_STUB_PORT:-19998}"
 AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT="${AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT:-18081}"
 AUTHZ_AGENT_PARTIAL_STRICT_PORT="${AUTHZ_AGENT_PARTIAL_STRICT_PORT:-18082}"
-UPSTREAM_CAPTURE_PORT="${UPSTREAM_CAPTURE_PORT:-19090}"
 AUTHZ_POLICY_ADMIN_PORT="${AUTHZ_POLICY_ADMIN_PORT:-18090}"
 # OPA's own port, published straight to the host by the runtime compose
 # (docker-compose.yml maps ${OPA_DIRECT_PORT:-18181}:8181). The suite reaches it
@@ -59,7 +58,7 @@ export DOCKER_DEFAULT_PLATFORM="${DOCKER_DEFAULT_PLATFORM:-${DOCKER_PLATFORM}}"
 RUNTIME_TEST_HOST="${RUNTIME_TEST_HOST:-localhost}"
 export RUNTIME_TEST_HOST
 export OPA_DIRECT_PORT
-export PROJECT_NAME AUTHZ_AGENT_HTTP_PORT AUTHZ_AGENT_ADMIN_PORT KC_HTTP_PORT PIP_STUB_PORT ENTITLEMENTS_STUB_PORT AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT AUTHZ_AGENT_PARTIAL_STRICT_PORT UPSTREAM_CAPTURE_PORT AUTHZ_POLICY_ADMIN_PORT AUTHZ_PAP_CLIENT_PULL_INTERVAL OPA_AUTH_TOKEN
+export PROJECT_NAME AUTHZ_AGENT_HTTP_PORT AUTHZ_AGENT_ADMIN_PORT KC_HTTP_PORT PIP_STUB_PORT ENTITLEMENTS_STUB_PORT AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT AUTHZ_AGENT_PARTIAL_STRICT_PORT AUTHZ_POLICY_ADMIN_PORT AUTHZ_PAP_CLIENT_PULL_INTERVAL OPA_AUTH_TOKEN
 export OPA_DIRECT_URL="${OPA_DIRECT_URL:-http://${RUNTIME_TEST_HOST}:${OPA_DIRECT_PORT}}"
 export ENTITLEMENTS_MOCK_URL="${ENTITLEMENTS_MOCK_URL:-http://${RUNTIME_TEST_HOST}:${ENTITLEMENTS_STUB_PORT}}"
 export AUTHZ_POLICY_ADMIN_URL="${AUTHZ_POLICY_ADMIN_URL:-http://${RUNTIME_TEST_HOST}:${AUTHZ_POLICY_ADMIN_PORT}}"
@@ -87,7 +86,7 @@ cleanup() {
 }
 
 show_stack_logs() {
-  "${COMPOSE_CMD[@]}" logs --no-color keycloak envoy opa-bootstrap opa pap-client decision-log-collector pip-stub entitlements-mock upstream-capture authz-policy-admin opa-partial-permissive-bootstrap opa-partial-permissive pap-client-partial-permissive opa-partial-strict-bootstrap opa-partial-strict pap-client-partial-strict || true
+  "${COMPOSE_CMD[@]}" logs --no-color keycloak envoy opa-bootstrap opa pap-client decision-log-collector pip-stub entitlements-mock authz-policy-admin opa-partial-permissive-bootstrap opa-partial-permissive pap-client-partial-permissive opa-partial-strict-bootstrap opa-partial-strict pap-client-partial-strict || true
 }
 
 collect_artifacts() {
@@ -106,7 +105,7 @@ collect_artifacts() {
   fi
 
   # Save Docker Compose service logs.
-  for svc in keycloak envoy opa-bootstrap opa pap-client decision-log-collector pip-stub entitlements-mock upstream-capture authz-policy-admin opa-partial-permissive-bootstrap opa-partial-permissive pap-client-partial-permissive opa-partial-strict-bootstrap opa-partial-strict pap-client-partial-strict; do
+  for svc in keycloak envoy opa-bootstrap opa pap-client decision-log-collector pip-stub entitlements-mock authz-policy-admin opa-partial-permissive-bootstrap opa-partial-permissive pap-client-partial-permissive opa-partial-strict-bootstrap opa-partial-strict pap-client-partial-strict; do
     local svc_log="${artifacts_dir}/${svc}.log"
     "${COMPOSE_CMD[@]}" logs --no-color "${svc}" >"${svc_log}" 2>&1 || true
     log "runtime log saved to ${svc_log}"
@@ -125,7 +124,6 @@ log "effective KC_HTTP_PORT=${KC_HTTP_PORT}"
 log "effective PIP_STUB_PORT=${PIP_STUB_PORT}"
 log "effective AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT=${AUTHZ_AGENT_PARTIAL_PERMISSIVE_PORT}"
 log "effective AUTHZ_AGENT_PARTIAL_STRICT_PORT=${AUTHZ_AGENT_PARTIAL_STRICT_PORT}"
-log "effective UPSTREAM_CAPTURE_PORT=${UPSTREAM_CAPTURE_PORT}"
 
 trap cleanup EXIT
 
@@ -138,7 +136,7 @@ log "rendering runtime configs for Compose split topology"
 "${ROOT_DIR}/test/scripts/render-runtime-configs.sh"
 
 log "starting runtime stack (build + up)"
-if ! "${COMPOSE_CMD[@]}" up -d --build keycloak pip-stub entitlements-mock opa-bootstrap opa pap-client decision-log-collector upstream-capture envoy pap-client-partial-permissive pap-client-partial-strict; then
+if ! "${COMPOSE_CMD[@]}" up -d --build keycloak pip-stub entitlements-mock opa-bootstrap opa pap-client decision-log-collector envoy pap-client-partial-permissive pap-client-partial-strict; then
   log "error: main compose up failed (port conflict or image build error)"
   "${COMPOSE_CMD[@]}" logs --no-color 2>&1 | tail -60 || true
   exit 1
@@ -167,7 +165,6 @@ if ! (cd "${TESTIFY_DIR}" && \
      KC_EXPIRED_WAIT_SECONDS="${KC_EXPIRED_WAIT_SECONDS}" \
      PIP_STUB_URL="http://${RUNTIME_TEST_HOST}:${PIP_STUB_PORT}" \
      PIP_STUB_INTERNAL_URL="http://pip-stub:8090" \
-     UPSTREAM_CAPTURE_URL="http://${RUNTIME_TEST_HOST}:${UPSTREAM_CAPTURE_PORT}" \
      AUTHZ_POLICY_ADMIN_URL="http://${RUNTIME_TEST_HOST}:${AUTHZ_POLICY_ADMIN_PORT}" \
      AUTHZ_PAP_CLIENT_PULL_INTERVAL="${AUTHZ_PAP_CLIENT_PULL_INTERVAL}" \
      OPA_AUTH_TOKEN="${OPA_AUTH_TOKEN}" \
@@ -199,7 +196,7 @@ if [ "${RUN_M2M_KEYCLOAK_PROFILE}" = "true" ]; then
   "${COMPOSE_CMD[@]}" down -v
 
   log "starting m2m-keycloak runtime stack (token-fetcher + Keycloak client_credentials)"
-  if ! "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" up -d --build keycloak pip-stub entitlements-mock token-fetcher opa-bootstrap opa pap-client decision-log-collector upstream-capture envoy pap-client-partial-permissive pap-client-partial-strict; then
+  if ! "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" up -d --build keycloak pip-stub entitlements-mock token-fetcher opa-bootstrap opa pap-client decision-log-collector envoy pap-client-partial-permissive pap-client-partial-strict; then
     log "error: m2m-keycloak compose up failed (port conflict or image build error)"
     "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" logs --no-color 2>&1 | tail -60 || true
     "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" down -v >/dev/null 2>&1 || true
@@ -222,7 +219,6 @@ if [ "${RUN_M2M_KEYCLOAK_PROFILE}" = "true" ]; then
        KC_EXPIRED_WAIT_SECONDS="${KC_EXPIRED_WAIT_SECONDS}" \
        PIP_STUB_URL="http://${RUNTIME_TEST_HOST}:${PIP_STUB_PORT}" \
        PIP_STUB_INTERNAL_URL="http://pip-stub:8090" \
-       UPSTREAM_CAPTURE_URL="http://${RUNTIME_TEST_HOST}:${UPSTREAM_CAPTURE_PORT}" \
        AUTHZ_POLICY_ADMIN_URL="http://${RUNTIME_TEST_HOST}:${AUTHZ_POLICY_ADMIN_PORT}" \
        AUTHZ_PAP_CLIENT_PULL_INTERVAL="${AUTHZ_PAP_CLIENT_PULL_INTERVAL}" \
        OPA_AUTH_TOKEN="${OPA_AUTH_TOKEN}" \
@@ -236,7 +232,7 @@ if [ "${RUN_M2M_KEYCLOAK_PROFILE}" = "true" ]; then
 
   if [ "${M2M_PASS}" = "false" ]; then
     log "m2m-keycloak suite failed; dumping m2m stack logs"
-    "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" logs --no-color keycloak envoy opa-bootstrap opa pap-client token-fetcher decision-log-collector pip-stub entitlements-mock upstream-capture opa-partial-permissive-bootstrap opa-partial-permissive pap-client-partial-permissive opa-partial-strict-bootstrap opa-partial-strict pap-client-partial-strict || true
+    "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" logs --no-color keycloak envoy opa-bootstrap opa pap-client token-fetcher decision-log-collector pip-stub entitlements-mock opa-partial-permissive-bootstrap opa-partial-permissive pap-client-partial-permissive opa-partial-strict-bootstrap opa-partial-strict pap-client-partial-strict || true
   fi
 
   "${COMPOSE_M2M_KEYCLOAK_CMD[@]}" down -v >/dev/null 2>&1 || true
