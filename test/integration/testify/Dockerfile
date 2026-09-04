@@ -21,12 +21,12 @@ RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
 
 FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
 
-# Read-only inputs stay root-owned and world-readable; only the binary is
-# given to the image's own uid.
+# Everything the image ships stays root-owned: the inputs world-readable, the
+# binary world-executable, so the runtime uid can run it but not change it.
 COPY api/openapi.yaml /app/api/openapi.yaml
 COPY test/readme.md /app/test/readme.md
 COPY test/integration/testify/testdata/ /app/test/integration/testify/testdata/
-COPY --chown=10001:0 --chmod=555 --from=builder /out/runtime.test /app/test/integration/testify/runtime.test
+COPY --chmod=555 --from=builder /out/runtime.test /app/test/integration/testify/runtime.test
 
 WORKDIR /app/test/integration/testify
 USER 10001:10001

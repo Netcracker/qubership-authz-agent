@@ -47,7 +47,7 @@ services:
       dockerfile: build/pap-client/Dockerfile
     pull_policy: build
     image: authz-pap-client:local
-    command: ["bootstrap"]
+    command: ["pap-client", "bootstrap"]
     depends_on:
       keycloak:
         condition: service_healthy
@@ -65,6 +65,10 @@ services:
   # svt-opa-data volume.
   opa:
     image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    # Match the uid the pap-client image runs as: bootstrap writes
+    # opa-auth-secret.json with mode 0600 into the shared opa-data volume,
+    # and OPA has to be able to read it.
+    user: "10001:0"
     depends_on:
       opa-bootstrap:
         condition: service_completed_successfully

@@ -166,7 +166,7 @@ services:
   opa-bootstrap:
     image: ${PARITY_PAP_CLIENT_IMAGE:-authz-pap-client:local}
     container_name: parity-authz-opa-bootstrap
-    command: ["bootstrap"]
+    command: ["pap-client", "bootstrap"]
     depends_on:
       idp:
         condition: service_healthy
@@ -188,6 +188,10 @@ services:
   # routes to opa:8181.
   opa:
     image: openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16
+    # Match the uid the pap-client image runs as: bootstrap writes
+    # opa-auth-secret.json with mode 0600 into the shared opa-data volume,
+    # and OPA has to be able to read it.
+    user: "10001:0"
     container_name: parity-authz-opa
     depends_on:
       opa-bootstrap:
