@@ -72,6 +72,10 @@
     "AUTHZ_PAP_CLIENT_TOKEN_FILE":     { "type": "string" },
     "AUTHZ_POLICY_CONFIGMAP":   { "type": "string" },
 
+    "AUTHZ_ENTITLEMENTS_URL":          { "type": "string" },
+    "AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT": { "type": "integer", "minimum": 1 },
+    "AUTHZ_ENTITLEMENTS_HTTP_RETRIES": { "type": "integer", "minimum": 1 },
+
     "AUTHZ_POLICY_ADMIN_ENABLED":        { "type": "boolean" },
     "AUTHZ_POLICY_ADMIN_PORT":           { "type": "integer", "minimum": 1, "maximum": 65535 },
     "AUTHZ_POLICY_ADMIN_DATA_DIR":       { "type": "string", "minLength": 1 },

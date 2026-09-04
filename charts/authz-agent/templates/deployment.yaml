@@ -382,6 +382,15 @@ spec:
               value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
             - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
               value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
+            # Entitlements resolver (authz-agent-ADR-0054). Container-pinned:
+            # pap-client materialises the ENTITLEMENT PIP from these at startup,
+            # and an empty URL leaves the resolver off.
+            - name: AUTHZ_ENTITLEMENTS_URL
+              value: '{{ .Values.AUTHZ_ENTITLEMENTS_URL }}'
+            - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
+              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
+            - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
+              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
             # OPA write-path auth token file (authz-agent-ADR-0077).
             # pap-client reads this to authenticate its PUT/PATCH requests to OPA.
             # Path MUST point inside the directory mounted below, NOT to the

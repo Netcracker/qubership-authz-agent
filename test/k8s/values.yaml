@@ -26,3 +26,6 @@ AUTHZ_TENANT_MANAGER_URL: ""
 AUTHZ_POLICY_ADMIN_ENABLED: true
 # The suite waits one pull interval plus two seconds after each upload.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 2
+
+# The entitlements stub of the harness; the suite pins its responses.
+AUTHZ_ENTITLEMENTS_URL: http://entitlements-mock:8090
