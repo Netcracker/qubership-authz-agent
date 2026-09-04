@@ -20,10 +20,13 @@
 //  1. Reads clientId and clientSecret from mounted Secret files.
 //  2. POSTs to the configured Keycloak token endpoint.
 //  3. Writes the access_token to AUTHZ_PAP_CLIENT_TOKEN_FILE using atomicfile.WriteFile.
-//  4. Writes the ready marker file on the first successful fetch; this file is
-//     polled by the pod's startupProbe so the pap-client container does not start
-//     before the first token is on disk.
-//  5. Schedules the next refresh at expires_in - AUTHZ_M2M_RENEW_BEFORE_SECONDS.
+//  4. Rewrites the ready marker file after every successful fetch. The pod's
+//     startupProbe polls for its existence, so the pap-client container does
+//     not start before the first token is on disk; the marker's mtime records
+//     the time of the last successful refresh.
+//  5. Schedules the next refresh at expires_in - AUTHZ_M2M_RENEW_BEFORE_SECONDS,
+//     or at half the token lifetime when that margin does not fit, never
+//     sooner than one second.
 //  6. On error: logs a warning, retries with exponential backoff; never exits.
 package main
 
@@ -36,6 +39,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -58,8 +62,8 @@ func main() {
 	logger := log.New(os.Stdout, "[token-fetcher] ", log.LstdFlags)
 
 	cfg := loadConfig(logger)
-	logger.Printf("starting: token_url=%s token_file=%s renew_before=%s",
-		cfg.tokenURL, cfg.tokenFile, cfg.renewBefore)
+	logger.Printf("starting: token_url=%s token_file=%s marker_file=%s renew_before=%s",
+		cfg.tokenURL, cfg.tokenFile, cfg.markerFile, cfg.renewBefore)
 
 	run(cfg, logger)
 }
@@ -76,8 +80,7 @@ type config struct {
 func loadConfig(logger *log.Logger) config {
 	renewBefore := defaultRenewBefore
 	if v := envStr("AUTHZ_M2M_RENEW_BEFORE_SECONDS"); v != "" {
-		var secs int
-		if _, err := fmt.Sscanf(v, "%d", &secs); err == nil && secs >= 0 {
+		if secs, err := strconv.Atoi(v); err == nil && secs >= 0 {
 			renewBefore = time.Duration(secs) * time.Second
 		} else {
 			logger.Printf("warn: invalid AUTHZ_M2M_RENEW_BEFORE_SECONDS=%q, using default %s", v, defaultRenewBefore)
@@ -96,35 +99,46 @@ func loadConfig(logger *log.Logger) config {
 // run is the main loop: fetch, write, sleep, repeat. Never returns.
 func run(cfg config, logger *log.Logger) {
 	client := &http.Client{Timeout: 30 * time.Second}
-	firstSuccess := false
 	backoff := initialBackoff
 
 	for {
-		expiresIn, err := fetchAndWrite(cfg, client, logger)
-		if err != nil {
-			logger.Printf("warn: token fetch failed: %v; retrying in %s", err, backoff)
-			time.Sleep(backoff)
-			backoff = min(backoff*2, maxBackoff)
-			continue
-		}
-
-		// Reset backoff on success.
-		backoff = initialBackoff
-
-		if !firstSuccess {
-			firstSuccess = true
-			if err := writeMarker(cfg.markerFile, logger); err != nil {
-				logger.Printf("warn: could not write marker file: %v", err)
-			}
-		}
-
-		sleep := expiresIn - cfg.renewBefore
-		if sleep < time.Second {
-			sleep = time.Second
-		}
-		logger.Printf("token refreshed; next refresh in %s", sleep)
+		var sleep time.Duration
+		sleep, backoff = step(cfg, client, logger, backoff)
 		time.Sleep(sleep)
 	}
+}
+
+// step performs one fetch/write iteration and returns how long to sleep
+// before the next iteration plus the backoff to use for the next failure.
+// On success it rewrites the marker file and resets the backoff; on failure
+// it returns the current backoff as the sleep and doubles the next one, up
+// to maxBackoff.
+func step(cfg config, client *http.Client, logger *log.Logger, backoff time.Duration) (sleep, nextBackoff time.Duration) {
+	expiresIn, err := fetchAndWrite(cfg, client, logger)
+	if err != nil {
+		logger.Printf("warn: token fetch failed: %v; retrying in %s", err, backoff)
+		return backoff, min(backoff*2, maxBackoff)
+	}
+
+	if err := writeMarker(cfg.markerFile); err != nil {
+		logger.Printf("warn: could not write marker file: %v", err)
+	}
+
+	sleep = expiresIn - cfg.renewBefore
+	if halfLife := expiresIn / 2; sleep < halfLife {
+		// Refreshing no later than half-life keeps the request rate
+		// proportional to the token lifetime; an absolute floor alone would
+		// let lifetimes just above the margin collapse into a one-second
+		// polling loop against the IdP.
+		logger.Printf("warn: renew_before=%s does not fit into token lifetime %s; ignoring the configured margin",
+			cfg.renewBefore, expiresIn)
+		sleep = halfLife
+	}
+	if sleep < time.Second {
+		sleep = time.Second
+	}
+	logger.Printf("token refreshed; next refresh in %s", sleep)
+	return sleep, initialBackoff
 }
 
 // fetchAndWrite obtains a new token and writes it to disk.
@@ -238,9 +252,10 @@ func jwtExp(token string) (time.Time, error) {
 	return time.Unix(int64(claims.Exp), 0), nil
 }
 
-// writeMarker writes the marker file that the startupProbe polls.
-func writeMarker(path string, logger *log.Logger) error {
-	logger.Printf("writing startup marker: %s", path)
+// writeMarker writes the marker file after every successful fetch. Its
+// existence gates the pod's startupProbe; its mtime records the last
+// successful refresh for anyone debugging a stale token.
+func writeMarker(path string) error {
 	return atomicfile.WriteFile(path, []byte("ready\n"))
 }
 
@@ -261,12 +276,4 @@ func envStrDefault(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-// min returns the smaller of two durations (stdlib min is Go 1.21+).
-func min(a, b time.Duration) time.Duration {
-	if a < b {
-		return a
-	}
-	return b
 }
