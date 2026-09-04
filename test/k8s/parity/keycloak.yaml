@@ -28,11 +28,10 @@ spec:
         - name: keycloak
           image: quay.io/keycloak/keycloak:26.3.5
           args: ["start-dev", "--import-realm", "--health-enabled=true"]
+          # No bootstrap admin: nothing in the harness uses the admin API, the
+          # realm imports carry every client and user the suites need, and a
+          # credential the manifest does not hold cannot leak from it.
           env:
-            - name: KC_BOOTSTRAP_ADMIN_USERNAME
-              value: kcbootstrap
-            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
-              value: KcBootstrap1!@#
             - name: KC_HOSTNAME
               value: http://idp:8080/auth
             - name: KC_HTTP_RELATIVE_PATH
