@@ -1,7 +1,7 @@
 #
 # Decision-log-collector: minimal image for OPA decision-log ingest and download.
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.24-alpine@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
