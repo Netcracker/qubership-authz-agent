@@ -17,10 +17,17 @@ ENVOY_CPU_LIMIT: "4"
 ENVOY_MEM_REQUEST: 512Mi
 ENVOY_MEM_LIMIT: 1Gi
 
-BACKEND_CPU_REQUEST: "4"
-BACKEND_CPU_LIMIT: "8"
-BACKEND_MEM_REQUEST: 2Gi
-BACKEND_MEM_LIMIT: 8Gi
+# The former single backend container is now OPA plus pap-client. OPA keeps the
+# backend sizing: it evaluates every request. pap-client only pulls and converts
+# policies; its memory follows the policy set (see dev.yaml), not the traffic.
+OPA_CPU_REQUEST: "4"
+OPA_CPU_LIMIT: "8"
+OPA_MEM_REQUEST: 2Gi
+OPA_MEM_LIMIT: 8Gi
+PAP_CLIENT_CPU_REQUEST: 500m
+PAP_CLIENT_CPU_LIMIT: "1"
+PAP_CLIENT_MEM_REQUEST: 512Mi
+PAP_CLIENT_MEM_LIMIT: 1Gi
 
 COLLECTOR_CPU_REQUEST: "1"
 COLLECTOR_CPU_LIMIT: "2"

@@ -1,108 +1,911 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "http://example.com/example.json",
   "type": "object",
+  "title": "The authz-agent schema.",
+  "description": "JSON Schema for the authz-agent chart values.",
+  "definitions": {
+    "integerOrString": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    }
+  },
   "properties": {
-    "PAAS_PLATFORM":                          { "type": "string" },
-    "PAAS_VERSION":                           { "type": "string" },
-    "NAMESPACE":                              { "type": "string" },
-    "ARTIFACT_DESCRIPTOR_VERSION":            { "type": "string" },
-    "TAG":                                    { "type": "string" },
-    "IMAGE_REPOSITORY":                       { "type": "string" },
-    "SERVICE_NAME":                           { "type": "string" },
-    "DEPLOYMENT_RESOURCE_NAME":               { "type": "string" },
-    "DEPLOYMENT_VERSION":                     { "type": "string" },
-    "MONITORING_ENABLED":                     { "type": "boolean" },
-    "TRACING_ENABLED":                        { "type": "boolean" },
-    "EXECUTION_MODE":                         { "type": "string" },
-    "READONLY_CONTAINER_FILE_SYSTEM_ENABLED": { "type": "boolean" },
-    "CERTIFICATE_BUNDLE_MD5SUM":              { "type": "string" },
-    "SSL_SECRET":                             { "type": "string" },
-    "MANAGED_BY":                             { "type": "string" },
-    "DEPLOYMENT_SESSION_ID":                  { "type": "string" },
-    "MESH_ROUTES_ENABLED":                    { "type": "boolean" },
-
-    "ENVOY_IMAGE":          { "type": "string" },
-    "COLLECTOR_IMAGE":      { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_IMAGE":        { "type": "string" },
-    "TOKEN_FETCHER_IMAGE":  { "type": "string" },
-
-    "KUBERNETES_M2M_ENABLED":     { "type": "boolean" },
-
-    "IMAGE_PULL_POLICY": { "type": "string", "enum": ["Always", "IfNotPresent", "Never"] },
-
-    "AUTHZ_TRUSTED_PROVIDERS_FILE":    { "type": "string" },
-    "AUTHZ_DECISION_LOG_PATH":         { "type": "string" },
-
-    "IDENTITY_PROVIDER_URL":    { "type": "string" },
-    "AUTHZ_TENANT_MANAGER_URL": { "type": "string" },
+    "PAAS_PLATFORM": {
+      "$id": "#/properties/PAAS_PLATFORM",
+      "description": "Cloud Platform type",
+      "enum": [
+        "KUBERNETES",
+        "OPENSHIFT"
+      ],
+      "examples": [
+        "KUBERNETES",
+        "OPENSHIFT"
+      ],
+      "internal": true,
+      "title": "The PAAS_PLATFORM schema",
+      "type": "string"
+    },
+    "PAAS_VERSION": {
+      "$id": "#/properties/PAAS_VERSION",
+      "default": "",
+      "description": "Version of Cloud Platform",
+      "examples": [
+        "v3.11"
+      ],
+      "internal": true,
+      "title": "The PAAS_VERSION schema",
+      "type": "string"
+    },
+    "NAMESPACE": {
+      "$id": "#/properties/NAMESPACE",
+      "description": "Namespace where deploy is performed",
+      "examples": [
+        "cloud-core-dbaas-ci"
+      ],
+      "internal": true,
+      "title": "The NAMESPACE schema",
+      "type": "string"
+    },
+    "ARTIFACT_DESCRIPTOR_VERSION": {
+      "$id": "#/properties/ARTIFACT_DESCRIPTOR_VERSION",
+      "description": "Artifact descriptor version which is installed",
+      "examples": [
+        "master-20230130.130852-481"
+      ],
+      "internal": true,
+      "title": "The ARTIFACT_DESCRIPTOR_VERSION schema",
+      "type": "string"
+    },
+    "TAG": {
+      "$id": "#/properties/TAG",
+      "description": "Docker image tag",
+      "examples": [
+        "build180"
+      ],
+      "internal": true,
+      "title": "The TAG schema",
+      "type": "string"
+    },
+    "IMAGE_REPOSITORY": {
+      "$id": "#/properties/IMAGE_REPOSITORY",
+      "description": "Docker image repository path",
+      "examples": [
+        "ghcr.io/netcracker"
+      ],
+      "internal": true,
+      "title": "The IMAGE_REPOSITORY schema",
+      "type": "string"
+    },
+    "SERVICE_NAME": {
+      "$id": "#/properties/SERVICE_NAME",
+      "description": "Name of service (specified in config.xml)",
+      "examples": [
+        "identity-provider"
+      ],
+      "internal": true,
+      "title": "The SERVICE_NAME schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_RESOURCE_NAME": {
+      "$id": "#/properties/DEPLOYMENT_RESOURCE_NAME",
+      "description": "Service name with version postfix (matching DEPLOYMENT_VERSION parameter value). Provided if facade/bluegreen mode is true",
+      "examples": [
+        "identity-provider-v2"
+      ],
+      "internal": true,
+      "title": "The DEPLOYMENT_RESOURCE_NAME schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_VERSION": {
+      "$id": "#/properties/DEPLOYMENT_VERSION",
+      "description": "Deployment version. Provided if facade/bluegreen mode is true",
+      "examples": [
+        "v2"
+      ],
+      "internal": true,
+      "title": "The DEPLOYMENT_VERSION schema",
+      "type": "string"
+    },
+    "MONITORING_ENABLED": {
+      "$id": "#/properties/MONITORING_ENABLED",
+      "description": "Set to true to import dashboards to Grafana and configure integration with Prometheus. Requires Platform System Monitor CRDs to be deployed to target k8s/openshift cluster",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "The MONITORING_ENABLED schema",
+      "type": "boolean"
+    },
+    "TRACING_ENABLED": {
+      "$id": "#/properties/TRACING_ENABLED",
+      "description": "Enables tracing info collecting and streaming to OpenTracing- compatible collector (preferably- Jaeger)",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "The TRACING_ENABLED schema",
+      "type": "boolean"
+    },
+    "EXECUTION_MODE": {
+      "$id": "#/properties/EXECUTION_MODE",
+      "description": "Defines microservice execution mode in DR configuration",
+      "enum": [
+        "active",
+        "standby",
+        "disabled"
+      ],
+      "examples": [
+        "active",
+        "standby",
+        "disabled"
+      ],
+      "title": "The EXECUTION_MODE schema",
+      "type": "string"
+    },
+    "READONLY_CONTAINER_FILE_SYSTEM_ENABLED": {
+      "$id": "#/properties/READONLY_CONTAINER_FILE_SYSTEM_ENABLED",
+      "description": "Read-only container file system is enabled",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "The READONLY_CONTAINER_FILE_SYSTEM_ENABLED schema",
+      "type": "boolean"
+    },
+    "CERTIFICATE_BUNDLE_MD5SUM": {
+      "$id": "#/properties/CERTIFICATE_BUNDLE_MD5SUM",
+      "description": "MD5 sum of certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
+      "examples": [
+        "89ae9282c9d92ef2308f1308e99f6529"
+      ],
+      "internal": true,
+      "title": "The CERTIFICATE_BUNDLE_MD5SUM schema",
+      "type": "string"
+    },
+    "SSL_SECRET": {
+      "$id": "#/properties/SSL_SECRET",
+      "description": "Secret name with SSL certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
+      "examples": [
+        "defaultsslcertificate"
+      ],
+      "internal": true,
+      "title": "The SSL_SECRET schema",
+      "type": "string"
+    },
+    "MANAGED_BY": {
+      "$id": "#/properties/MANAGED_BY",
+      "type": "string",
+      "title": "The MANAGED_BY schema",
+      "description": "The tool being used to manage the operation of an application",
+      "examples": [
+        "helm",
+        "operator",
+        "argocd"
+      ],
+      "internal": true
+    },
+    "DEPLOYMENT_SESSION_ID": {
+      "$id": "#/properties/DEPLOYMENT_SESSION_ID",
+      "type": "string",
+      "title": "The DEPLOYMENT_SESSION_ID schema",
+      "description": "Unique identifier of deployment session used to track e2e deploy activity",
+      "examples": [
+        "516736bf-d4b7-4900-beab-9599573ac8a8"
+      ],
+      "internal": true
+    },
+    "KUBERNETES_M2M_ENABLED": {
+      "$id": "#/properties/KUBERNETES_M2M_ENABLED",
+      "type": "boolean",
+      "title": "The KUBERNETES_M2M_ENABLED schema",
+      "description": "Parameter specifies if M2M authentication with Kubernetes service account tokens is enabled",
+      "default": false,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "MESH_ROUTES_ENABLED": {
+      "$id": "#/properties/MESH_ROUTES_ENABLED",
+      "type": "boolean",
+      "title": "The MESH_ROUTES_ENABLED schema",
+      "description": "Registers the check API and POST /access/v1/authorize on the platform gateways through Mesh custom resources handled by core-operator. Set to false on a cluster without core-operator, or when access-control keeps serving these routes in the same namespace",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "ENVOY_IMAGE": {
+      "$id": "#/properties/ENVOY_IMAGE",
+      "type": "string",
+      "title": "The ENVOY_IMAGE schema",
+      "description": "Overrides the Envoy image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-envoy:{{ TAG }}.",
+      "default": "",
+      "examples": [
+        "ghcr.io/netcracker/authz-agent-envoy:1.0.0"
+      ],
+      "internal": true
+    },
+    "OPA_IMAGE": {
+      "$id": "#/properties/OPA_IMAGE",
+      "type": "string",
+      "title": "The OPA_IMAGE schema",
+      "description": "Overrides the OPA image. Empty means the upstream OPA image pinned by digest in the chart helpers.",
+      "default": "",
+      "examples": [
+        "openpolicyagent/opa:1.14.0"
+      ],
+      "internal": true
+    },
+    "PAP_CLIENT_IMAGE": {
+      "$id": "#/properties/PAP_CLIENT_IMAGE",
+      "type": "string",
+      "title": "The PAP_CLIENT_IMAGE schema",
+      "description": "Overrides the pap-client image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-pap-client:{{ TAG }}.",
+      "default": "",
+      "examples": [
+        "ghcr.io/netcracker/authz-agent-pap-client:1.0.0"
+      ],
+      "internal": true
+    },
+    "COLLECTOR_IMAGE": {
+      "$id": "#/properties/COLLECTOR_IMAGE",
+      "type": "string",
+      "title": "The COLLECTOR_IMAGE schema",
+      "description": "Overrides the decision-log collector image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-collector:{{ TAG }}.",
+      "default": "",
+      "examples": [
+        "ghcr.io/netcracker/authz-agent-collector:1.0.0"
+      ],
+      "internal": true
+    },
+    "TOKEN_FETCHER_IMAGE": {
+      "$id": "#/properties/TOKEN_FETCHER_IMAGE",
+      "type": "string",
+      "title": "The TOKEN_FETCHER_IMAGE schema",
+      "description": "Overrides the token-fetcher sidecar image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}. Used only when KUBERNETES_M2M_ENABLED is false",
+      "default": "",
+      "examples": [
+        "ghcr.io/netcracker/authz-agent-token-fetcher:1.0.0"
+      ],
+      "internal": true
+    },
+    "AUTHZ_POLICY_ADMIN_IMAGE": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_IMAGE",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_IMAGE schema",
+      "description": "Overrides the authz-policy-admin image. Empty means {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.",
+      "default": "",
+      "examples": [
+        "ghcr.io/netcracker/authz-policy-admin:1.0.0"
+      ],
+      "internal": true
+    },
+    "IMAGE_PULL_POLICY": {
+      "$id": "#/properties/IMAGE_PULL_POLICY",
+      "type": "string",
+      "title": "The IMAGE_PULL_POLICY schema",
+      "description": "Image pull policy of every container. IfNotPresent suits immutable pipeline tags; set Always where a moving tag must win on every restart",
+      "default": "IfNotPresent",
+      "examples": [
+        "Always",
+        "IfNotPresent",
+        "Never"
+      ],
+      "enum": [
+        "Always",
+        "IfNotPresent",
+        "Never"
+      ]
+    },
+    "AUTHZ_TRUSTED_PROVIDERS_FILE": {
+      "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_FILE",
+      "type": "string",
+      "title": "The AUTHZ_TRUSTED_PROVIDERS_FILE schema",
+      "description": "Path where the trusted-providers ConfigMap is mounted; pap-client watches this file",
+      "default": "/etc/authz/trusted-providers.json",
+      "examples": [
+        "/etc/authz/trusted-providers.json"
+      ]
+    },
+    "IDENTITY_PROVIDER_URL": {
+      "$id": "#/properties/IDENTITY_PROVIDER_URL",
+      "type": "string",
+      "title": "The IDENTITY_PROVIDER_URL schema",
+      "description": "Base URL of the platform identity provider, without a realm. Used to generate the trusted providers when AUTHZ_TRUSTED_PROVIDERS is empty",
+      "default": "http://identity-provider:8080",
+      "examples": [
+        "http://identity-provider:8080",
+        "https://identity-provider:8443"
+      ]
+    },
     "AUTHZ_IDP_REALMS": {
+      "$id": "#/properties/AUTHZ_IDP_REALMS",
       "type": "array",
-      "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+      "title": "The AUTHZ_IDP_REALMS schema",
+      "description": "Realms to trust when the provider list is generated from IDENTITY_PROVIDER_URL. Each name becomes a provider id; cloud-common is marked required. An empty list means no providers",
+      "default": [
+        "cloud-common",
+        "default",
+        "cpq",
+        "external"
+      ],
+      "examples": [
+        [
+          "cloud-common",
+          "default"
+        ]
+      ],
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9._-]+$"
+      },
       "uniqueItems": true
     },
-
     "AUTHZ_TRUSTED_PROVIDERS": {
+      "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS",
       "type": "array",
+      "title": "The AUTHZ_TRUSTED_PROVIDERS schema",
+      "description": "Explicit trusted token providers, rendered into the trusted-providers ConfigMap. An entry names either an issuer, resolved through OIDC discovery, or a jwksUri, never both. Empty means the list is generated from IDENTITY_PROVIDER_URL and AUTHZ_IDP_REALMS",
+      "default": [],
+      "examples": [
+        [
+          {
+            "id": "cloud-common",
+            "issuer": "http://identity-provider:8080/auth/realms/cloud-common",
+            "audiences": [
+              "account"
+            ],
+            "required": true,
+            "allowMissingAud": true
+          }
+        ]
+      ],
       "items": {
         "type": "object",
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id":              { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
-          "issuer":          { "type": "string", "minLength": 1 },
-          "jwksUri":         { "type": "string", "minLength": 1 },
-          "audiences":       { "type": "array", "items": { "type": "string" } },
-          "required":        { "type": "boolean" },
-          "allowMissingAud": { "type": "boolean" }
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._-]+$"
+          },
+          "issuer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "jwksUri": {
+            "type": "string",
+            "minLength": 1
+          },
+          "audiences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "allowMissingAud": {
+            "type": "boolean"
+          }
         },
         "oneOf": [
-          { "required": ["issuer"],  "not": { "required": ["jwksUri"] } },
-          { "required": ["jwksUri"], "not": { "required": ["issuer"] } }
+          {
+            "required": [
+              "issuer"
+            ],
+            "not": {
+              "required": [
+                "jwksUri"
+              ]
+            }
+          },
+          {
+            "required": [
+              "jwksUri"
+            ],
+            "not": {
+              "required": [
+                "issuer"
+              ]
+            }
+          }
         ]
       }
     },
-
-    "AUTHZ_JWKS_BOOTSTRAP_REQUIRED":            { "type": "boolean" },
-    "AUTHZ_JWKS_HTTP_TIMEOUT":                  { "type": "integer", "minimum": 1 },
-    "AUTHZ_JWKS_HTTP_RETRIES":                  { "type": "integer", "minimum": 1 },
-    "AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL":  { "type": "integer", "minimum": 0 },
-
-    "AUTHZ_PAP_CLIENT_SOURCE_URL":      { "type": "string" },
-    "AUTHZ_PAP_CLIENT_PULL_INTERVAL":  { "type": "integer", "minimum": 0 },
-    "AUTHZ_PAP_CLIENT_TOKEN_FILE":     { "type": "string" },
-    "AUTHZ_POLICY_CONFIGMAP":   { "type": "string" },
-
-    "AUTHZ_ENTITLEMENTS_URL":          { "type": "string" },
-    "AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT": { "type": "integer", "minimum": 1 },
-    "AUTHZ_ENTITLEMENTS_HTTP_RETRIES": { "type": "integer", "minimum": 1 },
-
-    "AUTHZ_POLICY_ADMIN_ENABLED":        { "type": "boolean" },
-    "AUTHZ_POLICY_ADMIN_PORT":           { "type": "integer", "minimum": 1, "maximum": 65535 },
-    "AUTHZ_POLICY_ADMIN_DATA_DIR":       { "type": "string", "minLength": 1 },
-    "AUTHZ_POLICY_ADMIN_STORAGE_SIZE":   { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_STORAGE_CLASS":  { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_STORAGE_RETAIN": { "type": "boolean" },
-
-    "HPA_ENABLED":                  { "type": "boolean" },
-    "HPA_MIN_REPLICAS":             { "type": "integer" },
-    "HPA_MAX_REPLICAS":             { "type": "integer" },
-    "HPA_AVERAGE_CPU_UTILIZATION":  { "type": "integer" },
-
-    "ENVOY_CPU_REQUEST":     { "type": "string" },
-    "ENVOY_CPU_LIMIT":       { "type": "string" },
-    "ENVOY_MEM_REQUEST":     { "type": "string" },
-    "ENVOY_MEM_LIMIT":       { "type": "string" },
-    "BACKEND_CPU_REQUEST":   { "type": "string" },
-    "BACKEND_CPU_LIMIT":     { "type": "string" },
-    "BACKEND_MEM_REQUEST":   { "type": "string" },
-    "BACKEND_MEM_LIMIT":     { "type": "string" },
-    "COLLECTOR_CPU_REQUEST": { "type": "string" },
-    "COLLECTOR_CPU_LIMIT":   { "type": "string" },
-    "COLLECTOR_MEM_REQUEST": { "type": "string" },
-    "COLLECTOR_MEM_LIMIT":   { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_CPU_REQUEST":   { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_CPU_LIMIT":     { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_MEM_REQUEST":   { "type": "string" },
-    "AUTHZ_POLICY_ADMIN_MEM_LIMIT":     { "type": "string" }
-  }
+    "AUTHZ_TENANT_MANAGER_URL": {
+      "$id": "#/properties/AUTHZ_TENANT_MANAGER_URL",
+      "type": "string",
+      "title": "The AUTHZ_TENANT_MANAGER_URL schema",
+      "description": "Address of tenant-manager, used to resolve a realm named by its tenant display name once discovery for that name has failed. Empty disables the lookup",
+      "default": "http://tenant-manager:8080",
+      "examples": [
+        "http://tenant-manager:8080"
+      ]
+    },
+    "AUTHZ_JWKS_BOOTSTRAP_REQUIRED": {
+      "$id": "#/properties/AUTHZ_JWKS_BOOTSTRAP_REQUIRED",
+      "type": "boolean",
+      "title": "The AUTHZ_JWKS_BOOTSTRAP_REQUIRED schema",
+      "description": "true: every explicitly configured provider must be fetched before the Pod is Ready; false: one is enough. A generated provider list always behaves as false, and providers marked required must bootstrap either way",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "AUTHZ_JWKS_HTTP_TIMEOUT": {
+      "$id": "#/properties/AUTHZ_JWKS_HTTP_TIMEOUT",
+      "type": "integer",
+      "title": "The AUTHZ_JWKS_HTTP_TIMEOUT schema",
+      "description": "Per-request timeout in seconds for OIDC discovery and JWKS fetches",
+      "default": 5,
+      "examples": [
+        5
+      ],
+      "minimum": 1
+    },
+    "AUTHZ_JWKS_HTTP_RETRIES": {
+      "$id": "#/properties/AUTHZ_JWKS_HTTP_RETRIES",
+      "type": "integer",
+      "title": "The AUTHZ_JWKS_HTTP_RETRIES schema",
+      "description": "Retry count for OIDC discovery and JWKS fetches",
+      "default": 3,
+      "examples": [
+        3
+      ],
+      "minimum": 1
+    },
+    "AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL": {
+      "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL",
+      "type": "integer",
+      "title": "The AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL schema",
+      "description": "Seconds between checks of the mounted trusted-providers file. 0 turns the watcher off, so provider changes need a Pod restart",
+      "default": 30,
+      "examples": [
+        30,
+        0
+      ],
+      "minimum": 0
+    },
+    "AUTHZ_PAP_CLIENT_SOURCE_URL": {
+      "$id": "#/properties/AUTHZ_PAP_CLIENT_SOURCE_URL",
+      "type": "string",
+      "title": "The AUTHZ_PAP_CLIENT_SOURCE_URL schema",
+      "description": "Base URL of the access-control service the policy pull loop reads from. Empty disables the pull, unless AUTHZ_POLICY_ADMIN_ENABLED points the agent at the in-namespace stub",
+      "default": "",
+      "examples": [
+        "http://access-control:8080"
+      ]
+    },
+    "AUTHZ_PAP_CLIENT_PULL_INTERVAL": {
+      "$id": "#/properties/AUTHZ_PAP_CLIENT_PULL_INTERVAL",
+      "type": "integer",
+      "title": "The AUTHZ_PAP_CLIENT_PULL_INTERVAL schema",
+      "description": "Seconds between policy pulls. 0 disables both the pull loop and the mount watcher",
+      "default": 30,
+      "examples": [
+        30,
+        0
+      ],
+      "minimum": 0
+    },
+    "AUTHZ_PAP_CLIENT_TOKEN_FILE": {
+      "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
+      "type": "string",
+      "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
+      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true or by the token-fetcher sidecar otherwise",
+      "default": "/etc/authz/ac-token/token",
+      "examples": [
+        "/etc/authz/ac-token/token"
+      ]
+    },
+    "AUTHZ_POLICY_CONFIGMAP": {
+      "$id": "#/properties/AUTHZ_POLICY_CONFIGMAP",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_CONFIGMAP schema",
+      "description": "Name of an existing ConfigMap with policy data to mount instead of pulling (mount mode). Empty means pull mode. Cannot be combined with AUTHZ_POLICY_ADMIN_ENABLED",
+      "default": "",
+      "examples": [
+        "authz-policies"
+      ]
+    },
+    "AUTHZ_ENTITLEMENTS_URL": {
+      "$id": "#/properties/AUTHZ_ENTITLEMENTS_URL",
+      "type": "string",
+      "title": "The AUTHZ_ENTITLEMENTS_URL schema",
+      "description": "Base URL of the entitlements aggregator the ENTITLEMENT PIP calls. Empty leaves the resolver off, and entitlement-based policies evaluate against an empty set",
+      "default": "",
+      "examples": [
+        "http://entitlements-aggregator:8080"
+      ]
+    },
+    "AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT": {
+      "$id": "#/properties/AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT",
+      "type": "integer",
+      "title": "The AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT schema",
+      "description": "Per-request timeout in seconds for the entitlements aggregator call",
+      "default": 5,
+      "examples": [
+        5
+      ],
+      "minimum": 1
+    },
+    "AUTHZ_ENTITLEMENTS_HTTP_RETRIES": {
+      "$id": "#/properties/AUTHZ_ENTITLEMENTS_HTTP_RETRIES",
+      "type": "integer",
+      "title": "The AUTHZ_ENTITLEMENTS_HTTP_RETRIES schema",
+      "description": "Retry count for the entitlements aggregator call",
+      "default": 3,
+      "examples": [
+        3
+      ],
+      "minimum": 1
+    },
+    "AUTHZ_POLICY_ADMIN_ENABLED": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_ENABLED",
+      "type": "boolean",
+      "title": "The AUTHZ_POLICY_ADMIN_ENABLED schema",
+      "description": "Deploys the authz-policy-admin stub, which serves the v3 config API in place of access-control, and points the pull loop at it. Its control surface has no authentication: for development and test namespaces only",
+      "default": false,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "AUTHZ_POLICY_ADMIN_PORT": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_PORT",
+      "type": "integer",
+      "title": "The AUTHZ_POLICY_ADMIN_PORT schema",
+      "description": "HTTP port of the stub: the container port, the Service port, and the port in the generated AUTHZ_PAP_CLIENT_SOURCE_URL",
+      "default": 18090,
+      "examples": [
+        18090
+      ],
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "AUTHZ_POLICY_ADMIN_DATA_DIR": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_DATA_DIR",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_DATA_DIR schema",
+      "description": "Directory where the stub keeps the uploaded policies and PIPs; it is the mount path of its volume",
+      "default": "/var/lib/authz-policy-admin",
+      "examples": [
+        "/var/lib/authz-policy-admin"
+      ],
+      "minLength": 1
+    },
+    "AUTHZ_POLICY_ADMIN_STORAGE_SIZE": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_SIZE",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_SIZE schema",
+      "description": "Size of the PersistentVolumeClaim that holds the uploaded policies",
+      "default": "1Gi",
+      "examples": [
+        "1Gi"
+      ],
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_STORAGE_CLASS": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_CLASS",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_CLASS schema",
+      "description": "StorageClass of that claim. Empty uses the cluster default",
+      "default": "",
+      "examples": [
+        "standard"
+      ],
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_STORAGE_RETAIN": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_RETAIN",
+      "type": "boolean",
+      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_RETAIN schema",
+      "description": "Keeps the claim when the release is uninstalled or the stub is disabled",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "AUTHZ_DECISION_LOG_PATH": {
+      "$id": "#/properties/AUTHZ_DECISION_LOG_PATH",
+      "type": "string",
+      "title": "The AUTHZ_DECISION_LOG_PATH schema",
+      "description": "Directory where the decision-log collector writes its NDJSON file, on ephemeral container storage",
+      "default": "/var/log/authz-agent/decisions/",
+      "examples": [
+        "/var/log/authz-agent/decisions/"
+      ]
+    },
+    "HPA_ENABLED": {
+      "$id": "#/properties/HPA_ENABLED",
+      "description": "Defines whether horizontal autoscaling enabled for microservice",
+      "envSpecific": true,
+      "examples": [
+        true,
+        false
+      ],
+      "internal": true,
+      "title": "The HPA_ENABLED schema",
+      "type": "boolean"
+    },
+    "HPA_MIN_REPLICAS": {
+      "$id": "#/properties/HPA_MIN_REPLICAS",
+      "description": "Defines the lower limit for the number of replicas to which the autoscaler can scale down",
+      "envSpecific": true,
+      "examples": [
+        2
+      ],
+      "internal": true,
+      "title": "The HPA_MIN_REPLICAS schema",
+      "type": "integer"
+    },
+    "HPA_MAX_REPLICAS": {
+      "$id": "#/properties/HPA_MAX_REPLICAS",
+      "description": "Defines the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that HPA_MIN_REPLICAS",
+      "envSpecific": true,
+      "examples": [
+        5
+      ],
+      "internal": true,
+      "title": "The HPA_MAX_REPLICAS schema",
+      "type": "integer"
+    },
+    "HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT": {
+      "$id": "#/properties/HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT",
+      "description": "Target average CPU utilization for horizontal pod autoscaling",
+      "envSpecific": true,
+      "examples": [
+        75
+      ],
+      "internal": true,
+      "title": "The HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT schema",
+      "type": "integer"
+    },
+    "ENVOY_CPU_REQUEST": {
+      "$id": "#/properties/ENVOY_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The ENVOY_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the Envoy container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "ENVOY_CPU_LIMIT": {
+      "$id": "#/properties/ENVOY_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The ENVOY_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the Envoy container can use",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "ENVOY_MEM_REQUEST": {
+      "$id": "#/properties/ENVOY_MEM_REQUEST",
+      "type": "string",
+      "title": "The ENVOY_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the Envoy container will use to start",
+      "examples": [
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "ENVOY_MEM_LIMIT": {
+      "$id": "#/properties/ENVOY_MEM_LIMIT",
+      "type": "string",
+      "title": "The ENVOY_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the Envoy container can use",
+      "examples": [
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "OPA_CPU_REQUEST": {
+      "$id": "#/properties/OPA_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The OPA_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the OPA container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "OPA_CPU_LIMIT": {
+      "$id": "#/properties/OPA_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The OPA_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the OPA container can use",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "OPA_MEM_REQUEST": {
+      "$id": "#/properties/OPA_MEM_REQUEST",
+      "type": "string",
+      "title": "The OPA_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the OPA container will use to start",
+      "examples": [
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "OPA_MEM_LIMIT": {
+      "$id": "#/properties/OPA_MEM_LIMIT",
+      "type": "string",
+      "title": "The OPA_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the OPA container can use",
+      "examples": [
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "PAP_CLIENT_CPU_REQUEST": {
+      "$id": "#/properties/PAP_CLIENT_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The PAP_CLIENT_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the pap-client container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "PAP_CLIENT_CPU_LIMIT": {
+      "$id": "#/properties/PAP_CLIENT_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The PAP_CLIENT_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the pap-client container can use",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "PAP_CLIENT_MEM_REQUEST": {
+      "$id": "#/properties/PAP_CLIENT_MEM_REQUEST",
+      "type": "string",
+      "title": "The PAP_CLIENT_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the pap-client container will use to start",
+      "examples": [
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "PAP_CLIENT_MEM_LIMIT": {
+      "$id": "#/properties/PAP_CLIENT_MEM_LIMIT",
+      "type": "string",
+      "title": "The PAP_CLIENT_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the pap-client container can use",
+      "examples": [
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "COLLECTOR_CPU_REQUEST": {
+      "$id": "#/properties/COLLECTOR_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The COLLECTOR_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the decision-log collector container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "COLLECTOR_CPU_LIMIT": {
+      "$id": "#/properties/COLLECTOR_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The COLLECTOR_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the decision-log collector container can use",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "COLLECTOR_MEM_REQUEST": {
+      "$id": "#/properties/COLLECTOR_MEM_REQUEST",
+      "type": "string",
+      "title": "The COLLECTOR_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the decision-log collector container will use to start",
+      "examples": [
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "COLLECTOR_MEM_LIMIT": {
+      "$id": "#/properties/COLLECTOR_MEM_LIMIT",
+      "type": "string",
+      "title": "The COLLECTOR_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the decision-log collector container can use",
+      "examples": [
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_CPU_REQUEST": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_POLICY_ADMIN_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the authz-policy-admin container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_CPU_LIMIT": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_POLICY_ADMIN_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the authz-policy-admin container can use",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_MEM_REQUEST": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_MEM_REQUEST",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the authz-policy-admin container will use to start",
+      "examples": [
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_MEM_LIMIT": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_MEM_LIMIT",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the authz-policy-admin container can use",
+      "examples": [
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    }
+  },
+  "additionalProperties": true
 }
