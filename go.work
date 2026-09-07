@@ -1,8 +1,9 @@
-go 1.26.8
+go 1.27.1
 
 use (
 	.
-	./test/integration/testify
+	./spike/opa-embedded
 	./test/integration/pipstub
+	./test/integration/testify
 	./test/parity/suite
 )
