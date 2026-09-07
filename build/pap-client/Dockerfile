@@ -11,7 +11,7 @@
 #   COPY components/ components/
 #   COPY internal/ internal/
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS pap_client_builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS pap_client_builder
 
 ARG TARGETOS
 ARG TARGETARCH
