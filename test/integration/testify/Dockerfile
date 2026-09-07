@@ -7,7 +7,7 @@
 # repository root as the context:
 #   docker build -t local/authz-runtime-suite:ci -f test/integration/testify/Dockerfile .
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH

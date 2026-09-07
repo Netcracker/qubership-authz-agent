@@ -1,6 +1,6 @@
 module authz-agent/test/parity/suite
 
-go 1.24.0
+go 1.26.8
 
 require (
 	github.com/google/go-cmp v0.6.0

@@ -5,7 +5,7 @@
 # relative path. Build with this directory as the context:
 #   docker build -t local/authz-parity-suite:ci -f test/parity/suite/Dockerfile test/parity/suite
 
-FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
