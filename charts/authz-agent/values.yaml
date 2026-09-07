@@ -364,7 +364,7 @@ AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 HPA_ENABLED: false
 HPA_MIN_REPLICAS: 1
 HPA_MAX_REPLICAS: 1
-HPA_AVERAGE_CPU_UTILIZATION: 75
+HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
 
 # Per-container resource baselines.
 # Defaults below mirror `resource-profiles/dev.yaml` so that a plain
