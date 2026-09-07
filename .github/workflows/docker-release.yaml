@@ -41,7 +41,7 @@ jobs:
       contents: write
     steps:
       - name: Create Tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-action@8b1f50086b028c0ad22dafd33352e2166189b742 # v2.7.0
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@4ce44398bac0a6f82e55aeb4a753aada3530de5b # v2.7.1
         with:
           ref: ${{ github.ref }}
           tag-name: v${{ github.event.inputs.version }}
@@ -52,7 +52,7 @@ jobs:
     needs: create-tag
     permissions:
       packages: write
-    uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@8b1f50086b028c0ad22dafd33352e2166189b742 # v2.7.0
+    uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@4ce44398bac0a6f82e55aeb4a753aada3530de5b # v2.7.1
     with:
       ref: v${{ inputs.version }}
       dry-run: ${{ github.event.inputs.dry-run == 'true' }}
@@ -77,7 +77,7 @@ jobs:
       contents: write
     steps:
       - name: Delete Tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-action@8b1f50086b028c0ad22dafd33352e2166189b742 # v2.7.0
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@4ce44398bac0a6f82e55aeb4a753aada3530de5b # v2.7.1
         with:
           ref: ${{ github.ref }}
           tag-name: v${{ github.event.inputs.version }}
@@ -89,7 +89,7 @@ jobs:
     if: ${{ github.event.inputs.dry-run == 'false' }}
     permissions:
       contents: write
-    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@8b1f50086b028c0ad22dafd33352e2166189b742 # v2.7.0
+    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@4ce44398bac0a6f82e55aeb4a753aada3530de5b # v2.7.1
     with:
       version: ${{ github.event.inputs.version }}
       publish: false
