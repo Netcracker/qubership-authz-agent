@@ -73,6 +73,9 @@ jobs:
       - name: Run apm-packages-update action
         uses: netcracker/qubership-workflow-hub/actions/apm-packages-update@8b1f50086b028c0ad22dafd33352e2166189b742 # v2.7.0
         with:
+          # microsoft/apm-action defaults to APM 0.14.0, which cannot read
+          # this repository's APM 0.29.0 lockfile (workflow-hub#949).
+          apm-version: "0.29.0"
           branch: ${{ env.BRANCH }}
           debug: ${{ env.DEBUG }}
           dry-run: ${{ env.DRY_RUN }}
