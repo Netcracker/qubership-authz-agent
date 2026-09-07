@@ -51,7 +51,7 @@ KIND_CLUSTER ?= authz-e2e
 E2E_NAMESPACE ?= authz-e2e
 E2E_ARTIFACTS ?= test/artifacts/kind
 E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
-E2E_AUTHN := test/integration/runtime/authn/keycloak
+E2E_AUTHN := test/k8s/authn
 E2E_IMAGES := authz-agent-pap-client authz-agent-envoy authz-agent-collector \
               authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite \
               authz-parity-suite
@@ -112,7 +112,7 @@ e2e-down:
 # cluster and the images with the e2e targets above.
 PARITY_NAMESPACE ?= authz-parity
 PARITY_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(PARITY_NAMESPACE)
-PARITY_SEED := test/parity/compose/idp-seed
+PARITY_SEED := test/k8s/parity/idp-seed
 
 parity: e2e-cluster e2e-images parity-harness parity-install parity-suite
 

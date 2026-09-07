@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "c4a8a215-4d43-40c7-a2ae-b2f7b930fc3f",
-    "name": "Authz Agent Runtime (docker-compose)",
-    "description": "Collection for the runtime stack from tests/integration/runtime/docker-compose.yml. Includes token acquisition, policy upload, authorization endpoints, and not-yet-wired compatibility endpoints.",
+    "name": "Authz Agent Runtime (kind port-forward)",
+    "description": "Collection for the runtime stack on kind (make e2e), reached through port-forwards as described in docs/local-integration-tests.md. Includes token acquisition, policy upload, authorization endpoints, and not-yet-wired compatibility endpoints.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

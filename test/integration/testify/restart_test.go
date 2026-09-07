@@ -37,11 +37,9 @@ import (
 // fail because OPA starts with an empty data directory and all policy-dependent
 // decisions return the wrong result.
 //
-// How the restart happens is the stack driver's business (stack.go). The
-// Compose stack restarts the container through the docker CLI and restarts
-// pap-client with it, because the two share a network namespace there. On
-// Kubernetes an ephemeral container signals the OPA process and the kubelet
-// restarts that container only, with pap-client untouched.
+// How the restart happens is the stack driver's business (stack.go): an
+// ephemeral container signals the OPA process and the kubelet restarts that
+// container only, with pap-client untouched.
 func (s *RuntimeSuite) TestOPARestart() {
 
 	// ── Step 1: establish pre-restart baseline ────────────────────────────

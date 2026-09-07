@@ -178,7 +178,7 @@ func (ds *legacyPapSeeder) putJSON(ctx context.Context, endpoint, token string, 
 //
 // The delay is the pull interval plus a margin for the fetch, conversion and
 // PUT into OPA. It must stay >= AUTHZ_PAP_CLIENT_PULL_INTERVAL in
-// tests/parity/compose/docker-compose.authz-agent.yml (1 s there, so 2 s here).
+// test/k8s/parity/values.yaml (1 s there, so 2 s here).
 // Raise PARITY_PULL_SETTLE_SECONDS if that interval is raised, or on a slow
 // machine where the conversion of a large fixture set overruns the margin.
 //

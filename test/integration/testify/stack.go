@@ -27,84 +27,23 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 )
 
 // stackDriver performs the one action the suite needs that reaches past the
 // agent's HTTP surface: restarting the OPA container on its own, with the rest
-// of the agent left running. The Compose stack and a Kubernetes cluster do
-// that differently; the tests see only this interface.
+// of the agent left running. The tests see only this interface, so another
+// runtime can provide its own driver.
 type stackDriver interface {
 	// RestartOPA restarts the OPA container and returns once the stack is
 	// ready for the test to poll OPA's own health endpoint.
 	RestartOPA() error
 }
 
-// newStackDriver picks the driver from RUNTIME_PROFILE: `kubernetes` for the
-// kind harness under test/k8s, anything else for the Compose stack.
+// newStackDriver returns the driver for the cluster the suite runs in.
 func newStackDriver(cfg RuntimeConfig) (stackDriver, error) {
-	if cfg.RuntimeProfile == "kubernetes" {
-		return newKubeDriver(cfg)
-	}
-	return newComposeDriver(cfg)
-}
-
-// waitForHTTP200 polls rawURL until it answers 200 or the timeout passes.
-func waitForHTTP200(rawURL string, timeout time.Duration, what string) error {
-	client := &http.Client{Timeout: 3 * time.Second}
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		resp, err := client.Get(rawURL)
-		if err == nil {
-			_ = resp.Body.Close()
-			if resp.StatusCode == http.StatusOK {
-				return nil
-			}
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-	return fmt.Errorf("%s did not answer 200 on %s within %s", what, rawURL, timeout)
-}
-
-// ── Compose ──────────────────────────────────────────────────────────────────
-
-// composeDriver drives the Compose runtime stack through the docker CLI.
-type composeDriver struct {
-	docker             string // absolute path of the docker binary
-	project            string
-	papClientHealthURL string
-}
-
-// newComposeDriver resolves the docker binary once, so a missing CLI fails
-// the suite setup with a clear message instead of the first restart step.
-func newComposeDriver(cfg RuntimeConfig) (*composeDriver, error) {
-	docker, err := exec.LookPath("docker")
-	if err != nil {
-		return nil, fmt.Errorf("compose stack driver: docker CLI not found: %w", err)
-	}
-	return &composeDriver{
-		docker:             docker,
-		project:            cfg.ComposeProjectName,
-		papClientHealthURL: cfg.PAPClientHealthURL,
-	}, nil
-}
-
-// RestartOPA restarts the opa service and then pap-client as well: pap-client
-// shares OPA's network namespace there (network_mode: "service:opa"), a
-// restarted OPA gets a new one, and pap-client would stay cut off from OPA and
-// from Docker's DNS until it rejoins. Waiting for pap-client's health leaves
-// the tests after this one with a working pull loop.
-func (d *composeDriver) RestartOPA() error {
-	for _, service := range []string{"opa", "pap-client"} {
-		out, err := exec.Command(d.docker, "compose", "-p", d.project, "restart", service).CombinedOutput()
-		if err != nil {
-			return fmt.Errorf("docker compose restart %s (project %s): %w: %s",
-				service, d.project, err, strings.TrimSpace(string(out)))
-		}
-	}
-	return waitForHTTP200(d.papClientHealthURL, 45*time.Second, "pap-client after the restart")
+	return newKubeDriver(cfg)
 }
 
 // ── Kubernetes ───────────────────────────────────────────────────────────────
@@ -130,7 +69,7 @@ type kubeDriver struct {
 func newKubeDriver(cfg RuntimeConfig) (*kubeDriver, error) {
 	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
 	if host == "" || port == "" {
-		return nil, fmt.Errorf("RUNTIME_PROFILE=kubernetes needs KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT: the suite has to run inside the cluster")
+		return nil, fmt.Errorf("KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT are not set: the suite has to run inside the cluster")
 	}
 	token, err := os.ReadFile(serviceAccountDir + "/token")
 	if err != nil {

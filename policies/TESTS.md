@@ -47,11 +47,10 @@ and with the current project docs in `docs/ai/`.
      - unconditional-allow short-circuit semantics for all three wildcard buckets;
      - malformed normalization entries;
      - filter and bulk remapping behavior.
-5. `test/scripts/test-envoy-runtime.sh`
-   - Starts Keycloak plus `authz-agent` through Docker Compose.
-   - Executes the Testify integration suite from the host via `go test`.
+5. `make e2e`
+   - Installs Keycloak plus `authz-agent` from the Helm chart on a kind cluster.
+   - Executes the Testify integration suite as a Job inside the cluster.
    - Uploads simplified runtime policies through the guarded pap-client endpoint during suite setup.
-   - Mounts writable authn bootstrap data through the Compose-managed runtime volume.
    - Mirrors the implemented legacy check-endpoint integration coverage from
      the internal access-control source repository
      (`CheckEndpointTest.java` and `CheckEndpointV2Test.java`).
@@ -125,7 +124,7 @@ The `policy_language` suite covers all documented condition operators and key gr
 
 ## Runtime Coverage Matrix
 
-`test/scripts/test-envoy-runtime.sh` plus the Testify suite are expected to keep the following runtime combinations covered:
+`make e2e` plus the Testify suite are expected to keep the following runtime combinations covered:
 
 | Area | Required combinations |
 | --- | --- |
@@ -134,7 +133,7 @@ The `policy_language` suite covers all documented condition operators and key gr
 | Legacy check/resource/bulk | denied IDs, empty array, malformed entries, null body => `400`, missing required fields => `400`, tenant invariance, large payload of 3000 allowed IDs with non-restrictive RLS, wrong address => `404` |
 | Legacy check/filter | `calculationResult`, deny/allow paths, tenant invariance, missing `resourceType` => `400`, wrong address => `404` |
 | Public boundary | `/authorize` and `/v1/data/authorize` not exposed; not-yet-implemented legacy routes return `404` |
-| Runner behavior | Compose stack detached from host-side Go test execution, step-level PASS/FAIL reporting, catalog-validated coverage |
+| Runner behavior | Suite runs as a Job inside the cluster, step-level PASS/FAIL reporting, catalog-validated coverage |
 
 ## Fixture Conventions
 
@@ -150,7 +149,8 @@ For each `policy_language` case:
 
 1. These tests intentionally validate full documented language behavior, even if current Rego implementation is not yet fully aligned.
 2. Rego policy implementation files are intentionally not modified by this test suite.
-3. `test/scripts/test-opa.sh` uses `policies/`; runtime stacks use mounted data from `test/integration/runtime/opa/runtime-data/` plus runtime-generated authn data.
+3. `test/scripts/test-opa.sh` uses `policies/`; the runtime stack on kind loads the same policies through the chart's
+   policy ConfigMap (`make copy-policies`) plus runtime-generated authn data.
 
 ## Token Toolkit for Tests
 
@@ -182,4 +182,4 @@ To refresh the committed Rego fixtures used by the suites above:
 test/scripts/token-testkit/refresh-rego-fixtures.sh
 ```
 
-Runtime/integration auth checks intentionally do not use these repository fixture outputs; they request real tokens from Keycloak through `test/scripts/test-envoy-runtime.sh`.
+Runtime/integration auth checks intentionally do not use these repository fixture outputs; they request real tokens from the harness Keycloak during `make e2e`.

@@ -52,8 +52,8 @@ const previewBulkOperationsUnexercised = "preview bulk/operations is a real Envo
 // components/pap-client/internal/policyadmin/health_test.go.
 const healthUnavailableUnexercised = "GET /health 503 needs an agent whose OPA is not ready or whose strict-mode JWKS bootstrap failed; the harness runs the suite against a healthy agent. Covered by the policyadmin unit tests."
 
-// reachabilityWhitelist lists spec-declared responses that a full Compose suite
-// run does not exercise and that this task may not add a test for, each with the
+// reachabilityWhitelist lists spec-declared responses that a full suite run
+// does not exercise and that this task may not add a test for, each with the
 // reason it stays unexercised (ADR-0064). The lint's pass-2 flags any entry that
 // is no longer declared in the spec, or that has become exercised, so the list
 // cannot silently rot into a rubber stamp that re-hides drift.

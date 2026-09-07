@@ -1,9 +1,8 @@
 # Keycloak for the kind end-to-end run (`make e2e-harness`).
 #
-# Same start-dev settings as the Compose runtime stack. The realm imports come
-# from test/integration/runtime/authn/keycloak/ and are packed into the
-# keycloak-realms ConfigMap by the script, so this file does not duplicate
-# them. KC_HOSTNAME must match the in-cluster Service name: the issuer and the
+# The realm imports come from test/k8s/authn/ and are packed into the
+# keycloak-realms ConfigMap by `make e2e-harness`, so this file does not
+# duplicate them. KC_HOSTNAME must match the in-cluster Service name: the issuer and the
 # JWKS URI in the discovery document derive from it, and the agent fetches them
 # from inside the cluster.
 apiVersion: apps/v1

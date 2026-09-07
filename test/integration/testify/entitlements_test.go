@@ -32,9 +32,8 @@ import (
 // container-pinned entitlements PIP.
 //
 // Each Step pins a per-user V3 entitlements-aggregator response on the
-// `entitlements-mock` pip-stub instance (wired into
-// tests/integration/runtime/docker-compose.yml by Step 6 sub-step 3 +
-// reached by pap-client via AUTHZ_ENTITLEMENTS_URL), uploads a
+// `entitlements-mock` pip-stub instance (the harness runs it next to the
+// agent, which reaches it via AUTHZ_ENTITLEMENTS_URL), uploads a
 // policy set that references `subject.entitledResources.of(...).as(...)`
 // in its condition, and asserts the resulting decision on
 // `/access/v1/check/resource`.
@@ -66,9 +65,8 @@ func (s *RuntimeSuite) adminSubjectID() string {
 }
 
 // pinEntitlements pins a single /api/v3/user-entitlements/user/{userId}
-// response on the entitlements-mock stub at the host-published control
-// URL. The pap-client container reaches the same stub via the
-// in-Compose DNS alias declared on AUTHZ_ENTITLEMENTS_URL.
+// response on the entitlements-mock stub at its control URL. The agent
+// reaches the same stub through AUTHZ_ENTITLEMENTS_URL.
 func (s *RuntimeSuite) pinEntitlements(userID string, refs map[string]map[string][]string) {
 	s.T().Helper()
 	path := fmt.Sprintf("/api/v3/user-entitlements/user/%s", userID)
@@ -166,9 +164,8 @@ func (s *RuntimeSuite) checkResourceDecision(resourceType, operation string, res
 }
 
 // TestEntitlementsRuntime exercises the ADR-0054 matrix end-to-end.
-// Requires the runtime compose stack (tests/integration/runtime/docker-compose.yml)
-// with the entitlements-mock service from D-AG-15 and
-// AUTHZ_ENTITLEMENTS_URL set on the pap-client container. Per
+// Requires the harness entitlements-mock service and AUTHZ_ENTITLEMENTS_URL
+// set on the agent. Per
 // D-AG-19 this coverage is mandatory on every integration-suite run —
 // if the stub is unreachable the test fails loudly rather than
 // skipping, so a stack that omits the D-AG-15 wiring cannot hide a
@@ -244,10 +241,9 @@ func (s *RuntimeSuite) TestEntitlementsRuntime() {
 
 // entitlementsMockReachable probes the entitlements-mock pip-stub
 // control plane for liveness. Per D-AG-19 this is used as a hard
-// precondition in TestEntitlementsRuntime — if the runtime compose
-// stack was brought up without the D-AG-15 service block, the
-// integration suite fails loudly on this check instead of silently
-// skipping ENT coverage.
+// precondition in TestEntitlementsRuntime — if the harness came up
+// without the entitlements-mock service, the integration suite fails
+// loudly on this check instead of silently skipping ENT coverage.
 func entitlementsMockReachable(cfg RuntimeConfig) bool {
 	req, err := http.NewRequest(http.MethodGet, cfg.EntitlementsMockURL+"/pip-stub/calls", nil)
 	if err != nil {

@@ -406,8 +406,8 @@ func expectedDecisionLogStepNames(cfg RuntimeConfig) []string {
 		if catalogStepRejectedBeforeOPA(entry.Name) {
 			continue
 		}
-		// m2m_keycloak steps are profile-gated: when the m2m-keycloak Compose
-		// overlay is not active they call t.Skip() and produce no decision logs.
+		// m2m_keycloak steps are profile-gated: when M2M_KEYCLOAK_PROFILE is
+		// not set they call t.Skip() and produce no decision logs.
 		if !cfg.M2MKeycloakProfile && strings.HasPrefix(entry.Name, "m2m_keycloak.") {
 			continue
 		}

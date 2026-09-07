@@ -1,10 +1,8 @@
 # Keycloak for the parity replay on kind (`make parity-harness`).
 #
-# The Compose parity stack runs Keycloak in production mode on Postgres; the
-# replay does not depend on persistence, so dev mode with the same two realm
-# imports is enough here. The realm files come from
-# test/parity/compose/idp-seed/ and are packed into the parity-realms ConfigMap
-# by the Makefile. The Service is named `idp` because that host is the issuer
+# The replay does not depend on persistence, so dev mode with the two realm
+# imports is enough. The realm files come from test/k8s/parity/idp-seed/ and
+# are packed into the parity-realms ConfigMap by `make parity-harness`. The Service is named `idp` because that host is the issuer
 # in the trusted-providers entry and in KC_HOSTNAME.
 apiVersion: apps/v1
 kind: Deployment

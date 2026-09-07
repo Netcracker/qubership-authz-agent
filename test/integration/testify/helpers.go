@@ -42,25 +42,21 @@ type RuntimeConfig struct {
 	KcPassword            string
 	KcTokenScope          string
 	KcExpiredWaitSeconds  int
-	// D-AG-15 (ADR-0054): entitlements-mock pip-stub instance wired into
-	// the runtime compose. EntitlementsMockURL is the host-published
-	// control URL used by the test harness for pin/reset; the
-	// pap-client container reaches the same stub via the in-compose
-	// DNS alias, pinned through AUTHZ_ENTITLEMENTS_URL.
+	// EntitlementsMockURL is the control URL of the second pip-stub instance
+	// that serves the entitlements endpoint; the suite pins and resets it
+	// there. The agent reaches the same stub through AUTHZ_ENTITLEMENTS_URL.
 	EntitlementsMockURL string
 	// authz-agent-ADR-0062 cross-transport contract: the same OPA Data
 	// API envelope is exposed on both the Envoy mount
 	// (`/access/v1/authorize`) and the OPA-direct mount
-	// (`/v1/data/authorize`). OPADirectURL is the host-published address
-	// of the latter — the compose service `opa` publishes its container
-	// port 8181 to the host so the testify suite can drive both
-	// transports from the same process for parity assertions.
+	// (`/v1/data/authorize`). OPADirectURL is the address of the latter, the
+	// OPA port of the agent Service, so the suite can drive both transports
+	// from the same process for parity assertions.
 	OPADirectURL string
-	// ACStubURL is the host-published URL of the authz-policy-admin that serves the
-	// access-control v3 config API to the PolicyPuller.
-	// The pap-client pull loop (AUTHZ_PAP_CLIENT_SOURCE_URL) must point to the
-	// in-compose alias of this stub; ACStubURL is the host-side address the
-	// test harness uses to upload simplified policies.
+	// ACStubURL is the URL of the authz-policy-admin that serves the
+	// access-control v3 config API to the PolicyPuller. The pap-client pull
+	// loop (AUTHZ_PAP_CLIENT_SOURCE_URL) points at the same service; the suite
+	// uploads simplified policies through this address.
 	// Default: http://localhost:18090
 	ACStubURL string
 	// PullInterval is the PolicyPuller tick interval that the agent-under-test is
@@ -69,30 +65,18 @@ type RuntimeConfig struct {
 	// applied before follow-up assertions run.
 	// Default: 2s (test stacks must set AUTHZ_PAP_CLIENT_PULL_INTERVAL=2 or shorter).
 	PullInterval time.Duration
-	// M2MKeycloakProfile is true when the runtime stack was started with the
-	// docker-compose.m2m-keycloak.yml overlay (M2M_KEYCLOAK_PROFILE=true).
-	// When false (default), m2m_keycloak catalog steps are skipped via t.Skip().
+	// M2MKeycloakProfile is true when the agent under test fetches its M2M
+	// token from Keycloak (M2M_KEYCLOAK_PROFILE=true), as the kind harness
+	// configures it. When false, m2m_keycloak catalog steps are skipped.
 	M2MKeycloakProfile bool
 	// OPAAuthToken is the shared bearer token that pap-client sends to OPA on
 	// write requests (PUT/PATCH /v1/data/**). Used by opa_lockdown tests that
 	// verify authenticated writes are accepted (authz-agent-ADR-0077).
-	// Default: "test-opa-auth-token" (matches authn/opa-auth-token in the
-	// runtime compose stack).
+	// The kind harness reads it from the chart's Secret. Default:
+	// "test-opa-auth-token".
 	OPAAuthToken string
-	// RuntimeProfile selects the stack driver (stack.go): `kubernetes` for
-	// the kind harness under test/k8s, anything else for the Compose stack.
-	RuntimeProfile string
-	// ComposeProjectName is the Docker Compose project name (-p flag) of the
-	// test stack; the Compose driver restarts containers through it. Read from
-	// PROJECT_NAME; the default matches the script default.
-	ComposeProjectName string
-	// PAPClientHealthURL is the host-reachable URL of pap-client's GET /health
-	// endpoint on the Compose stack, where pap-client's port (8182) is
-	// published via the opa service. The Compose driver waits on it after a
-	// restart. Default: http://localhost:18182/health
-	PAPClientHealthURL string
-	// KubeNamespace, KubeAgentSelector and KubeDebugImage configure the
-	// Kubernetes driver: the namespace the agent runs in, the label selector
+	// KubeNamespace, KubeAgentSelector and KubeDebugImage configure the stack
+	// driver (stack.go): the namespace the agent runs in, the label selector
 	// of its Pod, and the image whose `kill` signals the OPA container from an
 	// ephemeral container.
 	KubeNamespace     string
@@ -100,8 +84,9 @@ type RuntimeConfig struct {
 	KubeDebugImage    string
 }
 
-// LoadConfig builds RuntimeConfig from environment variables with defaults
-// suitable for the host-side test runner started by test-envoy-runtime.sh.
+// LoadConfig builds RuntimeConfig from environment variables. The kind Job
+// (test/k8s/runtime-suite-job.yaml) sets every address to a Service name; the
+// defaults suit a run from the host through port-forwards.
 func LoadConfig() RuntimeConfig {
 	waitSec := 6
 	if v := os.Getenv("KC_EXPIRED_WAIT_SECONDS"); v != "" {
@@ -137,9 +122,6 @@ func LoadConfig() RuntimeConfig {
 		PullInterval:          pullInterval,
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
 		OPAAuthToken:          envOr("OPA_AUTH_TOKEN", "test-opa-auth-token"),
-		RuntimeProfile:        envOr("RUNTIME_PROFILE", "compose"),
-		ComposeProjectName:    envOr("PROJECT_NAME", "authz-agent-runtime-test"),
-		PAPClientHealthURL:    envOr("PAP_CLIENT_HEALTH_URL", "http://localhost:18182/health"),
 		KubeNamespace:         envOr("K8S_NAMESPACE", "authz-e2e"),
 		KubeAgentSelector:     envOr("K8S_AGENT_SELECTOR", "name=authz-agent"),
 		KubeDebugImage:        envOr("K8S_DEBUG_IMAGE", "local/authz-agent-pap-client:ci"),

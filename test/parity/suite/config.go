@@ -65,8 +65,8 @@ type Config struct {
 	// GET /pip-stub/reset. Default http://localhost:28091.
 	PipMockControlURL string
 
-	// EAMockControlURL is the base URL of the entitlements-mock service
-	// (part of the parity compose stack per D-U). Default http://localhost:28092.
+	// EAMockControlURL is the base URL of the entitlements-mock service of
+	// the parity harness. Default http://localhost:28092.
 	EAMockControlURL string
 
 	// TenantID is the value the suite sends in the tenant_id query param

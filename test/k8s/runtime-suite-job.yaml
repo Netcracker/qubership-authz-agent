@@ -49,8 +49,6 @@ spec:
             # The stack driver (test/integration/testify/stack.go) restarts
             # OPA through the API server: it needs the namespace, the agent
             # Pod's label, and an image with `kill` for the ephemeral container.
-            - name: RUNTIME_PROFILE
-              value: kubernetes
             - name: K8S_NAMESPACE
               valueFrom:
                 fieldRef:

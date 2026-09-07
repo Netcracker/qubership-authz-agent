@@ -21,113 +21,57 @@ without access to the original service.
 
 ## Prerequisites
 
-1. **Docker + Compose v2** on the host.
-2. Local images built (see [Build](#build) below).
-3. **Go 1.24+** on the host to run the Go test suite directly.
-
-## Build
-
-Build the two images the parity replay stack needs:
-
-```bash
-bash test/parity/scripts/build-images.sh
-```
-
-This builds:
-
-| Image tag                      | Dockerfile                    |
-| ------------------------------ | ----------------------------- |
-| `authz-pap-client:local`       | `build/pap-client/Dockerfile` |
-| `decision-log-collector:local` | `build/collector/Dockerfile`  |
-
-The `pip-stub:local` image is built by the integration runtime
-(`test/scripts/build-runtime-images.sh` or a prior integration test run)
-and is shared between the two suites. Build it if not already present:
-
-```bash
-docker build -t pip-stub:local -f test/integration/pipstub/Dockerfile test/integration/pipstub
-```
-
-The `authz-policy-admin:local` image is also needed:
-
-```bash
-docker build -t authz-policy-admin:local -f build/authz-policy-admin/Dockerfile .
-```
-
-The IdP service (`idp`) runs the public Keycloak image
-(`quay.io/keycloak/keycloak:26.3.5`). No pre-build step is needed for it —
-`docker compose up` pulls it automatically.
+1. **Docker**, **kind**, **kubectl**, and **helm** on the host.
+2. **Go 1.24+** to run the suite module's own unit tests (`cd test/parity/suite && go test ./...`).
 
 ## Run the replay suite
 
 ```bash
-PARITY_PROFILE=authz-agent bash test/parity/scripts/run-parity-suite.sh
+make parity        # cluster, images, harness, chart, suite in namespace authz-parity
+make parity-logs   # artifacts into test/artifacts/kind/parity/
 ```
 
-The script brings up the compose stack (if not already running), waits for all
-services to reach healthy (allow up to ~6 minutes for the cold Keycloak
-augmentation build), runs the Go/testify suite, and prints the result.
+`make parity` runs the shared `e2e-cluster` and `e2e-images` targets first (every image the replay needs, including
+the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 
-Expected final line when all cases pass:
+| Target | What it does |
+| --- | --- |
+| `parity-harness` | Namespace `authz-parity`; Keycloak as `idp` in dev mode with the two realm imports; `pip-mock` with the request-args rule set; `entitlements-mock`; the M2M client-credentials Secret |
+| `parity-install` | `helm upgrade --install` with [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
+| `parity-suite` | The Job from [`test/k8s/parity/parity-suite-job.yaml`](../k8s/parity/parity-suite-job.yaml); its log is streamed |
 
-```text
-Parity suite passed: 135/135 cases green against authz-agent.
-```
+Expected result: 135/135 cases green against authz-agent. CI runs the same targets (job `Parity on kind` in
+`.github/workflows/integration-tests.yaml`).
 
-### Running against an already-up stack
+The suite addresses `authz-agent`, `idp`, `pip-mock`, and `entitlements-mock` by Service name; nothing is published on
+the host. To look at the stack from the host, port-forward, for example
+`kubectl --context kind-authz-e2e -n authz-parity port-forward svc/authz-agent 28100:8080`.
 
-If the compose stack is already running, the script reuses it:
+### Iterating
 
-```bash
-# keep the stack running between runs for fast iteration
-PARITY_PROFILE=authz-agent bash test/parity/scripts/run-parity-suite.sh
-```
+After a change to the suite or the product, `make e2e-images parity-suite` rebuilds the images and reruns the Job; the
+harness and the chart stay. `make parity-install parity-suite` picks up changed chart values.
 
 ### Teardown
 
 ```bash
-docker compose -p parity-authz -f test/parity/compose/docker-compose.authz-agent.yml down -v
+kubectl --context kind-authz-e2e delete namespace authz-parity   # the replay only
+make e2e-down                                                     # the whole cluster
 ```
-
-The `-v` flag removes the named volumes so the next `up` starts from a clean
-PostgreSQL state (schema re-runs, realm re-imports, fixtures re-seeded).
-
-## Port map
-
-| Env var                   | Default | Service                           |
-| ------------------------- | ------- | --------------------------------- |
-| `PARITY_AUTHZ_PORT`       | `28100` | Authz Agent Envoy public listener |
-| `PARITY_AUTHZ_ADMIN_PORT` | `28182` | pap-client upload port            |
-| `PARITY_AUTHZ_PIP_PORT`   | `28191` | pip-mock copy for this profile    |
-| `PARITY_AUTHZ_EA_PORT`    | `28192` | entitlements-mock copy            |
-| `PARITY_AUTHZ_IDP_PORT`   | `25558` | Keycloak HTTP listener            |
-
-No port in this block collides with the integration runtime block
-(`KC_HTTP_PORT=5556`, `AUTHZ_HTTP_PORT=18080`) or the SVT block
-(`SVT_KC_PORT=25556`, `SVT_AUTHZ_PORT=28080`).
 
 ## Identity provider
 
-The `idp` service uses the public Keycloak image
-(`quay.io/keycloak/keycloak:26.3.5`, matching the Keycloak version the goldens
-were captured against). The two realm import files
-([`compose/idp-seed/cloud-common-realm.json`](compose/idp-seed/cloud-common-realm.json)
-and [`compose/idp-seed/parity-realm.json`](compose/idp-seed/parity-realm.json))
-use only built-in Keycloak protocol mappers and require no custom SPI
-extensions. The suite calls the standard OIDC token endpoint
-(`/auth/realms/parity/protocol/openid-connect/token`) for `client_credentials`
-and `password` grants — no custom Keycloak REST APIs are involved.
+The `idp` Deployment runs the public Keycloak image (`quay.io/keycloak/keycloak`, the version the goldens were
+captured against). The two realm import files
+([`cloud-common-realm.json`](../k8s/parity/idp-seed/cloud-common-realm.json) and
+[`parity-realm.json`](../k8s/parity/idp-seed/parity-realm.json)) use only built-in Keycloak protocol mappers and
+require no custom SPI extensions. The suite calls the standard OIDC token endpoint
+(`/auth/realms/parity/protocol/openid-connect/token`) for `client_credentials` and `password` grants; no custom
+Keycloak REST APIs are involved.
 
-`KC_HTTP_RELATIVE_PATH=/auth` is set so the realm is reachable at
-`/auth/realms/parity/...` (Keycloak dropped the `/auth` prefix in v17; the
-parity stack wires that prefix throughout, so it is restored via config).
-
-The Keycloak image (`quay.io/keycloak/keycloak`) is UBI9-minimal and contains
-no `curl` or `wget`. The compose healthcheck uses bash's `/dev/tcp` built-in
-with a raw HTTP/1.0 request against the management port (9000). Note that
-`KC_HTTP_RELATIVE_PATH=/auth` prefixes ALL paths, including the management
-health endpoint: the correct URL is `http://localhost:9000/auth/health/ready`
-(not `/health/ready`).
+`KC_HTTP_RELATIVE_PATH=/auth` is set so the realm is reachable at `/auth/realms/parity/...` (Keycloak dropped the
+`/auth` prefix in v17; the parity fixtures carry that prefix throughout, so it is restored via config). It prefixes the
+management endpoints too, which is why the probes hit `/auth/health/ready`.
 
 ## Goldens, accepted divergences, and the divergence backlog
 
@@ -152,39 +96,16 @@ case:
 test/parity/
 ├── README.md                            (this file)
 ├── opa-body-snapshots/                  (9 OPA request/response captures for reference)
-├── compose/
-│   ├── docker-compose.authz-agent.yml  (replay stack: authz-agent + IdP + mocks)
-│   ├── authz-agent-config/             (envoy.yaml/opa-config.yaml templates)
-│   ├── idp-seed/                       (Keycloak realm import + cache config)
-│   └── pg-init/                        (postgres init script: two logical DBs)
-├── suite/                              (Go/testify parity suite)
-│   ├── Dockerfile                      (suite image for the kind run)
-│   ├── config.go
-│   ├── compare.go                      (golden read/diff; no write/record path)
-│   ├── accepted_divergences.go
-│   ├── testdata/
-│   │   ├── golden/                     (129 committed golden JSON files)
-│   │   └── fixtures/                   (seed policies and PIPs)
-│   └── test_row*.go                    (one file per parity endpoint row)
-└── scripts/
-    ├── build-images.sh                 (builds authz-pap-client + collector)
-    ├── build-authz-agent.sh            (builds authz-pap-client:local)
-    ├── build-decision-log-collector.sh (builds decision-log-collector:local)
-    └── run-parity-suite.sh             (compose up → healthy → go test)
+└── suite/                               (Go/testify parity suite)
+    ├── Dockerfile                       (suite image for the kind run)
+    ├── config.go
+    ├── compare.go                       (golden read/diff; no write/record path)
+    ├── accepted_divergences.go
+    ├── testdata/
+    │   ├── golden/                      (129 committed golden JSON files)
+    │   └── fixtures/                    (seed policies and PIPs)
+    └── test_row*.go                     (one file per parity endpoint row)
 ```
 
-## Running on kind
-
-CI runs the replay on a kind cluster against the Helm chart
-(`.github/workflows/integration-tests.yaml`, job `Parity on kind`); the Compose
-stack above is the local harness. The kind harness lives under
-`test/k8s/parity/` and reuses the realm imports from `compose/idp-seed/`, the
-pip-stub image, and the suite compiled into `suite/Dockerfile`:
-
-```bash
-make parity        # harness, chart, suite in namespace authz-parity
-make parity-logs   # artifacts into test/artifacts/kind/parity/
-```
-
-Keycloak runs in dev mode there; the Postgres of the Compose stack exists only
-to make that Keycloak persistent, which the replay does not need.
+The harness lives under [`test/k8s/parity/`](../k8s/parity/): the manifests, the chart values, and the realm imports
+in `idp-seed/`.

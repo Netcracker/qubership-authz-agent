@@ -79,7 +79,8 @@ Both users have `emailVerified: true` and `enabled: true`.
 
 ## How the Runtime Environment Uses This Import
 
-1. `docker-compose.yml` mounts `authz-test-realm.json` into the Keycloak container.
+1. `make e2e-harness` packs `authz-test-realm.json` into the `keycloak-realms` ConfigMap, which
+   `test/k8s/keycloak.yaml` mounts into the Keycloak container.
 2. `authz-agent` trusted-provider config points to `http://keycloak:8080/realms/authz-test`.
 3. On startup, `authz-agent` bootstrap fetches OIDC discovery from the Keycloak issuer,
    resolves the `jwks_uri`, downloads the JWKS, and writes it into the OPA data path.
@@ -109,6 +110,6 @@ A Keycloak-issued access token for the `order-reader` user contains (among other
 
 | Artifact                 | Path                                                             |
 | ------------------------ | ---------------------------------------------------------------- |
-| Realm import JSON        | `test/integration/runtime/authn/keycloak/authz-test-realm.json`  |
-| This description         | `test/integration/runtime/authn/keycloak/REALM-DESCRIPTION.md`   |
-| Trusted providers config | `test/integration/runtime/authn/keycloak/trusted-providers.json` |
+| Realm import JSON        | `test/k8s/authn/authz-test-realm.json`                           |
+| This description         | `test/k8s/authn/REALM-DESCRIPTION.md`                            |
+| Identity provider wiring | `IDENTITY_PROVIDER_URL` in `test/k8s/values.yaml`                |

@@ -58,7 +58,7 @@ func TestRuntimeSuite(t *testing.T) {
 func (s *RuntimeSuite) SetupSuite() {
 	s.cfg = LoadConfig()
 	stack, err := newStackDriver(s.cfg)
-	s.Require().NoError(err, "stack driver for RUNTIME_PROFILE=%s", s.cfg.RuntimeProfile)
+	s.Require().NoError(err, "stack driver")
 	s.stack = stack
 	s.results = make([]stepResult, 0, len(Catalog))
 
