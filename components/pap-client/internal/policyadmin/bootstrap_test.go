@@ -17,6 +17,7 @@ package policyadmin
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -796,5 +797,48 @@ func TestRunBootstrap_RejectedConfigIsRecordedAsAConfigError(t *testing.T) {
 	}
 	if healthy, _, _ := evaluateHealth(true, &status); healthy {
 		t.Error("a Pod with a rejected provider config must not be Ready")
+	}
+}
+
+// TestWriteOPAAuthSecret_GroupReadable: the bootstrap container writes the
+// file and the OPA container reads it under a different uid but the same
+// group, so the file must be group-readable and nothing more.
+func TestWriteOPAAuthSecret_GroupReadable(t *testing.T) {
+	dir := t.TempDir()
+	tokenFile := filepath.Join(dir, "token")
+	if err := os.WriteFile(tokenFile, []byte("s3cr3t\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	outDir := filepath.Join(dir, "opa-data")
+	if err := writeOPAAuthSecret(outDir, tokenFile, log.New(io.Discard, "", 0)); err != nil {
+		t.Fatalf("writeOPAAuthSecret: %v", err)
+	}
+	out := filepath.Join(outDir, "opa-auth-secret.json")
+	info, err := os.Stat(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := info.Mode().Perm(); got != 0o640 {
+		t.Fatalf("mode = %o, want 640", got)
+	}
+	content, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "{\"opa_auth_secret\":\"s3cr3t\"}\n"; string(content) != want {
+		t.Fatalf("content = %q, want %q", content, want)
+	}
+}
+
+// TestWriteOPAAuthSecret_MissingTokenFile: without a token the bootstrap
+// writes nothing and does not fail; OPA then denies every write.
+func TestWriteOPAAuthSecret_MissingTokenFile(t *testing.T) {
+	dir := t.TempDir()
+	outDir := filepath.Join(dir, "opa-data")
+	if err := writeOPAAuthSecret(outDir, filepath.Join(dir, "missing"), log.New(io.Discard, "", 0)); err != nil {
+		t.Fatalf("writeOPAAuthSecret: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(outDir, "opa-auth-secret.json")); !os.IsNotExist(err) {
+		t.Fatalf("expected no secret file, stat err = %v", err)
 	}
 }
