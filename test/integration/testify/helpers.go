@@ -75,13 +75,15 @@ type RuntimeConfig struct {
 	// The kind harness reads it from the chart's Secret. Default:
 	// "test-opa-auth-token".
 	OPAAuthToken string
-	// KubeNamespace, KubeAgentSelector and KubeDebugImage configure the stack
-	// driver (stack.go): the namespace the agent runs in, the label selector
-	// of its Pod, and the image whose `kill` signals the OPA container from an
-	// ephemeral container.
+	// KubeNamespace, KubeAgentSelector, KubeDebugImage and KubeOPAUID configure
+	// the stack driver (stack.go): the namespace the agent runs in, the label
+	// selector of its Pod, the image whose `kill` signals the OPA container
+	// from an ephemeral container, and the uid of the OPA image, used when
+	// neither the Pod nor the OPA container pins a runAsUser.
 	KubeNamespace     string
 	KubeAgentSelector string
 	KubeDebugImage    string
+	KubeOPAUID        int64
 }
 
 // LoadConfig builds RuntimeConfig from environment variables. The kind Job
@@ -126,7 +128,19 @@ func LoadConfig() RuntimeConfig {
 		KubeNamespace:         envOr("K8S_NAMESPACE", "authz-e2e"),
 		KubeAgentSelector:     envOr("K8S_AGENT_SELECTOR", "name=authz-agent"),
 		KubeDebugImage:        envOr("K8S_DEBUG_IMAGE", "local/authz-agent-pap-client:ci"),
+		KubeOPAUID:            envInt64("K8S_OPA_UID", 1000),
 	}
+}
+
+// envInt64 reads an integer environment variable, falling back on an unset or
+// malformed value.
+func envInt64(key string, fallback int64) int64 {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
+			return n
+		}
+	}
+	return fallback
 }
 
 func envOr(key, fallback string) string {

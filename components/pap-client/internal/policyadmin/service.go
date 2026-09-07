@@ -32,7 +32,7 @@ const (
 	// DefaultPullStatusFile is where PolicyPuller and MountWatcher record the
 	// first-pull latch.  Read by "pap-client healthcheck --readiness".
 	// Lives in the same emptyDir volume as the bootstrap status file so it is
-	// writable at uid 65534 without extra mounts.
+	// writable by the non-root runtime user without extra mounts.
 	DefaultPullStatusFile = "/var/run/authz/pull-status.json"
 	// DefaultM2MFile is where TokenWatcher writes the M2M bearer token so OPA
 	// can reload data.m2m from disk after a restart.  Path must produce the

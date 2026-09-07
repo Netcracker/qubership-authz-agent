@@ -21,11 +21,16 @@ spec:
         {{- include "authz-agent.commonLabels" . | nindent 8 }}
     spec:
       serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
+      # No runAsUser: on OpenShift the restricted SCC assigns every container of
+      # the Pod one uid from the namespace range and rejects a pinned one. On
+      # Kubernetes each container keeps the uid of its image (Envoy 101, OPA
+      # 1000, the Go images 10001) and gets runAsGroup 10001 in its own
+      # securityContext, so OPA can read what the bootstrap writes into the
+      # opa-data volume. The group is set per container, not here: containerd
+      # rejects a Pod-level runAsGroup without runAsUser when it creates the
+      # sandbox ("user group is specified without user").
       securityContext:
         runAsNonRoot: true
-        runAsUser: 65534
-        runAsGroup: 65534
-        fsGroup: 65534
       volumes:
         - name: runtime-config
           configMap:
@@ -43,12 +48,11 @@ spec:
             name: '{{ include "authz-agent.serviceName" . }}-policies'
         - name: decision-logs
           emptyDir: {}
-        # Writable scratch dirs for the pap-client bootstrap. The
-        # container image's /etc/opa and /var/run are root-owned and the
-        # Pod runs as uid 65534, so the bootstrap cannot create the JWKS
-        # and status sub-directories there without these emptyDir mounts.
-        # fsGroup=65534 (Pod-level securityContext) makes both volumes
-        # group-writable for the runtime user.
+        # Writable scratch dirs for the pap-client bootstrap. The container
+        # image's /etc/opa and /var/run are root-owned and the Pod does not run
+        # as root, so the bootstrap cannot create the JWKS and status
+        # sub-directories there without these emptyDir mounts. An emptyDir is
+        # world-writable, so no fsGroup is needed for them.
         - name: opa-data
           emptyDir: {}
         - name: authz-run
@@ -161,6 +165,9 @@ spec:
           # refresh, so its mtime shows the last refresh time when debugging.
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             capabilities:
               drop:
@@ -209,6 +216,9 @@ spec:
               readOnly: true
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             readOnlyRootFilesystem: false
             capabilities:
               drop:
@@ -252,6 +262,9 @@ spec:
               memory: '{{ .Values.ENVOY_MEM_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             capabilities:
               drop:
@@ -327,6 +340,9 @@ spec:
               memory: '{{ .Values.OPA_MEM_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             capabilities:
               drop:
@@ -481,6 +497,9 @@ spec:
               memory: '{{ .Values.PAP_CLIENT_MEM_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             capabilities:
               drop:
@@ -494,7 +513,7 @@ spec:
               value: '{{ .Values.AUTHZ_DECISION_LOG_PATH }}'
             # The collector binary reads DECISION_LOG_FILE (cmd/decision-log-collector
             # /main.go) and defaults to /var/log/authz/decision-logs.jsonl, which the
-            # uid 65534 runtime user cannot create. Without this the sink is
+            # non-root runtime user cannot create. Without this the sink is
             # unwritable: every OPA decision-log upload answers 500 and OPA retries
             # in a hot loop while the Pod stays Ready. Derived from
             # AUTHZ_DECISION_LOG_PATH so the file always lands in the mounted volume.
@@ -526,6 +545,9 @@ spec:
               memory: '{{ .Values.COLLECTOR_MEM_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             capabilities:
               drop:

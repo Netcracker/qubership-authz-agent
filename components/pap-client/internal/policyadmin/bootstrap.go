@@ -277,12 +277,13 @@ func writeOPAAuthSecret(opaDataDir, tokenFile string, logger *log.Logger) error 
 	if err := os.MkdirAll(opaDataDir, 0o755); err != nil {
 		return fmt.Errorf("mkdir %s: %w", opaDataDir, err)
 	}
-	// 0o600: both OPA and pap-client run as uid 1000 (OPA's default; pap-client's
-	// Dockerfile sets USER 1000 explicitly). The opa-data volume is an emptyDir
-	// in Kubernetes and a named Docker volume in Compose; in either case only
-	// uid-1000 processes can read this file, which is the desired access boundary
-	// for the OPA write-path auth secret (ADR-0077).
-	if err := os.WriteFile(outPath, append(content, '\n'), 0o600); err != nil {
+	// 0o640: the bootstrap container writes this file and the OPA container
+	// reads it. On Kubernetes the chart gives both the group 10001 while their
+	// uids differ (OPA's image runs as 1000, this one as 10001); on OpenShift
+	// every container of the Pod gets the same arbitrary uid. Group-readable
+	// keeps the OPA write-path auth secret inside the containers that mount the
+	// opa-data volume, which is the intended access boundary.
+	if err := os.WriteFile(outPath, append(content, '\n'), 0o640); err != nil {
 		return fmt.Errorf("write %s: %w", outPath, err)
 	}
 	logger.Printf("OPA auth secret written to %s (ADR-0077)", outPath)

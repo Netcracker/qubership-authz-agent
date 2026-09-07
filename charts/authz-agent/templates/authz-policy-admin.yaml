@@ -66,14 +66,18 @@ spec:
     spec:
       # No serviceAccountName: the stub calls no Kubernetes API, and it must not
       # inherit the agent's projected M2M token.
+      # No runAsUser, for the reason given in deployment.yaml. The stub writes
+      # to its PersistentVolume: on Kubernetes fsGroup makes the volume writable
+      # for the image user (10001), whose container also gets runAsGroup 10001;
+      # on OpenShift the restricted SCC assigns the uid and the fsGroup from the
+      # namespace range. Some CSI and NFS provisioners ignore fsGroup; the
+      # container then fails its startup write probe and reports the directory
+      # and uid in its logs.
       securityContext:
         runAsNonRoot: true
-        runAsUser: 65534
-        runAsGroup: 65534
-        # Makes the mounted volume group-writable for the runtime user. Some CSI
-        # and NFS provisioners ignore fsGroup; the container then fails its
-        # startup write probe and reports the directory and uid in its logs.
-        fsGroup: 65534
+        {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+        fsGroup: 10001
+        {{- end }}
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -127,6 +131,9 @@ spec:
               memory: '{{ .Values.AUTHZ_POLICY_ADMIN_MEM_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
+            {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
+            runAsGroup: 10001
+            {{- end }}
             # Safe at any value: every write lands on the mounted volume.
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
             capabilities:

@@ -57,6 +57,10 @@ spec:
               value: name=authz-agent
             - name: K8S_DEBUG_IMAGE
               value: local/authz-agent-pap-client:ci
+            # The uid of the upstream OPA image. The ephemeral container that
+            # signals OPA runs as this uid unless the Pod pins one.
+            - name: K8S_OPA_UID
+              value: "1000"
             - name: BASE_URL
               value: http://authz-agent:8080
             - name: OPA_DIRECT_URL

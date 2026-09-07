@@ -56,13 +56,16 @@ const serviceAccountDir = "/var/run/secrets/kubernetes.io/serviceaccount"
 // the OPA container's PID namespace sends the process SIGTERM, and the kubelet
 // restarts that container only. The OPA image has no shell, so the signal
 // comes from another image; the agent's own pap-client image is on the node
-// already and carries kill.
+// already and carries kill. A process may only signal processes of its own
+// uid, so the ephemeral container runs as OPA's uid: the one the Pod or the
+// OPA container pins, or the uid of the OPA image (K8S_OPA_UID).
 type kubeDriver struct {
 	apiServer  string
 	token      string
 	namespace  string
 	selector   string
 	debugImage string
+	opaUID     int64
 	client     *http.Client
 }
 
@@ -89,6 +92,7 @@ func newKubeDriver(cfg RuntimeConfig) (*kubeDriver, error) {
 		namespace:  cfg.KubeNamespace,
 		selector:   cfg.KubeAgentSelector,
 		debugImage: cfg.KubeDebugImage,
+		opaUID:     cfg.KubeOPAUID,
 		client: &http.Client{
 			Timeout: 15 * time.Second,
 			Transport: &http.Transport{
@@ -123,11 +127,24 @@ func (d *kubeDriver) do(method, path, contentType string, body []byte) ([]byte, 
 	return out, nil
 }
 
+// securityContext is the one field of a Pod or container securityContext the
+// driver reads.
+type securityContext struct {
+	RunAsUser *int64 `json:"runAsUser"`
+}
+
 // pod is the part of a Pod object the driver reads.
 type pod struct {
 	Metadata struct {
 		Name string `json:"name"`
 	} `json:"metadata"`
+	Spec struct {
+		SecurityContext securityContext `json:"securityContext"`
+		Containers      []struct {
+			Name            string          `json:"name"`
+			SecurityContext securityContext `json:"securityContext"`
+		} `json:"containers"`
+	} `json:"spec"`
 	Status struct {
 		Phase             string `json:"phase"`
 		ContainerStatuses []struct {
@@ -135,6 +152,21 @@ type pod struct {
 			RestartCount int    `json:"restartCount"`
 		} `json:"containerStatuses"`
 	} `json:"status"`
+}
+
+// uidOf returns the uid the named container runs as, when the Pod spec pins
+// it: the container's own runAsUser wins over the Pod-level one. ok is false
+// when neither is set and the uid comes from the image.
+func (p pod) uidOf(container string) (uid int64, ok bool) {
+	for _, c := range p.Spec.Containers {
+		if c.Name == container && c.SecurityContext.RunAsUser != nil {
+			return *c.SecurityContext.RunAsUser, true
+		}
+	}
+	if p.Spec.SecurityContext.RunAsUser != nil {
+		return *p.Spec.SecurityContext.RunAsUser, true
+	}
+	return 0, false
 }
 
 func (p pod) restartCount(container string) int {
@@ -180,6 +212,10 @@ func (d *kubeDriver) RestartOPA() error {
 		return fmt.Errorf("pod %s has no opa container", p.Metadata.Name)
 	}
 
+	uid, ok := p.uidOf("opa")
+	if !ok {
+		uid = d.opaUID
+	}
 	patch, err := json.Marshal(map[string]any{
 		"spec": map[string]any{
 			"ephemeralContainers": []map[string]any{{
@@ -188,6 +224,7 @@ func (d *kubeDriver) RestartOPA() error {
 				"imagePullPolicy":     "Never",
 				"command":             []string{"kill", "1"},
 				"targetContainerName": "opa",
+				"securityContext":     map[string]any{"runAsUser": uid},
 			}},
 		},
 	})
