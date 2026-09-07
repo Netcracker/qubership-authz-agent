@@ -108,8 +108,7 @@ per scenario family above.
 If the canonical Lua transform changes (forbidden by D6 except via a
 follow-on ADR) or the existing canonical fixtures gain new fields,
 update each snapshot to match. The transform is reproducible by hand
-from the audit table; no runtime stack is required. Run
-`bash tests/parity/scripts/run-parity-suite.sh` (PARITY_PROFILE=authz-agent)
+from the audit table; no runtime stack is required. Run `make parity`
 after editing to confirm the integration parity test still asserts
 byte-equality.
 

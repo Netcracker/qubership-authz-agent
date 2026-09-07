@@ -44,7 +44,7 @@ func RunSmokePhase(ctx context.Context, cfg Config, tokens *TokenFactory, pipMoc
 		//
 		// The GENERAL-PIP parity assertions (steps 9 / 10 / 11) stay
 		// skipped pending a separate investigation: the pip-stub route
-		// pinning the suite uses against the authz-agent parity compose
+		// pinning the suite uses against the authz-agent parity harness
 		// is not plumbed through the dedicated `parity-authz-pip-mock`
 		// network alias today, and the GENERAL-PIP HTTP probe from
 		// pap-client hits a different control plane than smoke.go

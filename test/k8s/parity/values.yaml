@@ -12,9 +12,9 @@ MESH_ROUTES_ENABLED: false
 # realm here, with the parity-m2m client.
 IDENTITY_PROVIDER_URL: http://idp:8080
 
-# The parity realm, exactly as test/parity/compose/authz-agent-config/
-# trusted-providers.json declares it: `allowMissingAud` is load-bearing, the
-# end-user client of that realm mints tokens without an aud claim on purpose.
+# The parity realm as an explicit trusted provider. `allowMissingAud` is
+# load-bearing: the end-user client of that realm mints tokens without an aud
+# claim on purpose.
 AUTHZ_TRUSTED_PROVIDERS:
   - id: parity-realm
     issuer: http://idp:8080/auth/realms/parity

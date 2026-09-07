@@ -182,10 +182,10 @@ var Catalog = []StepEntry{
 	{"wildcard_access.restore_original_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
 
 	// ── m2m_keycloak (Step 15) ──────────────────────────────────────────
-	// These steps run only when M2M_KEYCLOAK_PROFILE=true (activated by
-	// docker-compose.m2m-keycloak.yml overlay). In the default static-token
-	// profile they are skipped — the step body calls t.Skip() so the
-	// catalog coverage check still passes.
+	// These steps run only when M2M_KEYCLOAK_PROFILE=true, as the kind
+	// harness sets it. Against an agent with a static M2M token they are
+	// skipped — the step body calls t.Skip() so the catalog coverage check
+	// still passes.
 	{"m2m_keycloak.pull_succeeds_with_keycloak_token", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"m2m_keycloak.agent_functional_after_token_refresh", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 

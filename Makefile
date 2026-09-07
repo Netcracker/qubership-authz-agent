@@ -51,7 +51,7 @@ KIND_CLUSTER ?= authz-e2e
 E2E_NAMESPACE ?= authz-e2e
 E2E_ARTIFACTS ?= test/artifacts/kind
 E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
-E2E_AUTHN := test/integration/runtime/authn/keycloak
+E2E_AUTHN := test/k8s/authn
 E2E_IMAGES := authz-agent-pap-client authz-agent-envoy authz-agent-collector \
               authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite \
               authz-parity-suite
@@ -95,6 +95,16 @@ e2e-suite:
 	$(E2E_KUBECTL) logs -f job/runtime-suite
 	$(E2E_KUBECTL) wait --for=condition=Complete job/runtime-suite --timeout=1m
 
+# `make e2e-images` rebuilds the local images under the same tags, and a
+# running Pod keeps the old content: the kubelet never re-reads a tag it
+# already has. Restart every Deployment that runs a local image and wait until
+# it is Ready again, so the next `e2e-suite` tests the new build. Keycloak is
+# pulled, not built, and keeps running.
+E2E_LOCAL_DEPLOYMENTS := authz-agent authz-agent-authz-policy-admin pip-stub entitlements-mock
+e2e-restart:
+	$(E2E_KUBECTL) rollout restart $(addprefix deploy/,$(E2E_LOCAL_DEPLOYMENTS))
+	for d in $(E2E_LOCAL_DEPLOYMENTS); do $(E2E_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done
+
 # Everything needed to read a failed run: every container log on the node,
 # the namespace events, and the decision logs downloaded through Envoy.
 e2e-logs:
@@ -112,7 +122,7 @@ e2e-down:
 # cluster and the images with the e2e targets above.
 PARITY_NAMESPACE ?= authz-parity
 PARITY_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(PARITY_NAMESPACE)
-PARITY_SEED := test/parity/compose/idp-seed
+PARITY_SEED := test/k8s/parity/idp-seed
 
 parity: e2e-cluster e2e-images parity-harness parity-install parity-suite
 
@@ -139,10 +149,16 @@ parity-suite:
 	$(PARITY_KUBECTL) logs -f job/parity-suite
 	$(PARITY_KUBECTL) wait --for=condition=Complete job/parity-suite --timeout=1m
 
+# The parity counterpart of e2e-restart, for the same reason.
+PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-agent-authz-policy-admin pip-mock entitlements-mock
+parity-restart:
+	$(PARITY_KUBECTL) rollout restart $(addprefix deploy/,$(PARITY_LOCAL_DEPLOYMENTS))
+	for d in $(PARITY_LOCAL_DEPLOYMENTS); do $(PARITY_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done
+
 parity-logs:
 	mkdir -p $(E2E_ARTIFACTS)/parity
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
 
-.PHONY: copy-policies lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-logs
+.PHONY: copy-policies lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs

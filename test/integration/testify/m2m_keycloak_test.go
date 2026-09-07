@@ -22,12 +22,11 @@ package runtimetest
 //	token-fetcher sidecar → AUTHZ_PAP_CLIENT_TOKEN_FILE → TokenWatcher → OPA
 //	data.m2m.bearerToken → PolicyPuller Authorization header → authz-policy-admin → OPA policies.
 //
-// The tests run only when M2M_KEYCLOAK_PROFILE=true, which is set by
-// test-envoy-runtime.sh when the m2m-keycloak Compose overlay is active
-// (docker-compose.m2m-keycloak.yml). In the default static-token profile
-// the steps are skipped via t.Skip() so the catalog coverage check passes.
+// The tests run only when M2M_KEYCLOAK_PROFILE=true, which the kind harness
+// sets because its chart values run the token-fetcher sidecar against the
+// harness Keycloak. Against an agent with a static M2M token the steps are
+// skipped via t.Skip() so the catalog coverage check passes.
 //
-// Compose overlay: tests/integration/runtime/docker-compose.m2m-keycloak.yml
 // Test client: cloud-common realm / test-app-client (client_credentials)
 func (s *RuntimeSuite) TestM2MKeycloak() {
 	// (a) Policy pull succeeds with Keycloak token.
@@ -43,7 +42,7 @@ func (s *RuntimeSuite) TestM2MKeycloak() {
 	// end-to-end — if the pull had failed the agent would not have returned 200.
 	s.Step("m2m_keycloak.pull_succeeds_with_keycloak_token", func() {
 		if !s.cfg.M2MKeycloakProfile {
-			s.T().Skip("m2m-keycloak Compose profile not active (M2M_KEYCLOAK_PROFILE != true)")
+			s.T().Skip("M2M Keycloak profile not active (M2M_KEYCLOAK_PROFILE != true)")
 		}
 		// /access/v1/check/resource with a valid admin token must return 200,
 		// proving that OPA has loaded policies from the pull loop that ran with
@@ -71,7 +70,7 @@ func (s *RuntimeSuite) TestM2MKeycloak() {
 	// functionality.
 	s.Step("m2m_keycloak.agent_functional_after_token_refresh", func() {
 		if !s.cfg.M2MKeycloakProfile {
-			s.T().Skip("m2m-keycloak Compose profile not active (M2M_KEYCLOAK_PROFILE != true)")
+			s.T().Skip("M2M Keycloak profile not active (M2M_KEYCLOAK_PROFILE != true)")
 		}
 		// Allow at least one full pull interval to elapse so any in-flight
 		// token refresh and re-publish cycle has completed.

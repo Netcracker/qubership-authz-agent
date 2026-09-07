@@ -37,8 +37,7 @@ import (
 
 // Spec path is resolved relative to the testify directory (the cwd when
 // `go test` runs). The runtime suite must execute from this directory; the
-// canonical entry point `bash test/scripts/test-envoy-runtime.sh` cd's
-// here before invoking `go test`.
+// suite image (Dockerfile) copies the spec to the matching path.
 const specPathRelative = "../../../api/openapi.yaml"
 
 var (

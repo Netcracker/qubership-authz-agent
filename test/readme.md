@@ -166,8 +166,8 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | Policy language semantics | `P0` | Operator coverage, precedence, parentheses, JSONPath behavior, `has access`, normalized `conditionAst` evaluation, predicate passthrough | `policies/policy_language_contract_test.rego` |
 | Token verification and subject normalization | `P0` | Valid token, expired token, wrong issuer, unknown `kid`, no roles, `realm_access.roles` only, non-realm claim ignored, service token, object-form `subject` rejection, anonymous compatibility mode | `policies/token_auth_contract_test.rego` |
 | Legacy v1 endpoint mapping | `P0` | `/access/v1/check/resource`, `/access/v1/check/resource/bulk`, `/access/v1/check/filter` request mapping, response remapping, stable error shape, tenant pass-through ignored in decisioning | Rego contract tests plus runtime checks |
-| Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization`-only token source (ADR-0021), `Incoming-Token` ignored, admission `401` mapping, deterministic DENY reasons, mounted runtime data wiring | `test/integration/runtime/` via `test/scripts/test-envoy-runtime.sh` |
-| Envoy route and Lua wiring | `P1` | Route-specific Lua selection, `prefix_rewrite` behavior, public non-exposure of `/authorize`, `/v1/data/authorize`, and `/v1/data/authorize/result`, malformed body handling, query/header propagation | Runtime stack checks under `test/integration/runtime/` |
+| Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization`-only token source (ADR-0021), `Incoming-Token` ignored, admission `401` mapping, deterministic DENY reasons, mounted runtime data wiring | the kind harness under `test/k8s/` via `make e2e` |
+| Envoy route and Lua wiring | `P1` | Route-specific Lua selection, `prefix_rewrite` behavior, public non-exposure of `/authorize`, `/v1/data/authorize`, and `/v1/data/authorize/result`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
 | Simplified policy normalization | `P1` | OLS/RLS split, role-scoped RLS index, `conditionAst` usage, `condition=true` fallback, `predicate=true` fallback, explicit-role wildcard normalization for `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL`, unconditional-access short-circuit semantics for all wildcard buckets, unknown field preservation | New unit suite under `tests/unit/` |
 | Deferred legacy v1 bulk operations and preview APIs | `Deferred` | Historical baseline only: `/access/v1/check/resource/bulk/operations` and `/preview/v1/check/resource/bulk/operations` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
 | Deferred legacy v2 APIs and `/api-version` | `Deferred` | Historical baseline only: `/access/v2/check/resource`, `/access/v2/check/resource/bulk/operations`, `/preview/v2/check/resource/bulk/operations`, `/access/v2/check/filter`, and `/api-version` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
@@ -232,8 +232,9 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 
 ### 6. Runtime and Deployment Wiring
 
-- `docker compose up -d` brings up Keycloak plus the split authz runtime (`envoy`, `opa`, `decision-log-collector`) without pre-generated JWKS files.
-- Runtime tests execute from the host via `go test` (Testify suite under `test/integration/testify/`).
+- `make e2e-harness` and `make e2e-install` bring up Keycloak plus the agent from the Helm chart (`envoy`, `opa`,
+  `pap-client`, `decision-log-collector`) without pre-generated JWKS files.
+- Runtime tests execute as a Job inside the cluster (Testify suite under `test/integration/testify/`).
 - Runtime stack loads mounted policy data instead of relying on image-baked defaults.
 - OIDC discovery bootstrap populates runtime authn data before compatibility checks run.
 - Envoy routes still forward `/access/v1/authorize` and all supported compatibility endpoints to `/v1/data/authorize`.
@@ -245,7 +246,8 @@ The minimum CI gate for compatibility-sensitive changes should run:
 
 1. `test/scripts/test-opa.sh`
 2. `test/scripts/test-chart-render.sh`
-3. `test/scripts/test-envoy-runtime.sh`
+3. `make e2e` (the Testify suite on kind)
+4. `make parity` (the parity replay on kind)
 
 For running the runtime suite locally on a clean machine — prerequisites, the
 images the stack needs, ports, target platform, and troubleshooting — see

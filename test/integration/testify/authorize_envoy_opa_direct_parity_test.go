@@ -38,10 +38,8 @@ import (
 // test fires the two requests back-to-back with the same X-Request-Id and
 // the same body bytes.
 //
-// Deferred per the canonical OPA-direct + Envoy parity handover (Step 13):
-// requires the live runtime stack to actually green. The test is integration-
-// build-tagged and will run automatically with the rest of the testify suite
-// once the live compose stack is up.
+// The test is integration-build-tagged and runs with the rest of the testify
+// suite against a live stack.
 func (s *RuntimeSuite) TestAuthorizeEnvoyOpaDirectParity() {
 	s.Step("authorize.envoy_opa_direct.bytewise_response_parity", func() {
 		token := "Bearer " + s.validAdminToken

@@ -28,8 +28,8 @@ import (
 // examples by default, and EnableExamplesValidation pins that behaviour so a
 // future library default flip cannot silently drop the guard. The same
 // LoadFromFile + Validate call is used at runtime in spec_conformance.go, so
-// these tests catch a malformed spec (or a drifted example) before Docker
-// Compose boots. Neither test carries a build tag — both run under
+// these tests catch a malformed spec (or a drifted example) before a stack
+// is built. Neither test carries a build tag — both run under
 // `go test ./...` in this directory without the integration tag.
 func loadSpecForLint(t *testing.T) *openapi3.T {
 	t.Helper()

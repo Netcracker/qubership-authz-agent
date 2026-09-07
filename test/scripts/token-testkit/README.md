@@ -22,4 +22,4 @@ test/scripts/token-testkit/refresh-rego-fixtures.sh
 ```
 
 Generated artifacts are written to `/tmp/authz-token-testkit` by default.
-These scripts are not used by `test/scripts/test-envoy-runtime.sh`, which requests runtime tokens from Keycloak.
+These scripts are not used by the runtime suite, which requests its tokens from the harness Keycloak.

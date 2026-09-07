@@ -1,8 +1,7 @@
 # Runs the parity replay suite inside the cluster against the chart that
 # `make parity-install` installed. The image comes from
 # test/parity/suite/Dockerfile and is side-loaded into kind. Every target is
-# addressed by Service name; the PARITY_* block mirrors
-# test/parity/scripts/run-parity-suite.sh.
+# addressed by Service name.
 apiVersion: batch/v1
 kind: Job
 metadata:

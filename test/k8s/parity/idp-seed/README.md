@@ -1,8 +1,8 @@
 # Parity IdP seed realms
 
-These realm files are imported by the `idp` service in
-[docker-compose.authz-agent.yml](../docker-compose.authz-agent.yml) with Keycloak's
-`--import-realm`.
+These realm files are imported by the `idp` Deployment in [keycloak.yaml](../keycloak.yaml)
+with Keycloak's `--import-realm`; `make parity-harness` packs them into the `parity-realms`
+ConfigMap.
 
 ## Why the notes live here and not in the JSON
 

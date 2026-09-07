@@ -6,7 +6,8 @@ apply them by hand. CI runs the same targets one step at a time.
 
 | File | What it is |
 | --- | --- |
-| `keycloak.yaml` | Keycloak with the realm imports from `test/integration/runtime/authn/keycloak/` |
+| `keycloak.yaml` | Keycloak with the realm imports from `authn/` |
+| `authn/` | The realm imports, their description, and the M2M client credentials |
 | `pip-stub.yaml` | The PIP stub the uploaded PIP definitions call |
 | `entitlements-mock.yaml` | A second stub instance for the entitlements endpoint |
 | `values.yaml` | Chart values that point the agent at the harness Services |
@@ -14,15 +15,16 @@ apply them by hand. CI runs the same targets one step at a time.
 | `runtime-suite-rbac.yaml` | ServiceAccount and Role the suite uses to restart the OPA container |
 
 The ConfigMap with the realm imports and the M2M client-credentials Secret
-are generated from the files under `test/integration/runtime/authn/keycloak/`
-by `make e2e-harness`, so they have no manifest of their own.
+are generated from the files under `authn/` by `make e2e-harness`, so they
+have no manifest of their own.
 
 `parity/` holds the same shape for the parity replay suite (`test/parity`):
-Keycloak as `idp` with the realm imports from `test/parity/compose/idp-seed/`,
+Keycloak as `idp` with the realm imports from `parity/idp-seed/`,
 `pip-mock` with the request-args rule set, `entitlements-mock`, chart values
 with the parity realm as an explicit trusted provider, and the suite Job built
-from `test/parity/suite/Dockerfile`. It runs in its own namespace so its
-Service names match the Compose parity stack.
+from `test/parity/suite/Dockerfile`. It runs in its own namespace, so its
+Keycloak can be named `idp`, the issuer host in the parity realm's tokens,
+next to the e2e namespace's `keycloak`.
 
 ## Run
 
@@ -43,9 +45,10 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
 | `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `values.yaml` and `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
+| `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 
 The parity targets mirror these: `parity-harness`, `parity-install`,
-`parity-suite`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
+`parity-suite`, `parity-restart`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
 cluster and image targets first, then the three.
 
 `KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`

@@ -71,7 +71,8 @@ verified from a clean clone on public images.
 
 - Go 1.24+
 - [OPA CLI](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (for Rego tests; also installable via `bash test/scripts/install-opa.sh`)
-- Docker and Docker Compose (for integration, parity and load suites)
+- Docker, `kind`, and `kubectl` (for the integration and parity suites, which run on kind)
+- Docker Compose (for the load suite only)
 - `helm` (for chart render test)
 
 ### Unit tests — Go
@@ -105,28 +106,9 @@ bash test/scripts/test-chart-render.sh
 
 ### Integration test suite
 
-Requires Docker Compose and externally reachable images (public by default).
-
-```sh
-# Build local images first
-bash test/scripts/build-runtime-images.sh
-
-# Render Envoy/OPA configs from templates
-bash test/scripts/render-runtime-configs.sh
-
-# Run all integration tests (starts the compose stack automatically)
-bash test/scripts/test-envoy-runtime.sh
-```
-
-Expected: ~164 PASS, 0 FAIL, 2 SKIP (m2m-keycloak tests require
-`RUN_M2M_KEYCLOAK_PROFILE=true`).
-
-### Kind end-to-end
-
-Installs the Helm chart on a kind cluster and runs the runtime suite against
-it from inside the cluster. This is the integration check CI runs
-(`.github/workflows/integration-tests.yaml`); the Compose stack above is the
-older local harness. Requires Docker, `kind`, `kubectl`, and `helm`.
+Runs the Testify suite as a Job inside a kind cluster, against the Helm chart.
+This is the check CI runs (`.github/workflows/integration-tests.yaml`).
+Requires Docker, `kind`, `kubectl`, and `helm`.
 
 ```sh
 make e2e          # cluster, images, harness, chart, suite
@@ -134,8 +116,10 @@ make e2e-logs     # container logs, events, decision logs into test/artifacts/ki
 make e2e-down     # delete the cluster
 ```
 
-See [test/k8s/README.md](test/k8s/README.md) for the individual targets and
-for the suite groups the kind run does not cover yet.
+Expected: 20 groups pass, including the two catalog coverage checks. See
+[test/k8s/README.md](test/k8s/README.md) for the individual targets and
+[docs/local-integration-tests.md](docs/local-integration-tests.md) for a
+walkthrough from a clean machine.
 
 ### Parity replay
 
@@ -145,20 +129,11 @@ a frozen capture; they cannot be regenerated from this repository (see
 `test/parity/README.md`).
 
 ```sh
-# Build images (uses public base images)
-bash test/parity/scripts/build-images.sh
-
-# Run replay
-PARITY_PROFILE=authz-agent bash test/parity/scripts/run-parity-suite.sh
+make parity        # harness, chart, suite in namespace authz-parity
+make parity-logs   # artifacts into test/artifacts/kind/parity/
 ```
 
-Expected: 135/135 PASS.
-
-The same replay runs on kind against the Helm chart, which is what CI does:
-
-```sh
-make parity
-```
+Expected: 135/135 PASS. This is what CI runs (job `Parity on kind`).
 
 ### Load harness smoke check
 
