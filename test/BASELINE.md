@@ -29,11 +29,11 @@ quay.io); no external infrastructure is required beyond Docker.
   augmentation can take ~60 s on first pull.
 - The Envoy image ships `wget`, not `curl`; its healthchecks use
   `wget -q -O /dev/null http://localhost:9901/ready`.
-- `TestOPARestart` is order-independent: restarting the OPA container replaces its
-  network namespace, so the test also restarts `pap-client` (which runs with
-  `network_mode: "service:opa"`) once OPA is healthy again, then polls the
-  pap-client `/health` endpoint until a pull cycle completes before asserting
-  decisions. Later tests therefore never observe stale OPA state.
+- `TestOPARestart` is order-independent: the stack driver signals the OPA process
+  from an ephemeral container and the kubelet restarts that container only, with
+  `pap-client` untouched. The test polls OPA's `/health`, then waits for a pull
+  cycle before asserting decisions. Later tests therefore never observe stale OPA
+  state.
 - Golden collection is not possible from this repository: the goldens under
   `test/parity/suite/testdata/golden/` are a frozen capture — see
   `test/parity/README.md`.

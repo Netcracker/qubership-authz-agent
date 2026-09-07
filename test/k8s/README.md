@@ -45,9 +45,10 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
 | `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `values.yaml` and `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
+| `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 
 The parity targets mirror these: `parity-harness`, `parity-install`,
-`parity-suite`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
+`parity-suite`, `parity-restart`, and `parity-logs`, all in `PARITY_NAMESPACE`. `parity` runs the
 cluster and image targets first, then the three.
 
 `KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`

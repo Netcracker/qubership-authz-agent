@@ -49,8 +49,10 @@ the host. To look at the stack from the host, port-forward, for example
 
 ### Iterating
 
-After a change to the suite or the product, `make e2e-images parity-suite` rebuilds the images and reruns the Job; the
-harness and the chart stay. `make parity-install parity-suite` picks up changed chart values.
+After a change to the suite, `make e2e-images parity-suite` rebuilds the images and reruns the Job; the harness and
+the chart stay. After a change to the product, run `make e2e-images parity-restart parity-suite`: the images keep their
+tags, so the running Pods have to be restarted to pick the new build up. `make parity-install parity-suite` picks up
+changed chart values.
 
 ### Teardown
 

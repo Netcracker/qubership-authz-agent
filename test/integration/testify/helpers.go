@@ -85,8 +85,9 @@ type RuntimeConfig struct {
 }
 
 // LoadConfig builds RuntimeConfig from environment variables. The kind Job
-// (test/k8s/runtime-suite-job.yaml) sets every address to a Service name; the
-// defaults suit a run from the host through port-forwards.
+// (test/k8s/runtime-suite-job.yaml) sets every address to a Service name. The
+// defaults only keep the config well-formed: the suite runs inside the
+// cluster, because the stack driver needs the Pod's ServiceAccount (stack.go).
 func LoadConfig() RuntimeConfig {
 	waitSec := 6
 	if v := os.Getenv("KC_EXPIRED_WAIT_SECONDS"); v != "" {

@@ -114,7 +114,10 @@ make e2e-down     # delete the cluster
 
 ## 6. Iterating
 
-- Changed suite or product code: `make e2e-images e2e-suite`. The harness and the chart stay; the Job is recreated.
+- Changed the suite only: `make e2e-images e2e-suite`. The harness and the chart stay; the Job is recreated.
+- Changed product code: `make e2e-images e2e-restart e2e-suite`. The images are rebuilt under the same tags, and a
+  running Pod keeps the old content until it is restarted; `e2e-restart` restarts every Deployment that runs a local
+  image and waits until it is Ready again. Without it the suite tests the previous build.
 - Changed chart values: `make e2e-install e2e-suite`.
 - Re-running `e2e-harness` on its own replaces the Keycloak Pod, and a dev-mode Keycloak mints new realm keys on every
   start. Restart the agent afterwards so its JWKS bootstrap picks the new keys up, or the suite fails at
