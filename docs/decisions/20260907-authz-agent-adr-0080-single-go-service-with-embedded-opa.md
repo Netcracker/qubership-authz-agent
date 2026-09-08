@@ -1,15 +1,23 @@
 # Replace Envoy, the Lua filters, and the OPA container with one Go service that embeds OPA
 
 ## Status
+
 Proposed
+
+<!-- markdownlint-disable-next-line MD001 -->
 #### Date
 
 #### Owner
+
 kichasov
+
 #### Participants and approvers
+
 Netcracker/qubership-authz-agent maintainers (kichasov). Assumption: the repository maintainers sign off; no other
 team is affected until the chart switches.
+
 #### Related ADRs
+
 - [authz-agent-ADR-0062: Canonical OPA-Direct And Envoy Parity](20260602-authz-agent-adr-0062-canonical-opa-direct-envoy-parity.md):
   defines the canonical `/access/v1/authorize` contract this record keeps unchanged. The OPA-direct transport it
   introduced disappears with the OPA container; see Consequences.
