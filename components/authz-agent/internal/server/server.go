@@ -37,6 +37,9 @@ import (
 // versions the legacy service announces, kept byte for byte.
 const LegacyAPIVersion = `{"specs":[{"specRootUrl":"/access","major":3,"minor":0,"supportedMajors":[1,2,3]},{"specRootUrl":"/api","major":1,"minor":1,"supportedMajors":[1]},{"specRootUrl":"/template","major":1,"minor":0,"supportedMajors":[1]},{"specRootUrl":"/preview","major":2,"minor":0,"supportedMajors":[1,2]}]}`
 
+// decodeErrorPrefix opens the message of a request body OPA could not decode.
+const decodeErrorPrefix = "error(s) occurred while decoding request: "
+
 // Options tune the routes.
 type Options struct {
 	// Authorization guards every /v1/data request with data.system.authz.allow,
@@ -142,11 +145,11 @@ func (s *Server) decide(c *fiber.Ctx, segments []string) error {
 			Input json.RawMessage `json:"input"`
 		}
 		if err := json.Unmarshal(body, &req); err != nil {
-			return opaError(c, http.StatusBadRequest, "invalid_parameter", "error(s) occurred while decoding request: "+err.Error())
+			return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
 		}
 		if len(req.Input) > 0 {
 			if err := util.UnmarshalJSON(req.Input, &input); err != nil {
-				return opaError(c, http.StatusBadRequest, "invalid_parameter", "error(s) occurred while decoding request: "+err.Error())
+				return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
 			}
 		}
 	}
@@ -185,22 +188,29 @@ func (s *Server) logDecision(c *fiber.Ctx, id string, segments []string, input, 
 		}
 	}
 	if names := s.logs.Headers(); len(names) > 0 {
-		headers := map[string][]string{}
-		all := c.GetReqHeaders()
-		for _, name := range names {
-			for k, values := range all {
-				if strings.EqualFold(k, name) {
-					copied := make([]string, len(values))
-					for i, v := range values {
-						copied[i] = strings.Clone(v)
-					}
-					headers[name] = copied
-				}
-			}
-		}
-		ev.RequestContext = &decisionlog.RequestContext{HTTP: &decisionlog.HTTPRequestContext{Headers: headers}}
+		ev.RequestContext = &decisionlog.RequestContext{HTTP: &decisionlog.HTTPRequestContext{Headers: recordedHeaders(c, names)}}
 	}
 	s.logs.Log(ev)
+}
+
+// recordedHeaders copies the values of the named request headers, keyed by
+// the configured lowercase names, out of the request buffer.
+func recordedHeaders(c *fiber.Ctx, names []string) map[string][]string {
+	headers := map[string][]string{}
+	all := c.GetReqHeaders()
+	for _, name := range names {
+		for k, values := range all {
+			if !strings.EqualFold(k, name) {
+				continue
+			}
+			copied := make([]string, len(values))
+			for i, v := range values {
+				copied[i] = strings.Clone(v)
+			}
+			headers[name] = copied
+		}
+	}
+	return headers
 }
 
 // put stores the request body as the document, as PUT /v1/data/<path>.
@@ -211,7 +221,7 @@ func (s *Server) put(c *fiber.Ctx) error {
 	}
 	var value any
 	if err := util.UnmarshalJSON(c.Body(), &value); err != nil {
-		return opaError(c, http.StatusBadRequest, "invalid_parameter", "error(s) occurred while decoding request: "+err.Error())
+		return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
 	}
 	if err := s.engine.Put(c.UserContext(), segments, value); err != nil {
 		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
@@ -224,7 +234,7 @@ func (s *Server) put(c *fiber.Ctx) error {
 func (s *Server) patch(c *fiber.Ctx) error {
 	var ops []engine.PatchOp
 	if err := util.UnmarshalJSON(c.Body(), &ops); err != nil {
-		return opaError(c, http.StatusBadRequest, "invalid_parameter", "error(s) occurred while decoding request: "+err.Error())
+		return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
 	}
 	err := s.engine.Patch(c.UserContext(), dataSegments(c), ops)
 	switch {

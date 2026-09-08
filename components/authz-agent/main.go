@@ -32,6 +32,8 @@ import (
 	"github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2/security"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 	"github.com/netcracker/qubership-core-lib-go/v3/logging"
+	// memlimit sets the Go memory limit from the container's cgroup limit in
+	// its init function; importing it is the whole configuration.
 	_ "github.com/netcracker/qubership-core-lib-go/v3/memlimit"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 

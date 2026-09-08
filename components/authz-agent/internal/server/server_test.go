@@ -169,8 +169,9 @@ func TestDecide_BadBodyAndUndefined(t *testing.T) {
 }
 
 // TestDataAPI_GuardedByPolicy: without the secret a write and a read are
-// refused with 401 in OPA's shape; with it, PUT stores, GET reads, PATCH
-// updates, and a PATCH on a missing document is 404.
+// refused with 401 in OPA's shape; with it, PUT stores, GET reads, and the
+// next decision sees the new document. PATCH is what the test policy does
+// not open, so it stays refused even with the secret.
 func TestDataAPI_GuardedByPolicy(t *testing.T) {
 	app, _ := newApp(t, true, nil, nil)
 	if code, body, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "x"}`, nil); code != 401 || body["code"] != "unauthorized" {
@@ -192,23 +193,32 @@ func TestDataAPI_GuardedByPolicy(t *testing.T) {
 	if code, _, _ := do(t, app, http.MethodPatch, "/v1/data/authn", `[{"op":"add","path":"/k","value":1}]`, auth); code != 401 {
 		t.Fatalf("PATCH is not allowed by the test policy: %d", code)
 	}
-	app2, _ := newApp(t, false, nil, nil)
-	if code, body, _ := do(t, app2, http.MethodPatch, "/v1/data/authn", `[{"op":"add","path":"/k","value":1}]`, nil); code != 404 || body["code"] != "resource_not_found" {
-		t.Fatalf("PATCH on a missing document: %d %v", code, body)
+}
+
+// TestDataAPI_WriteSemantics: with the guard off, PATCH on a missing
+// document is 404 so a writer can fall back to PUT, PATCH on an existing one
+// updates it, an unsupported op and a bad body are 400, the root cannot be
+// replaced, and a missing document reads as an empty object.
+func TestDataAPI_WriteSemantics(t *testing.T) {
+	app, _ := newApp(t, false, nil, nil)
+	cases := []struct {
+		name, method, path, body string
+		status                   int
+		code                     string
+	}{
+		{"patch missing document", http.MethodPatch, "/v1/data/authn", `[{"op":"add","path":"/k","value":1}]`, 404, "resource_not_found"},
+		{"patch existing document", http.MethodPatch, "/v1/data/users", `[{"op":"add","path":"/admin","value":"bob"}]`, 204, ""},
+		{"patch with an unsupported op", http.MethodPatch, "/v1/data/users", `[{"op":"move","path":"/admin"}]`, 400, "invalid_parameter"},
+		{"put on the root", http.MethodPut, "/v1/data/", `{}`, 400, "invalid_parameter"},
+		{"put with a bad body", http.MethodPut, "/v1/data/users", `{`, 400, "invalid_parameter"},
 	}
-	if code, _, _ := do(t, app2, http.MethodPatch, "/v1/data/users", `[{"op":"add","path":"/admin","value":"bob"}]`, nil); code != 204 {
-		t.Fatalf("PATCH existing: %d", code)
+	for _, tc := range cases {
+		code, body, _ := do(t, app, tc.method, tc.path, tc.body, nil)
+		if code != tc.status || (tc.code != "" && body["code"] != tc.code) {
+			t.Errorf("%s: %d %v, want %d %s", tc.name, code, body, tc.status, tc.code)
+		}
 	}
-	if code, body, _ := do(t, app2, http.MethodPatch, "/v1/data/users", `[{"op":"move","path":"/admin"}]`, nil); code != 400 || body["code"] != "invalid_parameter" {
-		t.Fatalf("PATCH with an unsupported op: %d %v", code, body)
-	}
-	if code, _, _ := do(t, app2, http.MethodPut, "/v1/data/", `{}`, nil); code != 400 {
-		t.Fatalf("PUT on the root: %d", code)
-	}
-	if code, _, _ := do(t, app2, http.MethodPut, "/v1/data/users", `{`, nil); code != 400 {
-		t.Fatalf("PUT with a bad body: %d", code)
-	}
-	if code, _, raw := do(t, app2, http.MethodGet, "/v1/data/missing", "", nil); code != 200 || raw != "{}" {
+	if code, _, raw := do(t, app, http.MethodGet, "/v1/data/missing", "", nil); code != 200 || raw != "{}" {
 		t.Fatalf("GET missing: %d %s", code, raw)
 	}
 }

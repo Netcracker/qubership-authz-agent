@@ -99,7 +99,9 @@ func New(cfg Config, warn func(format string, args ...any)) *Logger {
 		cfg.Labels = map[string]string{}
 	}
 	if warn == nil {
-		warn = func(string, ...any) {}
+		warn = func(string, ...any) {
+			// A caller that passes no callback wants failures discarded.
+		}
 	}
 	return &Logger{
 		cfg:    cfg,
@@ -176,7 +178,9 @@ func (l *Logger) Run(ctx context.Context) {
 			for len(l.events) > 0 {
 				batch = append(batch, <-l.events)
 			}
-			final, cancel := context.WithTimeout(context.Background(), l.cfg.Timeout)
+			// ctx is done by now; keep its values but not its cancellation for
+			// the last upload.
+			final, cancel := context.WithTimeout(context.WithoutCancel(ctx), l.cfg.Timeout)
 			flush(final)
 			cancel()
 			return

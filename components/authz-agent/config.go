@@ -121,17 +121,25 @@ func splitList(s string) []string {
 // opaConfig is the part of OPA's configuration file the service honors: the
 // decision log service and the request headers recorded per decision.
 type opaConfig struct {
-	DecisionLogs struct {
-		Service        string `yaml:"service"`
-		RequestContext struct {
-			HTTP struct {
-				Headers []string `yaml:"headers"`
-			} `yaml:"http"`
-		} `yaml:"request_context"`
-	} `yaml:"decision_logs"`
-	Services map[string]struct {
-		URL string `yaml:"url"`
-	} `yaml:"services"`
+	DecisionLogs opaDecisionLogs       `yaml:"decision_logs"`
+	Services     map[string]opaService `yaml:"services"`
+}
+
+type opaDecisionLogs struct {
+	Service        string            `yaml:"service"`
+	RequestContext opaRequestContext `yaml:"request_context"`
+}
+
+type opaRequestContext struct {
+	HTTP opaHTTPContext `yaml:"http"`
+}
+
+type opaHTTPContext struct {
+	Headers []string `yaml:"headers"`
+}
+
+type opaService struct {
+	URL string `yaml:"url"`
 }
 
 // decisionLogsFromOPAConfig reads the decision log target from an OPA
