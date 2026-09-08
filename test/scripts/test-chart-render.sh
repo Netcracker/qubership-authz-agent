@@ -419,7 +419,8 @@ single_all="$(helm template t "${CHART_DIR}" --set AUTHZ_SINGLE_SERVICE_ENABLED=
 # The agent's own containers, by the names the two Pod templates use. The
 # policy-admin Deployment is rendered either way and is not one of them.
 agent_containers() {
-  echo "$1" | grep -cE "^        - name: (authz-agent|envoy|opa|pap-client|collector|token-fetcher)$" || true
+  local rendered=$1
+  echo "${rendered}" | grep -cE "^        - name: (authz-agent|envoy|opa|pap-client|collector|token-fetcher)$" || true
 }
 
 single_containers=$(agent_containers "${single_all}")

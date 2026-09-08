@@ -192,49 +192,85 @@ func jwt(claims string) string {
 	return "eyJhbGciOiJSUzI1NiJ9." + base64.RawURLEncoding.EncodeToString([]byte(claims)) + ".sig"
 }
 
-func TestFetchToken(t *testing.T) {
-	future := time.Now().Add(90 * time.Second).Unix()
+// tokenEndpoint answers every request with status and body, as the identity
+// provider's token endpoint would.
+func tokenEndpoint(t *testing.T, status int, body string) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+// TestFetchToken_Refuses: every answer the token endpoint can give that is
+// not a token the service can use is refused, with the reason in the error.
+// A token whose lifetime cannot be established is one of them: the source
+// would otherwise have nothing to schedule its renewal from.
+func TestFetchToken_Refuses(t *testing.T) {
 	cases := []struct {
-		name     string
-		status   int
-		body     string
-		token    string
-		lifetime time.Duration
-		err      string
+		name   string
+		status int
+		body   string
+		err    string
 	}{
-		{"expires_in is the lifetime", 200, `{"access_token":"t","expires_in":120}`, "t", 120 * time.Second, ""},
-		{"expires_in as a decimal", 200, `{"access_token":"t","expires_in":1.5}`, "t", 1500 * time.Millisecond, ""},
-		{"exp of the token when expires_in is absent", 200, fmt.Sprintf(`{"access_token":%q}`, jwt(fmt.Sprintf(`{"exp":%d}`, future))), jwt(fmt.Sprintf(`{"exp":%d}`, future)), 0, ""},
-		{"exp in the past", 200, fmt.Sprintf(`{"access_token":%q}`, jwt(`{"exp":1}`)), "", 0, "JWT exp is in the past"},
-		{"no exp and no expires_in", 200, fmt.Sprintf(`{"access_token":%q}`, jwt(`{}`)), "", 0, "exp claim absent"},
-		{"an empty token", 200, `{"access_token":""}`, "", 0, "empty access_token"},
-		{"a body that is not JSON", 200, `nope`, "", 0, "parse token response"},
-		{"a refusal", 401, `{"error":"invalid_client"}`, "", 0, "HTTP 401"},
+		{"exp in the past", 200, fmt.Sprintf(`{"access_token":%q}`, jwt(`{"exp":1}`)), "JWT exp is in the past"},
+		{"no exp and no expires_in", 200, fmt.Sprintf(`{"access_token":%q}`, jwt(`{}`)), "exp claim absent"},
+		{"an empty token", 200, `{"access_token":""}`, "empty access_token"},
+		{"a body that is not JSON", 200, `nope`, "parse token response"},
+		{"a refusal", 401, `{"error":"invalid_client"}`, "HTTP 401"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			idp := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(tc.status)
-				_, _ = w.Write([]byte(tc.body))
-			}))
-			defer idp.Close()
-			token, lifetime, err := fetchToken(context.Background(), idp.Client(), idp.URL, "id", "secret")
-			if tc.err != "" {
-				if err == nil || !strings.Contains(err.Error(), tc.err) {
-					t.Fatalf("fetchToken() error = %v, want it to contain %q", err, tc.err)
-				}
-				return
-			}
-			if err != nil || token != tc.token {
-				t.Fatalf("fetchToken() = %q, %v; want %q", token, err, tc.token)
-			}
-			if tc.lifetime != 0 && lifetime != tc.lifetime {
-				t.Errorf("lifetime = %s, want %s", lifetime, tc.lifetime)
-			}
-			if tc.lifetime == 0 && (lifetime < 80*time.Second || lifetime > 90*time.Second) {
-				t.Errorf("lifetime from exp = %s, want about 90s", lifetime)
+			idp := tokenEndpoint(t, tc.status, tc.body)
+			_, _, err := fetchToken(context.Background(), idp.Client(), idp.URL, "id", "secret")
+			if err == nil || !strings.Contains(err.Error(), tc.err) {
+				t.Fatalf("fetchToken() error = %v, want it to contain %q", err, tc.err)
 			}
 		})
+	}
+}
+
+// TestFetchToken_ReadsTheLifetimeFromExpiresIn: expires_in gives the
+// lifetime, and it is seconds rather than an integer count of them, since a
+// provider may answer with a fraction.
+func TestFetchToken_ReadsTheLifetimeFromExpiresIn(t *testing.T) {
+	cases := []struct {
+		name     string
+		body     string
+		lifetime time.Duration
+	}{
+		{"whole seconds", `{"access_token":"t","expires_in":120}`, 120 * time.Second},
+		{"a decimal", `{"access_token":"t","expires_in":1.5}`, 1500 * time.Millisecond},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			idp := tokenEndpoint(t, 200, tc.body)
+			token, lifetime, err := fetchToken(context.Background(), idp.Client(), idp.URL, "id", "secret")
+			if err != nil || token != "t" {
+				t.Fatalf("fetchToken() = %q, %v; want %q", token, err, "t")
+			}
+			if lifetime != tc.lifetime {
+				t.Errorf("lifetime = %s, want %s", lifetime, tc.lifetime)
+			}
+		})
+	}
+}
+
+// TestFetchToken_ReadsTheLifetimeFromExp: a provider that sends no
+// expires_in leaves the token's own exp as the only thing to renew against,
+// so the lifetime is taken from there.
+func TestFetchToken_ReadsTheLifetimeFromExp(t *testing.T) {
+	token := jwt(fmt.Sprintf(`{"exp":%d}`, time.Now().Add(90*time.Second).Unix()))
+	idp := tokenEndpoint(t, 200, fmt.Sprintf(`{"access_token":%q}`, token))
+
+	got, lifetime, err := fetchToken(context.Background(), idp.Client(), idp.URL, "id", "secret")
+	if err != nil || got != token {
+		t.Fatalf("fetchToken() = %q, %v; want the token from the body", got, err)
+	}
+	if lifetime < 80*time.Second || lifetime > 90*time.Second {
+		t.Errorf("lifetime from exp = %s, want about 90s", lifetime)
 	}
 }
 

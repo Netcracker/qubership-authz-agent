@@ -155,6 +155,30 @@ func loadConfig(args []string, get lookup) (config, error) {
 	if cfg.PapClientURL == "" {
 		cfg.PapClientURL = "http://127.0.0.1:8182"
 	}
+	opaConfigFile, err := applyOPAArguments(&cfg, args)
+	if err != nil {
+		return config{}, err
+	}
+	if opaConfigFile != "" {
+		parsed, err := opaSettingsFrom(opaConfigFile)
+		if err != nil {
+			return config{}, err
+		}
+		parsed.logs.Labels = cfg.DecisionLogs.Labels
+		cfg.DecisionLogs = parsed.logs
+		cfg.NDBuiltinCache = parsed.ndBuiltinCache
+		cfg.IgnoredOPAKeys = parsed.ignored
+	}
+	return cfg, nil
+}
+
+// applyOPAArguments reads the OPA command line into cfg and returns the path
+// its --config-file names, empty when it names none. The flags are the ones
+// the chart passes to the OPA container; anything else that looks like a flag
+// fails the start rather than being ignored, since a setting the service
+// drops in silence is one the operator believes is in force. args[0] is the
+// `run` subcommand and is not read here.
+func applyOPAArguments(cfg *config, args []string) (string, error) {
 	var opaConfigFile string
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
@@ -183,22 +207,12 @@ func loadConfig(args []string, get lookup) (config, error) {
 		case strings.HasPrefix(arg, "--config-file="):
 			opaConfigFile = strings.TrimPrefix(arg, "--config-file=")
 		case strings.HasPrefix(arg, "-"):
-			return config{}, fmt.Errorf("unsupported OPA argument %q", arg)
+			return "", fmt.Errorf("unsupported OPA argument %q", arg)
 		default:
 			cfg.DataDirs = append(cfg.DataDirs, arg)
 		}
 	}
-	if opaConfigFile != "" {
-		parsed, err := opaSettingsFrom(opaConfigFile)
-		if err != nil {
-			return config{}, err
-		}
-		parsed.logs.Labels = cfg.DecisionLogs.Labels
-		cfg.DecisionLogs = parsed.logs
-		cfg.NDBuiltinCache = parsed.ndBuiltinCache
-		cfg.IgnoredOPAKeys = parsed.ignored
-	}
-	return cfg, nil
+	return opaConfigFile, nil
 }
 
 func splitList(s string) []string {
@@ -362,33 +376,35 @@ func ignoredOPAKeys(raw []byte) []string {
 	if yaml.Unmarshal(raw, &document) != nil {
 		return nil
 	}
-	var ignored []string
-	// path is what the warning prints and pattern what honoredOPAKeys is
-	// keyed by; the two differ under `services`, whose keys are names.
-	var walk func(path, pattern string, node map[string]any)
-	walk = func(path, pattern string, node map[string]any) {
-		honored := honoredOPAKeys[pattern]
-		for key, value := range node {
-			childPath, childPattern := key, key
-			if path != "" {
-				childPath = path + "." + key
-			}
-			switch {
-			case pattern == "services":
-				childPattern = "services.*"
-			case pattern != "":
-				childPattern = pattern + "." + key
-			}
-			if honored != nil && !slices.Contains(honored, key) {
-				ignored = append(ignored, childPath)
-				continue
-			}
-			if nested, ok := value.(map[string]any); ok {
-				walk(childPath, childPattern, nested)
-			}
+	ignored := walkOPAKeys(nil, "", "", document)
+	slices.Sort(ignored)
+	return ignored
+}
+
+// walkOPAKeys appends to ignored the path of every key of node the service
+// does not read, and descends into the ones it does. path is what the
+// warning prints and pattern what honoredOPAKeys is keyed by; the two part
+// under `services`, whose keys are names rather than settings.
+func walkOPAKeys(ignored []string, path, pattern string, node map[string]any) []string {
+	honored := honoredOPAKeys[pattern]
+	for key, value := range node {
+		childPath, childPattern := key, key
+		if path != "" {
+			childPath = path + "." + key
+		}
+		switch {
+		case pattern == "services":
+			childPattern = "services.*"
+		case pattern != "":
+			childPattern = pattern + "." + key
+		}
+		if honored != nil && !slices.Contains(honored, key) {
+			ignored = append(ignored, childPath)
+			continue
+		}
+		if nested, ok := value.(map[string]any); ok {
+			ignored = walkOPAKeys(ignored, childPath, childPattern, nested)
 		}
 	}
-	walk("", "", document)
-	slices.Sort(ignored)
 	return ignored
 }

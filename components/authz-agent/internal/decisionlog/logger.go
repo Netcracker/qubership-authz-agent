@@ -308,42 +308,69 @@ func (l *Logger) upload(ctx context.Context, batch []Event) ([]Event, error) {
 // it. The event that crosses the bound is part of the chunk, so a chunk is
 // never empty.
 func (l *Logger) chunk(batch []Event) (body *bytes.Buffer, taken int, err error) {
-	var buf bytes.Buffer
-	gz := gzip.NewWriter(&buf)
-	if _, err := gz.Write([]byte("[")); err != nil {
-		return nil, len(batch), err
-	}
-	for taken = 0; taken < len(batch); {
+	out := newGzipped()
+	out.write("[")
+	for taken = 0; taken < len(batch) && out.err == nil; {
 		raw, err := json.Marshal(batch[taken])
 		if err != nil {
 			if taken > 0 {
 				break
 			}
+			// The first event of the chunk cannot be encoded at all, so the
+			// caller drops that one rather than stalling the queue on it.
 			return nil, 1, err
 		}
 		if taken > 0 {
-			if _, err := gz.Write([]byte(",")); err != nil {
-				return nil, len(batch), err
-			}
+			out.write(",")
 		}
-		if _, err := gz.Write(raw); err != nil {
-			return nil, len(batch), err
-		}
+		out.write(string(raw))
 		taken++
-		if err := gz.Flush(); err != nil {
-			return nil, len(batch), err
-		}
-		if buf.Len() >= l.cfg.MaxUploadBytes {
+		// The compressor holds a window back, so the body's length is only
+		// known once it has been flushed.
+		out.flush()
+		if out.buf.Len() >= l.cfg.MaxUploadBytes {
 			break
 		}
 	}
-	if _, err := gz.Write([]byte("]")); err != nil {
-		return nil, len(batch), err
+	out.write("]")
+	out.close()
+	if out.err != nil {
+		return nil, len(batch), out.err
 	}
-	if err := gz.Close(); err != nil {
-		return nil, len(batch), err
+	return &out.buf, taken, nil
+}
+
+// gzipped is a gzip stream over a buffer that holds the first error it met,
+// so a body assembled piece by piece reads as the sequence of writes it is.
+// The buffer cannot fail; the compressor can, and that is what err carries.
+type gzipped struct {
+	buf bytes.Buffer
+	gz  *gzip.Writer
+	err error
+}
+
+func newGzipped() *gzipped {
+	g := &gzipped{}
+	g.gz = gzip.NewWriter(&g.buf)
+	return g
+}
+
+func (g *gzipped) write(s string) {
+	if g.err == nil {
+		_, g.err = g.gz.Write([]byte(s))
 	}
-	return &buf, taken, nil
+}
+
+func (g *gzipped) flush() {
+	if g.err == nil {
+		g.err = g.gz.Flush()
+	}
+}
+
+func (g *gzipped) close() {
+	if g.err == nil {
+		g.err = g.gz.Close()
+	}
 }
 
 func (l *Logger) post(ctx context.Context, body *bytes.Buffer) error {
