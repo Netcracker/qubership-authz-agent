@@ -330,10 +330,11 @@ func TestDecide_LogsTheDecision(t *testing.T) {
 	}
 }
 
-// TestDecide_BuildsNoCacheWithoutLogging: with the decisions not logged the
-// builtin cache is not built either, since nothing would read it; the
-// decision itself is unchanged.
-func TestDecide_BuildsNoCacheWithoutLogging(t *testing.T) {
+// TestDecide_WithoutLogging: a decision is answered as usual when the
+// decisions are not logged, and carries no decision id. The builtin cache is
+// not built on that path either, which the decision cannot show; the
+// condition is shared with the id, so this is where it would break.
+func TestDecide_WithoutLogging(t *testing.T) {
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)

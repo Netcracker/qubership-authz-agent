@@ -57,7 +57,8 @@ type Options struct {
 	Health func() Report
 	// NDBuiltinCache records the non-deterministic builtin calls of a
 	// decision into its event, as OPA's nd_builtin_cache does. Off, the
-	// calls are not recorded and the cache is not built.
+	// calls are not recorded and the cache is not built; nor is it built
+	// when the decisions are not logged at all, since nothing would read it.
 	NDBuiltinCache bool
 	// PapClientURL is the base URL of the pap-client container, which
 	// answers GET /health for the Pod while it still has one; the public
@@ -287,15 +288,16 @@ func (s *Server) decide(c *fiber.Ctx, segments []string) error {
 // logged, records it under a fresh decision id; id is "" otherwise. defined
 // is false when the document is undefined.
 func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result any, defined bool, id string, err error) {
+	logged := s.logs != nil && s.logs.Enabled()
 	var ndbc builtins.NDBCache
-	if s.opts.NDBuiltinCache {
+	if s.opts.NDBuiltinCache && logged {
 		ndbc = builtins.NDBCache{}
 	}
 	result, defined, err = s.engine.Eval(c.UserContext(), segments, input, ndbc)
 	if err != nil {
 		return nil, false, "", err
 	}
-	if s.logs != nil && s.logs.Enabled() {
+	if logged {
 		id = decisionlog.NewDecisionID()
 		s.logDecision(c, id, segments, input, result, defined, ndbc)
 	}

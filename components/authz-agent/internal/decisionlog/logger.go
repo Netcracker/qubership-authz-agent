@@ -238,8 +238,8 @@ func (l *Logger) deliver(ctx context.Context, batch []Event) ([]Event, error) {
 }
 
 // retained is what is kept for the next attempt: the newest MaxQueued
-// events, since dropping the oldest is what the queue itself does when it
-// is full.
+// events. A backlog past that has to lose something, and the oldest
+// decisions are the ones a reader is least likely to still want.
 func (l *Logger) retained(events []Event) []Event {
 	if len(events) <= l.cfg.MaxQueued {
 		return events
