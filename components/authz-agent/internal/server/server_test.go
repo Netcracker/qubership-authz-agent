@@ -330,6 +330,32 @@ func TestDecide_LogsTheDecision(t *testing.T) {
 	}
 }
 
+// TestDecide_BuildsNoCacheWithoutLogging: with the decisions not logged the
+// builtin cache is not built either, since nothing would read it; the
+// decision itself is unchanged.
+func TestDecide_BuildsNoCacheWithoutLogging(t *testing.T) {
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	if err := eng.Put(context.Background(), []string{"users"}, map[string]any{"admin": "root"}); err != nil {
+		t.Fatal(err)
+	}
+	app := fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
+	// A logger with neither a collector nor a store is off, as the service
+	// runs without AUTHZ_DECISION_LOG_URL and AUTHZ_DECISION_LOG_FILE.
+	logs := decisionlog.New(decisionlog.Config{}, nil)
+	Register(app, eng, logs, Options{NDBuiltinCache: true})
+
+	code, body, raw := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "root"}}`, nil)
+	if code != 200 || body["result"].(map[string]any)["allowed"] != true {
+		t.Fatalf("POST /access/v1/authorize = %d %s, want the decision", code, raw)
+	}
+	if _, logged := body["decision_id"]; logged {
+		t.Errorf("body = %s, want no decision id when the decisions are not logged", raw)
+	}
+}
+
 // TestDecide_WithoutTheBuiltinCache: with the cache off the decision is
 // answered and logged as before, and the event carries no
 // nd_builtin_cache, so the PIP requests and responses are not recorded.

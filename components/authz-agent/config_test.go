@@ -282,12 +282,17 @@ decision_logs:
     http:
       headers:
         - x-request-id
+      mask: everything
   mask_decision: /system/log/mask
 distributed_tracing:
   type: grpc
 services:
   collector:
     url: http://127.0.0.1:8183
+    credentials:
+      bearer:
+        token: s3cret
+    allow_insecure_tls: true
 `), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -301,7 +306,16 @@ services:
 	if !cfg.NDBuiltinCache {
 		t.Error("nd_builtin_cache: true must record the builtin calls")
 	}
-	want := []string{"decision_logs.mask_decision", "distributed_tracing"}
+	// A setting of a service is named with the service, and the service's
+	// own name is not a setting; the credentials are the case that matters,
+	// since OPA would authenticate the upload and the service does not.
+	want := []string{
+		"decision_logs.mask_decision",
+		"decision_logs.request_context.http.mask",
+		"distributed_tracing",
+		"services.collector.allow_insecure_tls",
+		"services.collector.credentials",
+	}
 	if !reflect.DeepEqual(cfg.IgnoredOPAKeys, want) {
 		t.Errorf("ignored settings = %v, want %v", cfg.IgnoredOPAKeys, want)
 	}

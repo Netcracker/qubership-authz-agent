@@ -295,13 +295,19 @@ type opaSettings struct {
 }
 
 // honoredOPAKeys are the settings the service reads, by their path in the
-// file. Every other key is reported, so that a setting the service cannot
-// act on is not mistaken for one it applies.
+// file, with `*` for a service's own name. A path that is a key here holds
+// settings, and every one of its keys the list does not name is reported; a
+// path with no list, such as the names under `services`, holds no settings
+// of its own and is only walked through. So a setting the service cannot act
+// on is not mistaken for one it applies.
 var honoredOPAKeys = map[string][]string{
-	"":                              {"nd_builtin_cache", "decision_logs", "services"},
-	"decision_logs":                 {"service", "reporting", "request_context"},
-	"decision_logs.reporting":       {"min_delay_seconds", "max_delay_seconds", "upload_size_limit_bytes"},
-	"decision_logs.request_context": {"http"},
+	"":                                   {"nd_builtin_cache", "decision_logs", "services"},
+	"decision_logs":                      {"service", "reporting", "request_context"},
+	"decision_logs.reporting":            {"min_delay_seconds", "max_delay_seconds", "upload_size_limit_bytes"},
+	"decision_logs.request_context":      {"http"},
+	"decision_logs.request_context.http": {"headers"},
+	"services":                           nil,
+	"services.*":                         {"url"},
 }
 
 // opaSettingsFrom reads an OPA configuration file. A file without a
@@ -347,31 +353,42 @@ func flushInterval(reporting opaReporting) time.Duration {
 }
 
 // ignoredOPAKeys names the settings of the file the service does not read,
-// in the order they appear, by their path.
+// by their path, sorted: a YAML document read into a map has no order to
+// keep, and the warning should read the same on every start. A service's own
+// name is a path rather than a setting, so what is reported under it is
+// `services.<name>.credentials`, not the name.
 func ignoredOPAKeys(raw []byte) []string {
 	var document map[string]any
 	if yaml.Unmarshal(raw, &document) != nil {
 		return nil
 	}
 	var ignored []string
-	var walk func(prefix string, node map[string]any)
-	walk = func(prefix string, node map[string]any) {
-		honored, known := honoredOPAKeys[prefix]
+	// path is what the warning prints and pattern what honoredOPAKeys is
+	// keyed by; the two differ under `services`, whose keys are names.
+	var walk func(path, pattern string, node map[string]any)
+	walk = func(path, pattern string, node map[string]any) {
+		honored, holdsSettings := honoredOPAKeys[pattern]
 		for key, value := range node {
-			path := key
-			if prefix != "" {
-				path = prefix + "." + key
+			childPath, childPattern := key, key
+			if path != "" {
+				childPath = path + "." + key
 			}
-			if known && !slices.Contains(honored, key) {
-				ignored = append(ignored, path)
+			switch {
+			case pattern == "services":
+				childPattern = "services.*"
+			case pattern != "":
+				childPattern = pattern + "." + key
+			}
+			if holdsSettings && honored != nil && !slices.Contains(honored, key) {
+				ignored = append(ignored, childPath)
 				continue
 			}
 			if nested, ok := value.(map[string]any); ok {
-				walk(path, nested)
+				walk(childPath, childPattern, nested)
 			}
 		}
 	}
-	walk("", document)
+	walk("", "", document)
 	slices.Sort(ignored)
 	return ignored
 }
