@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -60,6 +61,13 @@ type config struct {
 	// DecisionLogFile stores the decisions in the service instead of
 	// uploading them; empty uploads.
 	DecisionLogFile string
+	// NDBuiltinCache records the non-deterministic builtin calls of a
+	// decision, the PIP requests and their responses, into its event, as
+	// OPA's nd_builtin_cache does.
+	NDBuiltinCache bool
+	// IgnoredOPAKeys names the settings of the OPA configuration file the
+	// service does not honor, for the warning that says so.
+	IgnoredOPAKeys []string
 	// Authn configures the trusted providers; an empty File disables them.
 	Authn authn.Config
 	// Pull configures the policy pull; [pull.Config] says what disables
@@ -93,6 +101,7 @@ func loadConfig(args []string, get lookup) (config, error) {
 		return value
 	}
 	cfg := config{
+		NDBuiltinCache:   true,
 		Addr:             get("authz.http.addr", "0.0.0.0:8181"),
 		PublicAddr:       get("authz.public.addr", "0.0.0.0:8080"),
 		StandIn:          standIn,
@@ -150,9 +159,15 @@ func loadConfig(args []string, get lookup) (config, error) {
 	for i := 1; i < len(args); i++ {
 		arg := args[i]
 		switch {
-		case arg == "--server", arg == "--authentication=token", strings.HasPrefix(arg, "--log-level"):
-			// Accepted for compatibility; the service is always a server and
-			// identifies callers by their bearer token.
+		case arg == "--server", arg == "--authentication=token", strings.HasPrefix(arg, "--log-level="):
+			// Accepted for compatibility; the service is always a server,
+			// identifies callers by their bearer token, and logs through the
+			// core library.
+		case arg == "--log-level" && i+1 < len(args):
+			// The value is consumed too: left behind it would read as a data
+			// directory and fail the start with a name the error never
+			// connects to this flag.
+			i++
 		case arg == "--addr" && i+1 < len(args):
 			i++
 			cfg.Addr = args[i]
@@ -174,12 +189,14 @@ func loadConfig(args []string, get lookup) (config, error) {
 		}
 	}
 	if opaConfigFile != "" {
-		logs, err := decisionLogsFromOPAConfig(opaConfigFile)
+		parsed, err := opaSettingsFrom(opaConfigFile)
 		if err != nil {
 			return config{}, err
 		}
-		logs.Labels = cfg.DecisionLogs.Labels
-		cfg.DecisionLogs = logs
+		parsed.logs.Labels = cfg.DecisionLogs.Labels
+		cfg.DecisionLogs = parsed.logs
+		cfg.NDBuiltinCache = parsed.ndBuiltinCache
+		cfg.IgnoredOPAKeys = parsed.ignored
 	}
 	return cfg, nil
 }
@@ -233,16 +250,29 @@ func boolean(get lookup, key string, fallback bool) bool {
 	return fallback
 }
 
-// opaConfig is the part of OPA's configuration file the service honors: the
-// decision log service and the request headers recorded per decision.
+// opaConfig is the part of OPA's configuration file the service honors:
+// whether the non-deterministic builtin cache is recorded, and the decision
+// log service, its reporting bounds, and the request headers recorded per
+// decision.
 type opaConfig struct {
-	DecisionLogs opaDecisionLogs       `yaml:"decision_logs"`
-	Services     map[string]opaService `yaml:"services"`
+	NDBuiltinCache bool                  `yaml:"nd_builtin_cache"`
+	DecisionLogs   opaDecisionLogs       `yaml:"decision_logs"`
+	Services       map[string]opaService `yaml:"services"`
 }
 
 type opaDecisionLogs struct {
 	Service        string            `yaml:"service"`
+	Reporting      opaReporting      `yaml:"reporting"`
 	RequestContext opaRequestContext `yaml:"request_context"`
+}
+
+// opaReporting bounds the uploads. The service posts on a fixed interval
+// rather than OPA's adaptive one, so max_delay_seconds is that interval and
+// min_delay_seconds its floor.
+type opaReporting struct {
+	MinDelaySeconds      float64 `yaml:"min_delay_seconds"`
+	MaxDelaySeconds      float64 `yaml:"max_delay_seconds"`
+	UploadSizeLimitBytes int     `yaml:"upload_size_limit_bytes"`
 }
 
 type opaRequestContext struct {
@@ -257,25 +287,91 @@ type opaService struct {
 	URL string `yaml:"url"`
 }
 
-// decisionLogsFromOPAConfig reads the decision log target from an OPA
-// configuration file. A file without a decision log service disables
-// logging.
-func decisionLogsFromOPAConfig(path string) (decisionlog.Config, error) {
+// opaSettings is what the service takes from an OPA configuration file.
+type opaSettings struct {
+	logs           decisionlog.Config
+	ndBuiltinCache bool
+	ignored        []string
+}
+
+// honoredOPAKeys are the settings the service reads, by their path in the
+// file. Every other key is reported, so that a setting the service cannot
+// act on is not mistaken for one it applies.
+var honoredOPAKeys = map[string][]string{
+	"":                              {"nd_builtin_cache", "decision_logs", "services"},
+	"decision_logs":                 {"service", "reporting", "request_context"},
+	"decision_logs.reporting":       {"min_delay_seconds", "max_delay_seconds", "upload_size_limit_bytes"},
+	"decision_logs.request_context": {"http"},
+}
+
+// opaSettingsFrom reads an OPA configuration file. A file without a
+// decision log service disables logging; a service without a URL is an
+// error, since the decisions would go nowhere.
+func opaSettingsFrom(path string) (opaSettings, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return decisionlog.Config{}, fmt.Errorf("read OPA config: %w", err)
+		return opaSettings{}, fmt.Errorf("read OPA config: %w", err)
 	}
 	var parsed opaConfig
 	if err := yaml.Unmarshal(raw, &parsed); err != nil {
-		return decisionlog.Config{}, fmt.Errorf("parse OPA config %s: %w", path, err)
+		return opaSettings{}, fmt.Errorf("parse OPA config %s: %w", path, err)
 	}
-	cfg := decisionlog.Config{Headers: parsed.DecisionLogs.RequestContext.HTTP.Headers}
+	reporting := parsed.DecisionLogs.Reporting
+	out := opaSettings{
+		ndBuiltinCache: parsed.NDBuiltinCache,
+		logs: decisionlog.Config{
+			Headers:        parsed.DecisionLogs.RequestContext.HTTP.Headers,
+			FlushInterval:  flushInterval(reporting),
+			MaxUploadBytes: reporting.UploadSizeLimitBytes,
+		},
+		ignored: ignoredOPAKeys(raw),
+	}
 	if service := parsed.DecisionLogs.Service; service != "" {
 		svc, ok := parsed.Services[service]
 		if !ok || svc.URL == "" {
-			return decisionlog.Config{}, fmt.Errorf("OPA config %s: decision log service %q has no URL", path, service)
+			return opaSettings{}, fmt.Errorf("OPA config %s: decision log service %q has no URL", path, service)
 		}
-		cfg.URL = svc.URL
+		out.logs.URL = svc.URL
 	}
-	return cfg, nil
+	return out, nil
+}
+
+// flushInterval is how often the queue is posted: max_delay_seconds, no
+// shorter than min_delay_seconds. Zero leaves the uploader's default.
+func flushInterval(reporting opaReporting) time.Duration {
+	seconds := reporting.MaxDelaySeconds
+	if seconds < reporting.MinDelaySeconds {
+		seconds = reporting.MinDelaySeconds
+	}
+	return time.Duration(seconds * float64(time.Second))
+}
+
+// ignoredOPAKeys names the settings of the file the service does not read,
+// in the order they appear, by their path.
+func ignoredOPAKeys(raw []byte) []string {
+	var document map[string]any
+	if yaml.Unmarshal(raw, &document) != nil {
+		return nil
+	}
+	var ignored []string
+	var walk func(prefix string, node map[string]any)
+	walk = func(prefix string, node map[string]any) {
+		honored, known := honoredOPAKeys[prefix]
+		for key, value := range node {
+			path := key
+			if prefix != "" {
+				path = prefix + "." + key
+			}
+			if known && !slices.Contains(honored, key) {
+				ignored = append(ignored, path)
+				continue
+			}
+			if nested, ok := value.(map[string]any); ok {
+				walk(path, nested)
+			}
+		}
+	}
+	walk("", document)
+	slices.Sort(ignored)
+	return ignored
 }

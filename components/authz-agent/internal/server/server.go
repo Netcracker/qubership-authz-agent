@@ -21,7 +21,6 @@ package server
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -56,6 +55,10 @@ type Options struct {
 	// means the service is healthy and ready as long as it answers, which
 	// is the case while the Pod's other containers run the loops.
 	Health func() Report
+	// NDBuiltinCache records the non-deterministic builtin calls of a
+	// decision into its event, as OPA's nd_builtin_cache does. Off, the
+	// calls are not recorded and the cache is not built.
+	NDBuiltinCache bool
 	// PapClientURL is the base URL of the pap-client container, which
 	// answers GET /health for the Pod while it still has one; the public
 	// surface relays /health to it. Empty makes the public /health the
@@ -284,7 +287,10 @@ func (s *Server) decide(c *fiber.Ctx, segments []string) error {
 // logged, records it under a fresh decision id; id is "" otherwise. defined
 // is false when the document is undefined.
 func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result any, defined bool, id string, err error) {
-	ndbc := builtins.NDBCache{}
+	var ndbc builtins.NDBCache
+	if s.opts.NDBuiltinCache {
+		ndbc = builtins.NDBCache{}
+	}
 	result, defined, err = s.engine.Eval(c.UserContext(), segments, input, ndbc)
 	if err != nil {
 		return nil, false, "", err
@@ -386,8 +392,10 @@ func (s *Server) patch(c *fiber.Ctx, segments []string) error {
 	}
 }
 
-// get reads the document at segments without evaluating rules, as
-// GET /v1/data/<path> does.
+// get reads the document at segments without evaluating rules, where
+// OPA's GET /v1/data/<path> evaluates them: a path that names a rule reads
+// as an empty result here. Nothing reaches it in the chart's Pod, whose
+// guard opens no GET under /v1/data.
 func (s *Server) get(c *fiber.Ctx, segments []string) error {
 	value, ok, err := s.engine.Get(c.UserContext(), segments)
 	if err != nil {
@@ -397,9 +405,4 @@ func (s *Server) get(c *fiber.Ctx, segments []string) error {
 		return c.JSON(fiber.Map{})
 	}
 	return c.JSON(fiber.Map{"result": value})
-}
-
-// String helps tests and logs name a server.
-func (s *Server) String() string {
-	return fmt.Sprintf("authz-agent server (authorization=%v)", s.opts.Authorization)
 }

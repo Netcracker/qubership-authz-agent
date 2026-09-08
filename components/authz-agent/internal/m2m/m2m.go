@@ -65,8 +65,8 @@ type Config struct {
 	WatchInterval time.Duration
 }
 
-// Store receives the m2m document.
-type Store interface {
+// Putter receives the m2m document.
+type Putter interface {
 	Put(ctx context.Context, path []string, value any) error
 }
 
@@ -80,7 +80,7 @@ type Logger interface {
 // goroutine while Run refreshes it.
 type Source struct {
 	cfg    Config
-	store  Store
+	store  Putter
 	log    Logger
 	client *http.Client
 
@@ -94,7 +94,7 @@ type Source struct {
 // New returns a source for cfg, with the defaults in place of the empty
 // files, a negative RenewBefore, and a WatchInterval that is zero or
 // negative; Run has to be started for it to hold a token.
-func New(cfg Config, store Store, log Logger) *Source {
+func New(cfg Config, store Putter, log Logger) *Source {
 	if cfg.ClientIDFile == "" {
 		cfg.ClientIDFile = DefaultClientIDFile
 	}

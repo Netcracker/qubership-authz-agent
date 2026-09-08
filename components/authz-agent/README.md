@@ -75,7 +75,9 @@ rules, and 503 with the reason and its details until then. `GET /ready`, on the 
 `{"status":"ready"}` after. A pull that fails later keeps the loaded policies and both verdicts.
 
 When started with OPA's command line (`run --server --addr ... --ignore=... --authorization=basic --config-file ...
-<dirs>`), the flags, the config file's decision log service, and the directories override the variables. In that Pod
+<dirs>`), the flags and the directories override the variables, and the config file supplies the decision log service,
+its `reporting` bounds, the recorded request headers, and `nd_builtin_cache`; every other setting of that file is
+named in a warning at start, so a setting the service cannot act on is not mistaken for one it applies. In that Pod
 Envoy holds port 8080 and the pap-client answers on 8182, so the public surface then defaults to `0.0.0.0:8280` and
 `AUTHZ_PAP_CLIENT_URL` to `http://127.0.0.1:8182`; the trusted providers and the token file default to off and the
 policy pull never runs, since the Pod's other containers run them, and `/health` is the pap-client's.

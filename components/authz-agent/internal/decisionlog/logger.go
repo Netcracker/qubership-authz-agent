@@ -46,10 +46,20 @@ type Config struct {
 	Headers []string
 	// Labels are attached to every event, as OPA's `labels` block.
 	Labels map[string]string
-	// MaxBatch and FlushInterval bound a batch by size and by time; zero
+	// MaxBatch and FlushInterval bound a batch by count and by time; zero
 	// values take the defaults of 100 events and one second.
 	MaxBatch      int
 	FlushInterval time.Duration
+	// MaxUploadBytes bounds one upload: a batch is posted in as many
+	// gzipped chunks as it takes to keep each body under it, as OPA's
+	// upload_size_limit_bytes does, so a collector with a body limit of its
+	// own is not handed a batch it refuses. Zero takes OPA's default of
+	// 32768. The bound is soft: the event that crosses it ends the chunk, so
+	// a single event larger than the bound is posted alone.
+	MaxUploadBytes int
+	// MaxQueued bounds the events kept across a failed upload; the oldest
+	// beyond it are dropped. Zero takes 1024, the size of the queue.
+	MaxQueued int
 	// Timeout bounds one upload; zero takes ten seconds.
 	Timeout time.Duration
 }
@@ -99,6 +109,12 @@ func New(cfg Config, warn func(format string, args ...any)) *Logger {
 	}
 	if cfg.Timeout <= 0 {
 		cfg.Timeout = 10 * time.Second
+	}
+	if cfg.MaxUploadBytes <= 0 {
+		cfg.MaxUploadBytes = 32768
+	}
+	if cfg.MaxQueued <= 0 {
+		cfg.MaxQueued = 1024
 	}
 	if cfg.Labels == nil {
 		cfg.Labels = map[string]string{}
@@ -159,10 +175,12 @@ func (l *Logger) Log(ev Event) {
 	}
 }
 
-// Run uploads queued events until ctx ends, then drains the queue with its
-// own deadline: the last decisions before a shutdown must reach the
+// Run delivers queued events until ctx ends, then drains the queue with
+// its own deadline: the last decisions before a shutdown must reach the
 // collector, as OPA's plugin flushes them too, and ctx is already cancelled
-// by then. Wait returns once Run is finished.
+// by then. A delivery that fails keeps its events for the next attempt, as
+// OPA requeues a chunk it could not upload; the oldest are dropped once
+// MaxQueued is reached. Wait returns once Run is finished.
 func (l *Logger) Run(ctx context.Context) {
 	defer close(l.done)
 	if !l.Enabled() {
@@ -175,10 +193,11 @@ func (l *Logger) Run(ctx context.Context) {
 		if len(batch) == 0 {
 			return
 		}
-		if err := l.deliver(ctx, batch); err != nil {
-			l.warn("decision log delivery failed: %v", err)
+		undelivered, err := l.deliver(ctx, batch)
+		if err != nil {
+			l.warn("decision log delivery failed, keeping %d decisions for the next attempt: %v", len(undelivered), err)
 		}
-		batch = nil
+		batch = l.retained(undelivered)
 	}
 	for {
 		select {
@@ -206,26 +225,96 @@ func (l *Logger) Run(ctx context.Context) {
 // Wait blocks until Run has drained the queue after its context ended.
 func (l *Logger) Wait() { <-l.done }
 
-// deliver hands a batch to the store, or uploads it.
-func (l *Logger) deliver(ctx context.Context, batch []Event) error {
+// deliver hands a batch to the store, or uploads it, and returns the
+// events that did not arrive.
+func (l *Logger) deliver(ctx context.Context, batch []Event) ([]Event, error) {
 	if l.cfg.Store != nil {
-		return l.cfg.Store.Append(batch)
+		if err := l.cfg.Store.Append(batch); err != nil {
+			return batch, err
+		}
+		return nil, nil
 	}
 	return l.upload(ctx, batch)
 }
 
-// upload posts one gzip-compressed JSON array of events, the wire format of
-// OPA's decision log plugin.
-func (l *Logger) upload(ctx context.Context, batch []Event) error {
+// retained is what is kept for the next attempt: the newest MaxQueued
+// events, since dropping the oldest is what the queue itself does when it
+// is full.
+func (l *Logger) retained(events []Event) []Event {
+	if len(events) <= l.cfg.MaxQueued {
+		return events
+	}
+	dropped := len(events) - l.cfg.MaxQueued
+	l.warn("decision log backlog is full, dropping the %d oldest decisions", dropped)
+	return events[dropped:]
+}
+
+// upload posts the batch as gzip-compressed JSON arrays, the wire format of
+// OPA's decision log plugin, one POST per chunk. It stops at the first
+// chunk that fails and returns the events of that chunk and every chunk
+// after it.
+func (l *Logger) upload(ctx context.Context, batch []Event) ([]Event, error) {
+	for len(batch) > 0 {
+		body, taken, err := l.chunk(batch)
+		if err != nil {
+			// The event cannot be encoded, so no attempt can deliver it.
+			l.warn("decision log encoding failed, dropping %d decisions: %v", taken, err)
+			batch = batch[taken:]
+			continue
+		}
+		if err := l.post(ctx, body); err != nil {
+			return batch, err
+		}
+		batch = batch[taken:]
+	}
+	return nil, nil
+}
+
+// chunk encodes the longest prefix of batch whose compressed body stays
+// under MaxUploadBytes, and returns the body with the number of events in
+// it. The event that crosses the bound is part of the chunk, so a chunk is
+// never empty.
+func (l *Logger) chunk(batch []Event) (body *bytes.Buffer, taken int, err error) {
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
-	if err := json.NewEncoder(gz).Encode(batch); err != nil {
-		return err
+	if _, err := gz.Write([]byte("[")); err != nil {
+		return nil, len(batch), err
+	}
+	for taken = 0; taken < len(batch); {
+		raw, err := json.Marshal(batch[taken])
+		if err != nil {
+			if taken > 0 {
+				break
+			}
+			return nil, 1, err
+		}
+		if taken > 0 {
+			if _, err := gz.Write([]byte(",")); err != nil {
+				return nil, len(batch), err
+			}
+		}
+		if _, err := gz.Write(raw); err != nil {
+			return nil, len(batch), err
+		}
+		taken++
+		if err := gz.Flush(); err != nil {
+			return nil, len(batch), err
+		}
+		if buf.Len() >= l.cfg.MaxUploadBytes {
+			break
+		}
+	}
+	if _, err := gz.Write([]byte("]")); err != nil {
+		return nil, len(batch), err
 	}
 	if err := gz.Close(); err != nil {
-		return err
+		return nil, len(batch), err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(l.cfg.URL, "/")+"/logs", &buf)
+	return &buf, taken, nil
+}
+
+func (l *Logger) post(ctx context.Context, body *bytes.Buffer) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, strings.TrimRight(l.cfg.URL, "/")+"/logs", body)
 	if err != nil {
 		return err
 	}

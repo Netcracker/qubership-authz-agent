@@ -17,6 +17,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -197,7 +198,7 @@ services:
 		t.Fatal(err)
 	}
 	args := []string{"run", "--server", "--addr", "0.0.0.0:8181", "--ignore=..*", "--authorization=basic",
-		"--authentication=token", "--config-file", opaConfig, "/etc/opa/policies", "/etc/opa/data"}
+		"--authentication=token", "--log-level", "debug", "--config-file", opaConfig, "/etc/opa/policies", "/etc/opa/data"}
 	cfg, err := loadConfig(args, fromMap(map[string]string{}))
 	if err != nil {
 		t.Fatal(err)
@@ -209,7 +210,7 @@ services:
 		t.Fatalf("stand-in defaults for the chart's Pod: public=%q pap-client=%q", cfg.PublicAddr, cfg.PapClientURL)
 	}
 	if len(cfg.DataDirs) != 2 || cfg.DataDirs[1] != "/etc/opa/data" {
-		t.Fatalf("positional dirs: %v", cfg.DataDirs)
+		t.Fatalf("data directories = %v, want the two positional arguments; a flag's value must not become one", cfg.DataDirs)
 	}
 	if cfg.DecisionLogs.URL != "http://127.0.0.1:8183" || cfg.DecisionLogs.Headers[0] != "x-request-id" || cfg.DecisionLogs.Labels["id"] != "authz-agent" {
 		t.Fatalf("decision logs from the OPA config: %+v", cfg.DecisionLogs)
@@ -260,5 +261,76 @@ func TestLoadConfig_RejectsUnknownFlagAndBrokenConfig(t *testing.T) {
 	cfg, err := loadConfig([]string{"run", "--config-file=" + noLogs, "--addr=:1"}, fromMap(nil))
 	if err != nil || cfg.DecisionLogs.URL != "" || cfg.Addr != ":1" {
 		t.Fatalf("config without decision logs: %+v err=%v", cfg, err)
+	}
+}
+
+// TestLoadConfig_OPAReporting: the reporting bounds of the OPA config
+// become the upload's interval and size limit, nd_builtin_cache decides
+// whether the builtin calls are recorded, and every setting the service
+// does not read is named.
+func TestLoadConfig_OPAReporting(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "opa-config.yaml")
+	if err := os.WriteFile(file, []byte(`nd_builtin_cache: true
+decision_logs:
+  service: collector
+  reporting:
+    min_delay_seconds: 0
+    max_delay_seconds: 2
+    upload_size_limit_bytes: 65536
+  request_context:
+    http:
+      headers:
+        - x-request-id
+  mask_decision: /system/log/mask
+distributed_tracing:
+  type: grpc
+services:
+  collector:
+    url: http://127.0.0.1:8183
+`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := loadConfig([]string{"run", "--config-file", file}, fromMap(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.DecisionLogs.FlushInterval != 2*time.Second || cfg.DecisionLogs.MaxUploadBytes != 65536 {
+		t.Errorf("reporting = every %s, %d bytes; want every 2s, 65536 bytes", cfg.DecisionLogs.FlushInterval, cfg.DecisionLogs.MaxUploadBytes)
+	}
+	if !cfg.NDBuiltinCache {
+		t.Error("nd_builtin_cache: true must record the builtin calls")
+	}
+	want := []string{"decision_logs.mask_decision", "distributed_tracing"}
+	if !reflect.DeepEqual(cfg.IgnoredOPAKeys, want) {
+		t.Errorf("ignored settings = %v, want %v", cfg.IgnoredOPAKeys, want)
+	}
+
+	off := filepath.Join(dir, "off.yaml")
+	if err := os.WriteFile(off, []byte("decision_logs:\n  service: collector\nservices:\n  collector:\n    url: http://c:1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err = loadConfig([]string{"run", "--config-file", off}, fromMap(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.NDBuiltinCache {
+		t.Error("a config file without nd_builtin_cache must not record the builtin calls, as OPA does not")
+	}
+	if cfg.DecisionLogs.FlushInterval != 0 || cfg.DecisionLogs.MaxUploadBytes != 0 || len(cfg.IgnoredOPAKeys) != 0 {
+		t.Errorf("a file without reporting = %+v and ignored %v, want the uploader's own defaults and nothing ignored", cfg.DecisionLogs, cfg.IgnoredOPAKeys)
+	}
+}
+
+// TestLoadConfig_NDBuiltinCacheOnTheServicesOwn: without an OPA config file
+// the builtin calls are recorded, since the decision logs of the chart's
+// Pod carry them.
+func TestLoadConfig_NDBuiltinCacheOnTheServicesOwn(t *testing.T) {
+	cfg, err := loadConfig(nil, fromMap(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.NDBuiltinCache {
+		t.Error("the service on its own must record the builtin calls")
 	}
 }

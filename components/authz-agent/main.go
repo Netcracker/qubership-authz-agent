@@ -22,6 +22,7 @@ package main
 
 import (
 	"context"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -89,6 +90,10 @@ func main() {
 		cfg.DecisionLogs.Store = decisionlog.NewStore(cfg.DecisionLogFile)
 	}
 	logs := decisionlog.New(cfg.DecisionLogs, logger.Warnf)
+	if len(cfg.IgnoredOPAKeys) > 0 {
+		logger.Warnf("OPA config: the service reads none of %s and applies OPA's behavior for none of them",
+			strings.Join(cfg.IgnoredOPAKeys, ", "))
+	}
 
 	// The trusted providers' keys are fetched before the service listens:
 	// a token cannot be verified without them, and the outcome, whatever
@@ -112,9 +117,10 @@ func main() {
 		puller = pull.New(cfg.Pull, eng, source, logger)
 	}
 	opts := server.Options{
-		Authorization: cfg.Authorization,
-		PapClientURL:  cfg.PapClientURL,
-		CollectorURL:  cfg.DecisionLogs.URL,
+		Authorization:  cfg.Authorization,
+		PapClientURL:   cfg.PapClientURL,
+		CollectorURL:   cfg.DecisionLogs.URL,
+		NDBuiltinCache: cfg.NDBuiltinCache,
 	}
 	if !cfg.StandIn {
 		opts.Health = func() server.Report { return report(providers, puller) }
@@ -149,6 +155,22 @@ func main() {
 	srv := server.Register(internal, eng, logs, opts)
 	srv.RegisterPublic(public)
 
+	// Both sockets are bound before anything serves, so an address already
+	// in use fails the start rather than leaving one surface up, and a
+	// shutdown that arrives before a server reached its Serve call still
+	// ends it: closing the socket is what the server waits on.
+	publicSocket, err := net.Listen("tcp", cfg.PublicAddr)
+	if err != nil {
+		logger.Errorf("public listener on %s: %v", cfg.PublicAddr, err)
+		os.Exit(1)
+	}
+	dataSocket, err := net.Listen("tcp", cfg.Addr)
+	if err != nil {
+		_ = publicSocket.Close()
+		logger.Errorf("data API listener on %s: %v", cfg.Addr, err)
+		os.Exit(1)
+	}
+
 	go logs.Run(ctx)
 	if tokens != nil {
 		go tokens.Run(ctx)
@@ -162,30 +184,36 @@ func main() {
 	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, data API on %s",
 		len(modules), cfg.DataDirs, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
 
-	// A listener that fails cancels the signal context, and main then shuts
-	// the other listener and the loops down.
+	// A server that ends on its own cancels the signal context, and main
+	// then ends the other one and the loops; a server that ends because the
+	// shutdown closed its socket is not that failure.
 	var failed atomic.Bool
-	var listeners sync.WaitGroup
-	serve := func(name string, app *fiber.App, addr string) {
-		listeners.Add(1)
+	var servers sync.WaitGroup
+	serve := func(name string, app *fiber.App, socket net.Listener) {
+		servers.Add(1)
 		go func() {
-			defer listeners.Done()
-			if err := app.Listen(addr); err != nil {
-				logger.Errorf("%s listener on %s: %v", name, addr, err)
+			defer servers.Done()
+			if err := app.Listener(socket); err != nil && ctx.Err() == nil {
+				logger.Errorf("%s server on %s: %v", name, socket.Addr(), err)
 				failed.Store(true)
 				stop()
 			}
 		}()
 	}
-	serve("public", public, cfg.PublicAddr)
-	serve("data API", internal, cfg.Addr)
+	serve("public", public, publicSocket)
+	serve("data API", internal, dataSocket)
 	<-ctx.Done()
 	for _, app := range []*fiber.App{public, internal} {
 		if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
 			logger.Warnf("shutdown: %v", err)
 		}
 	}
-	listeners.Wait()
+	// The shutdown above does nothing for a server still on its way to
+	// Serve, so the sockets are closed as well; one already closed by its
+	// own shutdown returns the error this ignores.
+	_ = publicSocket.Close()
+	_ = dataSocket.Close()
+	servers.Wait()
 	logs.Wait()
 	if failed.Load() {
 		os.Exit(1)

@@ -47,6 +47,7 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
 | `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `values.yaml` and `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
+| `e2e-single` | Starts the single service beside the chart's Pod and runs the suite against it; CI runs it after `e2e-suite` |
 | `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 
 The parity targets mirror these: `parity-harness`, `parity-install`,

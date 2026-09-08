@@ -65,8 +65,8 @@ type Config struct {
 	ReloadInterval time.Duration
 }
 
-// Store receives the authn document.
-type Store interface {
+// Putter receives the authn document.
+type Putter interface {
 	Put(ctx context.Context, path []string, value any) error
 }
 
@@ -125,7 +125,7 @@ var validProviderID = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
 // Manager owns the authn document of one store.
 type Manager struct {
 	cfg      Config
-	store    Store
+	store    Putter
 	log      Logger
 	client   *http.Client
 	resolver *realmResolver
@@ -137,7 +137,7 @@ type Manager struct {
 
 // New returns a manager for cfg; zero timeouts and retries take the
 // defaults.
-func New(cfg Config, store Store, log Logger) *Manager {
+func New(cfg Config, store Putter, log Logger) *Manager {
 	if cfg.HTTPTimeout <= 0 {
 		cfg.HTTPTimeout = DefaultHTTPTimeout
 	}

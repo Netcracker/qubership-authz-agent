@@ -141,6 +141,12 @@ jobs:
       - name: Run the runtime suite
         run: make e2e-suite
 
+      # The single service next to the chart's Pod, so that the binary the
+      # chart will run is a gate rather than a claim; it reads the chart's
+      # ConfigMaps and Secrets, hence after the install above.
+      - name: Run the runtime suite against the single service
+        run: make e2e-single
+
       - name: Collect logs
         if: always()
         run: make e2e-logs
@@ -186,6 +192,9 @@ jobs:
 
       - name: Run the parity suite
         run: make parity-suite
+
+      - name: Run the parity suite against the single service
+        run: make parity-single
 
       - name: Collect logs
         if: always()

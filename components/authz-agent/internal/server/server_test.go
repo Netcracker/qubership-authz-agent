@@ -82,7 +82,7 @@ func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, health f
 		t.Fatal(err)
 	}
 	app := fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
-	Register(app, eng, logs, Options{Authorization: authorization, Health: health})
+	Register(app, eng, logs, Options{Authorization: authorization, Health: health, NDBuiltinCache: true})
 	return app, eng
 }
 
@@ -326,6 +326,51 @@ func TestDecide_LogsTheDecision(t *testing.T) {
 		}
 	case <-time.After(3 * time.Second):
 		cancel()
+		t.Fatal("no decision log upload within 3s")
+	}
+}
+
+// TestDecide_WithoutTheBuiltinCache: with the cache off the decision is
+// answered and logged as before, and the event carries no
+// nd_builtin_cache, so the PIP requests and responses are not recorded.
+func TestDecide_WithoutTheBuiltinCache(t *testing.T) {
+	received := make(chan []decisionlog.Event, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gz, err := gzipReader(r.Body)
+		if err != nil {
+			t.Errorf("gzip: %v", err)
+			return
+		}
+		var batch []decisionlog.Event
+		if err := json.NewDecoder(gz).Decode(&batch); err != nil {
+			t.Errorf("decode: %v", err)
+		}
+		received <- batch
+	}))
+	defer srv.Close()
+	logs := decisionlog.New(decisionlog.Config{URL: srv.URL, FlushInterval: 20 * time.Millisecond}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go logs.Run(ctx)
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	app := fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
+	Register(app, eng, logs, Options{NDBuiltinCache: false})
+
+	if code, body, raw := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "root"}}`, nil); code != 200 || body["decision_id"] == nil {
+		t.Fatalf("POST /access/v1/authorize = %d %s, want 200 with a decision id", code, raw)
+	}
+	select {
+	case batch := <-received:
+		if len(batch) != 1 || batch[0].Result == nil {
+			t.Fatalf("batch = %+v, want one event with its result", batch)
+		}
+		if batch[0].NDBuiltinCache != nil {
+			t.Errorf("nd_builtin_cache = %v, want none with the cache off", batch[0].NDBuiltinCache)
+		}
+	case <-time.After(3 * time.Second):
 		t.Fatal("no decision log upload within 3s")
 	}
 }

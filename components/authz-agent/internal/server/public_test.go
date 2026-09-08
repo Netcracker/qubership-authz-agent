@@ -64,7 +64,7 @@ func newPublicApp(t *testing.T, authorization bool, logs *decisionlog.Logger, pa
 		t.Fatalf("engine: %v", err)
 	}
 	srv := Register(fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true}), eng, logs,
-		Options{Authorization: authorization, PapClientURL: papClient, CollectorURL: collector})
+		Options{Authorization: authorization, PapClientURL: papClient, CollectorURL: collector, NDBuiltinCache: true})
 	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
 	srv.RegisterPublic(app)
 	return app

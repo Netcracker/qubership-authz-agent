@@ -17,6 +17,8 @@ spec:
       labels:
         name: authz-agent-single
     spec:
+      # The service calls no Kubernetes API.
+      automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
         runAsUser: 10001
@@ -108,6 +110,15 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+              ephemeral-storage: 64Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+              ephemeral-storage: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

@@ -15,12 +15,17 @@
 package decisionlog
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -198,4 +203,171 @@ func TestNewDecisionID_Shape(t *testing.T) {
 	if id == NewDecisionID() {
 		t.Fatal("two ids must differ")
 	}
+}
+
+// TestUpload_ChunksBySize: a batch whose events do not fit one body is
+// posted in several, each under the size limit, and every event arrives
+// once.
+func TestUpload_ChunksBySize(t *testing.T) {
+	var mu sync.Mutex
+	var bodies []int
+	var received []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		raw, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Errorf("read: %v", err)
+			return
+		}
+		gz, err := gzip.NewReader(bytes.NewReader(raw))
+		if err != nil {
+			t.Errorf("gzip: %v", err)
+			return
+		}
+		var batch []Event
+		if err := json.NewDecoder(gz).Decode(&batch); err != nil {
+			t.Errorf("decode: %v", err)
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		bodies = append(bodies, len(raw))
+		for _, ev := range batch {
+			received = append(received, ev.DecisionID)
+		}
+	}))
+	defer srv.Close()
+
+	const limit = 512
+	logs := New(Config{URL: srv.URL, MaxUploadBytes: limit}, nil)
+	var batch []Event
+	var want []string
+	for i := range 40 {
+		id := fmt.Sprintf("d-%02d", i)
+		// Random input, so the compressed body grows with every event.
+		batch = append(batch, Event{DecisionID: id, Path: "authorize", Input: map[string]any{"filler": randomString(t, 400)}})
+		want = append(want, id)
+	}
+	undelivered, err := logs.upload(context.Background(), batch)
+	if err != nil || undelivered != nil {
+		t.Fatalf("upload() = %v, %v; want everything delivered", undelivered, err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(bodies) < 2 {
+		t.Fatalf("posted %d bodies of %v bytes, want the batch split by the %d-byte limit", len(bodies), bodies, limit)
+	}
+	for i, size := range bodies[:len(bodies)-1] {
+		// Only the event that crosses the limit ends its chunk, so a body
+		// may pass it by that event's compressed size, not by a multiple.
+		if size > 2*limit {
+			t.Errorf("body %d is %d bytes, want no more than twice the %d-byte limit", i, size, limit)
+		}
+	}
+	if !reflect.DeepEqual(received, want) {
+		t.Errorf("the collector received %v, want every event once, in order", received)
+	}
+}
+
+// TestUpload_KeepsWhatTheCollectorRefused: a collector that refuses one
+// body leaves the events of that body and every later one for the next
+// attempt, and the earlier ones are not sent twice.
+func TestUpload_KeepsWhatTheCollectorRefused(t *testing.T) {
+	var mu sync.Mutex
+	var posts int
+	var received []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		posts++
+		refuse := posts == 2
+		mu.Unlock()
+		if refuse {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		gz, _ := gzip.NewReader(r.Body)
+		var batch []Event
+		_ = json.NewDecoder(gz).Decode(&batch)
+		mu.Lock()
+		defer mu.Unlock()
+		for _, ev := range batch {
+			received = append(received, ev.DecisionID)
+		}
+	}))
+	defer srv.Close()
+
+	logs := New(Config{URL: srv.URL, MaxUploadBytes: 1}, nil)
+	batch := []Event{{DecisionID: "a"}, {DecisionID: "b"}, {DecisionID: "c"}}
+	undelivered, err := logs.upload(context.Background(), batch)
+	if err == nil {
+		t.Fatal("upload() = nil, want the collector's refusal")
+	}
+	if want := []Event{{DecisionID: "b"}, {DecisionID: "c"}}; !reflect.DeepEqual(undelivered, want) {
+		t.Errorf("undelivered = %v, want the refused event and the one after it", undelivered)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if !reflect.DeepEqual(received, []string{"a"}) {
+		t.Errorf("the collector received %v, want only the body it accepted", received)
+	}
+}
+
+// TestRun_RetriesTheRefusedBatch: a batch the collector refused is offered
+// again on the next flush, together with what has arrived since.
+func TestRun_RetriesTheRefusedBatch(t *testing.T) {
+	var mu sync.Mutex
+	var posts int
+	var received []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		posts++
+		refuse := posts == 1
+		mu.Unlock()
+		if refuse {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		gz, _ := gzip.NewReader(r.Body)
+		var batch []Event
+		_ = json.NewDecoder(gz).Decode(&batch)
+		mu.Lock()
+		defer mu.Unlock()
+		for _, ev := range batch {
+			received = append(received, ev.DecisionID)
+		}
+	}))
+	defer srv.Close()
+
+	logs := New(Config{URL: srv.URL, FlushInterval: 20 * time.Millisecond}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go logs.Run(ctx)
+	logs.Log(Event{DecisionID: "first"})
+	time.Sleep(60 * time.Millisecond)
+	logs.Log(Event{DecisionID: "second"})
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		mu.Lock()
+		done := len(received) == 2
+		mu.Unlock()
+		if done {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if !reflect.DeepEqual(received, []string{"first", "second"}) {
+		t.Errorf("the collector received %v, want the refused decision retried before the next one", received)
+	}
+}
+
+// randomString is filler that does not compress.
+func randomString(t *testing.T, n int) string {
+	t.Helper()
+	raw := make([]byte, n/2)
+	if _, err := rand.Read(raw); err != nil {
+		t.Fatal(err)
+	}
+	return hex.EncodeToString(raw)
 }

@@ -75,8 +75,8 @@ type Config struct {
 	Entitlements *pips.EntitlementsConfig
 }
 
-// Store receives the documents.
-type Store interface {
+// Putter receives the documents.
+type Putter interface {
 	Put(ctx context.Context, path []string, value any) error
 }
 
@@ -122,7 +122,7 @@ type Status struct {
 // Puller loads the documents into one store.
 type Puller struct {
 	cfg    Config
-	store  Store
+	store  Putter
 	tokens Tokens
 	log    Logger
 	client *http.Client
@@ -139,7 +139,7 @@ type Puller struct {
 
 // New returns a puller for cfg; an HTTPTimeout that is zero or negative
 // and a negative Interval take the defaults.
-func New(cfg Config, store Store, tokens Tokens, logger Logger) *Puller {
+func New(cfg Config, store Putter, tokens Tokens, logger Logger) *Puller {
 	if cfg.Interval < 0 {
 		cfg.Interval = DefaultInterval
 	}
