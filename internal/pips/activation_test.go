@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func TestBuildActivationIndexFromPolicies(t *testing.T) {
+func TestBuildActivationIndexFromFile(t *testing.T) {
 	t.Parallel()
 
 	policies := map[string]any{

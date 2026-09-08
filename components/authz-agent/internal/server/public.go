@@ -40,15 +40,19 @@ const (
 // RegisterPublic adds the routes the Envoy container exposed to app, with
 // the same meaning: the check routes of the legacy access-control API
 // translated by package legacy, the canonical authorize route as a data API
-// request, /api-version, /health relayed to the pap-client of
-// Options.PapClientURL, the decision-log download relayed to the collector
-// of Options.CollectorURL, and 404 {"message":"not found"} for every other
-// path. A route accepts any method, as the Envoy path matches did; the
-// check routes then read the body, and the filter routes the query,
-// whatever the method.
+// request, /api-version, /health, the decision-log download, and 404
+// {"message":"not found"} for every other path. /health is relayed to the
+// pap-client of Options.PapClientURL when one is set, and the download to
+// the collector of Options.CollectorURL when the decisions are not stored
+// in the service. A route accepts any method, as the Envoy path matches
+// did; the check routes then read the body, and the filter routes the
+// query, whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
 	app.Use(requestID)
-	if s.opts.CollectorURL != "" {
+	switch {
+	case s.logs != nil && s.logs.Store() != nil:
+		app.All("/internal/v1/decision-logs", s.download)
+	case s.opts.CollectorURL != "":
 		app.All("/internal/v1/decision-logs", relay(s.opts.CollectorURL, "collector", decisionLogsTimeout))
 	}
 	app.All("/access/v1/authorize", s.canonical)
@@ -91,6 +95,20 @@ func (s *Server) publicHealth(c *fiber.Ctx) error {
 		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})
 	}
 	return s.health(c)
+}
+
+// download serves the stored decisions as NDJSON, as the collector did,
+// for GET; any other method is 405.
+func (s *Server) download(c *fiber.Ctx) error {
+	if c.Method() != fiber.MethodGet {
+		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})
+	}
+	data, err := s.logs.Store().ReadAll()
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "failed to read decision logs"})
+	}
+	c.Set(fiber.HeaderContentType, "application/x-ndjson")
+	return c.Send(data)
 }
 
 // relay forwards the request, path and query included, to the container

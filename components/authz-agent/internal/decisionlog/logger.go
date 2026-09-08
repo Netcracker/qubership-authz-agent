@@ -13,8 +13,10 @@
 // limitations under the License.
 
 // Package decisionlog emits decision events in the shape of OPA's decision
-// log plugin and uploads them in gzip batches, so the collector and every
-// reader of its output keep working with OPA out of the process.
+// log plugin. A [Logger] queues them and either uploads them to a collector
+// in gzip batches, so the collector and every reader of its output keep
+// working with OPA out of the process, or appends them to a [Store] that
+// serves them back as the collector did.
 package decisionlog
 
 import (
@@ -31,11 +33,14 @@ import (
 	"time"
 )
 
-// Config sets where and how events are uploaded.
+// Config sets where and how events are delivered.
 type Config struct {
-	// URL is the collector's base URL; the events go to <URL>/logs. Empty
-	// disables logging: decisions get no decision_id and nothing is queued.
+	// URL is the collector's base URL; the events go to <URL>/logs.
 	URL string
+	// Store receives the events instead of the collector when set. With
+	// neither Store nor URL, logging is off: decisions get no decision_id
+	// and nothing is queued.
+	Store *Store
 	// Headers lists the request headers recorded into each event's
 	// request_context, lowercase.
 	Headers []string
@@ -113,7 +118,10 @@ func New(cfg Config, warn func(format string, args ...any)) *Logger {
 }
 
 // Enabled reports whether decisions are logged at all.
-func (l *Logger) Enabled() bool { return l.cfg.URL != "" }
+func (l *Logger) Enabled() bool { return l.cfg.Store != nil || l.cfg.URL != "" }
+
+// Store is the store the events go to, nil when they are uploaded.
+func (l *Logger) Store() *Store { return l.cfg.Store }
 
 // Headers returns the request headers recorded per event, lowercase.
 func (l *Logger) Headers() []string { return l.cfg.Headers }
@@ -167,8 +175,8 @@ func (l *Logger) Run(ctx context.Context) {
 		if len(batch) == 0 {
 			return
 		}
-		if err := l.upload(ctx, batch); err != nil {
-			l.warn("decision log upload failed: %v", err)
+		if err := l.deliver(ctx, batch); err != nil {
+			l.warn("decision log delivery failed: %v", err)
 		}
 		batch = nil
 	}
@@ -197,6 +205,14 @@ func (l *Logger) Run(ctx context.Context) {
 
 // Wait blocks until Run has drained the queue after its context ended.
 func (l *Logger) Wait() { <-l.done }
+
+// deliver hands a batch to the store, or uploads it.
+func (l *Logger) deliver(ctx context.Context, batch []Event) error {
+	if l.cfg.Store != nil {
+		return l.cfg.Store.Append(batch)
+	}
+	return l.upload(ctx, batch)
+}
 
 // upload posts one gzip-compressed JSON array of events, the wire format of
 // OPA's decision log plugin.

@@ -32,18 +32,47 @@ func BuildActivationIndex(generalPIPs map[string]GeneralPIPConfig, policiesPath 
 		return map[string]map[string][]string{}
 	}
 
-	aliasToName := make(map[string]string, len(generalPIPs))
-	for name, cfg := range generalPIPs {
-		aliasToName[cfg.Alias] = name
-		aliasToName[strings.TrimPrefix(name, "subject.")] = name
-	}
-
 	rlsData := loadRLSData(policiesPath)
 	if len(rlsData) == 0 {
 		return map[string]map[string][]string{}
 	}
 
-	return buildIndex(rlsData, aliasToName)
+	return buildIndex(rlsData, aliasIndex(generalPIPs))
+}
+
+// BuildActivationIndexFromPolicies builds the same activation map as
+// BuildActivationIndex from a normalized policy document held in memory,
+// the map NormalizePolicies returns, whose "rls" key carries the RLS rules.
+// The document is read as JSON, so the rules may be held in any Go shape
+// that encodes to the persisted one.
+func BuildActivationIndexFromPolicies(generalPIPs map[string]GeneralPIPConfig, policies map[string]any) map[string]map[string][]string {
+	if len(generalPIPs) == 0 {
+		return map[string]map[string][]string{}
+	}
+	raw, err := json.Marshal(policies)
+	if err != nil {
+		return map[string]map[string][]string{}
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		return map[string]map[string][]string{}
+	}
+	rlsData, _ := doc["rls"].(map[string]any)
+	if len(rlsData) == 0 {
+		return map[string]map[string][]string{}
+	}
+	return buildIndex(rlsData, aliasIndex(generalPIPs))
+}
+
+// aliasIndex maps every alias, and every name without its subject. prefix,
+// to the PIP's name.
+func aliasIndex(generalPIPs map[string]GeneralPIPConfig) map[string]string {
+	aliasToName := make(map[string]string, len(generalPIPs))
+	for name, cfg := range generalPIPs {
+		aliasToName[cfg.Alias] = name
+		aliasToName[strings.TrimPrefix(name, "subject.")] = name
+	}
+	return aliasToName
 }
 
 func loadRLSData(path string) map[string]any {

@@ -14,6 +14,7 @@ apply them by hand. CI runs the same targets one step at a time.
 | `runtime-suite-job.yaml` | The suite itself, built from `test/integration/testify/Dockerfile` |
 | `runtime-suite-rbac.yaml` | ServiceAccount and Role the suite uses to restart the OPA container |
 | `authz-agent-direct.yaml` | A Service on the single service's own public listener, for the runs described under "Testing the single service" |
+| `authz-agent-single.yaml` | The single service as one container next to the chart's Pod, with a Service of its own, for `make e2e-single` |
 
 The ConfigMap with the realm imports and the M2M client-credentials Secret
 are generated from the files under `authn/` by `make e2e-harness`, so they
@@ -72,6 +73,14 @@ service. With `E2E_BASE_URL=http://authz-agent-direct:8080`, the suite goes to
 the service's own public listener, which the `authz-agent-direct` Service from
 `e2e-harness` exposes on port 8080. The parity targets take
 `PARITY_AC_BASE_URL` the same way.
+
+`make e2e-single` goes one step further: it starts the service as one container
+of its own, from `authz-agent-single.yaml`, running the trusted providers, the
+policy pull, the M2M token, and the decision-log store itself, and points the
+suite at it with `E2E_BASE_URL`, `E2E_OPA_DIRECT_URL`, and `E2E_AGENT_SELECTOR`.
+The chart has to be installed: the Deployment reads its ConfigMaps and Secrets
+and pulls from its policy-admin. `make parity-single` is the parity counterpart,
+from `parity/authz-agent-single.yaml`.
 
 Re-running `e2e-harness` on its own replaces the Keycloak pod, and a dev-mode
 Keycloak mints new realm keys on every start. Restart the agent afterwards

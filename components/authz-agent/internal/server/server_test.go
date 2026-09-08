@@ -26,8 +26,10 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
+	"authz-agent/components/authz-agent/internal/pull"
 )
 
 // testPolicies mirror the shape of the product policies: a decision
@@ -67,7 +69,7 @@ allow if {
 }
 `
 
-func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, ready func() bool) (*fiber.App, *engine.Engine) {
+func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, health func() Report) (*fiber.App, *engine.Engine) {
 	t.Helper()
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
 	if err != nil {
@@ -80,7 +82,7 @@ func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, ready fu
 		t.Fatal(err)
 	}
 	app := fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
-	Register(app, eng, logs, Options{Authorization: authorization, Ready: ready})
+	Register(app, eng, logs, Options{Authorization: authorization, Health: health})
 	return app, eng
 }
 
@@ -108,17 +110,55 @@ func do(t *testing.T, app *fiber.App, method, path, body string, headers map[str
 	return resp.StatusCode, parsed, string(raw)
 }
 
-// TestHealth_ReflectsReadiness: /health answers the agent's contract, 200
-// with status healthy, and 503 while the engine is not ready.
-func TestHealth_ReflectsReadiness(t *testing.T) {
-	ready := false
-	app, _ := newApp(t, false, nil, func() bool { return ready })
-	if code, body, _ := do(t, app, http.MethodGet, "/health", "", nil); code != 503 || body["status"] != "unhealthy" {
-		t.Fatalf("not ready: %d %v", code, body)
+// TestReady_WaitsForThePolicies: /ready is 503 with the health reason
+// while the report is unhealthy, 503 "policies not loaded yet" while it is
+// healthy but the policies have not loaded, 200 once they have, and 200
+// when there is no report.
+func TestReady_WaitsForThePolicies(t *testing.T) {
+	report := Report{Healthy: false, Message: "bootstrap threshold not met"}
+	app, _ := newApp(t, false, nil, func() Report { return report })
+	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 || body["message"] != "bootstrap threshold not met" {
+		t.Errorf("GET /ready unhealthy = %d %v, want 503 with the health reason", code, body)
 	}
-	ready = true
-	if code, body, _ := do(t, app, http.MethodGet, "/health", "", nil); code != 200 || body["status"] != "healthy" {
-		t.Fatalf("ready: %d %v", code, body)
+	report = Report{Healthy: true}
+	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 || body["message"] != "policies not loaded yet" {
+		t.Errorf("GET /ready before the policies = %d %v, want 503 policies not loaded yet", code, body)
+	}
+	if code, _, raw := do(t, app, http.MethodGet, "/health", "", nil); code != 200 {
+		t.Errorf("GET /health before the policies = %d %s, want 200: the policies are not a liveness matter", code, raw)
+	}
+	report = Report{Healthy: true, Loaded: true}
+	if code, _, raw := do(t, app, http.MethodGet, "/ready", "", nil); code != 200 || raw != `{"status":"ready"}` {
+		t.Errorf("GET /ready loaded = %d %s, want 200 {\"status\":\"ready\"}", code, raw)
+	}
+	plain, _ := newApp(t, false, nil, nil)
+	if code, _, raw := do(t, plain, http.MethodGet, "/ready", "", nil); code != 200 || raw != `{"status":"ready"}` {
+		t.Errorf("GET /ready without a report = %d %s, want 200", code, raw)
+	}
+}
+
+// TestHealth_ReportsTheLoops: /health is 200 with the conversion counts
+// when the report is healthy, 503 with the reason and its details when it
+// is not, and 200 without details when there is no report.
+func TestHealth_ReportsTheLoops(t *testing.T) {
+	report := Report{Healthy: false, Message: "bootstrap threshold not met", Bootstrap: &authn.Details{Mode: "strict", SuccessCount: 0, RequiredCount: 1}}
+	app, _ := newApp(t, false, nil, func() Report { return report })
+	code, body, raw := do(t, app, http.MethodGet, "/health", "", nil)
+	if code != 503 || body["message"] != "bootstrap threshold not met" {
+		t.Fatalf("GET /health unhealthy = %d %s, want 503 with the message", code, raw)
+	}
+	details := body["details"].(map[string]any)
+	if details["opaReady"] != true || details["bootstrap"].(map[string]any)["requiredCount"] != float64(1) {
+		t.Errorf("details = %v, want opaReady true and the bootstrap counts", details)
+	}
+	report = Report{Healthy: true, Conversion: &pull.Conversion{PolicySets: 2, Policies: 3}}
+	code, body, raw = do(t, app, http.MethodGet, "/health", "", nil)
+	if code != 200 || body["status"] != "healthy" || body["policyConversion"].(map[string]any)["policies"] != float64(3) {
+		t.Fatalf("GET /health healthy = %d %s, want 200 with the conversion counts", code, raw)
+	}
+	plain, _ := newApp(t, false, nil, nil)
+	if code, _, raw := do(t, plain, http.MethodGet, "/health", "", nil); code != 200 || raw != `{"status":"healthy"}` {
+		t.Fatalf("GET /health without a report = %d %s, want 200 {\"status\":\"healthy\"}", code, raw)
 	}
 }
 

@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// authz-agent is the authorization agent as one service: the HTTP surface the
-// clients call, the embedded policy engine, and, in later steps, the loops
-// that feed it. This step carries the engine, the public surface with the
-// legacy check routes, and the slice of OPA's REST API the other containers
-// of the Pod still use, so the same binary can stand in for the OPA
-// container until the chart switches.
+// authz-agent is the authorization agent as one service: the HTTP surface
+// the clients call, the embedded policy engine, and the loops that feed it
+// with the trusted providers' keys, the policies and PIPs, and the agent's
+// own token. Started with OPA's command line, it stands in for the OPA
+// container of the current chart instead, leaving the loops to the Pod's
+// other containers and relaying to them.
 package main
 
 import (
 	"context"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -39,9 +40,13 @@ import (
 	_ "github.com/netcracker/qubership-core-lib-go/v3/memlimit"
 	"github.com/netcracker/qubership-core-lib-go/v3/serviceloader"
 
+	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
+	"authz-agent/components/authz-agent/internal/m2m"
+	"authz-agent/components/authz-agent/internal/pull"
 	"authz-agent/components/authz-agent/internal/server"
+	"authz-agent/internal/pips"
 	"authz-agent/policies"
 )
 
@@ -57,7 +62,7 @@ func init() {
 }
 
 func main() {
-	cfg, err := loadConfig(os.Args[1:], configloader.GetOrDefaultString)
+	cfg, err := loadConfig(os.Args[1:], get)
 	if err != nil {
 		logger.Errorf("configuration: %v", err)
 		os.Exit(2)
@@ -72,7 +77,48 @@ func main() {
 		logger.Errorf("policy engine: %v", err)
 		os.Exit(1)
 	}
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	if cfg.OPAAuthTokenFile != "" {
+		if err := loadAuthSecret(ctx, eng, cfg.OPAAuthTokenFile); err != nil {
+			logger.Warnf("data API secret: %v", err)
+		}
+	}
+	if cfg.DecisionLogFile != "" {
+		cfg.DecisionLogs.Store = decisionlog.NewStore(cfg.DecisionLogFile)
+	}
 	logs := decisionlog.New(cfg.DecisionLogs, logger.Warnf)
+
+	// The trusted providers' keys are fetched before the service listens:
+	// a token cannot be verified without them, and the outcome, whatever
+	// it is, goes into the health report.
+	var providers *authn.Manager
+	if cfg.Authn.File != "" {
+		providers = authn.New(cfg.Authn, eng, logger)
+		providers.Bootstrap(ctx)
+	}
+	var tokens *m2m.Source
+	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
+		tokens = m2m.New(cfg.M2M, eng, logger)
+	}
+	var puller *pull.Puller
+	if !cfg.StandIn {
+		cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
+		var source pull.Tokens
+		if tokens != nil {
+			source = tokens
+		}
+		puller = pull.New(cfg.Pull, eng, source, logger)
+	}
+	opts := server.Options{
+		Authorization: cfg.Authorization,
+		PapClientURL:  cfg.PapClientURL,
+		CollectorURL:  cfg.DecisionLogs.URL,
+	}
+	if !cfg.StandIn {
+		opts.Health = func() server.Report { return report(providers, puller) }
+	}
 
 	// Immutable: strings handed out by the request context, such as a path
 	// segment that becomes a store key or a header that goes into a decision
@@ -100,21 +146,24 @@ func main() {
 		logger.Errorf("fiber: %v", err)
 		os.Exit(1)
 	}
-	srv := server.Register(internal, eng, logs, server.Options{
-		Authorization: cfg.Authorization,
-		PapClientURL:  cfg.PapClientURL,
-		CollectorURL:  cfg.DecisionLogs.URL,
-	})
+	srv := server.Register(internal, eng, logs, opts)
 	srv.RegisterPublic(public)
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 	go logs.Run(ctx)
+	if tokens != nil {
+		go tokens.Run(ctx)
+	}
+	if puller != nil {
+		go puller.Run(ctx)
+	}
+	if providers != nil {
+		go providers.Run(ctx)
+	}
 	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, data API on %s",
-		len(modules), cfg.DataDirs, cfg.DecisionLogs.URL, cfg.PublicAddr, cfg.Addr)
+		len(modules), cfg.DataDirs, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
 
 	// A listener that fails cancels the signal context, and main then shuts
-	// the other listener and the decision log uploader down.
+	// the other listener and the loops down.
 	var failed atomic.Bool
 	var listeners sync.WaitGroup
 	serve := func(name string, app *fiber.App, addr string) {
@@ -141,4 +190,54 @@ func main() {
 	if failed.Load() {
 		os.Exit(1)
 	}
+}
+
+// get reads one key through configloader, except that an environment
+// variable set to the empty string is returned as the empty string:
+// configloader falls back to the default there, and the chart sets a URL to
+// "" to switch it off.
+func get(key, fallback string) string {
+	if value, ok := os.LookupEnv(strings.ToUpper(strings.ReplaceAll(key, ".", "_"))); ok && value == "" {
+		return ""
+	}
+	return configloader.GetOrDefaultString(key, fallback)
+}
+
+// loadAuthSecret stores the token of file as data.opa_auth_secret, the
+// identity the data API guard lets write. An empty file loads nothing, so
+// every write stays refused.
+func loadAuthSecret(ctx context.Context, eng *engine.Engine, file string) error {
+	raw, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	token := strings.TrimSpace(string(raw))
+	if token == "" {
+		return nil
+	}
+	return eng.Put(ctx, []string{"opa_auth_secret"}, token)
+}
+
+// report composes the state of the loops: the trusted providers' outcome
+// under the bootstrap rules decides Healthy, and the policies' first load
+// decides Loaded. providers may be nil; puller may not.
+func report(providers *authn.Manager, puller *pull.Puller) server.Report {
+	r := server.Report{Healthy: true}
+	if providers != nil {
+		healthy, message, configError, details := authn.Evaluate(providers.Status())
+		if !healthy {
+			r.Healthy, r.Message, r.ConfigError, r.Bootstrap = false, message, configError, details
+		}
+	}
+	status := puller.Status()
+	r.Conversion = status.Conversion
+	r.Loaded = status.PoliciesLoaded
+	return r
+}
+
+func decisionLogTarget(cfg config) string {
+	if cfg.DecisionLogFile != "" {
+		return cfg.DecisionLogFile
+	}
+	return cfg.DecisionLogs.URL
 }

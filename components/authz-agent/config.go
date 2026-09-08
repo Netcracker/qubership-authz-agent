@@ -17,11 +17,16 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
+	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/decisionlog"
+	"authz-agent/components/authz-agent/internal/m2m"
+	"authz-agent/components/authz-agent/internal/pull"
 )
 
 // config is what the service needs to start. Every value comes from the
@@ -33,6 +38,10 @@ type config struct {
 	Addr string
 	// PublicAddr is the listen address of the surface the clients call.
 	PublicAddr string
+	// StandIn is set when the service was started with OPA's command line
+	// and stands in for the OPA container of the chart's Pod: the Pod's
+	// other containers run the loops, and the service relays to them.
+	StandIn bool
 	// PapClientURL is the base URL of the pap-client that still answers
 	// /health for the Pod; empty when there is none.
 	PapClientURL string
@@ -42,8 +51,23 @@ type config struct {
 	Ignore []string
 	// Authorization guards the data API with data.system.authz.allow.
 	Authorization bool
-	// DecisionLogs configures the uploader; an empty URL disables it.
+	// OPAAuthTokenFile names the file whose token the guard lets write,
+	// loaded as data.opa_auth_secret; empty loads none.
+	OPAAuthTokenFile string
+	// DecisionLogs configures the delivery: an empty URL disables the
+	// upload, and DecisionLogFile stores the decisions instead.
 	DecisionLogs decisionlog.Config
+	// DecisionLogFile stores the decisions in the service instead of
+	// uploading them; empty uploads.
+	DecisionLogFile string
+	// Authn configures the trusted providers; an empty File disables them.
+	Authn authn.Config
+	// Pull configures the policy pull; [pull.Config] says what disables
+	// it. It is empty while standing in: the Pod's pap-client pulls.
+	Pull pull.Config
+	// M2M configures the agent's own token; empty TokenURL and TokenFile
+	// disable it.
+	M2M m2m.Config
 }
 
 // lookup reads one configuration key; configloader in main, a map in tests.
@@ -55,16 +79,52 @@ type lookup func(key, fallback string) string
 // container map onto the same settings, so the same image can replace that
 // container without a chart change. In that Pod, Envoy holds port 8080 and
 // the pap-client answers on 8182, so the public surface defaults to port
-// 8280 and the relay to the pap-client unless the environment sets them.
+// 8280 and the relay to the pap-client unless the environment sets them;
+// the trusted providers and the token file stay off unless the environment
+// turns them on, and the policy pull never runs.
 func loadConfig(args []string, get lookup) (config, error) {
+	standIn := len(args) > 0 && args[0] == "run"
+	// A loop's default applies to the service on its own; standing in for
+	// the OPA container, the same key is off unless set.
+	own := func(value string) string {
+		if standIn {
+			return ""
+		}
+		return value
+	}
 	cfg := config{
-		Addr:          get("authz.http.addr", "0.0.0.0:8181"),
-		PublicAddr:    get("authz.public.addr", "0.0.0.0:8080"),
-		PapClientURL:  get("authz.pap.client.url", ""),
-		Authorization: get("authz.data.api.authorization", "false") == "true",
+		Addr:             get("authz.http.addr", "0.0.0.0:8181"),
+		PublicAddr:       get("authz.public.addr", "0.0.0.0:8080"),
+		StandIn:          standIn,
+		PapClientURL:     get("authz.pap.client.url", ""),
+		Authorization:    get("authz.data.api.authorization", "false") == "true",
+		OPAAuthTokenFile: get("authz.opa.auth.token.file", ""),
 		DecisionLogs: decisionlog.Config{
 			URL:    get("authz.decision.log.url", ""),
 			Labels: map[string]string{"id": "authz-agent"},
+		},
+		DecisionLogFile: get("authz.decision.log.file", ""),
+		Authn: authn.Config{
+			File:             get("authz.trusted.providers.file", own(authn.DefaultFile)),
+			Required:         boolean(get, "authz.jwks.bootstrap.required", true),
+			HTTPTimeout:      seconds(get, "authz.jwks.http.timeout", authn.DefaultHTTPTimeout),
+			HTTPRetries:      integer(get, "authz.jwks.http.retries", authn.DefaultHTTPRetries),
+			TenantManagerURL: get("authz.tenant.manager.url", "http://tenant-manager:8080"),
+			ReloadInterval:   seconds(get, "authz.trusted.providers.reload.interval", authn.DefaultReloadInterval),
+		},
+		Pull: pull.Config{
+			SourceURL:   strings.TrimRight(get("authz.pap.client.source.url", ""), "/"),
+			Interval:    seconds(get, "authz.pap.client.pull.interval", pull.DefaultInterval),
+			MountDir:    get("authz.policy.mount.dir", pull.DefaultMountDir),
+			HTTPTimeout: pull.DefaultHTTPTimeout,
+		},
+		M2M: m2m.Config{
+			TokenURL:         get("authz.m2m.token.url", ""),
+			ClientIDFile:     get("authz.m2m.client.id.file", m2m.DefaultClientIDFile),
+			ClientSecretFile: get("authz.m2m.client.secret.file", m2m.DefaultClientSecretFile),
+			RenewBefore:      seconds(get, "authz.m2m.renew.before.seconds", m2m.DefaultRenewBefore),
+			TokenFile:        get("authz.pap.client.token.file", own(m2m.DefaultTokenFile)),
+			WatchInterval:    m2m.DefaultWatchInterval,
 		},
 	}
 	if dirs := get("authz.data.dirs", ""); dirs != "" {
@@ -76,9 +136,10 @@ func loadConfig(args []string, get lookup) (config, error) {
 	if headers := get("authz.decision.log.headers", ""); headers != "" {
 		cfg.DecisionLogs.Headers = splitList(headers)
 	}
-	if len(args) == 0 || args[0] != "run" {
+	if !standIn {
 		return cfg, nil
 	}
+	cfg.Pull = pull.Config{}
 	if get("authz.public.addr", "") == "" {
 		cfg.PublicAddr = "0.0.0.0:8280"
 	}
@@ -131,6 +192,45 @@ func splitList(s string) []string {
 		}
 	}
 	return out
+}
+
+// seconds reads a whole number of seconds; a value that is not one keeps
+// the fallback, and 0 is kept as 0 for the keys where it means off.
+func seconds(get lookup, key string, fallback time.Duration) time.Duration {
+	raw := strings.TrimSpace(get(key, ""))
+	if raw == "" {
+		return fallback
+	}
+	n, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || n < 0 {
+		return fallback
+	}
+	return time.Duration(n) * time.Second
+}
+
+// integer reads a positive integer; anything else keeps the fallback.
+func integer(get lookup, key string, fallback int) int {
+	raw := strings.TrimSpace(get(key, ""))
+	if raw == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n <= 0 {
+		return fallback
+	}
+	return n
+}
+
+// boolean reads true/false in the spellings the pap-client accepted;
+// anything else keeps the fallback.
+func boolean(get lookup, key string, fallback bool) bool {
+	switch strings.ToLower(strings.TrimSpace(get(key, ""))) {
+	case "1", "true", "yes", "on":
+		return true
+	case "0", "false", "no", "off":
+		return false
+	}
+	return fallback
 }
 
 // opaConfig is the part of OPA's configuration file the service honors: the

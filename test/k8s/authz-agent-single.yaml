@@ -1,0 +1,134 @@
+# The single service on its own, next to the chart's Pod: one container that
+# runs the engine, the trusted providers, the policy pull, the M2M token, and
+# the decision-log store, with nothing relayed. It reads the chart's
+# ConfigMaps and Secrets, the client-credentials Secret of `make e2e-harness`,
+# and the harness Services, so `make e2e-install` has to have run. The
+# container is named opa because the runtime suite restarts the container of
+# that name.
+#
+# Select it for the suites with E2E_BASE_URL=http://authz-agent-single:8080,
+# E2E_OPA_DIRECT_URL=http://authz-agent-single:8181, and
+# E2E_AGENT_SELECTOR=name=authz-agent-single, which `make e2e-single` does.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authz-agent-single
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: authz-agent-single
+  template:
+    metadata:
+      labels:
+        name: authz-agent-single
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      volumes:
+        - name: trusted-providers
+          configMap:
+            name: authz-agent-trusted-providers
+        - name: client-credentials
+          secret:
+            secretName: authz-agent-client-credentials
+        - name: opa-auth-token
+          secret:
+            secretName: authz-agent-opa-auth
+        - name: decision-logs
+          emptyDir: {}
+      containers:
+        - name: opa
+          image: local/authz-agent:ci
+          imagePullPolicy: Never
+          ports:
+            - name: web
+              containerPort: 8080
+            - name: opa
+              containerPort: 8181
+          env:
+            - name: AUTHZ_PUBLIC_ADDR
+              value: 0.0.0.0:8080
+            - name: AUTHZ_HTTP_ADDR
+              value: 0.0.0.0:8181
+            - name: AUTHZ_DATA_API_AUTHORIZATION
+              value: "true"
+            - name: AUTHZ_OPA_AUTH_TOKEN_FILE
+              value: /etc/authz/opa-auth/token
+            - name: AUTHZ_TRUSTED_PROVIDERS_FILE
+              value: /etc/authz/trusted-providers.json
+            # The e2e values generate the provider list from AUTHZ_IDP_REALMS,
+            # which the chart bootstraps in permissive mode with cloud-common
+            # required.
+            - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
+              value: "false"
+            - name: AUTHZ_TENANT_MANAGER_URL
+              value: ""
+            - name: AUTHZ_PAP_CLIENT_SOURCE_URL
+              value: http://authz-agent-authz-policy-admin:18090
+            - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
+              value: "2"
+            - name: AUTHZ_M2M_TOKEN_URL
+              value: http://keycloak:8080/auth/realms/cloud-common/protocol/openid-connect/token
+            - name: AUTHZ_M2M_CLIENT_ID_FILE
+              value: /etc/secret/username
+            - name: AUTHZ_M2M_CLIENT_SECRET_FILE
+              value: /etc/secret/password
+            - name: AUTHZ_ENTITLEMENTS_URL
+              value: http://entitlements-mock:8090
+            - name: AUTHZ_DECISION_LOG_FILE
+              value: /var/log/authz/decision-logs.jsonl
+            - name: AUTHZ_DECISION_LOG_HEADERS
+              value: x-request-id,x-authz-original-path
+          volumeMounts:
+            - name: trusted-providers
+              mountPath: /etc/authz
+              readOnly: true
+            - name: client-credentials
+              mountPath: /etc/secret
+              readOnly: true
+            - name: opa-auth-token
+              mountPath: /etc/authz/opa-auth
+              readOnly: true
+            - name: decision-logs
+              mountPath: /var/log/authz
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8181
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8181
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authz-agent-single
+spec:
+  type: ClusterIP
+  selector:
+    name: authz-agent-single
+  ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    - name: opa
+      port: 8181
+      targetPort: 8181
+      protocol: TCP

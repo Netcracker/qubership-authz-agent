@@ -30,8 +30,10 @@ import (
 	"github.com/open-policy-agent/opa/v1/topdown/builtins"
 	"github.com/open-policy-agent/opa/v1/util"
 
+	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
+	"authz-agent/components/authz-agent/internal/pull"
 )
 
 // LegacyAPIVersion is the body of GET /api-version: the specification
@@ -50,8 +52,10 @@ type Options struct {
 	// /v1/data/authorize under its own method, and the legacy check routes
 	// as POST /v1/data/authorize.
 	Authorization bool
-	// Ready reports whether the service can answer; nil means always.
-	Ready func() bool
+	// Health reports the state of the loops the service runs itself; nil
+	// means the service is healthy and ready as long as it answers, which
+	// is the case while the Pod's other containers run the loops.
+	Health func() Report
 	// PapClientURL is the base URL of the pap-client container, which
 	// answers GET /health for the Pod while it still has one; the public
 	// surface relays /health to it. Empty makes the public /health the
@@ -59,7 +63,8 @@ type Options struct {
 	PapClientURL string
 	// CollectorURL is the base URL of the decision-log collector, which
 	// serves the download of the decisions it received; the public surface
-	// relays GET /internal/v1/decision-logs to it. Empty leaves the download
+	// relays GET /internal/v1/decision-logs to it unless the decisions are
+	// stored in the service. Empty, with no store, leaves the download
 	// unregistered.
 	CollectorURL string
 }
@@ -72,11 +77,12 @@ type Server struct {
 }
 
 // Register adds the routes of the OPA-compatible surface to app: /health,
-// /api-version, the canonical POST /access/v1/authorize, and the data API
-// under /v1/data.
+// /ready, /api-version, the canonical POST /access/v1/authorize, and the
+// data API under /v1/data.
 func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts Options) *Server {
 	s := &Server{engine: eng, logs: logs, opts: opts}
 	app.Get("/health", s.health)
+	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
 	app.Post("/access/v1/authorize", s.canonical)
 	data := app.Group("/v1/data", s.authorize)
@@ -87,11 +93,92 @@ func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts
 	return s
 }
 
+// Report is the state of the service as its loops see it. Healthy is the
+// liveness verdict, which the trusted providers decide; Loaded is the
+// readiness one, set once the policies have loaded and never cleared.
+type Report struct {
+	Healthy bool
+	// Message names the reason when the service is unhealthy or not ready.
+	Message string
+	// ConfigError is the trusted providers file's error, when that is the
+	// reason.
+	ConfigError string
+	// Bootstrap carries the counts when a bootstrap threshold is not met or
+	// a required provider is missing.
+	Bootstrap *authn.Details
+	// Conversion counts the last policy conversion, on either outcome.
+	Conversion *pull.Conversion
+	Loaded     bool
+}
+
+// HealthResponse is the body of a healthy GET /health.
+type HealthResponse struct {
+	Status           string           `json:"status"`
+	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
+}
+
+// HealthErrorResponse is the body of a 503 GET /health or GET /ready.
+type HealthErrorResponse struct {
+	Message string              `json:"message"`
+	Details *HealthErrorDetails `json:"details,omitempty"`
+}
+
+// HealthErrorDetails carries the diagnostics of an unhealthy verdict.
+// OPAReady is always true: the service holds the engine, so there is no
+// separate OPA to wait for; the field stays for the shape the pap-client
+// gave the body.
+type HealthErrorDetails struct {
+	OPAReady         *bool            `json:"opaReady,omitempty"`
+	ConfigError      string           `json:"configError,omitempty"`
+	Bootstrap        *authn.Details   `json:"bootstrap,omitempty"`
+	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
+}
+
+// health answers as the pap-client did: 200 with the conversion counts
+// when healthy, 503 with the reason and its details otherwise. The
+// policies' first load is not part of it, so a liveness probe does not
+// restart a service that is still waiting for its source; /ready carries
+// that.
 func (s *Server) health(c *fiber.Ctx) error {
-	if s.opts.Ready != nil && !s.opts.Ready() {
-		return c.Status(http.StatusServiceUnavailable).JSON(fiber.Map{"status": "unhealthy", "message": "the policy engine is not ready"})
+	if s.opts.Health == nil {
+		return c.JSON(HealthResponse{Status: "healthy"})
 	}
-	return c.JSON(fiber.Map{"status": "healthy"})
+	report := s.opts.Health()
+	if report.Healthy {
+		return c.JSON(HealthResponse{Status: "healthy", PolicyConversion: report.Conversion})
+	}
+	return unavailable(c, report)
+}
+
+// ready is the readiness answer: 200 {"status":"ready"} once the service
+// is healthy and the policies have loaded, 503 with the reason otherwise.
+func (s *Server) ready(c *fiber.Ctx) error {
+	if s.opts.Health == nil {
+		return c.JSON(fiber.Map{"status": "ready"})
+	}
+	report := s.opts.Health()
+	if !report.Healthy {
+		return unavailable(c, report)
+	}
+	if !report.Loaded {
+		report.Message = "policies not loaded yet"
+		return unavailable(c, report)
+	}
+	return c.JSON(fiber.Map{"status": "ready"})
+}
+
+// unavailable writes the 503 body of /health and /ready.
+func unavailable(c *fiber.Ctx, report Report) error {
+	ready := true
+	return c.Status(http.StatusServiceUnavailable).JSON(HealthErrorResponse{
+		Message: report.Message,
+		Details: &HealthErrorDetails{
+			OPAReady:         &ready,
+			ConfigError:      report.ConfigError,
+			Bootstrap:        report.Bootstrap,
+			PolicyConversion: report.Conversion,
+		},
+	})
 }
 
 func apiVersion(c *fiber.Ctx) error {

@@ -21,6 +21,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -332,6 +333,31 @@ func TestPublic_RelaysTheDownloadToTheCollector(t *testing.T) {
 	}
 	if strings.Join(*seen, ", ") != "GET /internal/v1/decision-logs?since=1" || len(*papClientSaw) != 0 {
 		t.Errorf("collector saw %q and the pap-client %q, want only the collector to see the download", *seen, *papClientSaw)
+	}
+}
+
+// TestPublic_ServesTheStoredDecisions: with the decisions stored in the
+// service, the download serves the store as NDJSON for GET, answers 405 to
+// any other method, and relays nothing to a collector.
+func TestPublic_ServesTheStoredDecisions(t *testing.T) {
+	collector, collectorSaw := recorder(http.StatusOK, "application/x-ndjson", "")
+	defer collector.Close()
+	store := decisionlog.NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
+	if err := store.Append([]decisionlog.Event{{DecisionID: "d-1", Path: "authorize"}}); err != nil {
+		t.Fatal(err)
+	}
+	logs := decisionlog.New(decisionlog.Config{Store: store}, nil)
+	app := newPublicApp(t, false, logs, "", collector.URL)
+
+	code, body, contentType := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
+	if code != 200 || contentType != "application/x-ndjson" || !strings.Contains(body, `"decision_id":"d-1"`) {
+		t.Errorf("GET /internal/v1/decision-logs = %d %q (%s), want 200 NDJSON with the stored decision", code, body, contentType)
+	}
+	if code, body, _ := call(t, app, http.MethodPost, "/internal/v1/decision-logs", "", nil); code != 405 || body != `{"message":"method not allowed"}` {
+		t.Errorf("POST /internal/v1/decision-logs = %d %s, want 405", code, body)
+	}
+	if len(*collectorSaw) != 0 {
+		t.Errorf("collector saw %q, want nothing", *collectorSaw)
 	}
 }
 

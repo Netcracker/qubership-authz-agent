@@ -58,8 +58,11 @@ E2E_HELM_ARGS ?=
 # Where the suites send their requests. The chart's Service fronts the Pod
 # with Envoy; http://authz-agent-direct:8080 is the single service's own
 # public listener (test/k8s/authz-agent-direct.yaml), for a chart installed
-# with OPA_IMAGE set to the service image.
+# with OPA_IMAGE set to the service image; authz-agent-single is the service
+# on its own (test/k8s/authz-agent-single.yaml), which e2e-single selects.
 E2E_BASE_URL ?= http://authz-agent:8080
+E2E_OPA_DIRECT_URL ?= http://authz-agent:8181
+E2E_AGENT_SELECTOR ?= name=authz-agent
 PARITY_AC_BASE_URL ?= http://authz-agent:8080
 E2E_AUTHN := test/k8s/authn
 E2E_IMAGES := authz-agent authz-agent-pap-client authz-agent-envoy authz-agent-collector \
@@ -99,13 +102,26 @@ e2e-install: copy-policies
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
-# The Job manifest carries the chart's Service as BASE_URL; sed swaps in E2E_BASE_URL.
+# The Job manifest carries the chart's Service and Pod; sed swaps in
+# E2E_BASE_URL, E2E_OPA_DIRECT_URL, and E2E_AGENT_SELECTOR.
 e2e-suite:
 	$(E2E_KUBECTL) delete job runtime-suite --ignore-not-found
-	sed 's|value: http://authz-agent:8080$$|value: $(E2E_BASE_URL)|' test/k8s/runtime-suite-job.yaml | $(E2E_KUBECTL) apply -f test/k8s/runtime-suite-rbac.yaml -f -
+	sed -e 's|value: http://authz-agent:8080$$|value: $(E2E_BASE_URL)|' \
+	    -e 's|value: http://authz-agent:8181$$|value: $(E2E_OPA_DIRECT_URL)|' \
+	    -e 's|value: name=authz-agent$$|value: $(E2E_AGENT_SELECTOR)|' \
+	    test/k8s/runtime-suite-job.yaml | $(E2E_KUBECTL) apply -f test/k8s/runtime-suite-rbac.yaml -f -
 	$(E2E_KUBECTL) wait --for=condition=Ready pod -l job-name=runtime-suite --timeout=3m
 	$(E2E_KUBECTL) logs -f job/runtime-suite
 	$(E2E_KUBECTL) wait --for=condition=Complete job/runtime-suite --timeout=1m
+
+# The single service on its own, next to the chart's Pod, and the runtime
+# suite against it. The chart has to be installed: the Deployment reads its
+# ConfigMaps and Secrets and pulls from its policy-admin.
+e2e-single:
+	$(E2E_KUBECTL) apply -f test/k8s/authz-agent-single.yaml
+	$(E2E_KUBECTL) rollout restart deploy/authz-agent-single
+	$(E2E_KUBECTL) rollout status deploy/authz-agent-single --timeout=3m
+	$(MAKE) e2e-suite E2E_BASE_URL=http://authz-agent-single:8080 E2E_OPA_DIRECT_URL=http://authz-agent-single:8181 E2E_AGENT_SELECTOR=name=authz-agent-single
 
 # `make e2e-images` rebuilds the local images under the same tags, and a
 # running Pod keeps the old content: the kubelet never re-reads a tag it
@@ -162,6 +178,13 @@ parity-suite:
 	$(PARITY_KUBECTL) logs -f job/parity-suite
 	$(PARITY_KUBECTL) wait --for=condition=Complete job/parity-suite --timeout=1m
 
+# As e2e-single, in the parity namespace, with the parity replay.
+parity-single:
+	$(PARITY_KUBECTL) apply -f test/k8s/parity/authz-agent-single.yaml
+	$(PARITY_KUBECTL) rollout restart deploy/authz-agent-single
+	$(PARITY_KUBECTL) rollout status deploy/authz-agent-single --timeout=3m
+	$(MAKE) parity-suite PARITY_AC_BASE_URL=http://authz-agent-single:8080
+
 # The parity counterpart of e2e-restart, for the same reason.
 PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-agent-authz-policy-admin pip-mock entitlements-mock
 parity-restart:
@@ -174,4 +197,4 @@ parity-logs:
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
 
-.PHONY: copy-policies lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: copy-policies lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-single e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-single parity-restart parity-logs
