@@ -78,18 +78,24 @@ We will replace Envoy, the Lua filters, the OPA container, `pap-client`, `decisi
   perform no transport-level authentication, as Envoy performed none; the policies validate the tokens.
 - **OPA as a library.** The `rego` package of `github.com/open-policy-agent/opa/v1` with an in-memory store. The Rego
   policies are embedded in the binary unchanged, compiled at start, and prepared once. The data documents are written
-  into the store by Go code in transactions; there is no REST data API, no `system.authz`, and no write secret. The
-  inter-query builtin cache is configured so that `http.send` behaves as in the server.
+  into the store by Go code in transactions. The slice of OPA's REST data API that the platform uses is kept and
+  served on the same port, guarded by `system.authz` with the same write secret: the canonical transport of ADR-0062
+  reaches it, and one suite gates both topologies through it. Dropping that surface is a decision of its own, like
+  removing the five-container topology. The inter-query builtin cache is configured so that `http.send` behaves as in
+  the server.
 - **In-process supporting logic.** The JWKS bootstrap, the policy and PIP pull loop, the trusted-provider reload, the
   mount mode, the M2M token refresh, and the health rules move into the binary as packages, writing into the store
   instead of calling OPA. Decision logs are emitted in-process with the event shape the collector produced (`input`,
   `result`, `nd_builtin_cache`, request-context headers), with the same JWT signature redaction, and served through
   `GET /internal/v1/decision-logs`.
 - **Deployment.** One container in the agent Pod and one image; the optional `authz-policy-admin` Deployment stays.
-  The chart keeps its parameter names except the per-image overrides, which collapse into one.
-- **Migration.** The service is developed next to the current one. The runtime suite and the parity replay run
-  against it on kind. The chart switches when both pass, and the old images, the Envoy configuration, and the Lua
-  filters are removed afterwards.
+  The chart keeps its parameter names, and `AUTHZ_AGENT_IMAGE` takes the place of the five per-image overrides.
+- **Migration.** The service is developed next to the current one, and the runtime suite and the parity replay run
+  against it on kind. The chart then assembles the Pod in either topology, and `AUTHZ_SINGLE_SERVICE_ENABLED`
+  selects between them: `false` while both are supported, so an upgrade changes nothing until the switch is thrown,
+  and `true` once the single service has been run in earnest. Both topologies are gated on every pull request. The
+  old images, the Envoy configuration, and the Lua filters are removed in a later step, whose timing is a decision of
+  its own rather than a criterion recorded here.
 
 ### Justification
 
@@ -125,11 +131,15 @@ Negative:
   the inter-query cache configuration. The spike showed two traps to design around: strings from Fiber alias the
   fasthttp request buffer and must be copied before they outlive the handler, and the decision-log queue must be
   drained with its own deadline on shutdown.
-- The OPA-direct transport of ADR-0062 (`/v1/data/authorize` on port 8181) and the OPA REST API disappear. The suite
-  groups that exercised them (`TestOPALockdown`, `TestAuthorizeEnvoyOpaDirectParity`, `TestOPARestart`) are dropped
-  with the catalog rows they cover.
+- `TestOPARestart` skips against the single-container topology, whose one container is the one it restarts; it keeps
+  gating the five-container one and is dropped with the catalog rows it covers when that topology is removed. The
+  other groups, `TestOPALockdown` and `TestAuthorizeEnvoyOpaDirectParity` included, gate both.
 - Deployments that set per-image values (`ENVOY_IMAGE`, `OPA_IMAGE`, `PAP_CLIENT_IMAGE`, `COLLECTOR_IMAGE`,
-  `TOKEN_FETCHER_IMAGE`) have to move to the single image value.
+  `TOKEN_FETCHER_IMAGE`) have to move to `AUTHZ_AGENT_IMAGE` when they throw the switch; those values have no effect
+  on the single-container topology.
+- Two topologies are supported at once: both are rendered by one chart, both are gated in CI, and the parts they do
+  not share, the Pod template, the Envoy and OPA ConfigMaps, and the per-container resources, live in the chart
+  twice until the five-container one is removed.
 - The check family keeps its legacy error bodies, so two error formats coexist in one service until the legacy
   routes are retired.
 

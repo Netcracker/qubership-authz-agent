@@ -905,6 +905,77 @@
       ],
       "internal": true,
       "envSpecific": true
+    },
+    "AUTHZ_SINGLE_SERVICE_ENABLED": {
+      "$id": "#/properties/AUTHZ_SINGLE_SERVICE_ENABLED",
+      "type": "boolean",
+      "title": "The AUTHZ_SINGLE_SERVICE_ENABLED schema",
+      "description": "Runs the agent as one container that carries the policy engine, the check API, and the loops that feed it, instead of the five containers Envoy, OPA, pap-client, decision-log collector, and token-fetcher. The parameters of this chart keep their meaning either way; the per-container image and resource parameters of the containers that are gone have no effect.",
+      "examples": [
+        false,
+        true
+      ],
+      "internal": true,
+      "envSpecific": false
+    },
+    "AUTHZ_AGENT_IMAGE": {
+      "$id": "#/properties/AUTHZ_AGENT_IMAGE",
+      "type": "string",
+      "title": "The AUTHZ_AGENT_IMAGE schema",
+      "description": "Overrides the image of the single service. Empty composes it from IMAGE_REPOSITORY and TAG. Only used when AUTHZ_SINGLE_SERVICE_ENABLED is true.",
+      "examples": [
+        "ghcr.io/netcracker/qubership-authz-agent:1.0.0"
+      ],
+      "internal": true,
+      "default": ""
+    },
+    "AUTHZ_AGENT_CPU_REQUEST": {
+      "$id": "#/properties/AUTHZ_AGENT_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the single service container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_CPU_LIMIT": {
+      "$id": "#/properties/AUTHZ_AGENT_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the single service container is allowed to use",
+      "examples": [
+        "4",
+        "500m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_MEM_REQUEST": {
+      "$id": "#/properties/AUTHZ_AGENT_MEM_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the single service container will use to start",
+      "examples": [
+        "200Mi",
+        "1Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_MEM_LIMIT": {
+      "$id": "#/properties/AUTHZ_AGENT_MEM_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the single service container is allowed to use",
+      "examples": [
+        "600Mi",
+        "2Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
     }
   },
   "additionalProperties": true

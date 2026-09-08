@@ -1,0 +1,203 @@
+{{- if .Values.AUTHZ_SINGLE_SERVICE_ENABLED }}
+{{- include "authz-agent.validateValues" . }}
+# The agent as one container: the policy engine, the HTTP surface the clients
+# call, and the loops that feed the engine with the trusted providers' keys,
+# the policies and PIPs, and the agent's own token, all in one process
+# (authz-agent-ADR-0080). It replaces the Envoy, OPA, pap-client, collector,
+# and token-fetcher containers of deployment.yaml, which AUTHZ_SINGLE_SERVICE_ENABLED
+# selects between; nothing is written to a shared volume, since the documents
+# live in the process and are rebuilt at every start.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}'
+  labels:
+    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      name: '{{ include "authz-agent.serviceName" . }}'
+  template:
+    metadata:
+      labels:
+        {{- include "authz-agent.commonLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
+      # The service calls no Kubernetes API. The projected token below, where
+      # the platform provisions the M2M identity that way, is a volume of its
+      # own and is unaffected.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      volumes:
+        # Mounted as a directory, deliberately not with subPath: the kubelet
+        # propagates a ConfigMap edit into a directory mount by swapping the
+        # `..data` symlink and never into a subPath'd file, and the service
+        # re-reads this file to reload the providers without a restart
+        # (authz-agent-ADR-0070).
+        - name: trusted-providers
+          configMap:
+            name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+        - name: decision-logs
+          emptyDir: {}
+        - name: opa-auth-token
+          secret:
+            secretName: '{{ include "authz-agent.serviceName" . }}-opa-auth'
+            defaultMode: 292
+        {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
+        # Mount-mode volume: an ALREADY-EXISTING ConfigMap named by
+        # AUTHZ_POLICY_CONFIGMAP (authz-agent-ADR-0071), which the chart never
+        # creates. Its presence switches the policy delivery from the pull
+        # loop to the mount.
+        - name: policy-data
+          configMap:
+            name: '{{ .Values.AUTHZ_POLICY_CONFIGMAP }}'
+        {{- end }}
+        {{- if .Values.KUBERNETES_M2M_ENABLED }}
+        - name: ac-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: netcracker
+                  expirationSeconds: 600
+            defaultMode: 292
+        {{- else }}
+        - name: client-credentials
+          secret:
+            secretName: '{{ include "authz-agent.serviceName" . }}-client-credentials'
+            defaultMode: 292
+        {{- end }}
+      containers:
+        - name: authz-agent
+          image: '{{ include "authz-agent.serviceImage" . }}'
+          imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
+          ports:
+            - name: web
+              containerPort: 8080
+              protocol: TCP
+            - name: data-api
+              containerPort: 8181
+              protocol: TCP
+          env:
+            - name: AUTHZ_PUBLIC_ADDR
+              value: "0.0.0.0:8080"
+            - name: AUTHZ_HTTP_ADDR
+              value: "0.0.0.0:8181"
+            # The data API is the writing surface of the engine, and the
+            # Service publishes its port, so the policy guard applies to it
+            # here as it did to OPA (authz-agent-ADR-0077).
+            - name: AUTHZ_DATA_API_AUTHORIZATION
+              value: "true"
+            - name: AUTHZ_OPA_AUTH_TOKEN_FILE
+              value: /etc/authz/opa-auth/token
+            - name: AUTHZ_TRUSTED_PROVIDERS_FILE
+              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE }}'
+            - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
+              value: '{{ include "authz-agent.jwksBootstrapRequired" . }}'
+            - name: AUTHZ_JWKS_HTTP_TIMEOUT
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_TIMEOUT }}'
+            - name: AUTHZ_JWKS_HTTP_RETRIES
+              value: '{{ .Values.AUTHZ_JWKS_HTTP_RETRIES }}'
+            - name: AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL
+              value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL }}'
+            - name: AUTHZ_TENANT_MANAGER_URL
+              value: '{{ .Values.AUTHZ_TENANT_MANAGER_URL }}'
+            - name: AUTHZ_PAP_CLIENT_SOURCE_URL
+              value: '{{ include "authz-agent.papSourceURL" . }}'
+            - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
+              value: '{{ .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL }}'
+            - name: AUTHZ_PAP_CLIENT_TOKEN_FILE
+              value: '{{ .Values.AUTHZ_PAP_CLIENT_TOKEN_FILE }}'
+            {{- if not .Values.KUBERNETES_M2M_ENABLED }}
+            # Client credentials: the service obtains the token itself and
+            # refreshes it before it expires, where the Pod of deployment.yaml
+            # ran token-fetcher beside the agent for it.
+            - name: AUTHZ_M2M_TOKEN_URL
+              value: '{{ .Values.IDENTITY_PROVIDER_URL }}/auth/realms/cloud-common/protocol/openid-connect/token'
+            - name: AUTHZ_M2M_CLIENT_ID_FILE
+              value: /etc/secret/username
+            - name: AUTHZ_M2M_CLIENT_SECRET_FILE
+              value: /etc/secret/password
+            - name: AUTHZ_M2M_RENEW_BEFORE_SECONDS
+              value: "60"
+            {{- end }}
+            - name: AUTHZ_ENTITLEMENTS_URL
+              value: '{{ .Values.AUTHZ_ENTITLEMENTS_URL }}'
+            - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
+              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
+            - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
+              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
+            - name: AUTHZ_DECISION_LOG_FILE
+              value: '{{ printf "%s/decision-logs.jsonl" (trimSuffix "/" .Values.AUTHZ_DECISION_LOG_PATH) }}'
+            - name: AUTHZ_DECISION_LOG_HEADERS
+              value: x-request-id,x-authz-original-path
+            {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
+            - name: AUTHZ_POLICY_MOUNT_DIR
+              value: /etc/authz/policies
+            {{- end }}
+          volumeMounts:
+            - name: trusted-providers
+              mountPath: /etc/authz
+              readOnly: true
+            - name: opa-auth-token
+              mountPath: /etc/authz/opa-auth
+              readOnly: true
+            - name: decision-logs
+              mountPath: '{{ .Values.AUTHZ_DECISION_LOG_PATH }}'
+            {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
+            - name: policy-data
+              mountPath: /etc/authz/policies
+              readOnly: true
+            {{- end }}
+            {{- if .Values.KUBERNETES_M2M_ENABLED }}
+            - name: ac-token
+              mountPath: /etc/authz/ac-token
+              readOnly: true
+            {{- else }}
+            - name: client-credentials
+              mountPath: /etc/secret
+              readOnly: true
+            {{- end }}
+          # /health answers once the trusted providers meet the bootstrap
+          # rules, and /ready once the policies have loaded as well, so a Pod
+          # waiting for its policy source is held out of the Service instead
+          # of being restarted.
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: data-api
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: data-api
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: '{{ .Values.AUTHZ_AGENT_CPU_REQUEST }}'
+              memory: '{{ .Values.AUTHZ_AGENT_MEM_REQUEST }}'
+            limits:
+              cpu: '{{ .Values.AUTHZ_AGENT_CPU_LIMIT }}'
+              memory: '{{ .Values.AUTHZ_AGENT_MEM_LIMIT }}'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            capabilities:
+              drop:
+                - ALL
+{{- end }}

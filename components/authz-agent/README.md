@@ -34,8 +34,8 @@ recorded in ADR 0080 under `docs/decisions`, delivered in steps.
 - `main.go` and `config.go`: configuration from the environment through configloader, and the OPA-style command line
   of the chart's OPA container mapped onto it.
 
-Not yet in the service: the chart with one container. Until it lands, the current chart still runs the service in
-place of its OPA container, with the Pod's other containers running the loops.
+The chart assembles the agent Pod as this one container, or as the five it replaces, and
+`AUTHZ_SINGLE_SERVICE_ENABLED` selects between them while both are supported.
 
 ## Configuration
 
@@ -82,26 +82,29 @@ Envoy holds port 8080 and the pap-client answers on 8182, so the public surface 
 `AUTHZ_PAP_CLIENT_URL` to `http://127.0.0.1:8182`; the trusted providers and the token file default to off and the
 policy pull never runs, since the Pod's other containers run them, and `/health` is the pap-client's.
 
-## Running in place of the OPA container
+## Running it
+
+The chart assembles the agent Pod as this one container when
+`AUTHZ_SINGLE_SERVICE_ENABLED` is set; the switch is off by default while both
+topologies are supported, and every other parameter of the chart keeps its
+meaning. On a kind cluster:
 
 ```bash
 make e2e-images
-E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' make e2e-install e2e-suite
+make e2e-single      # the chart with the switch on, then the runtime suite
+make parity-single   # the same in the parity namespace, then the parity replay
+make e2e-install     # back to the five-container Pod
 ```
 
-runs the runtime suite through Envoy, which forwards the decisions to the service. To send the suite to the
-service's own public surface instead, use the `authz-agent-direct` Service that `make e2e-harness` creates:
+Both suites pass against either topology. The groups that address OPA
+directly, `TestOPALockdown`, `TestOPARestart`, and
+`TestAuthorizeEnvoyOpaDirectParity`, are skipped against this one, which has no
+OPA of its own; they keep gating the five-container Pod.
 
-```bash
-E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' E2E_BASE_URL=http://authz-agent-direct:8080 make e2e-install e2e-suite
-```
+## Standing in for the OPA container
 
-The parity replay takes the same two variables, with `PARITY_AC_BASE_URL` in place of `E2E_BASE_URL`, on
-`make parity-install parity-suite`. Both suites pass either way.
-
-## Running on its own
-
-`make e2e-single` starts the service as one container next to the chart's Pod, from
-`test/k8s/authz-agent-single.yaml`, and runs the runtime suite against it; `make parity-single` does the same with
-the parity replay. The service reads the chart's ConfigMaps and Secrets and pulls from its policy-admin, so the chart
-has to be installed first. Both suites pass this way too.
+Before the chart could assemble the single service, the same binary was tested
+in place of the OPA container of the five-container Pod, and that still works:
+it reads the OPA command line, relays `/health` to the pap-client, and leaves
+the loops to the Pod's other containers. It is a manual aid, not a target of
+CI; `test/k8s/README.md` has the commands.

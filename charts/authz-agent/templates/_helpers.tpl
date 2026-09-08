@@ -64,6 +64,13 @@ Image name follows the Pod-container naming rule: authz-agent-<container>.
 {{- coalesce .Values.PAP_CLIENT_IMAGE (printf "%s/authz-agent-pap-client:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
 {{- end -}}
 
+{{/*
+The single service's image, the one container of deployment-single.yaml.
+*/}}
+{{- define "authz-agent.serviceImage" -}}
+{{- coalesce .Values.AUTHZ_AGENT_IMAGE (printf "%s/authz-agent:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
+{{- end -}}
+
 {{- define "authz-agent.collectorImage" -}}
 {{- coalesce .Values.COLLECTOR_IMAGE (printf "%s/authz-agent-collector:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
 {{- end -}}
@@ -213,7 +220,9 @@ covers the preview bulk-operations route. This is the same prefix set
 access-control registers on its public and private gateways, minus everything
 this agent does not serve (its whole management surface).
 
-These go through Envoy on port 8080: each legacy route carries a per-route Lua
+These go to port 8080, which is Envoy in the five-container topology and the
+single service's own public listener in the other; both answer the same
+shapes. Under Envoy, each legacy route carries a per-route Lua
 filter that rewrites the request and the response, so bypassing Envoy here would
 return raw OPA documents instead of the compatible shape.
 */}}

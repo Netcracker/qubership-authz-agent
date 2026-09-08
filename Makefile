@@ -56,14 +56,13 @@ E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
 # place of the OPA container.
 E2E_HELM_ARGS ?=
 # Where the suites send their requests. The chart's Service fronts the Pod
-# with Envoy; http://authz-agent-direct:8080 is the single service's own
-# public listener (test/k8s/authz-agent-direct.yaml), for a chart installed
-# with OPA_IMAGE set to the service image; authz-agent-single is the service
-# on its own (test/k8s/authz-agent-single.yaml), which e2e-single selects.
+# either way; http://authz-agent-direct:8080 is the public listener of the
+# service standing in for the OPA container (test/k8s/authz-agent-direct.yaml),
+# which is a manual aid rather than a target of its own.
 E2E_BASE_URL ?= http://authz-agent:8080
-E2E_OPA_DIRECT_URL ?= http://authz-agent:8181
-E2E_AGENT_SELECTOR ?= name=authz-agent
 PARITY_AC_BASE_URL ?= http://authz-agent:8080
+# The topology the suite is told it runs against; e2e-single sets it.
+E2E_SINGLE_SERVICE ?= false
 E2E_AUTHN := test/k8s/authn
 E2E_IMAGES := authz-agent authz-agent-pap-client authz-agent-envoy authz-agent-collector \
               authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite \
@@ -102,26 +101,24 @@ e2e-install: copy-policies
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
-# The Job manifest carries the chart's Service and Pod; sed swaps in
-# E2E_BASE_URL, E2E_OPA_DIRECT_URL, and E2E_AGENT_SELECTOR.
+# The Job manifest carries the chart's Service and the five-container
+# topology; sed swaps in E2E_BASE_URL and E2E_SINGLE_SERVICE.
 e2e-suite:
 	$(E2E_KUBECTL) delete job runtime-suite --ignore-not-found
 	sed -e 's|value: http://authz-agent:8080$$|value: $(E2E_BASE_URL)|' \
-	    -e 's|value: http://authz-agent:8181$$|value: $(E2E_OPA_DIRECT_URL)|' \
-	    -e 's|value: name=authz-agent$$|value: $(E2E_AGENT_SELECTOR)|' \
+	    -e '/name: SINGLE_SERVICE/{n;s|value: .*|value: "$(E2E_SINGLE_SERVICE)"|;}' \
 	    test/k8s/runtime-suite-job.yaml | $(E2E_KUBECTL) apply -f test/k8s/runtime-suite-rbac.yaml -f -
 	$(E2E_KUBECTL) wait --for=condition=Ready pod -l job-name=runtime-suite --timeout=3m
 	$(E2E_KUBECTL) logs -f job/runtime-suite
 	$(E2E_KUBECTL) wait --for=condition=Complete job/runtime-suite --timeout=1m
 
-# The single service on its own, next to the chart's Pod, and the runtime
-# suite against it. The chart has to be installed: the Deployment reads its
-# ConfigMaps and Secrets and pulls from its policy-admin.
-e2e-single:
-	$(E2E_KUBECTL) apply -f test/k8s/authz-agent-single.yaml
-	$(E2E_KUBECTL) rollout restart deploy/authz-agent-single
-	$(E2E_KUBECTL) rollout status deploy/authz-agent-single --timeout=3m
-	$(MAKE) e2e-suite E2E_BASE_URL=http://authz-agent-single:8080 E2E_OPA_DIRECT_URL=http://authz-agent-single:8181 E2E_AGENT_SELECTOR=name=authz-agent-single
+# The same chart with AUTHZ_SINGLE_SERVICE_ENABLED, so the Pod is the one
+# container of ADR 0080, and the runtime suite against it. The Service and
+# the Deployment keep their names, so the suite needs no address of its own;
+# `make e2e-install` puts the five-container Pod back.
+e2e-single: copy-policies
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m --set AUTHZ_SINGLE_SERVICE_ENABLED=true $(E2E_HELM_ARGS)
+	$(MAKE) e2e-suite E2E_SINGLE_SERVICE=true
 
 # `make e2e-images` rebuilds the local images under the same tags, and a
 # running Pod keeps the old content: the kubelet never re-reads a tag it
@@ -179,11 +176,9 @@ parity-suite:
 	$(PARITY_KUBECTL) wait --for=condition=Complete job/parity-suite --timeout=1m
 
 # As e2e-single, in the parity namespace, with the parity replay.
-parity-single:
-	$(PARITY_KUBECTL) apply -f test/k8s/parity/authz-agent-single.yaml
-	$(PARITY_KUBECTL) rollout restart deploy/authz-agent-single
-	$(PARITY_KUBECTL) rollout status deploy/authz-agent-single --timeout=3m
-	$(MAKE) parity-suite PARITY_AC_BASE_URL=http://authz-agent-single:8080
+parity-single: copy-policies
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m --set AUTHZ_SINGLE_SERVICE_ENABLED=true $(E2E_HELM_ARGS)
+	$(MAKE) parity-suite
 
 # The parity counterpart of e2e-restart, for the same reason.
 PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-agent-authz-policy-admin pip-mock entitlements-mock

@@ -41,6 +41,9 @@ import (
 // ephemeral container signals the OPA process and the kubelet restarts that
 // container only, with pap-client untouched.
 func (s *RuntimeSuite) TestOPARestart() {
+	if s.cfg.SingleService {
+		s.T().Skip("the single service is one container, so there is no OPA container to restart (SINGLE_SERVICE=true)")
+	}
 
 	// ── Step 1: establish pre-restart baseline ────────────────────────────
 	// Confirm that a policy-dependent request returns allow=true before the restart.

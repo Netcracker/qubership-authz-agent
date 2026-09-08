@@ -1,4 +1,9 @@
+{{- if not .Values.AUTHZ_SINGLE_SERVICE_ENABLED }}
 {{- include "authz-agent.validateValues" . }}
+# The agent as five containers: Envoy with the Lua filters in front of OPA,
+# with pap-client, the decision-log collector, and token-fetcher beside them.
+# deployment-single.yaml is the one container that replaces them, and
+# AUTHZ_SINGLE_SERVICE_ENABLED selects between the two.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -530,3 +535,4 @@ spec:
             capabilities:
               drop:
                 - ALL
+{{- end }}

@@ -67,6 +67,7 @@ MESH_ROUTES_ENABLED: true
 
 # Per-image overrides. If empty, the deployment template falls back to:
 #   OPA:                  openpolicyagent/opa@sha256:<digest>  (OPA 1.14.0, pinned)
+#   authz-agent:          {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}
 #   pap-client:           {{ IMAGE_REPOSITORY }}/authz-agent-pap-client:{{ TAG }}
 #   envoy:                {{ IMAGE_REPOSITORY }}/authz-agent-envoy:{{ TAG }}
 #   collector:            {{ IMAGE_REPOSITORY }}/authz-agent-collector:{{ TAG }}
@@ -87,6 +88,23 @@ OPA_IMAGE: ''
 # (authz-agent-pap-client); OPA runs as the vanilla upstream image.
 PAP_CLIENT_IMAGE: ''
 COLLECTOR_IMAGE: ''
+# AUTHZ_SINGLE_SERVICE_ENABLED: run the agent as one container instead of
+# five (authz-agent-ADR-0080). The single service carries the policy engine,
+# the check API, and the loops that feed it, so Envoy, OPA, pap-client, the
+# collector, and token-fetcher are not deployed and their images, their
+# ConfigMaps, and their shared volumes are not rendered. The parameters of
+# this file keep their meaning either way; the per-container resource and
+# image parameters of the containers that are gone have no effect.
+#
+# false while the two topologies live side by side, so an upgrade changes
+# nothing until the switch is thrown deliberately.
+AUTHZ_SINGLE_SERVICE_ENABLED: false
+
+# AUTHZ_AGENT_IMAGE: override for the single service's image.
+# Empty → {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}.
+# Only used when AUTHZ_SINGLE_SERVICE_ENABLED=true.
+AUTHZ_AGENT_IMAGE: ''
+
 # TOKEN_FETCHER_IMAGE: override for the token-fetcher sidecar image.
 # Empty → {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}.
 # Only used when KUBERNETES_M2M_ENABLED=false.
@@ -397,6 +415,16 @@ PAP_CLIENT_CPU_REQUEST: 100m
 PAP_CLIENT_CPU_LIMIT: 100m
 PAP_CLIENT_MEM_REQUEST: 100Mi
 PAP_CLIENT_MEM_LIMIT: 300Mi
+
+# The single service's container. The request is the sum of what Envoy and
+# OPA asked for, the two containers on the decision path, and the limit is
+# raised over theirs because policy evaluation, the pull loop, and the JWKS
+# bootstrap now share one process. Deployments with a load worth measuring
+# set these from the resource profiles.
+AUTHZ_AGENT_CPU_REQUEST: 100m
+AUTHZ_AGENT_CPU_LIMIT: 500m
+AUTHZ_AGENT_MEM_REQUEST: 200Mi
+AUTHZ_AGENT_MEM_LIMIT: 600Mi
 
 COLLECTOR_CPU_REQUEST: 100m
 COLLECTOR_CPU_LIMIT: 100m

@@ -1,3 +1,7 @@
+{{- if not .Values.AUTHZ_SINGLE_SERVICE_ENABLED }}
+# Envoy's routes and OPA's configuration, which only the five-container Pod
+# of deployment.yaml reads: the single service carries its routes in code and
+# its policies in the binary.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -15,11 +19,13 @@ data:
     {{- $opaTmpl := .Files.Get "files/opa/opa-config.yaml.tmpl" -}}
     {{- $opaTmpl = $opaTmpl | replace "__COLLECTOR_HOST__" "127.0.0.1" -}}
     {{- $opaTmpl | nindent 4 }}
+{{- end }}
 ---
 # Trusted token providers live in their own ConfigMap, separate from the
 # runtime config above, because this one is meant to be edited on a live
-# installation: `pap-client` watches the mounted file and republishes
-# `data.authn` into OPA without a Pod restart (authz-agent-ADR-0070). Keeping
+# installation: whichever container reads it, the pap-client of the
+# five-container Pod or the single service, re-reads the file and republishes
+# `data.authn` without a Pod restart (authz-agent-ADR-0070). Keeping
 # it apart from envoy.yaml / opa-config.yaml — which do need a restart to take
 # effect — makes "editable at runtime" a property of the object, not a footnote.
 #
@@ -36,6 +42,7 @@ data:
   trusted-providers.json: |-
 {{ (dict "providers" (include "authz-agent.trustedProviders" . | fromJsonArray)) | toPrettyJson | indent 4 }}
 ---
+{{- if not .Values.AUTHZ_SINGLE_SERVICE_ENABLED }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -44,7 +51,11 @@ metadata:
     {{- include "authz-agent.commonLabels" . | nindent 4 }}
 data:
 {{ (.Files.Glob "files/opa/policies/*.rego").AsConfig | indent 2 }}
+{{- end }}
 ---
+# ServiceAccount whose projected Kubernetes token the agent presents to the
+# policy source, whether the pap-client of the five-container Pod or the
+# single service reads it. The comment below is written for the former.
 # ServiceAccount that pap-client uses to obtain a projected Kubernetes
 # service-account token.  The token is sent as a Bearer credential on every
 # request to access-control's v3 config API; access-control recognises it as

@@ -246,8 +246,13 @@ The minimum CI gate for compatibility-sensitive changes should run:
 
 1. `test/scripts/test-opa.sh`
 2. `test/scripts/test-chart-render.sh`
-3. `make e2e` (the Testify suite on kind)
-4. `make parity` (the parity replay on kind)
+3. `make e2e` (the Testify suite on kind, against the five-container Pod)
+4. `make e2e-single` (the same suite against the one-container Pod of ADR 0080)
+5. `make parity` (the parity replay on kind)
+6. `make parity-single` (the parity replay against the one-container Pod)
+
+Both topologies are gated because one chart renders either of them, and
+`AUTHZ_SINGLE_SERVICE_ENABLED` selects between them.
 
 For running the runtime suite locally on a clean machine — prerequisites, the
 images the stack needs, ports, target platform, and troubleshooting — see

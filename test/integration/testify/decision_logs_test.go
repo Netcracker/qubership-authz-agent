@@ -411,6 +411,11 @@ func expectedDecisionLogStepNames(cfg RuntimeConfig) []string {
 		if !cfg.M2MKeycloakProfile && strings.HasPrefix(entry.Name, "m2m_keycloak.") {
 			continue
 		}
+		// The restart group is skipped against the single service and
+		// produces no decision logs there.
+		if cfg.SingleService && needsOPAContainer(entry.Name) {
+			continue
+		}
 		expected = append(expected, entry.Name)
 	}
 

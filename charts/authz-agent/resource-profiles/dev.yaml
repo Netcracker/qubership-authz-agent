@@ -1,9 +1,18 @@
 # Dev resource profile for authz-agent.
 # Keep the dev install small:
-#   envoy:      100Mi RAM / 100m CPU
-#   opa:         64Mi RAM /  50m CPU (vanilla OPA, stateless; data loaded from volume)
-#   pap-client: 100Mi RAM / 100m CPU
-#   collector:  100Mi RAM / 100m CPU
+#   authz-agent: 200Mi RAM / 100m CPU (the single service, when the switch is on)
+#   envoy:       100Mi RAM / 100m CPU
+#   opa:          64Mi RAM /  50m CPU (vanilla OPA, stateless; data loaded from volume)
+#   pap-client:  100Mi RAM / 100m CPU
+#   collector:   100Mi RAM / 100m CPU
+#
+# The first block applies with AUTHZ_SINGLE_SERVICE_ENABLED, the rest without
+# it; a profile carries both so that either topology installs sized.
+AUTHZ_AGENT_CPU_REQUEST: 100m
+AUTHZ_AGENT_CPU_LIMIT: 500m
+AUTHZ_AGENT_MEM_REQUEST: 200Mi
+AUTHZ_AGENT_MEM_LIMIT: 600Mi
+
 ENVOY_CPU_REQUEST: 100m
 ENVOY_CPU_LIMIT: 100m
 ENVOY_MEM_REQUEST: 100Mi

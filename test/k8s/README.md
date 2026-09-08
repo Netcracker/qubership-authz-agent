@@ -13,8 +13,7 @@ apply them by hand. CI runs the same targets one step at a time.
 | `values.yaml` | Chart values that point the agent at the harness Services |
 | `runtime-suite-job.yaml` | The suite itself, built from `test/integration/testify/Dockerfile` |
 | `runtime-suite-rbac.yaml` | ServiceAccount and Role the suite uses to restart the OPA container |
-| `authz-agent-direct.yaml` | A Service on the single service's own public listener, for the runs described under "Testing the single service" |
-| `authz-agent-single.yaml` | The single service as one container next to the chart's Pod, with a Service of its own, for `make e2e-single` |
+| `authz-agent-direct.yaml` | A Service on the public listener of the service standing in for the OPA container, for the manual swap described below |
 
 The ConfigMap with the realm imports and the M2M client-credentials Secret
 are generated from the files under `authn/` by `make e2e-harness`, so they
@@ -43,11 +42,11 @@ Step by step, in the order `make e2e` runs them:
 | Target | What it does |
 | --- | --- |
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
-| `e2e-images` | Builds the five product images, pip-stub, and the suite image, then loads them into the cluster |
+| `e2e-images` | Builds the six product images, pip-stub, and the suite image, then loads them into the cluster |
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
 | `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `values.yaml` and `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
-| `e2e-single` | Starts the single service beside the chart's Pod and runs the suite against it; CI runs it after `e2e-suite` |
+| `e2e-single` | Installs the chart with `AUTHZ_SINGLE_SERVICE_ENABLED=true` and runs the suite against the one-container Pod; CI runs it after `e2e-suite` |
 | `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 
 The parity targets mirror these: `parity-harness`, `parity-install`,
@@ -59,46 +58,44 @@ override the defaults. `E2E_HELM_ARGS` adds arguments to both chart installs;
 `E2E_BASE_URL` and `PARITY_AC_BASE_URL` set where the suites send their
 requests, the chart's Service by default.
 
-## Testing the single service
+## The two topologies
 
-The service under `components/authz-agent` can stand in for the OPA container
-of the chart, and the suites can reach it either through Envoy or directly:
+The chart assembles the agent Pod either as the five containers or as the one
+container of ADR 0080, and `AUTHZ_SINGLE_SERVICE_ENABLED` selects between them.
+Both are tested against the same harness:
+
+```bash
+make e2e-install e2e-suite   # five containers, the default
+make e2e-single              # the same chart with the switch on, then the suite
+make e2e-install             # back to the five containers
+```
+
+`make e2e-single` reinstalls the chart with the switch and runs the suite with
+`SINGLE_SERVICE=true`, which skips `TestOPARestart` alone: its one container is
+the one that is gone. Every other group, the data API lockdown and the
+two-transport comparison included, gates both topologies. The Service and the
+Deployment keep their names, so nothing else changes. `make parity-single` is
+the parity counterpart. CI runs both topologies on every pull request.
+
+Separately, and as a manual aid rather than a target of CI, the single
+service's binary can stand in for the OPA container of the five-container Pod:
 
 ```bash
 E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' make e2e-install e2e-suite
 E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' E2E_BASE_URL=http://authz-agent-direct:8080 make e2e-install e2e-suite
 ```
 
-Without `E2E_BASE_URL`, Envoy stays in front and forwards the decisions to the
-service. With `E2E_BASE_URL=http://authz-agent-direct:8080`, the suite goes to
-the service's own public listener, which the `authz-agent-direct` Service from
-`e2e-harness` exposes on port 8080. The parity targets take
-`PARITY_AC_BASE_URL` the same way.
-
-`make e2e-single` goes one step further: it starts the service as one container
-of its own, from `authz-agent-single.yaml`, running the trusted providers, the
-policy pull, the M2M token, and the decision-log store itself, and points the
-suite at it with `E2E_BASE_URL`, `E2E_OPA_DIRECT_URL`, and `E2E_AGENT_SELECTOR`.
-The chart has to be installed: the Deployment reads its ConfigMaps and Secrets
-and pulls from its policy-admin. `make parity-single` is the parity counterpart,
-from `parity/authz-agent-single.yaml`.
-
-Re-running `e2e-harness` on its own replaces the Keycloak pod, and a dev-mode
-Keycloak mints new realm keys on every start. Restart the agent afterwards
-(`kubectl rollout restart deploy/authz-agent`) so its JWKS bootstrap picks the
-new keys up, or the suite fails at `setup.wait_for_agent`.
-The first run on a fresh cluster is slower: the node pulls Keycloak and OPA
-from their registries, later runs reuse them.
-
-`make e2e-logs` writes every container log on the node (`kind export logs`),
-the namespace events, and the decision logs downloaded through Envoy.
+The first line keeps Envoy in front of it; the second sends the suite to the
+service's own listener, which `authz-agent-direct.yaml` exposes.
 
 ## What runs
 
 `runtime-suite-job.yaml` runs the whole Testify suite, including the two
 coverage checks that need a full run (`FULL_RUNTIME_SUITE=true`). Groups that
 inspect what OPA received, such as `TestOPARequestParity`, read the decision
-logs the collector serves through Envoy instead of a capture proxy.
+logs the agent serves at `/internal/v1/decision-logs` instead of a capture
+proxy: the collector through Envoy in the five-container topology, the single
+service's own store in the other.
 
 `TestOPARestart` restarts the OPA container through the API server: the Job
 runs as the `runtime-suite` ServiceAccount from `runtime-suite-rbac.yaml`,

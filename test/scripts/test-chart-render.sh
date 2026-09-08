@@ -405,6 +405,106 @@ for label_manifest in "default:${all_manifests}" "keycloak-mode:${keycloak_all}"
   fi
 done
 
+# ── The two topologies (authz-agent-ADR-0080) ────────────────────────────────
+#
+# One chart assembles the agent Pod either as the five containers or as the
+# single service, and AUTHZ_SINGLE_SERVICE_ENABLED selects between them. What
+# the switch has to change is structural and invisible to a unit test: which
+# Deployment is rendered, which containers it holds, and which ConfigMaps come
+# with it. A switch that leaves an Envoy config behind, or renders both Pods,
+# is what these assertions catch.
+
+single_all="$(helm template t "${CHART_DIR}" --set AUTHZ_SINGLE_SERVICE_ENABLED=true)"
+
+# The agent's own containers, by the names the two Pod templates use. The
+# policy-admin Deployment is rendered either way and is not one of them.
+agent_containers() {
+  echo "$1" | grep -cE "^        - name: (authz-agent|envoy|opa|pap-client|collector|token-fetcher)$" || true
+}
+
+single_containers=$(agent_containers "${single_all}")
+if [[ "${single_containers}" -eq 1 ]]; then
+  pass "the single-service Pod holds one container"
+else
+  fail "the single-service Pod holds ${single_containers} containers, expected 1"
+fi
+
+# The branches of the new template: the M2M identity, which a platform
+# install takes through a projected service-account token, and the mount mode
+# that replaces the pull loop. Neither is rendered by the default above.
+single_k8s_m2m="$(helm template t "${CHART_DIR}" --set AUTHZ_SINGLE_SERVICE_ENABLED=true --set KUBERNETES_M2M_ENABLED=true)"
+if [[ "${single_k8s_m2m}" == *"serviceAccountToken"* && "${single_k8s_m2m}" != *"client-credentials"* ]]; then
+  pass "the single-service Pod takes the projected token under KUBERNETES_M2M_ENABLED"
+else
+  fail "the single-service Pod does not take the projected token under KUBERNETES_M2M_ENABLED"
+fi
+if [[ "${single_k8s_m2m}" != *"AUTHZ_M2M_TOKEN_URL"* ]]; then
+  pass "the single-service Pod asks no identity provider for a token under KUBERNETES_M2M_ENABLED"
+else
+  fail "the single-service Pod still sets AUTHZ_M2M_TOKEN_URL under KUBERNETES_M2M_ENABLED"
+fi
+
+single_mount="$(helm template t "${CHART_DIR}" --set AUTHZ_SINGLE_SERVICE_ENABLED=true --set AUTHZ_POLICY_CONFIGMAP=my-policies)"
+if [[ "${single_mount}" == *"AUTHZ_POLICY_MOUNT_DIR"* && "${single_mount}" == *"my-policies"* ]]; then
+  pass "the single-service Pod mounts AUTHZ_POLICY_CONFIGMAP and points the service at it"
+else
+  fail "the single-service Pod does not mount AUTHZ_POLICY_CONFIGMAP"
+fi
+
+# Every setting the service reads has to reach it, and the objects it reads
+# them from have to be mounted.
+for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR AUTHZ_DATA_API_AUTHORIZATION AUTHZ_OPA_AUTH_TOKEN_FILE \
+  AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_JWKS_BOOTSTRAP_REQUIRED AUTHZ_PAP_CLIENT_SOURCE_URL \
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL AUTHZ_ENTITLEMENTS_URL AUTHZ_DECISION_LOG_FILE AUTHZ_DECISION_LOG_HEADERS; do
+  if [[ "${single_all}" == *"name: ${env_name}"* ]]; then
+    pass "the single-service Pod sets ${env_name}"
+  else
+    fail "the single-service Pod does not set ${env_name}"
+  fi
+done
+
+for volume in "authz-agent-trusted-providers" "authz-agent-opa-auth" "authz-agent-client-credentials"; do
+  if [[ "${single_all}" == *"${volume}"* ]]; then
+    pass "the single-service Pod mounts ${volume}"
+  else
+    fail "the single-service Pod does not mount ${volume}"
+  fi
+done
+
+legacy_containers=$(agent_containers "${all_manifests}")
+if [[ "${legacy_containers}" -eq 5 ]]; then
+  pass "the five-container Pod holds five containers"
+else
+  fail "the five-container Pod holds ${legacy_containers} containers, expected 5"
+fi
+
+# The renders are searched with a shell pattern rather than `grep -q`: this
+# script runs under `set -o pipefail`, and a quiet grep exits at its first
+# match, which leaves the writing side of the pipe with SIGPIPE and turns a
+# found string into a failed pipeline.
+image_lines=$(echo "${single_all}" | grep -cE "^          image: .*authz-agent:" || true)
+if [[ "${image_lines}" -ge 1 ]]; then
+  pass "the single-service Pod runs the authz-agent image"
+else
+  fail "the single-service Pod does not run the authz-agent image"
+fi
+
+for absent in "authz-agent-runtime" "authz-agent-policies" "openpolicyagent/opa" "authz-agent-envoy" "authz-agent-pap-client" "authz-agent-collector" "authz-agent-token-fetcher"; do
+  if [[ "${single_all}" == *"${absent}"* ]]; then
+    fail "the single-service render still carries ${absent}"
+  else
+    pass "the single-service render has no ${absent}"
+  fi
+done
+
+for present in "authz-agent-runtime" "authz-agent-policies" "openpolicyagent/opa"; do
+  if [[ "${all_manifests}" == *"${present}"* ]]; then
+    pass "the five-container render carries ${present}"
+  else
+    fail "the five-container render lost ${present}"
+  fi
+done
+
 echo
 if (( failures > 0 )); then
   echo "chart render checks: ${failures} failure(s)"

@@ -49,12 +49,13 @@ spec:
                   prefix: /access/v1/check/filter
               - match:
                   prefix: /access/v2/check/filter
-          # The canonical authorize API goes straight to OPA, skipping the Envoy
-          # container. It is the one route in the Envoy config with no per-route
-          # Lua filter — a pure path rewrite to /v1/data/authorize with a 30s
-          # timeout — so the gateway can do that rewrite itself and save a hop.
-          # Byte-identity of the two transports is what authz-agent-ADR-0062
-          # locks in.
+          # The canonical authorize API is rewritten to the data API on 8181,
+          # which is OPA in the five-container topology and the single
+          # service's own data API in the other. Under Envoy it is the one
+          # route with no per-route Lua filter — a pure path rewrite to
+          # /v1/data/authorize with a 30s timeout — so the gateway does that
+          # rewrite itself and saves a hop. Byte-identity of the two transports
+          # is what authz-agent-ADR-0062 locks in.
           #
           # A prefix, not an exact path — the mesh cannot express an exact match.
           # This rule originally used `match.path`, which the control plane
@@ -187,16 +188,17 @@ spec:
             rules:
               {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
           # The canonical authorize API, same destination and rewrite as on the
-          # internal gateway: straight to OPA on 8181, bypassing Envoy.
+          # internal gateway: the data API on 8181, whichever topology serves
+          # it.
           #
           # This is the one route in this chart that puts a PUBLIC gateway in
-          # front of OPA's data API. It is deliberately narrow — the rewrite
+          # front of that data API. It is deliberately narrow — the rewrite
           # pins the upstream path to `/v1/data/authorize`, so a caller cannot
           # reach another data document through it — but it is also
-          # unauthenticated at the HTTP layer: OPA answers 200 and the decision
-          # itself carries the auth outcome, because there is no Envoy hop and
-          # therefore no ext_authz. A caller with no token gets a decision
-          # object saying so, not a 401.
+          # unauthenticated at the HTTP layer: the answer is 200 and the
+          # decision itself carries the auth outcome, because no ext_authz sits
+          # in front. A caller with no token gets a decision object saying so,
+          # not a 401.
           #
           # Widening this rule, or changing the rewrite, exposes more of
           # `/v1/data` to the public internet. Treat it as security-relevant.

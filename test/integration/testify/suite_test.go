@@ -208,9 +208,15 @@ func (s *RuntimeSuite) TearDownSuite() {
 		executed[r.Name] = true
 	}
 	for _, e := range Catalog {
-		if !executed[e.Name] {
-			s.T().Errorf("catalog step %q was never executed", e.Name)
+		if executed[e.Name] {
+			continue
 		}
+		// TestOPARestart skips against the single service, so its steps are
+		// not expected there; every other group runs against both.
+		if s.cfg.SingleService && needsOPAContainer(e.Name) {
+			continue
+		}
+		s.T().Errorf("catalog step %q was never executed", e.Name)
 	}
 }
 

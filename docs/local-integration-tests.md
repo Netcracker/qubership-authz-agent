@@ -72,7 +72,7 @@ takes minutes on a slow network; later runs reuse them.
 
 | Image | Dockerfile |
 | --- | --- |
-| `local/authz-agent-pap-client:ci`, `local/authz-agent-collector:ci`, `local/authz-agent-token-fetcher:ci`, `local/authz-agent-envoy:ci`, `local/authz-policy-admin:ci` | `build/*/Dockerfile`, the product images |
+| `local/authz-agent:ci`, `local/authz-agent-pap-client:ci`, `local/authz-agent-collector:ci`, `local/authz-agent-token-fetcher:ci`, `local/authz-agent-envoy:ci`, `local/authz-policy-admin:ci` | `build/*/Dockerfile`, the product images |
 | `local/pip-stub:ci` | `test/integration/pipstub/Dockerfile` |
 | `local/authz-runtime-suite:ci` | `test/integration/testify/Dockerfile`, the suite compiled with `go test -c -tags integration` |
 | `local/authz-parity-suite:ci` | `test/parity/suite/Dockerfile`, used by `make parity` |
@@ -102,6 +102,18 @@ Step by step, in the order `make e2e` runs them:
 
 Each step prints a `STEP PASS/FAIL <name> <ms>` line. The Job sets `FULL_RUNTIME_SUITE=true`, so the run ends with the
 two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite` with 20 groups.
+
+The chart assembles the agent Pod as five containers or as the single service of ADR 0080, and CI gates both. To run
+the suite against the second one, and to go back:
+
+```bash
+make e2e-single   # the chart with AUTHZ_SINGLE_SERVICE_ENABLED, then the suite
+make e2e-install  # back to the five containers
+```
+
+It reinstalls the same release, so the Service and the addresses stay as they are; expected there is
+`--- PASS: TestRuntimeSuite` with 17 groups and `TestOPARestart` skipped, since its container is the one that is gone.
+`make parity-single` is the parity counterpart.
 
 Artifacts:
 
