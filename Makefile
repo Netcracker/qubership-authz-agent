@@ -51,8 +51,12 @@ KIND_CLUSTER ?= authz-e2e
 E2E_NAMESPACE ?= authz-e2e
 E2E_ARTIFACTS ?= test/artifacts/kind
 E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
+# Extra arguments for the chart install, for example
+# E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' to run the single service in
+# place of the OPA container.
+E2E_HELM_ARGS ?=
 E2E_AUTHN := test/k8s/authn
-E2E_IMAGES := authz-agent-pap-client authz-agent-envoy authz-agent-collector \
+E2E_IMAGES := authz-agent authz-agent-pap-client authz-agent-envoy authz-agent-collector \
               authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite \
               authz-parity-suite
 
@@ -63,6 +67,7 @@ e2e-cluster:
 
 # The images the chart and the harness reference as local/<name>:ci.
 e2e-images:
+	docker build -t local/authz-agent:ci               -f build/authz-agent/Dockerfile .
 	docker build -t local/authz-agent-pap-client:ci    -f build/pap-client/Dockerfile .
 	docker build -t local/authz-agent-envoy:ci         -f build/envoy/Dockerfile .
 	docker build -t local/authz-agent-collector:ci     -f build/collector/Dockerfile .
@@ -85,7 +90,7 @@ e2e-harness:
 	$(E2E_KUBECTL) rollout status deploy/keycloak --timeout=10m
 
 e2e-install: copy-policies
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 e2e-suite:
@@ -139,7 +144,7 @@ parity-harness:
 	$(PARITY_KUBECTL) rollout status deploy/idp --timeout=10m
 
 parity-install: copy-policies
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 parity-suite:

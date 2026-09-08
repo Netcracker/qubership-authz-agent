@@ -1,0 +1,201 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package decisionlog
+
+import (
+	"compress/gzip"
+	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"sync"
+	"testing"
+	"time"
+)
+
+// collector records every batch a test logger uploads.
+type collector struct {
+	mu      sync.Mutex
+	batches [][]Event
+	paths   []string
+	status  int
+}
+
+func newCollector(t *testing.T) (*collector, *httptest.Server) {
+	t.Helper()
+	c := &collector{status: http.StatusOK}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Encoding") != "gzip" {
+			t.Errorf("upload without gzip: %v", r.Header)
+		}
+		gz, err := gzip.NewReader(r.Body)
+		if err != nil {
+			t.Errorf("gzip: %v", err)
+			return
+		}
+		raw, _ := io.ReadAll(gz)
+		var batch []Event
+		if err := json.Unmarshal(raw, &batch); err != nil {
+			t.Errorf("batch is not a JSON array: %v", err)
+		}
+		c.mu.Lock()
+		c.batches = append(c.batches, batch)
+		c.paths = append(c.paths, r.URL.Path)
+		status := c.status
+		c.mu.Unlock()
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(srv.Close)
+	return c, srv
+}
+
+func (c *collector) events() []Event {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	var out []Event
+	for _, b := range c.batches {
+		out = append(out, b...)
+	}
+	return out
+}
+
+// TestLog_UploadsBatchesToLogs: queued events reach <URL>/logs as a gzip
+// JSON array with the sequence number, timestamp, and labels filled in.
+func TestLog_UploadsBatchesToLogs(t *testing.T) {
+	c, srv := newCollector(t)
+	l := New(Config{URL: srv.URL + "/", Labels: map[string]string{"id": "t"}, FlushInterval: 20 * time.Millisecond}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	go l.Run(ctx)
+	l.Log(Event{DecisionID: "d1", Path: "authorize", Result: map[string]any{"ok": true}})
+	l.Log(Event{DecisionID: "d2", Path: "authorize"})
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) && len(c.events()) < 2 {
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancel()
+	l.Wait()
+	got := c.events()
+	if len(got) != 2 {
+		t.Fatalf("uploaded %d events, want 2", len(got))
+	}
+	if c.paths[0] != "/logs" {
+		t.Errorf("upload path = %s, want /logs", c.paths[0])
+	}
+	if got[0].RequestID != 1 || got[1].RequestID != 2 {
+		t.Errorf("req_id = %d, %d; want 1, 2", got[0].RequestID, got[1].RequestID)
+	}
+	if got[0].Timestamp.IsZero() || got[0].Labels["id"] != "t" {
+		t.Errorf("timestamp or labels not filled: %+v", got[0])
+	}
+}
+
+// TestRun_DrainsOnShutdown: events queued right before the context ends are
+// still uploaded, with a fresh deadline, so the last decision before a
+// SIGTERM is not lost.
+func TestRun_DrainsOnShutdown(t *testing.T) {
+	c, srv := newCollector(t)
+	l := New(Config{URL: srv.URL, FlushInterval: time.Hour}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	go l.Run(ctx)
+	l.Log(Event{DecisionID: "last", Path: "authorize"})
+	cancel()
+	l.Wait()
+	if got := c.events(); len(got) != 1 || got[0].DecisionID != "last" {
+		t.Fatalf("drained events = %+v, want the last decision", got)
+	}
+}
+
+// TestRun_FlushesFullBatch: a batch is uploaded as soon as it reaches
+// MaxBatch, before the flush interval.
+func TestRun_FlushesFullBatch(t *testing.T) {
+	c, srv := newCollector(t)
+	l := New(Config{URL: srv.URL, MaxBatch: 2, FlushInterval: time.Hour}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go l.Run(ctx)
+	l.Log(Event{DecisionID: "a"})
+	l.Log(Event{DecisionID: "b"})
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) && len(c.events()) < 2 {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if len(c.events()) != 2 {
+		t.Fatalf("full batch not flushed: %d events", len(c.events()))
+	}
+}
+
+// TestUpload_FailureIsWarnedNotFatal: a collector error reaches the warn
+// callback and the logger keeps running.
+func TestUpload_FailureIsWarnedNotFatal(t *testing.T) {
+	c, srv := newCollector(t)
+	c.status = http.StatusInternalServerError
+	var mu sync.Mutex
+	var warnings []string
+	l := New(Config{URL: srv.URL, FlushInterval: 10 * time.Millisecond}, func(format string, args ...any) {
+		mu.Lock()
+		warnings = append(warnings, format)
+		mu.Unlock()
+	})
+	ctx, cancel := context.WithCancel(context.Background())
+	go l.Run(ctx)
+	l.Log(Event{DecisionID: "x"})
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		mu.Lock()
+		n := len(warnings)
+		mu.Unlock()
+		if n > 0 {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancel()
+	l.Wait()
+	mu.Lock()
+	defer mu.Unlock()
+	if len(warnings) == 0 {
+		t.Fatal("upload failure was not reported")
+	}
+}
+
+// TestDisabled_LogIsANoop: without a URL nothing is queued and Run returns
+// at once, so a deployment without a collector costs nothing.
+func TestDisabled_LogIsANoop(t *testing.T) {
+	l := New(Config{}, nil)
+	if l.Enabled() {
+		t.Fatal("logger without URL must be disabled")
+	}
+	l.Log(Event{DecisionID: "ignored"})
+	if len(l.events) != 0 {
+		t.Fatal("disabled logger queued an event")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	l.Run(ctx)
+	l.Wait()
+}
+
+// TestNewDecisionID_Shape: ids have the UUID layout OPA emits, so readers
+// that pattern-match decision_id keep working.
+func TestNewDecisionID_Shape(t *testing.T) {
+	id := NewDecisionID()
+	if len(id) != 36 || id[8] != '-' || id[13] != '-' || id[18] != '-' || id[23] != '-' {
+		t.Fatalf("decision id %q is not UUID-shaped", id)
+	}
+	if id == NewDecisionID() {
+		t.Fatal("two ids must differ")
+	}
+}
