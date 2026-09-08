@@ -362,6 +362,117 @@ func TestRun_RetriesTheRefusedBatch(t *testing.T) {
 	}
 }
 
+// TestRun_ShutdownDoesNotResendADeliveryInFlight: a shutdown that arrives
+// while an upload is on the wire lets it finish, so the decisions in it
+// reach the collector once. The loop's context used to abort that upload,
+// and the drain then offered the same decisions again, since a request cut
+// off cannot be told from one the collector never received; the collector
+// recorded d1 twice.
+func TestRun_ShutdownDoesNotResendADeliveryInFlight(t *testing.T) {
+	var mu sync.Mutex
+	var received []string
+	var held, once sync.Once
+	inFlight := make(chan struct{})
+	aborted := make(chan struct{})
+	release := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The first upload is held on the wire, so that the shutdown lands
+		// while it is there. A shutdown that aborts it closes the request
+		// context, and the handler reports that through aborted; the
+		// deferred call releases the main goroutine even where a check
+		// below fails, which would otherwise wait until the package times
+		// out and bury the message.
+		defer held.Do(func() {
+			close(inFlight)
+			select {
+			case <-r.Context().Done():
+				once.Do(func() { close(aborted) })
+			case <-release:
+			}
+		})
+		gz, err := gzip.NewReader(r.Body)
+		if err != nil {
+			t.Errorf("gzip: %v", err)
+			return
+		}
+		var batch []Event
+		if err := json.NewDecoder(gz).Decode(&batch); err != nil {
+			t.Errorf("decode: %v", err)
+			return
+		}
+		mu.Lock()
+		for _, ev := range batch {
+			received = append(received, ev.DecisionID)
+		}
+		mu.Unlock()
+	}))
+	defer srv.Close()
+
+	logs := New(Config{URL: srv.URL, FlushInterval: 10 * time.Millisecond}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	go logs.Run(ctx)
+	logs.Log(Event{DecisionID: "d1"})
+
+	<-inFlight
+	cancel()
+	select {
+	case <-aborted:
+		// The upload was cut off, and the resend it provokes is what the
+		// assertion below reports.
+	case <-time.After(500 * time.Millisecond):
+		// The upload outlived the shutdown, so let it finish.
+	}
+	close(release)
+	logs.Wait()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if !reflect.DeepEqual(received, []string{"d1"}) {
+		t.Errorf("the collector received %v, want [d1] once", received)
+	}
+}
+
+// TestRun_TimeoutBoundsADeliveryTheCollectorNeverAnswers: Timeout is what
+// ends a delivery the shutdown no longer aborts, so Run returns without it
+// even where the collector takes the request and never answers. The
+// configured value is what bounds it: on the ten-second default this run
+// would take about twenty seconds and miss the bound below.
+func TestRun_TimeoutBoundsADeliveryTheCollectorNeverAnswers(t *testing.T) {
+	hung := make(chan struct{})
+	reached := make(chan struct{})
+	var once sync.Once
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		once.Do(func() { close(reached) })
+		<-hung
+	}))
+	// The handler is released before the server is closed, which waits for
+	// the requests still in it.
+	defer srv.Close()
+	defer close(hung)
+
+	logs := New(Config{
+		URL:           srv.URL,
+		FlushInterval: 10 * time.Millisecond,
+		Timeout:       50 * time.Millisecond,
+	}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	go logs.Run(ctx)
+	logs.Log(Event{DecisionID: "d1"})
+
+	<-reached
+	cancel()
+	done := make(chan struct{})
+	go func() {
+		logs.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("Run has not returned three seconds after the shutdown, so Timeout does not bound a delivery the collector never answers")
+	}
+}
+
 // randomString is filler that does not compress.
 func randomString(t *testing.T, n int) string {
 	t.Helper()

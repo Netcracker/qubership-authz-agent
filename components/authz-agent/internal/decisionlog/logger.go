@@ -175,12 +175,16 @@ func (l *Logger) Log(ev Event) {
 	}
 }
 
-// Run delivers queued events until ctx ends, then drains the queue with
-// its own deadline: the last decisions before a shutdown must reach the
-// collector, as OPA's plugin flushes them too, and ctx is already cancelled
-// by then. A delivery that fails keeps its events for the next attempt, as
-// OPA requeues a chunk it could not upload; the oldest are dropped once
-// MaxQueued is reached. Wait returns once Run is finished.
+// Run delivers queued events until ctx ends, then drains the queue: the
+// last decisions before a shutdown must reach the collector, as OPA's plugin
+// flushes them too. A delivery that fails keeps its events for the next
+// attempt, as OPA requeues a chunk it could not upload; the oldest are
+// dropped once MaxQueued is reached.
+//
+// Cancelling ctx ends the loop and leaves a delivery already under way to
+// finish under its own Timeout. Run therefore returns up to two Timeouts
+// after ctx ends, one for a delivery in flight when it ended and one for
+// the drain. Wait returns once Run is finished.
 func (l *Logger) Run(ctx context.Context) {
 	defer close(l.done)
 	if !l.Enabled() {
@@ -189,11 +193,16 @@ func (l *Logger) Run(ctx context.Context) {
 	ticker := time.NewTicker(l.cfg.FlushInterval)
 	defer ticker.Stop()
 	var batch []Event
-	flush := func(ctx context.Context) {
+	flush := func() {
 		if len(batch) == 0 {
 			return
 		}
-		undelivered, err := l.deliver(ctx, batch)
+		// A request cut off mid-flight cannot be told from one the collector
+		// never received, so ctx ends the loop without aborting a delivery
+		// already under way. Timeout bounds the delivery instead.
+		deadline, cancel := context.WithTimeout(context.WithoutCancel(ctx), l.cfg.Timeout)
+		undelivered, err := l.deliver(deadline, batch)
+		cancel()
 		if err != nil {
 			l.warn("decision log delivery failed, keeping %d decisions for the next attempt: %v", len(undelivered), err)
 		}
@@ -205,24 +214,21 @@ func (l *Logger) Run(ctx context.Context) {
 			for len(l.events) > 0 {
 				batch = append(batch, <-l.events)
 			}
-			// ctx is done by now; keep its values but not its cancellation for
-			// the last upload.
-			final, cancel := context.WithTimeout(context.WithoutCancel(ctx), l.cfg.Timeout)
-			flush(final)
-			cancel()
+			flush()
 			return
 		case ev := <-l.events:
 			batch = append(batch, ev)
 			if len(batch) >= l.cfg.MaxBatch {
-				flush(ctx)
+				flush()
 			}
 		case <-ticker.C:
-			flush(ctx)
+			flush()
 		}
 	}
 }
 
 // Wait blocks until Run has drained the queue after its context ended.
+// That can take up to two Timeouts from the cancellation.
 func (l *Logger) Wait() { <-l.done }
 
 // deliver hands a batch to the store, or uploads it, and returns the
