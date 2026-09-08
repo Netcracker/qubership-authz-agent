@@ -14,16 +14,18 @@
 
 // authz-agent is the authorization agent as one service: the HTTP surface the
 // clients call, the embedded policy engine, and, in later steps, the loops
-// that feed it. This step carries the engine, the decision endpoints, and
-// the slice of OPA's REST API the other containers of the Pod still use, so
-// the same binary can stand in for the OPA container until the chart
-// switches.
+// that feed it. This step carries the engine, the public surface with the
+// legacy check routes, and the slice of OPA's REST API the other containers
+// of the Pod still use, so the same binary can stand in for the OPA
+// container until the chart switches.
 package main
 
 import (
 	"context"
 	"os"
 	"os/signal"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -72,10 +74,11 @@ func main() {
 	}
 	logs := decisionlog.New(cfg.DecisionLogs, logger.Warnf)
 
-	app, err := fiberserver.New(fiber.Config{
-		// Immutable: strings handed out by the request context, such as a
-		// path segment that becomes a store key, must not alias the buffer
-		// the server reuses for the next request.
+	// Immutable: strings handed out by the request context, such as a path
+	// segment that becomes a store key or a header that goes into a decision
+	// log event, must not alias the buffer the server reuses for the next
+	// request.
+	internal, err := fiberserver.New(fiber.Config{
 		Immutable:             true,
 		BodyLimit:             32 << 20,
 		DisableStartupMessage: true,
@@ -84,22 +87,58 @@ func main() {
 		logger.Errorf("fiber: %v", err)
 		os.Exit(1)
 	}
-	server.Register(app, eng, logs, server.Options{Authorization: cfg.Authorization})
+	// The public routes match the way Envoy's path matches did: exact,
+	// case-sensitive, and without a trailing slash.
+	public, err := fiberserver.New(fiber.Config{
+		Immutable:             true,
+		BodyLimit:             32 << 20,
+		StrictRouting:         true,
+		CaseSensitive:         true,
+		DisableStartupMessage: true,
+	}).Process()
+	if err != nil {
+		logger.Errorf("fiber: %v", err)
+		os.Exit(1)
+	}
+	srv := server.Register(internal, eng, logs, server.Options{
+		Authorization: cfg.Authorization,
+		PapClientURL:  cfg.PapClientURL,
+		CollectorURL:  cfg.DecisionLogs.URL,
+	})
+	srv.RegisterPublic(public)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	go logs.Run(ctx)
-	go func() {
-		<-ctx.Done()
+	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, data API on %s",
+		len(modules), cfg.DataDirs, cfg.DecisionLogs.URL, cfg.PublicAddr, cfg.Addr)
+
+	// A listener that fails cancels the signal context, and main then shuts
+	// the other listener and the decision log uploader down.
+	var failed atomic.Bool
+	var listeners sync.WaitGroup
+	serve := func(name string, app *fiber.App, addr string) {
+		listeners.Add(1)
+		go func() {
+			defer listeners.Done()
+			if err := app.Listen(addr); err != nil {
+				logger.Errorf("%s listener on %s: %v", name, addr, err)
+				failed.Store(true)
+				stop()
+			}
+		}()
+	}
+	serve("public", public, cfg.PublicAddr)
+	serve("data API", internal, cfg.Addr)
+	<-ctx.Done()
+	for _, app := range []*fiber.App{public, internal} {
 		if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
 			logger.Warnf("shutdown: %v", err)
 		}
-	}()
-	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, listening on %s",
-		len(modules), cfg.DataDirs, cfg.DecisionLogs.URL, cfg.Addr)
-	if err := app.Listen(cfg.Addr); err != nil {
-		logger.Errorf("listen: %v", err)
+	}
+	listeners.Wait()
+	logs.Wait()
+	if failed.Load() {
 		os.Exit(1)
 	}
-	stop()
-	logs.Wait()
 }

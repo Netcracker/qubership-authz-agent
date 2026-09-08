@@ -36,11 +36,16 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Addr != "0.0.0.0:8080" || cfg.Authorization || cfg.DecisionLogs.URL != "" || len(cfg.DataDirs) != 0 {
+	if cfg.Addr != "0.0.0.0:8181" || cfg.PublicAddr != "0.0.0.0:8080" || cfg.PapClientURL != "" {
+		t.Fatalf("default addresses: %+v", cfg)
+	}
+	if cfg.Authorization || cfg.DecisionLogs.URL != "" || len(cfg.DataDirs) != 0 {
 		t.Fatalf("defaults: %+v", cfg)
 	}
 	cfg, err = loadConfig(nil, fromMap(map[string]string{
 		"authz.http.addr":              ":9090",
+		"authz.public.addr":            ":9091",
+		"authz.pap.client.url":         "http://pap-client:8182",
 		"authz.data.dirs":              "/a, /b",
 		"authz.data.ignore":            "..*",
 		"authz.data.api.authorization": "true",
@@ -50,7 +55,10 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Addr != ":9090" || !cfg.Authorization || len(cfg.DataDirs) != 2 || cfg.Ignore[0] != "..*" {
+	if cfg.Addr != ":9090" || cfg.PublicAddr != ":9091" || cfg.PapClientURL != "http://pap-client:8182" {
+		t.Fatalf("addresses from env: %+v", cfg)
+	}
+	if !cfg.Authorization || len(cfg.DataDirs) != 2 || cfg.Ignore[0] != "..*" {
 		t.Fatalf("env values: %+v", cfg)
 	}
 	if cfg.DecisionLogs.URL != "http://collector:8183" || len(cfg.DecisionLogs.Headers) != 2 || cfg.DecisionLogs.Labels["id"] != "authz-agent" {
@@ -59,7 +67,9 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 }
 
 // TestLoadConfig_OPAArguments: the chart's OPA command line maps onto the
-// same settings, including the decision log target from the OPA config file.
+// same settings, including the decision log target from the OPA config
+// file, and brings the stand-in defaults for the public surface and the
+// pap-client relay.
 func TestLoadConfig_OPAArguments(t *testing.T) {
 	dir := t.TempDir()
 	opaConfig := filepath.Join(dir, "opa-config.yaml")
@@ -84,11 +94,30 @@ services:
 	if cfg.Addr != "0.0.0.0:8181" || !cfg.Authorization || cfg.Ignore[0] != "..*" {
 		t.Fatalf("flags: %+v", cfg)
 	}
+	if cfg.PublicAddr != "0.0.0.0:8280" || cfg.PapClientURL != "http://127.0.0.1:8182" {
+		t.Fatalf("stand-in defaults for the chart's Pod: public=%q pap-client=%q", cfg.PublicAddr, cfg.PapClientURL)
+	}
 	if len(cfg.DataDirs) != 2 || cfg.DataDirs[1] != "/etc/opa/data" {
 		t.Fatalf("positional dirs: %v", cfg.DataDirs)
 	}
 	if cfg.DecisionLogs.URL != "http://127.0.0.1:8183" || cfg.DecisionLogs.Headers[0] != "x-request-id" || cfg.DecisionLogs.Labels["id"] != "authz-agent" {
 		t.Fatalf("decision logs from the OPA config: %+v", cfg.DecisionLogs)
+	}
+}
+
+// TestLoadConfig_OPAArgumentsKeepTheEnvironmentsAddresses: under OPA's
+// command line the stand-in defaults yield to a public address and a
+// pap-client URL set in the environment.
+func TestLoadConfig_OPAArgumentsKeepTheEnvironmentsAddresses(t *testing.T) {
+	cfg, err := loadConfig([]string{"run", "--addr=:1"}, fromMap(map[string]string{
+		"authz.public.addr":    ":2",
+		"authz.pap.client.url": "http://pap-client:9",
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Addr != ":1" || cfg.PublicAddr != ":2" || cfg.PapClientURL != "http://pap-client:9" {
+		t.Fatalf("addresses = %q %q %q, want :1 :2 http://pap-client:9", cfg.Addr, cfg.PublicAddr, cfg.PapClientURL)
 	}
 }
 

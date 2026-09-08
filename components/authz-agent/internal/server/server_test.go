@@ -224,14 +224,17 @@ func TestDataAPI_WriteSemantics(t *testing.T) {
 }
 
 // TestAuthorize_ExplainIsRefused: query parameters reach the policy as
-// input.params, so ?explain=full on the decision endpoint is refused.
+// input.params, so ?explain=full on the decision endpoint is refused, on
+// the canonical route as on the data API.
 func TestAuthorize_ExplainIsRefused(t *testing.T) {
 	app, _ := newApp(t, true, nil, nil)
-	if code, _, _ := do(t, app, http.MethodPost, "/v1/data/authorize?explain=full", `{"input": {}}`, nil); code != 401 {
-		t.Fatalf("explain: %d", code)
-	}
-	if code, _, _ := do(t, app, http.MethodPost, "/v1/data/authorize?metrics=true", `{"input": {}}`, nil); code != 200 {
-		t.Fatalf("metrics param must not be refused: %d", code)
+	for _, path := range []string{"/v1/data/authorize", "/access/v1/authorize"} {
+		if code, _, _ := do(t, app, http.MethodPost, path+"?explain=full", `{"input": {}}`, nil); code != 401 {
+			t.Errorf("POST %s?explain=full = %d, want 401", path, code)
+		}
+		if code, _, _ := do(t, app, http.MethodPost, path+"?metrics=true", `{"input": {}}`, nil); code != 200 {
+			t.Errorf("POST %s?metrics=true = %d, want 200", path, code)
+		}
 	}
 }
 

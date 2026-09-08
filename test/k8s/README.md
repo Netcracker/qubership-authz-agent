@@ -13,6 +13,7 @@ apply them by hand. CI runs the same targets one step at a time.
 | `values.yaml` | Chart values that point the agent at the harness Services |
 | `runtime-suite-job.yaml` | The suite itself, built from `test/integration/testify/Dockerfile` |
 | `runtime-suite-rbac.yaml` | ServiceAccount and Role the suite uses to restart the OPA container |
+| `authz-agent-direct.yaml` | A Service on the single service's own public listener, for the runs described under "Testing the single service" |
 
 The ConfigMap with the realm imports and the M2M client-credentials Secret
 are generated from the files under `authn/` by `make e2e-harness`, so they
@@ -52,7 +53,25 @@ The parity targets mirror these: `parity-harness`, `parity-install`,
 cluster and image targets first, then the three.
 
 `KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`
-override the defaults.
+override the defaults. `E2E_HELM_ARGS` adds arguments to both chart installs;
+`E2E_BASE_URL` and `PARITY_AC_BASE_URL` set where the suites send their
+requests, the chart's Service by default.
+
+## Testing the single service
+
+The service under `components/authz-agent` can stand in for the OPA container
+of the chart, and the suites can reach it either through Envoy or directly:
+
+```bash
+E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' make e2e-install e2e-suite
+E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' E2E_BASE_URL=http://authz-agent-direct:8080 make e2e-install e2e-suite
+```
+
+Without `E2E_BASE_URL`, Envoy stays in front and forwards the decisions to the
+service. With `E2E_BASE_URL=http://authz-agent-direct:8080`, the suite goes to
+the service's own public listener, which the `authz-agent-direct` Service from
+`e2e-harness` exposes on port 8080. The parity targets take
+`PARITY_AC_BASE_URL` the same way.
 
 Re-running `e2e-harness` on its own replaces the Keycloak pod, and a dev-mode
 Keycloak mints new realm keys on every start. Restart the agent afterwards

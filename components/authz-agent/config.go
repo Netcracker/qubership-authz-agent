@@ -29,8 +29,13 @@ import (
 // and so on); the OPA-style command line of the chart's OPA container
 // overrides it while the service stands in for that container.
 type config struct {
-	// Addr is the listen address.
+	// Addr is the listen address of the OPA-compatible surface.
 	Addr string
+	// PublicAddr is the listen address of the surface the clients call.
+	PublicAddr string
+	// PapClientURL is the base URL of the pap-client that still answers
+	// /health for the Pod; empty when there is none.
+	PapClientURL string
 	// DataDirs seed the store at start, as `opa run <dir>` would.
 	DataDirs []string
 	// Ignore lists file name patterns skipped in DataDirs.
@@ -48,10 +53,14 @@ type lookup func(key, fallback string) string
 // look like the OPA command line (`run --server --addr ... <dirs>`), from
 // those arguments: the flags and directories the chart passes to the OPA
 // container map onto the same settings, so the same image can replace that
-// container without a chart change.
+// container without a chart change. In that Pod, Envoy holds port 8080 and
+// the pap-client answers on 8182, so the public surface defaults to port
+// 8280 and the relay to the pap-client unless the environment sets them.
 func loadConfig(args []string, get lookup) (config, error) {
 	cfg := config{
-		Addr:          get("authz.http.addr", "0.0.0.0:8080"),
+		Addr:          get("authz.http.addr", "0.0.0.0:8181"),
+		PublicAddr:    get("authz.public.addr", "0.0.0.0:8080"),
+		PapClientURL:  get("authz.pap.client.url", ""),
 		Authorization: get("authz.data.api.authorization", "false") == "true",
 		DecisionLogs: decisionlog.Config{
 			URL:    get("authz.decision.log.url", ""),
@@ -69,6 +78,12 @@ func loadConfig(args []string, get lookup) (config, error) {
 	}
 	if len(args) == 0 || args[0] != "run" {
 		return cfg, nil
+	}
+	if get("authz.public.addr", "") == "" {
+		cfg.PublicAddr = "0.0.0.0:8280"
+	}
+	if cfg.PapClientURL == "" {
+		cfg.PapClientURL = "http://127.0.0.1:8182"
 	}
 	var opaConfigFile string
 	for i := 1; i < len(args); i++ {

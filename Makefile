@@ -55,6 +55,12 @@ E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
 # E2E_HELM_ARGS='--set OPA_IMAGE=local/authz-agent:ci' to run the single service in
 # place of the OPA container.
 E2E_HELM_ARGS ?=
+# Where the suites send their requests. The chart's Service fronts the Pod
+# with Envoy; http://authz-agent-direct:8080 is the single service's own
+# public listener (test/k8s/authz-agent-direct.yaml), for a chart installed
+# with OPA_IMAGE set to the service image.
+E2E_BASE_URL ?= http://authz-agent:8080
+PARITY_AC_BASE_URL ?= http://authz-agent:8080
 E2E_AUTHN := test/k8s/authn
 E2E_IMAGES := authz-agent authz-agent-pap-client authz-agent-envoy authz-agent-collector \
               authz-agent-token-fetcher authz-policy-admin pip-stub authz-runtime-suite \
@@ -84,7 +90,7 @@ e2e-harness:
 	kubectl --context kind-$(KIND_CLUSTER) create namespace $(E2E_NAMESPACE) --dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
 	$(E2E_KUBECTL) create configmap keycloak-realms --from-file=$(E2E_AUTHN)/authz-test-realm.json --from-file=$(E2E_AUTHN)/cloud-common-realm.json --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
 	$(E2E_KUBECTL) create secret generic authz-agent-client-credentials --from-file=username=$(E2E_AUTHN)/m2m-credentials/username --from-file=password=$(E2E_AUTHN)/m2m-credentials/password --from-literal=name=authz-agent --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
-	$(E2E_KUBECTL) apply -f test/k8s/keycloak.yaml -f test/k8s/pip-stub.yaml -f test/k8s/entitlements-mock.yaml
+	$(E2E_KUBECTL) apply -f test/k8s/keycloak.yaml -f test/k8s/pip-stub.yaml -f test/k8s/entitlements-mock.yaml -f test/k8s/authz-agent-direct.yaml
 	$(E2E_KUBECTL) rollout status deploy/pip-stub --timeout=2m
 	$(E2E_KUBECTL) rollout status deploy/entitlements-mock --timeout=2m
 	$(E2E_KUBECTL) rollout status deploy/keycloak --timeout=10m
@@ -93,9 +99,10 @@ e2e-install: copy-policies
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
+# The Job manifest carries the chart's Service as BASE_URL; sed swaps in E2E_BASE_URL.
 e2e-suite:
 	$(E2E_KUBECTL) delete job runtime-suite --ignore-not-found
-	$(E2E_KUBECTL) apply -f test/k8s/runtime-suite-rbac.yaml -f test/k8s/runtime-suite-job.yaml
+	sed 's|value: http://authz-agent:8080$$|value: $(E2E_BASE_URL)|' test/k8s/runtime-suite-job.yaml | $(E2E_KUBECTL) apply -f test/k8s/runtime-suite-rbac.yaml -f -
 	$(E2E_KUBECTL) wait --for=condition=Ready pod -l job-name=runtime-suite --timeout=3m
 	$(E2E_KUBECTL) logs -f job/runtime-suite
 	$(E2E_KUBECTL) wait --for=condition=Complete job/runtime-suite --timeout=1m
@@ -138,7 +145,7 @@ parity-harness:
 	$(PARITY_KUBECTL) create configmap parity-realms --from-file=$(PARITY_SEED)/cloud-common-realm.json --from-file=$(PARITY_SEED)/parity-realm.json --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
 	$(PARITY_KUBECTL) create configmap pip-mock-config --from-file=test/integration/pipstub/config/requestargs.responses.yaml --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
 	$(PARITY_KUBECTL) create secret generic authz-agent-client-credentials --from-literal=username=parity-m2m '--from-literal=password=ParityM2MSecret1!@#' --from-literal=name=authz-agent --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
-	$(PARITY_KUBECTL) apply -f test/k8s/parity/keycloak.yaml -f test/k8s/parity/pip-mock.yaml -f test/k8s/parity/entitlements-mock.yaml
+	$(PARITY_KUBECTL) apply -f test/k8s/parity/keycloak.yaml -f test/k8s/parity/pip-mock.yaml -f test/k8s/parity/entitlements-mock.yaml -f test/k8s/authz-agent-direct.yaml
 	$(PARITY_KUBECTL) rollout status deploy/pip-mock --timeout=2m
 	$(PARITY_KUBECTL) rollout status deploy/entitlements-mock --timeout=2m
 	$(PARITY_KUBECTL) rollout status deploy/idp --timeout=10m
@@ -147,9 +154,10 @@ parity-install: copy-policies
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
+# As e2e-suite: sed swaps PARITY_AC_BASE_URL into the Job manifest.
 parity-suite:
 	$(PARITY_KUBECTL) delete job parity-suite --ignore-not-found
-	$(PARITY_KUBECTL) apply -f test/k8s/parity/parity-suite-job.yaml
+	sed 's|value: http://authz-agent:8080$$|value: $(PARITY_AC_BASE_URL)|' test/k8s/parity/parity-suite-job.yaml | $(PARITY_KUBECTL) apply -f -
 	$(PARITY_KUBECTL) wait --for=condition=Ready pod -l job-name=parity-suite --timeout=3m
 	$(PARITY_KUBECTL) logs -f job/parity-suite
 	$(PARITY_KUBECTL) wait --for=condition=Complete job/parity-suite --timeout=1m
