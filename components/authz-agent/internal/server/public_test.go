@@ -343,7 +343,7 @@ func TestPublic_ServesTheStoredDecisions(t *testing.T) {
 	collector, collectorSaw := recorder(http.StatusOK, "application/x-ndjson", "")
 	defer collector.Close()
 	store := decisionlog.NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
-	if err := store.Append([]decisionlog.Event{{DecisionID: "d-1", Path: "authorize"}}); err != nil {
+	if _, err := store.Append([]decisionlog.Event{{DecisionID: "d-1", Path: "authorize"}}); err != nil {
 		t.Fatal(err)
 	}
 	logs := decisionlog.New(decisionlog.Config{Store: store}, nil)

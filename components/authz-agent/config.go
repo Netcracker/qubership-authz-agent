@@ -297,9 +297,9 @@ type opaSettings struct {
 // honoredOPAKeys are the settings the service reads, by their path in the
 // file, with `*` for a service's own name. A path that is a key here holds
 // settings, and every one of its keys the list does not name is reported; a
-// path with no list, such as the names under `services`, holds no settings
-// of its own and is only walked through. So a setting the service cannot act
-// on is not mistaken for one it applies.
+// path mapped to no list, which `services` is, holds no settings of its own
+// and is only walked through, its children matching `services.*`. So a
+// setting the service cannot act on is not mistaken for one it applies.
 var honoredOPAKeys = map[string][]string{
 	"":                                   {"nd_builtin_cache", "decision_logs", "services"},
 	"decision_logs":                      {"service", "reporting", "request_context"},
@@ -367,7 +367,7 @@ func ignoredOPAKeys(raw []byte) []string {
 	// keyed by; the two differ under `services`, whose keys are names.
 	var walk func(path, pattern string, node map[string]any)
 	walk = func(path, pattern string, node map[string]any) {
-		honored, holdsSettings := honoredOPAKeys[pattern]
+		honored := honoredOPAKeys[pattern]
 		for key, value := range node {
 			childPath, childPattern := key, key
 			if path != "" {
@@ -379,7 +379,7 @@ func ignoredOPAKeys(raw []byte) []string {
 			case pattern != "":
 				childPattern = pattern + "." + key
 			}
-			if holdsSettings && honored != nil && !slices.Contains(honored, key) {
+			if honored != nil && !slices.Contains(honored, key) {
 				ignored = append(ignored, childPath)
 				continue
 			}

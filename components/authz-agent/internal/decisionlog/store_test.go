@@ -40,8 +40,8 @@ func TestStore_RedactsJWTSignatures(t *testing.T) {
 		},
 		RequestContext: &RequestContext{HTTP: &HTTPRequestContext{Headers: map[string][]string{"authorization": {"Bearer " + token}}}},
 	}
-	if err := st.Append([]Event{ev}); err != nil {
-		t.Fatalf("Append() = %v", err)
+	if written, err := st.Append([]Event{ev}); err != nil || written != 1 {
+		t.Fatalf("Append() = %d, %v", written, err)
 	}
 	data, err := st.ReadAll()
 	if err != nil {
@@ -88,14 +88,40 @@ func TestStore_ReadAllBeforeAppend(t *testing.T) {
 	}
 }
 
+// TestStore_AppendReportsWhatItWroteBeforeAFailure: a line already on disk
+// stays there, so the count is what tells the caller where to resume. An
+// event that cannot be encoded stands in for the full volume that is the
+// reachable failure.
+func TestStore_AppendReportsWhatItWroteBeforeAFailure(t *testing.T) {
+	st := NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
+	batch := []Event{
+		{DecisionID: "1"},
+		{DecisionID: "2"},
+		{DecisionID: "3", Input: make(chan int)},
+		{DecisionID: "4"},
+	}
+	written, err := st.Append(batch)
+	if err == nil {
+		t.Fatal("Append() = nil, want the encoding error of the third event")
+	}
+	if written != 2 {
+		t.Errorf("Append() wrote %d, want the two events before the failure", written)
+	}
+	data, _ := st.ReadAll()
+	lines := strings.Split(strings.TrimSpace(string(data)), "\n")
+	if len(lines) != 2 {
+		t.Errorf("stored lines = %q, want the two that were written", lines)
+	}
+}
+
 // TestStore_AppendsOneLinePerEvent: events are appended in order, one line
 // each, across appends.
 func TestStore_AppendsOneLinePerEvent(t *testing.T) {
 	st := NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
-	if err := st.Append([]Event{{DecisionID: "1"}, {DecisionID: "2"}}); err != nil {
+	if _, err := st.Append([]Event{{DecisionID: "1"}, {DecisionID: "2"}}); err != nil {
 		t.Fatal(err)
 	}
-	if err := st.Append([]Event{{DecisionID: "3"}}); err != nil {
+	if _, err := st.Append([]Event{{DecisionID: "3"}}); err != nil {
 		t.Fatal(err)
 	}
 	data, _ := st.ReadAll()

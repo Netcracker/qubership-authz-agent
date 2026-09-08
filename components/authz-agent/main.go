@@ -171,7 +171,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	go logs.Run(ctx)
 	if tokens != nil {
 		go tokens.Run(ctx)
 	}
@@ -184,40 +183,70 @@ func main() {
 	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, data API on %s",
 		len(modules), cfg.DataDirs, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
 
-	// A server that ends on its own cancels the signal context, and main
-	// then ends the other one and the loops; a server that ends because the
-	// shutdown closed its socket is not that failure.
+	if serveUntilShutdown(ctx, stop, logs, []surface{
+		{"public", public, publicSocket},
+		{"data API", internal, dataSocket},
+	}) {
+		os.Exit(1)
+	}
+}
+
+// surface is one of the service's two HTTP surfaces: the app, the socket it
+// serves, and the name the logs call it.
+type surface struct {
+	name   string
+	app    *fiber.App
+	socket net.Listener
+}
+
+// serveUntilShutdown runs the decision-log loop and the surfaces until ctx
+// ends, shuts the surfaces down, and drains the log queue. It reports
+// whether a surface ended on its own, which is a failed start rather than a
+// shutdown; stop ends ctx for the rest of the process when one does.
+//
+// The order the two halves end in is the point. Fiber's shutdown waits for
+// the requests still in their handlers, and every one of those produces a
+// decision, so the queue is read until the last handler has returned. A
+// logger sharing ctx with the surfaces stops reading at the signal instead,
+// and the decisions of a rolling restart are the ones an operator reading
+// the log afterwards goes looking for.
+func serveUntilShutdown(ctx context.Context, stop func(), logs *decisionlog.Logger, surfaces []surface) bool {
+	logCtx, stopLogs := context.WithCancel(context.WithoutCancel(ctx))
+	go logs.Run(logCtx)
+
+	// A surface that ends on its own cancels the signal context, and the
+	// caller then ends the other one and the loops; one that ends because
+	// the shutdown closed its socket is not that failure.
 	var failed atomic.Bool
 	var servers sync.WaitGroup
-	serve := func(name string, app *fiber.App, socket net.Listener) {
+	for _, s := range surfaces {
 		servers.Add(1)
 		go func() {
 			defer servers.Done()
-			if err := app.Listener(socket); err != nil && ctx.Err() == nil {
-				logger.Errorf("%s server on %s: %v", name, socket.Addr(), err)
+			if err := s.app.Listener(s.socket); err != nil && ctx.Err() == nil {
+				logger.Errorf("%s server on %s: %v", s.name, s.socket.Addr(), err)
 				failed.Store(true)
 				stop()
 			}
 		}()
 	}
-	serve("public", public, publicSocket)
-	serve("data API", internal, dataSocket)
 	<-ctx.Done()
-	for _, app := range []*fiber.App{public, internal} {
-		if err := app.ShutdownWithTimeout(5 * time.Second); err != nil {
+	for _, s := range surfaces {
+		if err := s.app.ShutdownWithTimeout(5 * time.Second); err != nil {
 			logger.Warnf("shutdown: %v", err)
 		}
 	}
 	// The shutdown above does nothing for a server still on its way to
 	// Serve, so the sockets are closed as well; one already closed by its
 	// own shutdown returns the error this ignores.
-	_ = publicSocket.Close()
-	_ = dataSocket.Close()
-	servers.Wait()
-	logs.Wait()
-	if failed.Load() {
-		os.Exit(1)
+	for _, s := range surfaces {
+		_ = s.socket.Close()
 	}
+	servers.Wait()
+	// Every handler has returned, so nothing can queue a decision now.
+	stopLogs()
+	logs.Wait()
+	return failed.Load()
 }
 
 // get reads one key through configloader, except that an environment

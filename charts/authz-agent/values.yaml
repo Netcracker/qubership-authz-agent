@@ -416,15 +416,18 @@ PAP_CLIENT_CPU_LIMIT: 100m
 PAP_CLIENT_MEM_REQUEST: 100Mi
 PAP_CLIENT_MEM_LIMIT: 300Mi
 
-# The single service's container. The request is the sum of what Envoy and
-# OPA asked for, the two containers on the decision path, and the limit is
-# raised over theirs because policy evaluation, the pull loop, and the JWKS
-# bootstrap now share one process. Deployments with a load worth measuring
-# set these from the resource profiles.
-AUTHZ_AGENT_CPU_REQUEST: 100m
-AUTHZ_AGENT_CPU_LIMIT: 500m
-AUTHZ_AGENT_MEM_REQUEST: 200Mi
-AUTHZ_AGENT_MEM_LIMIT: 600Mi
+# The single service's container. It does the work of the four containers that
+# have sizing of their own, Envoy, OPA, pap-client, and the collector, so it asks
+# for what they ask for between them (100m + 50m + 100m + 100m, and 100Mi + 64Mi
+# + 100Mi + 100Mi) and is capped at their caps (100m four times, and 100Mi +
+# 200Mi + 300Mi + 100Mi). Throwing the switch therefore leaves the Pod's floor
+# and its ceiling where they were, which is the only claim these numbers make:
+# no load has been measured against the service. Deployments with one worth
+# measuring set these from the resource profiles.
+AUTHZ_AGENT_CPU_REQUEST: 350m
+AUTHZ_AGENT_CPU_LIMIT: 400m
+AUTHZ_AGENT_MEM_REQUEST: 364Mi
+AUTHZ_AGENT_MEM_LIMIT: 700Mi
 
 COLLECTOR_CPU_REQUEST: 100m
 COLLECTOR_CPU_LIMIT: 100m

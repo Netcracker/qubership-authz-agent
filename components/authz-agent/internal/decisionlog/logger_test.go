@@ -25,7 +25,9 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -432,44 +434,92 @@ func TestRun_ShutdownDoesNotResendADeliveryInFlight(t *testing.T) {
 	}
 }
 
-// TestRun_TimeoutBoundsADeliveryTheCollectorNeverAnswers: Timeout is what
-// ends a delivery the shutdown no longer aborts, so Run returns without it
-// even where the collector takes the request and never answers. The
-// configured value is what bounds it: on the ten-second default this run
-// would take about twenty seconds and miss the bound below.
-func TestRun_TimeoutBoundsADeliveryTheCollectorNeverAnswers(t *testing.T) {
-	hung := make(chan struct{})
-	reached := make(chan struct{})
-	var once sync.Once
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		once.Do(func() { close(reached) })
-		<-hung
-	}))
-	// The handler is released before the server is closed, which waits for
-	// the requests still in it.
-	defer srv.Close()
-	defer close(hung)
+// TestDeliver_KeepsOnlyWhatTheStoreDidNotWrite: a store that fails part-way
+// hands back the event it failed on and the ones after it. Handing back the
+// whole batch put the decisions already on disk in the file a second time.
+func TestDeliver_KeepsOnlyWhatTheStoreDidNotWrite(t *testing.T) {
+	st := NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
+	logs := New(Config{Store: st}, nil)
+	batch := []Event{
+		{DecisionID: "1"},
+		{DecisionID: "2"},
+		{DecisionID: "3", Input: make(chan int)},
+		{DecisionID: "4"},
+	}
+	undelivered, err := logs.deliver(context.Background(), batch)
+	if err == nil {
+		t.Fatal("deliver() = nil, want the store's encoding error")
+	}
+	var kept []string
+	for _, ev := range undelivered {
+		kept = append(kept, ev.DecisionID)
+	}
+	if !reflect.DeepEqual(kept, []string{"3", "4"}) {
+		t.Errorf("deliver kept %v, want the event it failed on and the one after it", kept)
+	}
+	data, _ := st.ReadAll()
+	if got := strings.Count(string(data), `"decision_id":"1"`); got != 1 {
+		t.Errorf("decision 1 is in the file %d times, want once", got)
+	}
+}
 
-	logs := New(Config{
-		URL:           srv.URL,
-		FlushInterval: 10 * time.Millisecond,
-		Timeout:       50 * time.Millisecond,
-	}, nil)
-	ctx, cancel := context.WithCancel(context.Background())
-	go logs.Run(ctx)
-	logs.Log(Event{DecisionID: "d1"})
+// TestRun_ShutdownRetriesTheBatchOnceAndReturns: after the shutdown the
+// batch a failed upload retained goes out once more, from the drain, and
+// Run returns. A tick that fell due while the delivery ran used to be ready
+// beside ctx.Done(), and select takes either of two ready cases, so the
+// batch went out again on about half the shutdowns and each attempt cost a
+// full Timeout. Ten shutdowns, because one of them is not conclusive.
+func TestRun_ShutdownRetriesTheBatchOnceAndReturns(t *testing.T) {
+	shutdown := func(t *testing.T) int {
+		t.Helper()
+		hung := make(chan struct{})
+		reached := make(chan struct{})
+		var mu sync.Mutex
+		var uploads int
+		var once sync.Once
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			uploads++
+			mu.Unlock()
+			once.Do(func() { close(reached) })
+			<-hung
+		}))
+		// The handler is released before the server is closed, which waits
+		// for the requests still in it.
+		defer srv.Close()
+		defer close(hung)
 
-	<-reached
-	cancel()
-	done := make(chan struct{})
-	go func() {
-		logs.Wait()
-		close(done)
-	}()
-	select {
-	case <-done:
-	case <-time.After(3 * time.Second):
-		t.Fatal("Run has not returned three seconds after the shutdown, so Timeout does not bound a delivery the collector never answers")
+		logs := New(Config{
+			URL:           srv.URL,
+			FlushInterval: 5 * time.Millisecond,
+			Timeout:       50 * time.Millisecond,
+		}, nil)
+		ctx, cancel := context.WithCancel(context.Background())
+		go logs.Run(ctx)
+		logs.Log(Event{DecisionID: "d1"})
+
+		// The shutdown lands while the first upload is on the wire, so every
+		// upload after it is a retry.
+		<-reached
+		cancel()
+		done := make(chan struct{})
+		go func() {
+			logs.Wait()
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run has not returned five seconds after the shutdown, so nothing bounds an upload the collector never answers")
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		return uploads
+	}
+	for i := range 10 {
+		if got := shutdown(t); got != 2 {
+			t.Fatalf("shutdown %d took %d uploads, want the one in flight and the drain's", i+1, got)
+		}
 	}
 }
 

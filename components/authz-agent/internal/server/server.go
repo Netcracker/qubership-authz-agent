@@ -55,10 +55,15 @@ type Options struct {
 	// means the service is healthy and ready as long as it answers, which
 	// is the case while the Pod's other containers run the loops.
 	Health func() Report
-	// NDBuiltinCache records the non-deterministic builtin calls of a
-	// decision into its event, as OPA's nd_builtin_cache does. Off, the
-	// calls are not recorded and the cache is not built; nor is it built
-	// when the decisions are not logged at all, since nothing would read it.
+	// NDBuiltinCache builds the non-deterministic builtin cache, which the
+	// evaluator reads as a memo within one decision and which is recorded
+	// into the decision's event, as OPA's nd_builtin_cache does. Off,
+	// neither happens. It is also left unbuilt when the decisions are not
+	// logged, where the memo is all it would be: every non-deterministic
+	// builtin the policies call is stable within a decision without it,
+	// http.send and uuid.rfc4122 through caches of their own and
+	// io.jwt.decode_verify and time.now_ns through the evaluation's fixed
+	// clock. io.jwt.encode_sign, the one that would differ, is not called.
 	NDBuiltinCache bool
 	// PapClientURL is the base URL of the pap-client container, which
 	// answers GET /health for the Pod while it still has one; the public

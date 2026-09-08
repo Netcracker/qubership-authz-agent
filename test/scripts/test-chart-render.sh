@@ -463,6 +463,15 @@ for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR AUTHZ_DATA_API_AUTHORIZATION A
   fi
 done
 
+# The drain has to fit inside the grace period: five seconds for each of the
+# two surfaces, then up to two ten-second upload timeouts for the decision
+# logs. The default of thirty is exactly that sum, so the Pod asks for more.
+if [[ "${single_all}" == *"terminationGracePeriodSeconds: 45"* ]]; then
+  pass "the single-service Pod keeps a grace period longer than its drain"
+else
+  fail "the single-service Pod leaves the grace period at the default"
+fi
+
 for volume in "authz-agent-trusted-providers" "authz-agent-opa-auth" "authz-agent-client-credentials"; do
   if [[ "${single_all}" == *"${volume}"* ]]; then
     pass "the single-service Pod mounts ${volume}"

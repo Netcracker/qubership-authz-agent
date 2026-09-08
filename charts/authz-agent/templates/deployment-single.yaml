@@ -29,6 +29,13 @@ spec:
         {{- include "authz-agent.commonLabels" . | nindent 8 }}
     spec:
       serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
+      # Long enough for the whole shutdown: the two HTTP surfaces are given
+      # five seconds each to finish the requests in their handlers, and the
+      # decision-log loop then has at most two ten-second upload timeouts,
+      # one for an upload in flight when the signal arrived and one for the
+      # drain. Thirty seconds, the default, is exactly that sum, so a
+      # decision made by the last request served could be SIGKILLed away.
+      terminationGracePeriodSeconds: 45
       # The service calls no Kubernetes API. The projected token below, where
       # the platform provisions the M2M identity that way, is a volume of its
       # own and is unaffected.

@@ -112,7 +112,7 @@ make e2e-install  # back to the five containers
 ```
 
 It reinstalls the same release, so the Service and the addresses stay as they are; expected there is
-`--- PASS: TestRuntimeSuite` with 17 groups and `TestOPARestart` skipped, since its container is the one that is gone.
+`--- PASS: TestRuntimeSuite` with 19 groups and `TestOPARestart` skipped, since its container is the one that is gone.
 `make parity-single` is the parity counterpart.
 
 Artifacts:

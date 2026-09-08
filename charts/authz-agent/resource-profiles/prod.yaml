@@ -12,13 +12,16 @@
 # (tests/svt/common/compose/docker-compose.yml: backend `cpus: 8`,
 # `mem_limit: 8g`), not a measurement — re-derive them from the first real SVT
 # run before this profile is used for a production install.
-# The single service, when AUTHZ_SINGLE_SERVICE_ENABLED is on: it evaluates
-# every request, as OPA did, and runs the pull loop and the JWKS bootstrap
-# beside it, so it takes OPA's sizing with pap-client's memory added.
-AUTHZ_AGENT_CPU_REQUEST: "4"
-AUTHZ_AGENT_CPU_LIMIT: "8"
-AUTHZ_AGENT_MEM_REQUEST: 2Gi
-AUTHZ_AGENT_MEM_LIMIT: 8Gi
+# The single service, when AUTHZ_SINGLE_SERVICE_ENABLED is on: it evaluates every
+# request as OPA does, terminates the client's connection as Envoy does, and runs
+# the pull loop, the token renewal, and the decision-log upload beside them, so it
+# takes what Envoy, OPA, pap-client, and the collector take between them, which
+# leaves the Pod's floor and ceiling as they are. That is arithmetic on
+# the numbers below rather than a measurement, like the rest of this file.
+AUTHZ_AGENT_CPU_REQUEST: 7500m
+AUTHZ_AGENT_CPU_LIMIT: "15"
+AUTHZ_AGENT_MEM_REQUEST: 3584Mi
+AUTHZ_AGENT_MEM_LIMIT: 13Gi
 
 ENVOY_CPU_REQUEST: "2"
 ENVOY_CPU_LIMIT: "4"

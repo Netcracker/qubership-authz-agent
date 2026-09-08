@@ -182,9 +182,11 @@ func (l *Logger) Log(ev Event) {
 // dropped once MaxQueued is reached.
 //
 // Cancelling ctx ends the loop and leaves a delivery already under way to
-// finish under its own Timeout. Run therefore returns up to two Timeouts
-// after ctx ends, one for a delivery in flight when it ended and one for
-// the drain. Wait returns once Run is finished.
+// finish under its own bound rather than aborting it. On the upload path
+// that bound is Timeout, so Run returns up to two Timeouts after ctx ends,
+// one for an upload in flight when it ended and one for the drain; on the
+// store path it is however long those two writes take. Wait returns once
+// Run is finished.
 func (l *Logger) Run(ctx context.Context) {
 	defer close(l.done)
 	if !l.Enabled() {
@@ -199,7 +201,8 @@ func (l *Logger) Run(ctx context.Context) {
 		}
 		// A request cut off mid-flight cannot be told from one the collector
 		// never received, so ctx ends the loop without aborting a delivery
-		// already under way. Timeout bounds the delivery instead.
+		// already under way. Timeout bounds an upload instead; a store
+		// takes no deadline, and the write is its own bound.
 		deadline, cancel := context.WithTimeout(context.WithoutCancel(ctx), l.cfg.Timeout)
 		undelivered, err := l.deliver(deadline, batch)
 		cancel()
@@ -222,21 +225,29 @@ func (l *Logger) Run(ctx context.Context) {
 				flush()
 			}
 		case <-ticker.C:
+			if ctx.Err() != nil {
+				// The tick was pending while the last delivery ran, and
+				// both cases are ready now. The drain below finishes the
+				// batch; flushing it here first would spend another
+				// Timeout on it, and so would every tick after that.
+				continue
+			}
 			flush()
 		}
 	}
 }
 
-// Wait blocks until Run has drained the queue after its context ended.
-// That can take up to two Timeouts from the cancellation.
+// Wait blocks until Run has drained the queue after its context ended,
+// which takes up to two Timeouts on the upload path.
 func (l *Logger) Wait() { <-l.done }
 
 // deliver hands a batch to the store, or uploads it, and returns the
 // events that did not arrive.
 func (l *Logger) deliver(ctx context.Context, batch []Event) ([]Event, error) {
 	if l.cfg.Store != nil {
-		if err := l.cfg.Store.Append(batch); err != nil {
-			return batch, err
+		written, err := l.cfg.Store.Append(batch)
+		if err != nil {
+			return batch[written:], err
 		}
 		return nil, nil
 	}

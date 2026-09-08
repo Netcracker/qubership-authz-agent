@@ -96,10 +96,13 @@ make parity-single   # the same in the parity namespace, then the parity replay
 make e2e-install     # back to the five-container Pod
 ```
 
-Both suites pass against either topology. The groups that address OPA
-directly, `TestOPALockdown`, `TestOPARestart`, and
-`TestAuthorizeEnvoyOpaDirectParity`, are skipped against this one, which has no
-OPA of its own; they keep gating the five-container Pod.
+Both suites pass against either topology, and one group is skipped against
+this one: `TestOPARestart`, whose container is the one that is gone. The other
+two groups that address OPA directly gate both, because the single service
+answers for OPA rather than replacing what it served — `TestOPALockdown`, since
+the data API is on the same port under the same policy and write secret
+(ADR-0077), and `TestAuthorizeEnvoyOpaDirectParity`, since both transports it
+compares are still there (ADR-0062).
 
 ## Standing in for the OPA container
 

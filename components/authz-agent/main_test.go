@@ -16,13 +16,19 @@ package main
 
 import (
 	"context"
+	"net"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
 
 	"authz-agent/components/authz-agent/internal/authn"
+	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
 	"authz-agent/components/authz-agent/internal/pull"
 )
@@ -118,5 +124,62 @@ func TestLoadAuthSecret(t *testing.T) {
 	}
 	if err := loadAuthSecret(context.Background(), other, filepath.Join(t.TempDir(), "missing")); err == nil {
 		t.Error("a missing file must be an error")
+	}
+}
+
+// TestServeUntilShutdown_LogsADecisionMadeWhileTheSurfacesDrain: the
+// shutdown waits for the handlers still running, and every one of them
+// produces a decision, so the queue is read until the last has returned.
+// While the logger shared the signal context with the surfaces it stopped
+// reading at the signal, and this decision reached nothing.
+func TestServeUntilShutdown_LogsADecisionMadeWhileTheSurfacesDrain(t *testing.T) {
+	store := decisionlog.NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
+	logs := decisionlog.New(decisionlog.Config{Store: store, FlushInterval: 5 * time.Millisecond}, nil)
+
+	handling := make(chan struct{})
+	app := fiber.New()
+	app.Get("/slow", func(c *fiber.Ctx) error {
+		close(handling)
+		// Still in the handler when the shutdown starts, as a bulk check of
+		// 3000 resources or one waiting on a PIP would be.
+		time.Sleep(200 * time.Millisecond)
+		logs.Log(decisionlog.Event{DecisionID: "served-while-draining"})
+		return c.SendString("ok")
+	})
+	socket, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan bool, 1)
+	go func() { done <- serveUntilShutdown(ctx, cancel, logs, []surface{{"public", app, socket}}) }()
+	requested := make(chan struct{})
+	go func() {
+		defer close(requested)
+		resp, err := http.Get("http://" + socket.Addr().String() + "/slow")
+		if err == nil {
+			_ = resp.Body.Close()
+		}
+	}()
+
+	<-handling
+	cancel()
+	select {
+	case failed := <-done:
+		if failed {
+			t.Error("serveUntilShutdown() = true, want the shutdown rather than a failed surface")
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("serveUntilShutdown has not returned ten seconds after the shutdown")
+	}
+	<-requested
+
+	data, err := store.ReadAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), "served-while-draining") {
+		t.Errorf("the store holds %q, want the decision of the request the shutdown waited for", data)
 	}
 }

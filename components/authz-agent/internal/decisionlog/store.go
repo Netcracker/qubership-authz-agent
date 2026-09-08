@@ -48,29 +48,33 @@ func NewStore(path string) *Store {
 	return &Store{path: path}
 }
 
-// Append writes the events, redacted, to the end of the file.
-func (s *Store) Append(events []Event) error {
+// Append writes the events, redacted, to the end of the file, and returns
+// how many of them it wrote. One event is written at a time and nothing
+// rolls back, so a full volume leaves the events before the failure on
+// disk; the count is what lets the caller resume there rather than offer
+// the whole batch again and record those decisions twice.
+func (s *Store) Append(events []Event) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if err := os.MkdirAll(filepath.Dir(s.path), 0o755); err != nil {
-		return err
+		return 0, err
 	}
 	f, err := os.OpenFile(s.path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer func() { _ = f.Close() }()
 	enc := json.NewEncoder(f)
-	for _, ev := range events {
+	for written, ev := range events {
 		line, err := redacted(ev)
 		if err != nil {
-			return err
+			return written, err
 		}
 		if err := enc.Encode(line); err != nil {
-			return err
+			return written, err
 		}
 	}
-	return nil
+	return len(events), nil
 }
 
 // ReadAll returns the file's content; nil before the first append.
