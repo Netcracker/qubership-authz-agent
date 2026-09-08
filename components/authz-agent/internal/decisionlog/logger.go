@@ -178,7 +178,8 @@ func (l *Logger) Log(ev Event) {
 // Run delivers queued events until ctx ends, then drains the queue: the
 // last decisions before a shutdown must reach the collector, as OPA's plugin
 // flushes them too. A delivery that fails keeps its events for the next
-// attempt, as OPA requeues a chunk it could not upload; the oldest are
+// attempt, as OPA requeues a chunk it could not upload, and waits for the
+// next interval rather than retrying on the next decision; the oldest are
 // dropped once MaxQueued is reached.
 //
 // Cancelling ctx ends the loop and leaves a delivery already under way to
@@ -195,6 +196,10 @@ func (l *Logger) Run(ctx context.Context) {
 	ticker := time.NewTicker(l.cfg.FlushInterval)
 	defer ticker.Stop()
 	var batch []Event
+	// Set by a delivery that failed and cleared by one that did not. What a
+	// failed delivery retains already sits at MaxBatch, so without this
+	// every decision that arrived afterwards would start another attempt.
+	holding := false
 	flush := func() {
 		if len(batch) == 0 {
 			return
@@ -209,6 +214,7 @@ func (l *Logger) Run(ctx context.Context) {
 		if err != nil {
 			l.warn("decision log delivery failed, keeping %d decisions for the next attempt: %v", len(undelivered), err)
 		}
+		holding = err != nil
 		batch = l.retained(undelivered)
 	}
 	for {
@@ -221,15 +227,25 @@ func (l *Logger) Run(ctx context.Context) {
 			return
 		case ev := <-l.events:
 			batch = append(batch, ev)
-			if len(batch) >= l.cfg.MaxBatch {
+			switch {
+			case ctx.Err() != nil || holding:
+				// Two reasons this decision's arrival delivers nothing.
+				// Once ctx has ended, the drain above is what delivers the
+				// batch, and it and this case are both ready while the
+				// queue is not empty, so a flush here would be another
+				// Timeout drawn at random. And a failed delivery waits for
+				// the next tick, so a collector that is down is asked once
+				// per interval rather than once per decision.
+				batch = l.retained(batch)
+			case len(batch) >= l.cfg.MaxBatch:
 				flush()
 			}
 		case <-ticker.C:
 			if ctx.Err() != nil {
 				// The tick was pending while the last delivery ran, and
-				// both cases are ready now. The drain below finishes the
-				// batch; flushing it here first would spend another
-				// Timeout on it, and so would every tick after that.
+				// both cases are ready now. The drain finishes the batch;
+				// flushing it here first would spend another Timeout on
+				// it, and so would every tick after that.
 				continue
 			}
 			flush()

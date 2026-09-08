@@ -63,7 +63,8 @@ type Options struct {
 	// builtin the policies call is stable within a decision without it,
 	// http.send and uuid.rfc4122 through caches of their own and
 	// io.jwt.decode_verify and time.now_ns through the evaluation's fixed
-	// clock. io.jwt.encode_sign, the one that would differ, is not called.
+	// clock. The two that would differ, io.jwt.encode_sign and
+	// io.jwt.encode_sign_raw, read no cache at all and are not called.
 	NDBuiltinCache bool
 	// PapClientURL is the base URL of the pap-client container, which
 	// answers GET /health for the Pod while it still has one; the public

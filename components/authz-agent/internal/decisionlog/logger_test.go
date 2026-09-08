@@ -463,6 +463,112 @@ func TestDeliver_KeepsOnlyWhatTheStoreDidNotWrite(t *testing.T) {
 	}
 }
 
+// TestRun_HoldsAFailedBatchUntilTheNextTick: a delivery that failed is
+// retried on the interval, not on the next decision to arrive. What it
+// retained already sits at MaxBatch, so an unguarded size trigger asked a
+// collector that was down once per decision: 400 decisions produced 204
+// attempts where the interval allows one.
+func TestRun_HoldsAFailedBatchUntilTheNextTick(t *testing.T) {
+	posted := make(chan struct{}, 64)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		posted <- struct{}{}
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	// An hour, so the queue is the only thing that could trigger a second
+	// attempt within the test.
+	logs := New(Config{
+		URL:           srv.URL,
+		MaxBatch:      2,
+		FlushInterval: time.Hour,
+		Timeout:       time.Second,
+	}, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go logs.Run(ctx)
+
+	logs.Log(Event{DecisionID: "d1"})
+	logs.Log(Event{DecisionID: "d2"})
+	<-posted
+	for i := range 18 {
+		logs.Log(Event{DecisionID: fmt.Sprintf("q%d", i)})
+	}
+	select {
+	case <-posted:
+		t.Error("the collector was asked a second time before the interval, once for the decisions that arrived after the failure")
+	case <-time.After(300 * time.Millisecond):
+	}
+}
+
+// TestRun_ShutdownDoesNotRetryPerQueuedDecision: the decisions still queued
+// when the shutdown lands are collected by the drain rather than delivered
+// as each arrives. That case and ctx.Done() are both ready while the queue
+// is not empty and select takes either, so an unguarded size trigger spent
+// another full Timeout on the retained batch on about half the passes, and
+// the pass after that drew again. Ten shutdowns, because one is not
+// conclusive.
+func TestRun_ShutdownDoesNotRetryPerQueuedDecision(t *testing.T) {
+	shutdown := func(t *testing.T) int {
+		t.Helper()
+		hung := make(chan struct{})
+		reached := make(chan struct{})
+		var mu sync.Mutex
+		var uploads int
+		var once sync.Once
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			uploads++
+			mu.Unlock()
+			once.Do(func() { close(reached) })
+			<-hung
+		}))
+		// The handler is released before the server is closed, which waits
+		// for the requests still in it.
+		defer srv.Close()
+		defer close(hung)
+
+		// An hour, so no tick can fire and every upload after the first one
+		// comes from the queue.
+		logs := New(Config{
+			URL:           srv.URL,
+			MaxBatch:      2,
+			FlushInterval: time.Hour,
+			Timeout:       50 * time.Millisecond,
+		}, nil)
+		ctx, cancel := context.WithCancel(context.Background())
+		go logs.Run(ctx)
+		logs.Log(Event{DecisionID: "d1"})
+		logs.Log(Event{DecisionID: "d2"})
+
+		// The upload is on the wire and the loop is inside it, so these wait
+		// in the queue and the shutdown finds them there.
+		<-reached
+		for i := range 10 {
+			logs.Log(Event{DecisionID: fmt.Sprintf("q%d", i)})
+		}
+		cancel()
+		done := make(chan struct{})
+		go func() {
+			logs.Wait()
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run has not returned five seconds after the shutdown")
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		return uploads
+	}
+	for i := range 10 {
+		if got := shutdown(t); got != 2 {
+			t.Fatalf("shutdown %d took %d uploads, want the one in flight and the drain's", i+1, got)
+		}
+	}
+}
+
 // TestRun_ShutdownRetriesTheBatchOnceAndReturns: after the shutdown the
 // batch a failed upload retained goes out once more, from the drain, and
 // Run returns. A tick that fell due while the delivery ran used to be ready
