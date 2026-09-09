@@ -1,7 +1,8 @@
 # Task: 20260518-mixed-load-report — Mixed-Flow Resource Consumption Report
 
-> The SVT load stand this document describes was removed with the five-container Pod
-> (authz-agent-ADR-0080). The paths below are recorded as they were and no longer resolve.
+> These numbers were measured on the five-container stack, before the agent became one process
+> (authz-agent-ADR-0080). They are kept as the only thing a run on the restored stand can be
+> compared against; the paths below are recorded as they were and some no longer resolve.
 
 *Archived internal engineering document, restored for reference. Component names and paths reflect the tree at the time of writing and may differ from the current layout.*
 

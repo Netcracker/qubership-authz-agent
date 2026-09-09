@@ -1,0 +1,360 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Direct OPA scenario matrix runner — provisions 100 users, generates
+# scenario-specific policies/request sets, runs 5 direct OPA SVT measurements,
+# and writes a summary table with p95 latency.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+PROJECT_NAME="${PROJECT_NAME:-authz-svt}"
+SVT_KC_PORT="${SVT_KC_PORT:-25556}"
+SVT_AUTHZ_PORT="${SVT_AUTHZ_PORT:-28080}"
+SVT_AUTHZ_POLICY_ADMIN_PORT="${SVT_AUTHZ_POLICY_ADMIN_PORT:-28093}"
+# Must match the domain test/svt/scripts/up seeded under: the stub files
+# policies per domain and re-seeding a different one would leave the
+# original set in place alongside it.
+SVT_AUTHZ_POLICY_ADMIN_DOMAIN="${SVT_AUTHZ_POLICY_ADMIN_DOMAIN:-SVT}"
+SVT_PAP_PULL_INTERVAL="${SVT_PAP_PULL_INTERVAL:-2}"
+# One full pull tick plus a margin, derived from the interval the stack
+# runs with rather than hardcoded.
+SVT_PULL_WAIT_SECONDS=$((SVT_PAP_PULL_INTERVAL + 2))
+SVT_PROMETHEUS_PORT="${SVT_PROMETHEUS_PORT:-29090}"
+
+THREADS="${THREADS:-30}"
+RAMP_SECONDS="${RAMP_SECONDS:-5}"
+DURATION_SECONDS="${DURATION_SECONDS:-60}"
+TARGET_RPS="${TARGET_RPS:-500}"
+
+export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT SVT_AUTHZ_POLICY_ADMIN_PORT SVT_AUTHZ_POLICY_ADMIN_DOMAIN SVT_PROMETHEUS_PORT
+
+KC_REALM="svt-test"
+KC_CLIENT_ID="authz-agent"
+KC_CLIENT_SECRET="authz-agent-secret"
+KC_ADMIN_USER="${KC_ADMIN_USER:-kcadmin}"
+KC_ADMIN_PASSWORD="${KC_ADMIN_PASSWORD:-kcadmin}"
+KC_ADMIN_REALM="${KC_ADMIN_REALM:-master}"
+
+COMPOSE_CMD=(docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml")
+SCENARIOS=(rls-condition rls-predicate rls-predicate-pips ols-single ols-bulk-50)
+SCENARIOS_CSV="${SCENARIOS_CSV:-}"
+
+if [[ -n "${SCENARIOS_CSV}" ]]; then
+  IFS=',' read -r -a SCENARIOS <<<"${SCENARIOS_CSV}"
+fi
+
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+ARTIFACTS_DIR="${SVT_DIR}/artifacts/${TIMESTAMP}"
+TOKENS_FILE="${ARTIFACTS_DIR}/tokens.properties"
+SUMMARY_FILE="${ARTIFACTS_DIR}/matrix-summary.md"
+AUTHN_BASE_FILE="${ARTIFACTS_DIR}/authn-base.json"
+
+log() { echo "[svt-run-opa-direct-matrix] $*"; }
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "error: required command not found: $1" >&2
+    exit 1
+  fi
+}
+
+require_cmd docker
+require_cmd curl
+require_cmd jq
+require_cmd python3
+
+wait_for_backend_health() {
+  local attempts="${1:-90}"
+  local delay_seconds="${2:-2}"
+  local i
+  for ((i = 1; i <= attempts; i++)); do
+    if "${COMPOSE_CMD[@]}" exec -T opa policy-admin healthcheck >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${delay_seconds}"
+  done
+  return 1
+}
+
+wait_for_public_health() {
+  local attempts="${1:-90}"
+  local delay_seconds="${2:-2}"
+  local i
+  for ((i = 1; i <= attempts; i++)); do
+    if curl -sf "http://localhost:${SVT_AUTHZ_PORT}/health" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep "${delay_seconds}"
+  done
+  return 1
+}
+
+restart_opa() {
+  log "restarting opa to reduce cross-scenario runtime skew..."
+  "${COMPOSE_CMD[@]}" restart opa >/dev/null
+  wait_for_backend_health 90 2
+  wait_for_public_health 90 2
+}
+
+kc_admin_token() {
+  curl -sf -X POST \
+    "http://localhost:${SVT_KC_PORT}/realms/${KC_ADMIN_REALM}/protocol/openid-connect/token" \
+    -d "grant_type=password" \
+    -d "client_id=admin-cli" \
+    -d "username=${KC_ADMIN_USER}" \
+    -d "password=${KC_ADMIN_PASSWORD}" | jq -r '.access_token'
+}
+
+KC_ADMIN_TOKEN=""
+
+kc_api() {
+  local method=$1
+  local path=$2
+  shift 2
+  curl -sf -X "${method}" \
+    -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+    -H "Content-Type: application/json" \
+    "http://localhost:${SVT_KC_PORT}${path}" "$@"
+}
+
+ensure_matrix_users() {
+  local role_rep
+  local role_payload
+  local username
+  local email
+  local user_id
+  local user_doc
+
+  log "ensuring 100 matrix users exist in Keycloak..."
+  KC_ADMIN_TOKEN=$(kc_admin_token)
+  if [[ -z "${KC_ADMIN_TOKEN}" || "${KC_ADMIN_TOKEN}" == "null" ]]; then
+    log "ERROR: failed to acquire Keycloak admin token"
+    exit 1
+  fi
+
+  role_rep=$(kc_api GET "/admin/realms/${KC_REALM}/roles/ROLE_SVT_ADMIN")
+  role_payload=$(printf '[%s]' "${role_rep}")
+
+  for idx in $(seq 1 100); do
+    username=$(printf 'svt-matrix-%03d' "${idx}")
+    email="${username}@example.com"
+    user_id=$(kc_api GET "/admin/realms/${KC_REALM}/users?username=${username}&exact=true" | jq -r '.[0].id // empty')
+    if [[ -z "${user_id}" ]]; then
+      kc_api POST "/admin/realms/${KC_REALM}/users" \
+        -d "{\"username\":\"${username}\",\"email\":\"${email}\",\"enabled\":true,\"emailVerified\":true,\"firstName\":\"SVT\",\"lastName\":\"Matrix\",\"requiredActions\":[],\"credentials\":[{\"type\":\"password\",\"value\":\"password\",\"temporary\":false}]}" >/dev/null
+      user_id=$(kc_api GET "/admin/realms/${KC_REALM}/users?username=${username}&exact=true" | jq -r '.[0].id // empty')
+    fi
+    if [[ -z "${user_id}" ]]; then
+      log "ERROR: failed to resolve user id for ${username}"
+      exit 1
+    fi
+
+    user_doc=$(kc_api GET "/admin/realms/${KC_REALM}/users/${user_id}")
+    user_doc=$(jq -c \
+      --arg username "${username}" \
+      --arg email "${email}" \
+      '.username = $username
+      | .email = $email
+      | .enabled = true
+      | .emailVerified = true
+      | .firstName = "SVT"
+      | .lastName = "Matrix"
+      | .requiredActions = []
+      | .credentials = [{"type":"password","value":"password","temporary":false}]' <<<"${user_doc}")
+    kc_api PUT "/admin/realms/${KC_REALM}/users/${user_id}" -d "${user_doc}" >/dev/null
+
+    if ! kc_api GET "/admin/realms/${KC_REALM}/users/${user_id}/role-mappings/realm/composite" | jq -e '.[] | select(.name == "ROLE_SVT_ADMIN")' >/dev/null 2>&1; then
+      kc_api POST "/admin/realms/${KC_REALM}/users/${user_id}/role-mappings/realm" -d "${role_payload}" >/dev/null
+    fi
+  done
+
+  log "matrix users are ready"
+}
+
+acquire_user_tokens() {
+  local username
+  local token
+
+  : > "${TOKENS_FILE}"
+  for idx in $(seq 1 100); do
+    username=$(printf 'svt-matrix-%03d' "${idx}")
+    token=$(curl -sf -X POST \
+      "http://localhost:${SVT_KC_PORT}/realms/${KC_REALM}/protocol/openid-connect/token" \
+      -d "grant_type=password" \
+      -d "client_id=${KC_CLIENT_ID}" \
+      -d "client_secret=${KC_CLIENT_SECRET}" \
+      -d "username=${username}" \
+      -d "password=password" \
+      -d "scope=openid" | jq -r '.access_token')
+
+    if [[ -z "${token}" || "${token}" == "null" ]]; then
+      log "ERROR: failed to acquire token for ${username}"
+      exit 1
+    fi
+
+    printf 'token_%s=%s\n' "${username//-/_}" "${token}" >> "${TOKENS_FILE}"
+  done
+}
+
+seed_via_authz_policy_admin() {
+  # Seed simplified policies or PIPs into the authz-policy-admin, which serves
+  # access-control's own per-domain paths (authz-agent-ADR-0073); the OPA pull
+  # loop then reads them back through the v3 export.
+  # $1 = kind — "domainPolicies" or "domainPIPs"
+  # $2 = local payload file
+  local kind=$1
+  local payload_file=$2
+  local path="/access/v1/simplifiedPolicies/${kind}/${SVT_AUTHZ_POLICY_ADMIN_DOMAIN}"
+  local http_code
+
+  http_code=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+    -H "Content-Type: application/json" \
+    -d @"${payload_file}" \
+    "http://localhost:${SVT_AUTHZ_POLICY_ADMIN_PORT}${path}")
+
+  if [[ "${http_code}" != "200" ]]; then
+    log "ERROR: seed failed for ${path} (HTTP ${http_code})"
+    exit 1
+  fi
+}
+
+capture_authn_base() {
+  docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml" exec -T opa sh -lc \
+    "curl -sf http://localhost:8181/v1/data/authn" | jq -c '.result' > "${AUTHN_BASE_FILE}"
+}
+
+upload_authn_document() {
+  local payload_file=$1
+
+  docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml" exec -T opa sh -lc \
+    'cat > /tmp/authn.json && curl -sf -X PUT http://localhost:8181/v1/data/authn -H "Content-Type: application/json" --data @/tmp/authn.json >/dev/null' \
+    < "${payload_file}"
+}
+
+upload_policy_ref_index() {
+  local payload_file=$1
+
+  docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml" exec -T opa sh -lc \
+    'cat > /tmp/policies-ref-index.json && curl -sf -X PUT http://localhost:8181/v1/data/policies/refIndex -H "Content-Type: application/json" --data @/tmp/policies-ref-index.json >/dev/null' \
+    < "${payload_file}"
+}
+
+run_jmeter_scenario() {
+  local scenario_dir=$1
+  local result_dir=$2
+
+  mkdir -p "${result_dir}/temp"
+
+  "${COMPOSE_CMD[@]}" run --rm --no-deps \
+    --user "$(id -u):$(id -g)" \
+    -v "${SVT_DIR}/jmeter/plans:/plans:ro" \
+    -v "${TOKENS_FILE}:/tokens.properties:ro" \
+    -v "${scenario_dir}:/scenario:ro" \
+    -v "${result_dir}:/results" \
+    -e JMETER_HOME=/opt/apache-jmeter-5.5 \
+    jmeter \
+      -n \
+      -t /plans/opa-direct-scenario.jmx \
+      -q /tokens.properties \
+      -Jthreads="${THREADS}" \
+      -Jramp_seconds="${RAMP_SECONDS}" \
+      -Jduration_seconds="${DURATION_SECONDS}" \
+      -Jopa_host=opa \
+      -Jopa_port=8181 \
+      -Jtarget_rps="${TARGET_RPS}" \
+      -Jscenario_csv=/scenario/requests.csv \
+      -j /results/jmeter.log \
+      -l /results/results.jtl
+
+  "${COMPOSE_CMD[@]}" run --rm --no-deps \
+    --user "$(id -u):$(id -g)" \
+    -v "${result_dir}:/results" \
+    -e JMETER_HOME=/opt/apache-jmeter-5.5 \
+    jmeter \
+      -g /results/results.jtl \
+      -j /results/jmeter-report.log \
+      -Jjmeter.reportgenerator.temp_dir=/results/temp \
+      -o /results/dashboard
+}
+
+if ! wait_for_backend_health 1 1; then
+  log "ERROR: backend is not healthy — run 'test/svt/scripts/up' first"
+  exit 1
+fi
+
+mkdir -p "${ARTIFACTS_DIR}/generated" "${ARTIFACTS_DIR}/prometheus"
+log "resetting opa store before capturing base authn..."
+restart_opa
+capture_authn_base
+
+ensure_matrix_users
+
+{
+  printf '| Run | p95 latency (ms) |\n'
+  printf '|-----|------------------|\n'
+} > "${SUMMARY_FILE}"
+
+for idx in "${!SCENARIOS[@]}"; do
+  scenario="${SCENARIOS[$idx]}"
+  scenario_dir="${ARTIFACTS_DIR}/generated/${scenario}"
+  result_dir="${ARTIFACTS_DIR}/${scenario}"
+
+  log "preparing scenario ${scenario}..."
+  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" generate \
+    --scenario "${scenario}" \
+    --output-dir "${scenario_dir}"
+
+  acquire_user_tokens
+  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" build-authn-cache \
+    --tokens-file "${TOKENS_FILE}" \
+    --base-authn "${AUTHN_BASE_FILE}" \
+    --output-file "${scenario_dir}/authn.json"
+
+  log "uploading authn cache and policy ref-index for ${scenario}..."
+  upload_authn_document "${scenario_dir}/authn.json"
+  upload_policy_ref_index "${scenario_dir}/policies-ref-index.json"
+
+  log "seeding policies + PIPs into authz-policy-admin for ${scenario}..."
+  seed_via_authz_policy_admin "domainPolicies" "${scenario_dir}/policies.json"
+  seed_via_authz_policy_admin "domainPIPs" "${scenario_dir}/pips.json"
+  # Wait one full pull tick plus a margin for the new data to reach OPA.
+  sleep "${SVT_PULL_WAIT_SECONDS}"
+
+  run_jmeter_scenario "${scenario_dir}" "${result_dir}"
+
+  p95=$(python3 "${SVT_DIR}/tools/opa_direct_matrix.py" summarize-jtl --jtl "${result_dir}/results.jtl" | jq -r '.p95_ms')
+  printf '| %s | %s |\n' "${scenario}" "${p95}" >> "${SUMMARY_FILE}"
+  log "scenario ${scenario} complete (p95=${p95} ms)"
+
+  if (( idx + 1 < ${#SCENARIOS[@]} )); then
+    restart_opa
+  fi
+done
+
+log "snapshotting Prometheus TSDB..."
+SNAP_RESP=$(curl -sf -X POST \
+  "http://localhost:${SVT_PROMETHEUS_PORT}/api/v1/admin/tsdb/snapshot" 2>&1 || true)
+echo "${SNAP_RESP}" > "${ARTIFACTS_DIR}/prometheus/snapshot-response.json"
+
+cat > "${ARTIFACTS_DIR}/run-metadata.json" <<METAEOF
+{
+  "timestamp": "${TIMESTAMP}",
+  "profile": "opa-direct-matrix",
+  "scenarios": ["rls-condition", "rls-predicate", "rls-predicate-pips", "ols-single", "ols-bulk-50"],
+  "threads": ${THREADS},
+  "ramp_seconds": ${RAMP_SECONDS},
+  "duration_seconds": ${DURATION_SECONDS},
+  "target_rps": ${TARGET_RPS},
+  "target_endpoint": {
+    "host": "opa",
+    "port": 8181,
+    "path": "/v1/data/authorize"
+  },
+  "users": 100
+}
+METAEOF
+
+log "summary written to ${SUMMARY_FILE}"
+log "artifacts: ${ARTIFACTS_DIR}"

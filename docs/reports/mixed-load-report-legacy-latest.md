@@ -1,7 +1,8 @@
 # Mixed-Flow Load-Test Report — legacy
 
-> The SVT load stand this document describes was removed with the five-container Pod
-> (authz-agent-ADR-0080). The paths below are recorded as they were and no longer resolve.
+> These numbers were measured on the five-container stack, before the agent became one process
+> (authz-agent-ADR-0080). They are kept as the only thing a run on the restored stand can be
+> compared against; the paths below are recorded as they were and some no longer resolve.
 
 Generated: 2026-05-18 07:15:39 UTC
 Sweep timestamp: 20260518-100747

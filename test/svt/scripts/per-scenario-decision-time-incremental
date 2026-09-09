@@ -1,0 +1,597 @@
+#!/usr/bin/env python3
+"""Per-scenario incremental sweep for decision-time canonical baseline.
+
+Iterates 28 scenarios one-by-one. Per scenario:
+  1. Invokes `per-scenario-decision-time --scenarios X --rps ... --skip-promote`
+     against the already-running stack (no stack down/up; orchestrator handles
+     OPA restart between (scenario, RPS) cells).
+  2. Parses the new sweep's p95 cells for X.
+  3. Applies the existing canonical baseline's ±5 % per-cell no-regression
+     gate (same rule as `compare_and_promote_markdown` in the orchestrator).
+  4. If gate passes: merges X's section into `canonical-latest.md` and
+     replaces X's rows in the canonical xlsx workbook (per-scenario merge,
+     NOT full overwrite — other 27 scenarios' rows are preserved).
+  5. Logs decision (PROMOTED / HELD with regressing cells listed).
+
+Side-effects per iteration are atomic at the scenario boundary — a failure
+mid-sweep leaves prior promotions intact and skips the failing scenario.
+
+Risky-first order (PIP / wildcard / heavy-summary first) so cumulative-state
+saturation (if it reproduces) hits the diagnostic cases first, and the clean
+OLS / RLS-condition families are promoted last — least likely to be tainted.
+
+See also:
+  - docs/handovers/20260519-svt-pip-family-regression-task.md
+  - tests/svt/scripts/per-scenario-decision-time (the orchestrator this wraps)
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime
+import os
+import re
+import subprocess
+import sys
+
+# ── paths ──────────────────────────────────────────────────────────────────
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+REPORTS_DIR = os.path.join(REPO_ROOT, "docs", "reports")
+ARTIFACTS_ROOT = os.path.join(
+    REPO_ROOT, "tests", "svt", "load-tests", "per-scenario", "artifacts")
+ORCHESTRATOR = os.path.join(HERE, "per-scenario-decision-time")
+
+CANONICAL_MD_FOR_MODE = {
+    "canonical": os.path.join(
+        REPORTS_DIR, "per-scenario-decision-time-canonical-latest.md"),
+    "legacy": os.path.join(
+        REPORTS_DIR, "per-scenario-decision-time-legacy-latest.md"),
+}
+CANONICAL_XLSX = os.path.join(REPORTS_DIR, "per-scenario-decision-time.xlsx")
+
+# ── scenario order ─────────────────────────────────────────────────────────
+
+# Risky families first — the 12 scenarios that regressed in the 2026-05-19
+# 16:00 monolithic sweep (canonical-20260519-155138). If JMeter-side
+# saturation reproduces on the per-scenario flow, we see it early and the
+# canonical baseline is not contaminated for the 16 clean scenarios.
+RISKY_FIRST_ORDER: list[str] = [
+    # PIP family (6) — regressed 1500-18000 %.
+    "rls-predicate-pips-1-token-pip",
+    "rls-predicate-pips-2-token-pip",
+    "rls-predicate-pips-3-token-pip",
+    "rls-predicate-pips-1-header-pip",
+    "rls-predicate-pips-2-header-pip",
+    "rls-predicate-pips-3-header-pip",
+    # Wildcard (2) — regressed.
+    "wildcard-all-single",
+    "wildcard-mixed-bulk",
+    # Heavy RLS-predicate-summary (4) — regressed on 4+ predicates.
+    "rls-predicate-summary-4-predicates",
+    "rls-predicate-summary-5-predicates",
+    "rls-predicate-summary-10-predicates",
+    "rls-predicate-summary-10-predicates-3-token-pip",
+    # Light RLS-predicate-summary (2) — improved.
+    "rls-predicate-summary-3-predicates",
+    "rls-predicate-summary-2-predicates",
+    # RLS-predicate (1) — improved.
+    "rls-predicate",
+    # RLS-condition (4) — improved.
+    "rls-condition-5-expression",
+    "rls-condition-3-expression",
+    "rls-condition-2-expression",
+    "rls-condition-1-expression",
+    # OLS single + roles (6) — improved (heaviest first).
+    "ols-single-100roles",
+    "ols-single-50roles",
+    "ols-single-30roles",
+    "ols-single-20roles",
+    "ols-single-10roles",
+    "ols-single",
+    # OLS bulk (3) — improved (heaviest first).
+    "ols-bulk-1000",
+    "ols-bulk-100",
+    "ols-bulk-50",
+]
+
+DEFAULT_RPS = "100,200,300,400,500,1000"
+PROMOTE_TOLERANCE = 0.05  # ±5 % per-cell, matches orchestrator's gate.
+
+# ── logging ────────────────────────────────────────────────────────────────
+
+
+def log(msg: str) -> None:
+    now = datetime.datetime.now().strftime("%H:%M:%S")
+    print(f"[{now}] {msg}", flush=True)
+
+
+# ── markdown parsing & merge ───────────────────────────────────────────────
+
+H3_RE = re.compile(r"^### `(?P<scenario>[^`]+)`\s*$", re.MULTILINE)
+H2_OR_H3_RE = re.compile(r"^(### `|## )", re.MULTILINE)
+RPS_ROW_RE = re.compile(r"^\|\s*(?P<rps>\d+)\s*\|")
+
+
+def find_scenario_block(text: str, scenario: str) -> tuple[int, int] | None:
+    """Return (start, end) char offsets of the `### `scenario`` block in
+    `text`. The block ends at the next `### ` / `## ` header or EOF."""
+    pattern = re.compile(
+        rf"^### `{re.escape(scenario)}`\s*$", re.MULTILINE)
+    m = pattern.search(text)
+    if not m:
+        return None
+    start = m.start()
+    rest = text[m.end():]
+    nxt = H2_OR_H3_RE.search(rest)
+    end = m.end() + nxt.start() if nxt else len(text)
+    return (start, end)
+
+
+def extract_scenario_block(text: str, scenario: str) -> str | None:
+    """Return the full text of one `### `scenario`` block (incl. trailing
+    blank line, if any), or None if not present."""
+    span = find_scenario_block(text, scenario)
+    if span is None:
+        return None
+    return text[span[0]:span[1]]
+
+
+def parse_p95_for_scenario(block_text: str) -> dict[int, float]:
+    """Parse RPS → p95 from one scenario block's RPS table.
+    p95 is the third-from-last cell (rt p95)."""
+    out: dict[int, float] = {}
+    for line in block_text.splitlines():
+        if not line.startswith("|"):
+            continue
+        m = RPS_ROW_RE.match(line)
+        if not m:
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        try:
+            rps = int(cells[0])
+            p95 = float(cells[-2])
+        except ValueError:
+            continue
+        out[rps] = p95
+    return out
+
+
+def check_gate(scenario: str,
+               old_p95: dict[int, float],
+               new_p95: dict[int, float]
+               ) -> tuple[bool, list[tuple[int, float, float]]]:
+    """Return (pass, regressions). A regression is a per-RPS cell where
+    new > old * (1 + tolerance)."""
+    regressions: list[tuple[int, float, float]] = []
+    for rps, new_val in new_p95.items():
+        old_val = old_p95.get(rps)
+        if old_val is None or old_val == 0:
+            continue
+        if new_val > old_val * (1 + PROMOTE_TOLERANCE):
+            regressions.append((rps, old_val, new_val))
+    return (not regressions, regressions)
+
+
+def replace_scenario_block(canonical_text: str,
+                           scenario: str,
+                           new_block: str) -> str:
+    """Splice `new_block` in place of the existing `### `scenario`` block.
+    Preserves the rest of the canonical document. The new block is expected
+    to end with a single blank line — we normalise to keep the document tidy."""
+    span = find_scenario_block(canonical_text, scenario)
+    if span is None:
+        # Not present yet (e.g. first time a scenario is added). Insert at
+        # the end of the Results section, just before `## Notes`.
+        notes_m = re.search(r"^## Notes\b", canonical_text, re.MULTILINE)
+        if notes_m is None:
+            return canonical_text + "\n" + new_block
+        insert_at = notes_m.start()
+        # Make sure new_block ends with a blank line.
+        if not new_block.endswith("\n\n"):
+            new_block = new_block.rstrip("\n") + "\n\n"
+        return (canonical_text[:insert_at]
+                + new_block
+                + canonical_text[insert_at:])
+    # Normalise new_block to end with exactly one trailing blank line.
+    normalised = new_block.rstrip("\n") + "\n\n"
+    return canonical_text[:span[0]] + normalised + canonical_text[span[1]:]
+
+
+# ── Notes section merge ───────────────────────────────────────────────────
+
+NOTES_HEADER_RE = re.compile(r"^## Notes\s*$", re.MULTILINE)
+FLAGGED_BULLET_RE = re.compile(
+    r"^  - `(?P<scenario>[^`]+)` at (?P<rps>\d+) RPS — achieved [\d.]+/s\s*$",
+    re.MULTILINE)
+
+
+def merge_notes_for_scenario(canonical_text: str,
+                             new_report_text: str,
+                             scenario: str) -> str:
+    """Replace the canonical's flagged-RPS bullets for `scenario` with the
+    new report's bullets for the same scenario.
+
+    The canonical's Notes section has a header bullet ('- The following ...')
+    followed by sub-bullets of the form
+        `  - `<scenario>` at <rps> RPS — achieved X/s`
+    We surgically remove all sub-bullets for `scenario` and insert the new
+    report's sub-bullets for the same scenario at the same point (sorted by
+    RPS, deduped against the rest of the canonical)."""
+    notes_m = NOTES_HEADER_RE.search(canonical_text)
+    if notes_m is None:
+        # Canonical has no Notes section — nothing to merge. The orchestrator
+        # always emits one, but be defensive.
+        return canonical_text
+
+    # 1. Collect all flagged bullets from canonical Notes, keyed by scenario.
+    canonical_notes_section = canonical_text[notes_m.start():]
+    canonical_bullets: list[tuple[str, int, str]] = []  # (scenario, rps, line)
+    for m in FLAGGED_BULLET_RE.finditer(canonical_notes_section):
+        canonical_bullets.append((m.group("scenario"), int(m.group("rps")), m.group(0)))
+
+    # 2. Collect flagged bullets from the new report (single-scenario sweep,
+    # but be defensive and filter by scenario).
+    new_bullets: list[tuple[int, str]] = []
+    for m in FLAGGED_BULLET_RE.finditer(new_report_text):
+        if m.group("scenario") == scenario:
+            new_bullets.append((int(m.group("rps")), m.group(0)))
+
+    # 3. Rebuild canonical's flagged bullets:
+    #    - drop all old ones for the target scenario,
+    #    - keep the rest in original order,
+    #    - splice in the new ones where the first old one for this scenario
+    #      was (or after the last bullet for the previous scenario in
+    #      RISKY_FIRST_ORDER — but simpler: insert at the end of the bullets
+    #      block, the orchestrator's renderer doesn't depend on order).
+    kept = [(s, r, ln) for (s, r, ln) in canonical_bullets if s != scenario]
+    merged_lines = [ln for (_, _, ln) in kept] + [
+        ln for (_, ln) in sorted(new_bullets, key=lambda t: t[0])]
+
+    # 4. Rewrite the Notes section in place. Strategy: find the contiguous
+    # run of `  - <scenario> at RPS RPS ...` lines after the header bullet,
+    # replace that whole block with `merged_lines`. Be conservative — the
+    # Notes section may have free-form trailing notes after the bullets,
+    # which we must preserve.
+    bullet_block_re = re.compile(
+        r"(?:^  - `[^`]+` at \d+ RPS — achieved [\d.]+/s\s*\n)+",
+        re.MULTILINE)
+    notes_text = canonical_notes_section
+
+    # Find the first occurrence of the bullet block (there should be only one).
+    bbm = bullet_block_re.search(notes_text)
+    if bbm is None:
+        # No flagged bullets in canonical. If we have new ones, splice them
+        # right after the intro bullet header.
+        if not new_bullets:
+            return canonical_text
+        # Find the intro header line, splice after it.
+        intro_re = re.compile(
+            r"^- The following \(scenario, RPS\) rows under-delivered.*?:\s*\n",
+            re.MULTILINE)
+        im = intro_re.search(notes_text)
+        if im is None:
+            return canonical_text  # bail; canonical structure unexpected
+        insert_at_local = im.end()
+        new_block_text = "".join(ln + "\n" for ln in merged_lines)
+        new_notes = (notes_text[:insert_at_local]
+                     + new_block_text
+                     + notes_text[insert_at_local:])
+        return canonical_text[:notes_m.start()] + new_notes
+
+    new_block_text = "".join(ln + "\n" for ln in merged_lines)
+    new_notes = (notes_text[:bbm.start()]
+                 + new_block_text
+                 + notes_text[bbm.end():])
+    return canonical_text[:notes_m.start()] + new_notes
+
+
+# ── header timestamp update ────────────────────────────────────────────────
+
+def update_canonical_header(canonical_text: str,
+                            sweep_id: str,
+                            scenario: str) -> str:
+    """Bump the `Generated:` line to now and append the sweep_id + scenario
+    to a `Sweep timestamp:` history list.
+
+    Format: `Sweep timestamp: <id> (<scenario>)` is overwritten with the
+    most recent merge. We keep the line single — the artifact directory is
+    the durable record of merges (one per artifact)."""
+    now = datetime.datetime.now(datetime.timezone.utc).strftime(
+        "%Y-%m-%d %H:%M:%S UTC")
+    text = re.sub(
+        r"^Generated: .*$",
+        f"Generated: {now}",
+        canonical_text, count=1, flags=re.MULTILINE)
+    text = re.sub(
+        r"^Sweep timestamp: .*$",
+        f"Sweep timestamp: {sweep_id} (last merged: `{scenario}`)",
+        text, count=1, flags=re.MULTILINE)
+    return text
+
+
+# ── xlsx merge ─────────────────────────────────────────────────────────────
+
+def merge_xlsx_scenario(canonical_xlsx: str,
+                        new_xlsx: str,
+                        mode: str,
+                        scenario: str) -> None:
+    """In-place: delete rows in `canonical_xlsx[mode]` where col-0 == scenario,
+    then append rows from `new_xlsx[mode]` where col-0 == scenario.
+
+    Header row (row 1) is preserved. If `canonical_xlsx` has no `mode` sheet
+    yet, it's created with the header from `new_xlsx`. If `canonical_xlsx`
+    itself doesn't exist, it's created."""
+    try:
+        from openpyxl import Workbook, load_workbook
+    except ImportError:
+        log("openpyxl missing — skipping xlsx merge")
+        return
+
+    if os.path.isfile(canonical_xlsx):
+        wb = load_workbook(canonical_xlsx)
+    else:
+        wb = Workbook()
+        default = wb.active
+        if default is not None and default.title in ("Sheet", "default"):
+            wb.remove(default)
+
+    for sheet_name in ("canonical", "legacy"):
+        if sheet_name not in wb.sheetnames:
+            wb.create_sheet(title=sheet_name)
+
+    src_wb = load_workbook(new_xlsx)
+    src_ws = src_wb[mode]
+    dst_ws = wb[mode]
+
+    # If dst is empty, copy the header from src and proceed (only the rows
+    # for this scenario will be appended below).
+    if dst_ws.max_row == 1 and dst_ws.cell(row=1, column=1).value is None:
+        for col_idx, cell in enumerate(src_ws[1], start=1):
+            dst_ws.cell(row=1, column=col_idx, value=cell.value)
+
+    # Find and delete existing rows for this scenario (top-down delete is
+    # awkward in openpyxl; collect indices then delete in reverse).
+    to_delete: list[int] = []
+    for r in range(2, dst_ws.max_row + 1):
+        if dst_ws.cell(row=r, column=1).value == scenario:
+            to_delete.append(r)
+    for r in reversed(to_delete):
+        dst_ws.delete_rows(r, 1)
+
+    # Append rows for this scenario from src.
+    for row in src_ws.iter_rows(min_row=2, values_only=True):
+        if row and row[0] == scenario:
+            dst_ws.append(list(row))
+
+    wb.save(canonical_xlsx)
+
+
+# ── orchestrator invocation ────────────────────────────────────────────────
+
+def find_latest_sweep_dir(mode: str, since_ts: str) -> str | None:
+    """Return the most recent `<ARTIFACTS_ROOT>/<mode>-<YYYYMMDD-HHMMSS>/`
+    directory whose timestamp is >= since_ts."""
+    if not os.path.isdir(ARTIFACTS_ROOT):
+        return None
+    candidates: list[tuple[str, str]] = []
+    prefix = f"{mode}-"
+    for name in os.listdir(ARTIFACTS_ROOT):
+        if not name.startswith(prefix):
+            continue
+        ts = name[len(prefix):]
+        if ts >= since_ts:
+            candidates.append((ts, name))
+    if not candidates:
+        return None
+    candidates.sort()
+    return os.path.join(ARTIFACTS_ROOT, candidates[-1][1])
+
+
+def run_orchestrator(scenario: str, mode: str, rps: str) -> str | None:
+    """Invoke the orchestrator for one scenario. Returns the sweep_dir path
+    on success, None on failure."""
+    before = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    cmd = [
+        sys.executable, ORCHESTRATOR,
+        "--mode", mode,
+        "--scenarios", scenario,
+        "--rps", rps,
+        "--skip-promote",
+    ]
+    log(f"  → invoking: {' '.join(cmd[1:])}")
+    try:
+        subprocess.run(cmd, check=True, cwd=REPO_ROOT)
+    except subprocess.CalledProcessError as e:
+        log(f"  ✗ orchestrator failed (exit {e.returncode})")
+        return None
+    sweep_dir = find_latest_sweep_dir(mode, before)
+    if sweep_dir is None:
+        log(f"  ✗ could not locate sweep dir produced after {before}")
+        return None
+    log(f"  ✓ sweep dir: {os.path.relpath(sweep_dir, REPO_ROOT)}")
+    return sweep_dir
+
+
+# ── per-scenario decide & merge ───────────────────────────────────────────
+
+def decide_and_merge_scenario(scenario: str,
+                              mode: str,
+                              sweep_dir: str,
+                              dry_run: bool) -> tuple[str, str]:
+    """Return (decision, detail). decision ∈ {'PROMOTED', 'HELD', 'BOOTSTRAP'}."""
+    canonical_md = CANONICAL_MD_FOR_MODE[mode]
+    sweep_id = os.path.basename(sweep_dir)
+    new_md = os.path.join(
+        sweep_dir, f"per-scenario-decision-time-{mode}-{sweep_id.split('-', 1)[1]}.md")
+    new_xlsx = os.path.join(
+        sweep_dir, f"per-scenario-decision-time-{mode}-{sweep_id.split('-', 1)[1]}.xlsx")
+
+    if not os.path.isfile(new_md):
+        return ("HELD", f"new sweep markdown not found: {new_md}")
+    with open(new_md, encoding="utf-8") as f:
+        new_text = f.read()
+    new_block = extract_scenario_block(new_text, scenario)
+    if new_block is None:
+        return ("HELD", f"scenario block missing in new sweep markdown")
+
+    new_p95 = parse_p95_for_scenario(new_block)
+    if not new_p95:
+        return ("HELD", "no parsable p95 cells in new sweep")
+
+    bootstrap = not os.path.isfile(canonical_md)
+    if bootstrap:
+        # No canonical yet — write the new sweep wholesale (single-scenario
+        # report). This path is mostly defensive; canonical exists at the
+        # start of the loop.
+        if dry_run:
+            return ("BOOTSTRAP", "would write new sweep as canonical (dry-run)")
+        os.makedirs(os.path.dirname(canonical_md), exist_ok=True)
+        with open(canonical_md, "w", encoding="utf-8") as f:
+            f.write(new_text)
+        if os.path.isfile(new_xlsx):
+            merge_xlsx_scenario(CANONICAL_XLSX, new_xlsx, mode, scenario)
+        return ("BOOTSTRAP", "canonical did not exist; wrote new sweep")
+
+    with open(canonical_md, encoding="utf-8") as f:
+        canonical_text = f.read()
+    old_block = extract_scenario_block(canonical_text, scenario)
+    old_p95: dict[int, float] = {}
+    if old_block is not None:
+        old_p95 = parse_p95_for_scenario(old_block)
+
+    ok, regressions = check_gate(scenario, old_p95, new_p95)
+    if not ok:
+        regs = ", ".join(
+            f"@{rps}: {ov:.1f}→{nv:.1f}ms (+{(nv-ov)/ov*100:.1f}%)"
+            for rps, ov, nv in regressions)
+        return ("HELD", f"p95 regression(s): {regs}")
+
+    if dry_run:
+        deltas = ", ".join(
+            f"@{rps}: {old_p95.get(rps, 0):.1f}→{new_p95[rps]:.1f}ms"
+            for rps in sorted(new_p95))
+        return ("PROMOTED", f"(dry-run) would promote — deltas: {deltas}")
+
+    # Splice the markdown block.
+    merged = replace_scenario_block(canonical_text, scenario, new_block)
+    merged = merge_notes_for_scenario(merged, new_text, scenario)
+    merged = update_canonical_header(merged, sweep_id, scenario)
+    with open(canonical_md, "w", encoding="utf-8") as f:
+        f.write(merged)
+
+    # Splice the xlsx rows.
+    if os.path.isfile(new_xlsx):
+        merge_xlsx_scenario(CANONICAL_XLSX, new_xlsx, mode, scenario)
+    else:
+        log(f"  ⚠ new xlsx not found at {new_xlsx} — md merged, xlsx skipped")
+
+    deltas = ", ".join(
+        f"@{rps}: {old_p95.get(rps, 0):.1f}→{new_p95[rps]:.1f}ms"
+        for rps in sorted(new_p95))
+    return ("PROMOTED", f"deltas: {deltas}")
+
+
+# ── main ───────────────────────────────────────────────────────────────────
+
+
+def parse_scenarios_arg(value: str) -> list[str]:
+    if value == "risky":
+        return RISKY_FIRST_ORDER[:12]
+    if value == "clean":
+        return RISKY_FIRST_ORDER[12:]
+    if value == "all":
+        return list(RISKY_FIRST_ORDER)
+    out = [s.strip() for s in value.split(",") if s.strip()]
+    for s in out:
+        if s not in RISKY_FIRST_ORDER:
+            raise SystemExit(f"unknown scenario: {s}")
+    return out
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--mode", choices=["canonical", "legacy"], default="canonical")
+    parser.add_argument(
+        "--rps", default=DEFAULT_RPS,
+        help=f"comma-separated RPS levels (default: {DEFAULT_RPS})")
+    parser.add_argument(
+        "--scenarios", default="all",
+        help="'risky' (first 12), 'clean' (last 16), 'all' (default), or "
+             "explicit comma-separated list (any subset of risky-first order)")
+    parser.add_argument(
+        "--start-at", default=None,
+        help="resume from this scenario (skip everything before it in the "
+             "selected list). Useful after an interrupted loop.")
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="do not invoke orchestrator and do not write canonical; print "
+             "the planned scenario order and exit.")
+    parser.add_argument(
+        "--skip-orchestrator", action="store_true",
+        help="do not invoke the orchestrator; just re-decide merges against "
+             "the most recent sweep already present in artifacts. For "
+             "developing the merge logic against existing artifacts.")
+    args = parser.parse_args(argv)
+
+    scenarios = parse_scenarios_arg(args.scenarios)
+    if args.start_at is not None:
+        if args.start_at not in scenarios:
+            raise SystemExit(
+                f"--start-at {args.start_at!r} not in selected scenarios")
+        idx = scenarios.index(args.start_at)
+        scenarios = scenarios[idx:]
+
+    log(f"mode={args.mode} rps={args.rps} scenarios={len(scenarios)} "
+        f"dry_run={args.dry_run} skip_orchestrator={args.skip_orchestrator}")
+    log("order:")
+    for i, s in enumerate(scenarios, start=1):
+        log(f"  {i:2d}. {s}")
+
+    if args.dry_run and not args.skip_orchestrator:
+        log("dry-run + invoke-orchestrator: not running anything. "
+            "Use --skip-orchestrator to dry-run merge against existing sweeps.")
+        return 0
+
+    promoted: list[str] = []
+    held: list[tuple[str, str]] = []
+    for i, scenario in enumerate(scenarios, start=1):
+        log("")
+        log(f"━━━ [{i}/{len(scenarios)}] {scenario} ━━━")
+        if args.skip_orchestrator:
+            sweep_dir = find_latest_sweep_dir(args.mode, "00000000-000000")
+            if sweep_dir is None:
+                log(f"  ✗ no sweep dirs found under {ARTIFACTS_ROOT}")
+                held.append((scenario, "no sweep dir to re-decide against"))
+                continue
+            log(f"  using existing sweep: {os.path.relpath(sweep_dir, REPO_ROOT)}")
+        else:
+            sweep_dir = run_orchestrator(scenario, args.mode, args.rps)
+            if sweep_dir is None:
+                held.append((scenario, "orchestrator failed"))
+                continue
+        decision, detail = decide_and_merge_scenario(
+            scenario, args.mode, sweep_dir, dry_run=args.dry_run)
+        log(f"  → {decision}: {detail}")
+        if decision in ("PROMOTED", "BOOTSTRAP"):
+            promoted.append(scenario)
+        else:
+            held.append((scenario, detail))
+
+    log("")
+    log("━━━ summary ━━━")
+    log(f"PROMOTED ({len(promoted)}/{len(scenarios)}):")
+    for s in promoted:
+        log(f"  ✓ {s}")
+    log(f"HELD ({len(held)}/{len(scenarios)}):")
+    for s, reason in held:
+        log(f"  ✗ {s}: {reason}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
