@@ -98,8 +98,9 @@ def _write_text(path: str, content: str, *, make_executable: bool = False) -> No
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     if make_executable:
-        mode = os.stat(path).st_mode | 0o111
-        os.chmod(path, mode)
+        # Owner only. `0o111` would hand the execute bit to group and world as
+        # well, and nothing but the account that generated the tree runs these.
+        os.chmod(path, os.stat(path).st_mode | 0o100)
 
 
 # ── per-scenario Groovy body builders ─────────────────────────────────────
