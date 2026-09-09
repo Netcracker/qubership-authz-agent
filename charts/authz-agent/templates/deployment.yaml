@@ -37,11 +37,16 @@ spec:
       # the platform provisions the M2M identity that way, is a volume of its
       # own and is unaffected.
       automountServiceAccountToken: false
+      # No runAsUser: on OpenShift the restricted SCC assigns the Pod a uid from
+      # the namespace range and rejects a pinned one; on Kubernetes the
+      # container keeps the uid of its image, 10001. Nothing here depends on
+      # which one it gets. The trusted-provider ConfigMap and every Secret are
+      # mounted world-readable, and an emptyDir is world-writable, so neither
+      # fsGroup nor a per-container runAsGroup is needed: the five-container
+      # Pod set the group only so that OPA could read what pap-client had
+      # written into the volume the two of them shared.
       securityContext:
         runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 10001
       volumes:
         # Mounted as a directory, deliberately not with subPath: the kubelet
         # propagates a ConfigMap edit into a directory mount by swapping the
