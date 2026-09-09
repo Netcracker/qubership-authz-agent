@@ -1,5 +1,8 @@
 # Task: 20260518-mixed-load-report — Mixed-Flow Resource Consumption Report
 
+> The SVT load stand this document describes was removed with the five-container Pod
+> (authz-agent-ADR-0080). The paths below are recorded as they were and no longer resolve.
+
 *Archived internal engineering document, restored for reference. Component names and paths reflect the tree at the time of writing and may differ from the current layout.*
 
 ## Filename
@@ -247,7 +250,7 @@ Before declaring Phase 6 complete:
         is 50 HTTP req/s, each carrying 100 resources internally.
 - [x] Phase 3 — Token bootstrap (new SVT users)
   - [x] Extend
-        [tests/svt/common/compose/keycloak/svt-realm.json](../../../test/svt/common/compose/keycloak/svt-realm.json)
+        `tests/svt/common/compose/keycloak/svt-realm.json`
         with one Keycloak user per profiler claim profile: roles and
         `email` are aligned with the corresponding profiler
         `input-real-token.json`. *Eight users seeded (`svt-mixed-001..008`)
@@ -261,7 +264,7 @@ Before declaring Phase 6 complete:
         re-used in the running stack — tokens always come from Keycloak.
 - [x] Phase 4 — Metric collection harness
   - [x] Add a helper in
-        [tests/svt/common/scripts/lib/svt-lib.sh](../../../test/svt/common/scripts/lib/svt-lib.sh)
+        `tests/svt/common/scripts/lib/svt-lib.sh`
         that owns the per-RPS sequence:
         1. `svt_restart_opa` (existing helper — already re-seeds policies
            + PIPs on the `svt-fixes` branch; now also merges the
@@ -281,7 +284,7 @@ Before declaring Phase 6 complete:
         Report; the first canonical + legacy baselines were captured
         without the gap and need to be re-run when the gap lands.*
   - [x] Reuse the existing PromQL lookups in
-        [tests/svt/common/tools/svt_individual_matrix.py](../../../test/svt/common/tools/svt_individual_matrix.py)
+        `tests/svt/common/tools/svt_individual_matrix.py`
         for CPU and memory; add the IO queries listed below for all three
         services.
 - [x] Phase 5 — Report generator
@@ -298,7 +301,7 @@ Before declaring Phase 6 complete:
 - [x] Phase 6 — First canonical baseline
   - [x] Run the full six-RPS canonical sweep on the host baseline
         documented in
-        [tests/svt/README.md §Host Baseline](../../../test/svt/README.md#host-baseline-first-stage).
+        `tests/svt/README.md §Host Baseline`.
         *Executed on `2026-05-18` (`canonical-20260518-094051`); all six
         RPS levels achieved ~99% target with **0 JMeter errors**.*
   - [x] Commit the first
@@ -320,19 +323,19 @@ the percentages sum to `100 %`.
 
 | Scenario                             | Share | Profiler directory                                                                                                      |
 | ------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------- |
-| `ols-single-10roles`                 | 20%   | [tests/svt/profiler/ols-single-10roles/](../../../test/svt/profiler/ols-single-10roles)                                 |
-| `rls-predicate`                      | 5%    | [tests/svt/profiler/rls-predicate/](../../../test/svt/profiler/rls-predicate)                                           |
-| `rls-condition-1-expression`         | 5%    | [tests/svt/profiler/rls-condition/](../../../test/svt/profiler/rls-condition)                                           |
-| `ols-bulk-100`                       | 5%    | [tests/svt/profiler/ols-bulk-100/](../../../test/svt/profiler/ols-bulk-100)                                             |
-| `rls-condition-2-expression`         | 25%   | [tests/svt/profiler/rls-condition-2-expression/](../../../test/svt/profiler/rls-condition-2-expression)                 |
-| `rls-predicate-summary-2-predicates` | 25%   | [tests/svt/profiler/rls-predicate-summary-2-predicates/](../../../test/svt/profiler/rls-predicate-summary-2-predicates) |
-| `rls-predicate-pips-2-token-pip`     | 10%   | [tests/svt/profiler/rls-predicate-pips-2-token-pip/](../../../test/svt/profiler/rls-predicate-pips-2-token-pip)         |
-| `wildcard-all-single`                | 5%    | [tests/svt/profiler/wildcard-all-single/](../../../test/svt/profiler/wildcard-all-single)                               |
+| `ols-single-10roles`                 | 20%   | `tests/svt/profiler/ols-single-10roles/`                                                                                |
+| `rls-predicate`                      | 5%    | `tests/svt/profiler/rls-predicate/`                                                                                     |
+| `rls-condition-1-expression`         | 5%    | `tests/svt/profiler/rls-condition/`                                                                                     |
+| `ols-bulk-100`                       | 5%    | `tests/svt/profiler/ols-bulk-100/`                                                                                      |
+| `rls-condition-2-expression`         | 25%   | `tests/svt/profiler/rls-condition-2-expression/`                                                                        |
+| `rls-predicate-summary-2-predicates` | 25%   | `tests/svt/profiler/rls-predicate-summary-2-predicates/`                                                                |
+| `rls-predicate-pips-2-token-pip`     | 10%   | `tests/svt/profiler/rls-predicate-pips-2-token-pip/`                                                                    |
+| `wildcard-all-single`                | 5%    | `tests/svt/profiler/wildcard-all-single/`                                                                               |
 
 Per-thread-group target throughput at each RPS level (HTTP requests / s):
 
 | RPS  | ols-single-10roles | rls-predicate | rls-condition-1 | ols-bulk-100 | rls-condition-2 | rls-pred-sum-2 | rls-pip-2-tok | wildcard |
-| ---: | -----------------: | ------------: | --------------: | -----------: | --------------: | -------------: | ------------: | -------: |
+| ---- | ------------------ | ------------- | --------------- | ------------ | --------------- | -------------- | ------------- | -------- |
 | 100  | 20                 | 5             | 5               | 5            | 25              | 25             | 10            | 5        |
 | 200  | 40                 | 10            | 10              | 10           | 50              | 50             | 20            | 10       |
 | 300  | 60                 | 15            | 15              | 15           | 75              | 75             | 30            | 15       |
@@ -449,18 +452,18 @@ deliverables are on disk and pass static gates listed below.
 
 **Modified files:**
 
-- [tests/svt/common/compose/keycloak/svt-realm.json](../../../test/svt/common/compose/keycloak/svt-realm.json)
+- `tests/svt/common/compose/keycloak/svt-realm.json`
   — added `oidc-usermodel-attribute-mapper` for the `department`
   claim on the `authz-agent` client; added 8 users
   `svt-mixed-001..008` with the role + attribute mapping documented
   in RQ-B. Realm now seeds 14 total users.
-- [tests/svt/common/scripts/lib/svt-lib.sh](../../../test/svt/common/scripts/lib/svt-lib.sh)
+- `tests/svt/common/scripts/lib/svt-lib.sh`
   — new helpers `svt_merged_seed_policies`, `svt_merged_seed_pips`,
   `svt_upload_seeds`, `svt_capture_idle_window`,
   `svt_run_jmeter_mixed_flow`. `svt_restart_opa` rewritten to upload
   the merged base + mixed-flow seed. `svt_acquire_all_tokens` and
   `svt_write_tokens_file` extended with the 8 new svt-mixed tokens.
-- [tests/svt/scripts/up](../../../test/svt/scripts/up) — seed upload
+- `tests/svt/scripts/up` — seed upload
   step now merges base + mixed-flow JSON via `jq` before
   `PUT /internal/v1/policies` / `/internal/v1/pips` (same applies
   if the mixed-flow seed file is absent — graceful fallback to
@@ -470,15 +473,15 @@ deliverables are on disk and pass static gates listed below.
 
 **New files:**
 
-- [tests/svt/scripts/build-mixed-flow-seeds.py](../../../test/svt/scripts/build-mixed-flow-seeds.py)
+- `tests/svt/scripts/build-mixed-flow-seeds.py`
   — deterministic generator that emits the additive simplified-policy
   and PIP files from the eight profiler scenarios. Re-running yields
   byte-for-byte identical output.
-- [tests/svt/common/compose/seed/svt-mixed-flow-policies.json](../../../test/svt/common/compose/seed/svt-mixed-flow-policies.json)
+- `tests/svt/common/compose/seed/svt-mixed-flow-policies.json`
   — 970 simplified-policy entries (`component=SVT_MIXED_FLOW`,
   resource types `SVT_RT_01..10` and `SVT_BULK_RT_01..04`; no
   overlap with the base `SVT` component).
-- [tests/svt/common/compose/seed/svt-mixed-flow-pips.json](../../../test/svt/common/compose/seed/svt-mixed-flow-pips.json)
+- `tests/svt/common/compose/seed/svt-mixed-flow-pips.json`
   — 2 PIPs (`subject.emailFromToken`, `subject.departmentFromToken`).
   Merged with the base PIP file, the runtime sees 2 unique PIPs
   (deduplicated by `name`).
@@ -492,7 +495,7 @@ deliverables are on disk and pass static gates listed below.
   `1000rps`), each with `config.env` (pins TARGET_RPS + per-TG
   THREADS), `scenario.md`, `run` (standalone wrapper that sources
   `svt-lib.sh`, restarts OPA, runs the JMX), and `artifacts/.gitkeep`.
-- [tests/svt/scripts/mixed-load-report](../../../test/svt/scripts/mixed-load-report)
+- `tests/svt/scripts/mixed-load-report`
   — Python 3 stdlib-only orchestrator (`--mode canonical|legacy`,
   `--skip-promote`). Captures the per-sweep idle-before / idle-after
   baselines, drives the six per-RPS `run` scripts in ascending order
@@ -503,7 +506,7 @@ deliverables are on disk and pass static gates listed below.
   `docs/reports/mixed-load-report-<mode>-latest.md` when every peak
   CPU and peak memory cell stays within `±5%` of the existing
   baseline (IO rendered but not gated, per D-6).
-- [tests/svt/README.md](../../../test/svt/README.md) — new "Mixed-flow
+- `tests/svt/README.md` — new "Mixed-flow
   reports" subsection pointing at the two canonical files, the
   runner, the layout, and the seed/realm extension story.
 - [docs/plans/20260330-load-testing-preparation-plan.md](../../plans/20260330-load-testing-preparation-plan.md)
@@ -578,7 +581,7 @@ All run on the host that owns the working tree, no docker stack needed.
 #### Canonical vs legacy cost delta (1000 RPS peaks)
 
 | metric                           | canonical | legacy | delta |
-| -------------------------------- | --------: | -----: | ----: |
+| -------------------------------- | --------- | ------ | ----- |
 | envoy CPU (cores)                | 0.573     | 0.820  | +43%  |
 | envoy mem (MiB)                  | 66.1      | 113.9  | +72%  |
 | opa CPU (cores)                  | 4.072     | 6.917  | +70%  |

@@ -20,6 +20,9 @@ AUTHZ_AGENT_CPU_REQUEST: 7500m
 AUTHZ_AGENT_CPU_LIMIT: "15"
 AUTHZ_AGENT_MEM_REQUEST: 3584Mi
 AUTHZ_AGENT_MEM_LIMIT: 13Gi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
+AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
 
 # authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
 # stub replaces access-control and its control surface is unauthenticated by

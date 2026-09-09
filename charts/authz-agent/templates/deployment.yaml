@@ -51,8 +51,13 @@ spec:
         - name: trusted-providers
           configMap:
             name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+        # sizeLimit, so a log nothing rotates cannot fill the node's disk: the
+        # kubelet evicts this Pod instead. The agent's store reports how many
+        # events it wrote when a write fails, so the decisions already on disk
+        # are not recorded a second time by the retry.
         - name: decision-logs
-          emptyDir: {}
+          emptyDir:
+            sizeLimit: '{{ .Values.AUTHZ_DECISION_LOG_SIZE_LIMIT }}'
         - name: opa-auth-token
           secret:
             secretName: '{{ include "authz-agent.serviceName" . }}-opa-auth'
@@ -194,9 +199,11 @@ spec:
             requests:
               cpu: '{{ .Values.AUTHZ_AGENT_CPU_REQUEST }}'
               memory: '{{ .Values.AUTHZ_AGENT_MEM_REQUEST }}'
+              ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST }}'
             limits:
               cpu: '{{ .Values.AUTHZ_AGENT_CPU_LIMIT }}'
               memory: '{{ .Values.AUTHZ_AGENT_MEM_LIMIT }}'
+              ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}

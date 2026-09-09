@@ -1,5 +1,8 @@
 # Task: 20260518-per-scenario-decision-time — Per-Scenario E2E Decision-Time Report
 
+> The SVT load stand this document describes was removed with the five-container Pod
+> (authz-agent-ADR-0080). The paths below are recorded as they were and no longer resolve.
+
 *Archived internal engineering document, restored for reference. Component names and paths reflect the tree at the time of writing and may differ from the current layout.*
 
 ## Filename
@@ -288,7 +291,7 @@ Before declaring Phase 6 complete:
         the canonical bench-report between draft and execution is allowed
         — re-derive at execution time.
   - [ ] Extend
-        [tests/svt/scripts/build-mixed-flow-seeds.py](../../../test/svt/scripts/build-mixed-flow-seeds.py)
+        `tests/svt/scripts/build-mixed-flow-seeds.py`
         (or fork it as `build-per-scenario-seeds.py` if scope makes
         reuse messy) so it emits policies + PIPs for every scenario in
         the inventory. Output files:
@@ -300,7 +303,7 @@ Before declaring Phase 6 complete:
         existing merge-via-`jq` block; no logic rewrite).
 - [ ] Phase 2 — Keycloak users (one per scenario, 28 new)
   - [ ] Extend
-        [tests/svt/common/compose/keycloak/svt-realm.json](../../../test/svt/common/compose/keycloak/svt-realm.json)
+        `tests/svt/common/compose/keycloak/svt-realm.json`
         with **one distinct user per scenario** in the inventory (28
         new users beyond the 8 `svt-mixed-NNN` added by the
         mixed-flow handover). Per OQ-5 resolution, identical claim
@@ -375,7 +378,7 @@ Before declaring Phase 6 complete:
 - [ ] Phase 6 — First canonical baseline sweep
   - [ ] Run `tests/svt/scripts/per-scenario-decision-time --mode canonical`
         on the host baseline (see
-        [tests/svt/README.md §Host Baseline](../../../test/svt/README.md#host-baseline-first-stage)).
+        `tests/svt/README.md §Host Baseline`).
   - [ ] Commit the first
         `docs/reports/per-scenario-decision-time-canonical-latest.md`
         and the xlsx canonical sheet.
@@ -551,7 +554,7 @@ deliverables are on disk and pass static gates listed below.
 
 **Modified files:**
 
-- [tests/svt/common/scripts/lib/svt-lib.sh](../../../test/svt/common/scripts/lib/svt-lib.sh)
+- `tests/svt/common/scripts/lib/svt-lib.sh`
   — `svt_merged_seed_policies` and `svt_merged_seed_pips` extended to
   merge a third optional source
   (`svt-per-scenario-{policies,pips}.json`) alongside base +
@@ -560,7 +563,7 @@ deliverables are on disk and pass static gates listed below.
   `svt_acquire_all_tokens` / `svt_write_tokens_file` that iterate the
   array to acquire and emit the 28 `token_svt_bench_<scenario>` JMeter
   properties without enumerating each scenario by hand.
-- [tests/svt/scripts/up](../../../test/svt/scripts/up) — seed-upload
+- `tests/svt/scripts/up` — seed-upload
   step now merges base + mixed-flow + per-scenario JSON via `jq`
   before the `PUT /internal/v1/policies` / `/internal/v1/pips` calls.
   Same three-tier merge added for the PIP upload. New Admin-API
@@ -569,7 +572,7 @@ deliverables are on disk and pass static gates listed below.
   protocol mappers, and user definitions directly from
   `svt-realm.json` (so the fallback never drifts from the realm
   import).
-- [tests/svt/common/compose/keycloak/svt-realm.json](../../../test/svt/common/compose/keycloak/svt-realm.json)
+- `tests/svt/common/compose/keycloak/svt-realm.json`
   — extended idempotently by the new
   `tests/svt/scripts/build-per-scenario-realm.py` patcher: 233 new
   `PS_<scenario>_ROLE_NN` realm roles, 8 new
@@ -583,7 +586,7 @@ deliverables are on disk and pass static gates listed below.
 
 **New files:**
 
-- [tests/svt/scripts/build-per-scenario-seeds.py](../../../test/svt/scripts/build-per-scenario-seeds.py)
+- `tests/svt/scripts/build-per-scenario-seeds.py`
   — deterministic generator that emits the additive simplified-policy
   and PIP files from the 28-scenario inventory. Re-running yields
   byte-for-byte identical output. The inventory is the single source
@@ -592,9 +595,9 @@ deliverables are on disk and pass static gates listed below.
   `importlib.machinery.SourceFileLoader` so the seed namespace
   (`PS_<scenario>_RT/OP/ROLE_NN`) stays in sync with the realm users
   and the JMX request bodies.
-- [tests/svt/scripts/build-per-scenario-realm.py](../../../test/svt/scripts/build-per-scenario-realm.py)
+- `tests/svt/scripts/build-per-scenario-realm.py`
   — idempotent realm.json patcher.
-- [tests/svt/scripts/build-per-scenario-jmx.py](../../../test/svt/scripts/build-per-scenario-jmx.py)
+- `tests/svt/scripts/build-per-scenario-jmx.py`
   — generator for the 28 JMX plans + 168 per-RPS directories
   (`config.env` / `run` / `scenario.md` / `artifacts/.gitkeep`).
   Single-thread-group plans with the `${MODE}` switch wired into a
@@ -604,11 +607,11 @@ deliverables are on disk and pass static gates listed below.
   add `x-svt-region` / `x-svt-country` / `x-svt-division` headers.
   Thread count scales as `RPS / 10` (10/20/30/40/50/100) so the plan
   has enough parallelism for high-latency bulk scenarios.
-- [tests/svt/common/compose/seed/svt-per-scenario-policies.json](../../../test/svt/common/compose/seed/svt-per-scenario-policies.json)
+- `tests/svt/common/compose/seed/svt-per-scenario-policies.json`
   — 1309 simplified-policy entries spanning 28 components
   (`PS_<scenario>` namespace). No overlap with the base `SVT`
   component or the mixed-flow `SVT_MIXED_FLOW` component.
-- [tests/svt/common/compose/seed/svt-per-scenario-pips.json](../../../test/svt/common/compose/seed/svt-per-scenario-pips.json)
+- `tests/svt/common/compose/seed/svt-per-scenario-pips.json`
   — 13 PIP entries (10 TOKEN PIPs + 3 HEADER PIPs). Merged with the
   base + mixed-flow PIPs the runtime sees 13 unique entries
   (deduplicated by `name`).
@@ -619,7 +622,7 @@ deliverables are on disk and pass static gates listed below.
   — 168 directories (28 × 6 RPS), each with `config.env`,
   `scenario.md`, `run` (standalone wrapper that sources `svt-lib.sh`,
   restarts OPA, runs the per-scenario JMX), and `artifacts/.gitkeep`.
-- [tests/svt/scripts/per-scenario-decision-time](../../../test/svt/scripts/per-scenario-decision-time)
+- `tests/svt/scripts/per-scenario-decision-time`
   — Python 3 stdlib + openpyxl orchestrator. CLI flags: `--mode
   canonical|legacy`, `--scenarios <comma>` (defaults to live
   bench-report order), `--rps <comma>` (defaults to
@@ -636,7 +639,7 @@ deliverables are on disk and pass static gates listed below.
   mega-sheet — current run overwrites only its own sheet; the other
   is preserved. Promote-gate is `±5%` on response-time p95 per
   `(scenario, RPS)` cell (D-12).
-- [tests/svt/README.md](../../../test/svt/README.md) — new
+- `tests/svt/README.md` — new
   "Per-scenario decision-time reports" subsection pointing at the
   two canonical files, the workbook, the runner, the layout, and the
   Keycloak / seed / PIP extension story.
@@ -919,7 +922,7 @@ promote-gate.
   baseline) on the same stack; do **not** tear down between modes
   (the realm is warm, Keycloak admin-API provisioning happens once).
 - After both baselines and the xlsx ship, link them from
-  [tests/svt/README.md](../../../test/svt/README.md) under the existing
+  `tests/svt/README.md` under the existing
   "Mixed-flow reports" subsection (the per-scenario report sits
   alongside, not nested).
 - Consider a follow-up task to surface the `bench-report` vs

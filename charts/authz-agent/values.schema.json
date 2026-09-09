@@ -725,6 +725,42 @@
       ],
       "internal": true,
       "envSpecific": true
+    },
+    "AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST": {
+      "$id": "#/properties/AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST schema",
+      "description": "Defines minimum amount of ephemeral storage the agent container will use to start",
+      "examples": [
+        "64Mi",
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT": {
+      "$id": "#/properties/AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT schema",
+      "description": "Defines maximum amount of ephemeral storage the agent container is allowed to use",
+      "examples": [
+        "512Mi",
+        "4Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_DECISION_LOG_SIZE_LIMIT": {
+      "$id": "#/properties/AUTHZ_DECISION_LOG_SIZE_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_DECISION_LOG_SIZE_LIMIT schema",
+      "description": "Defines maximum size of the emptyDir volume the decision log is written to",
+      "examples": [
+        "256Mi",
+        "2Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
     }
   },
   "additionalProperties": true

@@ -1,5 +1,8 @@
 # Mixed-Flow Load-Test Report — canonical
 
+> The SVT load stand this document describes was removed with the five-container Pod
+> (authz-agent-ADR-0080). The paths below are recorded as they were and no longer resolve.
+
 Generated: 2026-05-18 06:48:42 UTC
 Sweep timestamp: 20260518-094051
 
@@ -17,7 +20,7 @@ Sweep timestamp: 20260518-094051
 - **Bulk slot accounting**: 1 HTTP request = 1 RPS. At 1000 RPS the `ols-bulk-100` thread group fires 50 req/s, each carrying 100 resources internally.
 - **PromQL** — CPU: `sum(rate(container_cpu_usage_seconds_total{name=~".*<svc>.*"}[30s]))`; Memory: `sum(container_memory_working_set_bytes{name=~".*<svc>.*"})`; IO net: receive + transmit `bytes_total` rate; IO fs: reads + writes `bytes_total` rate.
 - **Auto-promote gate**: any peak CPU or peak memory cell exceeding the baseline by more than 5% blocks the canonical file update. IO columns are rendered for visibility but **not** gated (cAdvisor fs sampling is noisy on cgroup v2 — see Notes).
-- **Host baseline**: Ubuntu 24.04.4 LTS, AMD Ryzen 9 8945HS (16 logical / 8 physical), 92 GiB RAM, Docker 29.3.1, Compose v5.1.1, OPA limits 8 CPU / 8G RAM (see [tests/svt/README.md §Host Baseline](../../test/svt/README.md#host-baseline-first-stage)).
+- **Host baseline**: Ubuntu 24.04.4 LTS, AMD Ryzen 9 8945HS (16 logical / 8 physical), 92 GiB RAM, Docker 29.3.1, Compose v5.1.1, OPA limits 8 CPU / 8G RAM (see `tests/svt/README.md §Host Baseline`).
 - **Other-mode report**: see [mixed-load-report-legacy-latest.md](mixed-load-report-legacy-latest.md) (independent baseline, no cross-mode gating per D-1).
 
 ## Idle baselines

@@ -316,6 +316,15 @@ else
   fail "the agent Pod leaves the grace period at the default"
 fi
 
+# The decision log is the only thing the container writes, and nothing rotates
+# it, so the storage limit and the volume's own cap are what stand between a
+# long-running Pod and a full node.
+if [[ "${all_manifests}" == *"ephemeral-storage:"* && "${all_manifests}" == *"sizeLimit:"* ]]; then
+  pass "the agent Pod declares its ephemeral storage and caps the decision-log volume"
+else
+  fail "the agent Pod leaves its ephemeral storage or the decision-log volume uncapped"
+fi
+
 # subPath breaks ConfigMap and Secret propagation: the kubelet swaps the
 # `..data` symlink of a directory mount and never rewrites a subPath'd file,
 # so a reload-without-restart stops working the moment one appears.

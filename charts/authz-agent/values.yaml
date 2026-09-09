@@ -371,6 +371,15 @@ AUTHZ_AGENT_CPU_LIMIT: 400m
 AUTHZ_AGENT_MEM_REQUEST: 364Mi
 AUTHZ_AGENT_MEM_LIMIT: 700Mi
 
+# The decision log is the only thing the container writes, to an emptyDir that
+# nothing rotates, so the storage limit and the volume's own sizeLimit are what
+# keep a long-running Pod from filling the node's disk. The volume is capped
+# below the container's limit, so the kubelet evicts on the volume rather than
+# on the sum of the writable layers.
+AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 64Mi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 512Mi
+AUTHZ_DECISION_LOG_SIZE_LIMIT: 256Mi
+
 # Only used when AUTHZ_POLICY_ADMIN_ENABLED is true. The stub serves a few megabytes of
 # JSON from memory; it does not need the backend's sizing.
 AUTHZ_POLICY_ADMIN_CPU_REQUEST: 50m
