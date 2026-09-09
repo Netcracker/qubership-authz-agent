@@ -320,12 +320,30 @@ def build_ols_bulk_requests(scenario_name, request_class):
     return rows
 
 
+# tools/ -> common/ -> svt/: everything this tool writes belongs under the
+# stand's own directory.
+SVT_DIR = Path(__file__).resolve().parents[2]
+
+
+def under_svt(path: Path) -> Path:
+    """Resolve path and refuse one that leaves the SVT directory.
+
+    Every destination comes from a `--output-dir` or `--output-file` on the
+    command line, so a typo or a pasted absolute path would write wherever it
+    said. Resolving first also collapses any `..` the argument carried.
+    """
+    resolved = path.expanduser().resolve()
+    if not resolved.is_relative_to(SVT_DIR):
+        raise SystemExit(f"refusing to write outside {SVT_DIR}: {resolved}")
+    return resolved
+
+
 def write_json(path: Path, payload):
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
+    under_svt(path).write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
 
 
 def write_requests(path: Path, rows):
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    with under_svt(path).open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
             fieldnames=["username", "scenarioLabel", "requestClass", "expectedDecision", "requestBodyTemplate"],

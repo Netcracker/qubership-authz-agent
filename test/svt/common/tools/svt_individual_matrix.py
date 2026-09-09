@@ -244,14 +244,34 @@ def json_deepcopy(payload: Any) -> Any:
     return json.loads(json.dumps(payload))
 
 
+# tools/ -> common/ -> svt/: everything this tool writes belongs under the
+# stand's own directory.
+SVT_DIR = Path(__file__).resolve().parents[2]
+
+
+def under_svt(path: Path) -> Path:
+    """Resolve path and refuse one that leaves the SVT directory.
+
+    Destinations come from the command line, so a typo or a pasted absolute
+    path would write wherever it said. Resolving first also collapses any `..`
+    the argument carried.
+    """
+    resolved = path.expanduser().resolve()
+    if not resolved.is_relative_to(SVT_DIR):
+        raise SystemExit(f"refusing to write outside {SVT_DIR}: {resolved}")
+    return resolved
+
+
 def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
+    target = under_svt(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
 
 
 def write_requests(path: Path, rows: list[dict[str, str]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    target = under_svt(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=REQUEST_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
@@ -263,7 +283,7 @@ def property_key(username: str) -> str:
 
 def write_tokens_properties(path: Path, tokens: dict[str, str]) -> None:
     lines = [f"{property_key(username)}={token}" for username, token in sorted(tokens.items())]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    under_svt(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def canonical_body(resources: list[dict[str, Any]], ignore_rls: bool) -> dict[str, Any]:
