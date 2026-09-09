@@ -25,7 +25,7 @@ RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
 
 # The platform base image: CA bundle, entrypoint that loads extra
 # certificates, uid 10001 in the root group.
-FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
+FROM ghcr.io/netcracker/qubership-core-base:2.4.3@sha256:346237ade5d4a91a2ba3099aa9377e744b40241b105bc580fb48ad81f56137a1
 
 # Root-owned and read-only for everyone else: the runtime uid can execute the
 # binary but not modify it.
