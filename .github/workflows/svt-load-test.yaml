@@ -1,0 +1,133 @@
+---
+# One load cell of the SVT stand, on demand.
+#
+# The stand is a Compose stack — Keycloak, the policy stub, and the agent —
+# driven by JMeter (test/svt/README.md). This workflow boots it, runs one
+# scenario at one RPS, and uploads what the run produced. It is dispatched by
+# hand: nothing here gates a pull request.
+#
+# What the numbers are worth. A hosted runner is four shared cores against the
+# sixteen-thread reference host the committed baselines were measured on, and
+# it is noisy. Treat a run here as an answer to "does the stand still work and
+# does the agent still serve this scenario without errors", never as a
+# measurement to compare with docs/reports/ or to promote into a baseline.
+#
+# The metrics trio (cAdvisor, Prometheus, Grafana) is left out:
+# cAdvisor wants a privileged container and /dev/kmsg, and a single cell needs
+# none of it — the response times come from JMeter, and only the report
+# generators read Prometheus.
+
+name: SVT load test
+
+run-name: "SVT: ${{ inputs.scenario }} at ${{ inputs.rps }} RPS (${{ inputs.mode }})"
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Scenario directory under test/svt/load-tests/per-scenario (see test/svt/README.md)"
+        type: string
+        default: ols-single-10roles
+      rps:
+        description: "Target requests per second"
+        type: choice
+        default: "100"
+        options: ["100", "200", "300", "400", "500", "1000"]
+      mode:
+        description: "canonical and legacy reach the public surface; opa-direct reaches the data API"
+        type: choice
+        default: canonical
+        options: [canonical, legacy, opa-direct]
+      duration-seconds:
+        description: "Length of the measured window"
+        type: string
+        default: "60"
+      threads:
+        description: "JMeter threads"
+        type: string
+        default: "10"
+
+permissions: {}
+
+concurrency:
+  group: svt-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  load:
+    name: One load cell
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Generate the per-scenario harness
+        run: python3 test/svt/scripts/build-per-scenario-jmx.py
+
+      - name: Resolve the cell
+        id: cell
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+          RPS: ${{ inputs.rps }}
+        run: |
+          set -euo pipefail
+          case "${SCENARIO}" in
+            */*|.*|"") echo "::error::scenario must be a directory name, got '${SCENARIO}'"; exit 1 ;;
+          esac
+          dir="test/svt/load-tests/per-scenario/${SCENARIO}/${RPS}rps"
+          if [[ ! -x "${dir}/run" ]]; then
+            echo "::error::no cell at ${dir}; the scenarios the generator produced are:"
+            find test/svt/load-tests/per-scenario -mindepth 1 -maxdepth 1 -type d -printf '  %f\n' | sort
+            exit 1
+          fi
+          echo "dir=${dir}" >> "${GITHUB_OUTPUT}"
+
+      - name: Bring the stand up
+        env:
+          SVT_METRICS_ENABLED: "false"
+        run: bash test/svt/scripts/up
+
+      - name: Run the cell
+        env:
+          CELL_DIR: ${{ steps.cell.outputs.dir }}
+          MODE: ${{ inputs.mode }}
+          DURATION_SECONDS: ${{ inputs.duration-seconds }}
+          THREADS: ${{ inputs.threads }}
+        run: bash "${CELL_DIR}/run"
+
+      - name: Summarise the run
+        if: always()
+        env:
+          CELL_DIR: ${{ steps.cell.outputs.dir }}
+          SCENARIO: ${{ inputs.scenario }}
+          RPS: ${{ inputs.rps }}
+          MODE: ${{ inputs.mode }}
+        run: python3 test/svt/scripts/summarise-run >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Collect the container logs
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p test/svt/artifacts/ci
+          docker compose -p authz-svt -f test/svt/common/compose/docker-compose.yml \
+            logs --no-color > test/svt/artifacts/ci/compose.log 2>&1 || true
+
+      - name: Upload the run
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: svt-${{ inputs.scenario }}-${{ inputs.rps }}rps-${{ inputs.mode }}
+          path: |
+            test/svt/load-tests/per-scenario/${{ inputs.scenario }}/${{ inputs.rps }}rps/artifacts/
+            test/svt/artifacts/ci/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Tear the stand down
+        if: always()
+        run: REMOVE_VOLUMES=1 bash test/svt/scripts/down

@@ -456,6 +456,23 @@ that under-deliver (`achieved_rps < 0.9 × target_rps`) are flagged with
 a `*` suffix on the `achieved_rps` cell in both markdown and xlsx and
 listed in the Notes section (D-18).
 
+## Running one cell from GitHub
+
+`.github/workflows/svt-load-test.yaml` boots the stand and runs one scenario at
+one RPS, dispatched by hand from the Actions tab. It picks a cell out of
+`load-tests/per-scenario/`, uploads the run's artifacts and the container logs,
+and writes a table of samples, errors and response times into the job summary.
+
+It leaves the metrics trio out (`SVT_METRICS_ENABLED=false`): cAdvisor wants a
+privileged container and `/dev/kmsg`, and one cell needs none of it, since the
+response times come from JMeter and only the report generators read Prometheus.
+
+What a run there is worth: a hosted runner is four shared cores against the
+sixteen-thread host the baselines were measured on, and it is shared and noisy.
+It answers whether the stand still works and whether the scenario still serves
+without errors. It is not a measurement to compare with `docs/reports/`, and
+nothing from it may be promoted into a baseline.
+
 ## Environment Services
 
 | Service                  | Internal Port | Default Host Port | Purpose                                                                                                                        |

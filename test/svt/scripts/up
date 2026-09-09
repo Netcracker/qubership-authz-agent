@@ -46,17 +46,33 @@ require_cmd curl
 require_cmd jq
 
 # ── bring up the stack ───────────────────────────────────────────────────────
+# The metrics trio is optional. cAdvisor needs a privileged container and
+# /dev/kmsg, which a hosted CI runner may not give it, and a single load cell
+# needs none of it: the response times come from JMeter and only the report
+# generators read Prometheus. SVT_METRICS_ENABLED=false leaves the three out.
+SVT_METRICS_ENABLED="${SVT_METRICS_ENABLED:-true}"
+
+SERVICES=(keycloak authz-policy-admin authz-agent)
+if [ "${SVT_METRICS_ENABLED}" = "true" ]; then
+  SERVICES+=(cadvisor prometheus grafana)
+fi
+
 log "starting SVT environment (project=${PROJECT_NAME})"
 log "  authz-agent : http://localhost:${SVT_AUTHZ_PORT}"
 log "  keycloak    : http://localhost:${SVT_KC_PORT}"
-log "  cadvisor    : http://localhost:${SVT_CADVISOR_PORT}"
-log "  prometheus  : http://localhost:${SVT_PROMETHEUS_PORT}"
-log "  grafana     : http://localhost:${SVT_GRAFANA_PORT}"
+if [ "${SVT_METRICS_ENABLED}" = "true" ]; then
+  log "  cadvisor    : http://localhost:${SVT_CADVISOR_PORT}"
+  log "  prometheus  : http://localhost:${SVT_PROMETHEUS_PORT}"
+  log "  grafana     : http://localhost:${SVT_GRAFANA_PORT}"
+else
+  log "  metrics     : disabled (SVT_METRICS_ENABLED=false); the report"
+  log "                generators have no Prometheus to read"
+fi
 
 # Start keycloak and the policy stub, then the agent (which depends on both),
-# then the rest of the stack. cadvisor, prometheus, and grafana have no
+# then whatever else is selected. cadvisor, prometheus, and grafana have no
 # depends_on so they come up in parallel.
-"${COMPOSE_CMD[@]}" up -d --build keycloak authz-policy-admin authz-agent cadvisor prometheus grafana
+"${COMPOSE_CMD[@]}" up -d --build "${SERVICES[@]}"
 
 # ── wait for Keycloak ────────────────────────────────────────────────────────
 log "waiting for Keycloak to become ready..."
