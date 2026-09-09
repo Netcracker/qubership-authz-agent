@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+#
+# Copyright 2024-2026 Netcracker Technology Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Markdown summary of the newest JMeter run under a cell directory.
+
+Reads `results.jtl` — the per-sample CSV JMeter writes — from the most
+recent artifacts directory of CELL_DIR and prints one table. Written for
+the GitHub step summary of .github/workflows/svt-load-test.yaml, which
+runs it with `if: always()`, so a run that never produced a JTL says so
+rather than failing.
+
+Environment: CELL_DIR (required), SCENARIO, RPS, MODE (labels only).
+"""
+
+import csv
+import os
+import statistics
+import sys
+from pathlib import Path
+
+
+def percentile(values: list[int], p: float) -> float:
+    """The p-th percentile by nearest rank, which is what JMeter reports."""
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    rank = max(1, min(len(ordered), round(p / 100 * len(ordered))))
+    return float(ordered[rank - 1])
+
+
+def newest_jtl(cell_dir: Path) -> Path | None:
+    candidates = sorted(cell_dir.glob("artifacts/*/results.jtl"))
+    return candidates[-1] if candidates else None
+
+
+def main() -> int:
+    cell_dir = os.environ.get("CELL_DIR", "")
+    if not cell_dir:
+        print("CELL_DIR is not set", file=sys.stderr)
+        return 1
+    label = "`{}` at {} RPS, `{}`".format(
+        os.environ.get("SCENARIO", "?"),
+        os.environ.get("RPS", "?"),
+        os.environ.get("MODE", "?"),
+    )
+
+    jtl = newest_jtl(Path(cell_dir))
+    if jtl is None:
+        print(f"## SVT load cell — {label}\n")
+        print("No `results.jtl` under the cell's artifacts: the run did not reach JMeter.")
+        return 0
+
+    with jtl.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows:
+        print(f"## SVT load cell — {label}\n")
+        print(f"`{jtl}` is empty.")
+        return 0
+
+    elapsed = [int(r["elapsed"]) for r in rows]
+    failures = [r for r in rows if r.get("success") != "true"]
+    codes = sorted({r.get("responseCode", "") for r in rows})
+    # JMeter stamps each sample with the epoch millisecond it started, so the
+    # achieved rate is the sample count over the span the samples cover.
+    starts = [int(r["timeStamp"]) for r in rows]
+    span_s = (max(starts) - min(starts)) / 1000 or 1.0
+
+    print(f"## SVT load cell — {label}\n")
+    print("| Measure | Value |")
+    print("| --- | --- |")
+    print(f"| Samples | {len(rows)} |")
+    print(f"| Failed | {len(failures)} |")
+    print(f"| Response codes | {', '.join(codes)} |")
+    print(f"| Achieved | {len(rows) / span_s:.1f} req/s over {span_s:.0f}s |")
+    print(f"| Response time avg | {statistics.mean(elapsed):.1f} ms |")
+    print(f"| Response time median | {statistics.median(elapsed):.1f} ms |")
+    print(f"| Response time p95 | {percentile(elapsed, 95):.1f} ms |")
+    print(f"| Response time p99 | {percentile(elapsed, 99):.1f} ms |")
+    print()
+    print("A hosted runner is four shared cores against the sixteen-thread host the")
+    print("baselines under `docs/reports/` were measured on. These times say whether the")
+    print("scenario still serves without errors; they are not comparable with a baseline")
+    print("and must not be promoted into one.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

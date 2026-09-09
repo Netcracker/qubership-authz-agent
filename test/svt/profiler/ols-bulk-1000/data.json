@@ -1,0 +1,3105 @@
+{
+  "authn": {
+    "verifiedTokens": {
+      "svt-profiler-token": {
+        "subject": {
+          "id": "svt-profiler-user",
+          "name": "svt-profiler-user",
+          "type": "USER",
+          "roles": [
+            "ROLE_SVT_ADMIN"
+          ],
+          "scopes": [
+            "email",
+            "openid",
+            "profile"
+          ]
+        }
+      }
+    }
+  },
+  "policies": {
+    "ols": {
+      "SVT_BULK_RT_01": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_02": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_03": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_04": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_05": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_06": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_07": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_08": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_09": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_10": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_11": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_12": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_13": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_14": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_15": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_16": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_17": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_18": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_19": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_20": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_21": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_22": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_23": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_24": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_25": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_26": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_27": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_28": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_29": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_30": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_31": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_32": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_33": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_34": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_35": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_36": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_37": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_38": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_39": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      },
+      "SVT_BULK_RT_40": {
+        "BULK_OP_01": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_02": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_03": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_04": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_05": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_06": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_07": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_08": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_09": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_10": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_11": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_12": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_13": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_14": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_15": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_16": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_17": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_18": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_19": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_20": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_21": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_22": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_23": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_24": [
+          "ROLE_SVT_ADMIN"
+        ],
+        "BULK_OP_25": [
+          "ROLE_SVT_ADMIN"
+        ]
+      }
+    }
+  }
+}

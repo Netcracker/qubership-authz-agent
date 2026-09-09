@@ -1,0 +1,67 @@
+[
+  {
+    "name": "subject.emailFromToken",
+    "pipType": "TOKEN",
+    "claim": "email"
+  },
+  {
+    "name": "subject.departmentFromToken",
+    "pipType": "TOKEN",
+    "claim": "department"
+  },
+  {
+    "name": "subject.regionFromToken",
+    "pipType": "TOKEN",
+    "claim": "region"
+  },
+  {
+    "name": "subject.countryFromToken",
+    "pipType": "TOKEN",
+    "claim": "country"
+  },
+  {
+    "name": "subject.divisionFromToken",
+    "pipType": "TOKEN",
+    "claim": "division"
+  },
+  {
+    "name": "subject.field06FromToken",
+    "pipType": "TOKEN",
+    "claim": "field06"
+  },
+  {
+    "name": "subject.field07FromToken",
+    "pipType": "TOKEN",
+    "claim": "field07"
+  },
+  {
+    "name": "subject.field08FromToken",
+    "pipType": "TOKEN",
+    "claim": "field08"
+  },
+  {
+    "name": "subject.field09FromToken",
+    "pipType": "TOKEN",
+    "claim": "field09"
+  },
+  {
+    "name": "subject.field10FromToken",
+    "pipType": "TOKEN",
+    "claim": "field10"
+  },
+  {
+    "name": "subject.regionFromHeader",
+    "pipType": "HEADER",
+    "header": "x-svt-region"
+  },
+  {
+    "name": "subject.countryFromHeader",
+    "pipType": "HEADER",
+    "header": "x-svt-country"
+  },
+  {
+    "name": "subject.divisionFromHeader",
+    "pipType": "HEADER",
+    "header": "x-svt-division"
+  }
+]

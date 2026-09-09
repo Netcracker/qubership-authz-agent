@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# Legacy compatibility wrapper — delegates to the new per-test runner at
+# tests/svt/load-tests/opa-direct/mixed/<rps>rps/run.
+#
+# All tunables (THREADS, DURATION_SECONDS, TARGET_RPS, etc.) are forwarded
+# as environment variables; the per-test config.env provides defaults that
+# the env vars override.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Default profile: opa-direct mixed 500 RPS (the original baseline)
+TARGET_RPS="${TARGET_RPS:-500}"
+export TARGET_RPS
+
+# Map to the per-test runner when an exact profile exists
+TEST_DIR="${SVT_DIR}/load-tests/opa-direct/mixed/${TARGET_RPS}rps"
+if [[ -x "${TEST_DIR}/run" ]]; then
+  exec "${TEST_DIR}/run"
+fi
+
+echo "[svt-run-opa-direct] ERROR: no per-test runner found for TARGET_RPS=${TARGET_RPS}" >&2
+echo "[svt-run-opa-direct] Available profiles: 100, 200, 300, 400, 500, 1000" >&2
+exit 1

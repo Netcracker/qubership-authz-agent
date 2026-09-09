@@ -1,0 +1,27 @@
+{
+  "authn": {
+    "trustedProviders": {
+      "byId": {
+        "svt-profiler-idp": {
+          "id": "svt-profiler-idp",
+          "audiences": [
+            "authz-agent"
+          ],
+          "required": true
+        }
+      }
+    },
+    "jwksByKid": {
+      "svt-profiler-idp-k1": [
+        {
+          "providerId": "svt-profiler-idp",
+          "kty": "RSA",
+          "jwksJson": "{\"keys\":[{\"alg\":\"RS256\",\"e\":\"AQAB\",\"kid\":\"svt-profiler-idp-k1\",\"kty\":\"RSA\",\"n\":\"xEnceq1UabYv1f8dPiI_qPhiqGgM3qW3INnDqRSGmZK7JOVhsjDIgJaqJchhiSt9uWFbDH-uyXEbEo0fLF2RQg5No75nm3vSGVoFWONI_GT0ai6mrUT5w0s-ycGwWIJmVgonDuLcsG6ndxnehaX5uj734b9w8Gl3rj5UrSLef9EpyUdlvNCIjV92R13w0WsPLTFtsJfX8NurlOy_aCrQaHJneN_jNv8T_8R8YiZ6d1WtbRRIA7A7gmEuPd4p35VLanEHirf0o0Ntd36H7ZP5E1Zbj5SaGTkRmuu5GYtpHICKPncDSO8nn3XNeWp1_7htCs8vZA7Xnc3fHmoGMQkYMw\",\"use\":\"sig\"}]}",
+          "alg": "RS256"
+        }
+      ]
+    }
+  },
+  "policies": {},
+  "pips": {}
+}

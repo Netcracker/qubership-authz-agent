@@ -1,0 +1,160 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    command: ["start-dev", "--import-realm", "--health-enabled=true"]
+    ports:
+      - "${SVT_KC_PORT:-25556}:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: kcadmin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: kcadmin
+      KC_HOSTNAME: http://keycloak:8080
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+      start_period: 15s
+    volumes:
+      - ./keycloak/svt-realm.json:/opt/keycloak/data/import/svt-realm.json:ro
+
+  authz-policy-admin:
+    build:
+      context: ../../../..
+      dockerfile: build/authz-policy-admin/Dockerfile
+    pull_policy: build
+    image: authz-policy-admin:local
+    ports:
+      - "${SVT_AUTHZ_POLICY_ADMIN_PORT:-28093}:18090"
+    environment:
+      AUTHZ_POLICY_ADMIN_PORT: "18090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:18090/authz-policy-admin/hash || exit 1"]
+      interval: 2s
+      timeout: 2s
+      retries: 10
+      start_period: 3s
+
+  # The agent under test: one container carrying the policy engine, the check
+  # API, and the loops that feed it (authz-agent-ADR-0080). It replaced the
+  # envoy, opa-bootstrap, opa, pap-client, and decision-log-collector services
+  # this stack used to run, and with them the shared data volume: the documents
+  # live in the process and are rebuilt at every start.
+  #
+  # No healthcheck: the platform base image carries no shell utility to probe
+  # with, so `scripts/up` waits on /health from the host, where 8080 is
+  # published. Nothing below depends on a health condition of this service.
+  authz-agent:
+    build:
+      context: ../../../..
+      dockerfile: build/authz-agent/Dockerfile
+    pull_policy: build
+    image: authz-agent:local
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      authz-policy-admin:
+        condition: service_healthy
+    ports:
+      - "${SVT_AUTHZ_PORT:-28080}:8080"
+    # cpus: 8
+    # mem_limit: 8g
+    environment:
+      AUTHZ_PUBLIC_ADDR: "0.0.0.0:8080"
+      AUTHZ_HTTP_ADDR: "0.0.0.0:8181"
+      AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
+      AUTHZ_JWKS_HTTP_TIMEOUT: "2"
+      AUTHZ_JWKS_HTTP_RETRIES: "20"
+      # No tenant-manager on the stand; an empty value disables realm
+      # resolution by tenant display name.
+      AUTHZ_TENANT_MANAGER_URL: ""
+      # Pull loop: the cadence comes from SVT_PAP_PULL_INTERVAL so the
+      # host-side wait after a re-seed and the puller's own interval cannot
+      # drift apart. The token file is a static dummy so the stub's
+      # Authorization check passes.
+      AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
+      AUTHZ_PAP_CLIENT_PULL_INTERVAL: "${SVT_PAP_PULL_INTERVAL:-2}"
+      AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
+      # The decisions are stored in the service and served from
+      # /internal/v1/decision-logs, where the collector served them before.
+      AUTHZ_DECISION_LOG_FILE: /var/log/authz-agent/decisions/decision-logs.jsonl
+      AUTHZ_DECISION_LOG_HEADERS: x-request-id,x-authz-original-path
+    volumes:
+      - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
+      - ./keycloak/ac-pull-token:/etc/authz/ac-pull-token:ro
+      - svt-common-decision-logs:/var/log/authz-agent/decisions
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    ports:
+      - "${SVT_CADVISOR_PORT:-28888}:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    ports:
+      - "${SVT_PROMETHEUS_PORT:-29090}:9090"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-admin-api"
+      - "--storage.tsdb.retention.time=7d"
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - svt-prometheus-data:/prometheus
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    ports:
+      - "${SVT_GRAFANA_PORT:-23000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ../grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ../grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ../grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - svt-grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  jmeter:
+    image: justb4/jmeter:5.5
+    profiles: ["run"]
+    volumes:
+      - ../jmeter/data:/data:ro
+    depends_on:
+      - authz-agent
+
+  # Host-networked JMeter for the public-surface tests where one Docker-bridge
+  # hop matters at high RPS. Used by `svt_run_jmeter_mixed_flow` (per-scenario
+  # + mixed-flow harness). The data API tests still use the bridged `jmeter`
+  # service above, because port 8181 is not published to the host. See
+  # authz-agent-ADR-0056.
+  jmeter-host:
+    image: justb4/jmeter:5.5
+    profiles: ["run"]
+    network_mode: host
+    volumes:
+      - ../jmeter/data:/data:ro
+    depends_on:
+      - authz-agent
+
+volumes:
+  # The decision log the agent writes and serves. A named volume rather than
+  # the container's writable layer, so `docker compose down -v` clears a run's
+  # decisions with the rest of the stand's state.
+  svt-common-decision-logs: {}
+  svt-prometheus-data: {}
+  svt-grafana-data: {}

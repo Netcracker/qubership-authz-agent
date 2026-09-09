@@ -1,0 +1,677 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Baseline Authz SVT" enabled="true">
+      <stringProp name="TestPlan.comments">Paired canonical/legacy authorization load test for authz-agent.
+Controlled by properties: mode (canonical|legacy), threads, ramp_seconds, duration_seconds.
+Tokens are passed via properties file: token_svt_admin, token_svt_manager, etc.</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="AUTHZ_HOST" elementType="Argument">
+            <stringProp name="Argument.name">AUTHZ_HOST</stringProp>
+            <stringProp name="Argument.value">${__P(authz_host,authz-agent)}</stringProp>
+          </elementProp>
+          <elementProp name="AUTHZ_PORT" elementType="Argument">
+            <stringProp name="Argument.name">AUTHZ_PORT</stringProp>
+            <stringProp name="Argument.value">${__P(authz_port,8080)}</stringProp>
+          </elementProp>
+          <elementProp name="MODE" elementType="Argument">
+            <stringProp name="Argument.name">MODE</stringProp>
+            <stringProp name="Argument.value">${__P(mode,canonical)}</stringProp>
+          </elementProp>
+          <elementProp name="THREADS" elementType="Argument">
+            <stringProp name="Argument.name">THREADS</stringProp>
+            <stringProp name="Argument.value">${__P(threads,30)}</stringProp>
+          </elementProp>
+          <elementProp name="RAMP_SECONDS" elementType="Argument">
+            <stringProp name="Argument.name">RAMP_SECONDS</stringProp>
+            <stringProp name="Argument.value">${__P(ramp_seconds,10)}</stringProp>
+          </elementProp>
+          <elementProp name="DURATION_SECONDS" elementType="Argument">
+            <stringProp name="Argument.name">DURATION_SECONDS</stringProp>
+            <stringProp name="Argument.value">${__P(duration_seconds,60)}</stringProp>
+          </elementProp>
+          <elementProp name="TARGET_RPS" elementType="Argument">
+            <stringProp name="Argument.name">TARGET_RPS</stringProp>
+            <stringProp name="Argument.value">${__P(target_rps,1000)}</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Thread Group: Canonical — Single Resource (/access/v1/authorize)
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Canonical — Single Resource" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__jexl3("${MODE}" == "canonical" ? "${THREADS}" : "0")}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${RAMP_SECONDS}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${DURATION_SECONDS}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="requests.csv" enabled="true">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="filename">/data/requests.csv</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">username,resourceType,operation,resourceJson,requestClass,expectedDecision</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Rate Limiter" enabled="true">
+          <stringProp name="throughput">${__jexl3(${TARGET_RPS} / 3.0 * 60)}</stringProp>
+          <intProp name="calcMode">2</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Resolve Token" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+def username = vars.get("username")
+def tokenKey = "token_" + username.replace("-", "_")
+def token = props.get(tokenKey) ?: ""
+vars.put("auth_token", token)
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${auth_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/authorize" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{"input":{"resources":[{"resourceType":"${resourceType}","operation":"${operation}","resource":${resourceJson}}],"subject":"Bearer ${auth_token}","ignoreRls":false}}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${AUTHZ_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${AUTHZ_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/authorize</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Label + Validate (canonical)" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">
+def rc = vars.get("requestClass") ?: "OLS"
+def ed = vars.get("expectedDecision") ?: "ALLOW"
+prev.setSampleLabel(prev.getSampleLabel() + " [" + rc + "|" + ed + "]")
+if (prev.getResponseCode() == "200") {
+    def body = prev.getResponseDataAsString()
+    def actual = body.contains('"isAllowed":true') ? "ALLOW" : "DENY"
+    if (actual != ed) {
+        prev.setSuccessful(false)
+        prev.setResponseMessage("Expected " + ed + " but got " + actual)
+    }
+}
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Thread Group: Canonical — Filter (/access/v1/authorize for filter)
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Canonical — Filter" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__jexl3("${MODE}" == "canonical" ? "${THREADS}" : "0")}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${RAMP_SECONDS}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${DURATION_SECONDS}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="requests-filter.csv" enabled="true">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="filename">/data/requests-filter.csv</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">username,resourceType,operation,requestClass,expectedCanonicalDecision,expectedFilterResult</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Rate Limiter" enabled="true">
+          <stringProp name="throughput">${__jexl3(${TARGET_RPS} / 3.0 * 60)}</stringProp>
+          <intProp name="calcMode">2</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Resolve Token" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+def username = vars.get("username")
+def tokenKey = "token_" + username.replace("-", "_")
+def token = props.get(tokenKey) ?: ""
+vars.put("auth_token", token)
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${auth_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/authorize (filter)" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{"input":{"resources":[{"resourceType":"${resourceType}","operation":"${operation}","resource":{}}],"subject":"Bearer ${auth_token}","ignoreRls":false}}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${AUTHZ_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${AUTHZ_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/authorize</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Label + Validate (canonical filter)" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">
+def rc = vars.get("requestClass") ?: "OLS"
+def ed = vars.get("expectedCanonicalDecision") ?: "ALLOW"
+prev.setSampleLabel(prev.getSampleLabel() + " [" + rc + "|" + ed + "]")
+if (prev.getResponseCode() == "200") {
+    def body = prev.getResponseDataAsString()
+    def actual = body.contains('"isAllowed":true') ? "ALLOW" : "DENY"
+    if (actual != ed) {
+        prev.setSuccessful(false)
+        prev.setResponseMessage("Expected " + ed + " but got " + actual)
+    }
+}
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Thread Group: Canonical — Bulk (/access/v1/authorize with N resources)
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Canonical — Bulk" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__jexl3("${MODE}" == "canonical" ? "${THREADS}" : "0")}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${RAMP_SECONDS}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${DURATION_SECONDS}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="requests-bulk.csv" enabled="true">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="filename">/data/requests-bulk.csv</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">username,batchId,requestClass,expectedDecision</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Rate Limiter" enabled="true">
+          <stringProp name="throughput">${__jexl3(${TARGET_RPS} / 3.0 * 60)}</stringProp>
+          <intProp name="calcMode">2</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Build Bulk Canonical Body" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+import groovy.json.JsonBuilder
+def username = vars.get("username")
+def tokenKey = "token_" + username.replace("-", "_")
+def token = props.get(tokenKey) ?: ""
+vars.put("auth_token", token)
+def batches = [
+  "A1": [["ORDER","READ"],["CUSTOMER","READ"],["PRODUCT","READ"]],
+  "A2": [["ORDER","CREATE"],["INVOICE","APPROVE"],["DOCUMENT","ARCHIVE"]],
+  "M1": [["ORDER","READ"],["CUSTOMER","UPDATE"],["PRODUCT","IMPORT"]],
+  "M2": [["INVOICE","READ"],["DOCUMENT","READ"],["ORDER","LIST"]],
+  "O1": [["ORDER","READ"],["CUSTOMER","LIST"],["PRODUCT","CREATE"]],
+  "V1": [["ORDER","READ"],["CUSTOMER","READ"],["PRODUCT","READ"],["INVOICE","READ"]],
+  "R1": [["ORDER","LIST"],["CUSTOMER","LIST"]],
+  "R2": [["ORDER","LIST"],["CUSTOMER","LIST"],["ORDER","LIST"]],
+  "VD1": [["ORDER","READ"],["ORDER","CREATE"],["CUSTOMER","READ"]],
+  "OD1": [["ORDER","READ"],["INVOICE","READ"],["DOCUMENT","READ"]]
+]
+def batchId = vars.get("batchId") ?: "A1"
+def items = batches.getOrDefault(batchId, batches["A1"])
+def resources = items.collect { [resourceType: it[0], operation: it[1], resource: [:]] }
+def body = new JsonBuilder([input: [resources: resources, subject: "Bearer " + token, ignoreRls: false]]).toString()
+vars.put("canonical_bulk_body", body)
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${auth_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/authorize (bulk)" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${canonical_bulk_body}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${AUTHZ_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${AUTHZ_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/authorize</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Label + Validate (canonical bulk)" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">
+def rc = vars.get("requestClass") ?: "OLS"
+def ed = vars.get("expectedDecision") ?: "ALLOW"
+prev.setSampleLabel(prev.getSampleLabel() + " [" + rc + "|" + ed + "]")
+if (prev.getResponseCode() == "200") {
+    def body = prev.getResponseDataAsString()
+    def hasDeny = body.contains('"isAllowed":false')
+    def actual = hasDeny ? "DENY" : "ALLOW"
+    if (actual != ed) {
+        prev.setSuccessful(false)
+        prev.setResponseMessage("Expected " + ed + " but got " + actual)
+    }
+}
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Thread Group: Legacy — check/resource
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Legacy — check/resource" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__jexl3("${MODE}" == "legacy" ? "${THREADS}" : "0")}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${RAMP_SECONDS}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${DURATION_SECONDS}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="requests.csv" enabled="true">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="filename">/data/requests.csv</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">username,resourceType,operation,resourceJson,requestClass,expectedDecision</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Rate Limiter" enabled="true">
+          <stringProp name="throughput">${__jexl3(${TARGET_RPS} / 3.0 * 60)}</stringProp>
+          <intProp name="calcMode">2</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Resolve Token" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+def username = vars.get("username")
+def tokenKey = "token_" + username.replace("-", "_")
+def token = props.get(tokenKey) ?: ""
+vars.put("auth_token", token)
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${auth_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/check/resource" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">{"type":"${resourceType}","operation":"${operation}","resource":${resourceJson}}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${AUTHZ_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${AUTHZ_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/check/resource</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Label + Validate (check/resource)" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">
+def rc = vars.get("requestClass") ?: "OLS"
+def ed = vars.get("expectedDecision") ?: "ALLOW"
+prev.setSampleLabel(prev.getSampleLabel() + " [" + rc + "|" + ed + "]")
+if (prev.getResponseCode() == "200") {
+    def body = prev.getResponseDataAsString().trim()
+    def actual = (body == "true") ? "ALLOW" : "DENY"
+    if (actual != ed) {
+        prev.setSuccessful(false)
+        prev.setResponseMessage("Expected " + ed + " but got " + actual)
+    }
+}
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Thread Group: Legacy — check/filter
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Legacy — check/filter" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__jexl3("${MODE}" == "legacy" ? "${THREADS}" : "0")}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${RAMP_SECONDS}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${DURATION_SECONDS}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="requests-filter.csv" enabled="true">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="filename">/data/requests-filter.csv</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">username,resourceType,operation,requestClass,expectedCanonicalDecision,expectedFilterResult</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Rate Limiter" enabled="true">
+          <stringProp name="throughput">${__jexl3(${TARGET_RPS} / 3.0 * 60)}</stringProp>
+          <intProp name="calcMode">2</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Resolve Token" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+def username = vars.get("username")
+def tokenKey = "token_" + username.replace("-", "_")
+def token = props.get(tokenKey) ?: ""
+vars.put("auth_token", token)
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${auth_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/check/filter" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${AUTHZ_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${AUTHZ_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/check/filter?resourceType=${resourceType}&amp;operation=${operation}</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Label + Validate (check/filter)" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">
+def rc = vars.get("requestClass") ?: "OLS"
+def ed = vars.get("expectedFilterResult") ?: "DENY"
+def actual = "DENY"
+if (prev.getResponseCode() == "200") {
+    def body = prev.getResponseDataAsString()
+    if (body.contains('"calculationResult":"ALLOW"') || body.contains('"calculationResult":"USE_FILTER_CONDITION"')) {
+        actual = "ALLOW"
+    }
+}
+prev.setSampleLabel(prev.getSampleLabel() + " [" + rc + "|" + actual + "]")
+if (actual != ed) {
+    prev.setSuccessful(false)
+    prev.setResponseMessage("Expected filter " + ed + " but got " + actual)
+}
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Thread Group: Legacy — check/resource/bulk
+           ════════════════════════════════════════════════════════════════════ -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Legacy — check/resource/bulk" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <intProp name="LoopController.loops">-1</intProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">${__jexl3("${MODE}" == "legacy" ? "${THREADS}" : "0")}</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">${RAMP_SECONDS}</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">${DURATION_SECONDS}</stringProp>
+        <stringProp name="ThreadGroup.delay">0</stringProp>
+      </ThreadGroup>
+      <hashTree>
+        <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="requests-bulk.csv" enabled="true">
+          <stringProp name="delimiter">,</stringProp>
+          <stringProp name="fileEncoding">UTF-8</stringProp>
+          <stringProp name="filename">/data/requests-bulk.csv</stringProp>
+          <boolProp name="ignoreFirstLine">true</boolProp>
+          <boolProp name="quotedData">true</boolProp>
+          <boolProp name="recycle">true</boolProp>
+          <stringProp name="shareMode">shareMode.thread</stringProp>
+          <boolProp name="stopThread">false</boolProp>
+          <stringProp name="variableNames">username,batchId,requestClass,expectedDecision</stringProp>
+        </CSVDataSet>
+        <hashTree/>
+        <ConstantThroughputTimer guiclass="TestBeanGUI" testclass="ConstantThroughputTimer" testname="Rate Limiter" enabled="true">
+          <stringProp name="throughput">${__jexl3(${TARGET_RPS} / 3.0 * 60)}</stringProp>
+          <intProp name="calcMode">2</intProp>
+        </ConstantThroughputTimer>
+        <hashTree/>
+        <JSR223PreProcessor guiclass="TestBeanGUI" testclass="JSR223PreProcessor" testname="Build Bulk Legacy Body" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="script">
+import groovy.json.JsonBuilder
+def username = vars.get("username")
+def tokenKey = "token_" + username.replace("-", "_")
+def token = props.get(tokenKey) ?: ""
+vars.put("auth_token", token)
+def batches = [
+  "A1": [["ORDER","READ"],["CUSTOMER","READ"],["PRODUCT","READ"]],
+  "A2": [["ORDER","CREATE"],["INVOICE","APPROVE"],["DOCUMENT","ARCHIVE"]],
+  "M1": [["ORDER","READ"],["CUSTOMER","UPDATE"],["PRODUCT","IMPORT"]],
+  "M2": [["INVOICE","READ"],["DOCUMENT","READ"],["ORDER","LIST"]],
+  "O1": [["ORDER","READ"],["CUSTOMER","LIST"],["PRODUCT","CREATE"]],
+  "V1": [["ORDER","READ"],["CUSTOMER","READ"],["PRODUCT","READ"],["INVOICE","READ"]],
+  "R1": [["ORDER","LIST"],["CUSTOMER","LIST"]],
+  "R2": [["ORDER","LIST"],["CUSTOMER","LIST"],["ORDER","LIST"]],
+  "VD1": [["ORDER","READ"],["ORDER","CREATE"],["CUSTOMER","READ"]],
+  "OD1": [["ORDER","READ"],["INVOICE","READ"],["DOCUMENT","READ"]]
+]
+def batchId = vars.get("batchId") ?: "A1"
+def items = batches.getOrDefault(batchId, batches["A1"])
+def idx = 0
+def legacyItems = items.collect { idx++; [type: it[0], operation: it[1], resource: [:], id: "b-" + idx] }
+vars.put("legacy_bulk_body", new JsonBuilder(legacyItems).toString())
+          </stringProp>
+        </JSR223PreProcessor>
+        <hashTree/>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Headers" enabled="true">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${auth_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/check/resource/bulk" enabled="true">
+          <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${legacy_bulk_body}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+          <stringProp name="HTTPSampler.domain">${AUTHZ_HOST}</stringProp>
+          <stringProp name="HTTPSampler.port">${AUTHZ_PORT}</stringProp>
+          <stringProp name="HTTPSampler.protocol">http</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/check/resource/bulk</stringProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+        </HTTPSamplerProxy>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Label + Validate (legacy bulk)" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="script">
+def rc = vars.get("requestClass") ?: "OLS"
+def ed = vars.get("expectedDecision") ?: "ALLOW"
+prev.setSampleLabel(prev.getSampleLabel() + " [" + rc + "|" + ed + "]")
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+      </hashTree>
+
+      <!-- ════════════════════════════════════════════════════════════════════
+           Listeners (shared across all thread groups)
+           ════════════════════════════════════════════════════════════════════ -->
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
