@@ -569,6 +569,71 @@ func TestRun_ShutdownDoesNotRetryPerQueuedDecision(t *testing.T) {
 	}
 }
 
+// TestRun_ShutdownDoesNotUploadPerQueuedDecisionWhenTheCollectorIsHealthy: the
+// other half of the guard. A collector that answers keeps `holding` false, so
+// only `ctx.Err() != nil` stands between the queue and the size trigger once
+// the shutdown has landed, and both cases are ready while the queue is not
+// empty. Without it a slow but healthy collector took an upload per drawn
+// decision instead of the drain's one. Ten shutdowns, because select draws a
+// coin each pass.
+func TestRun_ShutdownDoesNotUploadPerQueuedDecisionWhenTheCollectorIsHealthy(t *testing.T) {
+	shutdown := func(t *testing.T) int {
+		t.Helper()
+		reached := make(chan struct{})
+		var mu sync.Mutex
+		var uploads int
+		var once sync.Once
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			uploads++
+			mu.Unlock()
+			once.Do(func() { close(reached) })
+			// Slow enough that the shutdown lands while the first upload is
+			// still on the wire, and healthy, so nothing is ever retained.
+			time.Sleep(40 * time.Millisecond)
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer srv.Close()
+
+		// An hour, so no tick can fire and every upload after the first comes
+		// from the queue.
+		logs := New(Config{
+			URL:           srv.URL,
+			MaxBatch:      2,
+			FlushInterval: time.Hour,
+			Timeout:       time.Second,
+		}, nil)
+		ctx, cancel := context.WithCancel(context.Background())
+		go logs.Run(ctx)
+		logs.Log(Event{DecisionID: "d1"})
+		logs.Log(Event{DecisionID: "d2"})
+
+		<-reached
+		for i := range 20 {
+			logs.Log(Event{DecisionID: fmt.Sprintf("q%d", i)})
+		}
+		cancel()
+		done := make(chan struct{})
+		go func() {
+			logs.Wait()
+			close(done)
+		}()
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			t.Fatal("Run has not returned five seconds after the shutdown")
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		return uploads
+	}
+	for i := range 10 {
+		if got := shutdown(t); got != 2 {
+			t.Fatalf("shutdown %d took %d uploads, want the one in flight and the drain's", i+1, got)
+		}
+	}
+}
+
 // TestRun_ShutdownRetriesTheBatchOnceAndReturns: after the shutdown the
 // batch a failed upload retained goes out once more, from the drain, and
 // Run returns. A tick that fell due while the delivery ran used to be ready

@@ -28,10 +28,14 @@ spec:
       serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
       # Long enough for the whole shutdown: the two HTTP surfaces are given
       # five seconds each to finish the requests in their handlers, and the
-      # decision-log loop then has at most two ten-second upload timeouts,
-      # one for an upload in flight when the signal arrived and one for the
-      # drain. Thirty seconds, the default, is exactly that sum, so a
-      # decision made by the last request served could be SIGKILLed away.
+      # decision-log loop then drains what those requests queued. This Pod
+      # always writes the decisions to the volume below, never uploads them,
+      # so what bounds that drain is the writes rather than a timeout; the
+      # default of thirty leaves twenty seconds for a batch that can hold a
+      # thousand decisions, on a volume that may be backed by anything. If
+      # AUTHZ_DECISION_LOG_URL is ever wired into this chart, the bound
+      # becomes two ten-second upload timeouts and this number has to be
+      # read again.
       terminationGracePeriodSeconds: 45
       # The service calls no Kubernetes API. The projected token below, where
       # the platform provisions the M2M identity that way, is a volume of its

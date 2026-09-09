@@ -77,7 +77,33 @@ func (s *Store) Append(events []Event) (int, error) {
 	return len(events), nil
 }
 
-// ReadAll returns the file's content; nil before the first append.
+// Open returns the log file and the number of bytes in it, for a reader that
+// streams rather than holding the whole log in memory. The lock covers the
+// open and the stat and not the transfer: appends only add to the end, so what
+// the caller reads is a prefix, and taking the size while no append can run is
+// what makes that prefix end on a line boundary. The caller closes the file.
+// A log that has not been written yet returns a nil file.
+func (s *Store) Open() (*os.File, int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	f, err := os.Open(s.path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, 0, nil
+	}
+	if err != nil {
+		return nil, 0, err
+	}
+	info, err := f.Stat()
+	if err != nil {
+		_ = f.Close()
+		return nil, 0, err
+	}
+	return f, info.Size(), nil
+}
+
+// ReadAll returns the file's whole content; nil before the first append. It
+// holds the append lock for the length of the read, so nothing drains the
+// decision queue while it runs: use Open for anything a request can reach.
 func (s *Store) ReadAll() ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

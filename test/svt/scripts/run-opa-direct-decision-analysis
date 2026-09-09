@@ -280,7 +280,7 @@ prepare_analysis_bundle() {
 
   mkdir -p "${analysis_dir}"
 
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" materialize-requests \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" materialize-requests \
     --requests-csv "${scenario_dir}/requests.csv" \
     --tokens-file "${TOKENS_FILE}" \
     --output-file "${analysis_dir}/requests.json"
@@ -289,7 +289,7 @@ prepare_analysis_bundle() {
   dump_live_document policies "${analysis_dir}/policies-live.json"
   dump_live_document pips "${analysis_dir}/pips-live.json"
 
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" merge-analysis-data \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" merge-analysis-data \
     --authn-file "${analysis_dir}/authn-live.json" \
     --policies-file "${analysis_dir}/policies-live.json" \
     --pips-file "${analysis_dir}/pips-live.json" \
@@ -308,7 +308,7 @@ run_opa_bench() {
     "opa bench -f json --count ${OPA_BENCH_COUNT} -d /etc/opa/policies -d /tmp/opa-direct-analysis-data.json '${BATCH_QUERY}'" \
     > "${analysis_dir}/bench.json"
 
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" summarize-bench \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" summarize-bench \
     --bench-json "${analysis_dir}/bench.json" \
     --request-count "${request_count}" \
     > "${analysis_dir}/bench-summary.json"
@@ -322,7 +322,7 @@ run_opa_profile() {
     "opa eval --format json --profile --profile-sort total_time_ns --profile-limit ${OPA_PROFILE_LIMIT} -d /etc/opa/policies -d /tmp/opa-direct-analysis-data.json '${BATCH_QUERY}'" \
     > "${analysis_dir}/profile.json"
 
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" summarize-profile \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" summarize-profile \
     --profile-json "${analysis_dir}/profile.json" \
     --request-count "${request_count}" \
     > "${analysis_dir}/profile-summary.json"
@@ -350,12 +350,12 @@ for idx in "${!SCENARIOS[@]}"; do
   analysis_dir="${ARTIFACTS_DIR}/${scenario}/decision"
 
   log "preparing scenario ${scenario}..."
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" generate \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" generate \
     --scenario "${scenario}" \
     --output-dir "${scenario_dir}"
 
   acquire_user_tokens
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" build-authn-cache \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" build-authn-cache \
     --tokens-file "${TOKENS_FILE}" \
     --base-authn "${AUTHN_BASE_FILE}" \
     --output-file "${scenario_dir}/authn.json"

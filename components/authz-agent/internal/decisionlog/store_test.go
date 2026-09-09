@@ -17,6 +17,7 @@ package decisionlog
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -85,6 +86,47 @@ func TestStore_ReadAllBeforeAppend(t *testing.T) {
 	st := NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
 	if data, err := st.ReadAll(); err != nil || data != nil {
 		t.Errorf("ReadAll() = %q, %v; want nil, nil", data, err)
+	}
+}
+
+// TestStore_OpenDoesNotHoldTheAppendLock: a download streams from an open
+// file and the queue keeps draining while it does. Reading the whole log under
+// the lock stalled Append for as long as the read took, and the only reader of
+// the queue is the loop that calls it, so decisions were dropped on a full
+// channel with a warning as the only trace.
+func TestStore_OpenDoesNotHoldTheAppendLock(t *testing.T) {
+	st := NewStore(filepath.Join(t.TempDir(), "decision-logs.jsonl"))
+	if _, err := st.Append([]Event{{DecisionID: "1"}}); err != nil {
+		t.Fatal(err)
+	}
+	f, size, err := st.Open()
+	if err != nil || f == nil {
+		t.Fatalf("Open() = %v, %v", f, err)
+	}
+	defer func() { _ = f.Close() }()
+
+	appended := make(chan error, 1)
+	go func() {
+		_, err := st.Append([]Event{{DecisionID: "2"}})
+		appended <- err
+	}()
+	select {
+	case err := <-appended:
+		if err != nil {
+			t.Fatalf("Append() while a download was open = %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Append blocked while a download was open, so nothing drained the queue")
+	}
+
+	// The size taken at Open is what bounds the response, so the decision
+	// appended behind it is not half-written into someone's download.
+	body, err := io.ReadAll(io.LimitReader(f, size))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(body), `"decision_id":"1"`) || strings.Contains(string(body), `"decision_id":"2"`) {
+		t.Errorf("the stream carries %q, want the decision that was there when it opened and not the one after it", body)
 	}
 }
 

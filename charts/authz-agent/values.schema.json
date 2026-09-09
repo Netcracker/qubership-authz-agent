@@ -255,7 +255,7 @@
       "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_FILE",
       "type": "string",
       "title": "The AUTHZ_TRUSTED_PROVIDERS_FILE schema",
-      "description": "Path where the trusted-providers ConfigMap is mounted; pap-client watches this file",
+      "description": "Path where the trusted-providers ConfigMap is mounted; the agent watches this file",
       "default": "/etc/authz/trusted-providers.json",
       "examples": [
         "/etc/authz/trusted-providers.json"
@@ -451,7 +451,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
-      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true or by the token-fetcher sidecar otherwise",
+      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
       "default": "/etc/authz/ac-token/token",
       "examples": [
         "/etc/authz/ac-token/token"
@@ -671,7 +671,7 @@
       "$id": "#/properties/AUTHZ_AGENT_IMAGE",
       "type": "string",
       "title": "The AUTHZ_AGENT_IMAGE schema",
-      "description": "Overrides the image of the single service. Empty composes it from IMAGE_REPOSITORY and TAG. Only used when AUTHZ_SINGLE_SERVICE_ENABLED is true.",
+      "description": "Overrides the image of the agent. Empty composes it from IMAGE_REPOSITORY and TAG.",
       "examples": [
         "ghcr.io/netcracker/qubership-authz-agent:1.0.0"
       ],

@@ -308,8 +308,9 @@ else
 fi
 
 # The drain has to fit inside the grace period: five seconds for each of the
-# two surfaces, then up to two ten-second upload timeouts for the decision
-# logs. The default of thirty is exactly that sum, so the Pod asks for more.
+# two surfaces, then the decision-log drain, which on the path this chart
+# renders is bounded by the writes to the volume. The template says why the
+# default of thirty is not enough.
 if [[ "${all_manifests}" == *"terminationGracePeriodSeconds: 45"* ]]; then
   pass "the agent Pod keeps a grace period longer than its drain"
 else

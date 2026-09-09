@@ -237,4 +237,27 @@ reused; on a fresh install a new random value is generated.
 {{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED (eq (int .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL) 0) -}}
 {{- fail "AUTHZ_POLICY_ADMIN_ENABLED=true requires AUTHZ_PAP_CLIENT_PULL_INTERVAL > 0: 0 disables the pull loop, so the agent would never fetch from the stub." -}}
 {{- end -}}
+{{/*
+The per-container parameters of the five-container Pod (authz-agent-ADR-0080).
+`additionalProperties` is true, so a values file that still carries them renders
+without a word and the agent silently takes the defaults of this chart: an
+install passing its own copy of the old prod profile would drop from a 8Gi
+memory limit to 700Mi in one upgrade. Name them instead.
+*/}}
+{{- $removed := list
+  "ENVOY_IMAGE" "OPA_IMAGE" "PAP_CLIENT_IMAGE" "COLLECTOR_IMAGE" "TOKEN_FETCHER_IMAGE"
+  "AUTHZ_SINGLE_SERVICE_ENABLED"
+  "ENVOY_CPU_REQUEST" "ENVOY_CPU_LIMIT" "ENVOY_MEM_REQUEST" "ENVOY_MEM_LIMIT"
+  "OPA_CPU_REQUEST" "OPA_CPU_LIMIT" "OPA_MEM_REQUEST" "OPA_MEM_LIMIT"
+  "PAP_CLIENT_CPU_REQUEST" "PAP_CLIENT_CPU_LIMIT" "PAP_CLIENT_MEM_REQUEST" "PAP_CLIENT_MEM_LIMIT"
+  "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT" -}}
+{{- $carried := list -}}
+{{- range $removed -}}
+{{- if hasKey $.Values . -}}
+{{- $carried = append $carried . -}}
+{{- end -}}
+{{- end -}}
+{{- if $carried -}}
+{{- fail (printf "the agent Pod is one container since authz-agent-ADR-0080, and these values no longer reach anything: %s. The sizing moved to AUTHZ_AGENT_CPU_REQUEST, AUTHZ_AGENT_CPU_LIMIT, AUTHZ_AGENT_MEM_REQUEST, AUTHZ_AGENT_MEM_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and the image to AUTHZ_AGENT_IMAGE. Set those and drop these, or the Pod takes this chart's defaults." (join ", " $carried)) -}}
+{{- end -}}
 {{- end -}}

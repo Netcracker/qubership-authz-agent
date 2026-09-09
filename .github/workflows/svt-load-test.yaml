@@ -43,9 +43,13 @@ on:
         type: string
         default: "60"
       threads:
-        description: "JMeter threads"
+        description: >-
+          JMeter threads. Left empty it keeps the per-RPS budget the generator
+          wrote into the cell's config.env, which is what the target rate is
+          divided across: ten threads at 1000 RPS is a 10 ms budget per
+          request, and the cell will not reach its target.
         type: string
-        default: "10"
+        default: ""
 
 permissions: {}
 

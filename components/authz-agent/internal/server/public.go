@@ -97,12 +97,21 @@ func (s *Server) download(c *fiber.Ctx) error {
 	if c.Method() != fiber.MethodGet {
 		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})
 	}
-	data, err := s.logs.Store().ReadAll()
+	// Streamed, not read into memory: the log is capped by the volume's
+	// sizeLimit, 2Gi in the production profile, and a copy of that on the
+	// decision path would take the check API down with it. Streaming also
+	// keeps the append lock off the transfer, so the queue drains while a
+	// download runs.
+	f, size, err := s.logs.Store().Open()
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"message": "failed to read decision logs"})
 	}
 	c.Set(fiber.HeaderContentType, "application/x-ndjson")
-	return c.Send(data)
+	if f == nil {
+		return c.Send(nil)
+	}
+	// fasthttp closes a body stream that is an io.Closer once it is written.
+	return c.SendStream(f, int(size))
 }
 
 // relay forwards the request, path and query included, to the container
