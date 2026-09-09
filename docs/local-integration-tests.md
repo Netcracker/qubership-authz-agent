@@ -34,7 +34,7 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 | **helm** | installs the chart | `helm version` |
 | **Go 1.24+** (the version `test/integration/testify/go.mod` declares) | the structural tests and `go vet`; the suite itself is compiled inside its image | `go version` |
 
-You do **not** need a local OPA binary for the runtime tests (OPA runs in the agent Pod). It is only needed for the
+You do **not** need a local OPA binary for the runtime tests (the agent carries the engine). It is only needed for the
 Rego contract tests (section 7).
 
 `kind`, `kubectl`, and `helm` install from their release pages or a package manager (Homebrew on macOS). On a
@@ -72,7 +72,7 @@ takes minutes on a slow network; later runs reuse them.
 
 | Image | Dockerfile |
 | --- | --- |
-| `local/authz-agent:ci`, `local/authz-agent-pap-client:ci`, `local/authz-agent-collector:ci`, `local/authz-agent-token-fetcher:ci`, `local/authz-agent-envoy:ci`, `local/authz-policy-admin:ci` | `build/*/Dockerfile`, the product images |
+| `local/authz-agent:ci`, `local/authz-policy-admin:ci` | `build/*/Dockerfile`, the product images |
 | `local/pip-stub:ci` | `test/integration/pipstub/Dockerfile` |
 | `local/authz-runtime-suite:ci` | `test/integration/testify/Dockerfile`, the suite compiled with `go test -c -tags integration` |
 | `local/authz-parity-suite:ci` | `test/parity/suite/Dockerfile`, used by `make parity` |
@@ -97,23 +97,11 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
 | `e2e-images` | Builds the images above and loads them into the cluster |
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
-| `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `test/k8s/values.yaml` and `--wait` |
+| `e2e-install` | `helm upgrade --install` with `test/k8s/values.yaml` and `--wait` |
 | `e2e-suite` | Applies the Job and its RBAC, streams its log, and fails if the Job did not complete |
 
 Each step prints a `STEP PASS/FAIL <name> <ms>` line. The Job sets `FULL_RUNTIME_SUITE=true`, so the run ends with the
-two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite` with 20 groups.
-
-The chart assembles the agent Pod as five containers or as the single service of ADR 0080, and CI gates both. To run
-the suite against the second one, and to go back:
-
-```bash
-make e2e-single   # the chart with AUTHZ_SINGLE_SERVICE_ENABLED, then the suite
-make e2e-install  # back to the five containers
-```
-
-It reinstalls the same release, so the Service and the addresses stay as they are; expected there is
-`--- PASS: TestRuntimeSuite` with 19 groups and `TestOPARestart` skipped, since its container is the one that is gone.
-`make parity-single` is the parity counterpart.
+two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite` with 19 groups.
 
 Artifacts:
 

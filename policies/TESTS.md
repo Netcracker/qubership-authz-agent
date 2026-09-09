@@ -50,7 +50,7 @@ and with the current project docs in `docs/ai/`.
 5. `make e2e`
    - Installs Keycloak plus `authz-agent` from the Helm chart on a kind cluster.
    - Executes the Testify integration suite as a Job inside the cluster.
-   - Uploads simplified runtime policies through the guarded pap-client endpoint during suite setup.
+   - Uploads simplified runtime policies through the guarded data API during suite setup.
    - Mirrors the implemented legacy check-endpoint integration coverage from
      the internal access-control source repository
      (`CheckEndpointTest.java` and `CheckEndpointV2Test.java`).

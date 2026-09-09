@@ -1,33 +1,20 @@
 # qubership-authz-agent
 
-An OPA-based authorization proxy for Kubernetes.  The deliverable is a **Helm
-chart** that assembles the agent Pod, in one of two topologies that
-`AUTHZ_SINGLE_SERVICE_ENABLED` selects between.
-
-With the switch on, the Pod is one container, `authz-agent`: a Go service that
-carries the policy engine as a library, the check API, and the loops that feed
-the engine (authz-agent-ADR-0080). See
+An OPA-based authorization service for Kubernetes.  The deliverable is a
+**Helm chart** that assembles the agent Pod: one container, `authz-agent`, a Go
+service carrying the policy engine as a library, the check API, and the loops
+that feed the engine (authz-agent-ADR-0080).  See
 [`components/authz-agent/README.md`](components/authz-agent/README.md).
 
-With the switch off, which is the default while both topologies are supported,
-the agent is a Pod composed of:
-
-- [`openpolicyagent/opa`](https://hub.docker.com/r/openpolicyagent/opa) — the upstream OPA image, used unmodified and pinned by digest
-- `authz-agent-pap-client` — Policy Administration Point client: bootstraps OPA's data directory, pulls policies and PIPs, and pushes live updates over OPA's Data API
-- `authz-agent-envoy` — Envoy proxy carrying Lua filters that rewrite legacy access-control HTTP requests into OPA queries and back
-- `authz-agent-collector` — decision-log receiver, accepts OPA's decision-log batch stream
-- `authz-agent-token-fetcher` — sidecar that obtains and refreshes the M2M OAuth2 credential
-
-Either way, `authz-policy-admin` is a standalone Deployment (its own Service
-and PersistentVolumeClaim) that acts as the primary policy source.  Its image
-name has no `authz-agent-` prefix because it is not a container of the agent
-Pod.
+`authz-policy-admin` is a standalone Deployment (its own Service and
+PersistentVolumeClaim) that acts as the primary policy source.  Its image name
+has no `authz-agent-` prefix because it is not a container of the agent Pod.
 
 ## Maturity
 
 **Pre-1.0, no releases yet.**  The component has no published release and no
 stable API commitment.  The access-control-compatible API surface — the legacy
-check endpoints that Envoy rewrites — is deliberately partly unimplemented:
+check endpoints the agent translates — is deliberately partly unimplemented:
 only the paths that the test suites exercise are wired.  The deployment assumes
 a Kubernetes cluster running the Netcracker platform (Keycloak realm structure,
 M2M credential provisioning, optional service-mesh route registration).  A
@@ -50,10 +37,7 @@ that is set, `authz-policy-admin` is not needed and can be disabled.
 The Helm chart is at `charts/authz-agent/`.
 
 ```sh
-# Render chart templates (requires policies to be staged first)
-make copy-policies
 helm template charts/authz-agent
-helm template charts/authz-agent --set AUTHZ_SINGLE_SERVICE_ENABLED=true
 ```
 
 ## Building images
@@ -62,15 +46,11 @@ Each image has its own Dockerfile under `build/`:
 
 ```sh
 # Build an image locally
-docker build -t authz-agent-pap-client:local -f build/pap-client/Dockerfile .
-docker build -t authz-agent-envoy:local       -f build/envoy/Dockerfile .
-docker build -t authz-agent-collector:local   -f build/collector/Dockerfile .
-docker build -t authz-agent-token-fetcher:local -f build/token-fetcher/Dockerfile .
-docker build -t authz-policy-admin:local      -f build/authz-policy-admin/Dockerfile .
-docker build -t authz-agent:local             -f build/authz-agent/Dockerfile .
+docker build -t authz-agent:local        -f build/authz-agent/Dockerfile .
+docker build -t authz-policy-admin:local -f build/authz-policy-admin/Dockerfile .
 ```
 
-CI builds all six via `.github/docker-dev-config.json`.
+CI builds both via `.github/docker-dev-config.json`.
 
 ## Testing
 
@@ -144,15 +124,6 @@ make parity-logs   # artifacts into test/artifacts/kind/parity/
 ```
 
 Expected: 135/135 PASS. This is what CI runs (job `Parity on kind`).
-
-### Load harness smoke check
-
-```sh
-bash test/svt/scripts/up
-```
-
-The script starts the SVT compose stack, sends one authorisation request, and
-tears the stack down.  Expected: 200 OK.
 
 ## Development
 

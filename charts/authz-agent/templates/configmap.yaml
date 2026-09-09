@@ -1,33 +1,6 @@
-{{- if not .Values.AUTHZ_SINGLE_SERVICE_ENABLED }}
-# Envoy's routes and OPA's configuration, which only the five-container Pod
-# of deployment.yaml reads: the single service carries its routes in code and
-# its policies in the binary.
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: '{{ include "authz-agent.serviceName" . }}-runtime'
-  labels:
-    {{- include "authz-agent.commonLabels" . | nindent 4 }}
-data:
-  envoy.yaml: |
-    {{- $envoyTmpl := .Files.Get "files/envoy/envoy.yaml.tmpl" -}}
-    {{- $envoyTmpl = $envoyTmpl | replace "__PAP_CLIENT_HOST__" "127.0.0.1" -}}
-    {{- $envoyTmpl = $envoyTmpl | replace "__OPA_HOST__"          "127.0.0.1" -}}
-    {{- $envoyTmpl = $envoyTmpl | replace "__COLLECTOR_HOST__"    "127.0.0.1" -}}
-    {{- $envoyTmpl | nindent 4 }}
-  opa-config.yaml: |
-    {{- $opaTmpl := .Files.Get "files/opa/opa-config.yaml.tmpl" -}}
-    {{- $opaTmpl = $opaTmpl | replace "__COLLECTOR_HOST__" "127.0.0.1" -}}
-    {{- $opaTmpl | nindent 4 }}
-{{- end }}
----
-# Trusted token providers live in their own ConfigMap, separate from the
-# runtime config above, because this one is meant to be edited on a live
-# installation: whichever container reads it, the pap-client of the
-# five-container Pod or the single service, re-reads the file and republishes
-# `data.authn` without a Pod restart (authz-agent-ADR-0070). Keeping
-# it apart from envoy.yaml / opa-config.yaml — which do need a restart to take
-# effect — makes "editable at runtime" a property of the object, not a footnote.
+# Trusted token providers live in their own ConfigMap because it is meant to
+# be edited on a live installation: the agent re-reads the file and
+# republishes `data.authn` without a Pod restart (authz-agent-ADR-0070).
 #
 # The Deployment mounts this ConfigMap as a directory and NOT with `subPath`:
 # the kubelet never updates a subPath mount, so a subPath'd file would leave
@@ -42,25 +15,11 @@ data:
   trusted-providers.json: |-
 {{ (dict "providers" (include "authz-agent.trustedProviders" . | fromJsonArray)) | toPrettyJson | indent 4 }}
 ---
-{{- if not .Values.AUTHZ_SINGLE_SERVICE_ENABLED }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: '{{ include "authz-agent.serviceName" . }}-policies'
-  labels:
-    {{- include "authz-agent.commonLabels" . | nindent 4 }}
-data:
-{{ (.Files.Glob "files/opa/policies/*.rego").AsConfig | indent 2 }}
-{{- end }}
----
 # ServiceAccount whose projected Kubernetes token the agent presents to the
-# policy source, whether the pap-client of the five-container Pod or the
-# single service reads it. The comment below is written for the former.
-# ServiceAccount that pap-client uses to obtain a projected Kubernetes
-# service-account token.  The token is sent as a Bearer credential on every
-# request to access-control's v3 config API; access-control recognises it as
-# an M2M principal via the `kubernetes.io` claim check in isM2M().
-# The ServiceAccount itself needs no RBAC — the projected token is sufficient.
+# policy source. The token is sent as a Bearer credential on every request to
+# access-control's v3 config API; access-control recognises it as an M2M
+# principal via the `kubernetes.io` claim check in isM2M(). The ServiceAccount
+# itself needs no RBAC — the projected token is sufficient.
 apiVersion: v1
 kind: ServiceAccount
 metadata:

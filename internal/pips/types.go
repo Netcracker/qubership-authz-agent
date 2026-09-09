@@ -129,10 +129,10 @@ type EntitlementsPIPConfig struct {
 	HTTPRetries        int    `json:"httpRetries"`
 }
 
-// EntitlementsConfig is the in-memory representation the pap-client
-// service holds for the container-pinned entitlements entry. It is built
-// once at startup from AUTHZ_ENTITLEMENTS_URL + companions and merged
-// into every normalized PIP document produced by the pull loop or mount watcher.
+// EntitlementsConfig is the in-memory representation of the
+// deployment-pinned entitlements entry. It is built once at startup from
+// AUTHZ_ENTITLEMENTS_URL + companions and merged into every normalized PIP
+// document produced by the pull loop or the mount watcher.
 type EntitlementsConfig struct {
 	URL                string
 	HTTPTimeoutSeconds int

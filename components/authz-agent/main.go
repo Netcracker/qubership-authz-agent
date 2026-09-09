@@ -15,9 +15,7 @@
 // authz-agent is the authorization agent as one service: the HTTP surface
 // the clients call, the embedded policy engine, and the loops that feed it
 // with the trusted providers' keys, the policies and PIPs, and the agent's
-// own token. Started with OPA's command line, it stands in for the OPA
-// container of the current chart instead, leaving the loops to the Pod's
-// other containers and relaying to them.
+// own token.
 package main
 
 import (
@@ -63,11 +61,7 @@ func init() {
 }
 
 func main() {
-	cfg, err := loadConfig(os.Args[1:], get)
-	if err != nil {
-		logger.Errorf("configuration: %v", err)
-		os.Exit(2)
-	}
+	cfg := loadConfig(get)
 	modules, err := policies.Modules()
 	if err != nil {
 		logger.Errorf("policies: %v", err)
@@ -90,10 +84,6 @@ func main() {
 		cfg.DecisionLogs.Store = decisionlog.NewStore(cfg.DecisionLogFile)
 	}
 	logs := decisionlog.New(cfg.DecisionLogs, logger.Warnf)
-	if len(cfg.IgnoredOPAKeys) > 0 {
-		logger.Warnf("OPA config: the service reads none of %s and applies OPA's behavior for none of them",
-			strings.Join(cfg.IgnoredOPAKeys, ", "))
-	}
 
 	// The trusted providers' keys are fetched before the service listens:
 	// a token cannot be verified without them, and the outcome, whatever
@@ -107,23 +97,17 @@ func main() {
 	if cfg.M2M.TokenURL != "" || cfg.M2M.TokenFile != "" {
 		tokens = m2m.New(cfg.M2M, eng, logger)
 	}
-	var puller *pull.Puller
-	if !cfg.StandIn {
-		cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
-		var source pull.Tokens
-		if tokens != nil {
-			source = tokens
-		}
-		puller = pull.New(cfg.Pull, eng, source, logger)
+	cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
+	var source pull.Tokens
+	if tokens != nil {
+		source = tokens
 	}
+	puller := pull.New(cfg.Pull, eng, source, logger)
 	opts := server.Options{
 		Authorization:  cfg.Authorization,
-		PapClientURL:   cfg.PapClientURL,
 		CollectorURL:   cfg.DecisionLogs.URL,
 		NDBuiltinCache: cfg.NDBuiltinCache,
-	}
-	if !cfg.StandIn {
-		opts.Health = func() server.Report { return report(providers, puller) }
+		Health:         func() server.Report { return report(providers, puller) },
 	}
 
 	// Immutable: strings handed out by the request context, such as a path

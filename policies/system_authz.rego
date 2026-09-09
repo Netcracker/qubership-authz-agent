@@ -40,13 +40,14 @@ import rego.v1
 # See ADR-0077 §Consequences.
 #
 # Callers audited (2026-08-04):
-#   POST  /v1/data/authorize              — Envoy, direct callers (ADR-0062), tests
-#   PUT   /v1/data/policies               — pap-client (policy push)
-#   PUT   /v1/data/pips                   — pap-client (PIP configuration)
-#   PUT   /v1/data/m2m                    — pap-client (token_watcher.go)
-#   PATCH /v1/data/authn                  — providers_reload.go (JSON Patch)
-#   PUT   /v1/data/authn                  — providers_reload.go (fallback)
-#   GET   /health                         — OPA liveness/readiness probes
+#   POST  /v1/data/authorize              — the agent's public surface, direct
+#                                           callers (ADR-0062), tests
+#   PUT   /v1/data/policies               — the pull loop (policy push)
+#   PUT   /v1/data/pips                   — the pull loop (PIP configuration)
+#   PUT   /v1/data/m2m                    — the token source
+#   PATCH /v1/data/authn                  — the trusted-provider reload (JSON Patch)
+#   PUT   /v1/data/authn                  — the trusted-provider reload (fallback)
+#   GET   /health                         — liveness/readiness probes
 #
 # Explicitly blocked without a valid OPA auth token:
 #   PUT/PATCH /v1/data/**  (any path)    — write paths require identity
@@ -61,9 +62,9 @@ import rego.v1
 default allow := false
 
 # ── POST /v1/data/authorize ──────────────────────────────────────────────────
-# Canonical authorization endpoint. Reached by Envoy (via prefix_rewrite),
-# direct OPA-direct callers (ADR-0062), integration test suites, and SVT.
-# External callers (including public gateways) have no OPA bearer token and
+# Canonical authorization endpoint. Reached by the agent's public surface, by
+# direct data API callers (ADR-0062), and by the integration test suites.
+# External callers (including public gateways) have no bearer token and
 # must never be required to present one — keeping this endpoint unconditionally
 # open is a hard requirement of ADR-0062 and mesh-routes.yaml.
 #

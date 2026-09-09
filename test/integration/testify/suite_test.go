@@ -40,7 +40,6 @@ type RuntimeSuite struct {
 	suite.Suite
 
 	cfg                     RuntimeConfig
-	stack                   stackDriver
 	validOrderReaderToken   string
 	validAdminToken         string
 	expiredOrderReaderToken string
@@ -57,9 +56,6 @@ func TestRuntimeSuite(t *testing.T) {
 
 func (s *RuntimeSuite) SetupSuite() {
 	s.cfg = LoadConfig()
-	stack, err := newStackDriver(s.cfg)
-	s.Require().NoError(err, "stack driver")
-	s.stack = stack
 	s.results = make([]stepResult, 0, len(Catalog))
 
 	s.SetupStep("setup.wait_for_keycloak", func() error {
@@ -209,11 +205,6 @@ func (s *RuntimeSuite) TearDownSuite() {
 	}
 	for _, e := range Catalog {
 		if executed[e.Name] {
-			continue
-		}
-		// TestOPARestart skips against the single service, so its steps are
-		// not expected there; every other group runs against both.
-		if s.cfg.SingleService && needsOPAContainer(e.Name) {
 			continue
 		}
 		s.T().Errorf("catalog step %q was never executed", e.Name)

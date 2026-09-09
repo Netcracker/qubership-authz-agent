@@ -8,7 +8,7 @@ TAG: ci
 # A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.
 MESH_ROUTES_ENABLED: false
 
-# The harness Keycloak. token-fetcher takes its M2M token from the cloud-common
+# The harness Keycloak. The agent takes its M2M token from the cloud-common
 # realm here, with the parity-m2m client.
 IDENTITY_PROVIDER_URL: http://idp:8080
 

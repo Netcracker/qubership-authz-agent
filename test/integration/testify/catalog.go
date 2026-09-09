@@ -202,17 +202,6 @@ var Catalog = []StepEntry{
 	{"opa_lockdown.write_without_auth.401", "n/a", "PUT /v1/data/opa-lockdown-test (OPA-direct, no auth)", "-", "-", "none"},
 	{"opa_lockdown.write_with_auth.204", "n/a", "PUT /v1/data/opa-lockdown-test (OPA-direct, with token)", "-", "-", "none"},
 
-	// ── opa_restart (restart survival) ──────────────────────────────────
-	// Verifies that policies, PIPs, and authentication data survive an OPA
-	// container restart. pap-client writes all document roots to the shared
-	// opa-data volume before pushing to OPA's Data API; on restart OPA
-	// reloads from disk so correct decisions are served immediately without
-	// waiting for the next pap-client push tick (ADR-0077 §Restart).
-	{"opa_restart.pre_restart_baseline", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"opa_restart.restart_opa_container", "n/a", "restart of the OPA container", "-", "-", "none"},
-	{"opa_restart.wait_opa_healthy", "n/a", "GET /health (OPA direct)", "-", "-", "none"},
-	{"opa_restart.post_restart_decisions_correct", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-
 	// Verifies that the disk files written by pap-client have the correct
 	// OPA data-dir layout for restart recovery in ConfigMap-mount mode.
 	// In mount mode (MountWatcher) pap-client does NOT republish to OPA

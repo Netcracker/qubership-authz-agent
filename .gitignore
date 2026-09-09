@@ -7,14 +7,6 @@ test/tools/opa/opa
 # Go build cache and temp
 /tmp/
 
-# Generated Rego staging area for the Helm chart.
-# Source of truth: policies/
-# Generate with: make copy-policies
-/charts/authz-agent/files/opa/policies/
-
-# Runtime test configs (rendered by test/scripts/render-runtime-configs.sh)
-/test/.runtime-configs/
-
 # Parity suite: *.observed.json sidecar output from local runs (not evidence)
 *.observed.json
 

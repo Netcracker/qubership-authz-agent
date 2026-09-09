@@ -68,49 +68,19 @@ MESH_ROUTES_ENABLED: true
 # Per-image overrides. If empty, the deployment template falls back to:
 #   OPA:                  openpolicyagent/opa@sha256:<digest>  (OPA 1.14.0, pinned)
 #   authz-agent:          {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}
-#   pap-client:           {{ IMAGE_REPOSITORY }}/authz-agent-pap-client:{{ TAG }}
-#   envoy:                {{ IMAGE_REPOSITORY }}/authz-agent-envoy:{{ TAG }}
-#   collector:            {{ IMAGE_REPOSITORY }}/authz-agent-collector:{{ TAG }}
-#   token-fetcher:        {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}
 #   authz-policy-admin:   {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}
 #
 # Note: authz-policy-admin uses no authz-agent- prefix because it is a
-# standalone Deployment, not a container of the agent Pod (see .github/docker-dev-config.json).
+# standalone Deployment, not the agent (see .github/docker-dev-config.json).
 #
 # Cloud-Deployer can populate these from .Values.global.deployDescriptor
 # at install time.
-ENVOY_IMAGE: ''
-# OPA_IMAGE: override for the vanilla upstream OPA image.
-# Default is the pinned digest in _helpers.tpl (authz-agent.opaImage).
-# Only change this when a different OPA version is required.
-OPA_IMAGE: ''
-# pap-client runs in its own container from its own image
-# (authz-agent-pap-client); OPA runs as the vanilla upstream image.
-PAP_CLIENT_IMAGE: ''
-COLLECTOR_IMAGE: ''
-# AUTHZ_SINGLE_SERVICE_ENABLED: run the agent as one container instead of
-# five (authz-agent-ADR-0080). The single service carries the policy engine,
-# the check API, and the loops that feed it, so Envoy, OPA, pap-client, the
-# collector, and token-fetcher are not deployed and their images, their
-# ConfigMaps, and their shared volumes are not rendered. The parameters of
-# this file keep their meaning either way; the per-container resource and
-# image parameters of the containers that are gone have no effect.
-#
-# false while the two topologies live side by side, so an upgrade changes
-# nothing until the switch is thrown deliberately.
-AUTHZ_SINGLE_SERVICE_ENABLED: false
 
-# AUTHZ_AGENT_IMAGE: override for the single service's image.
+# AUTHZ_AGENT_IMAGE: override for the agent's image.
 # Empty → {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}.
-# Only used when AUTHZ_SINGLE_SERVICE_ENABLED=true.
 AUTHZ_AGENT_IMAGE: ''
 
-# TOKEN_FETCHER_IMAGE: override for the token-fetcher sidecar image.
-# Empty → {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}.
-# Only used when KUBERNETES_M2M_ENABLED=false.
-TOKEN_FETCHER_IMAGE: ''
-
-# Pull policy for all three containers. The default is IfNotPresent because the
+# Pull policy for every container. The default is IfNotPresent because the
 # pipeline tags images with an immutable pipeline id, so re-pulling an already
 # cached layer set buys nothing and makes every Pod restart depend on the
 # registry being reachable. Set to Always where a moving tag (`latest`) is
@@ -373,8 +343,8 @@ AUTHZ_POLICY_ADMIN_STORAGE_CLASS: ''
 # Cleanup is then a manual `kubectl delete pvc <release>-authz-policy-admin-data`.
 AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
 
-# Decision-log collector writes to ephemeral container storage. Lost on Pod
-# restart. See the handover Next Steps "decision-log collector sink
+# The decisions are written to ephemeral container storage and are lost on a
+# Pod restart. See the handover Next Steps "decision-log collector sink
 # productionisation" before any production deploy.
 AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 
@@ -384,55 +354,22 @@ HPA_MIN_REPLICAS: 1
 HPA_MAX_REPLICAS: 1
 HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
 
-# Per-container resource baselines.
+# Resource baselines.
 # Defaults below mirror `resource-profiles/dev.yaml` so that a plain
 # `helm install` on a dev / sandbox cluster (no profile selection, no
 # operator overrides) schedules cleanly on a small node. For production
 # installs, pass `-f resource-profiles/prod.yaml` or set the deployer's
 # PROFILE parameter to `prod`.
-ENVOY_CPU_REQUEST: 100m
-ENVOY_CPU_LIMIT: 100m
-ENVOY_MEM_REQUEST: 100Mi
-ENVOY_MEM_LIMIT: 100Mi
-
-# OPA container (vanilla upstream image, stateless policy engine).
-# OPA is memory-light for typical policy datasets: the data volume comes from
-# the pap-client container's normalisation, not from OPA's evaluation.
-OPA_CPU_REQUEST: 50m
-OPA_CPU_LIMIT: 100m
-OPA_MEM_REQUEST: 64Mi
-OPA_MEM_LIMIT: 200Mi
-
-# pap-client container.
-# 300Mi, not 100Mi: pap-client parses a real access-control dataset
-# (1294 policy sets / 2207 rules, 1.9 MB re-parsed every pull tick)
-# which peaks at ~134 MiB. At 100Mi it was OOMKilled into CrashLoopBackOff on
-# cloud-platform-security-dev-4. Keep this in step with resource-profiles/dev.yaml.
 #
-# GOMEMLIMIT is not set — the limit is a cliff, not a ceiling. Installations
-# with materially more policies will exceed it.
-PAP_CLIENT_CPU_REQUEST: 100m
-PAP_CLIENT_CPU_LIMIT: 100m
-PAP_CLIENT_MEM_REQUEST: 100Mi
-PAP_CLIENT_MEM_LIMIT: 300Mi
-
-# The single service's container. It does the work of the four containers that
-# have sizing of their own, Envoy, OPA, pap-client, and the collector, so it asks
-# for what they ask for between them (100m + 50m + 100m + 100m, and 100Mi + 64Mi
-# + 100Mi + 100Mi) and is capped at their caps (100m four times, and 100Mi +
-# 200Mi + 300Mi + 100Mi). Throwing the switch therefore leaves the Pod's floor
-# and its ceiling where they were, which is the only claim these numbers make:
-# no load has been measured against the service. Deployments with one worth
-# measuring set these from the resource profiles.
+# The numbers are what the five containers this one replaced asked for and
+# were capped at between them (authz-agent-ADR-0080), so upgrading onto this
+# chart moves neither the Pod's floor nor its ceiling. That is the only claim
+# they make: no load has been measured against the service. Deployments with
+# one worth measuring set these from the resource profiles.
 AUTHZ_AGENT_CPU_REQUEST: 350m
 AUTHZ_AGENT_CPU_LIMIT: 400m
 AUTHZ_AGENT_MEM_REQUEST: 364Mi
 AUTHZ_AGENT_MEM_LIMIT: 700Mi
-
-COLLECTOR_CPU_REQUEST: 100m
-COLLECTOR_CPU_LIMIT: 100m
-COLLECTOR_MEM_REQUEST: 100Mi
-COLLECTOR_MEM_LIMIT: 100Mi
 
 # Only used when AUTHZ_POLICY_ADMIN_ENABLED is true. The stub serves a few megabytes of
 # JSON from memory; it does not need the backend's sizing.

@@ -57,14 +57,14 @@ results := [r |
 // newPublicApp builds the public surface over publicPolicy and the guard of
 // testAuthz, with the routing options main uses. papClient and collector
 // are the base URLs the relays target, "" for none.
-func newPublicApp(t *testing.T, authorization bool, logs *decisionlog.Logger, papClient, collector string) *fiber.App {
+func newPublicApp(t *testing.T, authorization bool, logs *decisionlog.Logger, collector string) *fiber.App {
 	t.Helper()
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": publicPolicy, "authz.rego": testAuthz}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
 	srv := Register(fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true}), eng, logs,
-		Options{Authorization: authorization, PapClientURL: papClient, CollectorURL: collector, NDBuiltinCache: true})
+		Options{Authorization: authorization, CollectorURL: collector, NDBuiltinCache: true})
 	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
 	srv.RegisterPublic(app)
 	return app
@@ -96,7 +96,7 @@ var admin = map[string]string{"Authorization": "Bearer m2m", "Incoming-Token": "
 // TestPublic_CheckResource: the v1 route answers a bare boolean and the v2
 // route {"decision": bool}, both as JSON, from the first result.
 func TestPublic_CheckResource(t *testing.T) {
-	app := newPublicApp(t, false, nil, "", "")
+	app := newPublicApp(t, false, nil, "")
 	cases := []struct {
 		name, path, body, want string
 	}{
@@ -120,7 +120,7 @@ func TestPublic_CheckResource(t *testing.T) {
 // refuses carries the authError's status and message; and a GET reaches
 // the handler like a POST, so its empty body is what is rejected.
 func TestPublic_CheckResource_Refusals(t *testing.T) {
-	app := newPublicApp(t, false, nil, "", "")
+	app := newPublicApp(t, false, nil, "")
 	cases := []struct {
 		name, method, body string
 		headers            map[string]string
@@ -147,7 +147,7 @@ func TestPublic_CheckResource_Refusals(t *testing.T) {
 // without a single operation is answered without the policy, so it needs no
 // token.
 func TestPublic_Bulk(t *testing.T) {
-	app := newPublicApp(t, false, nil, "", "")
+	app := newPublicApp(t, false, nil, "")
 	cases := []struct {
 		name, path, body string
 		headers          map[string]string
@@ -187,7 +187,7 @@ func TestPublic_Bulk(t *testing.T) {
 // TestPublic_Filter: the filter routes read the query, not the body, and
 // answer the legacy filter shape with the policy's predicates.
 func TestPublic_Filter(t *testing.T) {
-	app := newPublicApp(t, false, nil, "", "")
+	app := newPublicApp(t, false, nil, "")
 	const useFilter = `{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"type==ORDER","sqlFilterCondition":"","customFilterCondition":null}`
 	const denied = `{"calculationResult":"DENY","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"","sqlFilterCondition":"","customFilterCondition":null}`
 	cases := []struct {
@@ -216,7 +216,7 @@ func TestPublic_Filter(t *testing.T) {
 // everything else, the data API included, is 404 {"message":"not found"}.
 // The canonical route runs the data API guard, so ?explain=full is refused.
 func TestPublic_Surface(t *testing.T) {
-	app := newPublicApp(t, true, nil, "", "")
+	app := newPublicApp(t, true, nil, "")
 	authorize := `{"input":{"subject":"Bearer admin","resources":[{"resourceType":"ORDER","operation":"READ"}]}}`
 	cases := []struct {
 		name, method, path, body string
@@ -251,11 +251,11 @@ func TestPublic_Surface(t *testing.T) {
 // the canonical route is 405 once the guard has let it through, and the
 // guard sees the method itself, so a GET the policy does not open is 401.
 func TestPublic_CanonicalRouteUnderOtherMethods(t *testing.T) {
-	open := newPublicApp(t, false, nil, "", "")
+	open := newPublicApp(t, false, nil, "")
 	if code, body, _ := call(t, open, http.MethodGet, "/access/v1/authorize", "", nil); code != 405 || !strings.Contains(body, "Method Not Allowed") {
 		t.Errorf("GET /access/v1/authorize without the guard = %d %s, want 405 Method Not Allowed", code, body)
 	}
-	guarded := newPublicApp(t, true, nil, "", "")
+	guarded := newPublicApp(t, true, nil, "")
 	if code, body, _ := call(t, guarded, http.MethodGet, "/access/v1/authorize", "", nil); code != 401 || !strings.Contains(body, `"code":"unauthorized"`) {
 		t.Errorf("GET /access/v1/authorize with the guard = %d %s, want 401 unauthorized", code, body)
 	}
@@ -266,7 +266,7 @@ func TestPublic_CanonicalRouteUnderOtherMethods(t *testing.T) {
 // request's method, as the Lua rewrite did, so plain parameters pass and
 // ?explain=full is refused in OPA's shape.
 func TestPublic_CheckRoutesRunTheGuard(t *testing.T) {
-	app := newPublicApp(t, true, nil, "", "")
+	app := newPublicApp(t, true, nil, "")
 	body := `{"type":"ORDER","operation":"READ"}`
 	if code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=default", body, admin); code != 200 || got != "true" {
 		t.Errorf("POST /access/v1/check/resource?tenant_id=default = %d %s, want 200 true", code, got)
@@ -297,25 +297,6 @@ func recorder(status int, contentType, body string) (*httptest.Server, *[]string
 	return srv, &seen
 }
 
-// TestPublic_RelaysHealthToThePapClient: /health goes to the pap-client
-// with its method and path, and the pap-client's answer comes back as it
-// is, status included.
-func TestPublic_RelaysHealthToThePapClient(t *testing.T) {
-	papClient, seen := recorder(http.StatusServiceUnavailable, "application/json", `{"status":"unhealthy"}`)
-	defer papClient.Close()
-	collector, collectorSaw := recorder(http.StatusOK, "application/x-ndjson", "")
-	defer collector.Close()
-	app := newPublicApp(t, false, nil, papClient.URL, collector.URL)
-
-	code, body, contentType := call(t, app, http.MethodPost, "/health", "", nil)
-	if code != 503 || body != `{"status":"unhealthy"}` || contentType != "application/json" {
-		t.Errorf("POST /health = %d %s (%s), want the pap-client's 503 {\"status\":\"unhealthy\"} (application/json)", code, body, contentType)
-	}
-	if strings.Join(*seen, ", ") != "POST /health" || len(*collectorSaw) != 0 {
-		t.Errorf("pap-client saw %q and the collector %q, want only the pap-client to see POST /health", *seen, *collectorSaw)
-	}
-}
-
 // TestPublic_RelaysTheDownloadToTheCollector: the decision-log download
 // goes to the collector that receives the decisions, query included, and
 // a body larger than one network read comes back whole.
@@ -323,16 +304,14 @@ func TestPublic_RelaysTheDownloadToTheCollector(t *testing.T) {
 	lines := strings.Repeat("{\"decision_id\":\"1\"}\n", 40000)
 	collector, seen := recorder(http.StatusOK, "application/x-ndjson", lines)
 	defer collector.Close()
-	papClient, papClientSaw := recorder(http.StatusOK, "application/json", `{"status":"healthy"}`)
-	defer papClient.Close()
-	app := newPublicApp(t, false, nil, papClient.URL, collector.URL)
+	app := newPublicApp(t, false, nil, collector.URL)
 
 	code, body, contentType := call(t, app, http.MethodGet, "/internal/v1/decision-logs?since=1", "", nil)
 	if code != 200 || contentType != "application/x-ndjson" || len(body) != len(lines) {
 		t.Errorf("GET /internal/v1/decision-logs = %d (%s) with %d bytes, want 200 (application/x-ndjson) with %d bytes", code, contentType, len(body), len(lines))
 	}
-	if strings.Join(*seen, ", ") != "GET /internal/v1/decision-logs?since=1" || len(*papClientSaw) != 0 {
-		t.Errorf("collector saw %q and the pap-client %q, want only the collector to see the download", *seen, *papClientSaw)
+	if strings.Join(*seen, ", ") != "GET /internal/v1/decision-logs?since=1" {
+		t.Errorf("collector saw %q, want the download with its query", *seen)
 	}
 }
 
@@ -347,7 +326,7 @@ func TestPublic_ServesTheStoredDecisions(t *testing.T) {
 		t.Fatal(err)
 	}
 	logs := decisionlog.New(decisionlog.Config{Store: store}, nil)
-	app := newPublicApp(t, false, logs, "", collector.URL)
+	app := newPublicApp(t, false, logs, collector.URL)
 
 	code, body, contentType := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
 	if code != 200 || contentType != "application/x-ndjson" || !strings.Contains(body, `"decision_id":"d-1"`) {
@@ -361,14 +340,14 @@ func TestPublic_ServesTheStoredDecisions(t *testing.T) {
 	}
 }
 
-// TestPublic_RelayWithoutPapClient: a pap-client that does not answer is
-// reported as 503 naming it, so a probe distinguishes it from a healthy
-// answer.
-func TestPublic_RelayWithoutPapClient(t *testing.T) {
-	app := newPublicApp(t, false, nil, "http://127.0.0.1:1", "")
-	code, body, _ := call(t, app, http.MethodGet, "/health", "", nil)
-	if code != 503 || !strings.Contains(body, "pap-client unavailable") {
-		t.Errorf("GET /health with no pap-client = %d %s, want 503 with a message naming the pap-client", code, body)
+// TestPublic_RelayToACollectorThatDoesNotAnswer: a collector that cannot be
+// reached is reported as 503 naming it, so the caller can tell the relay
+// apart from an empty log.
+func TestPublic_RelayToACollectorThatDoesNotAnswer(t *testing.T) {
+	app := newPublicApp(t, false, nil, "http://127.0.0.1:1")
+	code, body, _ := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
+	if code != 503 || !strings.Contains(body, "collector unavailable") {
+		t.Errorf("GET /internal/v1/decision-logs with no collector = %d %s, want 503 with a message naming the collector", code, body)
 	}
 }
 
@@ -420,7 +399,7 @@ func nextEvent(t *testing.T, events <-chan decisionlog.Event) decisionlog.Event 
 func TestPublic_LogsTheLegacyDecision(t *testing.T) {
 	logs, events, stop := collector(t)
 	defer stop()
-	app := newPublicApp(t, false, logs, "", "")
+	app := newPublicApp(t, false, logs, "")
 	headers := map[string]string{"Authorization": "Bearer m2m", "Incoming-Token": "Bearer admin", "X-Tenant": "acme"}
 
 	code, body, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=default", `{"type":"ORDER","operation":"READ"}`, headers)
@@ -459,7 +438,7 @@ func TestPublic_LogsTheLegacyDecision(t *testing.T) {
 func TestPublic_LogsTheRouteAsOriginalPath(t *testing.T) {
 	logs, events, stop := collector(t)
 	defer stop()
-	app := newPublicApp(t, false, logs, "", "")
+	app := newPublicApp(t, false, logs, "")
 	single := `{"type":"ORDER","operation":"READ"}`
 	bulk := `[{"id":"a","type":"ORDER","operation":"READ"}]`
 	operations := `[{"id":"a","type":"ORDER","operations":["READ"]}]`

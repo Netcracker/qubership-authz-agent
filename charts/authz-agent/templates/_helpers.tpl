@@ -37,42 +37,11 @@ app.kubernetes.io/technology: 'go'
 {{- end -}}
 
 {{/*
-Image references. If a per-image override is set in values
-(ENVOY_IMAGE, PAP_CLIENT_IMAGE, COLLECTOR_IMAGE, TOKEN_FETCHER_IMAGE), it wins.
-Otherwise the helper computes
-"{IMAGE_REPOSITORY}/authz-agent-{envoy|pap-client|collector|token-fetcher}:{TAG}".
-*/}}
-
-{{- define "authz-agent.envoyImage" -}}
-{{- coalesce .Values.ENVOY_IMAGE (printf "%s/authz-agent-envoy:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{/*
-OPA runs as the vanilla upstream image, pinned by digest.
-The digest pin (`latest-static` is not a pin) is the default; OPA_IMAGE
-overrides it when a different OPA build is needed.  OPA version 1.14.0.
-*/}}
-{{- define "authz-agent.opaImage" -}}
-{{- coalesce .Values.OPA_IMAGE "openpolicyagent/opa@sha256:b326c40be4255ff568350542d546f70950b8d321fbbc59e604918230c0520b16" -}}
-{{- end -}}
-
-{{/*
-pap-client image: Policy Administration Point client (bootstrap, pull, push).
-Image name follows the Pod-container naming rule: authz-agent-<container>.
-*/}}
-{{- define "authz-agent.papClientImage" -}}
-{{- coalesce .Values.PAP_CLIENT_IMAGE (printf "%s/authz-agent-pap-client:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{/*
-The single service's image, the one container of deployment-single.yaml.
+The agent's image. AUTHZ_AGENT_IMAGE wins where it is set; otherwise the
+helper computes "{IMAGE_REPOSITORY}/authz-agent:{TAG}".
 */}}
 {{- define "authz-agent.serviceImage" -}}
 {{- coalesce .Values.AUTHZ_AGENT_IMAGE (printf "%s/authz-agent:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{- define "authz-agent.collectorImage" -}}
-{{- coalesce .Values.COLLECTOR_IMAGE (printf "%s/authz-agent-collector:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
 {{- end -}}
 
 {{/*
@@ -113,12 +82,8 @@ app.kubernetes.io/technology: 'go'
 {{- coalesce .Values.AUTHZ_POLICY_ADMIN_IMAGE (printf "%s/authz-policy-admin:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
 {{- end -}}
 
-{{- define "authz-agent.tokenFetcherImage" -}}
-{{- coalesce .Values.TOKEN_FETCHER_IMAGE (printf "%s/authz-agent-token-fetcher:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
 {{/*
-Policy pull source for the pap-client container.
+Policy pull source for the agent's pull loop.
 
 Precedence: an explicitly configured AUTHZ_PAP_CLIENT_SOURCE_URL always wins — enabling
 the stub while pointing the agent at a real access-control is a legitimate
@@ -126,8 +91,8 @@ cutover setup, and the stub is then simply idle. Otherwise, when the stub is
 enabled, the agent is wired to its Service automatically so that a plain
 `helm install --set AUTHZ_POLICY_ADMIN_ENABLED=true` produces a working pull loop.
 
-`trimSuffix "/"` matters: PolicyPuller composes the request URL by plain string
-concatenation (components/pap-client/internal/policyadmin/policy_puller.go), so an operator's
+`trimSuffix "/"` matters: the puller composes the request URL by plain string
+concatenation (components/authz-agent/internal/pull/pull.go), so an operator's
 trailing slash would produce `//access/v3/config/policySets`.
 */}}
 {{- define "authz-agent.papSourceURL" -}}
@@ -220,11 +185,9 @@ covers the preview bulk-operations route. This is the same prefix set
 access-control registers on its public and private gateways, minus everything
 this agent does not serve (its whole management surface).
 
-These go to port 8080, which is Envoy in the five-container topology and the
-single service's own public listener in the other; both answer the same
-shapes. Under Envoy, each legacy route carries a per-route Lua
-filter that rewrites the request and the response, so bypassing Envoy here would
-return raw OPA documents instead of the compatible shape.
+These go to port 8080, the agent's public listener, which answers each legacy
+route in the shape access-control's clients expect. Routing one of them to the
+data API on 8181 instead would return the raw policy document.
 */}}
 {{- define "authz-agent.meshCheckRules" -}}
 - match:
@@ -245,16 +208,16 @@ Note on KUBERNETES_M2M_ENABLED=false (Keycloak mode): The Secret
 '{{ .Values.SERVICE_NAME }}-client-credentials' MUST exist before helm install.
 It is provisioned externally by the platform (security-scripts or manual creation
 with label core.netcracker.com/secret-type=m2m; see docs/architecture.md §
-"M2M Identity and Token Delivery"). If the Secret is missing, the token-fetcher
-sidecar cannot start, the startupProbe never passes, and the Pod stays NotReady
-indefinitely.  Helm cannot verify Secret existence at template time.
+"M2M Identity and Token Delivery"). If the Secret is missing, the agent cannot
+obtain its M2M token, the pull loop never authenticates, and the Pod stays
+NotReady indefinitely. Helm cannot verify Secret existence at template time.
 */}}
 {{/*
-OPA write-path authentication token (authz-agent-ADR-0077).
+Data API write-path authentication token (authz-agent-ADR-0077).
 
 Generated once per install (randAlphaNum 32) and preserved across upgrades via
-the Helm `lookup` function so that pap-client does not lose sync with OPA
-after a `helm upgrade`. When the Secret already exists, its current value is
+the Helm `lookup` function, so that a client holding the old token is not cut
+off by a `helm upgrade`. When the Secret already exists, its current value is
 reused; on a fresh install a new random value is generated.
 */}}
 {{- define "authz-agent.opaAuthToken" -}}
@@ -269,7 +232,7 @@ reused; on a fresh install a new random value is generated.
 
 {{- define "authz-agent.validateValues" -}}
 {{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED .Values.AUTHZ_POLICY_CONFIGMAP -}}
-{{- fail (printf "AUTHZ_POLICY_ADMIN_ENABLED=true conflicts with AUTHZ_POLICY_CONFIGMAP=%s: pap-client selects ConfigMap mount mode when /etc/authz/policies exists at startup and disables the pull loop entirely (authz-agent-ADR-0072), so the stub would be deployed, given a volume, and never polled. Pick one delivery mode." .Values.AUTHZ_POLICY_CONFIGMAP) -}}
+{{- fail (printf "AUTHZ_POLICY_ADMIN_ENABLED=true conflicts with AUTHZ_POLICY_CONFIGMAP=%s: the agent selects ConfigMap mount mode when /etc/authz/policies exists at startup and disables the pull loop entirely (authz-agent-ADR-0072), so the stub would be deployed, given a volume, and never polled. Pick one delivery mode." .Values.AUTHZ_POLICY_CONFIGMAP) -}}
 {{- end -}}
 {{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED (eq (int .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL) 0) -}}
 {{- fail "AUTHZ_POLICY_ADMIN_ENABLED=true requires AUTHZ_PAP_CLIENT_PULL_INTERVAL > 0: 0 disables the pull loop, so the agent would never fetch from the stub." -}}

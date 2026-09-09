@@ -2,10 +2,12 @@
 
 ## Status
 
-Proposed
+Accepted
 
 <!-- markdownlint-disable-next-line MD001 -->
 #### Date
+
+2026-09-09
 
 #### Owner
 
@@ -90,12 +92,13 @@ We will replace Envoy, the Lua filters, the OPA container, `pap-client`, `decisi
   `GET /internal/v1/decision-logs`.
 - **Deployment.** One container in the agent Pod and one image; the optional `authz-policy-admin` Deployment stays.
   The chart keeps its parameter names, and `AUTHZ_AGENT_IMAGE` takes the place of the five per-image overrides.
-- **Migration.** The service is developed next to the current one, and the runtime suite and the parity replay run
-  against it on kind. The chart then assembles the Pod in either topology, and `AUTHZ_SINGLE_SERVICE_ENABLED`
-  selects between them: `false` while both are supported, so an upgrade changes nothing until the switch is thrown,
-  and `true` once the single service has been run in earnest. Both topologies are gated on every pull request. The
-  old images, the Envoy configuration, and the Lua filters are removed in a later step, whose timing is a decision of
-  its own rather than a criterion recorded here.
+- **Migration.** The service was developed next to the current one, and the runtime suite and the parity replay ran
+  against both on kind while one chart rendered either topology behind `AUTHZ_SINGLE_SERVICE_ENABLED`. That switch
+  is gone: the chart renders the single service and nothing else, and the Envoy configuration, the Lua filters, the
+  four images they came with, and the SVT lab that ran them under Compose are deleted. An installation upgrading
+  onto this chart moves from five containers to one in place; the Service, its ports, the Deployment name, and every
+  chart parameter but the per-container images and resources are unchanged, and there is no way back short of
+  installing an older chart.
 
 ### Justification
 
@@ -131,24 +134,24 @@ Negative:
   the inter-query cache configuration. The spike showed two traps to design around: strings from Fiber alias the
   fasthttp request buffer and must be copied before they outlive the handler, and the decision-log queue must be
   drained with its own deadline on shutdown.
-- `TestOPARestart` skips against the single-container topology, whose one container is the one it restarts; it keeps
-  gating the five-container one and is dropped with the catalog rows it covers when that topology is removed. The
-  other groups, `TestOPALockdown` and `TestAuthorizeEnvoyOpaDirectParity` included, gate both.
+- `TestOPARestart` is gone with the container it restarted, and so are its four catalog rows: the documents it
+  proved survive a restart now live in the process and are rebuilt at every start. The other groups that address the
+  data API, `TestOPALockdown` and `TestAuthorizeEnvoyOpaDirectParity`, gate the service unchanged.
 - Deployments that set per-image values (`ENVOY_IMAGE`, `OPA_IMAGE`, `PAP_CLIENT_IMAGE`, `COLLECTOR_IMAGE`,
-  `TOKEN_FETCHER_IMAGE`) have to move to `AUTHZ_AGENT_IMAGE` when they throw the switch; those values have no effect
-  on the single-container topology.
-- Two topologies are supported at once: both are rendered by one chart, both are gated in CI, and the parts they do
-  not share, the Pod template, the Envoy and OPA ConfigMaps, and the per-container resources, live in the chart
-  twice until the five-container one is removed.
+  `TOKEN_FETCHER_IMAGE`) or per-container resources have to move to `AUTHZ_AGENT_IMAGE` and `AUTHZ_AGENT_*`; the old
+  keys are removed from the values schema, so an install still passing them fails validation rather than ignoring
+  them.
+- The four images stop being published. Anything outside this repository that pulls `authz-agent-pap-client`,
+  `authz-agent-envoy`, `authz-agent-collector`, or `authz-agent-token-fetcher` keeps only the tags already
+  released.
 - The check family keeps its legacy error bodies, so two error formats coexist in one service until the legacy
   routes are retired.
 
 Neutral:
 
-- The SVT lab under `test/svt` and the mesh route resources in the chart are unaffected.
-- Whether `qubership-core-lib-go` provides the Keycloak client-credentials token flow is still to be checked; if not,
-  the `token-fetcher` code runs as a goroutine inside the service.
-
-Planned steps, each a pull request verified on kind: the service skeleton from the spike with the canonical endpoint;
-the nine check-family handlers with the parity replay as the oracle; the pull loop, bootstrap, tokens, and decision
-logs in-process; the chart with one container, the kind harness, CI, and the removal of the old images.
+- The mesh route resources in the chart are unaffected.
+- The SVT lab under `test/svt` is deleted with the stack it drove: its Compose file, its JMeter plans, and its
+  profiler read Envoy's own statistics, which the service does not publish. A load stand for the service is work of
+  its own and is not recorded here.
+- The `token-fetcher` code runs as a goroutine inside the service: `qubership-core-lib-go` does not provide the
+  Keycloak client-credentials token flow.

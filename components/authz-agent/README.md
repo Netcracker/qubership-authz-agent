@@ -1,8 +1,8 @@
 # authz-agent service
 
 The authorization agent as one Go service: the embedded Rego policies and the OPA library behind a Fiber server from
-the Qubership core libraries, with the loops that feed the policies in the same process. This is the redesign
-recorded in ADR 0080 under `docs/decisions`, delivered in steps.
+the Qubership core libraries, with the loops that feed the policies in the same process. This is the design recorded
+in ADR 0080 under `docs/decisions`.
 
 ## What the service contains
 
@@ -23,27 +23,23 @@ recorded in ADR 0080 under `docs/decisions`, delivered in steps.
   before it expires, or read from a file another party keeps current. It is sent to the policy source and published
   as `data.m2m.bearerToken` for the PIP calls.
 - `internal/legacy`: the check routes of the legacy access-control API. Each route's body and headers become the
-  canonical authorize input, and the decision becomes the response shape of that route, as the Lua filters of the
-  Envoy container did.
-- `internal/server`: the routes, on two listeners. The public surface is what Envoy exposed: the nine check routes,
-  the canonical `POST /access/v1/authorize`, `GET /api-version`, `/health` relayed to the pap-client,
-  `GET /internal/v1/decision-logs` relayed to the collector, and `404 {"message":"not found"}` for every other
-  path. The OPA-compatible surface carries `/health`, `/ready`, `/api-version`, `POST /access/v1/authorize`, and,
-  under `/v1/data`, the slice of OPA's REST API the other containers of the Pod use: `POST` for a decision, `PUT`,
-  `PATCH`, and `GET` for documents, guarded by `data.system.authz.allow` when enabled.
-- `main.go` and `config.go`: configuration from the environment through configloader, and the OPA-style command line
-  of the chart's OPA container mapped onto it.
+  canonical authorize input, and the decision becomes the response shape of that route.
+- `internal/server`: the routes, on two listeners. The public surface carries the nine check routes, the canonical
+  `POST /access/v1/authorize`, `GET /api-version`, `/health`, `GET /internal/v1/decision-logs`, and
+  `404 {"message":"not found"}` for every other path. The data API carries `/health`, `/ready`, `/api-version`,
+  `POST /access/v1/authorize`, and, under `/v1/data`, the slice of OPA's REST API a client writing documents uses:
+  `POST` for a decision, `PUT`, `PATCH`, and `GET` for documents, guarded by `data.system.authz.allow` when enabled.
+- `main.go` and `config.go`: configuration from the environment through configloader.
 
-The chart assembles the agent Pod as this one container, or as the five it replaces, and
-`AUTHZ_SINGLE_SERVICE_ENABLED` selects between them while both are supported.
+The chart assembles the agent Pod as this one container.
 
 ## Configuration
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
-| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the OPA-compatible surface |
-| `AUTHZ_PAP_CLIENT_URL` | empty | Base URL of the pap-client that answers `/health`; empty makes the public `/health` the service's own |
+| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the data API |
+| `AUTHZ_ND_BUILTIN_CACHE` | `true` | Record the non-deterministic builtin calls of a decision, the PIP requests and their responses, into its decision-log event |
 | `AUTHZ_DATA_DIRS` | empty | Comma-separated directories whose JSON and YAML files seed the store at start |
 | `AUTHZ_DATA_IGNORE` | empty | Comma-separated file name patterns skipped in those directories, such as `..*` |
 | `AUTHZ_DATA_API_AUTHORIZATION` | `false` | Guard `/v1/data` with `data.system.authz.allow`; the canonical route is guarded as `/v1/data/authorize` under its own method, the check routes as `POST /v1/data/authorize` |
@@ -74,40 +70,16 @@ rules, and 503 with the reason and its details until then. `GET /ready`, on the 
 503 with the reason `policies not loaded yet` and the same details until they have loaded once, 200
 `{"status":"ready"}` after. A pull that fails later keeps the loaded policies and both verdicts.
 
-When started with OPA's command line (`run --server --addr ... --ignore=... --authorization=basic --config-file ...
-<dirs>`), the flags and the directories override the variables, and the config file supplies the decision log service,
-its `reporting` bounds, the recorded request headers, and `nd_builtin_cache`; every other setting of that file is
-named in a warning at start, so a setting the service cannot act on is not mistaken for one it applies. In that Pod
-Envoy holds port 8080 and the pap-client answers on 8182, so the public surface then defaults to `0.0.0.0:8280` and
-`AUTHZ_PAP_CLIENT_URL` to `http://127.0.0.1:8182`; the trusted providers and the token file default to off and the
-policy pull never runs, since the Pod's other containers run them, and `/health` is the pap-client's.
-
 ## Running it
 
-The chart assembles the agent Pod as this one container when
-`AUTHZ_SINGLE_SERVICE_ENABLED` is set; the switch is off by default while both
-topologies are supported, and every other parameter of the chart keeps its
-meaning. On a kind cluster:
+On a kind cluster:
 
 ```bash
 make e2e-images
-make e2e-single      # the chart with the switch on, then the runtime suite
-make parity-single   # the same in the parity namespace, then the parity replay
-make e2e-install     # back to the five-container Pod
+make e2e-install   # the chart
+make e2e-suite     # the runtime suite against it
+make parity        # the parity replay in its own namespace
 ```
 
-Both suites pass against either topology, and one group is skipped against
-this one: `TestOPARestart`, whose container is the one that is gone. The other
-two groups that address OPA directly gate both, because the single service
-answers for OPA rather than replacing what it served — `TestOPALockdown`, since
-the data API is on the same port under the same policy and write secret
-(ADR-0077), and `TestAuthorizeEnvoyOpaDirectParity`, since both transports it
-compares are still there (ADR-0062).
-
-## Standing in for the OPA container
-
-Before the chart could assemble the single service, the same binary was tested
-in place of the OPA container of the five-container Pod, and that still works:
-it reads the OPA command line, relays `/health` to the pap-client, and leaves
-the loops to the Pod's other containers. It is a manual aid, not a target of
-CI; `test/k8s/README.md` has the commands.
+Both suites gate the service in CI: the runtime suite in `Kind end-to-end`, the
+parity replay in `Parity on kind`.

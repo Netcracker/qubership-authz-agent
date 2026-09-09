@@ -108,7 +108,7 @@ func TestApplyEntitlementsOverride_AddsAndRemoves(t *testing.T) {
 		t.Fatalf("aliasSet should carry entitledResources alias")
 	}
 
-	// Applying nil cfg should remove the container-pinned entry.
+	// Applying nil cfg should remove the deployment-pinned entry.
 	ApplyEntitlementsOverride(doc, nil)
 	if doc.Normalized.Remote.Entitlements != nil {
 		t.Fatalf("nil cfg should remove remote.entitlements")
@@ -190,8 +190,8 @@ func TestValidate_RejectsEntitlementUpload(t *testing.T) {
 	if !strings.Contains(msg, "AUTHZ_ENTITLEMENTS_URL") {
 		t.Fatalf("expected message to mention AUTHZ_ENTITLEMENTS_URL env var, got %q", msg)
 	}
-	if !strings.Contains(msg, "container-pinned") {
-		t.Fatalf("expected message to mention container-pinned, got %q", msg)
+	if !strings.Contains(msg, "deployment-pinned") {
+		t.Fatalf("expected message to mention deployment-pinned, got %q", msg)
 	}
 }
 

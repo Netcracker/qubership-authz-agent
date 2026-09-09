@@ -69,30 +69,18 @@ type RuntimeConfig struct {
 	// token from Keycloak (M2M_KEYCLOAK_PROFILE=true), as the kind harness
 	// configures it. When false, m2m_keycloak catalog steps are skipped.
 	M2MKeycloakProfile bool
-	// SingleService is true when the agent under test is the one container of
-	// authz-agent-ADR-0080 (SINGLE_SERVICE=true). It serves the same data
-	// API on the same port under the same policy, so only TestOPARestart is
-	// skipped there: the container it restarts is the one that is gone.
-	SingleService bool
 	// OPAAuthToken is the shared bearer token that pap-client sends to OPA on
 	// write requests (PUT/PATCH /v1/data/**). Used by opa_lockdown tests that
 	// verify authenticated writes are accepted (authz-agent-ADR-0077).
 	// The kind harness reads it from the chart's Secret. Default:
 	// "test-opa-auth-token".
 	OPAAuthToken string
-	// KubeNamespace, KubeAgentSelector and KubeDebugImage configure the stack
-	// driver (stack.go): the namespace the agent runs in, the label selector
-	// of its Pod, and the image whose `kill` signals the OPA container from an
-	// ephemeral container.
-	KubeNamespace     string
-	KubeAgentSelector string
-	KubeDebugImage    string
 }
 
 // LoadConfig builds RuntimeConfig from environment variables. The kind Job
 // (test/k8s/runtime-suite-job.yaml) sets every address to a Service name. The
 // defaults only keep the config well-formed: the suite runs inside the
-// cluster, because the stack driver needs the Pod's ServiceAccount (stack.go).
+// cluster, where every target is reachable by Service name.
 func LoadConfig() RuntimeConfig {
 	waitSec := 6
 	if v := os.Getenv("KC_EXPIRED_WAIT_SECONDS"); v != "" {
@@ -127,21 +115,8 @@ func LoadConfig() RuntimeConfig {
 		OPADirectURL:          envOr("OPA_DIRECT_URL", "http://localhost:18181"),
 		PullInterval:          pullInterval,
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
-		SingleService:         os.Getenv("SINGLE_SERVICE") == "true",
 		OPAAuthToken:          envOr("OPA_AUTH_TOKEN", "test-opa-auth-token"),
-		KubeNamespace:         envOr("K8S_NAMESPACE", "authz-e2e"),
-		KubeAgentSelector:     envOr("K8S_AGENT_SELECTOR", "name=authz-agent"),
-		KubeDebugImage:        envOr("K8S_DEBUG_IMAGE", "local/authz-agent-pap-client:ci"),
 	}
-}
-
-// needsOPAContainer reports whether the step belongs to the group that
-// restarts the OPA container, which the single service does not have. It is
-// the one group RuntimeConfig.SingleService switches off, and both the
-// decision-log coverage and the end-of-run catalog check read it, so the two
-// stay in step.
-func needsOPAContainer(name string) bool {
-	return strings.HasPrefix(name, "opa_restart.")
 }
 
 func envOr(key, fallback string) string {

@@ -31,9 +31,9 @@ import (
 // authorize.
 const originalPathHeader = "X-Authz-Original-Path"
 
-// Relay timeouts, as the Envoy routes had them.
+// The decision-log download can carry a whole run's decisions, so it is
+// given a timeout of its own rather than the client's default.
 const (
-	healthTimeout       = 5 * time.Second
 	decisionLogsTimeout = 30 * time.Second
 )
 
@@ -41,12 +41,11 @@ const (
 // the same meaning: the check routes of the legacy access-control API
 // translated by package legacy, the canonical authorize route as a data API
 // request, /api-version, /health, the decision-log download, and 404
-// {"message":"not found"} for every other path. /health is relayed to the
-// pap-client of Options.PapClientURL when one is set, and the download to
-// the collector of Options.CollectorURL when the decisions are not stored
-// in the service. A route accepts any method, as the Envoy path matches
-// did; the check routes then read the body, and the filter routes the
-// query, whatever the method.
+// {"message":"not found"} for every other path. The download is relayed to
+// the collector of Options.CollectorURL when the decisions are not stored in
+// the service. A route accepts any method, as the Envoy path matches did;
+// the check routes then read the body, and the filter routes the query,
+// whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
 	app.Use(requestID)
 	switch {
@@ -66,11 +65,7 @@ func (s *Server) RegisterPublic(app *fiber.App) {
 	app.All("/access/v2/check/resource", s.checkResource("/access/v2/check/resource", true))
 	app.All("/access/v2/check/filter", s.checkFilter("/access/v2/check/filter"))
 	app.All("/api-version", apiVersion)
-	if s.opts.PapClientURL != "" {
-		app.All("/health", relay(s.opts.PapClientURL, "pap-client", healthTimeout))
-	} else {
-		app.All("/health", s.publicHealth)
-	}
+	app.All("/health", s.publicHealth)
 	app.Use(notFound)
 }
 
@@ -87,9 +82,8 @@ func notFound(c *fiber.Ctx) error {
 	return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "not found"})
 }
 
-// publicHealth is /health without a pap-client to relay to: the service's
-// own health for GET, and 405 for any other method, as the pap-client
-// answers.
+// publicHealth is the public surface's /health: the service's own health
+// for GET, and 405 for any other method, as access-control answers.
 func (s *Server) publicHealth(c *fiber.Ctx) error {
 	if c.Method() != fiber.MethodGet {
 		return c.Status(http.StatusMethodNotAllowed).JSON(fiber.Map{"message": "method not allowed"})

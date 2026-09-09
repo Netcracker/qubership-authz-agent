@@ -16,8 +16,6 @@ package runtimetest
 
 import (
 	"os"
-	"reflect"
-	"slices"
 	"strings"
 	"testing"
 )
@@ -140,36 +138,4 @@ func parseStepTable(content string) []StepEntry {
 		})
 	}
 	return entries
-}
-
-// TestNeedsOPAContainerCoversTheRestartGroup: the predicate that holds the
-// catalog checks and the decision-log coverage in step with the skip names
-// exactly the steps of the group that restarts the OPA container. A wrong
-// prefix would take steps out of both checks silently, since both only ever
-// stop expecting a step.
-func TestNeedsOPAContainerCoversTheRestartGroup(t *testing.T) {
-	var skipped, kept []string
-	for _, entry := range Catalog {
-		if needsOPAContainer(entry.Name) {
-			skipped = append(skipped, entry.Name)
-		} else {
-			kept = append(kept, entry.Name)
-		}
-	}
-	want := []string{
-		"opa_restart.pre_restart_baseline",
-		"opa_restart.restart_opa_container",
-		"opa_restart.wait_opa_healthy",
-		"opa_restart.post_restart_decisions_correct",
-	}
-	if !reflect.DeepEqual(skipped, want) {
-		t.Errorf("needsOPAContainer() covers %v, want %v", skipped, want)
-	}
-	// The two groups that address the data API run against both topologies:
-	// the single service serves it on the same port under the same policy.
-	for _, name := range []string{"opa_lockdown.write_with_auth.204", "authorize.envoy_opa_direct.bytewise_response_parity"} {
-		if !slices.Contains(kept, name) {
-			t.Errorf("needsOPAContainer() takes %q out of the catalog checks, want it kept", name)
-		}
-	}
 }

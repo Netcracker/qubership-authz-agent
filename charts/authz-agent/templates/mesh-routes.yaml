@@ -50,12 +50,10 @@ spec:
               - match:
                   prefix: /access/v2/check/filter
           # The canonical authorize API is rewritten to the data API on 8181,
-          # which is OPA in the five-container topology and the single
-          # service's own data API in the other. Under Envoy it is the one
-          # route with no per-route Lua filter — a pure path rewrite to
-          # /v1/data/authorize with a 30s timeout — so the gateway does that
-          # rewrite itself and saves a hop. Byte-identity of the two transports
-          # is what authz-agent-ADR-0062 locks in.
+          # a pure path rewrite to /v1/data/authorize with a 30s timeout, so
+          # the gateway does that rewrite itself and the request reaches the
+          # engine without a hop through the public surface. Byte-identity of
+          # the two transports is what authz-agent-ADR-0062 locks in.
           #
           # A prefix, not an exact path — the mesh cannot express an exact match.
           # This rule originally used `match.path`, which the control plane

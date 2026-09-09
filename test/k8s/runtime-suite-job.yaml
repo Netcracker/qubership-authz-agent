@@ -20,8 +20,7 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: runtime-suite
-      # The token is mounted explicitly below, for the one thing the suite
-      # asks the API server for: restarting the OPA container.
+      # The suite asks the API server for nothing.
       automountServiceAccountToken: false
       containers:
         - name: runtime-suite
@@ -42,25 +41,10 @@ spec:
               value: "^TestRuntimeSuite$"
             - name: FULL_RUNTIME_SUITE
               value: "true"
-            # The topology under test; `make e2e-single` sets it to true, and
-            # the groups that need an OPA of its own then skip.
-            - name: SINGLE_SERVICE
-              value: "false"
-            # The chart runs token-fetcher by default, so the m2m_keycloak
-            # steps are real here rather than skipped.
+            # The agent takes its M2M token from the harness Keycloak, so
+            # the m2m_keycloak steps are real here rather than skipped.
             - name: M2M_KEYCLOAK_PROFILE
               value: "true"
-            # The stack driver (test/integration/testify/stack.go) restarts
-            # OPA through the API server: it needs the namespace, the agent
-            # Pod's label, and an image with `kill` for the ephemeral container.
-            - name: K8S_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: K8S_AGENT_SELECTOR
-              value: name=authz-agent
-            - name: K8S_DEBUG_IMAGE
-              value: local/authz-agent-pap-client:ci
             - name: BASE_URL
               value: http://authz-agent:8080
             - name: OPA_DIRECT_URL
@@ -96,16 +80,12 @@ spec:
             - name: ENTITLEMENTS_MOCK_URL
               value: http://entitlements-mock:8090
             # The chart generates this token per install; the opa_lockdown
-            # steps read it from the same Secret pap-client uses.
+            # steps read it from the Secret the agent reads.
             - name: OPA_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: authz-agent-opa-auth
                   key: token
-          volumeMounts:
-            - name: kube-api
-              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
-              readOnly: true
           resources:
             requests:
               cpu: 100m
@@ -114,17 +94,3 @@ spec:
             limits:
               memory: 256Mi
               ephemeral-storage: 256Mi
-      volumes:
-        # A short-lived token for the runtime-suite ServiceAccount plus the
-        # cluster CA, at the path the driver reads.
-        - name: kube-api
-          projected:
-            sources:
-              - serviceAccountToken:
-                  path: token
-                  expirationSeconds: 3600
-              - configMap:
-                  name: kube-root-ca.crt
-                  items:
-                    - key: ca.crt
-                      path: ca.crt

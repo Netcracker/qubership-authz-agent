@@ -51,9 +51,8 @@ type Options struct {
 	// /v1/data/authorize under its own method, and the legacy check routes
 	// as POST /v1/data/authorize.
 	Authorization bool
-	// Health reports the state of the loops the service runs itself; nil
-	// means the service is healthy and ready as long as it answers, which
-	// is the case while the Pod's other containers run the loops.
+	// Health reports the state of the loops the service runs; nil means
+	// the service is healthy and ready as long as it answers.
 	Health func() Report
 	// NDBuiltinCache builds the non-deterministic builtin cache, which the
 	// evaluator reads as a memo within one decision and which is recorded
@@ -66,16 +65,11 @@ type Options struct {
 	// clock. The two that would differ, io.jwt.encode_sign and
 	// io.jwt.encode_sign_raw, read no cache at all and are not called.
 	NDBuiltinCache bool
-	// PapClientURL is the base URL of the pap-client container, which
-	// answers GET /health for the Pod while it still has one; the public
-	// surface relays /health to it. Empty makes the public /health the
-	// service's own.
-	PapClientURL string
-	// CollectorURL is the base URL of the decision-log collector, which
-	// serves the download of the decisions it received; the public surface
-	// relays GET /internal/v1/decision-logs to it unless the decisions are
-	// stored in the service. Empty, with no store, leaves the download
-	// unregistered.
+	// CollectorURL is the base URL of the decision-log collector the
+	// decisions are uploaded to, which serves the download of the ones it
+	// received; the public surface relays GET /internal/v1/decision-logs to
+	// it unless the decisions are stored in the service. Empty, with no
+	// store, leaves the download unregistered.
 	CollectorURL string
 }
 
@@ -135,8 +129,8 @@ type HealthErrorResponse struct {
 
 // HealthErrorDetails carries the diagnostics of an unhealthy verdict.
 // OPAReady is always true: the service holds the engine, so there is no
-// separate OPA to wait for; the field stays for the shape the pap-client
-// gave the body.
+// separate engine to wait for. The field stays because the body's shape is
+// what the platform's probes and dashboards already read.
 type HealthErrorDetails struct {
 	OPAReady         *bool            `json:"opaReady,omitempty"`
 	ConfigError      string           `json:"configError,omitempty"`
@@ -144,7 +138,7 @@ type HealthErrorDetails struct {
 	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
 }
 
-// health answers as the pap-client did: 200 with the conversion counts
+// health answers 200 with the conversion counts
 // when healthy, 503 with the reason and its details otherwise. The
 // policies' first load is not part of it, so a liveness probe does not
 // restart a service that is still waiting for its source; /ready carries

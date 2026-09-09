@@ -4,7 +4,7 @@
 # the plain Service names below resolve.
 
 # The images come from `make e2e-images`, which side-loads them into the kind
-# node. OPA keeps the chart's digest-pinned default and is pulled by the node.
+# node.
 IMAGE_REPOSITORY: local
 TAG: ci
 
@@ -12,7 +12,7 @@ TAG: ci
 MESH_ROUTES_ENABLED: false
 
 # The harness Keycloak. The chart composes <base>/auth/realms/<realm> for each
-# realm: cloud-common is the M2M realm the token-fetcher sidecar uses,
+# realm: cloud-common is the M2M realm the agent takes its token from,
 # authz-test is where the suite's users and clients live.
 IDENTITY_PROVIDER_URL: http://keycloak:8080
 AUTHZ_IDP_REALMS:
