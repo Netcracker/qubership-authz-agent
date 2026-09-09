@@ -250,16 +250,19 @@ SVT_DIR = Path(__file__).resolve().parents[2]
 
 
 def under_svt(path: Path) -> Path:
-    """Resolve path and refuse one that leaves the SVT directory.
+    """Canonicalise path and refuse one that leaves the SVT directory.
 
-    Destinations come from the command line, so a typo or a pasted absolute
-    path would write wherever it said. Resolving first also collapses any `..`
-    the argument carried.
+    Every destination comes from a `--output-dir` or `--output-file` on the
+    command line, so a typo or a pasted absolute path would write wherever it
+    said. `realpath` collapses any `..` the argument carried and follows the
+    symlinks on the way, so the comparison is against the file that would
+    actually be written rather than the string that was typed.
     """
-    resolved = path.expanduser().resolve()
-    if not resolved.is_relative_to(SVT_DIR):
-        raise SystemExit(f"refusing to write outside {SVT_DIR}: {resolved}")
-    return resolved
+    resolved = os.path.realpath(os.path.expanduser(str(path)))
+    root = os.path.realpath(str(SVT_DIR))
+    if resolved != root and not resolved.startswith(root + os.sep):
+        raise SystemExit(f"refusing to write outside {root}: {resolved}")
+    return Path(resolved)
 
 
 def write_json(path: Path, payload: Any) -> None:
