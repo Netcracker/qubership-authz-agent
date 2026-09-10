@@ -34,11 +34,10 @@ DATA_DIR="${COMMON_DIR}/jmeter/data"
 PROJECT_NAME="${PROJECT_NAME:-authz-svt}"
 SVT_KC_PORT="${SVT_KC_PORT:-25556}"
 SVT_AUTHZ_PORT="${SVT_AUTHZ_PORT:-28080}"
-SVT_AUTHZ_ADMIN_PORT="${SVT_AUTHZ_ADMIN_PORT:-29901}"
 SVT_PROMETHEUS_PORT="${SVT_PROMETHEUS_PORT:-29090}"
 # Host-published port of the authz-policy-admin that serves the access-control v3 config
 # API.  This is the port host-side tooling seeds through; inside the compose
-# network pap-client reaches the stub on its container port, so
+# network the agent reaches the stub on its container port, so
 # AUTHZ_PAP_CLIENT_SOURCE_URL is http://authz-policy-admin:18090 regardless of this value.
 SVT_AUTHZ_POLICY_ADMIN_PORT="${SVT_AUTHZ_POLICY_ADMIN_PORT:-28093}"
 # Simplified-policy domain the seeds are uploaded under.  The stub serves
@@ -53,7 +52,7 @@ SVT_PAP_PULL_INTERVAL="${SVT_PAP_PULL_INTERVAL:-2}"
 # reach OPA.
 SVT_PULL_WAIT_SECONDS=$((SVT_PAP_PULL_INTERVAL + 2))
 
-export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT SVT_AUTHZ_ADMIN_PORT SVT_PROMETHEUS_PORT SVT_AUTHZ_POLICY_ADMIN_PORT SVT_AUTHZ_POLICY_ADMIN_DOMAIN
+export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT SVT_PROMETHEUS_PORT SVT_AUTHZ_POLICY_ADMIN_PORT SVT_AUTHZ_POLICY_ADMIN_DOMAIN
 export SVT_PAP_PULL_INTERVAL SVT_PULL_WAIT_SECONDS
 
 KC_REALM="svt-test"
@@ -85,12 +84,17 @@ svt_wait_for_public_health() {
   return 1
 }
 
+# The agent answers /ready on its data API once the trusted providers have
+# bootstrapped and the policies have loaded once; the port is not published, so
+# the probe runs from a container on the compose network. The image carries no
+# shell utility, hence the one-shot curl container rather than `compose exec`.
 svt_wait_for_backend_health() {
   local attempts="${1:-90}"
   local delay_seconds="${2:-2}"
   local i
   for ((i = 1; i <= attempts; i++)); do
-    if "${COMPOSE_CMD[@]}" exec -T opa pap-client healthcheck >/dev/null 2>&1; then
+    if "${COMPOSE_CMD[@]}" run --rm --no-deps --entrypoint /bin/sh jmeter \
+      -c 'curl -fsS -o /dev/null http://authz-agent:8181/ready' >/dev/null 2>&1; then
       return 0
     fi
     sleep "${delay_seconds}"
@@ -144,7 +148,7 @@ svt_upload_seeds() {
   # own simplified-policy paths (the stub serves them verbatim —
   # authz-agent-ADR-0073).  pap-client's PolicyPuller fetches the v3 export on
   # the next pull tick and pushes the converted data to OPA.
-  # Used both by tests/svt/scripts/up at first boot and by svt_restart_opa
+  # Used both by tests/svt/scripts/up at first boot and by svt_restart_agent
   # after every OPA restart.  The re-seed after a restart is belt-and-braces:
   # the puller's applied hashes live in memory, so a restarted agent re-applies
   # the current data on its first tick regardless.
@@ -168,26 +172,25 @@ svt_upload_seeds() {
   fi
 }
 
-svt_restart_opa() {
-  svt_log "restarting 'opa' service before next measured phase..."
-  "${COMPOSE_CMD[@]}" restart opa >/dev/null
-  svt_log "waiting for public health after OPA restart..."
+svt_restart_agent() {
+  svt_log "restarting 'authz-agent' service before next measured phase..."
+  "${COMPOSE_CMD[@]}" restart authz-agent >/dev/null
+  svt_log "waiting for public health after the restart..."
   if ! svt_wait_for_public_health 90 2; then
-    svt_log "ERROR: stack did not become healthy after OPA restart"
+    svt_log "ERROR: stack did not become healthy after the restart"
     exit 1
   fi
-  # OPA restart clears the in-memory data document; the on-disk
-  # /etc/opa/data/{policies,pips}.json files still exist and the
-  # PolicyPuller will repopulate OPA on the next pull tick.  We re-upload
-  # seeds to the authz-policy-admin so the puller always sees current data even if
-  # the stub was also restarted.  This keeps RLS conditions referencing
-  # subject.emailFromToken (and the additive mixed-flow scenarios)
-  # evaluating correctly after the restart.
-  svt_log "re-seeding policies + PIPs after OPA restart..."
+  # A restart empties the store: the documents live in the process and are
+  # rebuilt from the source at every start, where the five-container stack
+  # reloaded them from a shared volume. We re-upload the seeds so the pull
+  # loop always fetches current data even if the stub was also restarted.
+  # This keeps RLS conditions referencing subject.emailFromToken (and the
+  # additive mixed-flow scenarios) evaluating correctly after the restart.
+  svt_log "re-seeding policies + PIPs after the restart..."
   svt_upload_seeds
-  # Wait for the OPA pull loop to fetch and apply the re-seeded data:
-  # one full tick plus a margin, derived from the interval the stack runs with.
-  svt_log "waiting ${SVT_PULL_WAIT_SECONDS}s for OPA pull loop to apply re-seeded data..."
+  # Wait for the pull loop to fetch and apply the re-seeded data: one full
+  # tick plus a margin, derived from the interval the stack runs with.
+  svt_log "waiting ${SVT_PULL_WAIT_SECONDS}s for the pull loop to apply re-seeded data..."
   sleep "${SVT_PULL_WAIT_SECONDS}"
   # Warm OPA's Rego JIT + Envoy upstream connection pool before the
   # measurement window opens. Without this, the first 200-500 ms of
@@ -384,7 +387,7 @@ svt_run_jmeter_full() {
       -Jthreads="${threads}" \
       -Jramp_seconds="${ramp}" \
       -Jduration_seconds="${duration}" \
-      -Jauthz_host=envoy \
+      -Jauthz_host=authz-agent \
       -Jauthz_port=8080 \
       -Jtarget_rps="${target_rps}" \
       -j /results/jmeter.log \
@@ -432,7 +435,7 @@ svt_run_jmeter_opa_direct() {
       -Jthreads="${threads}" \
       -Jramp_seconds="${ramp}" \
       -Jduration_seconds="${duration}" \
-      -Jopa_host=opa \
+      -Jopa_host=authz-agent \
       -Jopa_port=8181 \
       -Jtarget_rps="${target_rps}" \
       -j /results/jmeter.log \
@@ -453,8 +456,8 @@ svt_run_jmeter_opa_direct() {
 }
 
 # Run a generic Envoy-boundary scenario from a generated CSV.
-# Usage: svt_run_jmeter_envoy_scenario <result_dir> <jmx_path> <scenario_csv> <target_rps> <threads> <ramp> <duration> <tokens_file>
-svt_run_jmeter_envoy_scenario() {
+# Usage: svt_run_jmeter_public_scenario <result_dir> <jmx_path> <scenario_csv> <target_rps> <threads> <ramp> <duration> <tokens_file>
+svt_run_jmeter_public_scenario() {
   local result_dir=$1
   local jmx_path=$2
   local scenario_csv=$3
@@ -481,7 +484,7 @@ svt_run_jmeter_envoy_scenario() {
       -Jthreads="${threads}" \
       -Jramp_seconds="${ramp}" \
       -Jduration_seconds="${duration}" \
-      -Jauthz_host=envoy \
+      -Jauthz_host=authz-agent \
       -Jauthz_port=8080 \
       -Jscenario_csv=/scenario/requests.csv \
       -Jtarget_rps="${target_rps}" \
@@ -531,7 +534,7 @@ svt_run_jmeter_opa_direct_scenario() {
       -Jthreads="${threads}" \
       -Jramp_seconds="${ramp}" \
       -Jduration_seconds="${duration}" \
-      -Jopa_host=opa \
+      -Jopa_host=authz-agent \
       -Jopa_port=8181 \
       -Jscenario_csv=/scenario/requests.csv \
       -Jtarget_rps="${target_rps}" \
@@ -589,7 +592,7 @@ svt_write_run_metadata_full() {
     "docker_engine": "29.3.1",
     "docker_compose": "v5.1.1"
   },
-  "measured_containers": ["envoy", "opa", "decision-log-collector"],
+  "measured_containers": ["authz-agent"],
   "container_limits": {
     "opa_cpus": 8,
     "opa_mem_limit": "8g"
@@ -734,7 +737,7 @@ svt_run_jmeter_per_scenario_opa_direct() {
       -Jthreads="${threads}" \
       -Jramp_seconds="${ramp}" \
       -Jduration_seconds="${duration}" \
-      -Jauthz_host=opa \
+      -Jauthz_host=authz-agent \
       -Jauthz_port=8181 \
       -Jtarget_rps="${target_rps}" \
       -j /results/jmeter.log \
@@ -763,13 +766,13 @@ svt_write_run_metadata_opa_direct() {
   local duration=$5
   local target_rps=$6
 
-  local opa_nano_cpus=0
-  local opa_memory_bytes=0
-  local opa_container_id
-  opa_container_id=$("${COMPOSE_CMD[@]}" ps -q opa 2>/dev/null || true)
-  if [[ -n "${opa_container_id}" ]]; then
-    opa_nano_cpus=$(docker inspect -f '{{.HostConfig.NanoCpus}}' "${opa_container_id}" 2>/dev/null || echo 0)
-    opa_memory_bytes=$(docker inspect -f '{{.HostConfig.Memory}}' "${opa_container_id}" 2>/dev/null || echo 0)
+  local agent_nano_cpus=0
+  local agent_memory_bytes=0
+  local agent_container_id
+  agent_container_id=$("${COMPOSE_CMD[@]}" ps -q authz-agent 2>/dev/null || true)
+  if [[ -n "${agent_container_id}" ]]; then
+    agent_nano_cpus=$(docker inspect -f '{{.HostConfig.NanoCpus}}' "${agent_container_id}" 2>/dev/null || echo 0)
+    agent_memory_bytes=$(docker inspect -f '{{.HostConfig.Memory}}' "${agent_container_id}" 2>/dev/null || echo 0)
   fi
 
   cat > "${meta_file}" <<METAEOF
@@ -781,7 +784,7 @@ svt_write_run_metadata_opa_direct() {
   "duration_seconds": ${duration},
   "target_rps": ${target_rps},
   "target_endpoint": {
-    "host": "opa",
+    "host": "authz-agent",
     "port": 8181,
     "path": "/v1/data/authorize"
   },
@@ -794,10 +797,10 @@ svt_write_run_metadata_opa_direct() {
     "docker_engine": "29.3.1",
     "docker_compose": "v5.1.1"
   },
-  "measured_containers": ["opa", "decision-log-collector"],
+  "measured_containers": ["authz-agent"],
   "container_limits": {
-    "opa_nano_cpus": ${opa_nano_cpus},
-    "opa_memory_bytes": ${opa_memory_bytes}
+    "agent_nano_cpus": ${agent_nano_cpus},
+    "agent_memory_bytes": ${agent_memory_bytes}
   }
 }
 METAEOF

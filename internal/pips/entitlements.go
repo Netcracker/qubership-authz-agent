@@ -20,8 +20,8 @@ import (
 	"strings"
 )
 
-// Environment variables consumed at pap-client startup to materialise
-// the container-pinned entitlements PIP entry per ADR-0054 + D-AG-17.
+// Environment variables consumed at startup to materialise the
+// deployment-pinned entitlements PIP entry per ADR-0054 + D-AG-17.
 // The variable names mirror the existing `AUTHZ_JWKS_HTTP_*` block so the
 // knob shape is consistent for operators.
 const (
@@ -117,11 +117,10 @@ func ApplyEntitlementsOverride(doc *PIPDocument, cfg *EntitlementsConfig) {
 	doc.Normalized.Remote.Entitlements = entry
 }
 
-// EmptyDocumentWithEntitlements returns a minimal PIPDocument that
-// carries only the container-pinned entitlements entry. Used on
-// pap-client startup when AUTHZ_ENTITLEMENTS_URL is set but no
-// user-uploaded PIP document exists yet, so the rego resolver can
-// materialise entitlements even on a fresh container.
+// EmptyDocumentWithEntitlements returns a minimal PIPDocument that carries
+// only the deployment-pinned entitlements entry. Used at startup when
+// AUTHZ_ENTITLEMENTS_URL is set but no user-uploaded PIP document exists
+// yet, so the rego resolver can materialise entitlements on a fresh Pod.
 func EmptyDocumentWithEntitlements(cfg *EntitlementsConfig) *PIPDocument {
 	doc := &PIPDocument{
 		Raw: RawPIPDocument{Version: 1, Items: []SimplifiedPIP{}},

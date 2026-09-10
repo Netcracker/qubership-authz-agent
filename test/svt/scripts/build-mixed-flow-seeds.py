@@ -29,7 +29,7 @@ Outputs:
   - tests/svt/common/compose/seed/svt-mixed-flow-pips.json
 
 Both files are uploaded after the base svt-policies.json /
-svt-pips.json by tests/svt/scripts/up and svt_restart_opa (merge via
+svt-pips.json by tests/svt/scripts/up and svt_restart_agent (merge via
 jq before PUT).
 
 Run from the authz-agent repo root:

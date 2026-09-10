@@ -56,15 +56,12 @@ jobs:
     with:
       ref: v${{ inputs.version }}
       dry-run: ${{ github.event.inputs.dry-run == 'true' }}
-      # Five images: four agent-Pod containers (authz-agent-* prefix) and the
-      # standalone authz-policy-admin (no prefix — it is its own Deployment).
+      # Two images: the agent and the standalone authz-policy-admin, which is
+      # its own Deployment rather than a container of the agent Pod.
       # arm64 is required; do not change platforms to amd64-only.
       component: |
         [
-          { "name": "authz-agent-pap-client",    "file": "./build/pap-client/Dockerfile",         "context": "." },
-          { "name": "authz-agent-envoy",         "file": "./build/envoy/Dockerfile",              "context": "." },
-          { "name": "authz-agent-collector",     "file": "./build/collector/Dockerfile",          "context": "." },
-          { "name": "authz-agent-token-fetcher", "file": "./build/token-fetcher/Dockerfile",      "context": "." },
+          { "name": "authz-agent",               "file": "./build/authz-agent/Dockerfile",        "context": "." },
           { "name": "authz-policy-admin",        "file": "./build/authz-policy-admin/Dockerfile", "context": "." }
         ]
       platforms: linux/amd64,linux/arm64

@@ -223,61 +223,6 @@
         false
       ]
     },
-    "ENVOY_IMAGE": {
-      "$id": "#/properties/ENVOY_IMAGE",
-      "type": "string",
-      "title": "The ENVOY_IMAGE schema",
-      "description": "Overrides the Envoy image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-envoy:{{ TAG }}.",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-agent-envoy:1.0.0"
-      ],
-      "internal": true
-    },
-    "OPA_IMAGE": {
-      "$id": "#/properties/OPA_IMAGE",
-      "type": "string",
-      "title": "The OPA_IMAGE schema",
-      "description": "Overrides the OPA image. Empty means the upstream OPA image pinned by digest in the chart helpers.",
-      "default": "",
-      "examples": [
-        "openpolicyagent/opa:1.14.0"
-      ],
-      "internal": true
-    },
-    "PAP_CLIENT_IMAGE": {
-      "$id": "#/properties/PAP_CLIENT_IMAGE",
-      "type": "string",
-      "title": "The PAP_CLIENT_IMAGE schema",
-      "description": "Overrides the pap-client image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-pap-client:{{ TAG }}.",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-agent-pap-client:1.0.0"
-      ],
-      "internal": true
-    },
-    "COLLECTOR_IMAGE": {
-      "$id": "#/properties/COLLECTOR_IMAGE",
-      "type": "string",
-      "title": "The COLLECTOR_IMAGE schema",
-      "description": "Overrides the decision-log collector image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-collector:{{ TAG }}.",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-agent-collector:1.0.0"
-      ],
-      "internal": true
-    },
-    "TOKEN_FETCHER_IMAGE": {
-      "$id": "#/properties/TOKEN_FETCHER_IMAGE",
-      "type": "string",
-      "title": "The TOKEN_FETCHER_IMAGE schema",
-      "description": "Overrides the token-fetcher sidecar image. Empty means {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}. Used only when KUBERNETES_M2M_ENABLED is false",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-agent-token-fetcher:1.0.0"
-      ],
-      "internal": true
-    },
     "AUTHZ_POLICY_ADMIN_IMAGE": {
       "$id": "#/properties/AUTHZ_POLICY_ADMIN_IMAGE",
       "type": "string",
@@ -310,7 +255,7 @@
       "$id": "#/properties/AUTHZ_TRUSTED_PROVIDERS_FILE",
       "type": "string",
       "title": "The AUTHZ_TRUSTED_PROVIDERS_FILE schema",
-      "description": "Path where the trusted-providers ConfigMap is mounted; pap-client watches this file",
+      "description": "Path where the trusted-providers ConfigMap is mounted; the agent watches this file",
       "default": "/etc/authz/trusted-providers.json",
       "examples": [
         "/etc/authz/trusted-providers.json"
@@ -506,7 +451,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_TOKEN_FILE",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
-      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true or by the token-fetcher sidecar otherwise",
+      "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
       "default": "/etc/authz/ac-token/token",
       "examples": [
         "/etc/authz/ac-token/token"
@@ -676,190 +621,6 @@
       "title": "The HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT schema",
       "type": "integer"
     },
-    "ENVOY_CPU_REQUEST": {
-      "$id": "#/properties/ENVOY_CPU_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The ENVOY_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the Envoy container will use to start",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "ENVOY_CPU_LIMIT": {
-      "$id": "#/properties/ENVOY_CPU_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The ENVOY_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the Envoy container can use",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "ENVOY_MEM_REQUEST": {
-      "$id": "#/properties/ENVOY_MEM_REQUEST",
-      "type": "string",
-      "title": "The ENVOY_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the Envoy container will use to start",
-      "examples": [
-        "256Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "ENVOY_MEM_LIMIT": {
-      "$id": "#/properties/ENVOY_MEM_LIMIT",
-      "type": "string",
-      "title": "The ENVOY_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the Envoy container can use",
-      "examples": [
-        "512Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "OPA_CPU_REQUEST": {
-      "$id": "#/properties/OPA_CPU_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The OPA_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the OPA container will use to start",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "OPA_CPU_LIMIT": {
-      "$id": "#/properties/OPA_CPU_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The OPA_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the OPA container can use",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "OPA_MEM_REQUEST": {
-      "$id": "#/properties/OPA_MEM_REQUEST",
-      "type": "string",
-      "title": "The OPA_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the OPA container will use to start",
-      "examples": [
-        "256Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "OPA_MEM_LIMIT": {
-      "$id": "#/properties/OPA_MEM_LIMIT",
-      "type": "string",
-      "title": "The OPA_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the OPA container can use",
-      "examples": [
-        "512Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "PAP_CLIENT_CPU_REQUEST": {
-      "$id": "#/properties/PAP_CLIENT_CPU_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The PAP_CLIENT_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the pap-client container will use to start",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "PAP_CLIENT_CPU_LIMIT": {
-      "$id": "#/properties/PAP_CLIENT_CPU_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The PAP_CLIENT_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the pap-client container can use",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "PAP_CLIENT_MEM_REQUEST": {
-      "$id": "#/properties/PAP_CLIENT_MEM_REQUEST",
-      "type": "string",
-      "title": "The PAP_CLIENT_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the pap-client container will use to start",
-      "examples": [
-        "256Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "PAP_CLIENT_MEM_LIMIT": {
-      "$id": "#/properties/PAP_CLIENT_MEM_LIMIT",
-      "type": "string",
-      "title": "The PAP_CLIENT_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the pap-client container can use",
-      "examples": [
-        "512Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "COLLECTOR_CPU_REQUEST": {
-      "$id": "#/properties/COLLECTOR_CPU_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The COLLECTOR_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the decision-log collector container will use to start",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "COLLECTOR_CPU_LIMIT": {
-      "$id": "#/properties/COLLECTOR_CPU_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The COLLECTOR_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the decision-log collector container can use",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "COLLECTOR_MEM_REQUEST": {
-      "$id": "#/properties/COLLECTOR_MEM_REQUEST",
-      "type": "string",
-      "title": "The COLLECTOR_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the decision-log collector container will use to start",
-      "examples": [
-        "256Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "COLLECTOR_MEM_LIMIT": {
-      "$id": "#/properties/COLLECTOR_MEM_LIMIT",
-      "type": "string",
-      "title": "The COLLECTOR_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the decision-log collector container can use",
-      "examples": [
-        "512Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
     "AUTHZ_POLICY_ADMIN_CPU_REQUEST": {
       "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_REQUEST",
       "$ref": "#/definitions/integerOrString",
@@ -902,6 +663,101 @@
       "description": "Defines maximum amount of memory the authz-policy-admin container can use",
       "examples": [
         "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_IMAGE": {
+      "$id": "#/properties/AUTHZ_AGENT_IMAGE",
+      "type": "string",
+      "title": "The AUTHZ_AGENT_IMAGE schema",
+      "description": "Overrides the image of the agent. Empty composes it from IMAGE_REPOSITORY and TAG.",
+      "examples": [
+        "ghcr.io/netcracker/qubership-authz-agent:1.0.0"
+      ],
+      "internal": true,
+      "default": ""
+    },
+    "AUTHZ_AGENT_CPU_REQUEST": {
+      "$id": "#/properties/AUTHZ_AGENT_CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the single service container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_CPU_LIMIT": {
+      "$id": "#/properties/AUTHZ_AGENT_CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the single service container is allowed to use",
+      "examples": [
+        "4",
+        "500m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_MEM_REQUEST": {
+      "$id": "#/properties/AUTHZ_AGENT_MEM_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_MEM_REQUEST schema",
+      "description": "Defines minimum amount of memory the single service container will use to start",
+      "examples": [
+        "200Mi",
+        "1Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_MEM_LIMIT": {
+      "$id": "#/properties/AUTHZ_AGENT_MEM_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_MEM_LIMIT schema",
+      "description": "Defines maximum amount of memory the single service container is allowed to use",
+      "examples": [
+        "600Mi",
+        "2Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST": {
+      "$id": "#/properties/AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST schema",
+      "description": "Defines minimum amount of ephemeral storage the agent container will use to start",
+      "examples": [
+        "64Mi",
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT": {
+      "$id": "#/properties/AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT schema",
+      "description": "Defines maximum amount of ephemeral storage the agent container is allowed to use",
+      "examples": [
+        "512Mi",
+        "4Gi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_DECISION_LOG_SIZE_LIMIT": {
+      "$id": "#/properties/AUTHZ_DECISION_LOG_SIZE_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_DECISION_LOG_SIZE_LIMIT schema",
+      "description": "Defines maximum size of the emptyDir volume the decision log is written to",
+      "examples": [
+        "256Mi",
+        "2Gi"
       ],
       "internal": true,
       "envSpecific": true

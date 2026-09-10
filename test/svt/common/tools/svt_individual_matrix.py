@@ -80,7 +80,7 @@ ALLOW_ROLE = "ROLE_SVT_ADMIN"
 DENY_ROLE = "ROLE_SVT_MATRIX_DENY"
 PROM_STEP_SECONDS = 5
 
-TRANSPORT_MODE_ORDER = ("envoy-canonical", "envoy-legacy", "opa-direct")
+TRANSPORT_MODE_ORDER = ("public-canonical", "public-legacy", "opa-direct")
 SCENARIO_ORDER = (
     "ols-single",
     "ols-bulk",
@@ -105,11 +105,12 @@ REQUEST_FIELDS = [
     "headerFilterMode",
 ]
 
+# One measured container since authz-agent-ADR-0080: the public surface, the
+# engine, and the decision log are one process, so there is nothing left to
+# split the cost between.
 PROM_QUERIES = {
-    "opa_cpu": 'sum(rate(container_cpu_usage_seconds_total{name=~".*-opa-.*"}[30s]))',
-    "opa_mem": 'sum(container_memory_working_set_bytes{name=~".*-opa-.*"})',
-    "envoy_cpu": 'sum(rate(container_cpu_usage_seconds_total{name=~".*envoy.*"}[30s]))',
-    "envoy_mem": 'sum(container_memory_working_set_bytes{name=~".*envoy.*"})',
+    "agent_cpu": 'sum(rate(container_cpu_usage_seconds_total{name=~".*authz-agent.*"}[30s]))',
+    "agent_mem": 'sum(container_memory_working_set_bytes{name=~".*authz-agent.*"})',
 }
 
 
@@ -243,14 +244,37 @@ def json_deepcopy(payload: Any) -> Any:
     return json.loads(json.dumps(payload))
 
 
+# tools/ -> common/ -> svt/: everything this tool writes belongs under the
+# stand's own directory.
+SVT_DIR = Path(__file__).resolve().parents[2]
+
+
+def under_svt(path: Path) -> Path:
+    """Canonicalise path and refuse one that leaves the SVT directory.
+
+    Every destination comes from a `--output-dir` or `--output-file` on the
+    command line, so a typo or a pasted absolute path would write wherever it
+    said. `realpath` collapses any `..` the argument carried and follows the
+    symlinks on the way, so the comparison is against the file that would
+    actually be written rather than the string that was typed.
+    """
+    resolved = os.path.realpath(os.path.expanduser(str(path)))
+    root = os.path.realpath(str(SVT_DIR))
+    if resolved != root and not resolved.startswith(root + os.sep):
+        raise SystemExit(f"refusing to write outside {root}: {resolved}")
+    return Path(resolved)
+
+
 def write_json(path: Path, payload: Any) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
+    target = under_svt(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
 
 
 def write_requests(path: Path, rows: list[dict[str, str]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    target = under_svt(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=REQUEST_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
@@ -262,7 +286,7 @@ def property_key(username: str) -> str:
 
 def write_tokens_properties(path: Path, tokens: dict[str, str]) -> None:
     lines = [f"{property_key(username)}={token}" for username, token in sorted(tokens.items())]
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    under_svt(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def canonical_body(resources: list[dict[str, Any]], ignore_rls: bool) -> dict[str, Any]:
@@ -329,7 +353,7 @@ def build_ols_single_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
         allow = index < ALLOW_COUNT
         resources = [{"resourceType": resource_type, "operation": operation, "resource": {}}]
         expected_decision = "ALLOW" if allow else "DENY"
-        if transport_mode == "envoy-canonical":
+        if transport_mode == "public-canonical":
             rows.append(
                 make_row(
                     username=user["username"],
@@ -343,7 +367,7 @@ def build_ols_single_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     expected_predicate_present=False,
                 )
             )
-        elif transport_mode == "envoy-legacy":
+        elif transport_mode == "public-legacy":
             rows.append(
                 make_row(
                     username=user["username"],
@@ -403,7 +427,7 @@ def build_ols_bulk_assets(transport_mode: str) -> tuple[list[dict[str, Any]], li
         allow = index < ALLOW_COUNT
         combos = allow_batches[index % len(allow_batches)] if allow else deny_batch
         expected_decision = "ALLOW" if allow else "DENY"
-        if transport_mode == "envoy-legacy":
+        if transport_mode == "public-legacy":
             payload = []
             for item_index, (resource_type, operation) in enumerate(combos, start=1):
                 payload.append(
@@ -433,8 +457,8 @@ def build_ols_bulk_assets(transport_mode: str) -> tuple[list[dict[str, Any]], li
             {"resourceType": resource_type, "operation": operation, "resource": {}}
             for resource_type, operation in combos
         ]
-        request_path = "/access/v1/authorize" if transport_mode == "envoy-canonical" else "/v1/data/authorize"
-        request_body = canonical_body(resources, False) if transport_mode == "envoy-canonical" else direct_body(resources, False)
+        request_path = "/access/v1/authorize" if transport_mode == "public-canonical" else "/v1/data/authorize"
+        request_body = canonical_body(resources, False) if transport_mode == "public-canonical" else direct_body(resources, False)
         rows.append(
             make_row(
                 username=user["username"],
@@ -480,7 +504,7 @@ def build_rls_filter_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
         resource_type, operation = COMBOS_100[index]
         allow = index < ALLOW_COUNT
         expected_decision = "ALLOW" if allow else "DENY"
-        if transport_mode == "envoy-canonical":
+        if transport_mode == "public-canonical":
             rows.append(
                 make_row(
                     username=user["username"],
@@ -497,7 +521,7 @@ def build_rls_filter_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     expected_predicate_present=allow,
                 )
             )
-        elif transport_mode == "envoy-legacy":
+        elif transport_mode == "public-legacy":
             rows.append(
                 make_row(
                     username=user["username"],
@@ -580,7 +604,7 @@ def build_rls_condition_assets(
             "status": "active",
         }
         expected_decision = "ALLOW" if allow else "DENY"
-        if transport_mode == "envoy-canonical":
+        if transport_mode == "public-canonical":
             rows.append(
                 make_row(
                     username=user["username"],
@@ -597,7 +621,7 @@ def build_rls_condition_assets(
                     expected_predicate_present=False,
                 )
             )
-        elif transport_mode == "envoy-legacy":
+        elif transport_mode == "public-legacy":
             rows.append(
                 make_row(
                     username=user["username"],
@@ -936,14 +960,10 @@ def query_prometheus_metrics(start: float | None, end: float | None, output_dir:
     output_dir.mkdir(parents=True, exist_ok=True)
     if start is None or end is None or end <= start:
         empty_metrics = {
-            "opa_cpu_max": None,
-            "opa_cpu_avg": None,
-            "opa_mem_max": None,
-            "opa_mem_avg": None,
-            "envoy_cpu_max": None,
-            "envoy_cpu_avg": None,
-            "envoy_mem_max": None,
-            "envoy_mem_avg": None,
+            "agent_cpu_max": None,
+            "agent_cpu_avg": None,
+            "agent_mem_max": None,
+            "agent_mem_avg": None,
         }
         write_json(output_dir / "summary.json", empty_metrics)
         return empty_metrics
@@ -952,19 +972,13 @@ def query_prometheus_metrics(start: float | None, end: float | None, output_dir:
     for name, payload in query_results.items():
         write_json(output_dir / f"{name}.json", payload)
 
-    opa_cpu = summarize_prometheus_series(query_results["opa_cpu"])
-    opa_mem = summarize_prometheus_series(query_results["opa_mem"])
-    envoy_cpu = summarize_prometheus_series(query_results["envoy_cpu"])
-    envoy_mem = summarize_prometheus_series(query_results["envoy_mem"])
+    agent_cpu = summarize_prometheus_series(query_results["agent_cpu"])
+    agent_mem = summarize_prometheus_series(query_results["agent_mem"])
     summary = {
-        "opa_cpu_max": opa_cpu["max"],
-        "opa_cpu_avg": opa_cpu["avg"],
-        "opa_mem_max": opa_mem["max"],
-        "opa_mem_avg": opa_mem["avg"],
-        "envoy_cpu_max": envoy_cpu["max"],
-        "envoy_cpu_avg": envoy_cpu["avg"],
-        "envoy_mem_max": envoy_mem["max"],
-        "envoy_mem_avg": envoy_mem["avg"],
+        "agent_cpu_max": agent_cpu["max"],
+        "agent_cpu_avg": agent_cpu["avg"],
+        "agent_mem_max": agent_mem["max"],
+        "agent_mem_avg": agent_mem["avg"],
     }
     write_json(output_dir / "summary.json", summary)
     return summary
@@ -972,8 +986,8 @@ def query_prometheus_metrics(start: float | None, end: float | None, output_dir:
 
 def transport_runner_path(transport_mode: str) -> Path:
     return {
-        "envoy-canonical": SVT_DIR / "load-tests" / "individual" / "envoy-canonical" / "run",
-        "envoy-legacy": SVT_DIR / "load-tests" / "individual" / "envoy-legacy" / "run",
+        "public-canonical": SVT_DIR / "load-tests" / "individual" / "public-canonical" / "run",
+        "public-legacy": SVT_DIR / "load-tests" / "individual" / "public-legacy" / "run",
         "opa-direct": SVT_DIR / "load-tests" / "individual" / "opa-direct" / "run",
     }[transport_mode]
 
@@ -1045,14 +1059,10 @@ def run_transport(
         "achieved_rps": jtl_summary["achieved_rps"],
         "p95_ms": jtl_summary["p95_ms"],
         "error_count": jtl_summary["error_count"],
-        "opa_cpu_max": prom_summary["opa_cpu_max"],
-        "opa_mem_max": prom_summary["opa_mem_max"],
-        "opa_cpu_avg": prom_summary["opa_cpu_avg"],
-        "opa_mem_avg": prom_summary["opa_mem_avg"],
-        "envoy_cpu_max": prom_summary["envoy_cpu_max"],
-        "envoy_mem_max": prom_summary["envoy_mem_max"],
-        "envoy_cpu_avg": prom_summary["envoy_cpu_avg"],
-        "envoy_mem_avg": prom_summary["envoy_mem_avg"],
+        "agent_cpu_max": prom_summary["agent_cpu_max"],
+        "agent_mem_max": prom_summary["agent_mem_max"],
+        "agent_cpu_avg": prom_summary["agent_cpu_avg"],
+        "agent_mem_avg": prom_summary["agent_mem_avg"],
         "artifacts_dir": str(run_dir.resolve()),
     }
 
@@ -1126,14 +1136,10 @@ def write_workbook(path: Path, rows: list[dict[str, Any]]) -> None:
         "achieved_rps",
         "p95_ms",
         "error_count",
-        "opa_cpu_max",
-        "opa_mem_max",
-        "opa_cpu_avg",
-        "opa_mem_avg",
-        "envoy_cpu_max",
-        "envoy_mem_max",
-        "envoy_cpu_avg",
-        "envoy_mem_avg",
+        "agent_cpu_max",
+        "agent_mem_max",
+        "agent_cpu_avg",
+        "agent_mem_avg",
         "artifacts_dir",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)

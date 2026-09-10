@@ -5,7 +5,7 @@ info:
   description: |
     HTTP contract served by the Authz Agent runtime.
 
-    The agent exposes a single Envoy listener on port 8080 carrying both the
+    The agent exposes a single listener on port 8080 carrying both the
     public authorization surface (legacy v1 + v2 + preview + the canonical
     `/access/v1/authorize`) and the internal admin surface
     (`/internal/v1/decision-logs`). The `PUT /internal/v1/policies` and
@@ -33,9 +33,9 @@ info:
         release artefacts.
 servers:
   - url: http://localhost:18080
-    description: Public authorization surface (host-published Envoy port, runtime integration suite).
+    description: Public authorization surface (host-published port, runtime integration suite).
   - url: http://localhost:18080
-    description: Internal admin surface; same Envoy listener, segregated by the `/internal/v1/` URL prefix.
+    description: Internal admin surface; same listener, segregated by the `/internal/v1/` URL prefix.
 tags:
   - name: public
     description: Authorization decision endpoints reachable by every workload via the public ingress.
@@ -57,8 +57,8 @@ paths:
         or more `ResourceInput` entries. The canonical request body is the
         `AuthorizeRequestEnvelope` — an OPA Data API envelope of the form
         `{ "input": <AuthorizeRequest> }`. The same envelopes are the
-        contract on both transports: the Envoy mount at
-        `/access/v1/authorize` and the OPA-direct mount at
+        contract on both transports: the public mount at
+        `/access/v1/authorize` and the data API mount at
         `/v1/data/authorize` accept and forward the bodies byte-identically
         (authz-agent-ADR-0062). Admission and subject authentication
         tokens live in `input.authorizationToken` and `input.subject` — no
@@ -66,8 +66,8 @@ paths:
         header is consulted on this route. Admission or subject
         authentication failure is conveyed in-band, not as an HTTP error:
         the route returns HTTP 200 with `result.authError.{ status,reason }`
-        (e.g. `status: 401`), identically via Envoy (routing-only) and
-        OPA-direct, because the OPA Data API always answers 200
+        (e.g. `status: 401`), identically on the public surface and on the
+        data API, because the data API always answers 200
         (authz-agent-ADR-0062 Decision 11).
       security: []
       requestBody:
@@ -689,9 +689,9 @@ paths:
       tags: [meta]
       summary: Spec-version advertisement consumed by the legacy thin client.
       description: |
-        Served directly by Envoy as a static `direct_response`; never
-        reaches OPA. Re-introduced by ADR-0049 to drive the thin client's
-        interceptor selection (relay vs. forward).
+        Served as a static response; the policy engine never sees it.
+        Re-introduced by ADR-0049 to drive the thin client's interceptor
+        selection (relay vs. forward).
       security: []
       responses:
         '200':
@@ -702,7 +702,7 @@ paths:
                 $ref: '#/components/schemas/ApiVersionResponse'
               examples:
                 advertised:
-                  summary: Static spec-version advertisement served by Envoy.
+                  summary: Static spec-version advertisement.
                   value: { "specs": [{ "specRootUrl": "/access", "major": 3, "minor": 0, "supportedMajors": [1, 2, 3] }, { "specRootUrl": "/api", "major": 1, "minor": 1, "supportedMajors": [1] }, { "specRootUrl": "/template", "major": 1, "minor": 0, "supportedMajors": [1] }, { "specRootUrl": "/preview", "major": 2, "minor": 0, "supportedMajors": [1, 2] }] }
   /health:
     get:
@@ -710,10 +710,9 @@ paths:
       tags: [meta]
       summary: Liveness / readiness probe.
       description: |
-        Returns `200 { "status": "healthy" }` once Envoy + OPA + the
-        pap-client bootstrap have all settled. A degraded strict-mode
-        agent that fails the JWKS bootstrap returns
-        `503 { "status": ..., "message": ... }`.
+        Returns `200 { "status": "healthy" }` once the agent's trusted
+        providers have settled. A degraded strict-mode agent that fails the
+        JWKS bootstrap returns `503 { "status": ..., "message": ... }`.
       security: []
       responses:
         '200':
@@ -741,10 +740,9 @@ paths:
       tags: [internal-admin]
       summary: Download accumulated OPA decision logs.
       description: |
-        Returns the NDJSON stream collected by the
-        decision-log-collector sidecar. The body may be empty when no
-        decisions have been emitted yet. The per-line object shape is
-        OPA-defined and not part of this contract.
+        Returns the NDJSON stream of the decisions the agent recorded. The
+        body may be empty when no decisions have been emitted yet. The
+        per-line object shape is OPA-defined and not part of this contract.
       security: []
       responses:
         '200':

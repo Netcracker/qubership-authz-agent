@@ -31,7 +31,7 @@ if [[ ! -x "${OPA_BIN}" ]]; then
 fi
 
 exec "${OPA_BIN}" eval --format pretty --explain=full \
-  -d "${DIR}/../../../../charts/authz-agent/files/opa/policies" \
+  -d "${DIR}/../../../../policies" \
   -d "${DIR}/data.json" \
   -i "${DIR}/input.json" \
   'data.identity.verify_token("svt-profiler-token")'

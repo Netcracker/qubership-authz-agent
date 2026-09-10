@@ -18,6 +18,7 @@ import argparse
 import base64
 import csv
 import json
+import os
 import math
 import re
 from pathlib import Path
@@ -320,12 +321,33 @@ def build_ols_bulk_requests(scenario_name, request_class):
     return rows
 
 
+# tools/ -> common/ -> svt/: everything this tool writes belongs under the
+# stand's own directory.
+SVT_DIR = Path(__file__).resolve().parents[2]
+
+
+def under_svt(path: Path) -> Path:
+    """Canonicalise path and refuse one that leaves the SVT directory.
+
+    Every destination comes from a `--output-dir` or `--output-file` on the
+    command line, so a typo or a pasted absolute path would write wherever it
+    said. `realpath` collapses any `..` the argument carried and follows the
+    symlinks on the way, so the comparison is against the file that would
+    actually be written rather than the string that was typed.
+    """
+    resolved = os.path.realpath(os.path.expanduser(str(path)))
+    root = os.path.realpath(str(SVT_DIR))
+    if resolved != root and not resolved.startswith(root + os.sep):
+        raise SystemExit(f"refusing to write outside {root}: {resolved}")
+    return Path(resolved)
+
+
 def write_json(path: Path, payload):
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
+    under_svt(path).write_text(json.dumps(payload, indent=2) + "\n", encoding="ascii")
 
 
 def write_requests(path: Path, rows):
-    with path.open("w", encoding="utf-8", newline="") as handle:
+    with under_svt(path).open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(
             handle,
             fieldnames=["username", "scenarioLabel", "requestClass", "expectedDecision", "requestBodyTemplate"],

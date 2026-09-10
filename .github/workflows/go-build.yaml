@@ -7,9 +7,9 @@
 # Module configuration note
 # -------------------------
 # This repository has four Go modules:
-#   .                              — the product module (four binaries, zero external deps)
+#   .                              — the product module (two binaries, zero external deps)
 #   test/parity/suite              — parity-replay test suite
-#   test/integration/testify       — Envoy/OPA integration suite (needs a running stack)
+#   test/integration/testify       — runtime integration suite (needs a running stack)
 #   test/integration/pipstub       — pip-stub service used by the integration suite
 #
 # The shared workflow takes a single go-module-dir and would only build and test

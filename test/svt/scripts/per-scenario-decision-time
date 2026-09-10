@@ -16,15 +16,13 @@ Three modes, independent baselines (D-15 of the parent task):
     tests/svt/scripts/per-scenario-decision-time --mode legacy
     tests/svt/scripts/per-scenario-decision-time --mode opa-direct
 
-The `opa-direct` mode bypasses Envoy and hits OPA directly at
-`POST /v1/data/authorize` on `opa:8181`. Decision-log-collector
-stays attached (D-5 of the opa-direct task); the column shape is
-identical across the three modes (envoy columns show idle values when
-in `opa-direct` mode, since the request never traverses Envoy).
+The `opa-direct` mode skips the public surface and hits the data API at
+`POST /v1/data/authorize` on `authz-agent:8181`; the column shape is
+identical across the three modes, since one container serves them all.
 
 Mirrors `tests/svt/scripts/mixed-load-report` in shape, but the report
 contains one H3 sub-section per scenario (six-row RPS table per
-sub-section) and the xlsx is a flat mega-sheet (168 rows × 25 columns
+sub-section) and the xlsx is a flat mega-sheet (168 rows × 13 columns
 per sheet).
 
 Python 3 standard library plus `openpyxl` (already installed on the
@@ -60,12 +58,11 @@ BENCH_REPORT_LATEST = os.path.join(REPORTS_DIR, "bench-report-latest.md")
 
 RPS_LEVELS = (100, 200, 300, 400, 500, 1000)
 
-SERVICES = ("envoy", "opa", "decision-log-collector")
-SERVICE_SHORT = {
-    "envoy": "envoy",
-    "opa": "opa",
-    "decision-log-collector": "dlc",
-}
+# One measured container since authz-agent-ADR-0080: the agent carries the
+# public surface, the engine, and the decision log in one process, where this
+# stand used to measure envoy, opa, and decision-log-collector separately.
+SERVICES = ("authz-agent",)
+SERVICE_SHORT = {"authz-agent": "agent"}
 
 # D-20 (2026-05-18 refinement): load window is 15 s with 3 s ramp
 # (mixed-flow ships 60 s + 5 s; the per-scenario sweep overrides to
@@ -371,22 +368,24 @@ def render_methodology(mode: str) -> list[str]:
     other_modes = [m for m in XLSX_SHEET_NAMES if m != mode]
     rps_str = ", ".join(str(r) for r in RPS_LEVELS)
     if mode == "canonical":
-        mode_desc = ("requests traverse Envoy → OPA → decision-log-collector "
-                     "via `POST /access/v1/authorize`.")
+        mode_desc = ("requests reach the agent's public surface via "
+                     "`POST /access/v1/authorize`.")
     elif mode == "legacy":
-        mode_desc = ("requests traverse Envoy → Lua mapping → OPA → "
-                     "decision-log-collector via the legacy compatibility "
-                     "endpoints (`/access/v1/check/resource`, "
+        mode_desc = ("requests reach the agent's public surface through the "
+                     "legacy compatibility endpoints "
+                     "(`/access/v1/check/resource`, "
                      "`/access/v1/check/resource/bulk`, "
-                     "`/access/v1/check/filter`).")
+                     "`/access/v1/check/filter`), which it translates into "
+                     "the same decision.")
     else:  # opa-direct
-        mode_desc = ("requests bypass Envoy and hit OPA directly via "
-                     "`POST /v1/data/authorize` on `opa:8181` "
-                     "(decision-log-collector remains attached per D-5 "
-                     "of the opa-direct task, so OPA's decision-log push "
-                     "pressure is part of the cost surface). Envoy is "
-                     "running but idle; envoy CPU/RAM/IO columns reflect "
-                     "that idle state, not a workload path.")
+        mode_desc = ("requests skip the public surface and hit the data API "
+                     "directly via `POST /v1/data/authorize` on "
+                     "`authz-agent:8181`. The two transports are the ones "
+                     "authz-agent-ADR-0062 pins as byte-identical, so the "
+                     "difference between this mode and `canonical` is the "
+                     "cost of the compatibility layer alone. The decision "
+                     "log is written either way, so its pressure stays part "
+                     "of the cost surface.")
     return [
         "## Methodology",
         "",
@@ -472,11 +471,9 @@ def render_scenario_section(spec: dict, rows: list[dict]) -> list[str]:
         f"_Canonical endpoint_: `/access/v1/authorize`. "
         f"_Legacy endpoint_: `{spec['legacy_endpoint']}`.",
         "",
-        "| RPS | achieved | envoy CPU peak | envoy CPU avg | envoy RAM peak | envoy RAM avg "
-        "| envoy IO peak | envoy IO avg | opa CPU peak | opa CPU avg | opa RAM peak | opa RAM avg "
-        "| opa IO peak | opa IO avg | dlc CPU peak | dlc CPU avg | dlc RAM peak | dlc RAM avg "
-        "| dlc IO peak | dlc IO avg | rt avg | rt median | rt p95 | rt p99 |",
-        "|----:|---------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|",
+        "| RPS | achieved | agent CPU peak | agent CPU avg | agent RAM peak | agent RAM avg "
+        "| agent IO peak | agent IO avg | rt avg | rt median | rt p95 | rt p99 |",
+        "|----:|---------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|-------:|",
     ]
     for row in rows:
         cells = [
@@ -587,15 +584,9 @@ def render_report(mode: str, sweep_timestamp: str,
 
 XLSX_HEADERS = (
     "scenario", "RPS", "achieved_rps",
-    "envoy CPU peak", "envoy CPU avg",
-    "envoy RAM peak", "envoy RAM avg",
-    "envoy IO-net peak", "envoy IO-net avg",
-    "opa CPU peak", "opa CPU avg",
-    "opa RAM peak", "opa RAM avg",
-    "opa IO-net peak", "opa IO-net avg",
-    "dlc CPU peak", "dlc CPU avg",
-    "dlc RAM peak", "dlc RAM avg",
-    "dlc IO-net peak", "dlc IO-net avg",
+    "agent CPU peak", "agent CPU avg",
+    "agent RAM peak", "agent RAM avg",
+    "agent IO-net peak", "agent IO-net avg",
     "rt avg (ms)", "rt median (ms)", "rt p95 (ms)", "rt p99 (ms)",
 )
 
@@ -803,7 +794,7 @@ def promote_xlsx_sheet(staged_xlsx: str, canonical_xlsx: str, mode: str) -> None
 def drive_sweep(mode: str, scenarios: list[dict], rps_levels: list[int],
                 sweep_dir: str) -> tuple[dict[str, list[dict]], list[str], list[dict]]:
     """Outer loop: scenarios. Inner loop: rps_levels. Per tuple:
-    svt_restart_opa (inside the per-RPS `run`) → JMeter → Prometheus
+    svt_restart_agent (inside the per-RPS `run`) → JMeter → Prometheus
     range → results.jtl parse. Returns the rows grouped by scenario,
     plus a notes list and a flagged-rows list (D-18)."""
     rows_by_scenario: dict[str, list[dict]] = {}

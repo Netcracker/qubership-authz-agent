@@ -38,8 +38,8 @@ if [[ ! -f "${KEYS_DIR}/profiler-rsa-private.pem" ]]; then
 fi
 
 exec "${OPA_BIN}" bench --format pretty --count 5 \
-  -d "${DIR}/../../../../charts/authz-agent/files/opa/policies" \
+  -d "${DIR}/../../../../policies" \
   -d "${DIR}/data.json" \
   -d "${DIR}/data-real-token.json" \
   -i "${DIR}/input-real-token.json" \
-  'data.authorize.result'
+  'data.authorize.results'

@@ -1,5 +1,9 @@
 # Per-Scenario Decision-Time Report — legacy
 
+> These numbers were measured on the five-container stack, before the agent became one process
+> (authz-agent-ADR-0080). They are kept as the only thing a run on the restored stand can be
+> compared against; the paths below are recorded as they were and some no longer resolve.
+
 Generated: 2026-05-18 12:29:15 UTC
 Sweep timestamp: 20260518-141320
 
@@ -16,7 +20,7 @@ Sweep timestamp: 20260518-141320
 - **Response-time stats** (per row): avg / median / p95 / p99 of the JMeter `elapsed` column from `results.jtl`. Nearest-rank percentile.
 - **Achieved RPS**: cumulative `summary =` rate from the JMeter Summariser tail. Rows where `achieved_rps < 0.9 × target_rps` are marked with `*` and listed in Notes.
 - **Auto-promote gate**: any per-(scenario, RPS) response-time **p95** cell exceeding the baseline by more than 5 % blocks promotion. CPU / memory / IO are rendered for visibility but **not** gated (D-12).
-- **Host baseline**: Ubuntu 24.04.4 LTS, AMD Ryzen 9 8945HS (16 logical / 8 physical), 92 GiB RAM, Docker 29.3.1, Compose v5.1.1, OPA limits 8 CPU / 8G RAM (see [tests/svt/README.md §Host Baseline](../../test/svt/README.md#host-baseline-first-stage)).
+- **Host baseline**: Ubuntu 24.04.4 LTS, AMD Ryzen 9 8945HS (16 logical / 8 physical), 92 GiB RAM, Docker 29.3.1, Compose v5.1.1, OPA limits 8 CPU / 8G RAM (see `tests/svt/README.md §Host Baseline`).
 - **Other-mode report**: see [per-scenario-decision-time-canonical-latest.md](per-scenario-decision-time-canonical-latest.md) (independent baseline, no cross-mode gating per D-15).
 - **Companion xlsx**: [per-scenario-decision-time.xlsx](per-scenario-decision-time.xlsx), `legacy` sheet (168 rows × 25 cols, header row sortable).
 

@@ -12,7 +12,7 @@ apply them by hand. CI runs the same targets one step at a time.
 | `entitlements-mock.yaml` | A second stub instance for the entitlements endpoint |
 | `values.yaml` | Chart values that point the agent at the harness Services |
 | `runtime-suite-job.yaml` | The suite itself, built from `test/integration/testify/Dockerfile` |
-| `runtime-suite-rbac.yaml` | ServiceAccount and Role the suite uses to restart the OPA container |
+| `runtime-suite-rbac.yaml` | The ServiceAccount the Job names; it is granted no rules |
 
 The ConfigMap with the realm imports and the M2M client-credentials Secret
 are generated from the files under `authn/` by `make e2e-harness`, so they
@@ -41,9 +41,9 @@ Step by step, in the order `make e2e` runs them:
 | Target | What it does |
 | --- | --- |
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
-| `e2e-images` | Builds the five product images, pip-stub, and the suite image, then loads them into the cluster |
+| `e2e-images` | Builds the two product images, pip-stub, and the suite images, then loads them into the cluster |
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
-| `e2e-install` | `make copy-policies`, then `helm upgrade --install` with `values.yaml` and `--wait` |
+| `e2e-install` | `helm upgrade --install` with `values.yaml` and `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
 | `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 
@@ -52,25 +52,18 @@ The parity targets mirror these: `parity-harness`, `parity-install`,
 cluster and image targets first, then the three.
 
 `KIND_CLUSTER`, `E2E_NAMESPACE`, `PARITY_NAMESPACE`, and `E2E_ARTIFACTS`
-override the defaults.
-
-Re-running `e2e-harness` on its own replaces the Keycloak pod, and a dev-mode
-Keycloak mints new realm keys on every start. Restart the agent afterwards
-(`kubectl rollout restart deploy/authz-agent`) so its JWKS bootstrap picks the
-new keys up, or the suite fails at `setup.wait_for_agent`.
-The first run on a fresh cluster is slower: the node pulls Keycloak and OPA
-from their registries, later runs reuse them.
-
-`make e2e-logs` writes every container log on the node (`kind export logs`),
-the namespace events, and the decision logs downloaded through Envoy.
+override the defaults. `E2E_HELM_ARGS` adds arguments to both chart installs;
+`E2E_BASE_URL` and `PARITY_AC_BASE_URL` set where the suites send their
+requests, the chart's Service by default.
 
 ## What runs
 
 `runtime-suite-job.yaml` runs the whole Testify suite, including the two
 coverage checks that need a full run (`FULL_RUNTIME_SUITE=true`). Groups that
-inspect what OPA received, such as `TestOPARequestParity`, read the decision
-logs the collector serves through Envoy instead of a capture proxy.
+inspect what the engine received, such as `TestOPARequestParity`, read the decision
+logs the agent serves at `/internal/v1/decision-logs` instead of a capture
+proxy: the agent's own store of the decisions it made.
 
-`TestOPARestart` restarts the OPA container through the API server: the Job
-runs as the `runtime-suite` ServiceAccount from `runtime-suite-rbac.yaml`,
-which may list Pods and add ephemeral containers to them, nothing more.
+The Job reaches every target by Service name and asks the API server for
+nothing, so the `runtime-suite` ServiceAccount from `runtime-suite-rbac.yaml`
+is granted no rules and its token is not mounted.

@@ -302,12 +302,12 @@ for idx in "${!SCENARIOS[@]}"; do
   result_dir="${ARTIFACTS_DIR}/${scenario}"
 
   log "preparing scenario ${scenario}..."
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" generate \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" generate \
     --scenario "${scenario}" \
     --output-dir "${scenario_dir}"
 
   acquire_user_tokens
-  python3 "${SVT_DIR}/tools/opa_direct_matrix.py" build-authn-cache \
+  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" build-authn-cache \
     --tokens-file "${TOKENS_FILE}" \
     --base-authn "${AUTHN_BASE_FILE}" \
     --output-file "${scenario_dir}/authn.json"
@@ -324,7 +324,7 @@ for idx in "${!SCENARIOS[@]}"; do
 
   run_jmeter_scenario "${scenario_dir}" "${result_dir}"
 
-  p95=$(python3 "${SVT_DIR}/tools/opa_direct_matrix.py" summarize-jtl --jtl "${result_dir}/results.jtl" | jq -r '.p95_ms')
+  p95=$(python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" summarize-jtl --jtl "${result_dir}/results.jtl" | jq -r '.p95_ms')
   printf '| %s | %s |\n' "${scenario}" "${p95}" >> "${SUMMARY_FILE}"
   log "scenario ${scenario} complete (p95=${p95} ms)"
 

@@ -7,32 +7,22 @@
 #
 # The numbers below are the SVT sizing: what the service under test is given on
 # the load stand, with requests deliberately below limits so a run can push the
-# containers into their limits and CPU throttling stays observable. They are a
-# starting point derived from the compose SVT reference
-# (tests/svt/common/compose/docker-compose.yml: backend `cpus: 8`,
+# container into its limits and CPU throttling stays observable. They are a
+# starting point derived from the compose SVT reference (backend `cpus: 8`,
 # `mem_limit: 8g`), not a measurement — re-derive them from the first real SVT
 # run before this profile is used for a production install.
-ENVOY_CPU_REQUEST: "2"
-ENVOY_CPU_LIMIT: "4"
-ENVOY_MEM_REQUEST: 512Mi
-ENVOY_MEM_LIMIT: 1Gi
-
-# The former single backend container is now OPA plus pap-client. OPA keeps the
-# backend sizing: it evaluates every request. pap-client only pulls and converts
-# policies; its memory follows the policy set (see dev.yaml), not the traffic.
-OPA_CPU_REQUEST: "4"
-OPA_CPU_LIMIT: "8"
-OPA_MEM_REQUEST: 2Gi
-OPA_MEM_LIMIT: 8Gi
-PAP_CLIENT_CPU_REQUEST: 500m
-PAP_CLIENT_CPU_LIMIT: "1"
-PAP_CLIENT_MEM_REQUEST: 512Mi
-PAP_CLIENT_MEM_LIMIT: 1Gi
-
-COLLECTOR_CPU_REQUEST: "1"
-COLLECTOR_CPU_LIMIT: "2"
-COLLECTOR_MEM_REQUEST: 512Mi
-COLLECTOR_MEM_LIMIT: 3Gi
+#
+# The agent evaluates every request as OPA did, terminates the client's
+# connection as Envoy did, and runs the pull loop, the token renewal, and the
+# decision-log upload beside them, so it takes what the five containers it
+# replaced took between them (authz-agent-ADR-0080).
+AUTHZ_AGENT_CPU_REQUEST: 7500m
+AUTHZ_AGENT_CPU_LIMIT: "15"
+AUTHZ_AGENT_MEM_REQUEST: 3584Mi
+AUTHZ_AGENT_MEM_LIMIT: 13Gi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
+AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
 
 # authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
 # stub replaces access-control and its control surface is unauthenticated by

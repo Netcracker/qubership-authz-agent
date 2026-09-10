@@ -42,7 +42,9 @@ REPORTS_DIR = os.path.join(REPO_ROOT, "docs", "reports")
 
 RPS_LEVELS = (100, 200, 300, 400, 500, 1000)
 
-SERVICES = ("envoy", "opa", "decision-log-collector")
+# One measured container since authz-agent-ADR-0080; see
+# scripts/per-scenario-decision-time.
+SERVICES = ("authz-agent",)
 
 # Per-RPS thread count (per thread group). Mirrors the values committed in
 # tests/svt/load-tests/mixed-flow/<rps>rps/config.env.
@@ -52,9 +54,9 @@ IDLE_WINDOW_SECONDS = 30
 LOAD_DURATION_SECONDS = 60
 RAMP_SECONDS = 5
 # Wall-clock gap between the last RPS load window and the idle-after
-# sampling window (D-8). Lets post-load transients (Envoy connection
-# pool teardown, OPA request cleanup, decision-log-collector flush)
-# drop out of the sample so idle-after reflects steady idle rather
+# sampling window (D-8). Lets post-load transients (connection-pool
+# teardown, request cleanup, the decision-log flush) drop out of the
+# sample so idle-after reflects steady idle rather
 # than a tail of the load window. Intentionally shorter than the
 # typical collector flush interval so a slice of drain activity still
 # lands in idle-after.
@@ -265,12 +267,13 @@ def render_methodology(mode: str, host_baseline_text: str) -> list[str]:
         "## Methodology",
         "",
         f"- **Mode**: `{mode}` — "
-        + ("requests traverse Envoy → OPA → decision-log-collector via "
+        + ("requests reach the agent's public surface via "
            "`POST /access/v1/authorize`."
            if mode == "canonical"
-           else "requests traverse Envoy → Lua mapping → OPA → decision-log-collector "
-                "via the legacy compatibility endpoints (`/access/v1/check/resource`, "
-                "`/access/v1/check/resource/bulk`, `/access/v1/check/filter`)."),
+           else "requests reach the agent's public surface through the legacy "
+                "compatibility endpoints (`/access/v1/check/resource`, "
+                "`/access/v1/check/resource/bulk`, `/access/v1/check/filter`), "
+                "which it translates into the same decision."),
         "- **Scenarios (8, share sums to 100%)**: 20% `ols-single-10roles`, "
         "5% `rls-predicate`, 5% `rls-condition`, 5% `ols-bulk-100`, "
         "25% `rls-condition-2-expression`, 25% `rls-predicate-summary-2-predicates`, "
@@ -285,12 +288,12 @@ def render_methodology(mode: str, host_baseline_text: str) -> list[str]:
         f"{RAMP_SECONDS}s ramp, no cooldown inside the plan.",
         f"- **Idle baselines**: one `idle-before` + one `idle-after` window "
         f"({IDLE_WINDOW_SECONDS}s each), captured once per sweep at the "
-        "sweep boundaries (per D-5; OPA-restart-per-RPS makes a per-RPS "
+        "sweep boundaries (per D-5; the restart-per-RPS makes a per-RPS "
         "idle window identical by construction). Idle-after starts "
         f"{COOLDOWN_SECONDS}s after the last load window ends (D-8 "
-        "wall-clock cooldown gap) so post-load transients (Envoy "
-        "connection-pool teardown, OPA request cleanup, "
-        "decision-log-collector flush) drop out before sampling.",
+        "wall-clock cooldown gap) so post-load transients (connection-pool "
+        "teardown, request cleanup, the decision-log flush) drop out "
+        "before sampling.",
         f"- **Bulk slot accounting**: 1 HTTP request = 1 RPS. At 1000 RPS the "
         "`ols-bulk-100` thread group fires 50 req/s, each carrying 100 "
         "resources internally.",
@@ -514,7 +517,7 @@ def drive_sweep(mode: str, sweep_dir: str) -> tuple[dict, dict[int, dict], dict,
     else:
         log(f"D-8 cooldown already elapsed by {-cooldown_sleep_s:.1f}s; sampling idle-after immediately")
 
-    # idle-after (drain window, decision-log-collector keeps flushing).
+    # idle-after (drain window, the decision log keeps flushing).
     # start_ms is read after the cooldown wake-up so the recorded window
     # reflects actual wall-clock, robust to system suspend/skew.
     log(f"capturing idle-after baseline ({IDLE_WINDOW_SECONDS}s)")

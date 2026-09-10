@@ -66,33 +66,20 @@ DEPLOYMENT_SESSION_ID: ''
 MESH_ROUTES_ENABLED: true
 
 # Per-image overrides. If empty, the deployment template falls back to:
-#   OPA:                  openpolicyagent/opa@sha256:<digest>  (OPA 1.14.0, pinned)
-#   pap-client:           {{ IMAGE_REPOSITORY }}/authz-agent-pap-client:{{ TAG }}
-#   envoy:                {{ IMAGE_REPOSITORY }}/authz-agent-envoy:{{ TAG }}
-#   collector:            {{ IMAGE_REPOSITORY }}/authz-agent-collector:{{ TAG }}
-#   token-fetcher:        {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}
+#   authz-agent:          {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}
 #   authz-policy-admin:   {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}
 #
 # Note: authz-policy-admin uses no authz-agent- prefix because it is a
-# standalone Deployment, not a container of the agent Pod (see .github/docker-dev-config.json).
+# standalone Deployment, not the agent (see .github/docker-dev-config.json).
 #
 # Cloud-Deployer can populate these from .Values.global.deployDescriptor
 # at install time.
-ENVOY_IMAGE: ''
-# OPA_IMAGE: override for the vanilla upstream OPA image.
-# Default is the pinned digest in _helpers.tpl (authz-agent.opaImage).
-# Only change this when a different OPA version is required.
-OPA_IMAGE: ''
-# pap-client runs in its own container from its own image
-# (authz-agent-pap-client); OPA runs as the vanilla upstream image.
-PAP_CLIENT_IMAGE: ''
-COLLECTOR_IMAGE: ''
-# TOKEN_FETCHER_IMAGE: override for the token-fetcher sidecar image.
-# Empty → {{ IMAGE_REPOSITORY }}/authz-agent-token-fetcher:{{ TAG }}.
-# Only used when KUBERNETES_M2M_ENABLED=false.
-TOKEN_FETCHER_IMAGE: ''
 
-# Pull policy for all three containers. The default is IfNotPresent because the
+# AUTHZ_AGENT_IMAGE: override for the agent's image.
+# Empty → {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}.
+AUTHZ_AGENT_IMAGE: ''
+
+# Pull policy for every container. The default is IfNotPresent because the
 # pipeline tags images with an immutable pipeline id, so re-pulling an already
 # cached layer set buys nothing and makes every Pod restart depend on the
 # registry being reachable. Set to Always where a moving tag (`latest`) is
@@ -130,7 +117,7 @@ AUTHZ_IDP_REALMS:
   - external
 
 # Trusted token providers, rendered into the `<name>-trusted-providers`
-# ConfigMap. See components/pap-client/internal/policyadmin/bootstrap.go TrustedProvider for the
+# ConfigMap. See components/authz-agent/internal/authn for the
 # Go-side contract.
 #
 # An entry takes one of two forms and never both (authz-agent-ADR-0075):
@@ -161,7 +148,7 @@ AUTHZ_IDP_REALMS:
 # from IDENTITY_PROVIDER_URL and AUTHZ_IDP_REALMS above. Set this to take over.
 # (Emptying AUTHZ_IDP_REALMS as well *does* mean trust nobody.)
 #
-# This ConfigMap can also be edited on a running installation: pap-client
+# This ConfigMap can also be edited on a running installation: the agent
 # watches the mounted file and republishes the fetched keys into OPA without a
 # Pod restart (authz-agent-ADR-0070).
 AUTHZ_TRUSTED_PROVIDERS: []
@@ -173,7 +160,7 @@ AUTHZ_TRUSTED_PROVIDERS: []
 # the addressable name is a UUID that differs per installation and cannot be
 # written into a chart.
 #
-# pap-client therefore asks tenant-manager
+# The agent therefore asks tenant-manager
 # `GET /api/v4/tenant-manager/registration/tenants?dns=<name>`, which is
 # unauthenticated, and only AFTER discovery for the configured name has failed —
 # a realm name that works is never second-guessed. An unreachable or unhelpful
@@ -207,16 +194,14 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #   KUBERNETES_M2M_ENABLED=true  (not default):
 #     A Kubernetes projected ServiceAccount token (audience=netcracker,
 #     ExpirationSeconds=600) is mounted into /etc/authz/ac-token/token by the
-#     kubelet and rotated automatically. pap-client re-reads it on every pull
-#     tick. No sidecar, no Secret dependency.
+#     kubelet and rotated automatically. The agent re-reads it every fifteen
+#     seconds. No Secret dependency.
 #
 #   KUBERNETES_M2M_ENABLED=false (DEFAULT):
-#     A native Kubernetes sidecar (initContainers[*].restartPolicy: Always)
-#     runs token-fetcher, which obtains a Keycloak client_credentials token from
-#     the cloud-common realm and writes it atomically to the same path.
-#     token-fetcher refreshes the token before expiry; the pap-client container
-#     waits for the first successful write via a startupProbe on the marker file
-#     /var/run/authz/token-fetcher-ready.
+#     The agent obtains a Keycloak client_credentials token from the
+#     cloud-common realm itself, with the credentials mounted from the Secret
+#     below, and refreshes it before it expires. Where a sidecar wrote that
+#     token to a shared path for the Pod, the agent now holds it in memory.
 #
 # KEYCLOAK ROLES REQUIRED (deployer note — NOT a chart field):
 #   The Keycloak client for authz-agent must carry realm roles:
@@ -230,8 +215,8 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 # SECRET PREREQUISITE (KUBERNETES_M2M_ENABLED=false — INSTALL PREREQUISITE):
 #   The Secret {{ .Values.SERVICE_NAME }}-client-credentials MUST exist before
 #   helm install / helm upgrade.  The chart only mounts this Secret; it does NOT
-#   create it.  If the Secret is missing the token-fetcher sidecar cannot start,
-#   its startupProbe never passes, and the Pod stays NotReady indefinitely.
+#   create it.  If the Secret is missing the agent cannot obtain its token, the
+#   pull loop never authenticates, and the Pod stays NotReady indefinitely.
 #
 #   HOW TO CREATE THE SECRET:
 #     The recommended path is Cloud Core security-scripts, which creates the
@@ -257,15 +242,15 @@ KUBERNETES_M2M_ENABLED: false
 
 # Policy delivery configuration (authz-agent-ADR-0071).
 #
-# Pull mode (default): pap-client fetches simplified policies and PIPs from
+# Pull mode (default): the agent fetches simplified policies and PIPs from
 # access-control's v3 config API on a configurable interval and publishes them
 # into OPA without a Pod restart.  The Bearer token comes from AUTHZ_PAP_CLIENT_TOKEN_FILE
 # (written by the kubelet in KUBERNETES_M2M_ENABLED=true mode, or by the
-# token-fetcher sidecar in KUBERNETES_M2M_ENABLED=false mode).
+# agent itself in KUBERNETES_M2M_ENABLED=false mode).
 #
 # Mount mode: set AUTHZ_POLICY_CONFIGMAP to the name of an ALREADY-EXISTING
 # ConfigMap in the same namespace.  The chart mounts it as a directory at
-# /etc/authz/policies and sets AUTHZ_POLICY_MOUNT_DIR accordingly; pap-client
+# /etc/authz/policies and sets AUTHZ_POLICY_MOUNT_DIR accordingly; the agent
 # detects the directory at startup and switches to mount-watcher mode
 # automatically.  The operator is responsible for creating and managing the
 # ConfigMap — the chart never creates it.
@@ -279,7 +264,7 @@ AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 #   mount-watcher.  Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
 # AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the Bearer token written by the kubelet
-#   (KUBERNETES_M2M_ENABLED=true) or the token-fetcher sidecar (false).
+#   (KUBERNETES_M2M_ENABLED=true) or the agent's own token loop (false).
 AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
 # AUTHZ_POLICY_CONFIGMAP: name of an existing ConfigMap to mount as policy data
 #   (mount mode, authz-agent-ADR-0071). Empty (default) → pull mode; no volume,
@@ -289,7 +274,7 @@ AUTHZ_POLICY_CONFIGMAP: ''
 # Entitlements resolver.
 #
 # The ENTITLEMENT PIP is container-pinned: it cannot arrive through the pull
-# loop or a ConfigMap mount, pap-client materialises it at startup from these
+# loop or a ConfigMap mount, the agent materialises it at startup from these
 # values. The Rego resolver then calls
 # `<AUTHZ_ENTITLEMENTS_URL>/api/v3/user-entitlements/user/<subject id>` once per
 # authorize request.
@@ -336,8 +321,8 @@ AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
 # loop, so the combination is rejected at template time.
 AUTHZ_POLICY_ADMIN_ENABLED: false
 # Per-image override. Empty → {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.
-# Note: authz-policy-admin is a standalone Deployment, so it does not carry the
-# authz-agent- prefix used by Pod containers (authz-agent-envoy, -pap-client, etc.).
+# Note: authz-policy-admin is a standalone Deployment of its own, so it does not
+# carry the authz-agent- prefix the agent's image uses.
 AUTHZ_POLICY_ADMIN_IMAGE: ''
 # HTTP port, used for the container port, the Service port, and the generated
 # AUTHZ_PAP_CLIENT_SOURCE_URL. 18090 matches the test stacks and every documented curl.
@@ -355,8 +340,8 @@ AUTHZ_POLICY_ADMIN_STORAGE_CLASS: ''
 # Cleanup is then a manual `kubectl delete pvc <release>-authz-policy-admin-data`.
 AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
 
-# Decision-log collector writes to ephemeral container storage. Lost on Pod
-# restart. See the handover Next Steps "decision-log collector sink
+# The decisions are written to ephemeral container storage and are lost on a
+# Pod restart. See the handover Next Steps "decision-log collector sink
 # productionisation" before any production deploy.
 AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 
@@ -366,42 +351,31 @@ HPA_MIN_REPLICAS: 1
 HPA_MAX_REPLICAS: 1
 HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
 
-# Per-container resource baselines.
+# Resource baselines.
 # Defaults below mirror `resource-profiles/dev.yaml` so that a plain
 # `helm install` on a dev / sandbox cluster (no profile selection, no
 # operator overrides) schedules cleanly on a small node. For production
 # installs, pass `-f resource-profiles/prod.yaml` or set the deployer's
 # PROFILE parameter to `prod`.
-ENVOY_CPU_REQUEST: 100m
-ENVOY_CPU_LIMIT: 100m
-ENVOY_MEM_REQUEST: 100Mi
-ENVOY_MEM_LIMIT: 100Mi
-
-# OPA container (vanilla upstream image, stateless policy engine).
-# OPA is memory-light for typical policy datasets: the data volume comes from
-# the pap-client container's normalisation, not from OPA's evaluation.
-OPA_CPU_REQUEST: 50m
-OPA_CPU_LIMIT: 100m
-OPA_MEM_REQUEST: 64Mi
-OPA_MEM_LIMIT: 200Mi
-
-# pap-client container.
-# 300Mi, not 100Mi: pap-client parses a real access-control dataset
-# (1294 policy sets / 2207 rules, 1.9 MB re-parsed every pull tick)
-# which peaks at ~134 MiB. At 100Mi it was OOMKilled into CrashLoopBackOff on
-# cloud-platform-security-dev-4. Keep this in step with resource-profiles/dev.yaml.
 #
-# GOMEMLIMIT is not set — the limit is a cliff, not a ceiling. Installations
-# with materially more policies will exceed it.
-PAP_CLIENT_CPU_REQUEST: 100m
-PAP_CLIENT_CPU_LIMIT: 100m
-PAP_CLIENT_MEM_REQUEST: 100Mi
-PAP_CLIENT_MEM_LIMIT: 300Mi
+# The numbers are what the five containers this one replaced asked for and
+# were capped at between them (authz-agent-ADR-0080), so upgrading onto this
+# chart moves neither the Pod's floor nor its ceiling. That is the only claim
+# they make: no load has been measured against the service. Deployments with
+# one worth measuring set these from the resource profiles.
+AUTHZ_AGENT_CPU_REQUEST: 350m
+AUTHZ_AGENT_CPU_LIMIT: 400m
+AUTHZ_AGENT_MEM_REQUEST: 364Mi
+AUTHZ_AGENT_MEM_LIMIT: 700Mi
 
-COLLECTOR_CPU_REQUEST: 100m
-COLLECTOR_CPU_LIMIT: 100m
-COLLECTOR_MEM_REQUEST: 100Mi
-COLLECTOR_MEM_LIMIT: 100Mi
+# The decision log is the only thing the container writes, to an emptyDir that
+# nothing rotates, so the storage limit and the volume's own sizeLimit are what
+# keep a long-running Pod from filling the node's disk. The volume is capped
+# below the container's limit, so the kubelet evicts on the volume rather than
+# on the sum of the writable layers.
+AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 64Mi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 512Mi
+AUTHZ_DECISION_LOG_SIZE_LIMIT: 256Mi
 
 # Only used when AUTHZ_POLICY_ADMIN_ENABLED is true. The stub serves a few megabytes of
 # JSON from memory; it does not need the backend's sizing.

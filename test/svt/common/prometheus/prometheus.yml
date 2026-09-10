@@ -6,3 +6,10 @@ scrape_configs:
   - job_name: "cadvisor"
     static_configs:
       - targets: ["cadvisor:8080"]
+
+  # The agent publishes its own process metrics on the data API listener; the
+  # dashboards read cAdvisor, but a run can be questioned from here too.
+  - job_name: "authz-agent"
+    metrics_path: /prometheus
+    static_configs:
+      - targets: ["authz-agent:8181"]

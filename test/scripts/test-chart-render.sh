@@ -25,10 +25,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CHART_DIR="${ROOT_DIR}/charts/authz-agent"
 
-# The chart's policy ConfigMap reads from files/opa/policies/ which is
-# generated (gitignored). Populate it before rendering.
-make -C "${ROOT_DIR}" copy-policies >/dev/null
-
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "error: required command not found: $1" >&2
@@ -167,7 +163,7 @@ fi
 # ── Realm resolution is wired and disable-able ───────────────────────────
 
 if [[ "$(env_value AUTHZ_TENANT_MANAGER_URL)" == "http://tenant-manager:8080" ]]; then
-  pass "pap-client is pointed at tenant-manager for realm display-name resolution"
+  pass "the agent is pointed at tenant-manager for realm display-name resolution"
 else
   fail "expected AUTHZ_TENANT_MANAGER_URL to default to the in-namespace tenant-manager"
 fi
@@ -222,186 +218,129 @@ else
   pass "a duplicated realm is rejected"
 fi
 
-# ── KUBERNETES_M2M_ENABLED=false (Keycloak sidecar mode) ─────────────────
+# ── The agent Pod (authz-agent-ADR-0080) ─────────────────────────────────
+#
+# What the Pod template has to get right is structural and invisible to a unit
+# test: how many containers it holds, which settings reach the process, and
+# which objects it mounts to read them from.
 
-# Helpers to render the full Deployment manifest for a given mode.
-render_deployment() {
-  # Capture helm's own diagnostics. Piping helm straight into awk under
-  # `set -e` makes a template failure kill the script with no output at all:
-  # the reader keeps the exit status, the error text goes nowhere useful, and
-  # the run stops after the last passing check with nothing to read. Surface
-  # the arguments and helm's message instead.
-  local rendered rc=0
-  rendered="$(helm template t "${CHART_DIR}" "$@" 2>&1)" || rc=$?
-  if [[ ${rc} -ne 0 ]]; then
-    printf 'helm template failed (exit %s)\n  args: %s\n%s\n' \
-      "${rc}" "$*" "${rendered}" >&2
-    return "${rc}"
-  fi
-  awk '/^---$/{found=0} /kind: Deployment/{found=1} found' <<<"${rendered}"
+all_manifests="$(helm template t "${CHART_DIR}")"
+
+# The agent's own container. The policy-admin Deployment is rendered beside it
+# and is not one of them.
+agent_containers() {
+  local rendered=$1
+  echo "${rendered}" | grep -cE "^        - name: (authz-agent|envoy|opa|pap-client|collector|token-fetcher)$" || true
 }
 
-keycloak_manifest="$(render_deployment --set KUBERNETES_M2M_ENABLED=false)"
-
-# (a) No projected ac-token volume.
-if grep -q "serviceAccountToken" <<<"${keycloak_manifest}"; then
-  fail "KUBERNETES_M2M_ENABLED=false must not render a projected serviceAccountToken volume"
+containers=$(agent_containers "${all_manifests}")
+if [[ "${containers}" -eq 1 ]]; then
+  pass "the agent Pod holds one container"
 else
-  pass "KUBERNETES_M2M_ENABLED=false: no projected serviceAccountToken volume"
+  fail "the agent Pod holds ${containers} containers, expected 1"
 fi
 
-# (b) emptyDir medium: Memory named ac-token.
-# Checked on the ac-token block itself, not on the whole manifest: a stray
-# "medium: Memory" belonging to some other volume must not satisfy this.
-ac_token_block="$(grep -A3 "name: ac-token" <<<"${keycloak_manifest}" || true)"
-if grep -q "medium: Memory" <<<"${ac_token_block}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: ac-token volume is emptyDir medium Memory"
+# The renders are searched with a shell pattern rather than `grep -q`: this
+# script runs under `set -o pipefail`, and a quiet grep exits at its first
+# match, which leaves the writing side of the pipe with SIGPIPE and turns a
+# found string into a failed pipeline.
+image_lines=$(echo "${all_manifests}" | grep -cE "^          image: .*authz-agent:" || true)
+if [[ "${image_lines}" -ge 1 ]]; then
+  pass "the agent Pod runs the authz-agent image"
 else
-  fail "KUBERNETES_M2M_ENABLED=false: expected emptyDir medium: Memory for ac-token"
+  fail "the agent Pod does not run the authz-agent image"
 fi
 
-# (c) client-credentials Secret volume present.
-if grep -q "client-credentials" <<<"${keycloak_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: client-credentials Secret volume present"
+# The M2M identity, which a platform install takes through a projected
+# service-account token, and the mount mode that replaces the pull loop.
+# Neither is rendered by the default above.
+k8s_m2m="$(helm template t "${CHART_DIR}" --set KUBERNETES_M2M_ENABLED=true)"
+if [[ "${k8s_m2m}" == *"serviceAccountToken"* && "${k8s_m2m}" != *"client-credentials"* ]]; then
+  pass "the agent Pod takes the projected token under KUBERNETES_M2M_ENABLED"
 else
-  fail "KUBERNETES_M2M_ENABLED=false: client-credentials Secret volume missing"
+  fail "the agent Pod does not take the projected token under KUBERNETES_M2M_ENABLED"
+fi
+if [[ "${k8s_m2m}" != *"AUTHZ_M2M_TOKEN_URL"* ]]; then
+  pass "the agent Pod asks no identity provider for a token under KUBERNETES_M2M_ENABLED"
+else
+  fail "the agent Pod still sets AUTHZ_M2M_TOKEN_URL under KUBERNETES_M2M_ENABLED"
+fi
+if [[ "${all_manifests}" == *"client-credentials"* && "${all_manifests}" != *"serviceAccountToken"* ]]; then
+  pass "the agent Pod takes the client-credentials Secret without KUBERNETES_M2M_ENABLED"
+else
+  fail "the agent Pod does not take the client-credentials Secret without KUBERNETES_M2M_ENABLED"
 fi
 
-# (d) Native sidecar token-fetcher in initContainers with restartPolicy: Always and startupProbe.
-if grep -q "restartPolicy: Always" <<<"${keycloak_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: initContainer has restartPolicy: Always (native sidecar)"
+mount_mode="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_CONFIGMAP=my-policies)"
+if [[ "${mount_mode}" == *"AUTHZ_POLICY_MOUNT_DIR"* && "${mount_mode}" == *"my-policies"* ]]; then
+  pass "the agent Pod mounts AUTHZ_POLICY_CONFIGMAP and points the service at it"
 else
-  fail "KUBERNETES_M2M_ENABLED=false: initContainer restartPolicy: Always missing"
+  fail "the agent Pod does not mount AUTHZ_POLICY_CONFIGMAP"
 fi
 
-if grep -q "startupProbe" <<<"${keycloak_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: startupProbe present on token-fetcher sidecar"
-else
-  fail "KUBERNETES_M2M_ENABLED=false: startupProbe missing on token-fetcher sidecar"
-fi
-
-if grep -q "name: token-fetcher" <<<"${keycloak_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: token-fetcher sidecar container present"
-else
-  fail "KUBERNETES_M2M_ENABLED=false: token-fetcher sidecar container missing"
-fi
-
-# (f) token-fetcher image reference must not be empty or malformed (e.g. "/...:").
-# This catches the class of defect where TOKEN_FETCHER_IMAGE stays '' because
-# bake-image-refs did not substitute it — which produces "image: /authz-agent-token-fetcher:"
-# and an Init:InvalidImageName failure at deploy time.
-# We render with an explicit non-empty TOKEN_FETCHER_IMAGE to simulate a baked chart.
-baked_keycloak_manifest="$(render_deployment \
-  --set KUBERNETES_M2M_ENABLED=false \
-  --set 'TOKEN_FETCHER_IMAGE=registry.example.com/ns/authz-agent-token-fetcher:1')"
-# Fed by here-string, not `echo |`: this is the only awk in the script that
-# exits early, and an early exit can SIGPIPE the writer, which `pipefail` then
-# turns into a silent script death. Harmless at today's manifest size (16 KB
-# fits the pipe buffer) but it is a trap waiting for the chart to grow.
-tf_image="$(awk '/name: token-fetcher/{found=1} found && /image:/{print; exit}' \
-  <<<"${baked_keycloak_manifest}" \
-  | sed 's/.*image: *//')"
-# Valid: non-empty AND starts with a registry host (contains at least one dot before first slash).
-if grep -qE '^[^/]+\.[^/]+/.+:.+$' <<<"${tf_image}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: token-fetcher image reference is non-empty and valid (${tf_image})"
-else
-  fail "KUBERNETES_M2M_ENABLED=false: token-fetcher image reference is empty or malformed: '${tf_image}'"
-fi
-
-# (e) backend volumeMount at /etc/authz/ac-token unchanged (present in Keycloak mode).
-if grep -q "mountPath: /etc/authz/ac-token" <<<"${keycloak_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=false: backend volumeMount at /etc/authz/ac-token present"
-else
-  fail "KUBERNETES_M2M_ENABLED=false: backend volumeMount at /etc/authz/ac-token missing"
-fi
-
-# ── KUBERNETES_M2M_ENABLED=true (K8s projected token) ────────────────────
-
-k8s_manifest="$(render_deployment --set KUBERNETES_M2M_ENABLED=true)"
-
-# No sidecar in K8s mode.
-if grep -q "name: token-fetcher" <<<"${k8s_manifest}"; then
-  fail "KUBERNETES_M2M_ENABLED=true must not render a token-fetcher initContainer"
-else
-  pass "KUBERNETES_M2M_ENABLED=true: no token-fetcher sidecar"
-fi
-
-# Projected volume present in K8s mode.
-if grep -q "serviceAccountToken" <<<"${k8s_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=true: projected serviceAccountToken volume present"
-else
-  fail "KUBERNETES_M2M_ENABLED=true: projected serviceAccountToken volume missing"
-fi
-
-# backend volumeMount at /etc/authz/ac-token also present in K8s mode.
-if grep -q "mountPath: /etc/authz/ac-token" <<<"${k8s_manifest}"; then
-  pass "KUBERNETES_M2M_ENABLED=true: backend volumeMount at /etc/authz/ac-token present"
-else
-  fail "KUBERNETES_M2M_ENABLED=true: backend volumeMount at /etc/authz/ac-token missing"
-fi
-
-# ── Readiness / liveness probe separation ────────────────────────────────────
-
-default_deployment="$(render_deployment)"
-
-# Readiness must use --readiness flag; liveness must NOT.
-if grep -q '"pap-client", "healthcheck", "--readiness"' <<<"${default_deployment}"; then
-  pass "backend readinessProbe uses pap-client healthcheck --readiness"
-else
-  fail "backend readinessProbe must use 'pap-client healthcheck --readiness'"
-fi
-
-if grep -qE '"pap-client", "healthcheck"[^,]' <<<"${default_deployment}"; then
-  pass "backend livenessProbe uses pap-client healthcheck (no --readiness)"
-else
-  fail "backend livenessProbe must use 'pap-client healthcheck' without --readiness"
-fi
-
-# Liveness and readiness must NOT use the same command (they were identical before).
-# grep -A2 cannot reach the command: line (it is 8+ lines after readinessProbe:);
-# count occurrences of each distinct form instead to avoid a pipefail abort.
-r_count=$(echo "${default_deployment}" | grep -c '"healthcheck", "--readiness"' 2>/dev/null || echo 0)
-l_count=$(echo "${default_deployment}" | grep -cE '"healthcheck"\]' 2>/dev/null || echo 0)
-if [[ "${r_count}" -ge 1 && "${l_count}" -ge 1 ]]; then
-  pass "readinessProbe and livenessProbe use different healthcheck commands"
-else
-  fail "readinessProbe and livenessProbe must differ: readiness needs --readiness flag"
-fi
-
-# ── subPath-free invariant ─────────────────────────────────────────────────
-#
-# A volumeMount with subPath causes runc to abort container creation with
-# "not a directory" when the parent directory does not exist in the rootfs
-# (defect 7: opa-auth-token subPath: token).  It also prevents the kubelet from
-# propagating Secret/ConfigMap updates into the mounted file.
-#
-# WHITELIST (pre-existing before this task, not changed here):
-#   subPath: envoy.yaml   — single Envoy config file from the runtime-config
-#                           ConfigMap; hot-reload not required; pre-dates this work.
-#   subPath: opa-config.yaml — single OPA config file; same reasoning.
-#
-# Any new subPath outside this whitelist must be rejected here first.
-#
-# Strategy: render both modes, count total subPath occurrences, and compare
-# against the known-good count (2).  If any new subPath is added to the chart,
-# the count exceeds 2 and the assertion fails — forcing a deliberate whitelist
-# extension with a written justification.
-all_manifests="$(helm template t "${CHART_DIR}")"
-keycloak_all="$(helm template t "${CHART_DIR}" --set KUBERNETES_M2M_ENABLED=false)"
-k8s_all="$(helm template t "${CHART_DIR}" --set KUBERNETES_M2M_ENABLED=true)"
-
-for label_manifest in "default:${all_manifests}" "keycloak-mode:${keycloak_all}" "k8s-mode:${k8s_all}"; do
-  label="${label_manifest%%:*}"
-  manifest="${label_manifest#*:}"
-  # Match only actual YAML subPath keys (lines where subPath: appears as a
-  # key with leading whitespace), NOT comment lines that mention subPath.
-  sp_count=$(echo "${manifest}" | grep -cE '^\s+subPath:' 2>/dev/null || echo 0)
-  # Whitelist: exactly 2 subPath uses (envoy.yaml, opa-config.yaml).
-  if [[ "${sp_count}" -le 2 ]]; then
-    pass "no unexpected subPath mounts in ${label} render (${sp_count} whitelisted)"
+# Every setting the service reads has to reach it, and the objects it reads
+# them from have to be mounted.
+for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR AUTHZ_DATA_API_AUTHORIZATION AUTHZ_OPA_AUTH_TOKEN_FILE \
+  AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_JWKS_BOOTSTRAP_REQUIRED AUTHZ_PAP_CLIENT_SOURCE_URL \
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL AUTHZ_ENTITLEMENTS_URL AUTHZ_DECISION_LOG_FILE AUTHZ_DECISION_LOG_HEADERS; do
+  if [[ "${all_manifests}" == *"name: ${env_name}"* ]]; then
+    pass "the agent Pod sets ${env_name}"
   else
-    echo "${manifest}" | grep -E '^\s+subPath:' >&2
-    fail "unexpected subPath mounts in ${label} render: found ${sp_count}, expected <=2 (envoy.yaml + opa-config.yaml only)"
+    fail "the agent Pod does not set ${env_name}"
+  fi
+done
+
+for volume in "authz-agent-trusted-providers" "authz-agent-opa-auth" "authz-agent-client-credentials"; do
+  if [[ "${all_manifests}" == *"${volume}"* ]]; then
+    pass "the agent Pod mounts ${volume}"
+  else
+    fail "the agent Pod does not mount ${volume}"
+  fi
+done
+
+# /health answers once the trusted providers are in order and /ready once the
+# policies have loaded too, so a Pod waiting for its policy source is held out
+# of the Service instead of being restarted.
+if [[ "${all_manifests}" == *"path: /ready"* && "${all_manifests}" == *"path: /health"* ]]; then
+  pass "the agent Pod probes /ready for readiness and /health for liveness"
+else
+  fail "the agent Pod does not separate the readiness and liveness probes"
+fi
+
+# The drain has to fit inside the grace period: five seconds for each of the
+# two surfaces, then the decision-log drain, which on the path this chart
+# renders is bounded by the writes to the volume. The template says why the
+# default of thirty is not enough.
+if [[ "${all_manifests}" == *"terminationGracePeriodSeconds: 45"* ]]; then
+  pass "the agent Pod keeps a grace period longer than its drain"
+else
+  fail "the agent Pod leaves the grace period at the default"
+fi
+
+# The decision log is the only thing the container writes, and nothing rotates
+# it, so the storage limit and the volume's own cap are what stand between a
+# long-running Pod and a full node.
+if [[ "${all_manifests}" == *"ephemeral-storage:"* && "${all_manifests}" == *"sizeLimit:"* ]]; then
+  pass "the agent Pod declares its ephemeral storage and caps the decision-log volume"
+else
+  fail "the agent Pod leaves its ephemeral storage or the decision-log volume uncapped"
+fi
+
+# subPath breaks ConfigMap and Secret propagation: the kubelet swaps the
+# `..data` symlink of a directory mount and never rewrites a subPath'd file,
+# so a reload-without-restart stops working the moment one appears.
+sp_count=$(echo "${all_manifests}" | grep -cE "^ +subPath:" || true)
+if [[ "${sp_count}" -eq 0 ]]; then
+  pass "no subPath mounts in the render"
+else
+  fail "unexpected subPath mounts in the render: found ${sp_count}, expected none"
+fi
+
+for absent in "authz-agent-runtime" "authz-agent-policies" "openpolicyagent/opa" "authz-agent-envoy" "authz-agent-pap-client" "authz-agent-collector" "authz-agent-token-fetcher"; do
+  if [[ "${all_manifests}" == *"${absent}"* ]]; then
+    fail "the render still carries ${absent}"
+  else
+    pass "the render has no ${absent}"
   fi
 done
 

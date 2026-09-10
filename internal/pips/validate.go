@@ -121,7 +121,7 @@ func rejectUnsupported(idx int, pipType string, pip SimplifiedPIP) error {
 		// the error message names the runtime knob so the operator knows
 		// what to set without having to read the ADR.
 		return fmt.Errorf(
-			`pip %d (%s): pipType "ENTITLEMENT" is container-pinned; configure AUTHZ_ENTITLEMENTS_URL on the pap-client container instead`,
+			`pip %d (%s): pipType "ENTITLEMENT" is deployment-pinned; configure AUTHZ_ENTITLEMENTS_URL on the agent instead`,
 			idx, pip.Name,
 		)
 	}

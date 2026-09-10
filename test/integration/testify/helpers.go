@@ -75,19 +75,12 @@ type RuntimeConfig struct {
 	// The kind harness reads it from the chart's Secret. Default:
 	// "test-opa-auth-token".
 	OPAAuthToken string
-	// KubeNamespace, KubeAgentSelector and KubeDebugImage configure the stack
-	// driver (stack.go): the namespace the agent runs in, the label selector
-	// of its Pod, and the image whose `kill` signals the OPA container from an
-	// ephemeral container.
-	KubeNamespace     string
-	KubeAgentSelector string
-	KubeDebugImage    string
 }
 
 // LoadConfig builds RuntimeConfig from environment variables. The kind Job
 // (test/k8s/runtime-suite-job.yaml) sets every address to a Service name. The
 // defaults only keep the config well-formed: the suite runs inside the
-// cluster, because the stack driver needs the Pod's ServiceAccount (stack.go).
+// cluster, where every target is reachable by Service name.
 func LoadConfig() RuntimeConfig {
 	waitSec := 6
 	if v := os.Getenv("KC_EXPIRED_WAIT_SECONDS"); v != "" {
@@ -123,9 +116,6 @@ func LoadConfig() RuntimeConfig {
 		PullInterval:          pullInterval,
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
 		OPAAuthToken:          envOr("OPA_AUTH_TOKEN", "test-opa-auth-token"),
-		KubeNamespace:         envOr("K8S_NAMESPACE", "authz-e2e"),
-		KubeAgentSelector:     envOr("K8S_AGENT_SELECTOR", "name=authz-agent"),
-		KubeDebugImage:        envOr("K8S_DEBUG_IMAGE", "local/authz-agent-pap-client:ci"),
 	}
 }
 

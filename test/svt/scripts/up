@@ -7,13 +7,11 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SVT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-ROOT_DIR="$(cd "${SVT_DIR}/../.." && pwd)"
 
 # ── tunables ─────────────────────────────────────────────────────────────────
 PROJECT_NAME="${PROJECT_NAME:-authz-svt}"
 SVT_KC_PORT="${SVT_KC_PORT:-25556}"
 SVT_AUTHZ_PORT="${SVT_AUTHZ_PORT:-28080}"
-SVT_AUTHZ_ADMIN_PORT="${SVT_AUTHZ_ADMIN_PORT:-29901}"
 SVT_CADVISOR_PORT="${SVT_CADVISOR_PORT:-28888}"
 SVT_PROMETHEUS_PORT="${SVT_PROMETHEUS_PORT:-29090}"
 SVT_GRAFANA_PORT="${SVT_GRAFANA_PORT:-23000}"
@@ -28,7 +26,7 @@ SVT_PAP_PULL_INTERVAL="${SVT_PAP_PULL_INTERVAL:-2}"
 # runs with rather than hardcoded.
 SVT_PULL_WAIT_SECONDS=$((SVT_PAP_PULL_INTERVAL + 2))
 
-export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT SVT_AUTHZ_ADMIN_PORT
+export PROJECT_NAME SVT_KC_PORT SVT_AUTHZ_PORT
 export SVT_CADVISOR_PORT SVT_PROMETHEUS_PORT SVT_GRAFANA_PORT SVT_AUTHZ_POLICY_ADMIN_PORT SVT_AUTHZ_POLICY_ADMIN_DOMAIN
 export SVT_PAP_PULL_INTERVAL SVT_PULL_WAIT_SECONDS
 
@@ -47,23 +45,34 @@ require_cmd docker
 require_cmd curl
 require_cmd jq
 
-# ── render runtime configs (single-source templates in
-#     charts/authz-agent/files/...) ────────────────────────────────────
-log "rendering runtime configs for Compose split topology"
-"${ROOT_DIR}/test/scripts/render-runtime-configs.sh"
-
 # ── bring up the stack ───────────────────────────────────────────────────────
-log "starting SVT environment (project=${PROJECT_NAME})"
-log "  envoy       : http://localhost:${SVT_AUTHZ_PORT}"
-log "  keycloak    : http://localhost:${SVT_KC_PORT}"
-log "  cadvisor    : http://localhost:${SVT_CADVISOR_PORT}"
-log "  prometheus  : http://localhost:${SVT_PROMETHEUS_PORT}"
-log "  grafana     : http://localhost:${SVT_GRAFANA_PORT}"
+# The metrics trio is optional. cAdvisor needs a privileged container and
+# /dev/kmsg, which a hosted CI runner may not give it, and a single load cell
+# needs none of it: the response times come from JMeter and only the report
+# generators read Prometheus. SVT_METRICS_ENABLED=false leaves the three out.
+SVT_METRICS_ENABLED="${SVT_METRICS_ENABLED:-true}"
 
-# Start keycloak, then pap-client (which pulls in opa-bootstrap → opa →
-# pap-client via depends_on), then the rest of the stack. cadvisor,
-# prometheus, and grafana have no depends_on so they come up in parallel.
-"${COMPOSE_CMD[@]}" up -d --build keycloak pap-client decision-log-collector envoy cadvisor prometheus grafana
+SERVICES=(keycloak authz-policy-admin authz-agent)
+if [ "${SVT_METRICS_ENABLED}" = "true" ]; then
+  SERVICES+=(cadvisor prometheus grafana)
+fi
+
+log "starting SVT environment (project=${PROJECT_NAME})"
+log "  authz-agent : http://localhost:${SVT_AUTHZ_PORT}"
+log "  keycloak    : http://localhost:${SVT_KC_PORT}"
+if [ "${SVT_METRICS_ENABLED}" = "true" ]; then
+  log "  cadvisor    : http://localhost:${SVT_CADVISOR_PORT}"
+  log "  prometheus  : http://localhost:${SVT_PROMETHEUS_PORT}"
+  log "  grafana     : http://localhost:${SVT_GRAFANA_PORT}"
+else
+  log "  metrics     : disabled (SVT_METRICS_ENABLED=false); the report"
+  log "                generators have no Prometheus to read"
+fi
+
+# Start keycloak and the policy stub, then the agent (which depends on both),
+# then whatever else is selected. cadvisor, prometheus, and grafana have no
+# depends_on so they come up in parallel.
+"${COMPOSE_CMD[@]}" up -d --build "${SERVICES[@]}"
 
 # ── wait for Keycloak ────────────────────────────────────────────────────────
 log "waiting for Keycloak to become ready..."
@@ -81,24 +90,12 @@ if [ "${KC_READY}" != "true" ]; then
 fi
 log "Keycloak ready"
 
-# ── wait for envoy readiness (Envoy admin) ──────────────────────────────────
-log "waiting for envoy readiness..."
-ENVOY_READY=false
-for i in $(seq 1 90); do
-  if curl -sf "http://localhost:${SVT_AUTHZ_ADMIN_PORT}/ready" >/dev/null 2>&1; then
-    ENVOY_READY=true
-    break
-  fi
-  sleep 1
-done
-if [ "${ENVOY_READY}" != "true" ]; then
-  log "ERROR: envoy did not become ready within 90 s"
-  exit 1
-fi
-log "envoy ready"
-
-# ── wait for backend health (via Envoy) ─────────────────────────────────────
-log "waiting for backend health..."
+# ── wait for the agent ──────────────────────────────────────────────────────
+# The container carries no healthcheck of its own: the platform base image has
+# no shell utility to probe with, so the wait happens here, where 8080 is
+# published. /health answers once the trusted providers have bootstrapped; the
+# policies are seeded below, so /ready cannot be the gate yet.
+log "waiting for authz-agent health..."
 AGENT_READY=false
 for i in $(seq 1 90); do
   if curl -sf "http://localhost:${SVT_AUTHZ_PORT}/health" >/dev/null 2>&1; then
@@ -108,10 +105,10 @@ for i in $(seq 1 90); do
   sleep 1
 done
 if [ "${AGENT_READY}" != "true" ]; then
-  log "ERROR: backend did not become healthy within 90 s"
+  log "ERROR: authz-agent did not become healthy within 90 s"
   exit 1
 fi
-log "backend healthy"
+log "authz-agent healthy"
 
 # ── seed policies (base + mixed-flow + per-scenario) ────────────────────────
 # The mixed-flow report task (handover 20260518) ships a second committed
@@ -176,7 +173,7 @@ fi
 log "PIPs seeded into authz-policy-admin"
 
 # ── wait for pull loop to apply seeded data ──────────────────────────────────
-log "waiting ${SVT_PULL_WAIT_SECONDS}s for OPA pull loop to apply seeded policies + PIPs..."
+log "waiting ${SVT_PULL_WAIT_SECONDS}s for the pull loop to apply seeded policies + PIPs..."
 sleep "${SVT_PULL_WAIT_SECONDS}"
 
 # ── verify with a quick smoke ────────────────────────────────────────────────

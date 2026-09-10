@@ -31,7 +31,7 @@ if [[ ! -x "${OPA_BIN}" ]]; then
 fi
 
 exec "${OPA_BIN}" eval --format pretty --profile --profile-sort total_time_ns --profile-limit 20 \
-  -d "${DIR}/../../../../charts/authz-agent/files/opa/policies" \
+  -d "${DIR}/../../../../policies" \
   -d "${DIR}/data.json" \
   -i "${DIR}/input.json" \
-  'data.authorize.result'
+  'data.authorize.results'
