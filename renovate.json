@@ -17,7 +17,7 @@
     {
       "description": "Automerge Netcracker Docker patch and digest updates",
       "matchManagers": ["dockerfile"],
-      "matchPackageNames": ["/^ghcr\\.io\/netcracker\//"],
+      "matchPackageNames": ["ghcr.io/netcracker/**"],
       "matchUpdateTypes": ["patch", "digest"],
       "automerge": true,
       "automergeType": "pr",
