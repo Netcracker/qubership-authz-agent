@@ -3,5 +3,40 @@
   "assignAutomerge": true,
   "assigneesFromCodeOwners": true,
   "reviewersFromCodeOwners": true,
-  "extends": ["github>Netcracker/qubership-core-infra:renovate-core-config"]
+  "extends": ["github>Netcracker/qubership-core-infra:renovate-core-config"],
+  "packageRules": [
+    {
+      "description": "Automerge stable Go patch and digest updates",
+      "matchManagers": ["gomod"],
+      "matchUpdateTypes": ["patch", "digest"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Automerge Netcracker Docker patch and digest updates",
+      "matchManagers": ["dockerfile"],
+      "matchPackageNames": ["ghcr.io/netcracker/**"],
+      "matchUpdateTypes": ["patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Automerge Netcracker Maven patch updates",
+      "matchManagers": ["maven"],
+      "matchPackageNames": ["/^com\\.netcracker\\./"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "automerge": false
+  },
+  "lockFileMaintenance": {
+    "automerge": false
+  }
 }
