@@ -65,3 +65,15 @@ jobs:
     # instead of `secrets: inherit` (zizmor: secrets-inherit).
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  build-gate:
+    name: Build gate
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: [build]
+    if: always()
+    steps:
+      - name: Check build result
+        env:
+          RESULT: ${{ needs.build.result }}
+        run: test "$RESULT" = "success"
