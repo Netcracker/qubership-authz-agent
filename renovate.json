@@ -15,10 +15,19 @@
       "platformAutomerge": true
     },
     {
-      "description": "Automerge Qubership core base patch and digest updates",
+      "description": "Automerge Netcracker Docker patch and digest updates",
       "matchManagers": ["dockerfile"],
-      "matchPackageNames": ["ghcr.io/netcracker/qubership-core-base"],
+      "matchPackageNames": ["/^ghcr\\.io\/netcracker\//"],
       "matchUpdateTypes": ["patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Automerge Netcracker Maven patch updates",
+      "matchManagers": ["maven"],
+      "matchPackageNames": ["/^com\\.netcracker\\./"],
+      "matchUpdateTypes": ["patch"],
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
