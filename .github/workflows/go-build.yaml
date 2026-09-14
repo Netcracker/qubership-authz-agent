@@ -67,7 +67,7 @@ jobs:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build-gate:
-    name: ${{ github.event_name == 'pull_request' && 'Build gate' || 'Build gate (push)' }}
+    name: Build gate
     runs-on: ubuntu-latest
     permissions: {}
     needs: [build]
