@@ -1,0 +1,15 @@
+[
+  {
+    "_comment": "Same name as the tenant B PIP, different endpoint.",
+    "name": "subject.mtLimit",
+    "url": "http://pip-mock:8090/api/v1/pip/mt-limit-a",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.value",
+    "requestAttributes": {
+      "resourceType": "PARITY_MT_PIP"
+    },
+    "cacheable": false
+  }
+]

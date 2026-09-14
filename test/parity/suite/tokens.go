@@ -118,9 +118,15 @@ func (tf *TokenFactory) M2MToken() (string, error) {
 // minting a fresh one via password grant against parity-end-user if the
 // cache entry is missing or close to expiry.
 func (tf *TokenFactory) EndUserToken(profile UserProfile) (string, error) {
-	key := "enduser:" + profile.Username()
+	return tf.EndUserTokenFor(profile.Username())
+}
+
+// EndUserTokenFor is EndUserToken for a user the parity realm does not seed,
+// such as a user of a tenant realm on a multi-tenant stand.
+func (tf *TokenFactory) EndUserTokenFor(username string) (string, error) {
+	key := "enduser:" + username
 	return tf.cachedToken(key, func() (tokenEntry, error) {
-		return tf.passwordGrant(profile.Username())
+		return tf.passwordGrant(username)
 	})
 }
 

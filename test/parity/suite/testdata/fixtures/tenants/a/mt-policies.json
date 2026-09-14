@@ -1,0 +1,60 @@
+[
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_ONLY_A",
+    "resourceType": "PARITY_MT_ONLY_A",
+    "operation": "READ",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0025"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_REGION",
+    "resourceType": "PARITY_MT_REGION",
+    "operation": "READ",
+    "condition": "resource.region == 'A'",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0026"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_PIP",
+    "resourceType": "PARITY_MT_PIP",
+    "operation": "READ",
+    "condition": "resource.amount <= subject.mtLimit",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0027"
+  },
+  {
+    "component": "PARITY",
+    "reason": "ALL",
+    "resourceType": "ALL",
+    "operation": "ALL",
+    "roles": [
+      "ROLE_MT_ADMIN"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0028"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_FILTER",
+    "resourceType": "PARITY_MT_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "tenant==a",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0029"
+  }
+]
