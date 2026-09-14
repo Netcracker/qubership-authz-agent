@@ -165,6 +165,22 @@ func (ds *legacyPapSeeder) putJSON(ctx context.Context, endpoint, token string, 
 	return nil
 }
 
+// HelperPutSimplifiedPolicies uploads policies into domain on the legacy PAP and
+// returns the status and body instead of failing on a non-2xx status, so a case
+// can record that access-control refused the upload.
+func HelperPutSimplifiedPolicies(ctx context.Context, cfg Config, m2mToken, domain string, policies []any) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		simplifiedPath("domainPolicies", domain),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPut, endpoint, policies, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
 // pullSettleDelay is how long to wait after writing to the authz-policy-admin before the
 // agent can be assumed to have applied the change.
 //

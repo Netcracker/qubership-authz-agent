@@ -40,7 +40,8 @@ the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 | `parity-install` | `helm upgrade --install` with [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
 | `parity-suite` | The Job from [`test/k8s/parity/parity-suite-job.yaml`](../k8s/parity/parity-suite-job.yaml); its log is streamed |
 
-Expected result: 135/135 cases green against authz-agent. CI runs the same targets (job `Parity on kind` in
+Expected result: 135/135 cases green against authz-agent, and the cases that wait for a golden skipped (see
+[Cases waiting for a golden](#cases-waiting-for-a-golden)). CI runs the same targets (job `Parity on kind` in
 `.github/workflows/integration-tests.yaml`).
 
 The suite addresses `authz-agent`, `idp`, `pip-mock`, and `entitlements-mock` by Service name; nothing is published on
@@ -91,6 +92,47 @@ case:
 - If the new behaviour is a regression: fix the regression.
 - The golden files themselves should not be edited — they are the record of
   what the legacy service did, not a living test spec.
+
+## Cases waiting for a golden
+
+Some cases are written before access-control has answered them, so that the answers can be recorded on a live
+access-control outside this repository. Such a case compares through `requirePendingGolden` instead of
+`requireGolden`: while its golden file is missing, it skips and prints the answer it got, for example
+`golden check-resource-v1/semantics/s2b-neq-attribute-absent is not recorded yet; the authz-agent profile answered false`. Once the
+golden is committed, the case compares like any other. A case that uses `requireGolden` still fails when its golden is
+missing.
+
+| Test | What it asks access-control | Goldens under `suite/testdata/golden/` |
+| --- | --- | --- |
+| `TestRow02CheckResourceV1MissingResourceAttribute`, `…MissingAttributeUnderOr`, `…MissingAttributeBesideAllowingPolicy`, `…MissingPIPAttribute`, `…FailedGeneralPIP`, `…GeneralPIPJsonPathMatchesNothing`, `…ExpressionShape` | What a condition answers when an attribute it reads is missing, and how `OR`, `AND`, and long expressions evaluate | `check-resource-v1/semantics/` |
+| `TestRow06CheckFilterV1MissingPIPAttribute` | Which predicate survives when a policy reads a TOKEN PIP with no value | `check-filter-v1/semantics/` |
+| `TestLoadSimplifiedPoliciesConditionSyntax` | Whether the upload accepts a condition outside the grammar | `load-simplified-policies-v1/condition-syntax/` |
+| `TestTenantScopedDecisions` | Which tenant a decision is scoped to, given the token, `tenant_id`, and the `Tenant` header | `check-resource-v1/tenant/`, `check-filter-v1/tenant/` |
+
+The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
+answers, golden or not.
+
+`TestLoadSimplifiedPoliciesConditionSyntax` skips on the `authz-agent` profile: authz-policy-admin stores a policy
+without validating its condition, so the upload status says nothing about the agent.
+
+### Two-tenant stand
+
+`TestTenantScopedDecisions` needs the legacy PAP, so it skips on the `authz-agent` profile, where authz-policy-admin keys
+a domain without the tenant. It also needs two tenants, each with its own realm, and skips unless all four of these are
+set:
+
+| Variable | Value |
+| --- | --- |
+| `PARITY_MT_TENANT_A_ID` | Identifier of tenant A, the stand's default tenant, as the PAP stores it |
+| `PARITY_MT_TENANT_A_IDP_BASE_URL` | Base URL of tenant A's realm, ending in `/realms/<realm>` |
+| `PARITY_MT_TENANT_B_ID` | Identifier of tenant B |
+| `PARITY_MT_TENANT_B_IDP_BASE_URL` | Base URL of tenant B's realm |
+
+Each realm needs a user with `ROLE_MT_READER` and a user with `ROLE_MT_ADMIN`, by default `mt-a` and `mt-a-admin` in
+tenant A and `mt-b` and `mt-b-admin` in tenant B; `PARITY_MT_TENANT_{A,B}_USER` and `PARITY_MT_TENANT_{A,B}_ADMIN_USER`
+override the names. The users log in with the suite's end-user client and `PARITY_END_USER_PASSWORD`, and the M2M token
+comes from `PARITY_IDP_BASE_URL`. The policies are in `suite/testdata/fixtures/tenants/`; both tenants receive them in
+the domain `PARITY_MT`.
 
 ## Directory layout
 

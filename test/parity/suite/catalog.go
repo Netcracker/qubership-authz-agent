@@ -38,6 +38,9 @@ const (
 	PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2
 	PSUITE_ROW_9_PREVIEW_BULK_OPERATIONS_V2
 	PSUITE_ROW_10_CHECK_FILTER_V2
+	// PSUITE_LOAD_SIMPLIFIED_POLICIES is the PAP upload of simplified policies,
+	// used by the cases that record whether access-control accepts a condition.
+	PSUITE_LOAD_SIMPLIFIED_POLICIES
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -106,6 +109,10 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		PathTmpl: "/access/v2/check/filter", GoldenDir: "check-filter-v2",
 		IgnoreObligations: true,
 	},
+	PSUITE_LOAD_SIMPLIFIED_POLICIES: {
+		ID: PSUITE_LOAD_SIMPLIFIED_POLICIES, Name: "load-simplified-policies-v1", HTTPMethod: "PUT",
+		PathTmpl: "/access/v1/simplifiedPolicies/domainPolicies/{domain}", GoldenDir: "load-simplified-policies-v1",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -145,6 +152,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.CheckResourcesResponse{}
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
+	case PSUITE_LOAD_SIMPLIFIED_POLICIES:
+		return &model.PolicyLoadOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }

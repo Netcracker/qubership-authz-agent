@@ -16,7 +16,9 @@ package paritysuite
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -66,6 +68,9 @@ func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual 
 	goldenPath := gc.GoldenPath(id, subCase)
 
 	raw, err := os.ReadFile(goldenPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("%w: %s", ErrGoldenNotRecorded, goldenPath)
+	}
 	if err != nil {
 		return fmt.Errorf("read golden %s: %w", goldenPath, err)
 	}
@@ -279,6 +284,12 @@ func normalizeRsqlInElements(expr string) string {
 	}
 	return out.String()
 }
+
+// ErrGoldenNotRecorded is returned by [GoldenComparator.Compare] when no golden
+// file exists for the case. A case whose golden is expected to exist treats it
+// as a failure; a case written ahead of its golden capture skips on it (see
+// requirePendingGolden).
+var ErrGoldenNotRecorded = errors.New("golden not recorded")
 
 // GoldenMismatchError carries the diff text so the testify assertion layer
 // can surface it via s.T().Errorf without re-invoking cmp.Diff.

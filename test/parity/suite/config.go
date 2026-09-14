@@ -81,6 +81,10 @@ type Config struct {
 	// Profile is the active PARITY_PROFILE. The only supported value is
 	// "authz-agent" (golden collection cannot run from this repository).
 	Profile string
+
+	// Tenants describes the two-tenant stand the tenant-scoped cases need. The
+	// kind parity harness has one realm, so these cases skip unless it is set.
+	Tenants TenantStand
 }
 
 // LoadConfig builds a Config from the PARITY_* environment variables. Missing
@@ -104,6 +108,7 @@ func LoadConfig() Config {
 		TenantID:            envOr("PARITY_TENANT_ID", "default"),
 		DomainName:          envOr("PARITY_DOMAIN_NAME", "PARITY"),
 		Profile:             profile,
+		Tenants:             loadTenantStand(),
 	}
 }
 

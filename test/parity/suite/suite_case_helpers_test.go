@@ -18,6 +18,8 @@ package paritysuite
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"sort"
 
@@ -61,6 +63,59 @@ func (s *ParitySuite) requireGolden(id ParityEndpointID, subCase string, actual 
 	if err := s.comparator.Compare(id, subCase, actual); err != nil {
 		s.T().Errorf("%v", err)
 	}
+}
+
+// requirePendingGolden is requireGolden for a case written before access-control
+// answered it. With no golden recorded the case skips and prints the answer of the
+// service under test, which is access-control when the golden is being captured;
+// once the golden is committed it compares like any other case.
+func (s *ParitySuite) requirePendingGolden(id ParityEndpointID, subCase string, actual any) {
+	s.T().Helper()
+	err := s.comparator.Compare(id, subCase, actual)
+	if errors.Is(err, ErrGoldenNotRecorded) {
+		answer, _ := json.Marshal(actual)
+		s.T().Skipf("golden %s/%s is not recorded yet; the %s profile answered %s", Meta(id).GoldenDir, subCase, s.cfg.Profile, answer)
+	}
+	if err != nil {
+		s.T().Errorf("%v", err)
+	}
+}
+
+func (s *ParitySuite) runPendingCheckResourceV1Case(subCase string, body model.CheckAccessRequest, tokens TokenBundle, opts PerCallOptions) {
+	s.T().Helper()
+
+	status, decision, _, err := HelperCheckResourceV1(context.Background(), s.cfg, body, tokens, opts)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusOK, status)
+	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1, subCase, &decision)
+}
+
+// runRepeatedPendingCheckResourceV1Case sends the same request calls times. The
+// answers have to agree with each other before the first one is compared with the
+// golden, so an order-dependent answer shows up even while recording.
+func (s *ParitySuite) runRepeatedPendingCheckResourceV1Case(subCase string, body model.CheckAccessRequest, tokens TokenBundle, calls int) {
+	s.T().Helper()
+
+	decisions := make([]bool, 0, calls)
+	distinct := map[bool]struct{}{}
+	for range calls {
+		status, decision, _, err := HelperCheckResourceV1(context.Background(), s.cfg, body, tokens, PerCallOptions{})
+		s.Require().NoError(err)
+		s.Require().Equal(http.StatusOK, status)
+		decisions = append(decisions, decision)
+		distinct[decision] = struct{}{}
+	}
+	s.Require().Len(distinct, 1, "decisions over %d identical calls: %v", calls, decisions)
+	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1, subCase, &decisions[0])
+}
+
+func (s *ParitySuite) runPendingFilterV1Case(subCase, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) {
+	s.T().Helper()
+
+	status, decoded, _, err := HelperFilterV1(context.Background(), s.cfg, resourceType, operation, tokens, opts)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusOK, status)
+	s.requirePendingGolden(PSUITE_ROW_6_CHECK_FILTER_V1, subCase, &decoded)
 }
 
 func (s *ParitySuite) runCheckResourceV1Case(subCase string, body model.CheckAccessRequest, tokens TokenBundle, opts PerCallOptions) {

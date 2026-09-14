@@ -60,7 +60,7 @@ func HelperApiVersion(ctx context.Context, cfg Config) (int, model.ApiVersionRes
 // plus the raw status and body so validation rows (row 11) can assert on
 // error responses.
 func HelperCheckResourceV1(ctx context.Context, cfg Config, body model.CheckAccessRequest, tokens TokenBundle, opts PerCallOptions) (int, bool, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathCheckResource, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckResource, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, false, nil, err
@@ -77,7 +77,7 @@ func HelperCheckResourceV1(ctx context.Context, cfg Config, body model.CheckAcce
 // The decoded set of allowed ids is returned as a []string; callers use
 // cmpopts.SortSlices at compare time per D-M.
 func HelperCheckResourcesV1(ctx context.Context, cfg Config, body []model.CheckAccessRequestWithID, tokens TokenBundle, opts PerCallOptions) (int, []string, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulk, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulk, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, nil, nil, err
@@ -96,7 +96,7 @@ func HelperCheckResourcesV1(ctx context.Context, cfg Config, body []model.CheckA
 // HelperCheckResourcesByOperationsV1 drives row 4
 // (POST /access/v1/check/resource/bulk/operations).
 func HelperCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []model.CheckAccessBulkOperationsRequest, tokens TokenBundle, opts PerCallOptions) (int, map[string][]string, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulkOperations, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckResourceBulkOperations, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, nil, nil, err
@@ -117,7 +117,7 @@ func HelperCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []
 // row 4; differs only in the path prefix (thin client passes
 // Flags.withPreview() which rewrites the path template).
 func HelperPreviewCheckResourcesByOperationsV1(ctx context.Context, cfg Config, body []model.CheckAccessBulkOperationsRequest, tokens TokenBundle, opts PerCallOptions) (int, map[string][]string, []byte, error) {
-	target := buildURL(cfg.ACBaseURL, v1PathPreviewBulkOperations, buildQuery(cfg, opts.UserID, nil))
+	target := buildURL(cfg.ACBaseURL, v1PathPreviewBulkOperations, buildQuery(cfg, opts, nil))
 	req, err := buildRequest(ctx, http.MethodPost, target, body, tokens, opts)
 	if err != nil {
 		return 0, nil, nil, err
@@ -145,7 +145,7 @@ func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation str
 	if operation != "" {
 		extra.Set("operation", operation)
 	}
-	target := buildURL(cfg.ACBaseURL, v1PathCheckFilter, buildQuery(cfg, opts.UserID, extra))
+	target := buildURL(cfg.ACBaseURL, v1PathCheckFilter, buildQuery(cfg, opts, extra))
 	req, err := buildRequest(ctx, http.MethodPost, target, nil, tokens, opts)
 	if err != nil {
 		return 0, model.OldFilterEvaluationResult{}, nil, err
