@@ -31,7 +31,16 @@ import (
 // assert behaviour directly (decision + GET /pip-stub/calls) against the static
 // PIP_STUB_CONFIG rules under /api/v1/pip/ra/*, so no golden files are involved.
 //
-// Fixtures: testdata/fixtures/policies/suite/requestargs-pips.json (+ -rls.json).
+// Fixtures: testdata/fixtures/requestargs/requestargs-pips.json (+ -rls.json),
+// seeded on the authz-agent profile only (see mainFixturesFor).
+
+// skipUnlessAuthzAgent skips a row 30 test on any profile other than
+// authz-agent, where the request-args PIPs are not seeded.
+func (s *ParitySuite) skipUnlessAuthzAgent() {
+	if !isAuthzAgentProfile(s.cfg.Profile) {
+		s.T().Skipf("row 30 tests the authz-agent GENERAL PIP request-args contract (authz-agent-ADR-0066..0069), which access-control does not implement; PARITY_PROFILE=%s", s.cfg.Profile)
+	}
+}
 
 // findPipCall returns the first recorded pip-stub call to the given path.
 func findPipCall(calls []PipStubCall, path string) (PipStubCall, bool) {
@@ -47,6 +56,7 @@ func findPipCall(calls []PipStubCall, path string) (PipStubCall, bool) {
 // templates (customer-${resource.id}); §G — an inbound x-request-id is propagated
 // onto the PIP call.
 func (s *ParitySuite) TestRow30RequestArgsEchoSubstitution() {
+	s.skipUnlessAuthzAgent()
 	ctx := context.Background()
 	s.Require().NoError(s.pipMock.ResetCalls(ctx))
 
@@ -76,6 +86,7 @@ func (s *ParitySuite) TestRow30RequestArgsEchoSubstitution() {
 // §G — with no inbound x-request-id, OPA generates one and it still lands on the
 // PIP call (Envoy also supplies one on this path; either way it is present).
 func (s *ParitySuite) TestRow30RequestArgsRequestIdPresentWhenAbsent() {
+	s.skipUnlessAuthzAgent()
 	ctx := context.Background()
 	s.Require().NoError(s.pipMock.ResetCalls(ctx))
 
@@ -97,6 +108,7 @@ func (s *ParitySuite) TestRow30RequestArgsRequestIdPresentWhenAbsent() {
 // §C — response.extract=$.data.ids[*].id binds a whole-value array; a policy IN
 // predicate admits/denies against it.
 func (s *ParitySuite) TestRow30RequestArgsWholeValueArrayIN() {
+	s.skipUnlessAuthzAgent()
 	ctx := context.Background()
 
 	_, allow, _, err := HelperCheckResourceV1(ctx, s.cfg,
@@ -117,6 +129,7 @@ func (s *ParitySuite) TestRow30RequestArgsWholeValueArrayIN() {
 // proceeds on the default. Asserts the stub WAS called (a real timeout, not a
 // skipped call) and that the default set — not a blanket allow — drives the match.
 func (s *ParitySuite) TestRow30RequestArgsTimeoutUsesDefault() {
+	s.skipUnlessAuthzAgent()
 	ctx := context.Background()
 	s.Require().NoError(s.pipMock.ResetCalls(ctx))
 
@@ -146,6 +159,7 @@ func (s *ParitySuite) TestRow30RequestArgsTimeoutUsesDefault() {
 //   - deny when resource.ok == false (the neq over a failed PIP must NOT fail
 //     open; the branch is genuinely false).
 func (s *ParitySuite) TestRow30RequestArgsNegationFailClosed() {
+	s.skipUnlessAuthzAgent()
 	ctx := context.Background()
 
 	_, allow, _, err := HelperCheckResourceV1(ctx, s.cfg,
