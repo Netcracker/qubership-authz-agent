@@ -41,6 +41,11 @@ const (
 	// PSUITE_LOAD_SIMPLIFIED_POLICIES is the PAP upload of simplified policies,
 	// used by the cases that record whether access-control accepts a condition.
 	PSUITE_LOAD_SIMPLIFIED_POLICIES
+	// PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME is row 2 recorded with its HTTP
+	// status, for requests access-control may refuse.
+	PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME
+	// PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME is row 6 recorded with its HTTP status.
+	PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -113,6 +118,14 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_LOAD_SIMPLIFIED_POLICIES, Name: "load-simplified-policies-v1", HTTPMethod: "PUT",
 		PathTmpl: "/access/v1/simplifiedPolicies/domainPolicies/{domain}", GoldenDir: "load-simplified-policies-v1",
 	},
+	PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME: {
+		ID: PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, Name: "check-resource-v1-outcome", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/check/resource", GoldenDir: "check-resource-v1-outcome",
+	},
+	PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME: {
+		ID: PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, Name: "check-filter-v1-outcome", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/check/filter", GoldenDir: "check-filter-v1-outcome",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -154,6 +167,10 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.FilterResponse{}
 	case PSUITE_LOAD_SIMPLIFIED_POLICIES:
 		return &model.PolicyLoadOutcome{}
+	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
+		return &model.CheckResourceOutcome{}
+	case PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME:
+		return &model.FilterOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }
