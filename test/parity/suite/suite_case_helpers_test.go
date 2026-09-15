@@ -109,6 +109,35 @@ func (s *ParitySuite) runRepeatedPendingCheckResourceV1Case(subCase string, body
 	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1, subCase, &decisions[0])
 }
 
+// runPendingCheckResourceV1OutcomeCase records the HTTP status together with the
+// decision, so a request access-control refuses is recorded rather than failed.
+func (s *ParitySuite) runPendingCheckResourceV1OutcomeCase(subCase string, body model.CheckAccessRequest, tokens TokenBundle, opts PerCallOptions) {
+	s.T().Helper()
+
+	status, decision, _, err := HelperCheckResourceV1(context.Background(), s.cfg, body, tokens, opts)
+	s.Require().NoError(err)
+	s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, subCase, &model.CheckResourceOutcome{Status: status, Decision: decision})
+}
+
+// runPendingFilterV1OutcomeCase is runPendingCheckResourceV1OutcomeCase for
+// check/filter.
+func (s *ParitySuite) runPendingFilterV1OutcomeCase(subCase, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) {
+	s.T().Helper()
+
+	status, decoded, _, err := HelperFilterV1(context.Background(), s.cfg, resourceType, operation, tokens, opts)
+	s.Require().NoError(err)
+	s.requirePendingGolden(PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, subCase, &model.FilterOutcome{Status: status, Result: decoded})
+}
+
+func (s *ParitySuite) runPendingCheckResourceBulkV1Case(subCase string, body []model.CheckAccessRequestWithID, tokens TokenBundle, opts PerCallOptions) {
+	s.T().Helper()
+
+	status, decoded, _, err := HelperCheckResourcesV1(context.Background(), s.cfg, body, tokens, opts)
+	s.Require().NoError(err)
+	s.Require().Equal(http.StatusOK, status)
+	s.requirePendingGolden(PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1, subCase, &decoded)
+}
+
 func (s *ParitySuite) runPendingFilterV1Case(subCase, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) {
 	s.T().Helper()
 

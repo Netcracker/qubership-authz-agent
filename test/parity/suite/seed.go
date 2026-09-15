@@ -181,6 +181,62 @@ func HelperPutSimplifiedPolicies(ctx context.Context, cfg Config, m2mToken, doma
 	return doRequest(req)
 }
 
+// UploadIsolatedPolicies replaces the PIPs and the policies of domain with the given
+// ones and returns the status of the first upload that was not accepted, or of the
+// last one. It empties the policies before replacing the PIPs, so no policy still
+// references a PIP being removed. On the legacy profile the status is the PAP's,
+// which refuses a declaration or a condition it does not accept. On the authz-agent
+// profile the uploads go to authz-policy-admin, which accepts anything, and the call
+// waits for the agent's next pull; the status is then 200 and says nothing about
+// the agent.
+func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
+	steps := []struct {
+		kind    string
+		payload []any
+	}{
+		{"domainPolicies", []any{}},
+		{"domainPIPs", emptyIfNil(pips)},
+		{"domainPolicies", emptyIfNil(policies)},
+	}
+	if isAuthzAgentProfile(cfg.Profile) {
+		seeder := &authzAgentInternalSeeder{cfg: cfg}
+		for _, step := range steps {
+			if err := seeder.putACStub(ctx, simplifiedPath(step.kind, domain), step.payload); err != nil {
+				return 0, err
+			}
+		}
+		awaitPull(ctx)
+		return http.StatusOK, nil
+	}
+	m2m, err := tokens.M2MToken()
+	if err != nil {
+		return 0, fmt.Errorf("mint M2M token for upload: %w", err)
+	}
+	status := 0
+	for _, step := range steps {
+		endpoint := buildURL(cfg.ACBaseURL, simplifiedPath(step.kind, domain), url.Values{"tenant_id": []string{cfg.TenantID}}.Encode())
+		req, err := buildRequest(ctx, http.MethodPut, endpoint, step.payload, TokenBundle{M2M: m2m}, PerCallOptions{})
+		if err != nil {
+			return 0, err
+		}
+		status, _, err = doRequest(req)
+		if err != nil {
+			return status, err
+		}
+		if status < http.StatusOK || status >= http.StatusMultipleChoices {
+			return status, nil
+		}
+	}
+	return status, nil
+}
+
+func emptyIfNil(items []any) []any {
+	if items == nil {
+		return []any{}
+	}
+	return items
+}
+
 // pullSettleDelay is how long to wait after writing to the authz-policy-admin before the
 // agent can be assumed to have applied the change.
 //

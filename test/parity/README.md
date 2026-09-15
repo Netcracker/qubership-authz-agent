@@ -106,14 +106,21 @@ missing.
 | --- | --- | --- |
 | `TestRow02CheckResourceV1MissingResourceAttribute`, `…MissingAttributeUnderOr`, `…MissingAttributeBesideAllowingPolicy`, `…MissingPIPAttribute`, `…FailedGeneralPIP`, `…GeneralPIPJsonPathMatchesNothing`, `…ExpressionShape` | What a condition answers when an attribute it reads is missing, and how `OR`, `AND`, and long expressions evaluate | `check-resource-v1/semantics/` |
 | `TestRow06CheckFilterV1MissingPIPAttribute` | Which predicate survives when a policy reads a TOKEN PIP with no value | `check-filter-v1/semantics/` |
+| `TestRow02CheckResourceV1NullValueUnderOperators`, `…ValueCoercion`, `…GeneralPIPNotFound`, `…GeneralPIPNullBody` | Where a null value stops being a value, how operators coerce types, and how a GENERAL PIP answering 404 or a null body resolves | `check-resource-v1/semantics/` |
+| `TestRow02CheckResourceV1RequestKeyCase`, `…ResourceNotAnObject` | What a lowercase resource type or operation, and a resource that is not an object, get, status included | `check-resource-v1-outcome/semantics/` |
+| `TestRow03CheckResourceBulkV1MissingAttributeInOneResource` | Whether a policy that stops on one resource of a bulk request affects the other | `check-resource-bulk-v1/semantics/` |
+| `TestRow06CheckFilterV1ConditionBesidePredicate`, `…PlaceholderOfFailedGeneralPIP` | Whether a filter applies a policy's condition to its predicate, and what a placeholder of a failed PIP renders, status included | `check-filter-v1-outcome/semantics/` |
 | `TestLoadSimplifiedPoliciesConditionSyntax` | Whether the upload accepts a condition outside the grammar | `load-simplified-policies-v1/condition-syntax/` |
+| `TestIsolatedPolicyCases` | Operator forms, attribute paths, subject attributes, literals, whitespace, declarations, and policy shapes the PAP may refuse, uploaded one case at a time into `PARITY_ISOLATED` | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/isolated/` |
 | `TestTenantScopedDecisions` | Which tenant a decision is scoped to, given the token, `tenant_id`, and the `Tenant` header | `check-resource-v1/tenant/`, `check-filter-v1/tenant/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
 answers, golden or not.
 
 `TestLoadSimplifiedPoliciesConditionSyntax` skips on the `authz-agent` profile: authz-policy-admin stores a policy
-without validating its condition, so the upload status says nothing about the agent.
+without validating its condition, so the upload status says nothing about the agent. For the same reason
+`TestIsolatedPolicyCases` compares the upload status only on the legacy profile; on both profiles it sends the
+requests of a case whose upload was accepted, and on the `authz-agent` profile it waits for a pull after each upload.
 
 ### Two-tenant stand
 
