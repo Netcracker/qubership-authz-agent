@@ -14,10 +14,10 @@ name: Lint Code Base
 on:
   push:
     branches:
-      - '**'
+      - main
+      - 'lts/**'
   pull_request:
-    branches:
-      - '**'
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       full_scan:
