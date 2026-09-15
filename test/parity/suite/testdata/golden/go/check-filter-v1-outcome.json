@@ -1,0 +1,57 @@
+{
+  "regular/filter-set-beside-simplified-policy/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "(simplified==1),(regular==1)",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "semantics/f1-false-condition-beside-predicate": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "p1==1,p2==2",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "semantics/f2-true-condition": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "p1==1",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "semantics/f3-resource-condition-without-resource": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "p1==1,p2==2",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "semantics/p8-placeholder-of-failed-pip": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  }
+}
