@@ -26,10 +26,9 @@ import (
 // refused or unparsable condition never reaches the domain the other cases use.
 const loadCaseDomain = "PARITY_LOAD"
 
-// Records whether access-control accepts a condition at upload time. The
-// conditions outside AbacExpression.g4 (parentheses, a standalone NOT, a doubled
-// space, a lowercase keyword) sit beside subject.isM2M and a permissionScope
-// reference, which the grammar allows and no seeded policy uses, and a control.
+// Records whether access-control accepts a condition at upload time: parentheses,
+// a standalone NOT, a doubled space, a lowercase keyword, subject.isM2M, and a
+// permissionScope reference, beside a single comparison as the control.
 // subject.isM2M does not parse in the agent, so none of these can join the seeded
 // pack: one unparsable condition fails the whole upload.
 //

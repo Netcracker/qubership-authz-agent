@@ -164,8 +164,8 @@ func (s *ParitySuite) TestRow02CheckResourceV1GeneralPIPJsonPathMatchesNothing()
 	})
 }
 
-// The grammar has no parentheses and no standalone NOT, so every condition is an
-// OR of ANDs. G1 and G2 put a negated operator inside that AND, which the agent's
+// The PAP refuses parentheses and a standalone NOT (see
+// TestLoadSimplifiedPoliciesConditionSyntax), so every condition is an OR of ANDs. G1 and G2 put a negated operator inside that AND, which the agent's
 // parser encodes as a third level of nesting.
 func (s *ParitySuite) TestRow02CheckResourceV1ExpressionShape() {
 	s.runSemanticsCases([]semanticsCase{

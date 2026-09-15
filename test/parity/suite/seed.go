@@ -181,6 +181,22 @@ func HelperPutSimplifiedPolicies(ctx context.Context, cfg Config, m2mToken, doma
 	return doRequest(req)
 }
 
+// HelperPutPolicySets uploads regular policy sets under externalID on the legacy
+// PAP, replacing the sets uploaded earlier under the same externalID, and returns
+// the status and body instead of failing on a non-2xx status.
+func HelperPutPolicySets(ctx context.Context, cfg Config, m2mToken, externalID string, sets []any) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		"/access/v1/policySets/externalId/"+url.PathEscape(externalID),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPut, endpoint, sets, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
 // UploadIsolatedPolicies replaces the PIPs and the policies of domain with the given
 // ones and returns the status of the first upload that was not accepted, or of the
 // last one. It empties the policies before replacing the PIPs, so no policy still
