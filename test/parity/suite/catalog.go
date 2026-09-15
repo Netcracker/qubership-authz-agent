@@ -46,6 +46,8 @@ const (
 	PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME
 	// PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME is row 6 recorded with its HTTP status.
 	PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME
+	// PSUITE_LOAD_POLICY_SETS is the PAP upload of regular policy sets.
+	PSUITE_LOAD_POLICY_SETS
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -126,6 +128,10 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, Name: "check-filter-v1-outcome", HTTPMethod: "POST",
 		PathTmpl: "/access/v1/check/filter", GoldenDir: "check-filter-v1-outcome",
 	},
+	PSUITE_LOAD_POLICY_SETS: {
+		ID: PSUITE_LOAD_POLICY_SETS, Name: "load-policy-sets-v1", HTTPMethod: "PUT",
+		PathTmpl: "/access/v1/policySets/externalId/{externalId}", GoldenDir: "load-policy-sets-v1",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -165,7 +171,7 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.CheckResourcesResponse{}
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
-	case PSUITE_LOAD_SIMPLIFIED_POLICIES:
+	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS:
 		return &model.PolicyLoadOutcome{}
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
 		return &model.CheckResourceOutcome{}
