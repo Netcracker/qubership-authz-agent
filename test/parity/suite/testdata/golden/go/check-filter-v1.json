@@ -143,6 +143,22 @@
     "sqlFilterCondition": "",
     "customFilterCondition": null
   },
+  "semantics/d5-failing-policy-beside-predicate": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "p1==1,p2==2",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
+  "semantics/p5-placeholder-of-pip-without-value": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "owner==",
+    "sqlFilterCondition": "",
+    "customFilterCondition": null
+  },
   "token-pip": {
     "calculationResult": "USE_FILTER_CONDITION",
     "filterCondition": "",
