@@ -84,3 +84,15 @@ jobs:
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BRANCH: ${{ github.event.pull_request.base.ref || github.event.push.ref }}
+
+  lint-gate:
+    name: Lint gate
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: [super-linter]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    steps:
+      - name: Check lint result
+        env:
+          RESULT: ${{ needs.super-linter.result }}
+        run: test "$RESULT" = "success"
