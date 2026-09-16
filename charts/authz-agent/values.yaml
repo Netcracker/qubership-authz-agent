@@ -8,11 +8,10 @@ IMAGE_REPOSITORY: ''
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
-# Injected by Cloud-Deployer; currently renders nothing. The ServiceMonitor
-# template it used to gate was removed because it scraped /stats/prometheus on
-# the `web` port (8080), where Envoy proxies the service API and serves no
-# statistics — an integration that silently produced zero metrics. It will come
-# back pointed at Envoy's admin port (9901).
+# Injected by Cloud-Deployer. The chart has no ServiceMonitor template, so this
+# value renders nothing. The agent serves Prometheus metrics at `/prometheus` on
+# the Service's `opa` port (8181); point a ServiceMonitor added later at that
+# path and port.
 MONITORING_ENABLED: false
 TRACING_ENABLED: false
 EXECUTION_MODE: active
@@ -34,10 +33,13 @@ DEPLOYMENT_SESSION_ID: ''
 # AND public gateways, routed straight to OPA. The CRs are
 # `core.netcracker.com/v1` `Mesh` objects handled by core-operator.
 #
-# The authorize route is the one place a PUBLIC gateway fronts OPA's data API.
-# It is pinned by rewrite to `/v1/data/authorize` and a decision still needs a
-# valid token in the body, but it has no HTTP-layer authentication — there is no
-# Envoy hop and therefore no ext_authz. See authz-agent-ADR-0074 §3.
+# The authorize route is the one place a PUBLIC gateway fronts the agent's data
+# API. The rewrite sends the prefix to `/v1/data/authorize`, and the
+# `system.authz` policy admits that POST without a bearer token, so nothing at
+# the HTTP layer authenticates the caller. That policy refuses `explain`,
+# `instrument`, `metrics`, and `provenance` here for everyone: the evaluation
+# trace carries the M2M token, and the rewrite preserves the query string. The
+# decision itself still requires a valid token in the request body.
 #
 # With AUTHZ_POLICY_ADMIN_ENABLED it also registers `/access/v1/simplifiedPolicies` — the
 # stub's policy-upload API, at access-control's own prefix — on the internal
@@ -254,6 +256,9 @@ KUBERNETES_M2M_ENABLED: false
 # detects the directory at startup and switches to mount-watcher mode
 # automatically.  The operator is responsible for creating and managing the
 # ConfigMap — the chart never creates it.
+#
+# PAP is the Policy Administration Point, the service the policies come from;
+# the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
 #
 # AUTHZ_PAP_CLIENT_SOURCE_URL: base URL of the access-control service.
 #   Empty (default) → pull disabled, UNLESS AUTHZ_POLICY_ADMIN_ENABLED is true, in which

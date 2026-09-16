@@ -20,26 +20,16 @@ import (
 	"encoding/json"
 )
 
-// TestAuthorizeEnvoyOpaDirectParity is the authz-agent-ADR-0062 cross-transport
-// contract test: the same canonical authorize request must produce a
-// byte-identical response on both transports.
+// TestAuthorizeEnvoyOpaDirectParity asserts the cross-transport contract of
+// authz-agent-ADR-0062: one canonical authorize request returns the same
+// response bytes on the public surface (POST /access/v1/authorize) and on the
+// data API (POST /v1/data/authorize). Both carry the OPA Data API envelope
+// {"result": <AuthorizeResponse>}.
 //
-// Pre-ADR-0062 the canonical wire was Envoy-only — `/access/v1/authorize`
-// was rewritten to `/v1/data/authorize/result` by Envoy and unwrapped by
-// the per-route Lua filter. Post-ADR-0062 the Envoy route no longer rewrites
-// to a `.result` sub-path and no longer mounts a per-route Lua filter
-// (Steps 7 + 8): both transports surface the OPA Data API envelope
-// `{"result": <AuthorizeResponse>}` byte-for-byte. This test is the
-// regression catch for that invariant.
-//
-// The test is hermetic to compute determinism — it does NOT assert decision
-// content, only response-byte identity. PIP staleness or token-expiry skew
-// between back-to-back calls is the only source of legitimate drift, so the
-// test fires the two requests back-to-back with the same X-Request-Id and
-// the same body bytes.
-//
-// The test is integration-build-tagged and runs with the rest of the testify
-// suite against a live stack.
+// decision_id and result.requestId differ on every pair of calls by design, so
+// maskDecisionID replaces both and every remaining byte has to match. The two
+// calls go out back-to-back, so a token expiry or a PIP change between them
+// cannot move those bytes.
 func (s *RuntimeSuite) TestAuthorizeEnvoyOpaDirectParity() {
 	s.Step("authorize.envoy_opa_direct.bytewise_response_parity", func() {
 		token := "Bearer " + s.validAdminToken
@@ -57,7 +47,7 @@ func (s *RuntimeSuite) TestAuthorizeEnvoyOpaDirectParity() {
 		envoyURL := s.cfg.BaseURL + "/access/v1/authorize"
 		envoyCode, envoyBody, envoyReqBody, envoyRespHdr, err := DoHTTPFull("POST", envoyURL, headers, bodyBytes)
 		s.Require().NoError(err)
-		// Conformance only declares the Envoy mount; OPA-direct is the same
+		// Conformance only declares the public surface; OPA-direct is the same
 		// envelope by ADR-0062 contract but is intentionally out of the
 		// public spec surface.
 		assertConformsToSpec(s.T(), "POST", envoyURL, headers, envoyReqBody, envoyCode, envoyRespHdr, envoyBody)
