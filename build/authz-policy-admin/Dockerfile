@@ -16,7 +16,7 @@ COPY components/ components/
 COPY internal/ internal/
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" go build -o /out/authz-policy-admin ./components/authz-policy-admin
 
-FROM ghcr.io/netcracker/qubership-core-base:2.5.0@sha256:d81cd148d874afea869c540defc632ff0bba36d90c809eaec3db0fcdd82ac7a5
+FROM ghcr.io/netcracker/qubership-core-base:2.5.1@sha256:d44be1b534f193dc12e7a4fa54606679011e5718ee2cd00075f663ee2a11dd43
 
 COPY --chmod=555 --from=builder /out/authz-policy-admin /usr/local/bin/authz-policy-admin
 
