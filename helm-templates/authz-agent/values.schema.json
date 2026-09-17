@@ -123,6 +123,44 @@
       "title": "The DEPLOYMENT_VERSION schema",
       "type": "string"
     },
+    "DEPLOYMENT_STRATEGY_TYPE": {
+      "$id": "#/properties/DEPLOYMENT_STRATEGY_TYPE",
+      "description": "Specify Deployment Strategy type for deploying service",
+      "enum": [
+        "recreate",
+        "best_effort_controlled_rollout",
+        "ramped_slow_rollout",
+        "custom_rollout"
+      ],
+      "examples": [
+        "recreate",
+        "best_effort_controlled_rollout",
+        "ramped_slow_rollout",
+        "custom_rollout"
+      ],
+      "title": "The DEPLOYMENT_STRATEGY_TYPE schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_STRATEGY_MAXSURGE": {
+      "$id": "#/properties/DEPLOYMENT_STRATEGY_MAXSURGE",
+      "description": "Specify .spec.strategy.rollingUpdate.maxSurge parameter",
+      "examples": [
+        "50%",
+        "2"
+      ],
+      "title": "The DEPLOYMENT_STRATEGY_MAXSURGE schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_STRATEGY_MAXUNAVAILABLE": {
+      "$id": "#/properties/DEPLOYMENT_STRATEGY_MAXUNAVAILABLE",
+      "description": "Specify .spec.strategy.rollingUpdate.maxUnavailable parameter",
+      "examples": [
+        "50%",
+        "2"
+      ],
+      "title": "The DEPLOYMENT_STRATEGY_MAXUNAVAILABLE schema",
+      "type": "string"
+    },
     "MONITORING_ENABLED": {
       "$id": "#/properties/MONITORING_ENABLED",
       "description": "Set to true to import dashboards to Grafana and configure integration with Prometheus. Requires Platform System Monitor CRDs to be deployed to target k8s/openshift cluster",

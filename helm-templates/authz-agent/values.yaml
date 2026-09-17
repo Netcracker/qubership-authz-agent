@@ -8,6 +8,15 @@ IMAGE_REPOSITORY: ''
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
+
+# DEPLOYMENT_STRATEGY_TYPE, DEPLOYMENT_STRATEGY_MAXSURGE, and
+# DEPLOYMENT_STRATEGY_MAXUNAVAILABLE are injected by Cloud-Deployer. TYPE has no
+# default here because the schema admits only the platform's four strategy
+# names (recreate, best_effort_controlled_rollout, ramped_slow_rollout,
+# custom_rollout); unset renders the 25% rolling update. The two sizes are read
+# under custom_rollout only and are strings in the schema, so a count is passed
+# quoted or with `--set-string`.
+
 # Injected by Cloud-Deployer; the HorizontalPodAutoscaler carries it in its
 # app.kubernetes.io/part-of label. The default is the value the chart's other
 # objects carry in that label.

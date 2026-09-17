@@ -12,11 +12,32 @@ metadata:
     {{- include "authz-agent.commonLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.REPLICAS | default 1 }}
+  # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
+  # unset renders the Kubernetes default of 25% surge and 25% unavailable.
   strategy:
+      {{- if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "recreate" }}
+    type: Recreate
+      {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "best_effort_controlled_rollout" }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 80%
+      {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "ramped_slow_rollout" }}
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
+      {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "custom_rollout" }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.DEPLOYMENT_STRATEGY_MAXSURGE | default "25%" }}
+      maxUnavailable: {{ .Values.DEPLOYMENT_STRATEGY_MAXUNAVAILABLE | default "25%" }}
+      {{- else }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+      {{- end }}
   selector:
     matchLabels:
       name: '{{ include "authz-agent.serviceName" . }}'

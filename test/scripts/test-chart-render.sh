@@ -503,6 +503,66 @@ for row in "dev:700Mi:1:1:9999:85:off" "dev-ha:700Mi:2:2:5:85:on" "prod:13Gi:2:2
   fi
 done
 
+# ── Deployment strategy ──────────────────────────────────────────────────
+#
+# DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
+# unset renders the Kubernetes default of 25% surge and 25% unavailable. The
+# whole block is compared, so a rollingUpdate left under Recreate would show.
+strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
+expect_strategy() {
+  local label="$1"
+  local expected="$2"
+  shift 2
+  local got
+  got="$(strategy_of "$@")"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${label}"
+  elif [[ -z "${got}" ]]; then
+    fail "${label}: no strategy block in the render: $(head -3 <<<"$(deployment_of "$@")")"
+  else
+    fail "${label}: $(diff <(echo "${expected}") <(echo "${got}") || true)"
+  fi
+}
+rolling='  strategy:
+    type: RollingUpdate
+    rollingUpdate:'
+expect_strategy "no DEPLOYMENT_STRATEGY_TYPE gives the 25% rolling update" "${rolling}
+      maxSurge: 25%
+      maxUnavailable: 25%"
+expect_strategy "recreate gives Recreate and no rollingUpdate" '  strategy:
+    type: Recreate' --set DEPLOYMENT_STRATEGY_TYPE=recreate
+expect_strategy "best_effort_controlled_rollout gives no surge and 80% unavailable" "${rolling}
+      maxSurge: 0
+      maxUnavailable: 80%" --set DEPLOYMENT_STRATEGY_TYPE=best_effort_controlled_rollout
+expect_strategy "ramped_slow_rollout gives one surge Pod and none unavailable" "${rolling}
+      maxSurge: 1
+      maxUnavailable: 0" --set DEPLOYMENT_STRATEGY_TYPE=ramped_slow_rollout
+expect_strategy "custom_rollout without its two values gives the 25% rolling update" "${rolling}
+      maxSurge: 25%
+      maxUnavailable: 25%" --set DEPLOYMENT_STRATEGY_TYPE=custom_rollout
+# The two values are strings in the schema, so a bare number has to be passed
+# as one.
+expect_strategy "custom_rollout takes DEPLOYMENT_STRATEGY_MAXSURGE and DEPLOYMENT_STRATEGY_MAXUNAVAILABLE" "${rolling}
+      maxSurge: 2
+      maxUnavailable: 1" --set DEPLOYMENT_STRATEGY_TYPE=custom_rollout \
+  --set-string DEPLOYMENT_STRATEGY_MAXSURGE=2 --set-string DEPLOYMENT_STRATEGY_MAXUNAVAILABLE=1
+expect_strategy "custom_rollout defaults each size on its own" "${rolling}
+      maxSurge: 2
+      maxUnavailable: 25%" --set DEPLOYMENT_STRATEGY_TYPE=custom_rollout --set-string DEPLOYMENT_STRATEGY_MAXSURGE=2
+expect_strategy "the sizes are read under custom_rollout only" "${rolling}
+      maxSurge: 25%
+      maxUnavailable: 25%" --set-string DEPLOYMENT_STRATEGY_MAXSURGE=2 --set-string DEPLOYMENT_STRATEGY_MAXUNAVAILABLE=1
+
+# The schema admits the four names and nothing else, the empty string included,
+# which is why values.yaml carries no default for the type.
+for bad_type in blue_green ""; do
+  if helm template t "${CHART_DIR}" --set "DEPLOYMENT_STRATEGY_TYPE=${bad_type}" >/dev/null 2>&1; then
+    fail "DEPLOYMENT_STRATEGY_TYPE '${bad_type}' must be rejected by the schema"
+  else
+    pass "DEPLOYMENT_STRATEGY_TYPE '${bad_type}' is rejected by the schema"
+  fi
+done
+
 echo
 if (( failures > 0 )); then
   echo "chart render checks: ${failures} failure(s)"
