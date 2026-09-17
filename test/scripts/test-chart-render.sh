@@ -23,7 +23,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-CHART_DIR="${ROOT_DIR}/charts/authz-agent"
+CHART_DIR="${ROOT_DIR}/helm-templates/authz-agent"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then

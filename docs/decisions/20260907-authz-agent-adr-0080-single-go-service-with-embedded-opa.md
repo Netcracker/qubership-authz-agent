@@ -39,7 +39,7 @@ receives OPA's decision logs and strips JWT signatures. `token-fetcher` obtains 
 for the pull loop.
 
 These parts are glued by two emptyDir volumes, a secret file that one container writes and another reads, a shared
-group id so that the two uids can share that file (see the security context in `charts/authz-agent/templates`), and,
+group id so that the two uids can share that file (see the security context in `helm-templates/authz-agent/templates`), and,
 in the test suite, an ephemeral container that signals the OPA process because the image has no shell. The Envoy
 configuration exists twice (the chart template and the SVT copy) and drifts. Every decision crosses two HTTP hops with
 JSON serialization on each.

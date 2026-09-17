@@ -34,10 +34,10 @@ that is set, `authz-policy-admin` is not needed and can be disabled.
 
 ## Chart
 
-The Helm chart is at `charts/authz-agent/`.
+The Helm chart is at `helm-templates/authz-agent/`.
 
 ```sh
-helm template charts/authz-agent
+helm template helm-templates/authz-agent
 ```
 
 ## Building images

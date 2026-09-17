@@ -14,7 +14,7 @@ quay.io); no external infrastructure is required beyond Docker.
 | Parity module unit tests | `cd test/parity/suite && go test -count=1 ./...` | 0 | PASS | Unit-level only (no Docker) |
 | Testify module unit tests | `cd test/integration/testify && go test -count=1 ./...` | 0 | PASS | Spec conformance/lint/drift; the in-cluster suite needs the tag |
 | Pipstub module unit tests | `cd test/integration/pipstub && go test -count=1 ./...` | 0 | PASS | — |
-| Chart render | `helm template charts/authz-agent` | 0 | one Deployment, one container | `test/scripts/test-chart-render.sh` asserts what the render has to carry |
+| Chart render | `helm template helm-templates/authz-agent` | 0 | one Deployment, one container | `test/scripts/test-chart-render.sh` asserts what the render has to carry |
 | Runtime suite on kind | `make e2e` | 0 | 19 groups PASS | Includes the `m2m_keycloak.*` steps and both catalog coverage checks |
 | Parity replay on kind | `make parity` | 0 | 135/135 PASS | Replays frozen goldens — see `test/parity/README.md` for what the goldens pin |
 

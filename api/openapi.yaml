@@ -28,7 +28,7 @@ info:
         objects whose internal layout is not part of this contract.
       - `info.version` mirrors the authz-agent release version. The
         canonical source-of-truth is
-        `charts/authz-agent/Chart.yaml` (`version` field). The
+        `helm-templates/authz-agent/Chart.yaml` (`version` field). The
         on-disk value is `0.0.1`; the build pipeline rewrites it for
         release artefacts.
 servers:
