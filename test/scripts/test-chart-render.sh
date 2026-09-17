@@ -404,7 +404,11 @@ fi
 # ending the script.
 hpa_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
 deployment_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
-field() { awk -v key="$2" '$1 == key {print $2; exit}' <<<"$1"; }
+field() {
+  local document="$1"
+  local key="$2"
+  awk -v key="${key}" '$1 == key {print $2; exit}' <<<"${document}"
+}
 
 # A plain install: one replica; the autoscaler disabled, with no policy and the
 # target 75% of the 400m limit over the 350m request; the chart's part-of label

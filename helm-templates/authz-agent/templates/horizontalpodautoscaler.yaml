@@ -1,6 +1,6 @@
 # The platform's HorizontalPodAutoscaler. Everything below `spec:` is the
-# platform's template byte for byte, so a change to the autoscaler follows that
-# template rather than being made here. This chart's own parts are the fixed
+# platform's template, one space before a `}}` for the linter aside, so a
+# change to the autoscaler follows that template rather than being made here. This chart's own parts are the fixed
 # apiVersion, the name, which is the Deployment's, and the labels. The object
 # is rendered on every install; with HPA_ENABLED unset or false it carries
 # selectPolicy Disabled in both directions and never scales.
@@ -58,7 +58,7 @@ spec:
           value: {{ .Values.HPA_SCALING_DOWN_PERCENT_VALUE }}
           periodSeconds: {{ .Values.HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS }}
 {{- end }}
-{{- if and .Values.HPA_SCALING_DOWN_PODS_VALUE (ge (int .Values.HPA_SCALING_DOWN_PODS_PERIOD_SECONDS) 0)}}
+{{- if and .Values.HPA_SCALING_DOWN_PODS_VALUE (ge (int .Values.HPA_SCALING_DOWN_PODS_PERIOD_SECONDS) 0) }}
         - type: Pods
           value: {{ .Values.HPA_SCALING_DOWN_PODS_VALUE }}
           periodSeconds: {{ .Values.HPA_SCALING_DOWN_PODS_PERIOD_SECONDS }}
