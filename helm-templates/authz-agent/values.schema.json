@@ -451,9 +451,9 @@
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_TOKEN_FILE schema",
       "description": "Path of the Bearer token the pull loop sends, written by the kubelet when KUBERNETES_M2M_ENABLED is true and by the agent's own token loop otherwise",
-      "default": "/etc/authz/ac-token/token",
+      "default": "/var/run/secrets/tokens/netcracker/token",
       "examples": [
-        "/etc/authz/ac-token/token"
+        "/var/run/secrets/tokens/netcracker/token"
       ]
     },
     "AUTHZ_POLICY_CONFIGMAP": {
