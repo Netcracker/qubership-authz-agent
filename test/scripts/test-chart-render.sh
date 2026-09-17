@@ -677,14 +677,23 @@ else
 fi
 
 # Probed with values no profile carries, as for the agent.
-stub_sized="$(helm template t "${STUB_CHART_DIR}" --set CPU_REQUEST=123m --set CPU_LIMIT=456m --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi 2>&1 || true)"
-for line in "cpu: '123m'" "cpu: '456m'" "memory: '111Mi'" "memory: '999Mi'"; do
+stub_sized="$(helm template t "${STUB_CHART_DIR}" --set CPU_REQUEST=123m --set CPU_LIMIT=456m --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi \
+  --set AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST=11Mi --set AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT=22Mi 2>&1 || true)"
+for line in "cpu: '123m'" "cpu: '456m'" "memory: '111Mi'" "memory: '999Mi'" "ephemeral-storage: '11Mi'" "ephemeral-storage: '22Mi'"; do
   if [[ "${stub_sized}" == *"${line}"* ]]; then
-    pass "the stub chart sizes its container from the platform keys (${line})"
+    pass "the stub chart sizes its container from its keys (${line})"
   else
     fail "the stub chart does not render ${line}"
   fi
 done
+
+# The stub calls no Kubernetes API, so no token of the default ServiceAccount
+# is mounted into it.
+if [[ "${stub_deployment}" == *"automountServiceAccountToken: false"* ]]; then
+  pass "the stub Pod mounts no service-account token"
+else
+  fail "the stub Pod must set automountServiceAccountToken: false"
+fi
 
 for old_key in AUTHZ_POLICY_ADMIN_MEM_LIMIT=1Gi AUTHZ_POLICY_ADMIN_ENABLED=true; do
   refused="$(helm template t "${STUB_CHART_DIR}" --set "${old_key}" 2>&1 || true)"

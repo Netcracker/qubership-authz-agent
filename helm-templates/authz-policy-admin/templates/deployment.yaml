@@ -39,7 +39,9 @@ spec:
       labels:
         {{- include "authz-policy-admin.commonLabels" . | nindent 8 }}
     spec:
-      # No serviceAccountName: the stub calls no Kubernetes API.
+      # No serviceAccountName and no token mounted: the stub calls no
+      # Kubernetes API.
+      automountServiceAccountToken: false
       # No runAsUser: on OpenShift the restricted SCC assigns the Pod a uid from
       # the namespace range and rejects a pinned one. The stub writes to its
       # PersistentVolume: on Kubernetes fsGroup makes the volume writable for the
@@ -101,9 +103,11 @@ spec:
             requests:
               cpu: '{{ .Values.CPU_REQUEST }}'
               memory: '{{ .Values.MEMORY_REQUEST }}'
+              ephemeral-storage: '{{ .Values.AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST }}'
             limits:
               cpu: '{{ .Values.CPU_LIMIT }}'
               memory: '{{ .Values.MEMORY_LIMIT }}'
+              ephemeral-storage: '{{ .Values.AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
             {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}

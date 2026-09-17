@@ -89,3 +89,9 @@ CPU_REQUEST: 50m
 CPU_LIMIT: 100m
 MEMORY_REQUEST: 64Mi
 MEMORY_LIMIT: 128Mi
+
+# The uploads go to the volume; the container's own ephemeral storage holds
+# only the writable layer and the logs, so a small allowance is enough, and the
+# limit keeps a runaway log from filling the node.
+AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST: 64Mi
+AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT: 256Mi
