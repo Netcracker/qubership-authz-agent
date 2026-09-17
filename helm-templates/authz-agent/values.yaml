@@ -3,7 +3,10 @@ PAAS_PLATFORM: "KUBERNETES"
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
-IMAGE_REPOSITORY: ''
+# The agent's image without its tag, as every platform chart names it; the
+# image is IMAGE_REPOSITORY:TAG. The default is where the release workflow
+# publishes the component named authz-agent in .github/docker-dev-config.json.
+IMAGE_REPOSITORY: ghcr.io/netcracker/authz-agent
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
@@ -84,11 +87,6 @@ DEPLOYMENT_SESSION_ID: ''
 # the unknown kind), and on whichever of access-control / authz-agent is not
 # meant to serve these routes when both run in one namespace.
 MESH_ROUTES_ENABLED: true
-
-# AUTHZ_AGENT_IMAGE: override for the agent's image. Empty (default) composes
-# {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}; Cloud-Deployer can populate it
-# from .Values.global.deployDescriptor at install time.
-AUTHZ_AGENT_IMAGE: ''
 
 # Pull policy for every container. The default is IfNotPresent because the
 # pipeline tags images with an immutable pipeline id, so re-pulling an already

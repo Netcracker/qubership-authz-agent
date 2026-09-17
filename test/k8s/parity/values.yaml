@@ -2,7 +2,7 @@
 # parity stack sets on its containers; the harness Services carry the same
 # names as the Compose services, so the URLs are the same too.
 
-IMAGE_REPOSITORY: local
+IMAGE_REPOSITORY: local/authz-agent
 TAG: ci
 
 # A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.

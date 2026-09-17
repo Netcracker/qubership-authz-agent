@@ -64,9 +64,9 @@
     },
     "IMAGE_REPOSITORY": {
       "$id": "#/properties/IMAGE_REPOSITORY",
-      "description": "Docker image repository path",
+      "description": "Image repository of the service without the tag; the image is IMAGE_REPOSITORY:TAG",
       "examples": [
-        "ghcr.io/netcracker"
+        "ghcr.io/netcracker/authz-agent"
       ],
       "internal": true,
       "title": "The IMAGE_REPOSITORY schema",
@@ -709,17 +709,6 @@
       "internal": true,
       "title": "The HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS schema",
       "type": "integer"
-    },
-    "AUTHZ_AGENT_IMAGE": {
-      "$id": "#/properties/AUTHZ_AGENT_IMAGE",
-      "type": "string",
-      "title": "The AUTHZ_AGENT_IMAGE schema",
-      "description": "Overrides the image of the agent. Empty composes it from IMAGE_REPOSITORY and TAG.",
-      "examples": [
-        "ghcr.io/netcracker/qubership-authz-agent:1.0.0"
-      ],
-      "internal": true,
-      "default": ""
     },
     "CPU_REQUEST": {
       "$id": "#/properties/CPU_REQUEST",

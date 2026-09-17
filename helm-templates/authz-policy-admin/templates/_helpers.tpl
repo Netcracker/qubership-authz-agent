@@ -47,15 +47,6 @@ deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
 {{- end -}}
 
 {{/*
-The stub's image. AUTHZ_POLICY_ADMIN_IMAGE wins where it is set; otherwise the
-helper composes "{IMAGE_REPOSITORY}/authz-policy-admin:{TAG}", as the
-authz-agent chart composes the agent's.
-*/}}
-{{- define "authz-policy-admin.image" -}}
-{{- coalesce .Values.AUTHZ_POLICY_ADMIN_IMAGE (printf "%s/authz-policy-admin:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{/*
 Labels of the mesh route CR (authz-agent-ADR-0074). `processed-by-operator` is
 what makes core-operator pick the CR up at all, and `deployer.cleanup/allow` is
 what lets the deployer remove the route when the release goes away.
@@ -74,13 +65,14 @@ deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
 {{/*
 Values this chart does not read: the sizing keys the stub had inside the
 authz-agent chart, which the platform names CPU_REQUEST, CPU_LIMIT,
-MEMORY_REQUEST and MEMORY_LIMIT, and AUTHZ_POLICY_ADMIN_ENABLED, which a chart
-that is the stub has no use for. `additionalProperties` is true, so a values
+MEMORY_REQUEST and MEMORY_LIMIT; AUTHZ_POLICY_ADMIN_ENABLED, which a chart that
+is the stub has no use for; and the AUTHZ_POLICY_ADMIN_IMAGE override, since the
+image is IMAGE_REPOSITORY:TAG as on the platform's charts. `additionalProperties` is true, so a values
 file that still carries them would render without a word and the Pod would
 take this chart's defaults.
 */}}
 {{- define "authz-policy-admin.validateValues" -}}
-{{- $removed := list "AUTHZ_POLICY_ADMIN_ENABLED" "AUTHZ_POLICY_ADMIN_CPU_REQUEST" "AUTHZ_POLICY_ADMIN_CPU_LIMIT" "AUTHZ_POLICY_ADMIN_MEM_REQUEST" "AUTHZ_POLICY_ADMIN_MEM_LIMIT" -}}
+{{- $removed := list "AUTHZ_POLICY_ADMIN_ENABLED" "AUTHZ_POLICY_ADMIN_IMAGE" "AUTHZ_POLICY_ADMIN_CPU_REQUEST" "AUTHZ_POLICY_ADMIN_CPU_LIMIT" "AUTHZ_POLICY_ADMIN_MEM_REQUEST" "AUTHZ_POLICY_ADMIN_MEM_LIMIT" -}}
 {{- $carried := list -}}
 {{- range $removed -}}
 {{- if hasKey $.Values . -}}
@@ -88,6 +80,6 @@ take this chart's defaults.
 {{- end -}}
 {{- end -}}
 {{- if $carried -}}
-{{- fail (printf "this chart does not read these values: %s. It is sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT; drop the listed keys." (join ", " $carried)) -}}
+{{- fail (printf "this chart does not read these values: %s. It is sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT, and its image is IMAGE_REPOSITORY:TAG; drop the listed keys." (join ", " $carried)) -}}
 {{- end -}}
 {{- end -}}

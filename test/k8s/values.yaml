@@ -5,7 +5,7 @@
 
 # The images come from `make e2e-images`, which side-loads them into the kind
 # node.
-IMAGE_REPOSITORY: local
+IMAGE_REPOSITORY: local/authz-agent
 TAG: ci
 
 # A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.

@@ -139,7 +139,7 @@ spec:
         {{- end }}
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
-          image: '{{ include "authz-agent.serviceImage" . }}'
+          image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
           imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
           ports:
             - name: web

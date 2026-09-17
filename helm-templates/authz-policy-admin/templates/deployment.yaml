@@ -61,7 +61,7 @@ spec:
             claimName: '{{ include "authz-policy-admin.serviceName" . }}-data'
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
-          image: '{{ include "authz-policy-admin.image" . }}'
+          image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
           imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
           ports:
             - name: web

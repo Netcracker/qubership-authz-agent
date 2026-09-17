@@ -3,7 +3,12 @@ PAAS_PLATFORM: "KUBERNETES"
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
-IMAGE_REPOSITORY: ''
+# The stub's image without its tag, as every platform chart names it; the
+# image is IMAGE_REPOSITORY:TAG. The default is where the release workflow
+# publishes the component named authz-policy-admin in
+# .github/docker-dev-config.json; the name carries no authz-agent- prefix, the
+# stub being a service of its own.
+IMAGE_REPOSITORY: ghcr.io/netcracker/authz-policy-admin
 SERVICE_NAME: "authz-policy-admin"
 DEPLOYMENT_RESOURCE_NAME: "authz-policy-admin"
 DEPLOYMENT_VERSION: ''
@@ -36,12 +41,6 @@ DEPLOYMENT_SESSION_ID: ''
 # the unknown kind).
 MESH_ROUTES_ENABLED: true
 
-# AUTHZ_POLICY_ADMIN_IMAGE: override for the stub's image. Empty (default)
-# composes {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}; Cloud-Deployer
-# can populate it from .Values.global.deployDescriptor at install time. The
-# image name carries no authz-agent- prefix: the stub is a service of its own,
-# not a container of the agent Pod (see .github/docker-dev-config.json).
-AUTHZ_POLICY_ADMIN_IMAGE: ''
 # The default is IfNotPresent because the pipeline tags images with an
 # immutable pipeline id. Set to Always where a moving tag (`latest`) is
 # deliberately used and the newest build must win on restart.

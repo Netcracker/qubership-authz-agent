@@ -24,6 +24,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CHART_DIR="${ROOT_DIR}/helm-templates/authz-agent"
+STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -62,6 +63,135 @@ yq_providers() {
     capture {capture=0}
   '
 }
+
+# The documents the checks below read, each rendered on its own with
+# --show-only, so that a check reads the agent's Deployment and no other. A
+# render that fails returns Helm's error as the document, so the check reports
+# it instead of ending the script.
+hpa_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
+deployment_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
+field() {
+  local document="$1"
+  local key="$2"
+  awk -v key="${key}" '$1 == key {print $2; exit}' <<<"${document}"
+}
+# Compares one block of the agent's Deployment, cut out by the named function,
+# with a literal, and reports the diff.
+expect_block() {
+  local block_of="$1"
+  local label="$2"
+  local expected="$3"
+  shift 3
+  local got
+  got="$("${block_of}" "$@")"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${label}"
+  elif [[ -z "${got}" ]]; then
+    fail "${label}: no such block in the render: $(head -3 <<<"$(deployment_of "$@")")"
+  else
+    fail "${label}: $(diff <(echo "${expected}") <(echo "${got}") || true)"
+  fi
+}
+
+# A plain install: one replica; the autoscaler disabled, with no policy and the
+# target 75% of the 400m limit over the 350m request; the chart's part-of label
+# and no session label.
+plain_hpa="$(hpa_of)"
+plain_summary="replicas=$(field "$(deployment_of)" replicas:) min=$(field "${plain_hpa}" minReplicas:) max=$(field "${plain_hpa}" maxReplicas:) target=$(field "${plain_hpa}" averageUtilization:) disabled=$(grep -c 'selectPolicy: Disabled' <<<"${plain_hpa}" || true) policies=$(grep -c 'type: P' <<<"${plain_hpa}" || true)"
+if [[ "${plain_summary}" == "replicas=1 min=1 max=9999 target=85 disabled=2 policies=0" ]]; then
+  pass "a plain install renders one replica and a disabled autoscaler (${plain_summary})"
+else
+  fail "a plain install renders ${plain_summary}, expected replicas=1 min=1 max=9999 target=85 disabled=2 policies=0"
+fi
+if [[ "${plain_hpa}" == *"app.kubernetes.io/part-of: 'Platform-Core-Security'"* && "${plain_hpa}" != *"sessionId"* ]]; then
+  pass "the autoscaler carries the chart's part-of label and no session label by default"
+else
+  fail "the autoscaler's default labels are off: $(grep -E 'part-of|sessionId' <<<"${plain_hpa}" | tr -d ' ' | paste -sd, - || true)"
+fi
+
+labelled="$(hpa_of --set APPLICATION_NAME=billing --set DEPLOYMENT_SESSION_ID=s-42)"
+if [[ "${labelled}" == *"app.kubernetes.io/part-of: 'billing'"* && "${labelled}" == *"deployment.netcracker.com/sessionId: 's-42'"* ]]; then
+  pass "the autoscaler takes part-of from APPLICATION_NAME and the session label from DEPLOYMENT_SESSION_ID"
+else
+  fail "the autoscaler's labels do not follow APPLICATION_NAME and DEPLOYMENT_SESSION_ID: $(grep -E 'part-of|sessionId' <<<"${labelled}" | tr -d ' ' | paste -sd, - || true)"
+fi
+
+# minReplicas falls back to REPLICAS where nothing sets HPA_MIN_REPLICAS.
+fallback="$(hpa_of --set HPA_ENABLED=true --set HPA_MAX_REPLICAS=5 --set REPLICAS=3)"
+if [[ "$(field "${fallback}" minReplicas:)" == "3" ]]; then
+  pass "an enabled autoscaler without HPA_MIN_REPLICAS takes its floor from REPLICAS"
+else
+  fail "expected minReplicas 3 from REPLICAS, got '$(field "${fallback}" minReplicas:)'"
+fi
+
+# Every profile validates against the schema and renders. The profile is
+# applied over a memory limit no profile carries, so that a misspelled key,
+# which the schema would admit, leaves that limit in the render in place of
+# the profile's; the dev sizing mirrors values.yaml and could not be told from
+# the default otherwise. REPLICAS reaches the Deployment. The autoscaler is the
+# profile's: the bounds; the target, HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT of
+# CPU_LIMIT over CPU_REQUEST, so 75 renders as 85 for 400m over 350m and as
+# 150 for 15 cores over 7500m, which also covers both spellings to_millicores
+# accepts; and the behavior block, which carries the windows and policies of
+# dbaas-operator's profiles, Disabled in both directions where the profile
+# keeps the autoscaler off.
+behavior_on='  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60'
+behavior_off="${behavior_on//selectPolicy: Max/selectPolicy: Disabled}"
+sentinel="$(mktemp)"
+trap 'rm -f "${sentinel}"' EXIT
+printf 'MEMORY_LIMIT: 1Mi\n' >"${sentinel}"
+for row in "dev:700Mi:1:1:9999:85:off" "dev-ha:700Mi:2:2:5:85:on" "prod:13Gi:2:2:5:150:on" "prod-nonha:13Gi:1:1:5:150:on"; do
+  IFS=: read -r profile mem_limit replicas floor ceiling target mode <<<"${row}"
+  profile_values=(-f "${sentinel}" -f "${CHART_DIR}/resource-profiles/${profile}.yaml")
+  if ! rendered="$(helm template t "${CHART_DIR}" "${profile_values[@]}" 2>&1)"; then
+    fail "the ${profile} profile does not render: ${rendered}"
+    continue
+  fi
+  if [[ "${rendered}" == *"memory: '${mem_limit}'"* ]]; then
+    pass "the ${profile} profile sizes the agent container (memory limit ${mem_limit})"
+  else
+    fail "the ${profile} profile does not set the memory limit ${mem_limit}; the render has: $(grep -E '^ +memory: ' <<<"${rendered}" | tr -d ' ' | paste -sd, - || true)"
+  fi
+  hpa="$(hpa_of "${profile_values[@]}")"
+  summary="replicas=$(field "$(deployment_of "${profile_values[@]}")" replicas:) min=$(field "${hpa}" minReplicas:) max=$(field "${hpa}" maxReplicas:) target=$(field "${hpa}" averageUtilization:)"
+  if [[ "${summary}" == "replicas=${replicas} min=${floor} max=${ceiling} target=${target}" ]]; then
+    pass "the ${profile} profile renders ${summary}"
+  else
+    fail "the ${profile} profile renders ${summary}, expected replicas=${replicas} min=${floor} max=${ceiling} target=${target}"
+  fi
+  if [[ "${mode}" == "on" ]]; then
+    expected_behavior="${behavior_on}"
+  else
+    expected_behavior="${behavior_off}"
+  fi
+  got_behavior="$(sed -n '/^  behavior:/,$p' <<<"${hpa}")"
+  if [[ "${got_behavior}" == "${expected_behavior}" ]]; then
+    pass "the ${profile} profile renders the scaling behavior with the autoscaler ${mode}"
+  else
+    fail "the ${profile} profile renders another scaling behavior: $(diff <(echo "${expected_behavior}") <(echo "${got_behavior}") || true)"
+  fi
+done
+
+# ── Deployment strategy ──────────────────────────────────────────────────
+#
+# DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
+# unset renders the Kubernetes default of 25% surge and 25% unavailable. The
+# whole block is compared, so a rollingUpdate left under Recreate would show.
+strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
 env_value() {
   local name="$1"
@@ -244,11 +374,29 @@ fi
 # script runs under `set -o pipefail`, and a quiet grep exits at its first
 # match, which leaves the writing side of the pipe with SIGPIPE and turns a
 # found string into a failed pipeline.
-image_lines=$(echo "${all_manifests}" | grep -cE "^          image: .*authz-agent:" || true)
-if [[ "${image_lines}" -ge 1 ]]; then
-  pass "the agent Pod runs the authz-agent image"
+image_lines=$(echo "${all_manifests}" | grep -cE "^          image: 'ghcr.io/netcracker/authz-agent:'" || true)
+if [[ "${image_lines}" -eq 1 ]]; then
+  pass "the agent Pod runs the published authz-agent image by default"
 else
-  fail "the agent Pod does not run the authz-agent image"
+  fail "the agent Pod does not run ghcr.io/netcracker/authz-agent by default: $(grep -E '^          image:' <<<"${all_manifests}" | tr -d ' ' | paste -sd, - || true)"
+fi
+
+# The image is IMAGE_REPOSITORY:TAG on both charts, as on the platform's, and
+# the override keys the charts had are refused.
+for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
+  name="$(basename "${chart}")"
+  got_image="$(field "$(helm template t "${chart}" --set IMAGE_REPOSITORY=reg/img --set TAG=1.2.3 --show-only templates/deployment.yaml 2>&1 || true)" image:)"
+  if [[ "${got_image}" == "'reg/img:1.2.3'" ]]; then
+    pass "${name}: the image is IMAGE_REPOSITORY:TAG"
+  else
+    fail "${name}: expected image 'reg/img:1.2.3', got ${got_image}"
+  fi
+done
+old_image="$(helm template t "${CHART_DIR}" --set AUTHZ_AGENT_IMAGE=x 2>&1 || true)"
+if [[ "${old_image}" == *"no longer reads these values: AUTHZ_AGENT_IMAGE"* ]]; then
+  pass "the agent chart refuses AUTHZ_AGENT_IMAGE by name"
+else
+  fail "the agent chart must refuse AUTHZ_AGENT_IMAGE by name, got: $(head -3 <<<"${old_image}")"
 fi
 
 # The M2M identity, which a platform install takes through a projected
@@ -398,134 +546,6 @@ else
   fail "a scaling policy value without its period must be refused, got: $(head -3 <<<"${half_policy}")"
 fi
 
-# The documents the checks below read, each rendered on its own with
-# --show-only, so that a check reads the agent's Deployment and no other. A
-# render that fails returns Helm's error as the document, so the check reports
-# it instead of ending the script.
-hpa_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
-deployment_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
-field() {
-  local document="$1"
-  local key="$2"
-  awk -v key="${key}" '$1 == key {print $2; exit}' <<<"${document}"
-}
-# Compares one block of the agent's Deployment, cut out by the named function,
-# with a literal, and reports the diff.
-expect_block() {
-  local block_of="$1"
-  local label="$2"
-  local expected="$3"
-  shift 3
-  local got
-  got="$("${block_of}" "$@")"
-  if [[ "${got}" == "${expected}" ]]; then
-    pass "${label}"
-  elif [[ -z "${got}" ]]; then
-    fail "${label}: no such block in the render: $(head -3 <<<"$(deployment_of "$@")")"
-  else
-    fail "${label}: $(diff <(echo "${expected}") <(echo "${got}") || true)"
-  fi
-}
-
-# A plain install: one replica; the autoscaler disabled, with no policy and the
-# target 75% of the 400m limit over the 350m request; the chart's part-of label
-# and no session label.
-plain_hpa="$(hpa_of)"
-plain_summary="replicas=$(field "$(deployment_of)" replicas:) min=$(field "${plain_hpa}" minReplicas:) max=$(field "${plain_hpa}" maxReplicas:) target=$(field "${plain_hpa}" averageUtilization:) disabled=$(grep -c 'selectPolicy: Disabled' <<<"${plain_hpa}" || true) policies=$(grep -c 'type: P' <<<"${plain_hpa}" || true)"
-if [[ "${plain_summary}" == "replicas=1 min=1 max=9999 target=85 disabled=2 policies=0" ]]; then
-  pass "a plain install renders one replica and a disabled autoscaler (${plain_summary})"
-else
-  fail "a plain install renders ${plain_summary}, expected replicas=1 min=1 max=9999 target=85 disabled=2 policies=0"
-fi
-if [[ "${plain_hpa}" == *"app.kubernetes.io/part-of: 'Platform-Core-Security'"* && "${plain_hpa}" != *"sessionId"* ]]; then
-  pass "the autoscaler carries the chart's part-of label and no session label by default"
-else
-  fail "the autoscaler's default labels are off: $(grep -E 'part-of|sessionId' <<<"${plain_hpa}" | tr -d ' ' | paste -sd, - || true)"
-fi
-
-labelled="$(hpa_of --set APPLICATION_NAME=billing --set DEPLOYMENT_SESSION_ID=s-42)"
-if [[ "${labelled}" == *"app.kubernetes.io/part-of: 'billing'"* && "${labelled}" == *"deployment.netcracker.com/sessionId: 's-42'"* ]]; then
-  pass "the autoscaler takes part-of from APPLICATION_NAME and the session label from DEPLOYMENT_SESSION_ID"
-else
-  fail "the autoscaler's labels do not follow APPLICATION_NAME and DEPLOYMENT_SESSION_ID: $(grep -E 'part-of|sessionId' <<<"${labelled}" | tr -d ' ' | paste -sd, - || true)"
-fi
-
-# minReplicas falls back to REPLICAS where nothing sets HPA_MIN_REPLICAS.
-fallback="$(hpa_of --set HPA_ENABLED=true --set HPA_MAX_REPLICAS=5 --set REPLICAS=3)"
-if [[ "$(field "${fallback}" minReplicas:)" == "3" ]]; then
-  pass "an enabled autoscaler without HPA_MIN_REPLICAS takes its floor from REPLICAS"
-else
-  fail "expected minReplicas 3 from REPLICAS, got '$(field "${fallback}" minReplicas:)'"
-fi
-
-# Every profile validates against the schema and renders. The profile is
-# applied over a memory limit no profile carries, so that a misspelled key,
-# which the schema would admit, leaves that limit in the render in place of
-# the profile's; the dev sizing mirrors values.yaml and could not be told from
-# the default otherwise. REPLICAS reaches the Deployment. The autoscaler is the
-# profile's: the bounds; the target, HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT of
-# CPU_LIMIT over CPU_REQUEST, so 75 renders as 85 for 400m over 350m and as
-# 150 for 15 cores over 7500m, which also covers both spellings to_millicores
-# accepts; and the behavior block, which carries the windows and policies of
-# dbaas-operator's profiles, Disabled in both directions where the profile
-# keeps the autoscaler off.
-behavior_on='  behavior:
-    scaleUp:
-      stabilizationWindowSeconds: 60
-      selectPolicy: Max
-      policies:
-        - type: Pods
-          value: 1
-          periodSeconds: 60
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      selectPolicy: Max
-      policies:
-        - type: Pods
-          value: 1
-          periodSeconds: 60'
-behavior_off="${behavior_on//selectPolicy: Max/selectPolicy: Disabled}"
-sentinel="$(mktemp)"
-trap 'rm -f "${sentinel}"' EXIT
-printf 'MEMORY_LIMIT: 1Mi\n' >"${sentinel}"
-for row in "dev:700Mi:1:1:9999:85:off" "dev-ha:700Mi:2:2:5:85:on" "prod:13Gi:2:2:5:150:on" "prod-nonha:13Gi:1:1:5:150:on"; do
-  IFS=: read -r profile mem_limit replicas floor ceiling target mode <<<"${row}"
-  profile_values=(-f "${sentinel}" -f "${CHART_DIR}/resource-profiles/${profile}.yaml")
-  if ! rendered="$(helm template t "${CHART_DIR}" "${profile_values[@]}" 2>&1)"; then
-    fail "the ${profile} profile does not render: ${rendered}"
-    continue
-  fi
-  if [[ "${rendered}" == *"memory: '${mem_limit}'"* ]]; then
-    pass "the ${profile} profile sizes the agent container (memory limit ${mem_limit})"
-  else
-    fail "the ${profile} profile does not set the memory limit ${mem_limit}; the render has: $(grep -E '^ +memory: ' <<<"${rendered}" | tr -d ' ' | paste -sd, - || true)"
-  fi
-  hpa="$(hpa_of "${profile_values[@]}")"
-  summary="replicas=$(field "$(deployment_of "${profile_values[@]}")" replicas:) min=$(field "${hpa}" minReplicas:) max=$(field "${hpa}" maxReplicas:) target=$(field "${hpa}" averageUtilization:)"
-  if [[ "${summary}" == "replicas=${replicas} min=${floor} max=${ceiling} target=${target}" ]]; then
-    pass "the ${profile} profile renders ${summary}"
-  else
-    fail "the ${profile} profile renders ${summary}, expected replicas=${replicas} min=${floor} max=${ceiling} target=${target}"
-  fi
-  if [[ "${mode}" == "on" ]]; then
-    expected_behavior="${behavior_on}"
-  else
-    expected_behavior="${behavior_off}"
-  fi
-  got_behavior="$(sed -n '/^  behavior:/,$p' <<<"${hpa}")"
-  if [[ "${got_behavior}" == "${expected_behavior}" ]]; then
-    pass "the ${profile} profile renders the scaling behavior with the autoscaler ${mode}"
-  else
-    fail "the ${profile} profile renders another scaling behavior: $(diff <(echo "${expected_behavior}") <(echo "${got_behavior}") || true)"
-  fi
-done
-
-# ── Deployment strategy ──────────────────────────────────────────────────
-#
-# DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
-# unset renders the Kubernetes default of 25% surge and 25% unavailable. The
-# whole block is compared, so a rollingUpdate left under Recreate would show.
-strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 expect_strategy() { expect_block strategy_of "$@"; }
 rolling='  strategy:
     type: RollingUpdate
@@ -636,7 +656,6 @@ fi
 # Recreate and no autoscaler, takes the platform sizing keys and refuses the
 # old ones, and registers its upload API on the mesh only where
 # MESH_ROUTES_ENABLED.
-STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
 
 old_stub_key="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_ADMIN_ENABLED=true 2>&1 || true)"
 if [[ "${old_stub_key}" == *"no longer deploys authz-policy-admin and does not read AUTHZ_POLICY_ADMIN_ENABLED"* ]]; then
@@ -695,7 +714,7 @@ else
   fail "the stub Pod must set automountServiceAccountToken: false"
 fi
 
-for old_key in AUTHZ_POLICY_ADMIN_MEM_LIMIT=1Gi AUTHZ_POLICY_ADMIN_ENABLED=true; do
+for old_key in AUTHZ_POLICY_ADMIN_MEM_LIMIT=1Gi AUTHZ_POLICY_ADMIN_ENABLED=true AUTHZ_POLICY_ADMIN_IMAGE=x; do
   refused="$(helm template t "${STUB_CHART_DIR}" --set "${old_key}" 2>&1 || true)"
   if [[ "${refused}" == *"does not read these values: ${old_key%%=*}"* ]]; then
     pass "the stub chart refuses ${old_key%%=*} by name"
@@ -748,7 +767,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   fi
 
   default_deployment="$(helm template t "${chart}" --show-only templates/deployment.yaml 2>&1 || true)"
-  if [[ "${default_deployment}" == *"seccompProfile:"* && "$(field "${default_deployment}" type: )" == "RuntimeDefault" || "${default_deployment}" == *"type: RuntimeDefault"* ]]; then
+  if [[ "${default_deployment}" == *"type: RuntimeDefault"* ]]; then
     pass "${name}: the container runs under the RuntimeDefault seccomp profile"
   else
     fail "${name}: no RuntimeDefault seccomp profile in the container's securityContext"

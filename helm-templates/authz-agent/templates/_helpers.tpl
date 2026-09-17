@@ -50,14 +50,6 @@ deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
 {{- end -}}
 
 {{/*
-The agent's image. AUTHZ_AGENT_IMAGE wins where it is set; otherwise the
-helper computes "{IMAGE_REPOSITORY}/authz-agent:{TAG}".
-*/}}
-{{- define "authz-agent.serviceImage" -}}
-{{- coalesce .Values.AUTHZ_AGENT_IMAGE (printf "%s/authz-agent:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{/*
 Policy pull source for the agent's pull loop: AUTHZ_PAP_CLIENT_SOURCE_URL with a
 trailing slash removed. The puller composes the request URL by plain string
 concatenation (components/authz-agent/internal/pull/pull.go), so an operator's
@@ -236,8 +228,10 @@ not, since the policies render either way.
 {{- end -}}
 {{/*
 Values this chart no longer reads: the per-container parameters of the
-five-container Pod (authz-agent-ADR-0080), and the AUTHZ_AGENT_-prefixed sizing
-that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT.
+five-container Pod (authz-agent-ADR-0080), the AUTHZ_AGENT_-prefixed sizing
+that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT,
+and the AUTHZ_AGENT_IMAGE override, since the image is IMAGE_REPOSITORY:TAG as
+on the platform's charts.
 `additionalProperties` is true, so a values file that still carries them renders
 without a word and the agent silently takes the defaults of this chart: an
 install passing its own copy of an old prod profile would drop from a 13Gi
@@ -250,7 +244,8 @@ memory limit to 700Mi in one upgrade. Name them instead.
   "OPA_CPU_REQUEST" "OPA_CPU_LIMIT" "OPA_MEM_REQUEST" "OPA_MEM_LIMIT"
   "PAP_CLIENT_CPU_REQUEST" "PAP_CLIENT_CPU_LIMIT" "PAP_CLIENT_MEM_REQUEST" "PAP_CLIENT_MEM_LIMIT"
   "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT"
-  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT" -}}
+  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT"
+  "AUTHZ_AGENT_IMAGE" -}}
 {{- $carried := list -}}
 {{- range $removed -}}
 {{- if hasKey $.Values . -}}
@@ -258,7 +253,7 @@ memory limit to 700Mi in one upgrade. Name them instead.
 {{- end -}}
 {{- end -}}
 {{- if $carried -}}
-{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, with its image in AUTHZ_AGENT_IMAGE. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
+{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and its image is IMAGE_REPOSITORY:TAG. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
 {{- end -}}
 {{- end -}}
 
