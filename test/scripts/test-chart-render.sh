@@ -226,8 +226,8 @@ fi
 
 all_manifests="$(helm template t "${CHART_DIR}")"
 
-# The agent's own container. The policy-admin Deployment is rendered beside it
-# and is not one of them.
+# The agent's own container, matched by name. The five names of the Pod it
+# replaced stay in the pattern, so a return of any of them is counted.
 agent_containers() {
   local rendered=$1
   echo "${rendered}" | grep -cE "^        - name: (authz-agent|envoy|opa|pap-client|collector|token-fetcher)$" || true
@@ -336,7 +336,7 @@ else
   fail "unexpected subPath mounts in the render: found ${sp_count}, expected none"
 fi
 
-for absent in "authz-agent-runtime" "authz-agent-policies" "openpolicyagent/opa" "authz-agent-envoy" "authz-agent-pap-client" "authz-agent-collector" "authz-agent-token-fetcher"; do
+for absent in "authz-agent-runtime" "authz-agent-policies" "openpolicyagent/opa" "authz-agent-envoy" "authz-agent-pap-client" "authz-agent-collector" "authz-agent-token-fetcher" "authz-policy-admin"; do
   if [[ "${all_manifests}" == *"${absent}"* ]]; then
     fail "the render still carries ${absent}"
   else
@@ -398,10 +398,10 @@ else
   fail "a scaling policy value without its period must be refused, got: $(head -3 <<<"${half_policy}")"
 fi
 
-# The documents the checks below read, each rendered on its own so that the
-# stub's Deployment cannot stand in for the agent's. A render that fails
-# returns Helm's error as the document, so the check reports it instead of
-# ending the script.
+# The documents the checks below read, each rendered on its own with
+# --show-only, so that a check reads the agent's Deployment and no other. A
+# render that fails returns Helm's error as the document, so the check reports
+# it instead of ending the script.
 hpa_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
 deployment_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
 field() {
@@ -625,6 +625,86 @@ if helm template t "${CHART_DIR}" --set CLOUD_TOPOLOGIES=kubernetes.io/hostname 
   fail "a CLOUD_TOPOLOGIES that is not a list must be rejected by the schema"
 else
   pass "a CLOUD_TOPOLOGIES that is not a list is rejected by the schema"
+fi
+
+# ── The authz-policy-admin chart ─────────────────────────────────────────
+#
+# The access-control stub is a chart of its own. The agent's chart refuses the
+# keys the stub had while it was part of it, so an old values file does not
+# render an agent that pulls from nowhere; the stub's chart renders the claim,
+# the Deployment and the Service under the stub's own name, one Pod under
+# Recreate and no autoscaler, takes the platform sizing keys and refuses the
+# old ones, and registers its upload API on the mesh only where
+# MESH_ROUTES_ENABLED.
+STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
+
+old_stub_key="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_ADMIN_ENABLED=true 2>&1 || true)"
+if [[ "${old_stub_key}" == *"no longer deploys authz-policy-admin and does not read AUTHZ_POLICY_ADMIN_ENABLED"* ]]; then
+  pass "the agent chart refuses AUTHZ_POLICY_ADMIN_ENABLED by name"
+else
+  fail "the agent chart must refuse AUTHZ_POLICY_ADMIN_ENABLED by name, got: $(head -3 <<<"${old_stub_key}")"
+fi
+# Any key of the prefix, not the switch alone, and every carried key named.
+old_stub_keys="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_ADMIN_PORT=1 --set AUTHZ_POLICY_ADMIN_IMAGE=x 2>&1 || true)"
+if [[ "${old_stub_keys}" == *"does not read AUTHZ_POLICY_ADMIN_IMAGE, AUTHZ_POLICY_ADMIN_PORT."* ]]; then
+  pass "the agent chart refuses every AUTHZ_POLICY_ADMIN_* key and names each one"
+else
+  fail "the agent chart must refuse AUTHZ_POLICY_ADMIN_PORT and AUTHZ_POLICY_ADMIN_IMAGE by name, got: $(head -3 <<<"${old_stub_keys}")"
+fi
+
+stub_manifests="$(helm template t "${STUB_CHART_DIR}" 2>&1 || true)"
+stub_deployment="$(helm template t "${STUB_CHART_DIR}" --show-only templates/deployment.yaml 2>&1 || true)"
+stub_summary="kinds=$(grep -E '^kind: ' <<<"${stub_manifests}" | sort | paste -sd, - | tr -d ' ') replicas=$(field "${stub_deployment}" replicas:) strategy=$(field "${stub_deployment}" type:) route=$(grep -c 'prefix: /access/v1/simplifiedPolicies' <<<"${stub_manifests}" || true)"
+if [[ "${stub_summary}" == "kinds=kind:Deployment,kind:Mesh,kind:PersistentVolumeClaim,kind:Service replicas=1 strategy=Recreate route=1" ]]; then
+  pass "the stub chart renders its claim, Deployment, Service and mesh route, one Pod under Recreate (${stub_summary})"
+else
+  fail "the stub chart renders ${stub_summary}, expected kinds=kind:Deployment,kind:Mesh,kind:PersistentVolumeClaim,kind:Service replicas=1 strategy=Recreate route=1"
+fi
+
+for named in "name: 'authz-policy-admin'" "name: 'authz-policy-admin-data'" "claimName: 'authz-policy-admin-data'" "endpoint: 'http://authz-policy-admin:18090'"; do
+  if [[ "${stub_manifests}" == *"${named}"* ]]; then
+    pass "the stub chart names its objects after its own service name (${named})"
+  else
+    fail "the stub chart does not render ${named}"
+  fi
+done
+
+stub_no_mesh_kinds="$(helm template t "${STUB_CHART_DIR}" --set MESH_ROUTES_ENABLED=false 2>&1 | grep -E '^kind: ' | sort | paste -sd, - | tr -d ' ' || true)"
+if [[ "${stub_no_mesh_kinds}" == "kind:Deployment,kind:PersistentVolumeClaim,kind:Service" ]]; then
+  pass "the stub chart drops the mesh route, and only it, with MESH_ROUTES_ENABLED false"
+else
+  fail "the stub chart renders ${stub_no_mesh_kinds} with MESH_ROUTES_ENABLED false, expected kind:Deployment,kind:PersistentVolumeClaim,kind:Service"
+fi
+
+# Probed with values no profile carries, as for the agent.
+stub_sized="$(helm template t "${STUB_CHART_DIR}" --set CPU_REQUEST=123m --set CPU_LIMIT=456m --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi 2>&1 || true)"
+for line in "cpu: '123m'" "cpu: '456m'" "memory: '111Mi'" "memory: '999Mi'"; do
+  if [[ "${stub_sized}" == *"${line}"* ]]; then
+    pass "the stub chart sizes its container from the platform keys (${line})"
+  else
+    fail "the stub chart does not render ${line}"
+  fi
+done
+
+for old_key in AUTHZ_POLICY_ADMIN_MEM_LIMIT=1Gi AUTHZ_POLICY_ADMIN_ENABLED=true; do
+  refused="$(helm template t "${STUB_CHART_DIR}" --set "${old_key}" 2>&1 || true)"
+  if [[ "${refused}" == *"does not read these values: ${old_key%%=*}"* ]]; then
+    pass "the stub chart refuses ${old_key%%=*} by name"
+  else
+    fail "the stub chart must refuse ${old_key%%=*} by name, got: $(head -3 <<<"${refused}")"
+  fi
+done
+
+if [[ "${stub_manifests}" != *"storageClassName"* ]]; then
+  pass "the stub chart renders no storageClassName while AUTHZ_POLICY_ADMIN_STORAGE_CLASS is empty"
+else
+  fail "the stub chart renders a storageClassName with AUTHZ_POLICY_ADMIN_STORAGE_CLASS empty: $(grep storageClassName <<<"${stub_manifests}" | tr -d ' ')"
+fi
+classed="$(helm template t "${STUB_CHART_DIR}" --set AUTHZ_POLICY_ADMIN_STORAGE_CLASS=fast 2>&1 || true)"
+if [[ "$(field "${classed}" storageClassName:)" == "'fast'" ]]; then
+  pass "the stub chart renders storageClassName from AUTHZ_POLICY_ADMIN_STORAGE_CLASS"
+else
+  fail "expected storageClassName 'fast' from AUTHZ_POLICY_ADMIN_STORAGE_CLASS, got '$(field "${classed}" storageClassName:)'"
 fi
 
 echo

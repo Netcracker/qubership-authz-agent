@@ -38,7 +38,7 @@ spec:
             - name: PARITY_IDP_BASE_URL
               value: http://idp:8080/auth/realms/parity
             - name: PARITY_AUTHZ_POLICY_ADMIN_BASE_URL
-              value: http://authz-agent-authz-policy-admin:18090
+              value: http://authz-policy-admin:18090
             - name: PARITY_PIP_MOCK_CONTROL_URL
               value: http://pip-mock:8090
             - name: PARITY_EA_MOCK_CONTROL_URL

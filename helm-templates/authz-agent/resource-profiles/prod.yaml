@@ -39,14 +39,3 @@ HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
 HPA_SCALING_DOWN_PODS_VALUE: 1
 HPA_MIN_REPLICAS: 2
 HPA_MAX_REPLICAS: 5
-
-# authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
-# stub replaces access-control and its control surface is unauthenticated by
-# default (authz-agent-ADR-0073). These numbers exist so that a staging or
-# demo namespace installed with the prod profile still renders sane limits; the
-# stub only serves a few megabytes of JSON, so it does not follow the backend's
-# sizing.
-AUTHZ_POLICY_ADMIN_CPU_REQUEST: 100m
-AUTHZ_POLICY_ADMIN_CPU_LIMIT: 500m
-AUTHZ_POLICY_ADMIN_MEM_REQUEST: 128Mi
-AUTHZ_POLICY_ADMIN_MEM_LIMIT: 512Mi

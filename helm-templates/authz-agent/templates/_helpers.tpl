@@ -45,61 +45,15 @@ helper computes "{IMAGE_REPOSITORY}/authz-agent:{TAG}".
 {{- end -}}
 
 {{/*
-Optional access-control stub (authz-agent-ADR-0073). Rendered only when
-AUTHZ_POLICY_ADMIN_ENABLED is true; see templates/authz-policy-admin.yaml.
-*/}}
-
-{{- define "authz-agent.authzPolicyAdminName" -}}
-{{- printf "%s-authz-policy-admin" (include "authz-agent.serviceName" .) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{/*
-The stub's labels MUST NOT repeat the agent's `name` label.
-`authz-agent.commonLabels` emits `name: <serviceName>`, and templates/service.yaml
-selects on exactly that key, so a stub Pod carrying it would be admitted to the
-agent's Service on ports 8080/8181 — where the stub serves nothing — and a share
-of every authorization request would answer 404. `app.kubernetes.io/name` is kept
-distinct for the same reason: any future label-based selector (for example the
-ServiceMonitor that MONITORING_ENABLED is meant to bring back) must not sweep the
-stub in with the agent.
-*/}}
-{{- define "authz-agent.authzPolicyAdminSelector" -}}
-name: '{{ include "authz-agent.authzPolicyAdminName" . }}'
-{{- end -}}
-
-{{- define "authz-agent.authzPolicyAdminLabels" -}}
-{{ include "authz-agent.authzPolicyAdminSelector" . }}
-app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}-authz-policy-admin'
-app.kubernetes.io/instance: '{{ include "authz-agent.instance" . }}'
-app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
-app.kubernetes.io/component: 'test-double'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
-app.kubernetes.io/managed-by: 'saasDeployer'
-app.kubernetes.io/technology: 'go'
-{{- end -}}
-
-{{- define "authz-agent.authzPolicyAdminImage" -}}
-{{- coalesce .Values.AUTHZ_POLICY_ADMIN_IMAGE (printf "%s/authz-policy-admin:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{/*
-Policy pull source for the agent's pull loop.
-
-Precedence: an explicitly configured AUTHZ_PAP_CLIENT_SOURCE_URL always wins — enabling
-the stub while pointing the agent at a real access-control is a legitimate
-cutover setup, and the stub is then simply idle. Otherwise, when the stub is
-enabled, the agent is wired to its Service automatically so that a plain
-`helm install --set AUTHZ_POLICY_ADMIN_ENABLED=true` produces a working pull loop.
-
-`trimSuffix "/"` matters: the puller composes the request URL by plain string
+Policy pull source for the agent's pull loop: AUTHZ_PAP_CLIENT_SOURCE_URL with a
+trailing slash removed. The puller composes the request URL by plain string
 concatenation (components/authz-agent/internal/pull/pull.go), so an operator's
-trailing slash would produce `//access/v3/config/policySets`.
+trailing slash would produce `//access/v3/config/policySets`. Empty stays
+empty, which leaves the pull loop off.
 */}}
 {{- define "authz-agent.papSourceURL" -}}
 {{- if .Values.AUTHZ_PAP_CLIENT_SOURCE_URL -}}
 {{- trimSuffix "/" .Values.AUTHZ_PAP_CLIENT_SOURCE_URL -}}
-{{- else if .Values.AUTHZ_POLICY_ADMIN_ENABLED -}}
-{{- printf "http://%s:%d" (include "authz-agent.authzPolicyAdminName" .) (int .Values.AUTHZ_POLICY_ADMIN_PORT) -}}
 {{- end -}}
 {{- end -}}
 
@@ -231,11 +185,20 @@ reused; on a fresh install a new random value is generated.
 {{- end -}}
 
 {{- define "authz-agent.validateValues" -}}
-{{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED .Values.AUTHZ_POLICY_CONFIGMAP -}}
-{{- fail (printf "AUTHZ_POLICY_ADMIN_ENABLED=true conflicts with AUTHZ_POLICY_CONFIGMAP=%s: the agent selects ConfigMap mount mode when /etc/authz/policies exists at startup and disables the pull loop entirely (authz-agent-ADR-0072), so the stub would be deployed, given a volume, and never polled. Pick one delivery mode." .Values.AUTHZ_POLICY_CONFIGMAP) -}}
+{{/*
+The access-control stub, authz-policy-admin, is a chart of its own,
+helm-templates/authz-policy-admin. A values file written for the time it was
+part of this chart would render without a word here: no stub would be deployed,
+and the agent would pull from nowhere.
+*/}}
+{{- $stubKeys := list -}}
+{{- range keys .Values -}}
+{{- if hasPrefix "AUTHZ_POLICY_ADMIN_" . -}}
+{{- $stubKeys = append $stubKeys . -}}
 {{- end -}}
-{{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED (eq (int .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL) 0) -}}
-{{- fail "AUTHZ_POLICY_ADMIN_ENABLED=true requires AUTHZ_PAP_CLIENT_PULL_INTERVAL > 0: 0 disables the pull loop, so the agent would never fetch from the stub." -}}
+{{- end -}}
+{{- if $stubKeys -}}
+{{- fail (printf "this chart no longer deploys authz-policy-admin and does not read %s. Install helm-templates/authz-policy-admin beside this chart and point AUTHZ_PAP_CLIENT_SOURCE_URL at its Service, http://authz-policy-admin:18090 with that chart's defaults." (join ", " (sortAlpha $stubKeys))) -}}
 {{- end -}}
 {{/*
 The platform's HorizontalPodAutoscaler template renders maxReplicas from

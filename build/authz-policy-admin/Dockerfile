@@ -1,9 +1,9 @@
 #
 # authz-policy-admin: access-control v3 config API stand-in.
 #
-# Used by the automated test stacks and by the optional AUTHZ_POLICY_ADMIN_ENABLED
-# deployment in the Helm chart (authz-agent-ADR-0073). The build context is the
-# repository root, like the other images.
+# Used by the automated test stacks and by its own Helm chart,
+# helm-templates/authz-policy-admin (authz-agent-ADR-0073). The build context is
+# the repository root, like the other images.
 
 FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS builder
 

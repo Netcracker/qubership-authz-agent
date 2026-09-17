@@ -5,9 +5,10 @@ It implements a subset of the access-control v3 configuration API so that
 teams without a platform access-control installation can load policies into the
 agent through the same pull path that production uses.
 
-It is deployed as a standalone Deployment (not as a sidecar of the agent Pod)
-with its own Service and PersistentVolumeClaim.  Enable it with
-`AUTHZ_POLICY_ADMIN_ENABLED=true` in the Helm chart.
+It has a Helm chart of its own, `helm-templates/authz-policy-admin`: a
+Deployment with its Service and PersistentVolumeClaim.  Install it beside the
+agent's chart and point the agent's `AUTHZ_PAP_CLIENT_SOURCE_URL` at its
+Service, `http://authz-policy-admin:18090` with the chart's defaults.
 
 ## HTTP API
 
@@ -31,9 +32,9 @@ The API is **unauthenticated**.  Deploy `authz-policy-admin` only in
 development and test namespaces, never in a namespace that is reachable by
 untrusted callers.
 
-### v3 config export (southbound, read by the agent's pap-client)
+### v3 config export (southbound, read by the agent's pull loop)
 
-These paths are the pull endpoint that `pap-client` polls at the interval set
+These paths are the pull endpoint that the agent's pull loop polls at the interval set
 by `AUTHZ_PAP_CLIENT_PULL_INTERVAL`.
 
 ```text
@@ -41,7 +42,7 @@ GET  /access/v3/config/policySets
 GET  /access/v3/config/pips
 ```
 
-Both require an `Authorization` header (the bearer token that pap-client holds;
+Both require an `Authorization` header (the bearer token that the agent holds;
 the value is not validated, only presence-checked).  They return the union of
 all domains.
 
@@ -82,7 +83,7 @@ JSON files under that directory, one file per domain per collection.
 
 In the Helm chart:
 
-- The PVC is named `<release>-authz-policy-admin-data`.
+- The PVC is named `authz-policy-admin-data` (the service name plus `-data`).
 - The default mount path is `AUTHZ_POLICY_ADMIN_DATA_DIR: /var/lib/authz-policy-admin`.
 - The storage class and size are controlled by
   `AUTHZ_POLICY_ADMIN_STORAGE_CLASS` and `AUTHZ_POLICY_ADMIN_STORAGE_SIZE`.
@@ -97,8 +98,7 @@ Deployment rather than a container of the agent Pod.
 
 When a platform access-control service is available (for example, in a
 production Netcracker environment), set `AUTHZ_PAP_CLIENT_SOURCE_URL` to point
-`pap-client` at it directly.  `authz-policy-admin` is then idle and can be
-disabled (`AUTHZ_POLICY_ADMIN_ENABLED=false`).
+the agent at it directly.  `authz-policy-admin` is then not needed.
 
 `authz-policy-admin` implements only the subset of the API that the agent uses:
 the simplified-policy upload paths and the v3 export paths.  It does not

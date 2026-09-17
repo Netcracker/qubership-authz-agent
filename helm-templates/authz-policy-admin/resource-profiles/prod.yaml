@@ -1,0 +1,12 @@
+# Prod resource profile for authz-policy-admin.
+#
+# A production install should not run the stub at all: it replaces
+# access-control and its control surface is unauthenticated by default
+# (authz-agent-ADR-0073). These numbers exist so that a staging or demo
+# namespace installed with the prod profile still renders sane limits; the stub
+# only serves a few megabytes of JSON, so it does not follow the agent's
+# sizing.
+CPU_REQUEST: 100m
+CPU_LIMIT: 500m
+MEMORY_REQUEST: 128Mi
+MEMORY_LIMIT: 512Mi

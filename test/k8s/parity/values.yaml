@@ -29,9 +29,11 @@ AUTHZ_JWKS_HTTP_RETRIES: 20
 # No tenant-manager in the harness; an empty value disables realm resolution.
 AUTHZ_TENANT_MANAGER_URL: ""
 
-# The suite seeds policies and PIPs through the in-namespace stub and waits
-# PARITY_PULL_SETTLE_SECONDS (2 by default) after each write.
-AUTHZ_POLICY_ADMIN_ENABLED: true
+# The suite seeds policies and PIPs through the authz-policy-admin stub,
+# installed from its own chart with policy-admin-values.yaml in this directory,
+# and waits PARITY_PULL_SETTLE_SECONDS (2 by default) after each write; the
+# agent pulls them from the stub's Service.
+AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 1
 
 # The entitlements stub of the harness.

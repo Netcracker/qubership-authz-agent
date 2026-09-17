@@ -40,8 +40,8 @@ KIND_CLUSTER ?= authz-e2e
 E2E_NAMESPACE ?= authz-e2e
 E2E_ARTIFACTS ?= test/artifacts/kind
 E2E_KUBECTL := kubectl --context kind-$(KIND_CLUSTER) -n $(E2E_NAMESPACE)
-# Extra arguments for the chart install, for example
-# E2E_HELM_ARGS='--set AUTHZ_POLICY_ADMIN_ENABLED=true'.
+# Extra arguments for both chart installs, for example
+# E2E_HELM_ARGS='--set IMAGE_PULL_POLICY=Never'.
 E2E_HELM_ARGS ?=
 # Where the suites send their requests: the chart's Service, which fronts the
 # agent Pod.
@@ -76,7 +76,10 @@ e2e-harness:
 	$(E2E_KUBECTL) rollout status deploy/entitlements-mock --timeout=2m
 	$(E2E_KUBECTL) rollout status deploy/keycloak --timeout=10m
 
+# The stub first: the agent reports Ready only once it has pulled its policies,
+# so its --wait would run out with no policy source to pull from.
 e2e-install:
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -n $(E2E_NAMESPACE) -f test/k8s/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
@@ -94,7 +97,7 @@ e2e-suite:
 # already has. Restart every Deployment that runs a local image and wait until
 # it is Ready again, so the next `e2e-suite` tests the new build. Keycloak is
 # pulled, not built, and keeps running.
-E2E_LOCAL_DEPLOYMENTS := authz-agent authz-agent-authz-policy-admin pip-stub entitlements-mock
+E2E_LOCAL_DEPLOYMENTS := authz-agent authz-policy-admin pip-stub entitlements-mock
 e2e-restart:
 	$(E2E_KUBECTL) rollout restart $(addprefix deploy/,$(E2E_LOCAL_DEPLOYMENTS))
 	for d in $(E2E_LOCAL_DEPLOYMENTS); do $(E2E_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done
@@ -132,7 +135,9 @@ parity-harness:
 	$(PARITY_KUBECTL) rollout status deploy/entitlements-mock --timeout=2m
 	$(PARITY_KUBECTL) rollout status deploy/idp --timeout=10m
 
+# The stub first, as in e2e-install.
 parity-install:
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -n $(PARITY_NAMESPACE) -f test/k8s/parity/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
@@ -145,7 +150,7 @@ parity-suite:
 	$(PARITY_KUBECTL) wait --for=condition=Complete job/parity-suite --timeout=1m
 
 # The parity counterpart of e2e-restart, for the same reason.
-PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-agent-authz-policy-admin pip-mock entitlements-mock
+PARITY_LOCAL_DEPLOYMENTS := authz-agent authz-policy-admin pip-mock entitlements-mock
 parity-restart:
 	$(PARITY_KUBECTL) rollout restart $(addprefix deploy/,$(PARITY_LOCAL_DEPLOYMENTS))
 	for d in $(PARITY_LOCAL_DEPLOYMENTS); do $(PARITY_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done

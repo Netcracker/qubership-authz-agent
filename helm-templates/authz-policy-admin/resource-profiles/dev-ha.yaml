@@ -1,0 +1,8 @@
+# Dev-HA resource profile for authz-policy-admin: the dev sizing. The stub runs
+# one Pod on a ReadWriteOnce volume and has no autoscaler, so there is nothing
+# this profile could make highly available; it exists so that every profile
+# name the deployer selects resolves.
+CPU_REQUEST: 50m
+CPU_LIMIT: 100m
+MEMORY_REQUEST: 64Mi
+MEMORY_LIMIT: 128Mi

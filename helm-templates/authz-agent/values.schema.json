@@ -290,17 +290,6 @@
         false
       ]
     },
-    "AUTHZ_POLICY_ADMIN_IMAGE": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_IMAGE",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_IMAGE schema",
-      "description": "Overrides the authz-policy-admin image. Empty means {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-policy-admin:1.0.0"
-      ],
-      "internal": true
-    },
     "IMAGE_PULL_POLICY": {
       "$id": "#/properties/IMAGE_PULL_POLICY",
       "type": "string",
@@ -496,7 +485,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_SOURCE_URL",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_SOURCE_URL schema",
-      "description": "Base URL of the access-control service the policy pull loop reads from. Empty disables the pull, unless AUTHZ_POLICY_ADMIN_ENABLED points the agent at the in-namespace stub",
+      "description": "Base URL of the policy source the pull loop reads from: the platform's access-control, or the authz-policy-admin stub from helm-templates/authz-policy-admin. Empty disables the pull",
       "default": "",
       "examples": [
         "http://access-control:8080"
@@ -528,7 +517,7 @@
       "$id": "#/properties/AUTHZ_POLICY_CONFIGMAP",
       "type": "string",
       "title": "The AUTHZ_POLICY_CONFIGMAP schema",
-      "description": "Name of an existing ConfigMap with policy data to mount instead of pulling (mount mode). Empty means pull mode. Cannot be combined with AUTHZ_POLICY_ADMIN_ENABLED",
+      "description": "Name of an existing ConfigMap with policy data to mount instead of pulling (mount mode). Empty means pull mode; mount mode disables the pull loop, so AUTHZ_PAP_CLIENT_SOURCE_URL is then unused",
       "default": "",
       "examples": [
         "authz-policies"
@@ -565,73 +554,6 @@
         3
       ],
       "minimum": 1
-    },
-    "AUTHZ_POLICY_ADMIN_ENABLED": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_ENABLED",
-      "type": "boolean",
-      "title": "The AUTHZ_POLICY_ADMIN_ENABLED schema",
-      "description": "Deploys the authz-policy-admin stub, which serves the v3 config API in place of access-control, and points the pull loop at it. Its control surface has no authentication: for development and test namespaces only",
-      "default": false,
-      "examples": [
-        true,
-        false
-      ]
-    },
-    "AUTHZ_POLICY_ADMIN_PORT": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_PORT",
-      "type": "integer",
-      "title": "The AUTHZ_POLICY_ADMIN_PORT schema",
-      "description": "HTTP port of the stub: the container port, the Service port, and the port in the generated AUTHZ_PAP_CLIENT_SOURCE_URL",
-      "default": 18090,
-      "examples": [
-        18090
-      ],
-      "minimum": 1,
-      "maximum": 65535
-    },
-    "AUTHZ_POLICY_ADMIN_DATA_DIR": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_DATA_DIR",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_DATA_DIR schema",
-      "description": "Directory where the stub keeps the uploaded policies and PIPs; it is the mount path of its volume",
-      "default": "/var/lib/authz-policy-admin",
-      "examples": [
-        "/var/lib/authz-policy-admin"
-      ],
-      "minLength": 1
-    },
-    "AUTHZ_POLICY_ADMIN_STORAGE_SIZE": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_SIZE",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_SIZE schema",
-      "description": "Size of the PersistentVolumeClaim that holds the uploaded policies",
-      "default": "1Gi",
-      "examples": [
-        "1Gi"
-      ],
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_STORAGE_CLASS": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_CLASS",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_CLASS schema",
-      "description": "StorageClass of that claim. Empty uses the cluster default",
-      "default": "",
-      "examples": [
-        "standard"
-      ],
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_STORAGE_RETAIN": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_RETAIN",
-      "type": "boolean",
-      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_RETAIN schema",
-      "description": "Keeps the claim when the release is uninstalled or the stub is disabled",
-      "default": true,
-      "examples": [
-        true,
-        false
-      ]
     },
     "AUTHZ_DECISION_LOG_PATH": {
       "$id": "#/properties/AUTHZ_DECISION_LOG_PATH",
@@ -844,52 +766,6 @@
       "internal": true,
       "title": "The HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS schema",
       "type": "integer"
-    },
-    "AUTHZ_POLICY_ADMIN_CPU_REQUEST": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_POLICY_ADMIN_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the authz-policy-admin container will use to start",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_CPU_LIMIT": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_POLICY_ADMIN_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the authz-policy-admin container can use",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_MEM_REQUEST": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_MEM_REQUEST",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the authz-policy-admin container will use to start",
-      "examples": [
-        "256Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_MEM_LIMIT": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_MEM_LIMIT",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the authz-policy-admin container can use",
-      "examples": [
-        "512Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
     },
     "AUTHZ_AGENT_IMAGE": {
       "$id": "#/properties/AUTHZ_AGENT_IMAGE",
