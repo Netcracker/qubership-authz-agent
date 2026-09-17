@@ -1,8 +1,5 @@
-# Dev resource profile for authz-agent. Keep the dev install small: 364Mi RAM
-# and 350m CPU requested.
-#
-# The agent's numbers are what the five containers it replaced asked for
-# between them (authz-agent-ADR-0080), not a measurement.
+# Dev-HA resource profile for authz-agent: the dev sizing with the autoscaler
+# on. See dev.yaml for where the numbers come from.
 CPU_REQUEST: 350m
 CPU_LIMIT: 400m
 MEMORY_REQUEST: 364Mi
@@ -10,12 +7,12 @@ MEMORY_LIMIT: 700Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 64Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 512Mi
 AUTHZ_DECISION_LOG_SIZE_LIMIT: 256Mi
-# One Pod and no autoscaling. The autoscaler object is rendered all the same:
-# its bounds are 1 and 9999 while HPA_ENABLED is false, and the target and the
-# policies below render but are inert under selectPolicy Disabled. dev-ha.yaml
-# is this profile with the autoscaler on.
-REPLICAS: 1
-HPA_ENABLED: false
+# The autoscaler keeps at least two Pods, and REPLICAS matches that floor so a
+# helm upgrade does not drop the Deployment to one Pod until the autoscaler
+# reconciles. The scaling policies and windows are the values dbaas-operator's
+# profiles carry.
+REPLICAS: 2
+HPA_ENABLED: true
 HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
 HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
 HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
@@ -27,5 +24,5 @@ HPA_SCALING_UP_SELECT_POLICY: Max
 HPA_SCALING_DOWN_SELECT_POLICY: Max
 HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
 HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
-HPA_MIN_REPLICAS: 1
+HPA_MIN_REPLICAS: 2
 HPA_MAX_REPLICAS: 5

@@ -32,17 +32,6 @@
       "title": "The PAAS_PLATFORM schema",
       "type": "string"
     },
-    "PAAS_VERSION": {
-      "$id": "#/properties/PAAS_VERSION",
-      "default": "",
-      "description": "Version of Cloud Platform",
-      "examples": [
-        "v3.11"
-      ],
-      "internal": true,
-      "title": "The PAAS_VERSION schema",
-      "type": "string"
-    },
     "NAMESPACE": {
       "$id": "#/properties/NAMESPACE",
       "description": "Namespace where deploy is performed",
@@ -75,9 +64,9 @@
     },
     "IMAGE_REPOSITORY": {
       "$id": "#/properties/IMAGE_REPOSITORY",
-      "description": "Docker image repository path",
+      "description": "Image repository of the service without the tag; the image is IMAGE_REPOSITORY:TAG",
       "examples": [
-        "ghcr.io/netcracker"
+        "ghcr.io/netcracker/authz-agent"
       ],
       "internal": true,
       "title": "The IMAGE_REPOSITORY schema",
@@ -92,6 +81,16 @@
       "internal": true,
       "title": "The SERVICE_NAME schema",
       "type": "string"
+    },
+    "APPLICATION_NAME": {
+      "$id": "#/properties/APPLICATION_NAME",
+      "type": "string",
+      "title": "The APPLICATION_NAME schema",
+      "description": "Defines application name",
+      "examples": [
+        "MyApplication"
+      ],
+      "internal": true
     },
     "DEPLOYMENT_RESOURCE_NAME": {
       "$id": "#/properties/DEPLOYMENT_RESOURCE_NAME",
@@ -113,6 +112,63 @@
       "title": "The DEPLOYMENT_VERSION schema",
       "type": "string"
     },
+    "DEPLOYMENT_STRATEGY_TYPE": {
+      "$id": "#/properties/DEPLOYMENT_STRATEGY_TYPE",
+      "description": "Specify Deployment Strategy type for deploying service",
+      "enum": [
+        "recreate",
+        "best_effort_controlled_rollout",
+        "ramped_slow_rollout",
+        "custom_rollout"
+      ],
+      "examples": [
+        "recreate",
+        "best_effort_controlled_rollout",
+        "ramped_slow_rollout",
+        "custom_rollout"
+      ],
+      "title": "The DEPLOYMENT_STRATEGY_TYPE schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_STRATEGY_MAXSURGE": {
+      "$id": "#/properties/DEPLOYMENT_STRATEGY_MAXSURGE",
+      "description": "Specify .spec.strategy.rollingUpdate.maxSurge parameter",
+      "examples": [
+        "50%",
+        "2"
+      ],
+      "title": "The DEPLOYMENT_STRATEGY_MAXSURGE schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_STRATEGY_MAXUNAVAILABLE": {
+      "$id": "#/properties/DEPLOYMENT_STRATEGY_MAXUNAVAILABLE",
+      "description": "Specify .spec.strategy.rollingUpdate.maxUnavailable parameter",
+      "examples": [
+        "50%",
+        "2"
+      ],
+      "title": "The DEPLOYMENT_STRATEGY_MAXUNAVAILABLE schema",
+      "type": "string"
+    },
+    "CLOUD_TOPOLOGIES": {
+      "$id": "#/properties/CLOUD_TOPOLOGIES",
+      "description": "Array of topologies settings for topologySpreadConstraints. Each array item must contain at least 'topologyKey' attribute. Other supported attributes are 'maxSkew' and 'whenUnsatisfiable' - optional",
+      "examples": [
+        "- topologyKey: kubernetes.io/hostname"
+      ],
+      "title": "The CLOUD_TOPOLOGIES schema",
+      "type": "array"
+    },
+    "CLOUD_TOPOLOGY_KEY": {
+      "$id": "#/properties/CLOUD_TOPOLOGY_KEY",
+      "default": "kubernetes.io/hostname",
+      "description": "Defines topologyKey in topologySpreadConstraints",
+      "examples": [
+        "kubernetes.io/hostname"
+      ],
+      "title": "The CLOUD_TOPOLOGY_KEY schema",
+      "type": "string"
+    },
     "MONITORING_ENABLED": {
       "$id": "#/properties/MONITORING_ENABLED",
       "description": "Set to true to import dashboards to Grafana and configure integration with Prometheus. Requires Platform System Monitor CRDs to be deployed to target k8s/openshift cluster",
@@ -123,32 +179,6 @@
       "title": "The MONITORING_ENABLED schema",
       "type": "boolean"
     },
-    "TRACING_ENABLED": {
-      "$id": "#/properties/TRACING_ENABLED",
-      "description": "Enables tracing info collecting and streaming to OpenTracing- compatible collector (preferably- Jaeger)",
-      "examples": [
-        true,
-        false
-      ],
-      "title": "The TRACING_ENABLED schema",
-      "type": "boolean"
-    },
-    "EXECUTION_MODE": {
-      "$id": "#/properties/EXECUTION_MODE",
-      "description": "Defines microservice execution mode in DR configuration",
-      "enum": [
-        "active",
-        "standby",
-        "disabled"
-      ],
-      "examples": [
-        "active",
-        "standby",
-        "disabled"
-      ],
-      "title": "The EXECUTION_MODE schema",
-      "type": "string"
-    },
     "READONLY_CONTAINER_FILE_SYSTEM_ENABLED": {
       "$id": "#/properties/READONLY_CONTAINER_FILE_SYSTEM_ENABLED",
       "description": "Read-only container file system is enabled",
@@ -158,26 +188,6 @@
       ],
       "title": "The READONLY_CONTAINER_FILE_SYSTEM_ENABLED schema",
       "type": "boolean"
-    },
-    "CERTIFICATE_BUNDLE_MD5SUM": {
-      "$id": "#/properties/CERTIFICATE_BUNDLE_MD5SUM",
-      "description": "MD5 sum of certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
-      "examples": [
-        "89ae9282c9d92ef2308f1308e99f6529"
-      ],
-      "internal": true,
-      "title": "The CERTIFICATE_BUNDLE_MD5SUM schema",
-      "type": "string"
-    },
-    "SSL_SECRET": {
-      "$id": "#/properties/SSL_SECRET",
-      "description": "Secret name with SSL certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
-      "examples": [
-        "defaultsslcertificate"
-      ],
-      "internal": true,
-      "title": "The SSL_SECRET schema",
-      "type": "string"
     },
     "MANAGED_BY": {
       "$id": "#/properties/MANAGED_BY",
@@ -222,17 +232,6 @@
         true,
         false
       ]
-    },
-    "AUTHZ_POLICY_ADMIN_IMAGE": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_IMAGE",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_IMAGE schema",
-      "description": "Overrides the authz-policy-admin image. Empty means {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-policy-admin:1.0.0"
-      ],
-      "internal": true
     },
     "IMAGE_PULL_POLICY": {
       "$id": "#/properties/IMAGE_PULL_POLICY",
@@ -429,7 +428,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_SOURCE_URL",
       "type": "string",
       "title": "The AUTHZ_PAP_CLIENT_SOURCE_URL schema",
-      "description": "Base URL of the access-control service the policy pull loop reads from. Empty disables the pull, unless AUTHZ_POLICY_ADMIN_ENABLED points the agent at the in-namespace stub",
+      "description": "Base URL of the policy source the pull loop reads from: the platform's access-control, or the authz-policy-admin stub from helm-templates/authz-policy-admin. Empty disables the pull",
       "default": "",
       "examples": [
         "http://access-control:8080"
@@ -461,7 +460,7 @@
       "$id": "#/properties/AUTHZ_POLICY_CONFIGMAP",
       "type": "string",
       "title": "The AUTHZ_POLICY_CONFIGMAP schema",
-      "description": "Name of an existing ConfigMap with policy data to mount instead of pulling (mount mode). Empty means pull mode. Cannot be combined with AUTHZ_POLICY_ADMIN_ENABLED",
+      "description": "Name of an existing ConfigMap with policy data to mount instead of pulling (mount mode). Empty means pull mode; mount mode disables the pull loop, so AUTHZ_PAP_CLIENT_SOURCE_URL is then unused",
       "default": "",
       "examples": [
         "authz-policies"
@@ -498,73 +497,6 @@
         3
       ],
       "minimum": 1
-    },
-    "AUTHZ_POLICY_ADMIN_ENABLED": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_ENABLED",
-      "type": "boolean",
-      "title": "The AUTHZ_POLICY_ADMIN_ENABLED schema",
-      "description": "Deploys the authz-policy-admin stub, which serves the v3 config API in place of access-control, and points the pull loop at it. Its control surface has no authentication: for development and test namespaces only",
-      "default": false,
-      "examples": [
-        true,
-        false
-      ]
-    },
-    "AUTHZ_POLICY_ADMIN_PORT": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_PORT",
-      "type": "integer",
-      "title": "The AUTHZ_POLICY_ADMIN_PORT schema",
-      "description": "HTTP port of the stub: the container port, the Service port, and the port in the generated AUTHZ_PAP_CLIENT_SOURCE_URL",
-      "default": 18090,
-      "examples": [
-        18090
-      ],
-      "minimum": 1,
-      "maximum": 65535
-    },
-    "AUTHZ_POLICY_ADMIN_DATA_DIR": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_DATA_DIR",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_DATA_DIR schema",
-      "description": "Directory where the stub keeps the uploaded policies and PIPs; it is the mount path of its volume",
-      "default": "/var/lib/authz-policy-admin",
-      "examples": [
-        "/var/lib/authz-policy-admin"
-      ],
-      "minLength": 1
-    },
-    "AUTHZ_POLICY_ADMIN_STORAGE_SIZE": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_SIZE",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_SIZE schema",
-      "description": "Size of the PersistentVolumeClaim that holds the uploaded policies",
-      "default": "1Gi",
-      "examples": [
-        "1Gi"
-      ],
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_STORAGE_CLASS": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_CLASS",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_CLASS schema",
-      "description": "StorageClass of that claim. Empty uses the cluster default",
-      "default": "",
-      "examples": [
-        "standard"
-      ],
-      "envSpecific": true
-    },
-    "AUTHZ_POLICY_ADMIN_STORAGE_RETAIN": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_RETAIN",
-      "type": "boolean",
-      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_RETAIN schema",
-      "description": "Keeps the claim when the release is uninstalled or the stub is disabled",
-      "default": true,
-      "examples": [
-        true,
-        false
-      ]
     },
     "AUTHZ_DECISION_LOG_PATH": {
       "$id": "#/properties/AUTHZ_DECISION_LOG_PATH",
@@ -621,11 +553,168 @@
       "title": "The HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT schema",
       "type": "integer"
     },
-    "AUTHZ_POLICY_ADMIN_CPU_REQUEST": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_REQUEST",
+    "REPLICAS": {
+      "$id": "#/properties/REPLICAS",
+      "description": "Number of initially deployed pods",
+      "envSpecific": true,
+      "examples": [
+        2
+      ],
+      "internal": true,
+      "title": "The REPLICAS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS",
+      "description": "Defines behavior.scaleUp.stabilizationWindowSeconds property in HPA resource",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_SELECT_POLICY": {
+      "$id": "#/properties/HPA_SCALING_UP_SELECT_POLICY",
+      "description": "Defines behavior.scaleUp.selectPolicy property in HPA resource. Allowed values are: Min, Max, Disabled",
+      "enum": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "envSpecific": true,
+      "examples": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_SELECT_POLICY schema",
+      "type": "string"
+    },
+    "HPA_SCALING_UP_PODS_VALUE": {
+      "$id": "#/properties/HPA_SCALING_UP_PODS_VALUE",
+      "description": "Defines behavior.scaleUp.policies[].value property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        1
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PODS_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_PODS_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_UP_PODS_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleUp.policies[].periodSeconds property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PODS_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_PERCENT_VALUE": {
+      "$id": "#/properties/HPA_SCALING_UP_PERCENT_VALUE",
+      "description": "Defines behavior.scaleUp.policies[].value property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        100
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PERCENT_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_PERCENT_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_UP_PERCENT_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleUp.policies[].periodSeconds property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PERCENT_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS",
+      "description": "Defines behavior.scaleDown.stabilizationWindowSeconds property in HPA resource",
+      "envSpecific": true,
+      "examples": [
+        300
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_SELECT_POLICY": {
+      "$id": "#/properties/HPA_SCALING_DOWN_SELECT_POLICY",
+      "description": "Defines behavior.scaleDown.selectPolicy property in HPA resource. Allowed values are: Min, Max, Disabled",
+      "enum": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "envSpecific": true,
+      "examples": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_SELECT_POLICY schema",
+      "type": "string"
+    },
+    "HPA_SCALING_DOWN_PODS_VALUE": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PODS_VALUE",
+      "description": "Defines behavior.scaleDown.policies[].value property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        1
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PODS_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_PODS_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PODS_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleDown.policies[].periodSeconds property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PODS_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_PERCENT_VALUE": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PERCENT_VALUE",
+      "description": "Defines behavior.scaleDown.policies[].value property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        100
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PERCENT_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleDown.policies[].periodSeconds property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "CPU_REQUEST": {
+      "$id": "#/properties/CPU_REQUEST",
       "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_POLICY_ADMIN_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the authz-policy-admin container will use to start",
+      "title": "The CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the container will use to start",
       "examples": [
         "4",
         "100m"
@@ -633,11 +722,11 @@
       "internal": true,
       "envSpecific": true
     },
-    "AUTHZ_POLICY_ADMIN_CPU_LIMIT": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_CPU_LIMIT",
+    "CPU_LIMIT": {
+      "$id": "#/properties/CPU_LIMIT",
       "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_POLICY_ADMIN_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the authz-policy-admin container can use",
+      "title": "The CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the container can use",
       "examples": [
         "4",
         "100m"
@@ -645,83 +734,24 @@
       "internal": true,
       "envSpecific": true
     },
-    "AUTHZ_POLICY_ADMIN_MEM_REQUEST": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_MEM_REQUEST",
+    "MEMORY_REQUEST": {
+      "$id": "#/properties/MEMORY_REQUEST",
       "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the authz-policy-admin container will use to start",
+      "title": "The MEMORY_REQUEST schema",
+      "description": "Defines minimum amount of memory the container will use to start",
       "examples": [
         "256Mi"
       ],
       "internal": true,
       "envSpecific": true
     },
-    "AUTHZ_POLICY_ADMIN_MEM_LIMIT": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_MEM_LIMIT",
+    "MEMORY_LIMIT": {
+      "$id": "#/properties/MEMORY_LIMIT",
       "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the authz-policy-admin container can use",
+      "title": "The MEMORY_LIMIT schema",
+      "description": "Defines maximum amount of memory the container can use",
       "examples": [
         "512Mi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_AGENT_IMAGE": {
-      "$id": "#/properties/AUTHZ_AGENT_IMAGE",
-      "type": "string",
-      "title": "The AUTHZ_AGENT_IMAGE schema",
-      "description": "Overrides the image of the agent. Empty composes it from IMAGE_REPOSITORY and TAG.",
-      "examples": [
-        "ghcr.io/netcracker/qubership-authz-agent:1.0.0"
-      ],
-      "internal": true,
-      "default": ""
-    },
-    "AUTHZ_AGENT_CPU_REQUEST": {
-      "$id": "#/properties/AUTHZ_AGENT_CPU_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the single service container will use to start",
-      "examples": [
-        "4",
-        "100m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_AGENT_CPU_LIMIT": {
-      "$id": "#/properties/AUTHZ_AGENT_CPU_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the single service container is allowed to use",
-      "examples": [
-        "4",
-        "500m"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_AGENT_MEM_REQUEST": {
-      "$id": "#/properties/AUTHZ_AGENT_MEM_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the single service container will use to start",
-      "examples": [
-        "200Mi",
-        "1Gi"
-      ],
-      "internal": true,
-      "envSpecific": true
-    },
-    "AUTHZ_AGENT_MEM_LIMIT": {
-      "$id": "#/properties/AUTHZ_AGENT_MEM_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the single service container is allowed to use",
-      "examples": [
-        "600Mi",
-        "2Gi"
       ],
       "internal": true,
       "envSpecific": true

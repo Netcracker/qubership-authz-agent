@@ -31,75 +31,34 @@ separator).
 */}}
 app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
 app.kubernetes.io/component: 'backend'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: 'saasDeployer'
 app.kubernetes.io/technology: 'go'
 {{- end -}}
 
 {{/*
-The agent's image. AUTHZ_AGENT_IMAGE wins where it is set; otherwise the
-helper computes "{IMAGE_REPOSITORY}/authz-agent:{TAG}".
+The labels of an object's metadata: the common set plus the deployer's session
+id, which the platform's charts put on every object and never on the Pod
+template. The id changes with every install session, and a Pod template label
+that changes rolls the Pods over on a deploy that changed nothing else.
 */}}
-{{- define "authz-agent.serviceImage" -}}
-{{- coalesce .Values.AUTHZ_AGENT_IMAGE (printf "%s/authz-agent:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
+{{- define "authz-agent.objectLabels" -}}
+{{ include "authz-agent.commonLabels" . }}
+{{- if .Values.DEPLOYMENT_SESSION_ID }}
+deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+{{- end }}
 {{- end -}}
 
 {{/*
-Optional access-control stub (authz-agent-ADR-0073). Rendered only when
-AUTHZ_POLICY_ADMIN_ENABLED is true; see templates/authz-policy-admin.yaml.
-*/}}
-
-{{- define "authz-agent.authzPolicyAdminName" -}}
-{{- printf "%s-authz-policy-admin" (include "authz-agent.serviceName" .) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{/*
-The stub's labels MUST NOT repeat the agent's `name` label.
-`authz-agent.commonLabels` emits `name: <serviceName>`, and templates/service.yaml
-selects on exactly that key, so a stub Pod carrying it would be admitted to the
-agent's Service on ports 8080/8181 — where the stub serves nothing — and a share
-of every authorization request would answer 404. `app.kubernetes.io/name` is kept
-distinct for the same reason: any future label-based selector (for example the
-ServiceMonitor that MONITORING_ENABLED is meant to bring back) must not sweep the
-stub in with the agent.
-*/}}
-{{- define "authz-agent.authzPolicyAdminSelector" -}}
-name: '{{ include "authz-agent.authzPolicyAdminName" . }}'
-{{- end -}}
-
-{{- define "authz-agent.authzPolicyAdminLabels" -}}
-{{ include "authz-agent.authzPolicyAdminSelector" . }}
-app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}-authz-policy-admin'
-app.kubernetes.io/instance: '{{ include "authz-agent.instance" . }}'
-app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
-app.kubernetes.io/component: 'test-double'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
-app.kubernetes.io/managed-by: 'saasDeployer'
-app.kubernetes.io/technology: 'go'
-{{- end -}}
-
-{{- define "authz-agent.authzPolicyAdminImage" -}}
-{{- coalesce .Values.AUTHZ_POLICY_ADMIN_IMAGE (printf "%s/authz-policy-admin:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
-{{- end -}}
-
-{{/*
-Policy pull source for the agent's pull loop.
-
-Precedence: an explicitly configured AUTHZ_PAP_CLIENT_SOURCE_URL always wins — enabling
-the stub while pointing the agent at a real access-control is a legitimate
-cutover setup, and the stub is then simply idle. Otherwise, when the stub is
-enabled, the agent is wired to its Service automatically so that a plain
-`helm install --set AUTHZ_POLICY_ADMIN_ENABLED=true` produces a working pull loop.
-
-`trimSuffix "/"` matters: the puller composes the request URL by plain string
+Policy pull source for the agent's pull loop: AUTHZ_PAP_CLIENT_SOURCE_URL with a
+trailing slash removed. The puller composes the request URL by plain string
 concatenation (components/authz-agent/internal/pull/pull.go), so an operator's
-trailing slash would produce `//access/v3/config/policySets`.
+trailing slash would produce `//access/v3/config/policySets`. Empty stays
+empty, which leaves the pull loop off.
 */}}
 {{- define "authz-agent.papSourceURL" -}}
 {{- if .Values.AUTHZ_PAP_CLIENT_SOURCE_URL -}}
 {{- trimSuffix "/" .Values.AUTHZ_PAP_CLIENT_SOURCE_URL -}}
-{{- else if .Values.AUTHZ_POLICY_ADMIN_ENABLED -}}
-{{- printf "http://%s:%d" (include "authz-agent.authzPolicyAdminName" .) (int .Values.AUTHZ_POLICY_ADMIN_PORT) -}}
 {{- end -}}
 {{- end -}}
 
@@ -167,7 +126,7 @@ access-control chart, which is the reference implementation for these CRs.
 */}}
 {{- define "authz-agent.meshLabels" -}}
 app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
 app.kubernetes.io/processed-by-operator: 'core-operator'
 deployer.cleanup/allow: 'true'
@@ -231,17 +190,51 @@ reused; on a fresh install a new random value is generated.
 {{- end -}}
 
 {{- define "authz-agent.validateValues" -}}
-{{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED .Values.AUTHZ_POLICY_CONFIGMAP -}}
-{{- fail (printf "AUTHZ_POLICY_ADMIN_ENABLED=true conflicts with AUTHZ_POLICY_CONFIGMAP=%s: the agent selects ConfigMap mount mode when /etc/authz/policies exists at startup and disables the pull loop entirely (authz-agent-ADR-0072), so the stub would be deployed, given a volume, and never polled. Pick one delivery mode." .Values.AUTHZ_POLICY_CONFIGMAP) -}}
+{{/*
+The access-control stub, authz-policy-admin, is a chart of its own,
+helm-templates/authz-policy-admin. A values file written for the time it was
+part of this chart would render without a word here: no stub would be deployed,
+and the agent would pull from nowhere.
+*/}}
+{{- $stubKeys := list -}}
+{{- range keys .Values -}}
+{{- if hasPrefix "AUTHZ_POLICY_ADMIN_" . -}}
+{{- $stubKeys = append $stubKeys . -}}
 {{- end -}}
-{{- if and .Values.AUTHZ_POLICY_ADMIN_ENABLED (eq (int .Values.AUTHZ_PAP_CLIENT_PULL_INTERVAL) 0) -}}
-{{- fail "AUTHZ_POLICY_ADMIN_ENABLED=true requires AUTHZ_PAP_CLIENT_PULL_INTERVAL > 0: 0 disables the pull loop, so the agent would never fetch from the stub." -}}
+{{- end -}}
+{{- if $stubKeys -}}
+{{- fail (printf "this chart no longer deploys authz-policy-admin and does not read %s. Install helm-templates/authz-policy-admin beside this chart and point AUTHZ_PAP_CLIENT_SOURCE_URL at its Service, http://authz-policy-admin:18090 with that chart's defaults." (join ", " (sortAlpha $stubKeys))) -}}
 {{- end -}}
 {{/*
-The per-container parameters of the five-container Pod (authz-agent-ADR-0080).
+The platform's HorizontalPodAutoscaler template renders maxReplicas from
+HPA_MAX_REPLICAS with no default, and the API server rejects an autoscaler
+without one. minReplicas falls back to REPLICAS and the target to 75, so this
+is the one key an enabled autoscaler cannot do without; every resource profile
+sets it.
+*/}}
+{{- if and .Values.HPA_ENABLED (not (hasKey .Values "HPA_MAX_REPLICAS")) -}}
+{{- fail "HPA_ENABLED=true requires HPA_MAX_REPLICAS: maxReplicas has no default in the platform's HorizontalPodAutoscaler template, and the API server rejects an autoscaler without it. The resource profiles set it." -}}
+{{- end -}}
+{{/*
+The template renders a scaling policy whenever its *_VALUE is set and takes
+the period as 0 when *_PERIOD_SECONDS is not, which leaves periodSeconds empty
+in the render. The API server rejects that, with the autoscaler enabled or
+not, since the policies render either way.
+*/}}
+{{- range list "HPA_SCALING_UP_PODS" "HPA_SCALING_UP_PERCENT" "HPA_SCALING_DOWN_PODS" "HPA_SCALING_DOWN_PERCENT" -}}
+{{- if and (index $.Values (printf "%s_VALUE" .)) (not (hasKey $.Values (printf "%s_PERIOD_SECONDS" .))) -}}
+{{- fail (printf "%s_VALUE is set without %s_PERIOD_SECONDS: the platform's HorizontalPodAutoscaler template then renders the policy with an empty periodSeconds, which the API server rejects." . .) -}}
+{{- end -}}
+{{- end -}}
+{{/*
+Values this chart no longer reads: the per-container parameters of the
+five-container Pod (authz-agent-ADR-0080), the AUTHZ_AGENT_-prefixed sizing
+that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT,
+and the AUTHZ_AGENT_IMAGE override, since the image is IMAGE_REPOSITORY:TAG as
+on the platform's charts.
 `additionalProperties` is true, so a values file that still carries them renders
 without a word and the agent silently takes the defaults of this chart: an
-install passing its own copy of the old prod profile would drop from a 8Gi
+install passing its own copy of an old prod profile would drop from a 13Gi
 memory limit to 700Mi in one upgrade. Name them instead.
 */}}
 {{- $removed := list
@@ -250,7 +243,9 @@ memory limit to 700Mi in one upgrade. Name them instead.
   "ENVOY_CPU_REQUEST" "ENVOY_CPU_LIMIT" "ENVOY_MEM_REQUEST" "ENVOY_MEM_LIMIT"
   "OPA_CPU_REQUEST" "OPA_CPU_LIMIT" "OPA_MEM_REQUEST" "OPA_MEM_LIMIT"
   "PAP_CLIENT_CPU_REQUEST" "PAP_CLIENT_CPU_LIMIT" "PAP_CLIENT_MEM_REQUEST" "PAP_CLIENT_MEM_LIMIT"
-  "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT" -}}
+  "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT"
+  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT"
+  "AUTHZ_AGENT_IMAGE" -}}
 {{- $carried := list -}}
 {{- range $removed -}}
 {{- if hasKey $.Values . -}}
@@ -258,6 +253,19 @@ memory limit to 700Mi in one upgrade. Name them instead.
 {{- end -}}
 {{- end -}}
 {{- if $carried -}}
-{{- fail (printf "the agent Pod is one container since authz-agent-ADR-0080, and these values no longer reach anything: %s. The sizing moved to AUTHZ_AGENT_CPU_REQUEST, AUTHZ_AGENT_CPU_LIMIT, AUTHZ_AGENT_MEM_REQUEST, AUTHZ_AGENT_MEM_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and the image to AUTHZ_AGENT_IMAGE. Set those and drop these, or the Pod takes this chart's defaults." (join ", " $carried)) -}}
+{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and its image is IMAGE_REPOSITORY:TAG. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+The platform's CPU quantity conversion, taken with its HorizontalPodAutoscaler
+template: `350m` gives 350, `15` gives 15000.
+*/}}
+{{- define "to_millicores" -}}
+  {{- $value := toString . -}}
+  {{- if hasSuffix "m" $value -}}
+    {{ trimSuffix "m" $value }}
+  {{- else -}}
+    {{ mulf $value 1000 }}
+  {{- end -}}
 {{- end -}}

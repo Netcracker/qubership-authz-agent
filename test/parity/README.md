@@ -37,7 +37,7 @@ the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 | Target | What it does |
 | --- | --- |
 | `parity-harness` | Namespace `authz-parity`; Keycloak as `idp` in dev mode with the two realm imports; `pip-mock` with the request-args rule set; `entitlements-mock`; the M2M client-credentials Secret |
-| `parity-install` | `helm upgrade --install` with [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
+| `parity-install` | `helm upgrade --install` of the stub chart with [`test/k8s/parity/policy-admin-values.yaml`](../k8s/parity/policy-admin-values.yaml), then of the agent chart with [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
 | `parity-suite` | The Job from [`test/k8s/parity/parity-suite-job.yaml`](../k8s/parity/parity-suite-job.yaml); its log is streamed |
 
 Expected result: 135/135 cases green against authz-agent. CI runs the same targets (job `Parity on kind` in

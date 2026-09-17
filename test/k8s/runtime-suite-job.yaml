@@ -50,7 +50,7 @@ spec:
             - name: OPA_DIRECT_URL
               value: http://authz-agent:8181
             - name: AUTHZ_POLICY_ADMIN_URL
-              value: http://authz-agent-authz-policy-admin:18090
+              value: http://authz-policy-admin:18090
             - name: AUTHZ_PAP_CLIENT_PULL_INTERVAL
               value: "2"
             - name: KC_BASE_URL

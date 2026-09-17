@@ -22,11 +22,11 @@
 //
 // It has two consumers:
 //
-//   - the automated test suites (testify, parity, SVT), which run it in Docker
-//     Compose and seed it over the same upload paths;
-//   - the optional `AUTHZ_POLICY_ADMIN_ENABLED` deployment in the authz-agent Helm chart,
-//     which lets a team with no access-control installation load policies into
-//     authz-agent through the same pull path production uses
+//   - the automated test suites: testify and parity run it on kind, SVT in
+//     Docker Compose, and all three seed it over the same upload paths;
+//   - its own Helm chart, helm-templates/authz-policy-admin, installed beside
+//     the agent's, which lets a team with no access-control installation load
+//     policies into authz-agent through the same pull path production uses
 //     (authz-agent-ADR-0073).
 //
 // The simplified-policy API — access-control's own paths, prefix included, so a

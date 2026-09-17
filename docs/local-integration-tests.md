@@ -16,7 +16,9 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 - The harness under [test/k8s/](../test/k8s/): Keycloak with the realm imports from `test/k8s/authn/`, the `pip-stub`
   the uploaded PIP definitions call, a second stub instance as `entitlements-mock`, and chart values that point the
   agent at them.
-- The agent under test comes from the Helm chart in `helm-templates/authz-agent`, installed with `test/k8s/values.yaml`.
+- The agent under test comes from the Helm chart in `helm-templates/authz-agent`, installed with `test/k8s/values.yaml`;
+  its policy source, the `authz-policy-admin` stub, from `helm-templates/authz-policy-admin` with
+  `test/k8s/policy-admin-values.yaml`.
 - The suite runs as the Job in `test/k8s/runtime-suite-job.yaml`, built from `test/integration/testify/Dockerfile`.
   Every target is a Service name, so no port has to leave the cluster.
 - The step catalog (source of truth) is [test/readme.md](../test/readme.md) plus `test/integration/testify/catalog.go`;
@@ -97,7 +99,7 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
 | `e2e-images` | Builds the images above and loads them into the cluster |
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
-| `e2e-install` | `helm upgrade --install` with `test/k8s/values.yaml` and `--wait` |
+| `e2e-install` | `helm upgrade --install` of the stub chart with `test/k8s/policy-admin-values.yaml`, then of the agent chart with `test/k8s/values.yaml`, each with `--wait` |
 | `e2e-suite` | Applies the Job and its RBAC, streams its log, and fails if the Job did not complete |
 
 Each step prints a `STEP PASS/FAIL <name> <ms>` line. The Job sets `FULL_RUNTIME_SUITE=true`, so the run ends with the

@@ -1,0 +1,28 @@
+# The volume holding the uploaded policies (authz-agent-ADR-0073).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: '{{ include "authz-policy-admin.serviceName" . }}-data'
+  labels:
+    {{- include "authz-policy-admin.objectLabels" . | nindent 4 }}
+  {{- if .Values.AUTHZ_POLICY_ADMIN_STORAGE_RETAIN }}
+  annotations:
+    # The volume is the ONLY copy of the uploaded policies — the chart creates no
+    # seed ConfigMap — so it outlives `helm uninstall`. Removing it is a
+    # deliberate `kubectl delete pvc {{ include "authz-policy-admin.serviceName" . }}-data`.
+    helm.sh/resource-policy: keep
+  {{- end }}
+spec:
+  accessModes:
+    # ReadWriteOnce and a single replica are the same decision: the stub's state
+    # is local files with no coordination between processes.
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: '{{ .Values.AUTHZ_POLICY_ADMIN_STORAGE_SIZE }}'
+  {{- if .Values.AUTHZ_POLICY_ADMIN_STORAGE_CLASS }}
+  # Rendered only when non-empty. `storageClassName: ""` is NOT the same as an
+  # absent key: the empty string disables dynamic provisioning and leaves the
+  # claim Pending forever on a cluster that has a default class.
+  storageClassName: '{{ .Values.AUTHZ_POLICY_ADMIN_STORAGE_CLASS }}'
+  {{- end }}

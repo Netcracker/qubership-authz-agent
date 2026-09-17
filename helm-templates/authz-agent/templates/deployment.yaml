@@ -9,14 +9,35 @@ kind: Deployment
 metadata:
   name: '{{ include "authz-agent.serviceName" . }}'
   labels:
-    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+    {{- include "authz-agent.objectLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.REPLICAS | default 1 }}
+  # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
+  # unset renders the Kubernetes default of 25% surge and 25% unavailable.
   strategy:
+      {{- if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "recreate" }}
+    type: Recreate
+      {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "best_effort_controlled_rollout" }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 80%
+      {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "ramped_slow_rollout" }}
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
+      {{- else if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "custom_rollout" }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.DEPLOYMENT_STRATEGY_MAXSURGE | default "25%" }}
+      maxUnavailable: {{ .Values.DEPLOYMENT_STRATEGY_MAXUNAVAILABLE | default "25%" }}
+      {{- else }}
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+      {{- end }}
   selector:
     matchLabels:
       name: '{{ include "authz-agent.serviceName" . }}'
@@ -51,6 +72,27 @@ spec:
       # written into the volume the two of them shared.
       securityContext:
         runAsNonRoot: true
+      # The Pods spread over the platform's topologies: one constraint per
+      # CLOUD_TOPOLOGIES entry, or one over CLOUD_TOPOLOGY_KEY when the list is
+      # empty, each selecting this Deployment's Pods by their name label.
+      topologySpreadConstraints:
+      {{- if .Values.CLOUD_TOPOLOGIES }}
+      {{- range $v := .Values.CLOUD_TOPOLOGIES }}
+        - topologyKey: {{ $v.topologyKey }}
+          maxSkew: {{ $v.maxSkew | default 1 }}
+          whenUnsatisfiable: {{ $v.whenUnsatisfiable | default "ScheduleAnyway" }}
+          labelSelector:
+            matchLabels:
+              name: "{{ coalesce $.Values.DEPLOYMENT_RESOURCE_NAME $.Values.SERVICE_NAME }}"
+      {{- end }}
+      {{- else }}
+        - maxSkew: 1
+          topologyKey: {{ .Values.CLOUD_TOPOLOGY_KEY }}
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              name: "{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}"
+      {{- end }}
       volumes:
         # Mounted as a directory, deliberately not with subPath: the kubelet
         # propagates a ConfigMap edit into a directory mount by swapping the
@@ -96,8 +138,8 @@ spec:
             defaultMode: 292
         {{- end }}
       containers:
-        - name: authz-agent
-          image: '{{ include "authz-agent.serviceImage" . }}'
+        - name: '{{ .Values.SERVICE_NAME }}'
+          image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
           imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
           ports:
             - name: web
@@ -206,16 +248,21 @@ spec:
             timeoutSeconds: 3
           resources:
             requests:
-              cpu: '{{ .Values.AUTHZ_AGENT_CPU_REQUEST }}'
-              memory: '{{ .Values.AUTHZ_AGENT_MEM_REQUEST }}'
+              cpu: '{{ .Values.CPU_REQUEST }}'
+              memory: '{{ .Values.MEMORY_REQUEST }}'
               ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST }}'
             limits:
-              cpu: '{{ .Values.AUTHZ_AGENT_CPU_LIMIT }}'
-              memory: '{{ .Values.AUTHZ_AGENT_MEM_LIMIT }}'
+              cpu: '{{ .Values.CPU_LIMIT }}'
+              memory: '{{ .Values.MEMORY_LIMIT }}'
               ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            # Read-only on Kubernetes only, as on the platform's charts: the
+            # decision log is the one thing the container writes, and it goes
+            # to the decision-logs emptyDir.
+            readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - ALL

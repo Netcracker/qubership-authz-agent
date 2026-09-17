@@ -4,7 +4,7 @@
 # Triggered manually (workflow_dispatch) when a release version is ready.
 # Performs the following steps:
 #   1. Tags the commit with the release version (checks for duplicate tags).
-#   2. Builds and publishes all five Docker images listed in docker-dev-config.json.
+#   2. Builds and publishes the two Docker images of the component list below.
 #   3. Creates a GitHub release entry.
 #   4. On failure, deletes the tag to keep the tag list clean.
 #

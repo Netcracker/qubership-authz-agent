@@ -1,23 +1,52 @@
 # Cloud-Deployer-injected platform keys.
 PAAS_PLATFORM: "KUBERNETES"
-PAAS_VERSION: ''
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
-IMAGE_REPOSITORY: ''
+# The agent's image without its tag, as the platform's charts name it; the
+# image is IMAGE_REPOSITORY:TAG. The default is the component authz-agent that
+# .github/docker-dev-config.json and the release workflow both list, published
+# by the docker action under the repository's owner on GHCR.
+IMAGE_REPOSITORY: ghcr.io/netcracker/authz-agent
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
-# Injected by Cloud-Deployer. The chart has no ServiceMonitor template, so this
-# value renders nothing. The agent serves Prometheus metrics at `/prometheus` on
-# the Service's `opa` port (8181); point a ServiceMonitor added later at that
-# path and port.
-MONITORING_ENABLED: false
-TRACING_ENABLED: false
-EXECUTION_MODE: active
-READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
-CERTIFICATE_BUNDLE_MD5SUM: "d41d8cd98f00b204e9800998ecf8427e"
-SSL_SECRET: "defaultsslcertificate"
+
+# DEPLOYMENT_STRATEGY_TYPE, DEPLOYMENT_STRATEGY_MAXSURGE, and
+# DEPLOYMENT_STRATEGY_MAXUNAVAILABLE are injected by Cloud-Deployer. TYPE has no
+# default here because the schema admits only the platform's four strategy
+# names (recreate, best_effort_controlled_rollout, ramped_slow_rollout,
+# custom_rollout); unset renders the 25% rolling update. The two sizes are read
+# under custom_rollout only and are strings in the schema, so a count is passed
+# quoted or with `--set-string`.
+
+# Pod spread. CLOUD_TOPOLOGIES is injected by Cloud-Deployer as a list of
+# topologies, each with a required `topologyKey` and an optional `maxSkew`
+# (1 when absent) and `whenUnsatisfiable` (ScheduleAnyway when absent):
+#
+#   CLOUD_TOPOLOGIES:
+#     - topologyKey: topology.kubernetes.io/zone
+#       maxSkew: 1
+#       whenUnsatisfiable: DoNotSchedule
+#
+# Empty (default) spreads the Pods over CLOUD_TOPOLOGY_KEY alone, with a
+# maximum skew of 1 and ScheduleAnyway, so a Pod the scheduler cannot spread
+# is still scheduled.
+CLOUD_TOPOLOGIES: []
+CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
+
+# Injected by Cloud-Deployer; every object carries it in its
+# app.kubernetes.io/part-of label.
+APPLICATION_NAME: 'Platform-Core-Security'
+# Renders the PodMonitor by which the platform's VictoriaMetrics operator
+# scrapes the agent's metrics at `/prometheus` on its data-api port (8181). Set to
+# false on a cluster without the monitoring.coreos.com CRDs (a plain kubeadm or
+# kind cluster), where `helm install` fails on the unknown kind.
+MONITORING_ENABLED: true
+# Read-only root file system for the container, on Kubernetes; on OpenShift the
+# template leaves it writable, as the platform's charts do. The decision log is
+# the one thing the agent writes, and it goes to an emptyDir.
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # Written into the labels of the mesh route CRs. Cloud-Deployer overrides it
 # (argocd installs set `argocd`); the default matches the value the other
 # manifests already carry.
@@ -41,13 +70,6 @@ DEPLOYMENT_SESSION_ID: ''
 # trace carries the M2M token, and the rewrite preserves the query string. The
 # decision itself still requires a valid token in the request body.
 #
-# With AUTHZ_POLICY_ADMIN_ENABLED it also registers `/access/v1/simplifiedPolicies` — the
-# stub's policy-upload API, at access-control's own prefix — on the internal
-# gateway. That surface has no authentication (see AUTHZ_POLICY_ADMIN_ENABLED below), and in
-# a namespace that also runs access-control it takes that prefix over from it. The
-# stub's v3 config API is not registered: the agent reaches it directly by Service
-# DNS.
-#
 # Registering a prefix another service already serves is NOT a collision that
 # fails or resolves at random — verified on a live stand. The control plane keys a
 # route by prefix + virtual service + version, and the most recent registration
@@ -66,20 +88,6 @@ DEPLOYMENT_SESSION_ID: ''
 # the unknown kind), and on whichever of access-control / authz-agent is not
 # meant to serve these routes when both run in one namespace.
 MESH_ROUTES_ENABLED: true
-
-# Per-image overrides. If empty, the deployment template falls back to:
-#   authz-agent:          {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}
-#   authz-policy-admin:   {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}
-#
-# Note: authz-policy-admin uses no authz-agent- prefix because it is a
-# standalone Deployment, not the agent (see .github/docker-dev-config.json).
-#
-# Cloud-Deployer can populate these from .Values.global.deployDescriptor
-# at install time.
-
-# AUTHZ_AGENT_IMAGE: override for the agent's image.
-# Empty → {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}.
-AUTHZ_AGENT_IMAGE: ''
 
 # Pull policy for every container. The default is IfNotPresent because the
 # pipeline tags images with an immutable pipeline id, so re-pulling an already
@@ -260,10 +268,11 @@ KUBERNETES_M2M_ENABLED: false
 # PAP is the Policy Administration Point, the service the policies come from;
 # the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
 #
-# AUTHZ_PAP_CLIENT_SOURCE_URL: base URL of the access-control service.
-#   Empty (default) → pull disabled, UNLESS AUTHZ_POLICY_ADMIN_ENABLED is true, in which
-#   case the chart points the agent at the in-namespace stub Service. A value
-#   set here always wins over the stub.
+# AUTHZ_PAP_CLIENT_SOURCE_URL: base URL of the policy source: the platform's
+#   access-control, or the authz-policy-admin stub installed from
+#   helm-templates/authz-policy-admin (http://authz-policy-admin:18090 with that
+#   chart's defaults; authz-agent-ADR-0073). Empty (default) leaves the pull
+#   loop off.
 AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 # AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables both pull and
 #   mount-watcher.  Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
@@ -295,83 +304,35 @@ AUTHZ_ENTITLEMENTS_URL: ''
 AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT: 5
 AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
 
-# Optional access-control stub (authz-agent-ADR-0073).
-#
-# For teams that do not run access-control at all. When enabled, the chart
-# deploys a single-Pod stub that serves the same v3 config API the PolicyPuller
-# reads, and wires AUTHZ_PAP_CLIENT_SOURCE_URL to it. Policies are loaded at runtime
-# through the stub's own control surface and stored on its volume:
-#
-#   kubectl port-forward svc/<release>-authz-policy-admin 18090:18090
-#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPolicies/BSS -d @policies.json
-#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPIPs/BSS     -d @pips.json
-#
-# Those are access-control's own paths: the stub serves the endpoints it supports
-# at the URLs access-control serves them at, per domain, and its v3 export is the
-# union of every domain. With MESH_ROUTES_ENABLED the same paths are reachable
-# through the internal gateway, so a CI job needs no port-forward.
-#
-# The agent picks the change up within AUTHZ_PAP_CLIENT_PULL_INTERVAL seconds (30 by
-# default), so "I uploaded and nothing happened" is expected for up to half a
-# minute.
-#
-# NOT for production. The control surface has no authentication, so any workload
-# that can reach the Service — or, with MESH_ROUTES_ENABLED, the internal gateway
-# — can replace the authorization policy set of every agent pulling from it. The
-# internal gateway does not add authentication: its ext_authz filter was observed
-# passing unauthenticated requests through to upstreams. Enable this in
-# development and test namespaces only.
-#
-# Mutually exclusive with AUTHZ_POLICY_CONFIGMAP: mount mode disables the pull
-# loop, so the combination is rejected at template time.
-AUTHZ_POLICY_ADMIN_ENABLED: false
-# Per-image override. Empty → {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.
-# Note: authz-policy-admin is a standalone Deployment of its own, so it does not
-# carry the authz-agent- prefix the agent's image uses.
-AUTHZ_POLICY_ADMIN_IMAGE: ''
-# HTTP port, used for the container port, the Service port, and the generated
-# AUTHZ_PAP_CLIENT_SOURCE_URL. 18090 matches the test stacks and every documented curl.
-AUTHZ_POLICY_ADMIN_PORT: 18090
-# Where the stub keeps policies.json / pips.json. Must stay inside the volume
-# mount — it is the mount path.
-AUTHZ_POLICY_ADMIN_DATA_DIR: /var/lib/authz-policy-admin
-# Volume holding the uploaded policies. It is the only copy: the chart creates
-# no seed ConfigMap.
-AUTHZ_POLICY_ADMIN_STORAGE_SIZE: 1Gi
-# Empty → the cluster's default StorageClass (the key is not rendered at all,
-# which is different from rendering an empty string).
-AUTHZ_POLICY_ADMIN_STORAGE_CLASS: ''
-# Keep the volume when the release is uninstalled or the stub is disabled.
-# Cleanup is then a manual `kubectl delete pvc <release>-authz-policy-admin-data`.
-AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
-
 # The decisions are written to ephemeral container storage and are lost on a
 # Pod restart. See the handover Next Steps "decision-log collector sink
 # productionisation" before any production deploy.
 AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 
-# HPA gating (default off; toggle on per environment if needed).
-HPA_ENABLED: false
-HPA_MIN_REPLICAS: 1
-HPA_MAX_REPLICAS: 1
-HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+# Autoscaling is set per environment by the resource profiles: REPLICAS and the
+# HPA_* keys have no default here. The HorizontalPodAutoscaler is the platform's
+# template and is rendered on every install; without a profile, or with
+# HPA_ENABLED false, it carries selectPolicy Disabled in both directions and
+# never scales. HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT is a percentage of
+# CPU_LIMIT, which the template converts into the percentage of CPU_REQUEST the
+# autoscaler compares against: 75 with the dev sizing renders as 85.
 
 # Resource baselines.
 # Defaults below mirror `resource-profiles/dev.yaml` so that a plain
 # `helm install` on a dev / sandbox cluster (no profile selection, no
-# operator overrides) schedules cleanly on a small node. For production
-# installs, pass `-f resource-profiles/prod.yaml` or set the deployer's
-# PROFILE parameter to `prod`.
+# operator overrides) schedules cleanly on a small node. The deployer's
+# PROFILE parameter selects one of `resource-profiles/` (dev, dev-ha, prod,
+# prod-nonha); by hand, pass the file with `-f`.
 #
 # The numbers are what the five containers this one replaced asked for and
 # were capped at between them (authz-agent-ADR-0080), so upgrading onto this
 # chart moves neither the Pod's floor nor its ceiling. That is the only claim
 # they make: no load has been measured against the service. Deployments with
 # one worth measuring set these from the resource profiles.
-AUTHZ_AGENT_CPU_REQUEST: 350m
-AUTHZ_AGENT_CPU_LIMIT: 400m
-AUTHZ_AGENT_MEM_REQUEST: 364Mi
-AUTHZ_AGENT_MEM_LIMIT: 700Mi
+CPU_REQUEST: 350m
+CPU_LIMIT: 400m
+MEMORY_REQUEST: 364Mi
+MEMORY_LIMIT: 700Mi
 
 # The decision log is the only thing the container writes, to an emptyDir that
 # nothing rotates, so the storage limit and the volume's own sizeLimit are what
@@ -381,10 +342,3 @@ AUTHZ_AGENT_MEM_LIMIT: 700Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 64Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 512Mi
 AUTHZ_DECISION_LOG_SIZE_LIMIT: 256Mi
-
-# Only used when AUTHZ_POLICY_ADMIN_ENABLED is true. The stub serves a few megabytes of
-# JSON from memory; it does not need the backend's sizing.
-AUTHZ_POLICY_ADMIN_CPU_REQUEST: 50m
-AUTHZ_POLICY_ADMIN_CPU_LIMIT: 100m
-AUTHZ_POLICY_ADMIN_MEM_REQUEST: 64Mi
-AUTHZ_POLICY_ADMIN_MEM_LIMIT: 128Mi

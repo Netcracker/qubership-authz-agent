@@ -2,11 +2,13 @@
 # parity stack sets on its containers; the harness Services carry the same
 # names as the Compose services, so the URLs are the same too.
 
-IMAGE_REPOSITORY: local
+IMAGE_REPOSITORY: local/authz-agent
 TAG: ci
 
-# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.
+# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD,
+# and no monitoring.coreos.com CRDs for the PodMonitor either.
 MESH_ROUTES_ENABLED: false
+MONITORING_ENABLED: false
 
 # The harness Keycloak. The agent takes its M2M token from the cloud-common
 # realm here, with the parity-m2m client.
@@ -29,9 +31,11 @@ AUTHZ_JWKS_HTTP_RETRIES: 20
 # No tenant-manager in the harness; an empty value disables realm resolution.
 AUTHZ_TENANT_MANAGER_URL: ""
 
-# The suite seeds policies and PIPs through the in-namespace stub and waits
-# PARITY_PULL_SETTLE_SECONDS (2 by default) after each write.
-AUTHZ_POLICY_ADMIN_ENABLED: true
+# The suite seeds policies and PIPs through the authz-policy-admin stub,
+# installed from its own chart with policy-admin-values.yaml in this directory,
+# and waits PARITY_PULL_SETTLE_SECONDS (2 by default) after each write; the
+# agent pulls them from the stub's Service.
+AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 1
 
 # The entitlements stub of the harness.

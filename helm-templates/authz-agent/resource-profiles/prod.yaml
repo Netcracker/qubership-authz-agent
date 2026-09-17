@@ -16,21 +16,30 @@
 # connection as Envoy did, and runs the pull loop, the token renewal, and the
 # decision-log upload beside them, so it takes what the five containers it
 # replaced took between them (authz-agent-ADR-0080).
-AUTHZ_AGENT_CPU_REQUEST: 7500m
-AUTHZ_AGENT_CPU_LIMIT: "15"
-AUTHZ_AGENT_MEM_REQUEST: 3584Mi
-AUTHZ_AGENT_MEM_LIMIT: 13Gi
+CPU_REQUEST: 7500m
+CPU_LIMIT: "15"
+MEMORY_REQUEST: 3584Mi
+MEMORY_LIMIT: 13Gi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
 AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
-
-# authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
-# stub replaces access-control and its control surface is unauthenticated by
-# default (authz-agent-ADR-0073). These numbers exist so that a staging or
-# demo namespace installed with the prod profile still renders sane limits; the
-# stub only serves a few megabytes of JSON, so it does not follow the backend's
-# sizing.
-AUTHZ_POLICY_ADMIN_CPU_REQUEST: 100m
-AUTHZ_POLICY_ADMIN_CPU_LIMIT: 500m
-AUTHZ_POLICY_ADMIN_MEM_REQUEST: 128Mi
-AUTHZ_POLICY_ADMIN_MEM_LIMIT: 512Mi
+# The autoscaler keeps at least two Pods, and REPLICAS matches that floor so a
+# helm upgrade does not drop the Deployment to one Pod until the autoscaler
+# reconciles. The scaling policies and windows are the values dbaas-operator's
+# profiles carry.
+# prod-nonha.yaml is this profile with the floor at one Pod.
+REPLICAS: 2
+HPA_ENABLED: true
+HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+HPA_SCALING_UP_PODS_VALUE: 1
+HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+HPA_SCALING_DOWN_PODS_VALUE: 1
+HPA_SCALING_UP_SELECT_POLICY: Max
+HPA_SCALING_DOWN_SELECT_POLICY: Max
+HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
+HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
+HPA_MIN_REPLICAS: 2
+HPA_MAX_REPLICAS: 5
