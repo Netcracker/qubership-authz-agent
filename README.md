@@ -6,9 +6,10 @@ service carrying the policy engine as a library, the check API, and the loops
 that feed the engine (authz-agent-ADR-0080).  See
 [`components/authz-agent/README.md`](components/authz-agent/README.md).
 
-`authz-policy-admin` is a standalone Deployment (its own Service and
-PersistentVolumeClaim) that acts as the primary policy source.  Its image name
-has no `authz-agent-` prefix because it is not a container of the agent Pod.
+`authz-policy-admin`, the primary policy source, is a service of its own with
+its own chart, `helm-templates/authz-policy-admin`: a Deployment with its
+Service and PersistentVolumeClaim.  Its image name has no `authz-agent-` prefix
+because it is not a container of the agent Pod.
 
 ## Maturity
 
@@ -24,20 +25,23 @@ provider and adjust the Helm values accordingly.
 ## Policy source
 
 [`authz-policy-admin`](components/authz-policy-admin/README.md) is the
-supported policy source.  Enable it with `AUTHZ_POLICY_ADMIN_ENABLED=true` in
-the Helm chart and load simplified policies and PIPs over its unauthenticated
-HTTP API.
+supported policy source.  Install its chart beside the agent's, point the
+agent's `AUTHZ_PAP_CLIENT_SOURCE_URL` at its Service
+(`http://authz-policy-admin:18090` with the chart's defaults), and load
+simplified policies and PIPs over its unauthenticated HTTP API.
 
 Pulling policies from the platform's access-control service is also supported:
 set `AUTHZ_PAP_CLIENT_SOURCE_URL` to the access-control service URL.  When
-that is set, `authz-policy-admin` is not needed and can be disabled.
+that is set, `authz-policy-admin` is not needed.
 
-## Chart
+## Charts
 
-The Helm chart is at `helm-templates/authz-agent/`.
+The agent's chart is at `helm-templates/authz-agent/` and the policy source's
+at `helm-templates/authz-policy-admin/`.
 
 ```sh
 helm template helm-templates/authz-agent
+helm template helm-templates/authz-policy-admin
 ```
 
 ## Building images

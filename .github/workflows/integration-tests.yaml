@@ -71,8 +71,10 @@ jobs:
         with:
           version: v4.3.0
 
-      - name: Lint the chart
-        run: helm lint helm-templates/authz-agent -f test/k8s/values.yaml
+      - name: Lint the charts
+        run: |
+          helm lint helm-templates/authz-agent -f test/k8s/values.yaml
+          helm lint helm-templates/authz-policy-admin -f test/k8s/policy-admin-values.yaml
 
       - name: Render assertions
         run: bash test/scripts/test-chart-render.sh

@@ -1,0 +1,304 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "title": "The authz-policy-admin schema.",
+  "description": "JSON Schema for the authz-policy-admin chart values.",
+  "definitions": {
+    "integerOrString": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "properties": {
+    "PAAS_PLATFORM": {
+      "$id": "#/properties/PAAS_PLATFORM",
+      "description": "Cloud Platform type",
+      "enum": [
+        "KUBERNETES",
+        "OPENSHIFT"
+      ],
+      "examples": [
+        "KUBERNETES",
+        "OPENSHIFT"
+      ],
+      "internal": true,
+      "title": "The PAAS_PLATFORM schema",
+      "type": "string"
+    },
+    "NAMESPACE": {
+      "$id": "#/properties/NAMESPACE",
+      "description": "Namespace where deploy is performed",
+      "examples": [
+        "cloud-core-dbaas-ci"
+      ],
+      "internal": true,
+      "title": "The NAMESPACE schema",
+      "type": "string"
+    },
+    "ARTIFACT_DESCRIPTOR_VERSION": {
+      "$id": "#/properties/ARTIFACT_DESCRIPTOR_VERSION",
+      "description": "Artifact descriptor version which is installed",
+      "examples": [
+        "master-20230130.130852-481"
+      ],
+      "internal": true,
+      "title": "The ARTIFACT_DESCRIPTOR_VERSION schema",
+      "type": "string"
+    },
+    "TAG": {
+      "$id": "#/properties/TAG",
+      "description": "Docker image tag",
+      "examples": [
+        "build180"
+      ],
+      "internal": true,
+      "title": "The TAG schema",
+      "type": "string"
+    },
+    "IMAGE_REPOSITORY": {
+      "$id": "#/properties/IMAGE_REPOSITORY",
+      "description": "Docker image repository path",
+      "examples": [
+        "ghcr.io/netcracker"
+      ],
+      "internal": true,
+      "title": "The IMAGE_REPOSITORY schema",
+      "type": "string"
+    },
+    "SERVICE_NAME": {
+      "$id": "#/properties/SERVICE_NAME",
+      "description": "Name of service (specified in config.xml)",
+      "examples": [
+        "identity-provider"
+      ],
+      "internal": true,
+      "title": "The SERVICE_NAME schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_RESOURCE_NAME": {
+      "$id": "#/properties/DEPLOYMENT_RESOURCE_NAME",
+      "description": "Service name with version postfix (matching DEPLOYMENT_VERSION parameter value). Provided if facade/bluegreen mode is true",
+      "examples": [
+        "identity-provider-v2"
+      ],
+      "internal": true,
+      "title": "The DEPLOYMENT_RESOURCE_NAME schema",
+      "type": "string"
+    },
+    "DEPLOYMENT_VERSION": {
+      "$id": "#/properties/DEPLOYMENT_VERSION",
+      "description": "Deployment version. Provided if facade/bluegreen mode is true",
+      "examples": [
+        "v2"
+      ],
+      "internal": true,
+      "title": "The DEPLOYMENT_VERSION schema",
+      "type": "string"
+    },
+    "READONLY_CONTAINER_FILE_SYSTEM_ENABLED": {
+      "$id": "#/properties/READONLY_CONTAINER_FILE_SYSTEM_ENABLED",
+      "description": "Read-only container file system is enabled",
+      "examples": [
+        true,
+        false
+      ],
+      "title": "The READONLY_CONTAINER_FILE_SYSTEM_ENABLED schema",
+      "type": "boolean"
+    },
+    "MANAGED_BY": {
+      "$id": "#/properties/MANAGED_BY",
+      "type": "string",
+      "title": "The MANAGED_BY schema",
+      "description": "The tool being used to manage the operation of an application",
+      "examples": [
+        "helm",
+        "operator",
+        "argocd"
+      ],
+      "internal": true
+    },
+    "DEPLOYMENT_SESSION_ID": {
+      "$id": "#/properties/DEPLOYMENT_SESSION_ID",
+      "type": "string",
+      "title": "The DEPLOYMENT_SESSION_ID schema",
+      "description": "Unique identifier of deployment session used to track e2e deploy activity",
+      "examples": [
+        "516736bf-d4b7-4900-beab-9599573ac8a8"
+      ],
+      "internal": true
+    },
+    "MESH_ROUTES_ENABLED": {
+      "$id": "#/properties/MESH_ROUTES_ENABLED",
+      "type": "boolean",
+      "title": "The MESH_ROUTES_ENABLED schema",
+      "description": "Registers the stub's policy-upload API, /access/v1/simplifiedPolicies, on the internal gateway through a Mesh CR handled by core-operator. Set to false on a cluster without core-operator.",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "AUTHZ_POLICY_ADMIN_IMAGE": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_IMAGE",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_IMAGE schema",
+      "description": "Overrides the authz-policy-admin image. Empty means {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.",
+      "default": "",
+      "examples": [
+        "ghcr.io/netcracker/authz-policy-admin:1.0.0"
+      ],
+      "internal": true
+    },
+    "IMAGE_PULL_POLICY": {
+      "$id": "#/properties/IMAGE_PULL_POLICY",
+      "type": "string",
+      "title": "The IMAGE_PULL_POLICY schema",
+      "description": "Image pull policy of every container. IfNotPresent suits immutable pipeline tags; set Always where a moving tag must win on every restart",
+      "default": "IfNotPresent",
+      "examples": [
+        "Always",
+        "IfNotPresent",
+        "Never"
+      ],
+      "enum": [
+        "Always",
+        "IfNotPresent",
+        "Never"
+      ]
+    },
+    "AUTHZ_POLICY_ADMIN_PORT": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_PORT",
+      "type": "integer",
+      "title": "The AUTHZ_POLICY_ADMIN_PORT schema",
+      "description": "HTTP port of the stub, used for the container port and the Service port",
+      "default": 18090,
+      "examples": [
+        18090
+      ],
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "AUTHZ_POLICY_ADMIN_DATA_DIR": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_DATA_DIR",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_DATA_DIR schema",
+      "description": "Directory where the stub keeps the uploaded policies and PIPs; it is the mount path of its volume",
+      "default": "/var/lib/authz-policy-admin",
+      "examples": [
+        "/var/lib/authz-policy-admin"
+      ],
+      "minLength": 1
+    },
+    "AUTHZ_POLICY_ADMIN_STORAGE_SIZE": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_SIZE",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_SIZE schema",
+      "description": "Size of the PersistentVolumeClaim that holds the uploaded policies",
+      "default": "1Gi",
+      "examples": [
+        "1Gi"
+      ],
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_STORAGE_CLASS": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_CLASS",
+      "type": "string",
+      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_CLASS schema",
+      "description": "StorageClass of that claim. Empty uses the cluster default",
+      "default": "",
+      "examples": [
+        "standard"
+      ],
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_STORAGE_RETAIN": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_STORAGE_RETAIN",
+      "type": "boolean",
+      "title": "The AUTHZ_POLICY_ADMIN_STORAGE_RETAIN schema",
+      "description": "Keeps the PersistentVolumeClaim with the uploaded policies when the release is uninstalled (helm.sh/resource-policy: keep)",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "CPU_REQUEST": {
+      "$id": "#/properties/CPU_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the container will use to start",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "CPU_LIMIT": {
+      "$id": "#/properties/CPU_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the container can use",
+      "examples": [
+        "4",
+        "100m"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "MEMORY_REQUEST": {
+      "$id": "#/properties/MEMORY_REQUEST",
+      "type": "string",
+      "title": "The MEMORY_REQUEST schema",
+      "description": "Defines minimum amount of memory the container will use to start",
+      "examples": [
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "MEMORY_LIMIT": {
+      "$id": "#/properties/MEMORY_LIMIT",
+      "type": "string",
+      "title": "The MEMORY_LIMIT schema",
+      "description": "Defines maximum amount of memory the container can use",
+      "examples": [
+        "512Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST schema",
+      "description": "Defines minimum amount of ephemeral storage the stub container will use to start",
+      "examples": [
+        "64Mi",
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    },
+    "AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT": {
+      "$id": "#/properties/AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT",
+      "$ref": "#/definitions/integerOrString",
+      "title": "The AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT schema",
+      "description": "Defines maximum amount of ephemeral storage the stub container is allowed to use",
+      "examples": [
+        "64Mi",
+        "256Mi"
+      ],
+      "internal": true,
+      "envSpecific": true
+    }
+  },
+  "additionalProperties": true
+}

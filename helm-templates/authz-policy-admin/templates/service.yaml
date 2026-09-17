@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: '{{ include "authz-policy-admin.serviceName" . }}'
+  labels:
+    {{- include "authz-policy-admin.commonLabels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    name: '{{ include "authz-policy-admin.serviceName" . }}'
+  ports:
+    # Service port equals the container port on purpose: every curl example in
+    # the READMEs and the SVT stack use 18090, so
+    # `kubectl port-forward svc/{{ include "authz-policy-admin.serviceName" . }} 18090:18090`
+    # makes them apply verbatim.
+    - name: web
+      port: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+      targetPort: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
+      protocol: TCP

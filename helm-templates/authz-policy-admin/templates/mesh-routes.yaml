@@ -1,0 +1,57 @@
+{{- if .Values.MESH_ROUTES_ENABLED }}
+# authz-policy-admin northbound API (authz-agent-ADR-0073, ADR-0074).
+#
+# The stub serves access-control's own simplified-policy paths, prefix included,
+# so this registers exactly what access-control registers on this gateway:
+# `/access/v1/simplifiedPolicies`. A caller that loaded policies into
+# access-control keeps working against the stub with no URL change.
+#
+# Internal gateway only. access-control also exposes this prefix on its private
+# gateway and two GET-only sub-paths on its public one; a policy-authoring
+# surface with no authentication does not belong on either.
+#
+# The v3 config API (`/access/v3/config/*`) is deliberately NOT registered: the
+# agent's pull loop reaches the stub directly by Service DNS inside the
+# namespace, so a gateway route would add no reachability while exposing the whole
+# policy set for reading.
+#
+# In a namespace that also runs access-control this prefix is already taken by it
+# — that is the conflict MESH_ROUTES_ENABLED exists to resolve. Being the same
+# prefix is the point: the stub replaces access-control, it does not sit beside it.
+#
+# These are unauthenticated policy writes, and the gateway does not change that:
+# on the R&D cluster the internal gateway's ext_authz filter was observed passing
+# requests with no Authorization header through to upstreams. Anything that can
+# reach `internal-gateway-service` can therefore replace the policy set — which is
+# acceptable only because the stub itself is a development and test component
+# (ADR-0073).
+apiVersion: core.netcracker.com/v1
+kind: Mesh
+subKind: RouteConfiguration
+metadata:
+  name: '{{ include "authz-policy-admin.serviceName" . }}-internal-routes'
+  namespace: '{{ .Values.NAMESPACE }}'
+  labels:
+    {{- include "authz-policy-admin.meshLabels" . | nindent 4 }}
+spec:
+  gateways:
+    - internal-gateway-service
+  tlsSupported: false
+  virtualServices:
+    - name: internal-gateway-service
+      hosts: [ "*" ]
+      routeConfiguration:
+        {{- if .Values.DEPLOYMENT_VERSION }}
+        version: '{{ .Values.DEPLOYMENT_VERSION }}'
+        {{- end }}
+        routes:
+          - destination:
+              cluster: '{{ .Values.SERVICE_NAME }}'
+              endpoint: 'http://{{ include "authz-policy-admin.serviceName" . }}:{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
+            rules:
+              # GET/PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}
+              # and .../domainPIPs/{domain}. The stub answers 405 on the verbs
+              # access-control supports and it does not (POST, PATCH, DELETE).
+              - match:
+                  prefix: /access/v1/simplifiedPolicies
+{{- end }}

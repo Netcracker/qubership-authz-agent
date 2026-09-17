@@ -1,0 +1,97 @@
+# Cloud-Deployer-injected platform keys.
+PAAS_PLATFORM: "KUBERNETES"
+NAMESPACE: ''
+ARTIFACT_DESCRIPTOR_VERSION: ''
+TAG: ''
+IMAGE_REPOSITORY: ''
+SERVICE_NAME: "authz-policy-admin"
+DEPLOYMENT_RESOURCE_NAME: "authz-policy-admin"
+DEPLOYMENT_VERSION: ''
+# Safe at any value: every write of the stub lands on its mounted volume.
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
+# Written into the labels of the mesh route CR. Cloud-Deployer overrides it
+# (argocd installs set `argocd`); the default matches the value the other
+# manifests already carry.
+MANAGED_BY: "saasDeployer"
+# Injected by Cloud-Deployer to tie every object of one install session
+# together. Empty (default) → the label is not rendered.
+DEPLOYMENT_SESSION_ID: ''
+
+# Service-mesh route registration (authz-agent-ADR-0073, ADR-0074).
+#
+# Registers the stub's policy-upload API, `/access/v1/simplifiedPolicies`, on
+# the internal gateway at access-control's own prefix, so a caller that loaded
+# policies into access-control keeps working against the stub with no URL
+# change. The CR is a `core.netcracker.com/v1` `Mesh` object handled by
+# core-operator. That surface has no authentication, and in a namespace that
+# also runs access-control it takes the prefix over from it.
+#
+# Set to false on a cluster without core-operator (a plain kubeadm or kind
+# cluster has no `meshes.core.netcracker.com` CRD, and `helm install` fails on
+# the unknown kind).
+MESH_ROUTES_ENABLED: true
+
+# AUTHZ_POLICY_ADMIN_IMAGE: override for the stub's image. Empty (default)
+# composes {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}; Cloud-Deployer
+# can populate it from .Values.global.deployDescriptor at install time. The
+# image name carries no authz-agent- prefix: the stub is a service of its own,
+# not a container of the agent Pod (see .github/docker-dev-config.json).
+AUTHZ_POLICY_ADMIN_IMAGE: ''
+# The default is IfNotPresent because the pipeline tags images with an
+# immutable pipeline id. Set to Always where a moving tag (`latest`) is
+# deliberately used and the newest build must win on restart.
+IMAGE_PULL_POLICY: IfNotPresent
+
+# The stub serves the access-control v3 config API from policies uploaded over
+# its own control surface, and the agent pulls them from this chart's Service:
+# set the agent's AUTHZ_PAP_CLIENT_SOURCE_URL to http://authz-policy-admin:18090
+# with the defaults of this chart (the Service is named DEPLOYMENT_RESOURCE_NAME,
+# else SERVICE_NAME). Policies are loaded at runtime and stored on the stub's
+# volume:
+#
+#   kubectl port-forward svc/authz-policy-admin 18090:18090
+#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPolicies/BSS -d @policies.json
+#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPIPs/BSS     -d @pips.json
+#
+# Those are access-control's own paths: the stub serves the endpoints it
+# supports at the URLs access-control serves them at, per domain, and its v3
+# export is the union of every domain. With MESH_ROUTES_ENABLED the same paths
+# are reachable through the internal gateway, so a CI job needs no
+# port-forward. The agent picks a change up within its
+# AUTHZ_PAP_CLIENT_PULL_INTERVAL (30 seconds by default).
+#
+# NOT for production. The control surface has no authentication, so any
+# workload that can reach the Service, or the internal gateway with
+# MESH_ROUTES_ENABLED, can replace the authorization policy set of every agent
+# pulling from it. Install this chart in development and test namespaces only.
+
+# HTTP port, used for the container port and the Service port. 18090 matches
+# the test stacks and every documented curl.
+AUTHZ_POLICY_ADMIN_PORT: 18090
+# Where the stub keeps policies.json / pips.json. Must stay inside the volume
+# mount — it is the mount path.
+AUTHZ_POLICY_ADMIN_DATA_DIR: /var/lib/authz-policy-admin
+# Volume holding the uploaded policies. It is the only copy: the chart creates
+# no seed ConfigMap.
+AUTHZ_POLICY_ADMIN_STORAGE_SIZE: 1Gi
+# Empty → the cluster's default StorageClass (the key is not rendered at all,
+# which is different from rendering an empty string).
+AUTHZ_POLICY_ADMIN_STORAGE_CLASS: ''
+# Keep the volume when the release is uninstalled. Cleanup is then a manual
+# `kubectl delete pvc authz-policy-admin-data`.
+AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
+
+# Resource baselines. These defaults mirror `resource-profiles/dev.yaml`; the
+# deployer's PROFILE parameter selects one of `resource-profiles/` (dev, dev-ha,
+# prod, prod-nonha), by hand pass the file with `-f`. The stub serves a few
+# megabytes of JSON from memory, so it does not follow the agent's sizing.
+CPU_REQUEST: 50m
+CPU_LIMIT: 100m
+MEMORY_REQUEST: 64Mi
+MEMORY_LIMIT: 128Mi
+
+# The uploads go to the volume; the container's own ephemeral storage holds
+# only the writable layer and the logs, so a small allowance is enough, and the
+# limit keeps a runaway log from filling the node.
+AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST: 64Mi
+AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT: 256Mi

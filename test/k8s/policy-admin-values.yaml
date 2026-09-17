@@ -1,0 +1,7 @@
+# Chart values for the authz-policy-admin stub in the kind harness of this
+# directory. The image comes from `make e2e-images`, which side-loads it into
+# the kind node. A kind cluster has no core-operator and no
+# meshes.core.netcracker.com CRD.
+IMAGE_REPOSITORY: local
+TAG: ci
+MESH_ROUTES_ENABLED: false

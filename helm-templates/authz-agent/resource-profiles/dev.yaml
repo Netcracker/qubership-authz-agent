@@ -1,7 +1,5 @@
-# Dev resource profile for authz-agent.
-# Keep the dev install small:
-#   authz-agent:        364Mi RAM / 350m CPU
-#   authz-policy-admin:  64Mi RAM /  50m CPU (only when it is enabled)
+# Dev resource profile for authz-agent. Keep the dev install small: 364Mi RAM
+# and 350m CPU requested.
 #
 # The agent's numbers are what the five containers it replaced asked for
 # between them (authz-agent-ADR-0080), not a measurement.
@@ -27,9 +25,3 @@ HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
 HPA_SCALING_DOWN_PODS_VALUE: 1
 HPA_MIN_REPLICAS: 1
 HPA_MAX_REPLICAS: 5
-
-# Only applied when AUTHZ_POLICY_ADMIN_ENABLED is true (authz-agent-ADR-0073).
-AUTHZ_POLICY_ADMIN_CPU_REQUEST: 50m
-AUTHZ_POLICY_ADMIN_CPU_LIMIT: 100m
-AUTHZ_POLICY_ADMIN_MEM_REQUEST: 64Mi
-AUTHZ_POLICY_ADMIN_MEM_LIMIT: 128Mi

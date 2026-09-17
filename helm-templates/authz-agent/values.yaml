@@ -69,13 +69,6 @@ DEPLOYMENT_SESSION_ID: ''
 # trace carries the M2M token, and the rewrite preserves the query string. The
 # decision itself still requires a valid token in the request body.
 #
-# With AUTHZ_POLICY_ADMIN_ENABLED it also registers `/access/v1/simplifiedPolicies` — the
-# stub's policy-upload API, at access-control's own prefix — on the internal
-# gateway. That surface has no authentication (see AUTHZ_POLICY_ADMIN_ENABLED below), and in
-# a namespace that also runs access-control it takes that prefix over from it. The
-# stub's v3 config API is not registered: the agent reaches it directly by Service
-# DNS.
-#
 # Registering a prefix another service already serves is NOT a collision that
 # fails or resolves at random — verified on a live stand. The control plane keys a
 # route by prefix + virtual service + version, and the most recent registration
@@ -95,18 +88,9 @@ DEPLOYMENT_SESSION_ID: ''
 # meant to serve these routes when both run in one namespace.
 MESH_ROUTES_ENABLED: true
 
-# Per-image overrides. If empty, the deployment template falls back to:
-#   authz-agent:          {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}
-#   authz-policy-admin:   {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}
-#
-# Note: authz-policy-admin uses no authz-agent- prefix because it is a
-# standalone Deployment, not the agent (see .github/docker-dev-config.json).
-#
-# Cloud-Deployer can populate these from .Values.global.deployDescriptor
-# at install time.
-
-# AUTHZ_AGENT_IMAGE: override for the agent's image.
-# Empty → {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}.
+# AUTHZ_AGENT_IMAGE: override for the agent's image. Empty (default) composes
+# {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}; Cloud-Deployer can populate it
+# from .Values.global.deployDescriptor at install time.
 AUTHZ_AGENT_IMAGE: ''
 
 # Pull policy for every container. The default is IfNotPresent because the
@@ -288,10 +272,11 @@ KUBERNETES_M2M_ENABLED: false
 # PAP is the Policy Administration Point, the service the policies come from;
 # the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
 #
-# AUTHZ_PAP_CLIENT_SOURCE_URL: base URL of the access-control service.
-#   Empty (default) → pull disabled, UNLESS AUTHZ_POLICY_ADMIN_ENABLED is true, in which
-#   case the chart points the agent at the in-namespace stub Service. A value
-#   set here always wins over the stub.
+# AUTHZ_PAP_CLIENT_SOURCE_URL: base URL of the policy source: the platform's
+#   access-control, or the authz-policy-admin stub installed from
+#   helm-templates/authz-policy-admin (http://authz-policy-admin:18090 with that
+#   chart's defaults; authz-agent-ADR-0073). Empty (default) leaves the pull
+#   loop off.
 AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 # AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables both pull and
 #   mount-watcher.  Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
@@ -322,56 +307,6 @@ AUTHZ_ENTITLEMENTS_URL: ''
 # the AUTHZ_JWKS_HTTP_* knobs above.
 AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT: 5
 AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
-
-# Optional access-control stub (authz-agent-ADR-0073).
-#
-# For teams that do not run access-control at all. When enabled, the chart
-# deploys a single-Pod stub that serves the same v3 config API the PolicyPuller
-# reads, and wires AUTHZ_PAP_CLIENT_SOURCE_URL to it. Policies are loaded at runtime
-# through the stub's own control surface and stored on its volume:
-#
-#   kubectl port-forward svc/<release>-authz-policy-admin 18090:18090
-#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPolicies/BSS -d @policies.json
-#   curl -X PUT localhost:18090/access/v1/simplifiedPolicies/domainPIPs/BSS     -d @pips.json
-#
-# Those are access-control's own paths: the stub serves the endpoints it supports
-# at the URLs access-control serves them at, per domain, and its v3 export is the
-# union of every domain. With MESH_ROUTES_ENABLED the same paths are reachable
-# through the internal gateway, so a CI job needs no port-forward.
-#
-# The agent picks the change up within AUTHZ_PAP_CLIENT_PULL_INTERVAL seconds (30 by
-# default), so "I uploaded and nothing happened" is expected for up to half a
-# minute.
-#
-# NOT for production. The control surface has no authentication, so any workload
-# that can reach the Service — or, with MESH_ROUTES_ENABLED, the internal gateway
-# — can replace the authorization policy set of every agent pulling from it. The
-# internal gateway does not add authentication: its ext_authz filter was observed
-# passing unauthenticated requests through to upstreams. Enable this in
-# development and test namespaces only.
-#
-# Mutually exclusive with AUTHZ_POLICY_CONFIGMAP: mount mode disables the pull
-# loop, so the combination is rejected at template time.
-AUTHZ_POLICY_ADMIN_ENABLED: false
-# Per-image override. Empty → {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.
-# Note: authz-policy-admin is a standalone Deployment of its own, so it does not
-# carry the authz-agent- prefix the agent's image uses.
-AUTHZ_POLICY_ADMIN_IMAGE: ''
-# HTTP port, used for the container port, the Service port, and the generated
-# AUTHZ_PAP_CLIENT_SOURCE_URL. 18090 matches the test stacks and every documented curl.
-AUTHZ_POLICY_ADMIN_PORT: 18090
-# Where the stub keeps policies.json / pips.json. Must stay inside the volume
-# mount — it is the mount path.
-AUTHZ_POLICY_ADMIN_DATA_DIR: /var/lib/authz-policy-admin
-# Volume holding the uploaded policies. It is the only copy: the chart creates
-# no seed ConfigMap.
-AUTHZ_POLICY_ADMIN_STORAGE_SIZE: 1Gi
-# Empty → the cluster's default StorageClass (the key is not rendered at all,
-# which is different from rendering an empty string).
-AUTHZ_POLICY_ADMIN_STORAGE_CLASS: ''
-# Keep the volume when the release is uninstalled or the stub is disabled.
-# Cleanup is then a manual `kubectl delete pvc <release>-authz-policy-admin-data`.
-AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
 
 # The decisions are written to ephemeral container storage and are lost on a
 # Pod restart. See the handover Next Steps "decision-log collector sink
@@ -411,10 +346,3 @@ MEMORY_LIMIT: 700Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 64Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 512Mi
 AUTHZ_DECISION_LOG_SIZE_LIMIT: 256Mi
-
-# Only used when AUTHZ_POLICY_ADMIN_ENABLED is true. The stub serves a few megabytes of
-# JSON from memory; it does not need the backend's sizing.
-AUTHZ_POLICY_ADMIN_CPU_REQUEST: 50m
-AUTHZ_POLICY_ADMIN_CPU_LIMIT: 100m
-AUTHZ_POLICY_ADMIN_MEM_REQUEST: 64Mi
-AUTHZ_POLICY_ADMIN_MEM_LIMIT: 128Mi

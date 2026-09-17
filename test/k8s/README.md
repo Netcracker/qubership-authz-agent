@@ -10,7 +10,8 @@ apply them by hand. CI runs the same targets one step at a time.
 | `authn/` | The realm imports, their description, and the M2M client credentials |
 | `pip-stub.yaml` | The PIP stub the uploaded PIP definitions call |
 | `entitlements-mock.yaml` | A second stub instance for the entitlements endpoint |
-| `values.yaml` | Chart values that point the agent at the harness Services |
+| `values.yaml` | Chart values that point the agent at the harness Services and at the stub |
+| `policy-admin-values.yaml` | Chart values for the `authz-policy-admin` stub, installed from its own chart |
 | `runtime-suite-job.yaml` | The suite itself, built from `test/integration/testify/Dockerfile` |
 | `runtime-suite-rbac.yaml` | The ServiceAccount the Job names; it is granted no rules |
 
@@ -43,7 +44,7 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
 | `e2e-images` | Builds the two product images, pip-stub, and the suite images, then loads them into the cluster |
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
-| `e2e-install` | `helm upgrade --install` with `values.yaml` and `--wait` |
+| `e2e-install` | `helm upgrade --install` of the stub chart with `policy-admin-values.yaml`, then of the agent chart with `values.yaml`, each with `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
 | `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 

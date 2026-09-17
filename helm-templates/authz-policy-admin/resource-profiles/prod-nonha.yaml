@@ -1,0 +1,9 @@
+# Prod-nonHA resource profile for authz-policy-admin: the prod sizing. The stub
+# runs one Pod on a ReadWriteOnce volume, so prod and prod-nonha are the same
+# numbers; see prod.yaml for what they are for.
+CPU_REQUEST: 100m
+CPU_LIMIT: 500m
+MEMORY_REQUEST: 128Mi
+MEMORY_LIMIT: 512Mi
+AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST: 64Mi
+AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT: 256Mi
