@@ -205,9 +205,10 @@ AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL: 30
 #
 #   KUBERNETES_M2M_ENABLED=true  (not default):
 #     A Kubernetes projected ServiceAccount token (audience=netcracker,
-#     ExpirationSeconds=600) is mounted into /etc/authz/ac-token/token by the
-#     kubelet and rotated automatically. The agent re-reads it every fifteen
-#     seconds. No Secret dependency.
+#     ExpirationSeconds=600) is mounted at
+#     /var/run/secrets/tokens/netcracker/token, the platform's layout for
+#     projected tokens, by the kubelet and rotated automatically. The agent
+#     re-reads it every fifteen seconds. No Secret dependency.
 #
 #   KUBERNETES_M2M_ENABLED=false (DEFAULT):
 #     The agent obtains a Keycloak client_credentials token from the
@@ -280,8 +281,9 @@ AUTHZ_PAP_CLIENT_SOURCE_URL: ''
 #   mount-watcher.  Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
 # AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the Bearer token written by the kubelet
-#   (KUBERNETES_M2M_ENABLED=true) or the agent's own token loop (false).
-AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-token/token
+#   (KUBERNETES_M2M_ENABLED=true) or the agent's own token loop (false). The
+#   default is where the platform's charts mount the netcracker-audience token.
+AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
 # AUTHZ_POLICY_CONFIGMAP: name of an existing ConfigMap to mount as policy data
 #   (mount mode, authz-agent-ADR-0071). Empty (default) → pull mode; no volume,
 #   no volumeMount, and AUTHZ_POLICY_MOUNT_DIR is not set in the Deployment.
