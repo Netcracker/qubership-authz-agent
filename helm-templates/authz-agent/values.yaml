@@ -8,6 +8,10 @@ IMAGE_REPOSITORY: ''
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
+# Injected by Cloud-Deployer; the HorizontalPodAutoscaler carries it in its
+# app.kubernetes.io/part-of label. The default is the value the chart's other
+# objects carry in that label.
+APPLICATION_NAME: 'Platform-Core-Security'
 # Injected by Cloud-Deployer. The chart has no ServiceMonitor template, so this
 # value renders nothing. The agent serves Prometheus metrics at `/prometheus` on
 # the Service's `opa` port (8181); point a ServiceMonitor added later at that
@@ -350,10 +354,13 @@ AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
 # productionisation" before any production deploy.
 AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 
-# Autoscaling is set per environment by the resource profiles: HPA_ENABLED,
-# HPA_MIN_REPLICAS, HPA_MAX_REPLICAS and HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT
-# have no default here, and without a profile the chart renders no
-# HorizontalPodAutoscaler.
+# Autoscaling is set per environment by the resource profiles: REPLICAS and the
+# HPA_* keys have no default here. The HorizontalPodAutoscaler is the platform's
+# template and is rendered on every install; without a profile, or with
+# HPA_ENABLED false, it carries selectPolicy Disabled in both directions and
+# never scales. HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT is a percentage of
+# CPU_LIMIT, which the template converts into the percentage of CPU_REQUEST the
+# autoscaler compares against: 75 with the dev sizing renders as 85.
 
 # Resource baselines.
 # Defaults below mirror `resource-profiles/dev.yaml` so that a plain

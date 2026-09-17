@@ -23,13 +23,22 @@ MEMORY_LIMIT: 13Gi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
 AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
-
-# The autoscaler keeps at least two Pods; prod-nonha.yaml is this profile with
-# the floor at one Pod.
+# The autoscaler keeps at least two Pods, and REPLICAS matches that floor so a
+# helm upgrade does not drop the Deployment to one Pod until the autoscaler
+# reconciles. The scaling policies and windows are the values dbaas-operator's
+# profiles carry.
+# prod-nonha.yaml is this profile with the floor at one Pod.
+REPLICAS: 2
 HPA_ENABLED: true
+HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+HPA_SCALING_UP_PODS_VALUE: 1
+HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+HPA_SCALING_DOWN_PODS_VALUE: 1
 HPA_MIN_REPLICAS: 2
 HPA_MAX_REPLICAS: 5
-HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
 
 # authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
 # stub replaces access-control and its control surface is unauthenticated by
