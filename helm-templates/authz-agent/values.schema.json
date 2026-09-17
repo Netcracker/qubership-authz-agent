@@ -161,6 +161,25 @@
       "title": "The DEPLOYMENT_STRATEGY_MAXUNAVAILABLE schema",
       "type": "string"
     },
+    "CLOUD_TOPOLOGIES": {
+      "$id": "#/properties/CLOUD_TOPOLOGIES",
+      "description": "Array of topologies settings for topologySpreadConstraints. Each array item must contain at least 'topologyKey' attribute. Other supported attributes are 'maxSkew' and 'whenUnsatisfiable' - optional",
+      "examples": [
+        "- topologyKey: kubernetes.io/hostname"
+      ],
+      "title": "The CLOUD_TOPOLOGIES schema",
+      "type": "array"
+    },
+    "CLOUD_TOPOLOGY_KEY": {
+      "$id": "#/properties/CLOUD_TOPOLOGY_KEY",
+      "default": "kubernetes.io/hostname",
+      "description": "Defines topologyKey in topologySpreadConstraints",
+      "examples": [
+        "kubernetes.io/hostname"
+      ],
+      "title": "The CLOUD_TOPOLOGY_KEY schema",
+      "type": "string"
+    },
     "MONITORING_ENABLED": {
       "$id": "#/properties/MONITORING_ENABLED",
       "description": "Set to true to import dashboards to Grafana and configure integration with Prometheus. Requires Platform System Monitor CRDs to be deployed to target k8s/openshift cluster",

@@ -409,6 +409,23 @@ field() {
   local key="$2"
   awk -v key="${key}" '$1 == key {print $2; exit}' <<<"${document}"
 }
+# Compares one block of the agent's Deployment, cut out by the named function,
+# with a literal, and reports the diff.
+expect_block() {
+  local block_of="$1"
+  local label="$2"
+  local expected="$3"
+  shift 3
+  local got
+  got="$("${block_of}" "$@")"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${label}"
+  elif [[ -z "${got}" ]]; then
+    fail "${label}: no such block in the render: $(head -3 <<<"$(deployment_of "$@")")"
+  else
+    fail "${label}: $(diff <(echo "${expected}") <(echo "${got}") || true)"
+  fi
+}
 
 # A plain install: one replica; the autoscaler disabled, with no policy and the
 # target 75% of the 400m limit over the 350m request; the chart's part-of label
@@ -509,20 +526,7 @@ done
 # unset renders the Kubernetes default of 25% surge and 25% unavailable. The
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
-expect_strategy() {
-  local label="$1"
-  local expected="$2"
-  shift 2
-  local got
-  got="$(strategy_of "$@")"
-  if [[ "${got}" == "${expected}" ]]; then
-    pass "${label}"
-  elif [[ -z "${got}" ]]; then
-    fail "${label}: no strategy block in the render: $(head -3 <<<"$(deployment_of "$@")")"
-  else
-    fail "${label}: $(diff <(echo "${expected}") <(echo "${got}") || true)"
-  fi
-}
+expect_strategy() { expect_block strategy_of "$@"; }
 rolling='  strategy:
     type: RollingUpdate
     rollingUpdate:'
@@ -562,6 +566,66 @@ for bad_type in blue_green ""; do
     pass "DEPLOYMENT_STRATEGY_TYPE '${bad_type}' is rejected by the schema"
   fi
 done
+
+# ── Pod spread ───────────────────────────────────────────────────────────
+#
+# One constraint over CLOUD_TOPOLOGY_KEY by default; with CLOUD_TOPOLOGIES, one
+# per entry, with maxSkew and whenUnsatisfiable defaulted per entry. The whole
+# block is compared; the selector has to name the label the Pod template
+# carries, which the DEPLOYMENT_RESOURCE_NAME checks read back from one render
+# as values.
+spread_of() { deployment_of "$@" | sed -n '/^      topologySpreadConstraints:/,/^      [a-zA-Z]/p' | sed '$d'; }
+expect_spread() { expect_block spread_of "$@"; }
+expect_spread "no CLOUD_TOPOLOGIES spreads over CLOUD_TOPOLOGY_KEY with skew 1 and ScheduleAnyway" '      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              name: "authz-agent"'
+expect_spread "CLOUD_TOPOLOGY_KEY sets the default constraint's key" '      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              name: "authz-agent"' --set CLOUD_TOPOLOGY_KEY=topology.kubernetes.io/zone
+expect_spread "CLOUD_TOPOLOGIES gives one constraint per entry, defaulting maxSkew and whenUnsatisfiable per entry" '      topologySpreadConstraints:
+        - topologyKey: topology.kubernetes.io/zone
+          maxSkew: 2
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              name: "authz-agent"
+        - topologyKey: kubernetes.io/hostname
+          maxSkew: 1
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              name: "authz-agent"' \
+  --set-json 'CLOUD_TOPOLOGIES=[{"topologyKey":"topology.kubernetes.io/zone","maxSkew":2,"whenUnsatisfiable":"DoNotSchedule"},{"topologyKey":"kubernetes.io/hostname"}]'
+
+# The Pod template's name label and the spread selector's, read from one
+# render as values, once with DEPLOYMENT_RESOURCE_NAME set and once with it
+# empty, where both fall back to SERVICE_NAME.
+for row in "authz-agent-v2:--set DEPLOYMENT_RESOURCE_NAME=authz-agent-v2" "agent-x:--set DEPLOYMENT_RESOURCE_NAME= --set SERVICE_NAME=agent-x"; do
+  IFS=: read -r want flags <<<"${row}"
+  # shellcheck disable=SC2086 # the flags are split on purpose
+  doc="$(deployment_of ${flags})"
+  label="$(field "$(sed -n '/^  template:/,/^    spec:/p' <<<"${doc}")" name: | tr -d "'\"")"
+  selector="$(field "$(sed -n '/^      topologySpreadConstraints:/,/^      [a-zA-Z]/p' <<<"${doc}")" name: | tr -d "'\"")"
+  if [[ "${label}" == "${want}" && "${selector}" == "${want}" ]]; then
+    pass "the spread selector and the Pod template's name label are both ${want} (${flags})"
+  else
+    fail "expected the Pod template's name label and the spread selector to be ${want} (${flags}); label '${label}', selector '${selector}'"
+  fi
+done
+
+if helm template t "${CHART_DIR}" --set CLOUD_TOPOLOGIES=kubernetes.io/hostname >/dev/null 2>&1; then
+  fail "a CLOUD_TOPOLOGIES that is not a list must be rejected by the schema"
+else
+  pass "a CLOUD_TOPOLOGIES that is not a list is rejected by the schema"
+fi
 
 echo
 if (( failures > 0 )); then

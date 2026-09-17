@@ -17,6 +17,21 @@ DEPLOYMENT_VERSION: ''
 # under custom_rollout only and are strings in the schema, so a count is passed
 # quoted or with `--set-string`.
 
+# Pod spread. CLOUD_TOPOLOGIES is injected by Cloud-Deployer as a list of
+# topologies, each with a required `topologyKey` and an optional `maxSkew`
+# (1 when absent) and `whenUnsatisfiable` (ScheduleAnyway when absent):
+#
+#   CLOUD_TOPOLOGIES:
+#     - topologyKey: topology.kubernetes.io/zone
+#       maxSkew: 1
+#       whenUnsatisfiable: DoNotSchedule
+#
+# Empty (default) spreads the Pods over CLOUD_TOPOLOGY_KEY alone, with a
+# maximum skew of 1 and ScheduleAnyway, so a Pod the scheduler cannot spread
+# is still scheduled.
+CLOUD_TOPOLOGIES: []
+CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
+
 # Injected by Cloud-Deployer; the HorizontalPodAutoscaler carries it in its
 # app.kubernetes.io/part-of label. The default is the value the chart's other
 # objects carry in that label.

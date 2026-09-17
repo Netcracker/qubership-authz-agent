@@ -72,6 +72,27 @@ spec:
       # written into the volume the two of them shared.
       securityContext:
         runAsNonRoot: true
+      # The Pods spread over the platform's topologies: one constraint per
+      # CLOUD_TOPOLOGIES entry, or one over CLOUD_TOPOLOGY_KEY when the list is
+      # empty, each selecting this Deployment's Pods by their name label.
+      topologySpreadConstraints:
+      {{- if .Values.CLOUD_TOPOLOGIES }}
+      {{- range $v := .Values.CLOUD_TOPOLOGIES }}
+        - topologyKey: {{ $v.topologyKey }}
+          maxSkew: {{ $v.maxSkew | default 1 }}
+          whenUnsatisfiable: {{ $v.whenUnsatisfiable | default "ScheduleAnyway" }}
+          labelSelector:
+            matchLabels:
+              name: "{{ coalesce $.Values.DEPLOYMENT_RESOURCE_NAME $.Values.SERVICE_NAME }}"
+      {{- end }}
+      {{- else }}
+        - maxSkew: 1
+          topologyKey: {{ .Values.CLOUD_TOPOLOGY_KEY }}
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              name: "{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}"
+      {{- end }}
       volumes:
         # Mounted as a directory, deliberately not with subPath: the kubelet
         # propagates a ConfigMap edit into a directory mount by swapping the
