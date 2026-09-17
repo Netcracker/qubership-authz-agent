@@ -230,7 +230,7 @@ all_manifests="$(helm template t "${CHART_DIR}")"
 # replaced stay in the pattern, so a return of any of them is counted.
 agent_containers() {
   local rendered=$1
-  echo "${rendered}" | grep -cE "^        - name: (authz-agent|envoy|opa|pap-client|collector|token-fetcher)$" || true
+  echo "${rendered}" | grep -cE "^        - name: '?(authz-agent|envoy|opa|pap-client|collector|token-fetcher)'?$" || true
 }
 
 containers=$(agent_containers "${all_manifests}")
@@ -714,6 +714,60 @@ if [[ "$(field "${classed}" storageClassName:)" == "'fast'" ]]; then
   pass "the stub chart renders storageClassName from AUTHZ_POLICY_ADMIN_STORAGE_CLASS"
 else
   fail "expected storageClassName 'fast' from AUTHZ_POLICY_ADMIN_STORAGE_CLASS, got '$(field "${classed}" storageClassName:)'"
+fi
+
+# ── Platform conventions shared by both charts ───────────────────────────
+#
+# What config-server, control-plane and dbaas-operator all do, and these two
+# charts do the same way: the deployer's session id on every object and never
+# on the Pod template, part-of from APPLICATION_NAME, the container named after
+# the service, a seccomp profile, and a root file system read-only on
+# Kubernetes only.
+for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
+  name="$(basename "${chart}")"
+  with_session="$(helm template t "${chart}" --set MESH_ROUTES_ENABLED=false --set DEPLOYMENT_SESSION_ID=s-42 2>&1 || true)"
+  on_objects=$(grep -c "deployment.netcracker.com/sessionId: 's-42'" <<<"${with_session}" || true)
+  objects=$(grep -c '^kind: ' <<<"${with_session}" || true)
+  in_pod_template=$(sed -n '/^  template:/,/^    spec:/p' <<<"$(helm template t "${chart}" --set DEPLOYMENT_SESSION_ID=s-42 --show-only templates/deployment.yaml 2>&1 || true)" | grep -c sessionId || true)
+  if [[ "${on_objects}" -eq "${objects}" && "${in_pod_template}" -eq 0 ]]; then
+    pass "${name}: the session id labels every object (${objects}) and not the Pod template"
+  else
+    fail "${name}: the session id labels ${on_objects} of ${objects} objects and appears ${in_pod_template} times in the Pod template"
+  fi
+  if [[ "$(helm template t "${chart}" 2>&1 || true)" != *"sessionId"* ]]; then
+    pass "${name}: no session label without DEPLOYMENT_SESSION_ID"
+  else
+    fail "${name}: a session label renders with DEPLOYMENT_SESSION_ID empty"
+  fi
+
+  deployment="$(helm template t "${chart}" --set APPLICATION_NAME=billing --set SERVICE_NAME=svc-x --show-only templates/deployment.yaml 2>&1 || true)"
+  if [[ "${deployment}" == *"app.kubernetes.io/part-of: 'billing'"* && "${deployment}" == *"        - name: 'svc-x'"* ]]; then
+    pass "${name}: part-of follows APPLICATION_NAME and the container is named after SERVICE_NAME"
+  else
+    fail "${name}: part-of or the container name does not follow the values: $(grep -E "part-of|^        - name:" <<<"${deployment}" | tr -d ' ' | sort -u | paste -sd, - || true)"
+  fi
+
+  default_deployment="$(helm template t "${chart}" --show-only templates/deployment.yaml 2>&1 || true)"
+  if [[ "${default_deployment}" == *"seccompProfile:"* && "$(field "${default_deployment}" type: )" == "RuntimeDefault" || "${default_deployment}" == *"type: RuntimeDefault"* ]]; then
+    pass "${name}: the container runs under the RuntimeDefault seccomp profile"
+  else
+    fail "${name}: no RuntimeDefault seccomp profile in the container's securityContext"
+  fi
+
+  # Kubernetes keeps the root file system read-only; OpenShift and an explicit
+  # false do not.
+  ro_summary="k8s=$(field "${default_deployment}" readOnlyRootFilesystem:) openshift=$(field "$(helm template t "${chart}" --set PAAS_PLATFORM=OPENSHIFT --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:) off=$(field "$(helm template t "${chart}" --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:)"
+  if [[ "${ro_summary}" == "k8s=true openshift=false off=false" ]]; then
+    pass "${name}: the root file system is read-only on Kubernetes and writable on OpenShift or when turned off"
+  else
+    fail "${name}: readOnlyRootFilesystem renders ${ro_summary}, expected k8s=true openshift=false off=false"
+  fi
+done
+
+if [[ "$(helm template t "${CHART_DIR}" --show-only templates/service.yaml)" == *"- name: data-api"* ]]; then
+  pass "the agent's Service names port 8181 data-api, as the container does"
+else
+  fail "the agent's Service does not name port 8181 data-api"
 fi
 
 echo

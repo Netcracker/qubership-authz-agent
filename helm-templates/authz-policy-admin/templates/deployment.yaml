@@ -20,7 +20,7 @@ kind: Deployment
 metadata:
   name: '{{ include "authz-policy-admin.serviceName" . }}'
   labels:
-    {{- include "authz-policy-admin.commonLabels" . | nindent 4 }}
+    {{- include "authz-policy-admin.objectLabels" . | nindent 4 }}
 spec:
   # Exactly one Pod, by design. The uploaded policies live on the Pod's volume
   # with no replication, so a second Pod would serve different content and a
@@ -60,7 +60,7 @@ spec:
           persistentVolumeClaim:
             claimName: '{{ include "authz-policy-admin.serviceName" . }}-data'
       containers:
-        - name: authz-policy-admin
+        - name: '{{ .Values.SERVICE_NAME }}'
           image: '{{ include "authz-policy-admin.image" . }}'
           imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
           ports:
@@ -113,8 +113,11 @@ spec:
             {{- if eq .Values.PAAS_PLATFORM "KUBERNETES" }}
             runAsGroup: 10001
             {{- end }}
-            # Safe at any value: every write lands on the mounted volume.
-            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            # Read-only on Kubernetes only, as on the platform's charts. Safe at
+            # any value: every write lands on the mounted volume.
+            readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - ALL

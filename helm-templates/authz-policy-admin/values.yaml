@@ -7,8 +7,13 @@ IMAGE_REPOSITORY: ''
 SERVICE_NAME: "authz-policy-admin"
 DEPLOYMENT_RESOURCE_NAME: "authz-policy-admin"
 DEPLOYMENT_VERSION: ''
-# Safe at any value: every write of the stub lands on its mounted volume.
-READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
+# Injected by Cloud-Deployer; every object carries it in its
+# app.kubernetes.io/part-of label.
+APPLICATION_NAME: 'Platform-Core-Security'
+# Read-only root file system for the container, on Kubernetes; on OpenShift the
+# template leaves it writable, as the platform's charts do. Safe at any value:
+# every write of the stub lands on its mounted volume.
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # Written into the labels of the mesh route CR. Cloud-Deployer overrides it
 # (argocd installs set `argocd`); the default matches the value the other
 # manifests already carry.

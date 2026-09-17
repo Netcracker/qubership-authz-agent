@@ -1,6 +1,5 @@
 # Cloud-Deployer-injected platform keys.
 PAAS_PLATFORM: "KUBERNETES"
-PAAS_VERSION: ''
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
@@ -32,20 +31,18 @@ DEPLOYMENT_VERSION: ''
 CLOUD_TOPOLOGIES: []
 CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
 
-# Injected by Cloud-Deployer; the HorizontalPodAutoscaler carries it in its
-# app.kubernetes.io/part-of label. The default is the value the chart's other
-# objects carry in that label.
+# Injected by Cloud-Deployer; every object carries it in its
+# app.kubernetes.io/part-of label.
 APPLICATION_NAME: 'Platform-Core-Security'
 # Injected by Cloud-Deployer. The chart has no ServiceMonitor template, so this
 # value renders nothing. The agent serves Prometheus metrics at `/prometheus` on
-# the Service's `opa` port (8181); point a ServiceMonitor added later at that
-# path and port.
+# the Service's `data-api` port (8181); point a ServiceMonitor added later at
+# that path and port.
 MONITORING_ENABLED: false
-TRACING_ENABLED: false
-EXECUTION_MODE: active
-READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
-CERTIFICATE_BUNDLE_MD5SUM: "d41d8cd98f00b204e9800998ecf8427e"
-SSL_SECRET: "defaultsslcertificate"
+# Read-only root file system for the container, on Kubernetes; on OpenShift the
+# template leaves it writable, as the platform's charts do. The decision log is
+# the one thing the agent writes, and it goes to an emptyDir.
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # Written into the labels of the mesh route CRs. Cloud-Deployer overrides it
 # (argocd installs set `argocd`); the default matches the value the other
 # manifests already carry.

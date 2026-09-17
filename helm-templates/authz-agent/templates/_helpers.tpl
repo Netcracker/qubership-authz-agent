@@ -31,9 +31,22 @@ separator).
 */}}
 app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
 app.kubernetes.io/component: 'backend'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: 'saasDeployer'
 app.kubernetes.io/technology: 'go'
+{{- end -}}
+
+{{/*
+The labels of an object's metadata: the common set plus the deployer's session
+id, which the platform's charts put on every object and never on the Pod
+template. The id changes with every install session, and a Pod template label
+that changes rolls the Pods over on a deploy that changed nothing else.
+*/}}
+{{- define "authz-agent.objectLabels" -}}
+{{ include "authz-agent.commonLabels" . }}
+{{- if .Values.DEPLOYMENT_SESSION_ID }}
+deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -121,7 +134,7 @@ access-control chart, which is the reference implementation for these CRs.
 */}}
 {{- define "authz-agent.meshLabels" -}}
 app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
 app.kubernetes.io/processed-by-operator: 'core-operator'
 deployer.cleanup/allow: 'true'

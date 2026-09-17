@@ -28,9 +28,22 @@ version longer than that, and the API server rejects every object carrying it.
 */}}
 app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
 app.kubernetes.io/component: 'test-double'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: 'saasDeployer'
 app.kubernetes.io/technology: 'go'
+{{- end -}}
+
+{{/*
+The labels of an object's metadata: the common set plus the deployer's session
+id, which the platform's charts put on every object and never on the Pod
+template. The id changes with every install session, and a Pod template label
+that changes rolls the Pod over on a deploy that changed nothing else.
+*/}}
+{{- define "authz-policy-admin.objectLabels" -}}
+{{ include "authz-policy-admin.commonLabels" . }}
+{{- if .Values.DEPLOYMENT_SESSION_ID }}
+deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -49,7 +62,7 @@ what lets the deployer remove the route when the release goes away.
 */}}
 {{- define "authz-policy-admin.meshLabels" -}}
 app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
 app.kubernetes.io/processed-by-operator: 'core-operator'
 deployer.cleanup/allow: 'true'

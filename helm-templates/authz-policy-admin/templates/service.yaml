@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: '{{ include "authz-policy-admin.serviceName" . }}'
   labels:
-    {{- include "authz-policy-admin.commonLabels" . | nindent 4 }}
+    {{- include "authz-policy-admin.objectLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:

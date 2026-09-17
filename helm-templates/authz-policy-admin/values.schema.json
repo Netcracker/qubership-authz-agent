@@ -298,6 +298,16 @@
       ],
       "internal": true,
       "envSpecific": true
+    },
+    "APPLICATION_NAME": {
+      "$id": "#/properties/APPLICATION_NAME",
+      "type": "string",
+      "title": "The APPLICATION_NAME schema",
+      "description": "Defines application name",
+      "examples": [
+        "MyApplication"
+      ],
+      "internal": true
     }
   },
   "additionalProperties": true
