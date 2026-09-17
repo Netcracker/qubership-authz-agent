@@ -93,6 +93,16 @@
       "title": "The SERVICE_NAME schema",
       "type": "string"
     },
+    "APPLICATION_NAME": {
+      "$id": "#/properties/APPLICATION_NAME",
+      "type": "string",
+      "title": "The APPLICATION_NAME schema",
+      "description": "Defines application name",
+      "examples": [
+        "MyApplication"
+      ],
+      "internal": true
+    },
     "DEPLOYMENT_RESOURCE_NAME": {
       "$id": "#/properties/DEPLOYMENT_RESOURCE_NAME",
       "description": "Service name with version postfix (matching DEPLOYMENT_VERSION parameter value). Provided if facade/bluegreen mode is true",
@@ -619,6 +629,163 @@
       ],
       "internal": true,
       "title": "The HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT schema",
+      "type": "integer"
+    },
+    "REPLICAS": {
+      "$id": "#/properties/REPLICAS",
+      "description": "Number of initially deployed pods",
+      "envSpecific": true,
+      "examples": [
+        2
+      ],
+      "internal": true,
+      "title": "The REPLICAS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS",
+      "description": "Defines behavior.scaleUp.stabilizationWindowSeconds property in HPA resource",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_SELECT_POLICY": {
+      "$id": "#/properties/HPA_SCALING_UP_SELECT_POLICY",
+      "description": "Defines behavior.scaleUp.selectPolicy property in HPA resource. Allowed values are: Min, Max, Disabled",
+      "enum": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "envSpecific": true,
+      "examples": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_SELECT_POLICY schema",
+      "type": "string"
+    },
+    "HPA_SCALING_UP_PODS_VALUE": {
+      "$id": "#/properties/HPA_SCALING_UP_PODS_VALUE",
+      "description": "Defines behavior.scaleUp.policies[].value property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        1
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PODS_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_PODS_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_UP_PODS_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleUp.policies[].periodSeconds property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PODS_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_PERCENT_VALUE": {
+      "$id": "#/properties/HPA_SCALING_UP_PERCENT_VALUE",
+      "description": "Defines behavior.scaleUp.policies[].value property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        100
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PERCENT_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_UP_PERCENT_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_UP_PERCENT_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleUp.policies[].periodSeconds property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_UP_PERCENT_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS",
+      "description": "Defines behavior.scaleDown.stabilizationWindowSeconds property in HPA resource",
+      "envSpecific": true,
+      "examples": [
+        300
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_SELECT_POLICY": {
+      "$id": "#/properties/HPA_SCALING_DOWN_SELECT_POLICY",
+      "description": "Defines behavior.scaleDown.selectPolicy property in HPA resource. Allowed values are: Min, Max, Disabled",
+      "enum": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "envSpecific": true,
+      "examples": [
+        "Min",
+        "Max",
+        "Disabled"
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_SELECT_POLICY schema",
+      "type": "string"
+    },
+    "HPA_SCALING_DOWN_PODS_VALUE": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PODS_VALUE",
+      "description": "Defines behavior.scaleDown.policies[].value property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        1
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PODS_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_PODS_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PODS_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleDown.policies[].periodSeconds property in HPA resource for Pods type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PODS_PERIOD_SECONDS schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_PERCENT_VALUE": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PERCENT_VALUE",
+      "description": "Defines behavior.scaleDown.policies[].value property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        100
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PERCENT_VALUE schema",
+      "type": "integer"
+    },
+    "HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS": {
+      "$id": "#/properties/HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS",
+      "description": "Defines behavior.scaleDown.policies[].periodSeconds property in HPA resource for Percent type",
+      "envSpecific": true,
+      "examples": [
+        60
+      ],
+      "internal": true,
+      "title": "The HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS schema",
       "type": "integer"
     },
     "AUTHZ_POLICY_ADMIN_CPU_REQUEST": {

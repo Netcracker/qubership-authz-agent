@@ -376,34 +376,101 @@ else
   fail "a values file still carrying AUTHZ_AGENT_MEM_LIMIT must be refused by name, got: $(head -3 <<<"${old_name}")"
 fi
 
-# The autoscaler's bounds and target have no default, so turning it on without
-# them is refused instead of rendered with empty fields for the API server to
-# reject.
+# The autoscaler is the platform's template, rendered on every install. Turned
+# off, it carries selectPolicy Disabled in both directions and the bounds 1 and
+# 9999, so it never scales. Turned on, maxReplicas comes from HPA_MAX_REPLICAS,
+# which has no default, so a bare HPA_ENABLED=true is refused instead of
+# rendered with a field the API server rejects.
 hpa_alone="$(helm template t "${CHART_DIR}" --set HPA_ENABLED=true 2>&1 || true)"
-if [[ "${hpa_alone}" == *"HPA_ENABLED=true requires HPA_MIN_REPLICAS"* ]]; then
-  pass "HPA_ENABLED without the autoscaler's bounds is refused at render time"
+if [[ "${hpa_alone}" == *"HPA_ENABLED=true requires HPA_MAX_REPLICAS"* ]]; then
+  pass "HPA_ENABLED without HPA_MAX_REPLICAS is refused at render time"
 else
-  fail "HPA_ENABLED without the autoscaler's bounds must be refused, got: $(head -3 <<<"${hpa_alone}")"
+  fail "HPA_ENABLED without HPA_MAX_REPLICAS must be refused, got: $(head -3 <<<"${hpa_alone}")"
 fi
 
-if [[ "${all_manifests}" != *"kind: HorizontalPodAutoscaler"* ]]; then
-  pass "a plain install renders no HorizontalPodAutoscaler"
+# A scaling policy renders whenever its *_VALUE is set, with periodSeconds
+# empty when *_PERIOD_SECONDS is not, and the API server rejects that whether
+# or not the autoscaler is enabled.
+half_policy="$(helm template t "${CHART_DIR}" --set HPA_SCALING_UP_PODS_VALUE=1 2>&1 || true)"
+if [[ "${half_policy}" == *"HPA_SCALING_UP_PODS_VALUE is set without HPA_SCALING_UP_PODS_PERIOD_SECONDS"* ]]; then
+  pass "a scaling policy value without its period is refused at render time"
 else
-  fail "a plain install renders a HorizontalPodAutoscaler"
+  fail "a scaling policy value without its period must be refused, got: $(head -3 <<<"${half_policy}")"
+fi
+
+# The documents the checks below read, each rendered on its own so that the
+# stub's Deployment cannot stand in for the agent's. A render that fails
+# returns Helm's error as the document, so the check reports it instead of
+# ending the script.
+hpa_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
+deployment_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
+field() { awk -v key="$2" '$1 == key {print $2; exit}' <<<"$1"; }
+
+# A plain install: one replica; the autoscaler disabled, with no policy and the
+# target 75% of the 400m limit over the 350m request; the chart's part-of label
+# and no session label.
+plain_hpa="$(hpa_of)"
+plain_summary="replicas=$(field "$(deployment_of)" replicas:) min=$(field "${plain_hpa}" minReplicas:) max=$(field "${plain_hpa}" maxReplicas:) target=$(field "${plain_hpa}" averageUtilization:) disabled=$(grep -c 'selectPolicy: Disabled' <<<"${plain_hpa}" || true) policies=$(grep -c 'type: P' <<<"${plain_hpa}" || true)"
+if [[ "${plain_summary}" == "replicas=1 min=1 max=9999 target=85 disabled=2 policies=0" ]]; then
+  pass "a plain install renders one replica and a disabled autoscaler (${plain_summary})"
+else
+  fail "a plain install renders ${plain_summary}, expected replicas=1 min=1 max=9999 target=85 disabled=2 policies=0"
+fi
+if [[ "${plain_hpa}" == *"app.kubernetes.io/part-of: 'Platform-Core-Security'"* && "${plain_hpa}" != *"sessionId"* ]]; then
+  pass "the autoscaler carries the chart's part-of label and no session label by default"
+else
+  fail "the autoscaler's default labels are off: $(grep -E 'part-of|sessionId' <<<"${plain_hpa}" | tr -d ' ' | paste -sd, - || true)"
+fi
+
+labelled="$(hpa_of --set APPLICATION_NAME=billing --set DEPLOYMENT_SESSION_ID=s-42)"
+if [[ "${labelled}" == *"app.kubernetes.io/part-of: 'billing'"* && "${labelled}" == *"deployment.netcracker.com/sessionId: 's-42'"* ]]; then
+  pass "the autoscaler takes part-of from APPLICATION_NAME and the session label from DEPLOYMENT_SESSION_ID"
+else
+  fail "the autoscaler's labels do not follow APPLICATION_NAME and DEPLOYMENT_SESSION_ID: $(grep -E 'part-of|sessionId' <<<"${labelled}" | tr -d ' ' | paste -sd, - || true)"
+fi
+
+# minReplicas falls back to REPLICAS where nothing sets HPA_MIN_REPLICAS.
+fallback="$(hpa_of --set HPA_ENABLED=true --set HPA_MAX_REPLICAS=5 --set REPLICAS=3)"
+if [[ "$(field "${fallback}" minReplicas:)" == "3" ]]; then
+  pass "an enabled autoscaler without HPA_MIN_REPLICAS takes its floor from REPLICAS"
+else
+  fail "expected minReplicas 3 from REPLICAS, got '$(field "${fallback}" minReplicas:)'"
 fi
 
 # Every profile validates against the schema and renders. The profile is
 # applied over a memory limit no profile carries, so that a misspelled key,
 # which the schema would admit, leaves that limit in the render in place of
 # the profile's; the dev sizing mirrors values.yaml and could not be told from
-# the default otherwise. The autoscaler's floor is the profile's: no autoscaler
-# in dev, two Pods in dev-ha and prod, one in prod-nonha.
+# the default otherwise. REPLICAS reaches the Deployment. The autoscaler is the
+# profile's: the bounds; the target, HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT of
+# CPU_LIMIT over CPU_REQUEST, so 75 renders as 85 for 400m over 350m and as
+# 150 for 15 cores over 7500m, which also covers both spellings to_millicores
+# accepts; and the behavior block, which carries the windows and policies of
+# dbaas-operator's profiles, Disabled in both directions where the profile
+# keeps the autoscaler off.
+behavior_on='  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60'
+behavior_off="${behavior_on//selectPolicy: Max/selectPolicy: Disabled}"
 sentinel="$(mktemp)"
 trap 'rm -f "${sentinel}"' EXIT
 printf 'MEMORY_LIMIT: 1Mi\n' >"${sentinel}"
-for row in "dev::700Mi" "dev-ha:2:700Mi" "prod:2:13Gi" "prod-nonha:1:13Gi"; do
-  IFS=: read -r profile floor mem_limit <<<"${row}"
-  if ! rendered="$(helm template t "${CHART_DIR}" -f "${sentinel}" -f "${CHART_DIR}/resource-profiles/${profile}.yaml" 2>&1)"; then
+for row in "dev:700Mi:1:1:9999:85:off" "dev-ha:700Mi:2:2:5:85:on" "prod:13Gi:2:2:5:150:on" "prod-nonha:13Gi:1:1:5:150:on"; do
+  IFS=: read -r profile mem_limit replicas floor ceiling target mode <<<"${row}"
+  profile_values=(-f "${sentinel}" -f "${CHART_DIR}/resource-profiles/${profile}.yaml")
+  if ! rendered="$(helm template t "${CHART_DIR}" "${profile_values[@]}" 2>&1)"; then
     fail "the ${profile} profile does not render: ${rendered}"
     continue
   fi
@@ -412,19 +479,23 @@ for row in "dev::700Mi" "dev-ha:2:700Mi" "prod:2:13Gi" "prod-nonha:1:13Gi"; do
   else
     fail "the ${profile} profile does not set the memory limit ${mem_limit}; the render has: $(grep -E '^ +memory: ' <<<"${rendered}" | tr -d ' ' | paste -sd, - || true)"
   fi
-  if [[ -z "${floor}" ]]; then
-    if [[ "${rendered}" != *"kind: HorizontalPodAutoscaler"* ]]; then
-      pass "the ${profile} profile renders no HorizontalPodAutoscaler"
-    else
-      fail "the ${profile} profile renders a HorizontalPodAutoscaler"
-    fi
-    continue
-  fi
-  got_floor="$(awk '/^  minReplicas: /{print $2}' <<<"${rendered}")"
-  if [[ "${got_floor}" == "${floor}" ]]; then
-    pass "the ${profile} profile sets the autoscaler floor to ${floor}"
+  hpa="$(hpa_of "${profile_values[@]}")"
+  summary="replicas=$(field "$(deployment_of "${profile_values[@]}")" replicas:) min=$(field "${hpa}" minReplicas:) max=$(field "${hpa}" maxReplicas:) target=$(field "${hpa}" averageUtilization:)"
+  if [[ "${summary}" == "replicas=${replicas} min=${floor} max=${ceiling} target=${target}" ]]; then
+    pass "the ${profile} profile renders ${summary}"
   else
-    fail "the ${profile} profile sets the autoscaler floor to '${got_floor}', expected ${floor}"
+    fail "the ${profile} profile renders ${summary}, expected replicas=${replicas} min=${floor} max=${ceiling} target=${target}"
+  fi
+  if [[ "${mode}" == "on" ]]; then
+    expected_behavior="${behavior_on}"
+  else
+    expected_behavior="${behavior_off}"
+  fi
+  got_behavior="$(sed -n '/^  behavior:/,$p' <<<"${hpa}")"
+  if [[ "${got_behavior}" == "${expected_behavior}" ]]; then
+    pass "the ${profile} profile renders the scaling behavior with the autoscaler ${mode}"
+  else
+    fail "the ${profile} profile renders another scaling behavior: $(diff <(echo "${expected_behavior}") <(echo "${got_behavior}") || true)"
   fi
 done
 

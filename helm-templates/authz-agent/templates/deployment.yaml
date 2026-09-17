@@ -11,7 +11,7 @@ metadata:
   labels:
     {{- include "authz-agent.commonLabels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.REPLICAS | default 1 }}
   strategy:
     type: RollingUpdate
     rollingUpdate:

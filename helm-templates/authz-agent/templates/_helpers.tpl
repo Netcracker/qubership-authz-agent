@@ -238,15 +238,24 @@ reused; on a fresh install a new random value is generated.
 {{- fail "AUTHZ_POLICY_ADMIN_ENABLED=true requires AUTHZ_PAP_CLIENT_PULL_INTERVAL > 0: 0 disables the pull loop, so the agent would never fetch from the stub." -}}
 {{- end -}}
 {{/*
-The autoscaler's bounds and target come from the resource profile and have no
-default here, and an HPA rendered with them empty is rejected by the API
-server, not by Helm.
+The platform's HorizontalPodAutoscaler template renders maxReplicas from
+HPA_MAX_REPLICAS with no default, and the API server rejects an autoscaler
+without one. minReplicas falls back to REPLICAS and the target to 75, so this
+is the one key an enabled autoscaler cannot do without; every resource profile
+sets it.
 */}}
-{{- if .Values.HPA_ENABLED -}}
-{{- range list "HPA_MIN_REPLICAS" "HPA_MAX_REPLICAS" "HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT" -}}
-{{- if not (hasKey $.Values .) -}}
-{{- fail (printf "HPA_ENABLED=true requires HPA_MIN_REPLICAS, HPA_MAX_REPLICAS and HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT, and %s is not set: the autoscaler's bounds and target come from the resource profile and have no default in this chart." .) -}}
+{{- if and .Values.HPA_ENABLED (not (hasKey .Values "HPA_MAX_REPLICAS")) -}}
+{{- fail "HPA_ENABLED=true requires HPA_MAX_REPLICAS: maxReplicas has no default in the platform's HorizontalPodAutoscaler template, and the API server rejects an autoscaler without it. The resource profiles set it." -}}
 {{- end -}}
+{{/*
+The template renders a scaling policy whenever its *_VALUE is set and takes
+the period as 0 when *_PERIOD_SECONDS is not, which leaves periodSeconds empty
+in the render. The API server rejects that, with the autoscaler enabled or
+not, since the policies render either way.
+*/}}
+{{- range list "HPA_SCALING_UP_PODS" "HPA_SCALING_UP_PERCENT" "HPA_SCALING_DOWN_PODS" "HPA_SCALING_DOWN_PERCENT" -}}
+{{- if and (index $.Values (printf "%s_VALUE" .)) (not (hasKey $.Values (printf "%s_PERIOD_SECONDS" .))) -}}
+{{- fail (printf "%s_VALUE is set without %s_PERIOD_SECONDS: the platform's HorizontalPodAutoscaler template then renders the policy with an empty periodSeconds, which the API server rejects." . .) -}}
 {{- end -}}
 {{- end -}}
 {{/*
@@ -275,4 +284,17 @@ memory limit to 700Mi in one upgrade. Name them instead.
 {{- if $carried -}}
 {{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, with its image in AUTHZ_AGENT_IMAGE. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+The platform's CPU quantity conversion, taken with its HorizontalPodAutoscaler
+template: `350m` gives 350, `15` gives 15000.
+*/}}
+{{- define "to_millicores" -}}
+  {{- $value := toString . -}}
+  {{- if hasSuffix "m" $value -}}
+    {{ trimSuffix "m" $value }}
+  {{- else -}}
+    {{ mulf $value 1000 }}
+  {{- end -}}
 {{- end -}}
