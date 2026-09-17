@@ -31,7 +31,7 @@ import rego.v1
 # data.opa_auth_secret. The secret is loaded from the JSON file written to
 # ${OPA_DATA_DIR}/opa-auth-secret.json by the start script before OPA starts,
 # using the value from the Helm-generated Secret (see authz-agent-ADR-0077
-# and charts/authz-agent/templates/secret.yaml).
+# and helm-templates/authz-agent/templates/secret.yaml).
 #
 # NOTE: Rego has no constant-time string comparison, so the identity check is
 # a plain equality test. This is acceptable because an attacker would need

@@ -17,7 +17,7 @@ lint:
 	find . \( -name '*.yml' -o -name '*.yaml' \) \
 	    -not -path './.git/*' \
 	    -not -path './node_modules/*' \
-	    -not -path './charts/*/templates/*.yaml' \
+	    -not -path './helm-templates/*/templates/*.yaml' \
 	  | xargs $${YAMLLINT_BIN:-$${HOME}/.local/bin/yamllint} -c .github/linters/.yaml-lint.yml
 	@echo "[lint] Markdown"
 	npx --yes markdownlint-cli2 --config .github/linters/.markdown-lint.yml "**/*.md" "#node_modules" \
@@ -77,7 +77,7 @@ e2e-harness:
 	$(E2E_KUBECTL) rollout status deploy/keycloak --timeout=10m
 
 e2e-install:
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 # The Job manifest carries the chart's Service; sed swaps in E2E_BASE_URL.
@@ -133,7 +133,7 @@ parity-harness:
 	$(PARITY_KUBECTL) rollout status deploy/idp --timeout=10m
 
 parity-install:
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent charts/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 # As e2e-suite: sed swaps PARITY_AC_BASE_URL into the Job manifest.

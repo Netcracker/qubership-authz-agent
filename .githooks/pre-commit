@@ -85,7 +85,7 @@ YAML_FILES=()
 while IFS= read -r f; do
     if [[ "$f" == *.yml || "$f" == *.yaml ]]; then
         # Skip Helm templates (Go template syntax conflicts with yamllint braces rule)
-        [[ "$f" == charts/*/templates/*.yaml ]] && continue
+        [[ "$f" == helm-templates/*/templates/*.yaml ]] && continue
         YAML_FILES+=("$REPO_ROOT/$f")
     fi
 done < <(staged)

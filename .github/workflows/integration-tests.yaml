@@ -72,7 +72,7 @@ jobs:
           version: v4.3.0
 
       - name: Lint the chart
-        run: helm lint charts/authz-agent -f test/k8s/values.yaml
+        run: helm lint helm-templates/authz-agent -f test/k8s/values.yaml
 
       - name: Render assertions
         run: bash test/scripts/test-chart-render.sh

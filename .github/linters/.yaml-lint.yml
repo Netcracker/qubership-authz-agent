@@ -6,8 +6,8 @@
 # Both patterns are needed: super-linter passes absolute /github/workspace/... paths
 # (matched by the **/ form), local runs pass repo-relative paths.
 ignore: |
-  charts/*/templates/*.yaml
-  **/charts/*/templates/*.yaml
+  helm-templates/*/templates/*.yaml
+  **/helm-templates/*/templates/*.yaml
 
 rules:
   braces:
