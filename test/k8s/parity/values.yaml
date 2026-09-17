@@ -5,8 +5,10 @@
 IMAGE_REPOSITORY: local/authz-agent
 TAG: ci
 
-# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.
+# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD,
+# and no monitoring.coreos.com CRDs for the PodMonitor either.
 MESH_ROUTES_ENABLED: false
+MONITORING_ENABLED: false
 
 # The harness Keycloak. The agent takes its M2M token from the cloud-common
 # realm here, with the parity-m2m client.

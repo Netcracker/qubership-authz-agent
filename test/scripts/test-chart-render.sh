@@ -789,6 +789,24 @@ else
   fail "the agent's Service does not name port 8181 data-api"
 fi
 
+# ── PodMonitor ───────────────────────────────────────────────────────────
+#
+# Under MONITORING_ENABLED the agent's metrics are scraped where the service
+# serves them: /prometheus on the data-api port, from the Pods the Service
+# selects.
+monitor="$(helm template t "${CHART_DIR}" --show-only templates/podmonitor.yaml 2>&1 || true)"
+monitor_summary="kind=$(field "${monitor}" kind:) port=$(field "${monitor}" port:) path=$(field "${monitor}" path:) interval=$(awk '$1 == "-" && $2 == "interval:" {print $3; exit}' <<<"${monitor}") selector=$(field "$(sed -n '/^  selector:/,$p' <<<"${monitor}")" name:)"
+if [[ "${monitor_summary}" == "kind=PodMonitor port=data-api path=/prometheus interval=30s selector='authz-agent'" ]]; then
+  pass "MONITORING_ENABLED renders a PodMonitor on data-api /prometheus every 30s for the agent's Pods"
+else
+  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor port=data-api path=/prometheus interval=30s selector='authz-agent'"
+fi
+if [[ "$(helm template t "${CHART_DIR}" --set MONITORING_ENABLED=false 2>&1 || true)" != *"kind: PodMonitor"* ]]; then
+  pass "MONITORING_ENABLED false renders no PodMonitor"
+else
+  fail "a PodMonitor renders with MONITORING_ENABLED false"
+fi
+
 echo
 if (( failures > 0 )); then
   echo "chart render checks: ${failures} failure(s)"

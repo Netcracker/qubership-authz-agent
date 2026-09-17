@@ -37,11 +37,11 @@ CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
 # Injected by Cloud-Deployer; every object carries it in its
 # app.kubernetes.io/part-of label.
 APPLICATION_NAME: 'Platform-Core-Security'
-# Injected by Cloud-Deployer. The chart has no ServiceMonitor template, so this
-# value renders nothing. The agent serves Prometheus metrics at `/prometheus` on
-# the Service's `data-api` port (8181); point a ServiceMonitor added later at
-# that path and port.
-MONITORING_ENABLED: false
+# Renders the PodMonitor that scrapes the agent's metrics at `/prometheus` on
+# its data-api port (8181), for the platform's VictoriaMetrics operator. Set to
+# false on a cluster without the monitoring.coreos.com CRDs (a plain kubeadm or
+# kind cluster), where `helm install` fails on the unknown kind.
+MONITORING_ENABLED: true
 # Read-only root file system for the container, on Kubernetes; on OpenShift the
 # template leaves it writable, as the platform's charts do. The decision log is
 # the one thing the agent writes, and it goes to an emptyDir.

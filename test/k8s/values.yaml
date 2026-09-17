@@ -8,8 +8,10 @@
 IMAGE_REPOSITORY: local/authz-agent
 TAG: ci
 
-# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD.
+# A kind cluster has no core-operator and no meshes.core.netcracker.com CRD,
+# and no monitoring.coreos.com CRDs for the PodMonitor either.
 MESH_ROUTES_ENABLED: false
+MONITORING_ENABLED: false
 
 # The harness Keycloak. The chart composes <base>/auth/realms/<realm> for each
 # realm: cloud-common is the M2M realm the agent takes its token from,
