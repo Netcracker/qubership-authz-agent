@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: '{{ include "authz-agent.serviceName" . }}'
   labels:
-    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+    {{- include "authz-agent.objectLabels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
@@ -13,7 +13,7 @@ spec:
       port: 8080
       targetPort: 8080
       protocol: TCP
-    - name: opa
+    - name: data-api
       port: 8181
       targetPort: 8181
       protocol: TCP

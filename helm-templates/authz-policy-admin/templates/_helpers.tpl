@@ -28,18 +28,22 @@ version longer than that, and the API server rejects every object carrying it.
 */}}
 app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
 app.kubernetes.io/component: 'test-double'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: 'saasDeployer'
 app.kubernetes.io/technology: 'go'
 {{- end -}}
 
 {{/*
-The stub's image. AUTHZ_POLICY_ADMIN_IMAGE wins where it is set; otherwise the
-helper composes "{IMAGE_REPOSITORY}/authz-policy-admin:{TAG}", as the
-authz-agent chart composes the agent's.
+The labels of an object's metadata: the common set plus the deployer's session
+id, which the platform's charts put on every object and never on the Pod
+template. The id changes with every install session, and a Pod template label
+that changes rolls the Pod over on a deploy that changed nothing else.
 */}}
-{{- define "authz-policy-admin.image" -}}
-{{- coalesce .Values.AUTHZ_POLICY_ADMIN_IMAGE (printf "%s/authz-policy-admin:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
+{{- define "authz-policy-admin.objectLabels" -}}
+{{ include "authz-policy-admin.commonLabels" . }}
+{{- if .Values.DEPLOYMENT_SESSION_ID }}
+deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -49,7 +53,7 @@ what lets the deployer remove the route when the release goes away.
 */}}
 {{- define "authz-policy-admin.meshLabels" -}}
 app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
 app.kubernetes.io/processed-by-operator: 'core-operator'
 deployer.cleanup/allow: 'true'
@@ -61,13 +65,14 @@ deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
 {{/*
 Values this chart does not read: the sizing keys the stub had inside the
 authz-agent chart, which the platform names CPU_REQUEST, CPU_LIMIT,
-MEMORY_REQUEST and MEMORY_LIMIT, and AUTHZ_POLICY_ADMIN_ENABLED, which a chart
-that is the stub has no use for. `additionalProperties` is true, so a values
+MEMORY_REQUEST and MEMORY_LIMIT; AUTHZ_POLICY_ADMIN_ENABLED, which a chart that
+is the stub has no use for; and the AUTHZ_POLICY_ADMIN_IMAGE override, since
+the image is IMAGE_REPOSITORY:TAG as on the platform's charts. `additionalProperties` is true, so a values
 file that still carries them would render without a word and the Pod would
 take this chart's defaults.
 */}}
 {{- define "authz-policy-admin.validateValues" -}}
-{{- $removed := list "AUTHZ_POLICY_ADMIN_ENABLED" "AUTHZ_POLICY_ADMIN_CPU_REQUEST" "AUTHZ_POLICY_ADMIN_CPU_LIMIT" "AUTHZ_POLICY_ADMIN_MEM_REQUEST" "AUTHZ_POLICY_ADMIN_MEM_LIMIT" -}}
+{{- $removed := list "AUTHZ_POLICY_ADMIN_ENABLED" "AUTHZ_POLICY_ADMIN_IMAGE" "AUTHZ_POLICY_ADMIN_CPU_REQUEST" "AUTHZ_POLICY_ADMIN_CPU_LIMIT" "AUTHZ_POLICY_ADMIN_MEM_REQUEST" "AUTHZ_POLICY_ADMIN_MEM_LIMIT" -}}
 {{- $carried := list -}}
 {{- range $removed -}}
 {{- if hasKey $.Values . -}}
@@ -75,6 +80,6 @@ take this chart's defaults.
 {{- end -}}
 {{- end -}}
 {{- if $carried -}}
-{{- fail (printf "this chart does not read these values: %s. It is sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT; drop the listed keys." (join ", " $carried)) -}}
+{{- fail (printf "this chart does not read these values: %s. It is sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT, and its image is IMAGE_REPOSITORY:TAG; drop the listed keys." (join ", " $carried)) -}}
 {{- end -}}
 {{- end -}}

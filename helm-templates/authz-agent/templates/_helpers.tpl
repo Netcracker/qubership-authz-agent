@@ -31,17 +31,22 @@ separator).
 */}}
 app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
 app.kubernetes.io/component: 'backend'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: 'saasDeployer'
 app.kubernetes.io/technology: 'go'
 {{- end -}}
 
 {{/*
-The agent's image. AUTHZ_AGENT_IMAGE wins where it is set; otherwise the
-helper computes "{IMAGE_REPOSITORY}/authz-agent:{TAG}".
+The labels of an object's metadata: the common set plus the deployer's session
+id, which the platform's charts put on every object and never on the Pod
+template. The id changes with every install session, and a Pod template label
+that changes rolls the Pods over on a deploy that changed nothing else.
 */}}
-{{- define "authz-agent.serviceImage" -}}
-{{- coalesce .Values.AUTHZ_AGENT_IMAGE (printf "%s/authz-agent:%s" .Values.IMAGE_REPOSITORY .Values.TAG) -}}
+{{- define "authz-agent.objectLabels" -}}
+{{ include "authz-agent.commonLabels" . }}
+{{- if .Values.DEPLOYMENT_SESSION_ID }}
+deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+{{- end }}
 {{- end -}}
 
 {{/*
@@ -121,7 +126,7 @@ access-control chart, which is the reference implementation for these CRs.
 */}}
 {{- define "authz-agent.meshLabels" -}}
 app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/part-of: 'Platform-Core-Security'
+app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
 app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
 app.kubernetes.io/processed-by-operator: 'core-operator'
 deployer.cleanup/allow: 'true'
@@ -223,8 +228,10 @@ not, since the policies render either way.
 {{- end -}}
 {{/*
 Values this chart no longer reads: the per-container parameters of the
-five-container Pod (authz-agent-ADR-0080), and the AUTHZ_AGENT_-prefixed sizing
-that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT.
+five-container Pod (authz-agent-ADR-0080), the AUTHZ_AGENT_-prefixed sizing
+that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT,
+and the AUTHZ_AGENT_IMAGE override, since the image is IMAGE_REPOSITORY:TAG as
+on the platform's charts.
 `additionalProperties` is true, so a values file that still carries them renders
 without a word and the agent silently takes the defaults of this chart: an
 install passing its own copy of an old prod profile would drop from a 13Gi
@@ -237,7 +244,8 @@ memory limit to 700Mi in one upgrade. Name them instead.
   "OPA_CPU_REQUEST" "OPA_CPU_LIMIT" "OPA_MEM_REQUEST" "OPA_MEM_LIMIT"
   "PAP_CLIENT_CPU_REQUEST" "PAP_CLIENT_CPU_LIMIT" "PAP_CLIENT_MEM_REQUEST" "PAP_CLIENT_MEM_LIMIT"
   "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT"
-  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT" -}}
+  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT"
+  "AUTHZ_AGENT_IMAGE" -}}
 {{- $carried := list -}}
 {{- range $removed -}}
 {{- if hasKey $.Values . -}}
@@ -245,7 +253,7 @@ memory limit to 700Mi in one upgrade. Name them instead.
 {{- end -}}
 {{- end -}}
 {{- if $carried -}}
-{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, with its image in AUTHZ_AGENT_IMAGE. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
+{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and its image is IMAGE_REPOSITORY:TAG. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
 {{- end -}}
 {{- end -}}
 

@@ -3,12 +3,26 @@ PAAS_PLATFORM: "KUBERNETES"
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
-IMAGE_REPOSITORY: ''
+# The stub's image without its tag, as the platform's charts name it; the
+# image is IMAGE_REPOSITORY:TAG. The default is the component
+# authz-policy-admin that .github/docker-dev-config.json and the release
+# workflow both list, published by the docker action under the repository's
+# owner on GHCR; the name carries no authz-agent- prefix, the stub being a
+# service of its own.
+IMAGE_REPOSITORY: ghcr.io/netcracker/authz-policy-admin
 SERVICE_NAME: "authz-policy-admin"
 DEPLOYMENT_RESOURCE_NAME: "authz-policy-admin"
 DEPLOYMENT_VERSION: ''
-# Safe at any value: every write of the stub lands on its mounted volume.
-READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
+# Injected by Cloud-Deployer; every object carries it in its
+# app.kubernetes.io/part-of label.
+APPLICATION_NAME: 'Platform-Core-Security'
+# Read-only root file system for the container, on Kubernetes; on OpenShift the
+# template leaves it writable, as the platform's charts do. Safe at any value:
+# every write of the stub lands on its mounted volume, and the base image's
+# entrypoint rebuilds the CA store only when it finds certificate files under
+# /tmp/cert or the service-account mount, neither of which this chart provides
+# (the Pod mounts no service-account token).
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # Written into the labels of the mesh route CR. Cloud-Deployer overrides it
 # (argocd installs set `argocd`); the default matches the value the other
 # manifests already carry.
@@ -31,12 +45,6 @@ DEPLOYMENT_SESSION_ID: ''
 # the unknown kind).
 MESH_ROUTES_ENABLED: true
 
-# AUTHZ_POLICY_ADMIN_IMAGE: override for the stub's image. Empty (default)
-# composes {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}; Cloud-Deployer
-# can populate it from .Values.global.deployDescriptor at install time. The
-# image name carries no authz-agent- prefix: the stub is a service of its own,
-# not a container of the agent Pod (see .github/docker-dev-config.json).
-AUTHZ_POLICY_ADMIN_IMAGE: ''
 # The default is IfNotPresent because the pipeline tags images with an
 # immutable pipeline id. Set to Always where a moving tag (`latest`) is
 # deliberately used and the newest build must win on restart.

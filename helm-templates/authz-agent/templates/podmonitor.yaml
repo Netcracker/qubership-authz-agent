@@ -1,0 +1,33 @@
+{{- if .Values.MONITORING_ENABLED }}
+# The platform's PodMonitor, as the platform's charts carry it: the
+# agent serves Prometheus metrics at /prometheus on its data API, the
+# container port named data-api (8181), and the platform's VictoriaMetrics
+# operator picks the monitor up by the processed-by-operator label.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: '{{ include "authz-agent.serviceName" . }}-pod-monitor'
+  labels:
+    k8s-app: '{{ include "authz-agent.serviceName" . }}-pod-monitor'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}-pod-monitor'
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/processed-by-operator: victoriametrics-operator
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
+spec:
+  podMetricsEndpoints:
+    - interval: 30s
+      port: data-api
+      scheme: http
+      path: /prometheus
+  jobLabel: k8s-app
+  namespaceSelector:
+    matchNames:
+      - '{{ .Values.NAMESPACE }}'
+  selector:
+    matchLabels:
+      name: '{{ include "authz-agent.serviceName" . }}'
+{{- end }}

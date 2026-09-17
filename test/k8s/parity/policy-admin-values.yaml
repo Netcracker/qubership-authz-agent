@@ -2,6 +2,6 @@
 # directory. The image comes from `make e2e-images`, which side-loads it into
 # the kind node. A kind cluster has no core-operator and no
 # meshes.core.netcracker.com CRD.
-IMAGE_REPOSITORY: local
+IMAGE_REPOSITORY: local/authz-policy-admin
 TAG: ci
 MESH_ROUTES_ENABLED: false

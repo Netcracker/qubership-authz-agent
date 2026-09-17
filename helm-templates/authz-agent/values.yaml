@@ -1,10 +1,13 @@
 # Cloud-Deployer-injected platform keys.
 PAAS_PLATFORM: "KUBERNETES"
-PAAS_VERSION: ''
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
-IMAGE_REPOSITORY: ''
+# The agent's image without its tag, as the platform's charts name it; the
+# image is IMAGE_REPOSITORY:TAG. The default is the component authz-agent that
+# .github/docker-dev-config.json and the release workflow both list, published
+# by the docker action under the repository's owner on GHCR.
+IMAGE_REPOSITORY: ghcr.io/netcracker/authz-agent
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
@@ -32,20 +35,18 @@ DEPLOYMENT_VERSION: ''
 CLOUD_TOPOLOGIES: []
 CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
 
-# Injected by Cloud-Deployer; the HorizontalPodAutoscaler carries it in its
-# app.kubernetes.io/part-of label. The default is the value the chart's other
-# objects carry in that label.
+# Injected by Cloud-Deployer; every object carries it in its
+# app.kubernetes.io/part-of label.
 APPLICATION_NAME: 'Platform-Core-Security'
-# Injected by Cloud-Deployer. The chart has no ServiceMonitor template, so this
-# value renders nothing. The agent serves Prometheus metrics at `/prometheus` on
-# the Service's `opa` port (8181); point a ServiceMonitor added later at that
-# path and port.
-MONITORING_ENABLED: false
-TRACING_ENABLED: false
-EXECUTION_MODE: active
-READONLY_CONTAINER_FILE_SYSTEM_ENABLED: false
-CERTIFICATE_BUNDLE_MD5SUM: "d41d8cd98f00b204e9800998ecf8427e"
-SSL_SECRET: "defaultsslcertificate"
+# Renders the PodMonitor by which the platform's VictoriaMetrics operator
+# scrapes the agent's metrics at `/prometheus` on its data-api port (8181). Set to
+# false on a cluster without the monitoring.coreos.com CRDs (a plain kubeadm or
+# kind cluster), where `helm install` fails on the unknown kind.
+MONITORING_ENABLED: true
+# Read-only root file system for the container, on Kubernetes; on OpenShift the
+# template leaves it writable, as the platform's charts do. The decision log is
+# the one thing the agent writes, and it goes to an emptyDir.
+READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # Written into the labels of the mesh route CRs. Cloud-Deployer overrides it
 # (argocd installs set `argocd`); the default matches the value the other
 # manifests already carry.
@@ -87,11 +88,6 @@ DEPLOYMENT_SESSION_ID: ''
 # the unknown kind), and on whichever of access-control / authz-agent is not
 # meant to serve these routes when both run in one namespace.
 MESH_ROUTES_ENABLED: true
-
-# AUTHZ_AGENT_IMAGE: override for the agent's image. Empty (default) composes
-# {{ IMAGE_REPOSITORY }}/authz-agent:{{ TAG }}; Cloud-Deployer can populate it
-# from .Values.global.deployDescriptor at install time.
-AUTHZ_AGENT_IMAGE: ''
 
 # Pull policy for every container. The default is IfNotPresent because the
 # pipeline tags images with an immutable pipeline id, so re-pulling an already

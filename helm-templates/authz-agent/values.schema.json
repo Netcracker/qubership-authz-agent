@@ -32,17 +32,6 @@
       "title": "The PAAS_PLATFORM schema",
       "type": "string"
     },
-    "PAAS_VERSION": {
-      "$id": "#/properties/PAAS_VERSION",
-      "default": "",
-      "description": "Version of Cloud Platform",
-      "examples": [
-        "v3.11"
-      ],
-      "internal": true,
-      "title": "The PAAS_VERSION schema",
-      "type": "string"
-    },
     "NAMESPACE": {
       "$id": "#/properties/NAMESPACE",
       "description": "Namespace where deploy is performed",
@@ -75,9 +64,9 @@
     },
     "IMAGE_REPOSITORY": {
       "$id": "#/properties/IMAGE_REPOSITORY",
-      "description": "Docker image repository path",
+      "description": "Image repository of the service without the tag; the image is IMAGE_REPOSITORY:TAG",
       "examples": [
-        "ghcr.io/netcracker"
+        "ghcr.io/netcracker/authz-agent"
       ],
       "internal": true,
       "title": "The IMAGE_REPOSITORY schema",
@@ -190,32 +179,6 @@
       "title": "The MONITORING_ENABLED schema",
       "type": "boolean"
     },
-    "TRACING_ENABLED": {
-      "$id": "#/properties/TRACING_ENABLED",
-      "description": "Enables tracing info collecting and streaming to OpenTracing- compatible collector (preferably- Jaeger)",
-      "examples": [
-        true,
-        false
-      ],
-      "title": "The TRACING_ENABLED schema",
-      "type": "boolean"
-    },
-    "EXECUTION_MODE": {
-      "$id": "#/properties/EXECUTION_MODE",
-      "description": "Defines microservice execution mode in DR configuration",
-      "enum": [
-        "active",
-        "standby",
-        "disabled"
-      ],
-      "examples": [
-        "active",
-        "standby",
-        "disabled"
-      ],
-      "title": "The EXECUTION_MODE schema",
-      "type": "string"
-    },
     "READONLY_CONTAINER_FILE_SYSTEM_ENABLED": {
       "$id": "#/properties/READONLY_CONTAINER_FILE_SYSTEM_ENABLED",
       "description": "Read-only container file system is enabled",
@@ -225,26 +188,6 @@
       ],
       "title": "The READONLY_CONTAINER_FILE_SYSTEM_ENABLED schema",
       "type": "boolean"
-    },
-    "CERTIFICATE_BUNDLE_MD5SUM": {
-      "$id": "#/properties/CERTIFICATE_BUNDLE_MD5SUM",
-      "description": "MD5 sum of certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
-      "examples": [
-        "89ae9282c9d92ef2308f1308e99f6529"
-      ],
-      "internal": true,
-      "title": "The CERTIFICATE_BUNDLE_MD5SUM schema",
-      "type": "string"
-    },
-    "SSL_SECRET": {
-      "$id": "#/properties/SSL_SECRET",
-      "description": "Secret name with SSL certificates from cloud-deployer CERTIFICATES_SECRET deploy pipeline parameter credential",
-      "examples": [
-        "defaultsslcertificate"
-      ],
-      "internal": true,
-      "title": "The SSL_SECRET schema",
-      "type": "string"
     },
     "MANAGED_BY": {
       "$id": "#/properties/MANAGED_BY",
@@ -766,17 +709,6 @@
       "internal": true,
       "title": "The HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS schema",
       "type": "integer"
-    },
-    "AUTHZ_AGENT_IMAGE": {
-      "$id": "#/properties/AUTHZ_AGENT_IMAGE",
-      "type": "string",
-      "title": "The AUTHZ_AGENT_IMAGE schema",
-      "description": "Overrides the image of the agent. Empty composes it from IMAGE_REPOSITORY and TAG.",
-      "examples": [
-        "ghcr.io/netcracker/qubership-authz-agent:1.0.0"
-      ],
-      "internal": true,
-      "default": ""
     },
     "CPU_REQUEST": {
       "$id": "#/properties/CPU_REQUEST",

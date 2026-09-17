@@ -4,7 +4,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: '{{ include "authz-policy-admin.serviceName" . }}-data'
   labels:
-    {{- include "authz-policy-admin.commonLabels" . | nindent 4 }}
+    {{- include "authz-policy-admin.objectLabels" . | nindent 4 }}
   {{- if .Values.AUTHZ_POLICY_ADMIN_STORAGE_RETAIN }}
   annotations:
     # The volume is the ONLY copy of the uploaded policies — the chart creates no

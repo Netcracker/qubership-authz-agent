@@ -9,7 +9,7 @@ kind: Deployment
 metadata:
   name: '{{ include "authz-agent.serviceName" . }}'
   labels:
-    {{- include "authz-agent.commonLabels" . | nindent 4 }}
+    {{- include "authz-agent.objectLabels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.REPLICAS | default 1 }}
   # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
@@ -138,8 +138,8 @@ spec:
             defaultMode: 292
         {{- end }}
       containers:
-        - name: authz-agent
-          image: '{{ include "authz-agent.serviceImage" . }}'
+        - name: '{{ .Values.SERVICE_NAME }}'
+          image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
           imagePullPolicy: '{{ .Values.IMAGE_PULL_POLICY }}'
           ports:
             - name: web
@@ -257,7 +257,12 @@ spec:
               ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: {{ .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED }}
+            # Read-only on Kubernetes only, as on the platform's charts: the
+            # decision log is the one thing the container writes, and it goes
+            # to the decision-logs emptyDir.
+            readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
+            seccompProfile:
+              type: RuntimeDefault
             capabilities:
               drop:
                 - ALL

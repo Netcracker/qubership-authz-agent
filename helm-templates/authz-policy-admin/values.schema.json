@@ -64,9 +64,9 @@
     },
     "IMAGE_REPOSITORY": {
       "$id": "#/properties/IMAGE_REPOSITORY",
-      "description": "Docker image repository path",
+      "description": "Image repository of the service without the tag; the image is IMAGE_REPOSITORY:TAG",
       "examples": [
-        "ghcr.io/netcracker"
+        "ghcr.io/netcracker/authz-policy-admin"
       ],
       "internal": true,
       "title": "The IMAGE_REPOSITORY schema",
@@ -144,17 +144,6 @@
         true,
         false
       ]
-    },
-    "AUTHZ_POLICY_ADMIN_IMAGE": {
-      "$id": "#/properties/AUTHZ_POLICY_ADMIN_IMAGE",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_ADMIN_IMAGE schema",
-      "description": "Overrides the authz-policy-admin image. Empty means {{ IMAGE_REPOSITORY }}/authz-policy-admin:{{ TAG }}.",
-      "default": "",
-      "examples": [
-        "ghcr.io/netcracker/authz-policy-admin:1.0.0"
-      ],
-      "internal": true
     },
     "IMAGE_PULL_POLICY": {
       "$id": "#/properties/IMAGE_PULL_POLICY",
@@ -298,6 +287,16 @@
       ],
       "internal": true,
       "envSpecific": true
+    },
+    "APPLICATION_NAME": {
+      "$id": "#/properties/APPLICATION_NAME",
+      "type": "string",
+      "title": "The APPLICATION_NAME schema",
+      "description": "Defines application name",
+      "examples": [
+        "MyApplication"
+      ],
+      "internal": true
     }
   },
   "additionalProperties": true
