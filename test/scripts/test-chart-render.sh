@@ -344,6 +344,90 @@ for absent in "authz-agent-runtime" "authz-agent-policies" "openpolicyagent/opa"
   fi
 done
 
+# ── Sizing and the resource profiles ─────────────────────────────────────
+#
+# The agent container is sized by the platform's own keys, so a resource
+# profile written for any other platform service fits this chart, and the
+# autoscaler comes from the profile alone.
+
+# Probed with values no profile carries: a render that ignored a key and kept
+# the default would not pass.
+sized="$(helm template t "${CHART_DIR}" \
+  --set CPU_REQUEST=123m --set CPU_LIMIT=456m \
+  --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi)"
+for pair in "CPU_REQUEST:cpu: '123m'" "CPU_LIMIT:cpu: '456m'" "MEMORY_REQUEST:memory: '111Mi'" "MEMORY_LIMIT:memory: '999Mi'"; do
+  key="${pair%%:*}"
+  line="${pair#*:}"
+  if [[ "${sized}" == *"${line}"* ]]; then
+    pass "${key} reaches the agent container"
+  else
+    fail "${key} does not reach the agent container: no \"${line}\" in the render"
+  fi
+done
+
+# The old names are refused rather than ignored: the schema admits unknown
+# keys, so an install still carrying them would otherwise take the chart's
+# defaults without a word. The guard's own text is matched, so a render that
+# fails for another reason does not pass as the refusal.
+old_name="$(helm template t "${CHART_DIR}" --set AUTHZ_AGENT_MEM_LIMIT=8Gi 2>&1 || true)"
+if [[ "${old_name}" == *"no longer reads these values: AUTHZ_AGENT_MEM_LIMIT"* ]]; then
+  pass "a values file still carrying AUTHZ_AGENT_MEM_LIMIT is refused at render time"
+else
+  fail "a values file still carrying AUTHZ_AGENT_MEM_LIMIT must be refused by name, got: $(head -3 <<<"${old_name}")"
+fi
+
+# The autoscaler's bounds and target have no default, so turning it on without
+# them is refused instead of rendered with empty fields for the API server to
+# reject.
+hpa_alone="$(helm template t "${CHART_DIR}" --set HPA_ENABLED=true 2>&1 || true)"
+if [[ "${hpa_alone}" == *"HPA_ENABLED=true requires HPA_MIN_REPLICAS"* ]]; then
+  pass "HPA_ENABLED without the autoscaler's bounds is refused at render time"
+else
+  fail "HPA_ENABLED without the autoscaler's bounds must be refused, got: $(head -3 <<<"${hpa_alone}")"
+fi
+
+if [[ "${all_manifests}" != *"kind: HorizontalPodAutoscaler"* ]]; then
+  pass "a plain install renders no HorizontalPodAutoscaler"
+else
+  fail "a plain install renders a HorizontalPodAutoscaler"
+fi
+
+# Every profile validates against the schema and renders. The profile is
+# applied over a memory limit no profile carries, so that a misspelled key,
+# which the schema would admit, leaves that limit in the render in place of
+# the profile's; the dev sizing mirrors values.yaml and could not be told from
+# the default otherwise. The autoscaler's floor is the profile's: no autoscaler
+# in dev, two Pods in dev-ha and prod, one in prod-nonha.
+sentinel="$(mktemp)"
+trap 'rm -f "${sentinel}"' EXIT
+printf 'MEMORY_LIMIT: 1Mi\n' >"${sentinel}"
+for row in "dev::700Mi" "dev-ha:2:700Mi" "prod:2:13Gi" "prod-nonha:1:13Gi"; do
+  IFS=: read -r profile floor mem_limit <<<"${row}"
+  if ! rendered="$(helm template t "${CHART_DIR}" -f "${sentinel}" -f "${CHART_DIR}/resource-profiles/${profile}.yaml" 2>&1)"; then
+    fail "the ${profile} profile does not render: ${rendered}"
+    continue
+  fi
+  if [[ "${rendered}" == *"memory: '${mem_limit}'"* ]]; then
+    pass "the ${profile} profile sizes the agent container (memory limit ${mem_limit})"
+  else
+    fail "the ${profile} profile does not set the memory limit ${mem_limit}; the render has: $(grep -E '^ +memory: ' <<<"${rendered}" | tr -d ' ' | paste -sd, - || true)"
+  fi
+  if [[ -z "${floor}" ]]; then
+    if [[ "${rendered}" != *"kind: HorizontalPodAutoscaler"* ]]; then
+      pass "the ${profile} profile renders no HorizontalPodAutoscaler"
+    else
+      fail "the ${profile} profile renders a HorizontalPodAutoscaler"
+    fi
+    continue
+  fi
+  got_floor="$(awk '/^  minReplicas: /{print $2}' <<<"${rendered}")"
+  if [[ "${got_floor}" == "${floor}" ]]; then
+    pass "the ${profile} profile sets the autoscaler floor to ${floor}"
+  else
+    fail "the ${profile} profile sets the autoscaler floor to '${got_floor}', expected ${floor}"
+  fi
+done
+
 echo
 if (( failures > 0 )); then
   echo "chart render checks: ${failures} failure(s)"

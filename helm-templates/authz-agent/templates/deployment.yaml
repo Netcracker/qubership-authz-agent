@@ -206,12 +206,12 @@ spec:
             timeoutSeconds: 3
           resources:
             requests:
-              cpu: '{{ .Values.AUTHZ_AGENT_CPU_REQUEST }}'
-              memory: '{{ .Values.AUTHZ_AGENT_MEM_REQUEST }}'
+              cpu: '{{ .Values.CPU_REQUEST }}'
+              memory: '{{ .Values.MEMORY_REQUEST }}'
               ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST }}'
             limits:
-              cpu: '{{ .Values.AUTHZ_AGENT_CPU_LIMIT }}'
-              memory: '{{ .Values.AUTHZ_AGENT_MEM_LIMIT }}'
+              cpu: '{{ .Values.CPU_LIMIT }}'
+              memory: '{{ .Values.MEMORY_LIMIT }}'
               ephemeral-storage: '{{ .Values.AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT }}'
           securityContext:
             allowPrivilegeEscalation: false

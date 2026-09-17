@@ -16,13 +16,20 @@
 # connection as Envoy did, and runs the pull loop, the token renewal, and the
 # decision-log upload beside them, so it takes what the five containers it
 # replaced took between them (authz-agent-ADR-0080).
-AUTHZ_AGENT_CPU_REQUEST: 7500m
-AUTHZ_AGENT_CPU_LIMIT: "15"
-AUTHZ_AGENT_MEM_REQUEST: 3584Mi
-AUTHZ_AGENT_MEM_LIMIT: 13Gi
+CPU_REQUEST: 7500m
+CPU_LIMIT: "15"
+MEMORY_REQUEST: 3584Mi
+MEMORY_LIMIT: 13Gi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
 AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
+
+# The autoscaler keeps at least two Pods; prod-nonha.yaml is this profile with
+# the floor at one Pod.
+HPA_ENABLED: true
+HPA_MIN_REPLICAS: 2
+HPA_MAX_REPLICAS: 5
+HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
 
 # authz-policy-admin sizing. A production install should keep AUTHZ_POLICY_ADMIN_ENABLED false — the
 # stub replaces access-control and its control surface is unauthenticated by

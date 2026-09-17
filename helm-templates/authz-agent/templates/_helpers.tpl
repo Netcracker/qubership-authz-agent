@@ -238,10 +238,24 @@ reused; on a fresh install a new random value is generated.
 {{- fail "AUTHZ_POLICY_ADMIN_ENABLED=true requires AUTHZ_PAP_CLIENT_PULL_INTERVAL > 0: 0 disables the pull loop, so the agent would never fetch from the stub." -}}
 {{- end -}}
 {{/*
-The per-container parameters of the five-container Pod (authz-agent-ADR-0080).
+The autoscaler's bounds and target come from the resource profile and have no
+default here, and an HPA rendered with them empty is rejected by the API
+server, not by Helm.
+*/}}
+{{- if .Values.HPA_ENABLED -}}
+{{- range list "HPA_MIN_REPLICAS" "HPA_MAX_REPLICAS" "HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT" -}}
+{{- if not (hasKey $.Values .) -}}
+{{- fail (printf "HPA_ENABLED=true requires HPA_MIN_REPLICAS, HPA_MAX_REPLICAS and HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT, and %s is not set: the autoscaler's bounds and target come from the resource profile and have no default in this chart." .) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{/*
+Values this chart no longer reads: the per-container parameters of the
+five-container Pod (authz-agent-ADR-0080), and the AUTHZ_AGENT_-prefixed sizing
+that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT.
 `additionalProperties` is true, so a values file that still carries them renders
 without a word and the agent silently takes the defaults of this chart: an
-install passing its own copy of the old prod profile would drop from a 8Gi
+install passing its own copy of an old prod profile would drop from a 13Gi
 memory limit to 700Mi in one upgrade. Name them instead.
 */}}
 {{- $removed := list
@@ -250,7 +264,8 @@ memory limit to 700Mi in one upgrade. Name them instead.
   "ENVOY_CPU_REQUEST" "ENVOY_CPU_LIMIT" "ENVOY_MEM_REQUEST" "ENVOY_MEM_LIMIT"
   "OPA_CPU_REQUEST" "OPA_CPU_LIMIT" "OPA_MEM_REQUEST" "OPA_MEM_LIMIT"
   "PAP_CLIENT_CPU_REQUEST" "PAP_CLIENT_CPU_LIMIT" "PAP_CLIENT_MEM_REQUEST" "PAP_CLIENT_MEM_LIMIT"
-  "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT" -}}
+  "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT"
+  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT" -}}
 {{- $carried := list -}}
 {{- range $removed -}}
 {{- if hasKey $.Values . -}}
@@ -258,6 +273,6 @@ memory limit to 700Mi in one upgrade. Name them instead.
 {{- end -}}
 {{- end -}}
 {{- if $carried -}}
-{{- fail (printf "the agent Pod is one container since authz-agent-ADR-0080, and these values no longer reach anything: %s. The sizing moved to AUTHZ_AGENT_CPU_REQUEST, AUTHZ_AGENT_CPU_LIMIT, AUTHZ_AGENT_MEM_REQUEST, AUTHZ_AGENT_MEM_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and the image to AUTHZ_AGENT_IMAGE. Set those and drop these, or the Pod takes this chart's defaults." (join ", " $carried)) -}}
+{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, with its image in AUTHZ_AGENT_IMAGE. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
 {{- end -}}
 {{- end -}}

@@ -350,28 +350,27 @@ AUTHZ_POLICY_ADMIN_STORAGE_RETAIN: true
 # productionisation" before any production deploy.
 AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 
-# HPA gating (default off; toggle on per environment if needed).
-HPA_ENABLED: false
-HPA_MIN_REPLICAS: 1
-HPA_MAX_REPLICAS: 1
-HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+# Autoscaling is set per environment by the resource profiles: HPA_ENABLED,
+# HPA_MIN_REPLICAS, HPA_MAX_REPLICAS and HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT
+# have no default here, and without a profile the chart renders no
+# HorizontalPodAutoscaler.
 
 # Resource baselines.
 # Defaults below mirror `resource-profiles/dev.yaml` so that a plain
 # `helm install` on a dev / sandbox cluster (no profile selection, no
-# operator overrides) schedules cleanly on a small node. For production
-# installs, pass `-f resource-profiles/prod.yaml` or set the deployer's
-# PROFILE parameter to `prod`.
+# operator overrides) schedules cleanly on a small node. The deployer's
+# PROFILE parameter selects one of `resource-profiles/` (dev, dev-ha, prod,
+# prod-nonha); by hand, pass the file with `-f`.
 #
 # The numbers are what the five containers this one replaced asked for and
 # were capped at between them (authz-agent-ADR-0080), so upgrading onto this
 # chart moves neither the Pod's floor nor its ceiling. That is the only claim
 # they make: no load has been measured against the service. Deployments with
 # one worth measuring set these from the resource profiles.
-AUTHZ_AGENT_CPU_REQUEST: 350m
-AUTHZ_AGENT_CPU_LIMIT: 400m
-AUTHZ_AGENT_MEM_REQUEST: 364Mi
-AUTHZ_AGENT_MEM_LIMIT: 700Mi
+CPU_REQUEST: 350m
+CPU_LIMIT: 400m
+MEMORY_REQUEST: 364Mi
+MEMORY_LIMIT: 700Mi
 
 # The decision log is the only thing the container writes, to an emptyDir that
 # nothing rotates, so the storage limit and the volume's own sizeLimit are what

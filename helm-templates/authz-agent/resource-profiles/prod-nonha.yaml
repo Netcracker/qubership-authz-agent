@@ -1,0 +1,22 @@
+# Prod-nonHA resource profile for authz-agent: the prod sizing with the
+# autoscaler's floor at one Pod. See prod.yaml for where the numbers come from
+# and what has to be measured before a production install.
+CPU_REQUEST: 7500m
+CPU_LIMIT: "15"
+MEMORY_REQUEST: 3584Mi
+MEMORY_LIMIT: 13Gi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
+AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
+AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
+
+HPA_ENABLED: true
+HPA_MIN_REPLICAS: 1
+HPA_MAX_REPLICAS: 5
+HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+
+# authz-policy-admin sizing, as in prod.yaml: a production install keeps
+# AUTHZ_POLICY_ADMIN_ENABLED false (authz-agent-ADR-0073).
+AUTHZ_POLICY_ADMIN_CPU_REQUEST: 100m
+AUTHZ_POLICY_ADMIN_CPU_LIMIT: 500m
+AUTHZ_POLICY_ADMIN_MEM_REQUEST: 128Mi
+AUTHZ_POLICY_ADMIN_MEM_LIMIT: 512Mi

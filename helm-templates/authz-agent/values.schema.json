@@ -678,11 +678,11 @@
       "internal": true,
       "default": ""
     },
-    "AUTHZ_AGENT_CPU_REQUEST": {
-      "$id": "#/properties/AUTHZ_AGENT_CPU_REQUEST",
+    "CPU_REQUEST": {
+      "$id": "#/properties/CPU_REQUEST",
       "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_CPU_REQUEST schema",
-      "description": "Defines minimum amount of CPU the single service container will use to start",
+      "title": "The CPU_REQUEST schema",
+      "description": "Defines minimum amount of CPU the container will use to start",
       "examples": [
         "4",
         "100m"
@@ -690,38 +690,36 @@
       "internal": true,
       "envSpecific": true
     },
-    "AUTHZ_AGENT_CPU_LIMIT": {
-      "$id": "#/properties/AUTHZ_AGENT_CPU_LIMIT",
+    "CPU_LIMIT": {
+      "$id": "#/properties/CPU_LIMIT",
       "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_CPU_LIMIT schema",
-      "description": "Defines maximum amount of CPU the single service container is allowed to use",
+      "title": "The CPU_LIMIT schema",
+      "description": "Defines maximum amount of CPU the container can use",
       "examples": [
         "4",
-        "500m"
+        "100m"
       ],
       "internal": true,
       "envSpecific": true
     },
-    "AUTHZ_AGENT_MEM_REQUEST": {
-      "$id": "#/properties/AUTHZ_AGENT_MEM_REQUEST",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_MEM_REQUEST schema",
-      "description": "Defines minimum amount of memory the single service container will use to start",
+    "MEMORY_REQUEST": {
+      "$id": "#/properties/MEMORY_REQUEST",
+      "type": "string",
+      "title": "The MEMORY_REQUEST schema",
+      "description": "Defines minimum amount of memory the container will use to start",
       "examples": [
-        "200Mi",
-        "1Gi"
+        "256Mi"
       ],
       "internal": true,
       "envSpecific": true
     },
-    "AUTHZ_AGENT_MEM_LIMIT": {
-      "$id": "#/properties/AUTHZ_AGENT_MEM_LIMIT",
-      "$ref": "#/definitions/integerOrString",
-      "title": "The AUTHZ_AGENT_MEM_LIMIT schema",
-      "description": "Defines maximum amount of memory the single service container is allowed to use",
+    "MEMORY_LIMIT": {
+      "$id": "#/properties/MEMORY_LIMIT",
+      "type": "string",
+      "title": "The MEMORY_LIMIT schema",
+      "description": "Defines maximum amount of memory the container can use",
       "examples": [
-        "600Mi",
-        "2Gi"
+        "512Mi"
       ],
       "internal": true,
       "envSpecific": true
