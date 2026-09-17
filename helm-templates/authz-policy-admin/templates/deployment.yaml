@@ -114,7 +114,10 @@ spec:
             runAsGroup: 10001
             {{- end }}
             # Read-only on Kubernetes only, as on the platform's charts. Safe at
-            # any value: every write lands on the mounted volume.
+            # any value: every write of the stub lands on the mounted volume,
+            # and the base image's entrypoint rebuilds the CA store only when
+            # it finds certificate files under /tmp/cert or the service-account
+            # mount, neither of which this Pod has.
             readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
             seccompProfile:
               type: RuntimeDefault

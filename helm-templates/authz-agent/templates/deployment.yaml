@@ -259,7 +259,7 @@ spec:
             allowPrivilegeEscalation: false
             # Read-only on Kubernetes only, as on the platform's charts: the
             # decision log is the one thing the container writes, and it goes
-            # to the emptyDir above.
+            # to the decision-logs emptyDir.
             readOnlyRootFilesystem: {{ and .Values.READONLY_CONTAINER_FILE_SYSTEM_ENABLED (eq .Values.PAAS_PLATFORM "KUBERNETES") }}
             seccompProfile:
               type: RuntimeDefault

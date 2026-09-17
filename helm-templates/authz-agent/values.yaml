@@ -3,9 +3,10 @@ PAAS_PLATFORM: "KUBERNETES"
 NAMESPACE: ''
 ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
-# The agent's image without its tag, as every platform chart names it; the
-# image is IMAGE_REPOSITORY:TAG. The default is where the release workflow
-# publishes the component named authz-agent in .github/docker-dev-config.json.
+# The agent's image without its tag, as the platform's charts name it; the
+# image is IMAGE_REPOSITORY:TAG. The default is the component authz-agent that
+# .github/docker-dev-config.json and the release workflow both list, published
+# by the docker action under the repository's owner on GHCR.
 IMAGE_REPOSITORY: ghcr.io/netcracker/authz-agent
 SERVICE_NAME: "authz-agent"
 DEPLOYMENT_RESOURCE_NAME: "authz-agent"
@@ -37,8 +38,8 @@ CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
 # Injected by Cloud-Deployer; every object carries it in its
 # app.kubernetes.io/part-of label.
 APPLICATION_NAME: 'Platform-Core-Security'
-# Renders the PodMonitor that scrapes the agent's metrics at `/prometheus` on
-# its data-api port (8181), for the platform's VictoriaMetrics operator. Set to
+# Renders the PodMonitor by which the platform's VictoriaMetrics operator
+# scrapes the agent's metrics at `/prometheus` on its data-api port (8181). Set to
 # false on a cluster without the monitoring.coreos.com CRDs (a plain kubeadm or
 # kind cluster), where `helm install` fails on the unknown kind.
 MONITORING_ENABLED: true

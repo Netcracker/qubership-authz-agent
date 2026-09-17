@@ -66,8 +66,8 @@ deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
 Values this chart does not read: the sizing keys the stub had inside the
 authz-agent chart, which the platform names CPU_REQUEST, CPU_LIMIT,
 MEMORY_REQUEST and MEMORY_LIMIT; AUTHZ_POLICY_ADMIN_ENABLED, which a chart that
-is the stub has no use for; and the AUTHZ_POLICY_ADMIN_IMAGE override, since the
-image is IMAGE_REPOSITORY:TAG as on the platform's charts. `additionalProperties` is true, so a values
+is the stub has no use for; and the AUTHZ_POLICY_ADMIN_IMAGE override, since
+the image is IMAGE_REPOSITORY:TAG as on the platform's charts. `additionalProperties` is true, so a values
 file that still carries them would render without a word and the Pod would
 take this chart's defaults.
 */}}

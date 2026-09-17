@@ -374,17 +374,20 @@ fi
 # script runs under `set -o pipefail`, and a quiet grep exits at its first
 # match, which leaves the writing side of the pipe with SIGPIPE and turns a
 # found string into a failed pipeline.
-image_lines=$(echo "${all_manifests}" | grep -cE "^          image: 'ghcr.io/netcracker/authz-agent:'" || true)
-if [[ "${image_lines}" -eq 1 ]]; then
-  pass "the agent Pod runs the published authz-agent image by default"
-else
-  fail "the agent Pod does not run ghcr.io/netcracker/authz-agent by default: $(grep -E '^          image:' <<<"${all_manifests}" | tr -d ' ' | paste -sd, - || true)"
-fi
-
-# The image is IMAGE_REPOSITORY:TAG on both charts, as on the platform's, and
-# the override keys the charts had are refused.
-for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
+# The image is IMAGE_REPOSITORY:TAG on both charts, as on the platform's, each
+# defaulting to the repository the release publishes (TAG has no default, so
+# the default render ends in a bare colon), and the override keys the charts
+# had are refused.
+for row in "${CHART_DIR}:ghcr.io/netcracker/authz-agent" "${STUB_CHART_DIR}:ghcr.io/netcracker/authz-policy-admin"; do
+  chart="${row%%:*}"
+  repository="${row#*:}"
   name="$(basename "${chart}")"
+  default_image="$(field "$(helm template t "${chart}" --show-only templates/deployment.yaml 2>&1 || true)" image:)"
+  if [[ "${default_image}" == "'${repository}:'" ]]; then
+    pass "${name}: the image repository defaults to ${repository}"
+  else
+    fail "${name}: expected the default image '${repository}:', got ${default_image}"
+  fi
   got_image="$(field "$(helm template t "${chart}" --set IMAGE_REPOSITORY=reg/img --set TAG=1.2.3 --show-only templates/deployment.yaml 2>&1 || true)" image:)"
   if [[ "${got_image}" == "'reg/img:1.2.3'" ]]; then
     pass "${name}: the image is IMAGE_REPOSITORY:TAG"
@@ -767,14 +770,17 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   fi
 
   default_deployment="$(helm template t "${chart}" --show-only templates/deployment.yaml 2>&1 || true)"
-  if [[ "${default_deployment}" == *"type: RuntimeDefault"* ]]; then
+  # The container's securityContext is the block at ten spaces; the Pod's, at
+  # six, is not read.
+  container_security="$(sed -n '/^          securityContext:/,/^          [a-z]/p' <<<"${default_deployment}")"
+  if [[ "${container_security}" == *"seccompProfile:"* && "${container_security}" == *"type: RuntimeDefault"* ]]; then
     pass "${name}: the container runs under the RuntimeDefault seccomp profile"
   else
-    fail "${name}: no RuntimeDefault seccomp profile in the container's securityContext"
+    fail "${name}: no RuntimeDefault seccomp profile in the container's securityContext: $(tr -d ' ' <<<"${container_security}" | paste -sd, -)"
   fi
 
-  # Kubernetes keeps the root file system read-only; OpenShift and an explicit
-  # false do not.
+  # The template renders the root file system read-only on Kubernetes, and
+  # writable on OpenShift or when the key is false.
   ro_summary="k8s=$(field "${default_deployment}" readOnlyRootFilesystem:) openshift=$(field "$(helm template t "${chart}" --set PAAS_PLATFORM=OPENSHIFT --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:) off=$(field "$(helm template t "${chart}" --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:)"
   if [[ "${ro_summary}" == "k8s=true openshift=false off=false" ]]; then
     pass "${name}: the root file system is read-only on Kubernetes and writable on OpenShift or when turned off"
@@ -783,10 +789,18 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   fi
 done
 
-if [[ "$(helm template t "${CHART_DIR}" --show-only templates/service.yaml)" == *"- name: data-api"* ]]; then
-  pass "the agent's Service names port 8181 data-api, as the container does"
+service_ports="$(helm template t "${CHART_DIR}" --show-only templates/service.yaml 2>&1 | grep -E '^    - name: |^      port: ' | tr -d ' ' | paste -sd, - || true)"
+if [[ "${service_ports}" == "-name:web,port:8080,-name:data-api,port:8181" ]]; then
+  pass "the agent's Service names its ports web (8080) and data-api (8181), as the container does"
 else
-  fail "the agent's Service does not name port 8181 data-api"
+  fail "the agent's Service ports render ${service_ports}, expected -name:web,port:8080,-name:data-api,port:8181"
+fi
+
+sa_namespace="$(field "$(helm template t "${CHART_DIR}" --set NAMESPACE=ns-x --show-only templates/configmap.yaml 2>&1 | sed -n '/^kind: ServiceAccount/,$p' || true)" namespace:)"
+if [[ "${sa_namespace}" == "'ns-x'" ]]; then
+  pass "the agent's ServiceAccount names its namespace from NAMESPACE"
+else
+  fail "the agent's ServiceAccount renders namespace ${sa_namespace}, expected 'ns-x'"
 fi
 
 # ── PodMonitor ───────────────────────────────────────────────────────────
@@ -795,11 +809,11 @@ fi
 # serves them: /prometheus on the data-api port, from the Pods the Service
 # selects.
 monitor="$(helm template t "${CHART_DIR}" --show-only templates/podmonitor.yaml 2>&1 || true)"
-monitor_summary="kind=$(field "${monitor}" kind:) port=$(field "${monitor}" port:) path=$(field "${monitor}" path:) interval=$(awk '$1 == "-" && $2 == "interval:" {print $3; exit}' <<<"${monitor}") selector=$(field "$(sed -n '/^  selector:/,$p' <<<"${monitor}")" name:)"
-if [[ "${monitor_summary}" == "kind=PodMonitor port=data-api path=/prometheus interval=30s selector='authz-agent'" ]]; then
-  pass "MONITORING_ENABLED renders a PodMonitor on data-api /prometheus every 30s for the agent's Pods"
+monitor_summary="kind=$(field "${monitor}" kind:) operator=$(field "${monitor}" app.kubernetes.io/processed-by-operator:) port=$(field "${monitor}" port:) path=$(field "${monitor}" path:) interval=$(awk '$1 == "-" && $2 == "interval:" {print $3; exit}' <<<"${monitor}") selector=$(field "$(sed -n '/^  selector:/,$p' <<<"${monitor}")" name:)"
+if [[ "${monitor_summary}" == "kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent'" ]]; then
+  pass "MONITORING_ENABLED renders a PodMonitor for the VictoriaMetrics operator on data-api /prometheus every 30s for the agent's Pods"
 else
-  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor port=data-api path=/prometheus interval=30s selector='authz-agent'"
+  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent'"
 fi
 if [[ "$(helm template t "${CHART_DIR}" --set MONITORING_ENABLED=false 2>&1 || true)" != *"kind: PodMonitor"* ]]; then
   pass "MONITORING_ENABLED false renders no PodMonitor"

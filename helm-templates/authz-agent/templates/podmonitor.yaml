@@ -1,5 +1,5 @@
 {{- if .Values.MONITORING_ENABLED }}
-# The platform's PodMonitor, as config-server and control-plane carry it: the
+# The platform's PodMonitor, as the platform's charts carry it: the
 # agent serves Prometheus metrics at /prometheus on its data API, the
 # container port named data-api (8181), and the platform's VictoriaMetrics
 # operator picks the monitor up by the processed-by-operator label.
