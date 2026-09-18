@@ -123,11 +123,15 @@ spec:
             name: '{{ .Values.AUTHZ_POLICY_CONFIGMAP }}'
         {{- end }}
         {{- if .Values.KUBERNETES_M2M_ENABLED }}
-        - name: ac-token
+        # The platform's layout for projected tokens, which its charts mount
+        # at /var/run/secrets/tokens with one directory per audience and its
+        # Go library reads from there; netcracker is the audience for M2M
+        # calls between the services of a namespace.
+        - name: projected-tokens
           projected:
             sources:
               - serviceAccountToken:
-                  path: token
+                  path: netcracker/token
                   audience: netcracker
                   expirationSeconds: 600
             defaultMode: 292
@@ -219,8 +223,8 @@ spec:
               readOnly: true
             {{- end }}
             {{- if .Values.KUBERNETES_M2M_ENABLED }}
-            - name: ac-token
-              mountPath: /etc/authz/ac-token
+            - name: projected-tokens
+              mountPath: /var/run/secrets/tokens
               readOnly: true
             {{- else }}
             - name: client-credentials

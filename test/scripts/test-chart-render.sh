@@ -416,6 +416,14 @@ if [[ "${k8s_m2m}" != *"AUTHZ_M2M_TOKEN_URL"* ]]; then
 else
   fail "the agent Pod still sets AUTHZ_M2M_TOKEN_URL under KUBERNETES_M2M_ENABLED"
 fi
+# The token lands where the platform's charts put the netcracker-audience
+# token, and the service is pointed at that file.
+token_summary="path=$(field "${k8s_m2m}" path:) audience=$(field "${k8s_m2m}" audience:) mount=$(field "$(grep -A1 'name: projected-tokens' <<<"${k8s_m2m}" | tail -1)" mountPath:) file=$(env_value AUTHZ_PAP_CLIENT_TOKEN_FILE --set KUBERNETES_M2M_ENABLED=true)"
+if [[ "${token_summary}" == "path=netcracker/token audience=netcracker mount=/var/run/secrets/tokens file=/var/run/secrets/tokens/netcracker/token" ]]; then
+  pass "the projected token is mounted at the platform's path and the agent reads it from there"
+else
+  fail "the projected token renders ${token_summary}, expected path=netcracker/token audience=netcracker mount=/var/run/secrets/tokens file=/var/run/secrets/tokens/netcracker/token"
+fi
 if [[ "${all_manifests}" == *"client-credentials"* && "${all_manifests}" != *"serviceAccountToken"* ]]; then
   pass "the agent Pod takes the client-credentials Secret without KUBERNETES_M2M_ENABLED"
 else
