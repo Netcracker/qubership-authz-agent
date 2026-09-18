@@ -93,6 +93,22 @@ case:
 - The golden files themselves should not be edited — they are the record of
   what the legacy service did, not a living test spec.
 
+## A GENERAL PIP value reaches a rule as a string
+
+`SinglePipDataConverter` in the legacy PDP declares `PipDataConverter<String>` and casts the JSONPath match to `String`
+with no check. A GENERAL PIP whose JSON holds a number or a boolean therefore raises a `ClassCastException` inside the
+rule; the rule fails with a `DenyEffectException` logged as `Can not calculate rule with id <uuid>`, and the decision is
+`false` whatever the condition says.
+
+A fixture that pins a GENERAL PIP to `{"value": 1000}` consequently does not record a comparison — it records the
+exception path, and it would record the same `false` for every condition and every resource. Pin `{"value": "1000"}`
+instead: the comparison operators coerce the string, so `resource.amount <= subject.x` still answers by magnitude and
+the golden means what the case name says.
+
+The two-tenant fixtures below use strings, which is what makes `t8a` and `t8b` differ. `test_row06_sub_cases_test.go`
+still pins a number and a boolean, so its goldens record deny-by-exception: accurate recordings of legacy behaviour for
+those inputs, but not the substitution the cases were written for.
+
 ## Cases waiting for a golden
 
 Some cases are written before access-control has answered them, so that the answers can be recorded on a live
@@ -145,6 +161,21 @@ tenant A and `mt-b` and `mt-b-admin` in tenant B; `PARITY_MT_TENANT_{A,B}_USER` 
 override the names. The users log in with the suite's end-user client and `PARITY_END_USER_PASSWORD`, and the M2M token
 comes from `PARITY_IDP_BASE_URL`. The policies are in `suite/testdata/fixtures/tenants/`; both tenants receive them in
 the domain `PARITY_MT`.
+
+The committed goldens were recorded on a stand where tenant A is the tenant access-control reports at
+`GET /access/v1/technical/defaultTenant` and its users live in the `parity` realm, and tenant B is a tenant identifier
+that exists nowhere else on the stand, with its users in a realm of its own. Tenant B needs the separate realm so that
+at least one case carries a token minted outside tenant A's realm; access-control accepts such a token in
+`Incoming-Token`, because the tenant of a decision comes from `tenant_id` or the `Tenant` header and never from the
+end-user token. That is what `t3` and `t4` record: tenant B's user reading tenant A's data succeeds, since only the
+query parameter and the header select a tenant.
+
+Tenant A's wildcard row (`t9b`) has `component`, `resourceType`, and `operation` all set to `ALL`. The legacy PAP
+accepts `resourceType: ALL` only on a global-access policy, and
+`SimplifiedPolicyMappingService.isGlobalAccessSimplifiedPolicy` decides that on `component == "ALL"` alone — a global
+policy must also carry `operation: ALL` and no `condition` and no `rsqlPredicate`. With any other `component` the
+upload is rejected with `simplified policy 'resourceType' field ALL is only allowed for global access policy`, in every
+tenant including the default one; nothing about the rule is tenant-specific.
 
 ## Directory layout
 
