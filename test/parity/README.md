@@ -113,6 +113,7 @@ missing.
 | `TestLoadSimplifiedPoliciesConditionSyntax` | Whether the upload accepts parentheses, a standalone `NOT`, irregular spacing and case, and subject attributes no seeded policy uses | `load-simplified-policies-v1/condition-syntax/` |
 | `TestRegularPolicySetCases` | How access-control evaluates regular policy sets: combining algorithms, ALLOW and DENY effects, nested sets, targets against conditions, predicates of several rules in a filter, and set lifecycle. Legacy profile only; the agent does not load regular policy sets | `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
 | `TestIsolatedPolicyCases` | Operator forms, attribute paths, subject attributes, literals, whitespace, declarations, and policy shapes the PAP may refuse, uploaded one case at a time into `PARITY_ISOLATED` | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/isolated/` |
+| `TestIsolatedConditionFormCases` | Forms the agent's own condition parser accepts and no golden records: the negated operators, the word forms of the comparisons, the single equals sign, the `/…/` regex literal, `FALSE` as a whole condition, and the `denied` access operator; plus `subject.scopes`, `subject.permissions` in a condition together with the `MAPPING` PIP that grants one, the `FILTERED` PIP, signed and fractional literals, and JSON Path beyond a plain or bracketed path | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/` |
 | `TestTenantScopedDecisions` | Which tenant a decision is scoped to, given the token, `tenant_id`, and the `Tenant` header | `check-resource-v1/tenant/`, `check-filter-v1/tenant/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
@@ -120,8 +121,10 @@ answers, golden or not.
 
 `TestLoadSimplifiedPoliciesConditionSyntax` skips on the `authz-agent` profile: authz-policy-admin stores a policy
 without validating its condition, so the upload status says nothing about the agent. For the same reason
-`TestIsolatedPolicyCases` compares the upload status only on the legacy profile; on both profiles it sends the
-requests of a case whose upload was accepted, and on the `authz-agent` profile it waits for a pull after each upload.
+`TestIsolatedPolicyCases` and `TestIsolatedConditionFormCases` compare the upload status only on the legacy profile; on both
+profiles they send the requests of a case whose upload was accepted, and on the `authz-agent` profile they wait for a
+pull after each upload. The two share the `PARITY_ISOLATED` domain and the runner behind it, and differ in which cases
+they carry, so that a recording run can be filtered to one of them.
 
 ### Two-tenant stand
 

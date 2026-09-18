@@ -69,11 +69,7 @@ var parityNoHeaderPIP = map[string]any{
 
 // Operator forms, attribute paths, subject attributes, literals, whitespace,
 // declarations, and policy shapes whose acceptance by the PAP is not established.
-// Each case records the upload status and, when the PAP accepts it, the status and
-// the answer of every request. On the authz-agent profile the upload status is not
-// compared (authz-policy-admin accepts anything) and the requests are.
 func (s *ParitySuite) TestIsolatedPolicyCases() {
-	reader := []string{"ROLE_PARITY_READER"}
 	cases := []isolatedCase{
 		{id: "j1-nested-path-neq", resourceType: "PARITY_SUITE_ISO_J1", condition: "resource.o.x != 'v'", requests: []isolatedRequest{
 			{name: "parent-absent", resource: map[string]any{"id": "iso-j1"}},
@@ -254,6 +250,18 @@ func (s *ParitySuite) TestIsolatedPolicyCases() {
 			{name: "reader", resource: map[string]any{"id": "iso-x31"}},
 		}},
 	}
+
+	s.runIsolatedCases(cases)
+}
+
+// runIsolatedCases uploads each case alone into isolatedCaseDomain and records the
+// upload status and, when the PAP accepts the case, the status and the answer of
+// every request. The upload status is a golden of its own, so a form the PAP
+// refuses is a recorded result rather than a failed case. On the authz-agent
+// profile the upload status is not compared (authz-policy-admin accepts anything)
+// and the requests are.
+func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
+	reader := []string{"ROLE_PARITY_READER"}
 
 	ctx := context.Background()
 	s.T().Cleanup(func() {
