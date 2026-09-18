@@ -143,8 +143,20 @@
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
     "load-policy-sets-v1/regular/upload-1": {"status":200}
   },
+  "one-deny-list-in-one-set": {
+    "check-resource-v1-outcome/regular/denied-by-no-entry": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/denied-by-the-single-list": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
   "permission-policy-target": {
     "check-resource-v1-outcome/regular/reader-without-permission": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "two-deny-lists-in-one-set": {
+    "check-resource-v1-outcome/regular/denied-by-both-lists": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/denied-by-neither-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/denied-by-the-alpha-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/denied-by-the-beta-list": {"status":200,"decision":true},
     "load-policy-sets-v1/regular/upload-1": {"status":200}
   }
 }
