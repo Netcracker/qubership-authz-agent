@@ -41,9 +41,12 @@ import (
 const (
 	DefaultClientIDFile     = "/etc/secret/username"
 	DefaultClientSecretFile = "/etc/secret/password"
-	DefaultTokenFile        = "/etc/authz/ac-token/token"
-	DefaultRenewBefore      = 60 * time.Second
-	DefaultWatchInterval    = 15 * time.Second
+	// DefaultTokenFile is where the platform's charts mount the projected
+	// token of the netcracker audience, one directory per audience under
+	// /var/run/secrets/tokens.
+	DefaultTokenFile     = "/var/run/secrets/tokens/netcracker/token"
+	DefaultRenewBefore   = 60 * time.Second
+	DefaultWatchInterval = 15 * time.Second
 
 	initialBackoff = 2 * time.Second
 	maxBackoff     = 5 * time.Minute

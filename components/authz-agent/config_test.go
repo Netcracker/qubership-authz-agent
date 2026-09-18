@@ -77,7 +77,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		t.Errorf("default pull = %+v, want %+v", cfg.Pull, wantPull)
 	}
 	wantM2M := m2m.Config{ClientIDFile: "/etc/secret/username", ClientSecretFile: "/etc/secret/password", RenewBefore: 60 * time.Second,
-		TokenFile: "/etc/authz/ac-token/token", WatchInterval: 15 * time.Second}
+		TokenFile: "/var/run/secrets/tokens/netcracker/token", WatchInterval: 15 * time.Second}
 	if cfg.M2M != wantM2M {
 		t.Errorf("default m2m = %+v, want %+v", cfg.M2M, wantM2M)
 	}
