@@ -91,8 +91,9 @@ In the Helm chart:
 ## Image
 
 Built from `build/authz-policy-admin/Dockerfile`.  Published as
-`authz-policy-admin` (no `authz-agent-` prefix) because it is a standalone
-Deployment rather than a container of the agent Pod.
+`ghcr.io/netcracker/qubership-authz-policy-admin`: `qubership-` plus the
+service name, as the platform names its images, and no `authz-agent-` prefix
+because it is a service of its own rather than a container of the agent Pod.
 
 ## Relationship to the platform's access-control service
 
