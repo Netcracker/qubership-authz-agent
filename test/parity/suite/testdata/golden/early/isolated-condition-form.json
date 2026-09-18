@@ -1,0 +1,122 @@
+{
+  "c10-negative-number-equals": {
+    "check-resource-v1-outcome/isolated/exact": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/same-magnitude-positive": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "c11-decimal-number-equals": {
+    "check-resource-v1-outcome/isolated/exact": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/trailing-zero": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "c12-greater-than-negative": {
+    "check-resource-v1-outcome/isolated/above-boundary": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/below-boundary": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "h3-filtered-pip-plain-reference": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "h4-filtered-pip-filtered-form": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "h5-filtered-form-on-general-pip": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "j10-jsonpath-recursive-descent": {
+    "check-resource-v1-outcome/isolated/nested-code": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/no-code-anywhere": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "j9-jsonpath-filter-expression": {
+    "check-resource-v1-outcome/isolated/selected-item-has-the-id": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/the-id-is-on-the-other-item": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "m1-not-match": {
+    "check-resource-v1-outcome/isolated/attribute-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/pattern-does-not-match": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/pattern-matches": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "m2-not-contains-any": {
+    "check-resource-v1-outcome/isolated/attribute-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/no-element-shared": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-element-shared": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "m3-is-not-subset": {
+    "check-resource-v1-outcome/isolated/attribute-null": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/empty-collection": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/every-element-listed": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/foreign-element": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pm1-mapping-pip-merged-list": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pm2-mapping-pip-suffixed-reference": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "pm3-mapping-pip-after-declaration-removed": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u10-subject-permissions-is-empty": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u11-subject-permissions-contains": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u12-subject-denied": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u8-subject-scopes-is-empty": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "u9-subject-scopes-contains": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "w1-greater-than-words": {
+    "check-resource-v1-outcome/isolated/above-boundary": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/boundary": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "w2-less-than-words": {
+    "check-resource-v1-outcome/isolated/below-boundary": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/boundary": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "w3-less-than-or-equal-words": {
+    "check-resource-v1-outcome/isolated/above-boundary": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/boundary": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "w4-greater-than-or-equals-to-words": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "w5-less-than-or-equals-to-words": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "x32-single-equal-sign": {
+    "check-resource-v1-outcome/isolated/attribute-differs": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/attribute-matches": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x33-condition-literal-false": {
+    "check-resource-v1-outcome/isolated/any-resource": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "x34-regex-literal": {
+    "check-resource-v1-outcome/isolated/pattern-does-not-match": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/pattern-matches": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}
