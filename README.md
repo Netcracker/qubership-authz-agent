@@ -57,7 +57,10 @@ docker build -t authz-policy-admin:local -f build/authz-policy-admin/Dockerfile 
 CI builds both via `.github/docker-dev-config.json` and publishes them as
 `ghcr.io/netcracker/qubership-authz-agent` and
 `ghcr.io/netcracker/qubership-authz-policy-admin`, named as the platform names
-its images: `qubership-` plus the service.
+its images: `qubership-` plus the service. A release is cut by hand with the
+Docker Images Release workflow (`.github/workflows/docker-release.yaml`), which
+tags the commit, builds the two images `.qubership/docker.cfg` lists, and
+publishes the GitHub release with notes composed from the merged pull requests.
 
 ## Testing
 
