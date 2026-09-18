@@ -5,11 +5,12 @@ ARTIFACT_DESCRIPTOR_VERSION: ''
 TAG: ''
 # The stub's image without its tag, as the platform's charts name it; the
 # image is IMAGE_REPOSITORY:TAG. The default is the component
-# authz-policy-admin that .github/docker-dev-config.json and the release
-# workflow both list, published by the docker action under the repository's
-# owner on GHCR; the name carries no authz-agent- prefix, the stub being a
+# qubership-authz-policy-admin that .github/docker-dev-config.json and the
+# release workflow both list, published by the docker action under the
+# repository's owner on GHCR. The name is qubership- plus the service, as the
+# platform names its images, with no authz-agent- prefix: the stub is a
 # service of its own.
-IMAGE_REPOSITORY: ghcr.io/netcracker/authz-policy-admin
+IMAGE_REPOSITORY: ghcr.io/netcracker/qubership-authz-policy-admin
 SERVICE_NAME: "authz-policy-admin"
 DEPLOYMENT_RESOURCE_NAME: "authz-policy-admin"
 DEPLOYMENT_VERSION: ''

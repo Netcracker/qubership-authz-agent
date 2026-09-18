@@ -74,7 +74,7 @@ No additional secrets are needed.
 ## docker-dev-config.json discovery
 
 The shared `docker-build.yaml` reads `.github/docker-dev-config.json` and runs
-one Docker build per component entry using a matrix strategy.  The five-entry
+one Docker build per component entry using a matrix strategy.  The two-entry
 array in this repository's `docker-dev-config.json` is handled in a single
 workflow run; no per-component config files are needed.  This was confirmed by
 reading `Netcracker/qubership-core-infra/.github/workflows/docker-build.yaml`

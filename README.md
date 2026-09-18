@@ -54,7 +54,10 @@ docker build -t authz-agent:local        -f build/authz-agent/Dockerfile .
 docker build -t authz-policy-admin:local -f build/authz-policy-admin/Dockerfile .
 ```
 
-CI builds both via `.github/docker-dev-config.json`.
+CI builds both via `.github/docker-dev-config.json` and publishes them as
+`ghcr.io/netcracker/qubership-authz-agent` and
+`ghcr.io/netcracker/qubership-authz-policy-admin`, named as the platform names
+its images: `qubership-` plus the service.
 
 ## Testing
 

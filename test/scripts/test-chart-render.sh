@@ -378,7 +378,7 @@ fi
 # defaulting to the repository the release publishes (TAG has no default, so
 # the default render ends in a bare colon), and the override keys the charts
 # had are refused.
-for row in "${CHART_DIR}:ghcr.io/netcracker/authz-agent" "${STUB_CHART_DIR}:ghcr.io/netcracker/authz-policy-admin"; do
+for row in "${CHART_DIR}:ghcr.io/netcracker/qubership-authz-agent" "${STUB_CHART_DIR}:ghcr.io/netcracker/qubership-authz-policy-admin"; do
   chart="${row%%:*}"
   repository="${row#*:}"
   name="$(basename "${chart}")"

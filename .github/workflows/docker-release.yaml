@@ -56,13 +56,14 @@ jobs:
     with:
       ref: v${{ inputs.version }}
       dry-run: ${{ github.event.inputs.dry-run == 'true' }}
-      # Two images: the agent and the standalone authz-policy-admin, which is
-      # its own Deployment rather than a container of the agent Pod.
+      # Two images, named as the platform names its images: qubership- plus
+      # the service. authz-policy-admin has an image of its own because it is
+      # a service of its own rather than a container of the agent Pod.
       # arm64 is required; do not change platforms to amd64-only.
       component: |
         [
-          { "name": "authz-agent",               "file": "./build/authz-agent/Dockerfile",        "context": "." },
-          { "name": "authz-policy-admin",        "file": "./build/authz-policy-admin/Dockerfile", "context": "." }
+          { "name": "qubership-authz-agent",        "file": "./build/authz-agent/Dockerfile",        "context": "." },
+          { "name": "qubership-authz-policy-admin", "file": "./build/authz-policy-admin/Dockerfile", "context": "." }
         ]
       platforms: linux/amd64,linux/arm64
 
