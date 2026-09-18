@@ -31,6 +31,29 @@ func (s *ParitySuite) TestRow06CheckFilterV1GeneralScalarNumber() {
 	s.runFilterV1Case("general-scalar-number-substitution", "PARITY_SUITE_SCALAR_NUMBER", "LIST", s.mustTokenBundle(UserProfileReader), PerCallOptions{})
 }
 
+// The template of TestRow06CheckFilterV1GeneralScalarNumber with the PIP
+// answering the JSON string "1000" instead of the JSON number 1000. A ${...}
+// placeholder is resolved by SpelContextStrLookup.lookup, which reads the
+// provider AllOperandsVisitor builds — PipReturnType.MULTIPLE, so the value stays
+// a Set and is rendered by collectionToDelimitedString(coll, ",", "\"", "\"").
+// Nothing on that path casts, so the predicate comes out as the same quoted
+// literal whichever JSON type the PIP returned, and this case records that.
+//
+// The pair is worth having because the other way a GENERAL PIP alias can be read
+// — as a single operand inside a condition — resolves through
+// PipReturnType.SINGLE and SinglePipDataConverter, whose unconditional checkcast
+// to String turns a JSON number into a ClassCastException and a denied rule. Same
+// PIP, same value, opposite tolerance: see the note in test/parity/README.md.
+func (s *ParitySuite) TestRow06CheckFilterV1GeneralScalarNumberAsString() {
+	err := s.pipMock.PinRoute(context.Background(), "/api/v1/pip/max-amount-scalar", PipStubResponse{
+		StatusCode: http.StatusOK,
+		Body:       map[string]any{"value": "1000"},
+	})
+	s.Require().NoError(err)
+
+	s.runFilterV1Case("general-scalar-number-as-string-substitution", "PARITY_SUITE_SCALAR_NUMBER", "LIST", s.mustTokenBundle(UserProfileReader), PerCallOptions{})
+}
+
 func (s *ParitySuite) TestRow06CheckFilterV1GeneralScalarBoolean() {
 	err := s.pipMock.PinRoute(context.Background(), "/api/v1/pip/archived-scalar", PipStubResponse{
 		StatusCode: http.StatusOK,

@@ -54,10 +54,10 @@ func (s *ParitySuite) TestTenantScopedDecisions() {
 	ctx := context.Background()
 	s.seedTenant(ctx, stand.A, tenantAFixtureFS)
 	s.seedTenant(ctx, stand.B, tenantBFixtureFS)
-	// The limits are strings on purpose. Legacy access-control funnels every
-	// GENERAL-PIP value through SinglePipDataConverter, which casts the JSONPath
-	// match to String unconditionally, so a JSON number raises a
-	// ClassCastException, the rule fails with a DenyEffectException logged as
+	// The limits are strings on purpose. A PIP alias standing as one operand of a
+	// condition resolves to PipReturnType.SINGLE, whose SinglePipDataConverter
+	// casts the JSONPath match to String unconditionally, so a JSON number raises
+	// a ClassCastException, the rule fails with a DenyEffectException logged as
 	// "Can not calculate rule with id ...", and every t8 case denies for a reason
 	// that has nothing to do with tenants. As strings the comparison operators
 	// still coerce, so 50 <= "10" is false and 50 <= "100" is true, and the

@@ -93,21 +93,29 @@ case:
 - The golden files themselves should not be edited — they are the record of
   what the legacy service did, not a living test spec.
 
-## A GENERAL PIP value reaches a rule as a string
+## A GENERAL PIP returns a string to a condition and anything to a template
 
-`SinglePipDataConverter` in the legacy PDP declares `PipDataConverter<String>` and casts the JSONPath match to `String`
-with no check. A GENERAL PIP whose JSON holds a number or a boolean therefore raises a `ClassCastException` inside the
-rule; the rule fails with a `DenyEffectException` logged as `Can not calculate rule with id <uuid>`, and the decision is
-`false` whatever the condition says.
+Which converter a PIP value meets depends on how the policy reads the alias, and only one of the two casts.
 
-A fixture that pins a GENERAL PIP to `{"value": 1000}` consequently does not record a comparison — it records the
-exception path, and it would record the same `false` for every condition and every resource. Pin `{"value": "1000"}`
+A PIP alias standing as one operand of a condition resolves through `SingleOperandVisitor` to `PipReturnType.SINGLE`,
+whose converter is `SinglePipDataConverter`. It declares `PipDataConverter<String>` and casts the JSONPath match to
+`String` with no check. A GENERAL PIP whose JSON holds a number or a boolean therefore raises a `ClassCastException`
+inside the rule; the rule fails with a `DenyEffectException` logged as `Can not calculate rule with id <uuid>`, and the
+decision is `false` whatever the condition says.
+
+A condition fixture that pins a GENERAL PIP to `{"value": 1000}` consequently does not record a comparison — it records
+the exception path, and it would record the same `false` for every condition and every resource. Pin `{"value": "1000"}`
 instead: the comparison operators coerce the string, so `resource.amount <= subject.x` still answers by magnitude and
-the golden means what the case name says.
+the golden means what the case name says. That is why the two-tenant fixtures below use strings and why `t8a` and `t8b`
+differ by tenant rather than both denying.
 
-The two-tenant fixtures below use strings, which is what makes `t8a` and `t8b` differ. `test_row06_sub_cases_test.go`
-still pins a number and a boolean, so its goldens record deny-by-exception: accurate recordings of legacy behaviour for
-those inputs, but not the substitution the cases were written for.
+A `${subject.x}` placeholder in an `rsqlPredicate` template takes the other route and is unaffected.
+`SpelContextStrLookup.lookup` asks `DataProviderGetter` for the alias, `AllOperandsVisitor` answers with
+`PipReturnType.MULTIPLE`, the value stays a `Set`, and `collectionToDelimitedString(coll, ",", "\"", "\"")` renders it.
+Nothing casts, so `{"value": 1000}` and `{"value": "1000"}` both render `amount=lt="1000"`. The cases in
+`test_row06_sub_cases_test.go` pin a number, a boolean and a string and all of them record real substitutions;
+`TestRow06CheckFilterV1GeneralScalarNumberAsString` is the string twin of the number case and exists to hold that
+equality in place.
 
 ## Cases waiting for a golden
 
