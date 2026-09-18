@@ -327,6 +327,65 @@ func regularPolicySetCases() []regularCase {
 		})
 	}
 
+	// Two PERMIT_UNLESS_DENY policies with deny lists of their own under one
+	// DENY_UNLESS_PERMIT set. Product policies ship that shape for a service whose
+	// endpoints are open except for a few, and split the exceptions over two
+	// policies. Each policy permits whatever its own list does not deny, so a set
+	// that takes the permit of either one lets the second policy cancel the first
+	// policy's denial. The alpha and beta requests record that; shared, denied by
+	// both lists, and open, denied by neither, fix the other two columns.
+	{
+		id := "two-deny-lists-in-one-set"
+		b := regularBuilder{caseID: id}
+		rt := regularResourceType(id)
+		cases = append(cases, regularCase{
+			id:           id,
+			resourceType: rt,
+			uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
+				b.set("set", "resourceType == '"+rt+"'", "DENY_UNLESS_PERMIT", []any{
+					b.policy("denies-alpha", readerTarget, "PERMIT_UNLESS_DENY",
+						b.rule("alpha", "operation == 'READ'", "resource.area == 'alpha'", "DENY", nil),
+						b.rule("alpha-shared", "operation == 'READ'", "resource.area == 'shared'", "DENY", nil)),
+					b.policy("denies-beta", readerTarget, "PERMIT_UNLESS_DENY",
+						b.rule("beta", "operation == 'READ'", "resource.area == 'beta'", "DENY", nil),
+						b.rule("beta-shared", "operation == 'READ'", "resource.area == 'shared'", "DENY", nil)),
+				}, nil),
+			}}},
+			requests: []isolatedRequest{
+				{name: "denied-by-the-alpha-list", resource: map[string]any{"id": "reg-two-lists", "area": "alpha"}},
+				{name: "denied-by-the-beta-list", resource: map[string]any{"id": "reg-two-lists", "area": "beta"}},
+				{name: "denied-by-both-lists", resource: map[string]any{"id": "reg-two-lists", "area": "shared"}},
+				{name: "denied-by-neither-list", resource: map[string]any{"id": "reg-two-lists", "area": "open"}},
+			},
+		})
+	}
+
+	// The control for two-deny-lists-in-one-set: the same deny list in one policy.
+	// Here alpha meets a single PERMIT_UNLESS_DENY verdict with nothing to combine
+	// it with, so a request the two-policy case answers differently is answered by
+	// the set level rather than by the rules.
+	{
+		id := "one-deny-list-in-one-set"
+		b := regularBuilder{caseID: id}
+		rt := regularResourceType(id)
+		cases = append(cases, regularCase{
+			id:           id,
+			resourceType: rt,
+			uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
+				b.set("set", "resourceType == '"+rt+"'", "DENY_UNLESS_PERMIT", []any{
+					b.policy("denies-both", readerTarget, "PERMIT_UNLESS_DENY",
+						b.rule("alpha", "operation == 'READ'", "resource.area == 'alpha'", "DENY", nil),
+						b.rule("beta", "operation == 'READ'", "resource.area == 'beta'", "DENY", nil),
+						b.rule("shared", "operation == 'READ'", "resource.area == 'shared'", "DENY", nil)),
+				}, nil),
+			}}},
+			requests: []isolatedRequest{
+				{name: "denied-by-the-single-list", resource: map[string]any{"id": "reg-one-list", "area": "alpha"}},
+				{name: "denied-by-no-entry", resource: map[string]any{"id": "reg-one-list", "area": "open"}},
+			},
+		})
+	}
+
 	// Policy and rule styles that simplified policies do not produce.
 	{
 		id := "permission-policy-target"
