@@ -29,12 +29,16 @@ import (
 // readerTarget is the policy target every regular case grants to parity-reader.
 const readerTarget = "subject.roles CONTAINS 'ROLE_PARITY_READER'"
 
-// regularCase uploads regular policy sets, and optionally simplified policies for
-// the same resource type, then sends requests against them.
+// regularCase uploads regular policy sets, and optionally the PIPs they reference
+// and simplified policies for the same resource type, then sends requests against
+// them.
 type regularCase struct {
 	id           string
 	resourceType string
-	// simplified policies go into isolatedCaseDomain before the sets are uploaded.
+	// pips and simplified policies go into isolatedCaseDomain before the sets are
+	// uploaded. PIPs belong to a domain and policy sets do not, so a set that
+	// reads one declares it here.
+	pips       []any
 	simplified []any
 	// uploads run in order; each replaces the sets of its own externalID.
 	uploads  []regularUpload
@@ -72,13 +76,15 @@ func (b regularBuilder) set(key, target, algorithm string, policies []any, neste
 	return set
 }
 
-// policy builds a policy; an empty algorithm leaves combiningAlgorithm out.
+// policy builds a policy; an empty algorithm leaves combiningAlgorithm out. A
+// policy with no rules uploads an empty list rather than null, so that a case about
+// an empty rule list is about that and not about the JSON form.
 func (b regularBuilder) policy(key, target, algorithm string, rules ...any) map[string]any {
 	policy := map[string]any{
 		"policyId": b.id("policy/" + key),
 		"name":     b.caseID + " " + key,
 		"target":   target,
-		"rules":    rules,
+		"rules":    emptyIfNil(rules),
 	}
 	if algorithm != "" {
 		policy["combiningAlgorithm"] = algorithm
@@ -115,6 +121,15 @@ func regularResourceType(caseID string) string {
 // status and the answer of every request. A case's sets stay on the stand after the
 // run; their resource types are the case's own, and a rerun replaces them.
 func (s *ParitySuite) TestRegularPolicySetCases() {
+	s.runRegularCases(regularPolicySetCases())
+}
+
+// runRegularCases uploads the sets of each case and records the upload status and,
+// once every upload was accepted, the status and the answer of every request. The
+// upload status is a golden of its own, so a set the PAP refuses is a recorded
+// result rather than a failed case, and the requests of a refused case are skipped
+// because they would record a DENY the rules never produced.
+func (s *ParitySuite) runRegularCases(cases []regularCase) {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("regular policy sets are evaluated by access-control only; authz-agent loads simplified policies")
 	}
@@ -125,13 +140,15 @@ func (s *ParitySuite) TestRegularPolicySetCases() {
 			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
 		}
 	})
-	for _, tc := range regularPolicySetCases() {
+	for _, tc := range cases {
 		s.Run(tc.id, func() {
-			if len(tc.simplified) > 0 {
-				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, tc.simplified)
+			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
+				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified)
 				s.Require().NoError(err)
-				s.Require().GreaterOrEqual(status, http.StatusOK, "simplified upload into %s", isolatedCaseDomain)
-				s.Require().Less(status, http.StatusMultipleChoices, "simplified upload into %s", isolatedCaseDomain)
+				s.Require().GreaterOrEqual(status, http.StatusOK, "upload of %d PIPs and %d policies into %s",
+					len(tc.pips), len(tc.simplified), isolatedCaseDomain)
+				s.Require().Less(status, http.StatusMultipleChoices, "upload of %d PIPs and %d policies into %s",
+					len(tc.pips), len(tc.simplified), isolatedCaseDomain)
 			}
 			accepted := true
 			for i, upload := range tc.uploads {

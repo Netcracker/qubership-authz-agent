@@ -140,16 +140,22 @@ missing.
 | `TestIsolatedConditionFormCases` | Forms the agent's own condition parser accepts and no golden records: the negated operators, the word forms of the comparisons, the single equals sign, the `/…/` regex literal, `FALSE` as a whole condition, and the `denied` access operator; plus `subject.scopes`, `subject.permissions` in a condition together with the `MAPPING` PIP that grants one, the `FILTERED` PIP, signed and fractional literals, and JSON Path beyond a plain or bracketed path | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/` |
 | `TestPermissionScopeIterateCases` | What `iterate.foreach` over `subject.permissionScope` evaluates: once per grant, or once over the grants merged into one map. It declares a `PERMISSION_SCOPE` PIP against pip-mock, pins three candidate wire formats in turn, and sends a literal-operand probe beside the scoped requests, so a shape access-control does not parse is told from one it does. Legacy profile only | `load-simplified-policies-v1/permission-scope/`, `load-policy-sets-v1/permission-scope/`, `check-resource-v1-outcome/permission-scope/` |
 | `TestTenantScopedDecisions` | Which tenant a decision is scoped to, given the token, `tenant_id`, and the `Tenant` header | `check-resource-v1/tenant/`, `check-filter-v1/tenant/` |
+| `TestTranslatorMatchDialectCases` | Which wildcard dialect `MATCH` speaks on a path: a star between segments and inside one, a double star away from the end and against zero segments, `?`, a trailing separator, a doubled separator, a query string, a percent-encoded separator, case, a pattern with no metacharacter, and a brace placeholder. Every case pairs a URI the pattern should select with one it should not | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/` |
+| `TestTranslatorValueSemanticsCases` | How equality, membership, and the relational operators treat a value whose JSON type or written form is not the literal's: the decimal forms of a number, an integer past the precision of a float64, an exponent, a relational operator over a string, a boolean, a null and a collection, case outside ASCII, and `CONTAINS` over numbers and over an object | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/` |
+| `TestTranslatorPolicySetCases` | What a regular policy set decides when every rule it holds is a DENY that did not apply, when the policy target kept the request from the DENY, and when a policy holds no rule; what a rule whose condition reads a failed or missing GENERAL PIP does to the allowing rule beside it, under each accepted algorithm; what `check/filter` returns for a resource type whose policy is a deny list; and what the filter carries when two sets name one rule id. Legacy profile only | `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
 answers, golden or not.
 
 `TestLoadSimplifiedPoliciesConditionSyntax` skips on the `authz-agent` profile: authz-policy-admin stores a policy
 without validating its condition, so the upload status says nothing about the agent. For the same reason
-`TestIsolatedPolicyCases` and `TestIsolatedConditionFormCases` compare the upload status only on the legacy profile; on both
+the cases that upload one policy at a time compare the upload status only on the legacy profile; on both
 profiles they send the requests of a case whose upload was accepted, and on the `authz-agent` profile they wait for a
-pull after each upload. The two share the `PARITY_ISOLATED` domain and the runner behind it, and differ in which cases
-they carry, so that a recording run can be filtered to one of them.
+pull after each upload. `TestIsolatedPolicyCases`, `TestIsolatedConditionFormCases`,
+`TestTranslatorMatchDialectCases` and `TestTranslatorValueSemanticsCases` share the `PARITY_ISOLATED` domain and the
+`runIsolatedCases` runner behind it, and differ in which cases they carry, so that a recording run can be filtered to
+one of them. `TestRegularPolicySetCases`, `TestPermissionScopeIterateCases` and `TestTranslatorPolicySetCases` reach
+the same domain for the PIPs their sets read, and are filtered the same way.
 
 ### Two-tenant stand
 
