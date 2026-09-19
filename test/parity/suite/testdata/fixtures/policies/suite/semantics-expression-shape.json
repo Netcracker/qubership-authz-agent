@@ -1,0 +1,79 @@
+[
+  {
+    "_comment": "G1: OR of AND with a negated operator, three levels deep once parsed.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_G1",
+    "resourceType": "PARITY_SUITE_SEM_G1",
+    "operation": "READ",
+    "condition": "resource.a == 'y' OR resource.b IS NOT NULL AND resource.c == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d001f"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_G2",
+    "resourceType": "PARITY_SUITE_SEM_G2",
+    "operation": "READ",
+    "condition": "resource.a == 'y' OR resource.c == 'y' AND resource.tags NOT CONTAINS 'red'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0020"
+  },
+  {
+    "_comment": "G3: precedence of AND over OR.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_G3",
+    "resourceType": "PARITY_SUITE_SEM_G3",
+    "operation": "READ",
+    "condition": "resource.a == 'y' OR resource.b == 'y' AND resource.c == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0021"
+  },
+  {
+    "_comment": "G7A: ten conditions joined by AND.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_G7A",
+    "resourceType": "PARITY_SUITE_SEM_G7A",
+    "operation": "READ",
+    "condition": "resource.a1 == 'y' AND resource.a2 == 'y' AND resource.a3 == 'y' AND resource.a4 == 'y' AND resource.a5 == 'y' AND resource.a6 == 'y' AND resource.a7 == 'y' AND resource.a8 == 'y' AND resource.a9 == 'y' AND resource.a10 == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0022"
+  },
+  {
+    "_comment": "G7B: ten conditions joined by OR.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_G7B",
+    "resourceType": "PARITY_SUITE_SEM_G7B",
+    "operation": "READ",
+    "condition": "resource.a1 == 'y' OR resource.a2 == 'y' OR resource.a3 == 'y' OR resource.a4 == 'y' OR resource.a5 == 'y' OR resource.a6 == 'y' OR resource.a7 == 'y' OR resource.a8 == 'y' OR resource.a9 == 'y' OR resource.a10 == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0023"
+  },
+  {
+    "_comment": "G7C: four groups of four conditions.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_G7C",
+    "resourceType": "PARITY_SUITE_SEM_G7C",
+    "operation": "READ",
+    "condition": "resource.a1 == 'y' AND resource.a2 == 'y' AND resource.a3 == 'y' AND resource.a4 == 'y' OR resource.b1 == 'y' AND resource.b2 == 'y' AND resource.b3 == 'y' AND resource.b4 == 'y' OR resource.c1 == 'y' AND resource.c2 == 'y' AND resource.c3 == 'y' AND resource.c4 == 'y' OR resource.d1 == 'y' AND resource.d2 == 'y' AND resource.d3 == 'y' AND resource.d4 == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0024"
+  }
+]
