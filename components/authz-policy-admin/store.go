@@ -35,6 +35,10 @@ import (
 // upload for its domain, so `cat policies-BSS.json` in a running Pod returns
 // exactly what the caller sent, and a restart re-parses it through the same code
 // path as the original request.
+// unreadableFile reports a file the store found and could not read, which
+// leaves the domain it holds out of what the stub serves.
+const unreadableFile = "cannot read %s: %v"
+
 const (
 	policiesFilePrefix = "policies-"
 	pipsFilePrefix     = "pips-"
@@ -126,7 +130,7 @@ func (s *store) loadFromDisk() {
 	for _, f := range globDomainFiles(s.dataDir, policiesFilePrefix) {
 		raw, err := os.ReadFile(f.path)
 		if err != nil {
-			logger.Errorf("cannot read %s: %v", f.path, err)
+			logger.Errorf(unreadableFile, f.path, err)
 			continue
 		}
 		var items []simplifiedPolicy
@@ -140,7 +144,7 @@ func (s *store) loadFromDisk() {
 	for _, f := range globDomainFiles(s.dataDir, pipsFilePrefix) {
 		raw, err := os.ReadFile(f.path)
 		if err != nil {
-			logger.Errorf("cannot read %s: %v", f.path, err)
+			logger.Errorf(unreadableFile, f.path, err)
 			continue
 		}
 		var items []simplifiedPIP
@@ -406,7 +410,7 @@ func readIfPresent(dir, name string) ([]byte, bool) {
 	raw, err := os.ReadFile(filepath.Join(dir, name))
 	if err != nil {
 		if !os.IsNotExist(err) {
-			logger.Errorf("cannot read %s: %v", filepath.Join(dir, name), err)
+			logger.Errorf(unreadableFile, filepath.Join(dir, name), err)
 		}
 		return nil, false
 	}

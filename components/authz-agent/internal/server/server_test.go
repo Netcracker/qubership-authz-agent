@@ -79,7 +79,13 @@ func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, health f
 // log, for a test whose subject is what the surface reports.
 func newAppWithLog(t *testing.T, authorization bool, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
 	t.Helper()
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
+	return newAppWithModules(t, map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}, authorization, logs, health, log)
+}
+
+// newAppWithModules is newAppWithLog over policies the test chooses.
+func newAppWithModules(t *testing.T, modules map[string]string, authorization bool, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
+	t.Helper()
+	eng, err := engine.New(engine.Options{Modules: modules})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
@@ -325,6 +331,107 @@ func TestDecide_ReportsTheDecisionAtDebug(t *testing.T) {
 	}
 	if strings.Contains(debug[0], "alice") {
 		t.Errorf("the decision reported %q, which carries the input; the decision log records that", debug[0])
+	}
+}
+
+// conflictingAuthz fails at evaluation rather than deciding: two complete
+// definitions of allow produce different values for the same request, which
+// OPA reports as a conflict.
+const conflictingAuthz = `package system.authz
+
+import rego.v1
+
+allow := true if input.method != ""
+
+allow := false if input.method != ""
+`
+
+// conflictingPolicies makes the decision itself fail, the same way.
+const conflictingPolicies = `package authorize
+
+import rego.v1
+
+allowed := true if input.user != ""
+
+allowed := false if input.user != ""
+`
+
+// TestDataAPI_ReportsAGuardThatCouldNotBeEvaluated: a guard policy that fails
+// to evaluate is the service's own defect, not the caller's, and the 500 the
+// caller receives says nothing an operator can act on. It is reported as an
+// error, with the request it was evaluated for.
+func TestDataAPI_ReportsAGuardThatCouldNotBeEvaluated(t *testing.T) {
+	reported := &levels{}
+	app, _ := newAppWithModules(t, map[string]string{"authorize.rego": testPolicies, "authz.rego": conflictingAuthz},
+		true, nil, nil, reported)
+
+	code, body, _ := do(t, app, http.MethodGet, "/v1/data/users", "", nil)
+	if code != 500 || body["code"] != "internal_error" {
+		t.Fatalf("GET under a failing guard = %d %v, want 500 internal_error", code, body)
+	}
+	errors := reported.at("error")
+	if len(errors) != 1 {
+		t.Fatalf("a guard that could not be evaluated reported %v, want one error", reported.lines)
+	}
+	if !strings.Contains(errors[0], "method=GET") || !strings.Contains(errors[0], "path=/v1/data/users") {
+		t.Errorf("the failure reported %q, want the method GET and the path /v1/data/users", errors[0])
+	}
+	if got := reported.at("warn"); len(got) != 0 {
+		t.Errorf("a guard that failed reported %v at warn, want none: nothing decided", got)
+	}
+}
+
+// TestDecide_ReportsADecisionThatCouldNotBeEvaluated: a policy that fails to
+// evaluate answers 500, and the decision log records nothing for a decision
+// that was never made, so the error line is the only account of it. A caller
+// that passes no logger gets no line and the same answer.
+func TestDecide_ReportsADecisionThatCouldNotBeEvaluated(t *testing.T) {
+	reported := &levels{}
+	for name, log := range map[string]Logger{"a logger was passed": reported, "no logger was passed": nil} {
+		t.Run(name, func(t *testing.T) {
+			app, _ := newAppWithModules(t, map[string]string{"authorize.rego": conflictingPolicies, "authz.rego": testAuthz},
+				false, nil, nil, log)
+
+			code, body, _ := do(t, app, http.MethodPost, "/v1/data/authorize", `{"input": {"user": "alice"}}`, nil)
+			if code != 500 || body["code"] != "internal_error" {
+				t.Fatalf("POST /v1/data/authorize under a failing policy = %d %v, want 500 internal_error", code, body)
+			}
+		})
+	}
+	errors := reported.at("error")
+	if len(errors) != 1 {
+		t.Fatalf("a decision that could not be evaluated reported %v, want one error", reported.lines)
+	}
+	if !strings.Contains(errors[0], "path=authorize") {
+		t.Errorf("the failure reported %q, want the path authorize", errors[0])
+	}
+}
+
+// TestDataAPI_ReportsAWriteTheStoreRefused: a write the store cannot apply
+// is the service's own failure, and the caller's 500 carries the store's
+// message but reaches no operator. The document under the refused path is
+// left as it was.
+func TestDataAPI_ReportsAWriteTheStoreRefused(t *testing.T) {
+	reported := &levels{}
+	app, _ := newAppWithLog(t, false, nil, nil, reported)
+
+	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/scalar", `5`, nil); code != 204 {
+		t.Fatalf("PUT /v1/data/scalar = %d, want 204", code)
+	}
+	// A child of a scalar: the store has nothing to hang it under.
+	code, body, _ := do(t, app, http.MethodPut, "/v1/data/scalar/child", `6`, nil)
+	if code != 500 || body["code"] != "internal_error" {
+		t.Fatalf("PUT under a scalar = %d %v, want 500 internal_error", code, body)
+	}
+	errors := reported.at("error")
+	if len(errors) != 1 {
+		t.Fatalf("a refused write reported %v, want one error", reported.lines)
+	}
+	if !strings.Contains(errors[0], "PUT path=scalar/child") {
+		t.Errorf("the failure reported %q, want the method and the path it was written to", errors[0])
+	}
+	if code, body, _ := do(t, app, http.MethodGet, "/v1/data/scalar", "", nil); code != 200 || body["result"] != float64(5) {
+		t.Errorf("GET /v1/data/scalar after the refused write = %d %v, want the document unchanged", code, body)
 	}
 }
 

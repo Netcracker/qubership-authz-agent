@@ -60,9 +60,15 @@ type Logger interface {
 // discardLogger is the logger a caller that passes none gets.
 type discardLogger struct{}
 
-func (discardLogger) DebugC(context.Context, string, ...any) {}
-func (discardLogger) WarnC(context.Context, string, ...any)  {}
-func (discardLogger) ErrorC(context.Context, string, ...any) {}
+func (discardLogger) DebugC(context.Context, string, ...any) {
+	// Deliberately empty: a caller that passes no logger wants no line.
+}
+func (discardLogger) WarnC(context.Context, string, ...any) {
+	// Deliberately empty: a caller that passes no logger wants no line.
+}
+func (discardLogger) ErrorC(context.Context, string, ...any) {
+	// Deliberately empty: a caller that passes no logger wants no line.
+}
 
 // Options tune the routes.
 type Options struct {

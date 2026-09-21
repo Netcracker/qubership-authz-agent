@@ -21,6 +21,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -153,43 +154,66 @@ func TestPublic_TheRequestIdNamesTheRequestEverywhere(t *testing.T) {
 			lines := &contextIDs{}
 			app := newPublicAppWithLog(t, false, logs, "", lines)
 
-			req := httptest.NewRequest(http.MethodPost, "/access/v1/check/resource",
-				strings.NewReader(`{"type":"ORDER","operation":"READ"}`))
-			req.Header.Set("Incoming-Token", "Bearer admin")
-			if tc.given != "" {
-				req.Header.Set(fiber.HeaderXRequestID, tc.given)
-			}
-			resp, err := app.Test(req, 5000)
-			if err != nil {
-				t.Fatalf("POST /access/v1/check/resource: %v", err)
-			}
+			resp := checkResourceWithID(t, app, tc.given)
 			defer func() { _ = resp.Body.Close() }()
-			if resp.StatusCode != http.StatusOK {
-				t.Fatalf("POST /access/v1/check/resource = %d, want 200", resp.StatusCode)
-			}
 
-			logged := nextEvent(t, events).RequestContext.HTTP.Headers["x-request-id"]
-			if len(logged) != 1 {
-				t.Fatalf("the decision log recorded x-request-id %q, want one value", logged)
+			logged := loggedRequestID(t, nextEvent(t, events), tc.given)
+			if got := resp.Header.Get(fiber.HeaderXRequestID); got != logged {
+				t.Errorf("the response carries request id %q, want %q, the one the decision was logged under", got, logged)
 			}
-			if tc.given != "" && logged[0] != tc.given {
-				t.Fatalf("the decision was logged under request id %q, want %q, the one the caller sent", logged[0], tc.given)
-			}
-			if tc.given == "" && len(logged[0]) != 36 {
-				t.Fatalf("the decision was logged under request id %q, want a generated UUID", logged[0])
-			}
-			if got := resp.Header.Get(fiber.HeaderXRequestID); got != logged[0] {
-				t.Errorf("the response carries request id %q, want %q, the one the decision was logged under", got, logged[0])
-			}
-			if len(lines.seen) == 0 {
-				t.Fatal("no line was written under the request's context, so the id it carries cannot be checked")
-			}
-			for i, got := range lines.seen {
-				if got != logged[0] {
-					t.Errorf("line %d was written under request id %q, want %q, the one the decision was logged under", i+1, got, logged[0])
-				}
-			}
+			assertLinesCarry(t, lines, logged)
 		})
+	}
+}
+
+// checkResourceWithID sends one legacy check, under the given request id when
+// it is not empty, and fails the test unless it is answered.
+func checkResourceWithID(t *testing.T, app *fiber.App, given string) *http.Response {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodPost, "/access/v1/check/resource",
+		strings.NewReader(`{"type":"ORDER","operation":"READ"}`))
+	req.Header.Set("Incoming-Token", "Bearer admin")
+	if given != "" {
+		req.Header.Set(fiber.HeaderXRequestID, given)
+	}
+	resp, err := app.Test(req, 5000)
+	if err != nil {
+		t.Fatalf("POST /access/v1/check/resource: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("POST /access/v1/check/resource = %d, want 200", resp.StatusCode)
+	}
+	return resp
+}
+
+// loggedRequestID is the id the decision was recorded under: the one the
+// caller gave, or a generated UUID when it gave none.
+func loggedRequestID(t *testing.T, ev decisionlog.Event, given string) string {
+	t.Helper()
+	logged := ev.RequestContext.HTTP.Headers["x-request-id"]
+	if len(logged) != 1 {
+		t.Fatalf("the decision log recorded x-request-id %q, want one value", logged)
+	}
+	if given != "" && logged[0] != given {
+		t.Fatalf("the decision was logged under request id %q, want %q, the one the caller sent", logged[0], given)
+	}
+	if given == "" && len(logged[0]) != 36 {
+		t.Fatalf("the decision was logged under request id %q, want a generated UUID", logged[0])
+	}
+	return logged[0]
+}
+
+// assertLinesCarry fails unless every line the request produced was written
+// under want, and unless it produced any.
+func assertLinesCarry(t *testing.T, lines *contextIDs, want string) {
+	t.Helper()
+	if len(lines.seen) == 0 {
+		t.Fatal("no line was written under the request's context, so the id it carries cannot be checked")
+	}
+	for i, got := range lines.seen {
+		if got != want {
+			t.Errorf("line %d was written under request id %q, want %q, the one the decision was logged under", i+1, got, want)
+		}
 	}
 }
 
@@ -273,6 +297,10 @@ func TestPublic_Bulk(t *testing.T) {
 			`[{"id":"a","type":"ORDER","operations":[""]}]`, nil, 200, `{}`},
 		{"v2 without an operation needs no token", "/access/v2/check/resource/bulk/operations",
 			`{"type":"ORDER","entries":[{"id":"a","operations":[""]}]}`, nil, 200, `{"decision":{}}`},
+		{"a body the v1 route cannot parse", "/access/v1/check/resource/bulk/operations",
+			`{"type":"ORDER"}`, admin, 400, `{"message":"bad request"}`},
+		{"a body the v2 route cannot parse", "/access/v2/check/resource/bulk/operations",
+			`[{"id":"a","type":"ORDER","operations":["READ"]}]`, admin, 400, `{"message":"bad request"}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -440,14 +468,46 @@ func TestPublic_ServesTheStoredDecisions(t *testing.T) {
 	}
 }
 
+// TestPublic_ReportsADecisionLogThatCannotBeRead: the download answers a
+// message that names no cause, because the caller cannot act on one; the
+// error the store returned is what an operator needs, so it is reported.
+func TestPublic_ReportsADecisionLogThatCannotBeRead(t *testing.T) {
+	// A regular file where a directory belongs: opening a path under it
+	// fails for a reason that is not "the log has not been written yet",
+	// which is the one failure the download answers 200 to.
+	notADir := filepath.Join(t.TempDir(), "file")
+	if err := os.WriteFile(notADir, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	logs := decisionlog.New(decisionlog.Config{Store: decisionlog.NewStore(filepath.Join(notADir, "decisions.jsonl"))}, nil)
+	reported := &levels{}
+	app := newPublicAppWithLog(t, false, logs, "", reported)
+
+	code, body, _ := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
+	if code != 500 || body != `{"message":"failed to read decision logs"}` {
+		t.Fatalf("GET /internal/v1/decision-logs over an unreadable store = %d %s, want 500", code, body)
+	}
+	errors := reported.at("error")
+	if len(errors) != 1 {
+		t.Fatalf("an unreadable decision log reported %v, want one error", reported.lines)
+	}
+	if !strings.Contains(errors[0], "decision log download failed") {
+		t.Errorf("the failure reported %q, want it to name the download", errors[0])
+	}
+}
+
 // TestPublic_RelayToACollectorThatDoesNotAnswer: a collector that cannot be
 // reached is reported as 503 naming it, so the caller can tell the relay
-// apart from an empty log.
+// apart from an empty log, and the timeout is reported as a warning.
 func TestPublic_RelayToACollectorThatDoesNotAnswer(t *testing.T) {
-	app := newPublicApp(t, false, nil, "http://127.0.0.1:1")
+	reported := &levels{}
+	app := newPublicAppWithLog(t, false, nil, "http://127.0.0.1:1", reported)
 	code, body, _ := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
 	if code != 503 || !strings.Contains(body, "collector unavailable") {
 		t.Errorf("GET /internal/v1/decision-logs with no collector = %d %s, want 503 with a message naming the collector", code, body)
+	}
+	if got := reported.at("warn"); len(got) != 1 || !strings.Contains(got[0], "collector did not answer") {
+		t.Errorf("an unreachable collector reported %v, want one warning naming the collector", reported.lines)
 	}
 }
 
