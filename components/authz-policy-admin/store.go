@@ -19,7 +19,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -36,6 +35,10 @@ import (
 // upload for its domain, so `cat policies-BSS.json` in a running Pod returns
 // exactly what the caller sent, and a restart re-parses it through the same code
 // path as the original request.
+// unreadableFile reports a file the store found and could not read, which
+// leaves the domain it holds out of what the stub serves.
+const unreadableFile = "cannot read %s: %v"
+
 const (
 	policiesFilePrefix = "policies-"
 	pipsFilePrefix     = "pips-"
@@ -127,35 +130,35 @@ func (s *store) loadFromDisk() {
 	for _, f := range globDomainFiles(s.dataDir, policiesFilePrefix) {
 		raw, err := os.ReadFile(f.path)
 		if err != nil {
-			log.Printf("error: cannot read %s: %v", f.path, err)
+			logger.Errorf(unreadableFile, f.path, err)
 			continue
 		}
 		var items []simplifiedPolicy
 		if err := json.Unmarshal(raw, &items); err != nil {
-			log.Printf("error: %s is malformed, skipping domain %q: %v", f.path, f.domain, err)
+			logger.Errorf("%s is malformed, skipping domain %q: %v", f.path, f.domain, err)
 			continue
 		}
 		s.policies[f.domain] = normalizePolicies(items)
-		log.Printf("loaded %d policies for domain %q from %s", len(items), f.domain, f.path)
+		logger.Infof("loaded %d policies for domain %q from %s", len(items), f.domain, f.path)
 	}
 	for _, f := range globDomainFiles(s.dataDir, pipsFilePrefix) {
 		raw, err := os.ReadFile(f.path)
 		if err != nil {
-			log.Printf("error: cannot read %s: %v", f.path, err)
+			logger.Errorf(unreadableFile, f.path, err)
 			continue
 		}
 		var items []simplifiedPIP
 		if err := json.Unmarshal(raw, &items); err != nil {
-			log.Printf("error: %s is malformed, skipping domain %q: %v", f.path, f.domain, err)
+			logger.Errorf("%s is malformed, skipping domain %q: %v", f.path, f.domain, err)
 			continue
 		}
 		s.pips[f.domain] = normalizePIPs(items)
-		log.Printf("loaded %d PIPs for domain %q from %s", len(items), f.domain, f.path)
+		logger.Infof("loaded %d PIPs for domain %q from %s", len(items), f.domain, f.path)
 	}
 	if raw, ok := readIfPresent(s.dataDir, stateFileName); ok {
 		var st persistedState
 		if err := json.Unmarshal(raw, &st); err != nil {
-			log.Printf("error: %s is malformed, restarting revision at 0: %v", stateFileName, err)
+			logger.Errorf("%s is malformed, restarting revision at 0: %v", stateFileName, err)
 		} else {
 			s.revision = st.Revision
 		}
@@ -326,7 +329,7 @@ func (s *store) rehashLocked() {
 func hashItems(v any) string {
 	b, err := json.Marshal(v)
 	if err != nil {
-		log.Printf("error: hashing failed, serving a blank hash: %v", err)
+		logger.Errorf("hashing failed, serving a blank hash: %v", err)
 		return ""
 	}
 	sum := sha256.Sum256(b)
@@ -368,7 +371,7 @@ func globDomainFiles(dir, prefix string) []domainFile {
 		name := filepath.Base(m)
 		domain := strings.TrimSuffix(strings.TrimPrefix(name, prefix), ".json")
 		if !validDomain(domain) {
-			log.Printf("warn: ignoring %s: %q is not a valid domain name", m, domain)
+			logger.Warnf("ignoring %s: %q is not a valid domain name", m, domain)
 			continue
 		}
 		out = append(out, domainFile{domain: domain, path: m})
@@ -407,7 +410,7 @@ func readIfPresent(dir, name string) ([]byte, bool) {
 	raw, err := os.ReadFile(filepath.Join(dir, name))
 	if err != nil {
 		if !os.IsNotExist(err) {
-			log.Printf("error: cannot read %s: %v", filepath.Join(dir, name), err)
+			logger.Errorf(unreadableFile, filepath.Join(dir, name), err)
 		}
 		return nil, false
 	}
@@ -434,7 +437,7 @@ func sweepTempFiles(dir string) {
 	}
 	for _, m := range matches {
 		if err := os.Remove(m); err == nil {
-			log.Printf("removed stale temp file %s", m)
+			logger.Infof("removed stale temp file %s", m)
 		}
 	}
 }

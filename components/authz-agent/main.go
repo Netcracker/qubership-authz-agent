@@ -105,6 +105,7 @@ func main() {
 	puller := pull.New(cfg.Pull, eng, source, logger)
 	opts := server.Options{
 		Authorization:  cfg.Authorization,
+		Log:            logger,
 		CollectorURL:   cfg.DecisionLogs.URL,
 		NDBuiltinCache: cfg.NDBuiltinCache,
 		Health:         func() server.Report { return report(providers, puller) },

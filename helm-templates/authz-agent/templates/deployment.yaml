@@ -153,6 +153,8 @@ spec:
               containerPort: 8181
               protocol: TCP
           env:
+            - name: LOGGING_LEVEL_ROOT
+              value: '{{ .Values.LOG_LEVEL }}'
             - name: AUTHZ_PUBLIC_ADDR
               value: "0.0.0.0:8080"
             - name: AUTHZ_HTTP_ADDR

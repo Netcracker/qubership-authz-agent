@@ -20,6 +20,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -41,6 +42,33 @@ const LegacyAPIVersion = `{"specs":[{"specRootUrl":"/access","major":3,"minor":0
 
 // decodeErrorPrefix opens the message of a request body OPA could not decode.
 const decodeErrorPrefix = "error(s) occurred while decoding request: "
+
+// Logger receives what the request path has to report. Every method takes
+// the request's context, which carries the id the platform log format prints
+// as request_id, so a line here can be matched with the caller's own line for
+// the same request.
+//
+// The decision itself is not written here: its input carries the caller's
+// token and claims, and the decision log is the surface that records those,
+// under the collector's own retention.
+type Logger interface {
+	DebugC(ctx context.Context, format string, args ...any)
+	WarnC(ctx context.Context, format string, args ...any)
+	ErrorC(ctx context.Context, format string, args ...any)
+}
+
+// discardLogger is the logger a caller that passes none gets.
+type discardLogger struct{}
+
+func (discardLogger) DebugC(context.Context, string, ...any) {
+	// Deliberately empty: a caller that passes no logger wants no line.
+}
+func (discardLogger) WarnC(context.Context, string, ...any) {
+	// Deliberately empty: a caller that passes no logger wants no line.
+}
+func (discardLogger) ErrorC(context.Context, string, ...any) {
+	// Deliberately empty: a caller that passes no logger wants no line.
+}
 
 // Options tune the routes.
 type Options struct {
@@ -65,6 +93,8 @@ type Options struct {
 	// clock. The two that would differ, io.jwt.encode_sign and
 	// io.jwt.encode_sign_raw, read no cache at all and are not called.
 	NDBuiltinCache bool
+	// Log receives the diagnostics of the request path; nil discards them.
+	Log Logger
 	// CollectorURL is the base URL of the decision-log collector the
 	// decisions are uploaded to, which serves the download of the ones it
 	// received; the public surface relays GET /internal/v1/decision-logs to
@@ -84,6 +114,9 @@ type Server struct {
 // /ready, /api-version, the canonical POST /access/v1/authorize, and the
 // data API under /v1/data.
 func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts Options) *Server {
+	if opts.Log == nil {
+		opts.Log = discardLogger{}
+	}
 	s := &Server{engine: eng, logs: logs, opts: opts}
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
@@ -230,10 +263,14 @@ func (s *Server) permitted(c *fiber.Ctx, method string, path []string) bool {
 	v, ok, err := s.engine.Eval(c.UserContext(), []string{"system", "authz", "allow"}, input, nil)
 	switch {
 	case err != nil:
+		s.opts.Log.ErrorC(c.UserContext(), "guard: data.system.authz.allow failed method=%s path=/%s: %v",
+			method, strings.Join(path, "/"), err)
 		_ = opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 	case ok && v == true:
 		return true
 	default:
+		s.opts.Log.WarnC(c.UserContext(), "guard: request refused by data.system.authz.allow method=%s path=/%s",
+			method, strings.Join(path, "/"))
 		_ = opaError(c, http.StatusUnauthorized, "unauthorized", "unauthorized resource access")
 	}
 	return false
@@ -295,12 +332,17 @@ func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result an
 	}
 	result, defined, err = s.engine.Eval(c.UserContext(), segments, input, ndbc)
 	if err != nil {
+		// Reported here rather than at the two callers: both answer 500 and
+		// the legacy one, which every check route reaches, reported nothing.
+		s.opts.Log.ErrorC(c.UserContext(), "decision failed path=%s: %v", strings.Join(segments, "/"), err)
 		return nil, false, "", err
 	}
 	if logged {
 		id = decisionlog.NewDecisionID()
 		s.logDecision(c, id, segments, input, result, defined, ndbc)
 	}
+	s.opts.Log.DebugC(c.UserContext(), "decision path=%s defined=%t decisionId=%s",
+		strings.Join(segments, "/"), defined, id)
 	return result, defined, id, nil
 }
 
@@ -371,6 +413,7 @@ func (s *Server) put(c *fiber.Ctx, segments []string) error {
 		return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
 	}
 	if err := s.engine.Put(c.UserContext(), segments, value); err != nil {
+		s.opts.Log.ErrorC(c.UserContext(), "data API: PUT path=%s failed: %v", strings.Join(segments, "/"), err)
 		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 	}
 	return c.SendStatus(http.StatusNoContent)
@@ -401,6 +444,7 @@ func (s *Server) patch(c *fiber.Ctx, segments []string) error {
 func (s *Server) get(c *fiber.Ctx, segments []string) error {
 	value, ok, err := s.engine.Get(c.UserContext(), segments)
 	if err != nil {
+		s.opts.Log.ErrorC(c.UserContext(), "data API: GET path=%s failed: %v", strings.Join(segments, "/"), err)
 		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 	}
 	if !ok {

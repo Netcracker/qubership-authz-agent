@@ -57,42 +57,74 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
 	"os"
+
+	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
+	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 )
 
+// logSink is the part of the platform logger this command writes through.
+// The narrow type is what lets a test record what a run reported.
+type logSink interface {
+	Infof(format string, args ...any)
+	Warnf(format string, args ...any)
+	Errorf(format string, args ...any)
+}
+
+// logger is shared by every file of the command.
+var logger logSink
+
+func init() {
+	// The environment is the only property source, as in authz-agent: the
+	// image ships no application.yaml, and the chart configures the stub
+	// through AUTHZ_POLICY_ADMIN_* variables and LOGGING_LEVEL_ROOT.
+	configloader.Init(configloader.EnvPropertySource())
+	logger = logging.GetLogger("authz-policy-admin")
+}
+
 func main() {
-	port := envOr("AUTHZ_POLICY_ADMIN_PORT", "18090")
 	// AUTHZ_POLICY_ADMIN_DATA_DIR is empty by default: the test stacks run the stub
 	// in-memory, and an unset value keeps `docker run` of this image working
 	// without a mounted volume. The Helm chart always sets it to the PVC
 	// mount path.
-	dataDir := os.Getenv("AUTHZ_POLICY_ADMIN_DATA_DIR")
+	mux, addr, err := build(os.Getenv("AUTHZ_POLICY_ADMIN_DATA_DIR"), envOr("AUTHZ_POLICY_ADMIN_PORT", "18090"))
+	if err != nil {
+		logger.Errorf("%v", err)
+		os.Exit(1)
+	}
+	logger.Infof("authz-policy-admin listening on %s", addr)
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		logger.Errorf("listening on %s: %v", addr, err)
+		os.Exit(1)
+	}
+}
 
+// build opens the store under dataDir, assembles the routes over it, and
+// returns them with the address port makes. An empty dataDir keeps the
+// policies in memory, which the run reports, as it reports that the upload
+// API is open to whoever can reach it.
+func build(dataDir, port string) (*http.ServeMux, string, error) {
 	st, err := newStore(dataDir)
 	if err != nil {
-		log.Fatalf("authz-policy-admin: %v", err)
+		return nil, "", fmt.Errorf("store: %w", err)
 	}
 	if dataDir == "" {
-		log.Printf("warn: persistence disabled: AUTHZ_POLICY_ADMIN_DATA_DIR not set, policies live in memory only and are lost on restart")
+		logger.Warnf("persistence disabled: AUTHZ_POLICY_ADMIN_DATA_DIR not set, policies live in memory only and are lost on restart")
 	} else {
-		log.Printf("persisting policies and PIPs under %s", dataDir)
+		logger.Infof("persisting policies and PIPs under %s", dataDir)
 	}
 	// Stated on every start, because whoever reads these logs should know it:
 	// the upload API accepts policies from anyone who can reach it.
-	log.Printf("warn: the simplified-policy API is unauthenticated — deploy this only in development and test namespaces")
+	logger.Warnf("the simplified-policy API is unauthenticated — deploy this only in development and test namespaces")
 	if ds := st.Domains(); len(ds) > 0 {
-		log.Printf("domains with content: %v", ds)
+		logger.Infof("domains with content: %v", ds)
 	}
 
-	srv := &server{st: st}
 	mux := http.NewServeMux()
-	srv.routes(mux)
-
-	addr := "0.0.0.0:" + port
-	log.Printf("authz-policy-admin listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	(&server{st: st}).routes(mux)
+	return mux, "0.0.0.0:" + port, nil
 }
 
 func envOr(key, fallback string) string {

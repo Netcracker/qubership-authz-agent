@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -89,6 +88,7 @@ type Tokens interface {
 
 // Logger receives the diagnostics.
 type Logger interface {
+	Debugf(format string, args ...any)
 	Infof(format string, args ...any)
 	Warnf(format string, args ...any)
 }
@@ -126,9 +126,6 @@ type Puller struct {
 	tokens Tokens
 	log    Logger
 	client *http.Client
-	// stdlog adapts the diagnostics for the converter, which logs through
-	// the standard library.
-	stdlog *log.Logger
 
 	mu             sync.Mutex
 	status         Status
@@ -152,7 +149,6 @@ func New(cfg Config, store Putter, tokens Tokens, logger Logger) *Puller {
 		tokens: tokens,
 		log:    logger,
 		client: &http.Client{Timeout: cfg.HTTPTimeout},
-		stdlog: log.New(writerFunc(func(p []byte) { logger.Warnf("policies: %s", strings.TrimSpace(string(p))) }), "", 0),
 	}
 }
 
@@ -260,6 +256,10 @@ func (p *Puller) applyMount(ctx context.Context) {
 
 // PullOnce fetches the policy sets and the PIPs from the source and loads
 // them; the documents in the store are untouched when any step fails.
+//
+// The load is reported at info until [Puller.Run] has recorded a first
+// success, and at debug from then on, so a caller that drives PullOnce
+// itself reports every load at info.
 func (p *Puller) PullOnce(ctx context.Context) error {
 	token := ""
 	if p.tokens != nil {
@@ -273,7 +273,7 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("fetch pips: %w", err)
 	}
-	policyList, stats, err := acconfig.ConvertPolicySets(policySets, p.stdlog)
+	policyList, stats, err := acconfig.ConvertPolicySets(policySets, p.log)
 	if err != nil {
 		return fmt.Errorf("convert policySets: %w", err)
 	}
@@ -282,7 +282,7 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 		p.log.Warnf("policies: conversion dropped data: %d/%d policy sets and %d/%d rules could not be converted (%d policies produced)",
 			stats.PolicySetsSkipped, stats.PolicySets, stats.RulesSkipped, stats.Rules, stats.Policies)
 	}
-	pipList, err := acconfig.ConvertPIPs(pipsRaw, p.stdlog)
+	pipList, err := acconfig.ConvertPIPs(pipsRaw, p.log)
 	if err != nil {
 		return fmt.Errorf("convert pips: %w", err)
 	}
@@ -299,8 +299,16 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	}
 	p.mu.Lock()
 	p.lastConversion = &conversion
+	first := p.firstSuccess.IsZero()
 	p.mu.Unlock()
-	p.log.Infof("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
+	// Every tick loads the source again, changed or not, so after the first
+	// load this line only repeats itself: 2880 identical lines a day at the
+	// default 30-second interval.
+	report := p.log.Debugf
+	if first {
+		report = p.log.Infof
+	}
+	report("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
 	return nil
 }
 
@@ -429,11 +437,4 @@ func readHashed(path string) ([]byte, string, error) {
 	}
 	sum := sha256.Sum256(raw)
 	return raw, hex.EncodeToString(sum[:]), nil
-}
-
-type writerFunc func(p []byte)
-
-func (w writerFunc) Write(p []byte) (int, error) {
-	w(p)
-	return len(p), nil
 }

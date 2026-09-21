@@ -72,6 +72,7 @@ by the Helm chart probes and the Docker Compose health checks.
 
 | Variable | Default | Description |
 | --- | --- | --- |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_POLICY_ADMIN_PORT` | `18090` | TCP port to listen on |
 | `AUTHZ_POLICY_ADMIN_DATA_DIR` | `` (empty) | Directory for persistence. Empty means in-memory only (data lost on restart). The Helm chart always sets this to the PVC mount path. |
 

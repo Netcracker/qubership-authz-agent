@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"time"
 )
@@ -89,7 +88,7 @@ func (s *server) handlePutDomainPolicies(w http.ResponseWriter, r *http.Request)
 		// The upload did not reach disk, so it is not committed in memory
 		// either. Telling the caller beats a 200 that quietly evaporates on
 		// the next restart.
-		log.Printf("error: policy upload for domain %q rejected: %v", domain, err)
+		logger.Errorf("policy upload for domain %q rejected: %v", domain, err)
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -123,7 +122,7 @@ func (s *server) handlePutDomainPIPs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.st.SetDomainPIPs(domain, items, raw); err != nil {
-		log.Printf("error: PIP upload for domain %q rejected: %v", domain, err)
+		logger.Errorf("PIP upload for domain %q rejected: %v", domain, err)
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}

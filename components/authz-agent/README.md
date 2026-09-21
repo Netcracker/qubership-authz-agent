@@ -37,6 +37,7 @@ The chart assembles the agent Pod as this one container.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
 | `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the data API |
 | `AUTHZ_ND_BUILTIN_CACHE` | `true` | Record the non-deterministic builtin calls of a decision, the PIP requests and their responses, into its decision-log event |
@@ -64,6 +65,12 @@ The chart assembles the agent Pod as this one container.
 
 A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
 default.
+
+At the default level the service reports what it could not do: a request the data API guard turned away, a policy
+that failed to evaluate, a document it could not store, a collector that did not answer. `debug` adds a line per
+decision, per rejected legacy request, per unmatched route and per policy load. A decision that denies its caller is
+not reported at either level: it is the answer the policy gave, and the decision log is where decisions are recorded.
+Every line carries the request id under `request_id`, the same id the decision log records.
 
 `GET /health` is 200 with the counts of the last policy conversion once the trusted providers meet the bootstrap
 rules, and 503 with the reason and its details until then. `GET /ready`, on the data API port, adds the policies:
