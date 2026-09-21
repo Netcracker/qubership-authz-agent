@@ -17,6 +17,7 @@ package pull
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -124,8 +125,39 @@ func (t *tokens) Ready() <-chan struct{} { return t.ready }
 
 type quiet struct{}
 
-func (quiet) Infof(string, ...any) {}
-func (quiet) Warnf(string, ...any) {}
+func (quiet) Debugf(string, ...any) {}
+func (quiet) Infof(string, ...any)  {}
+func (quiet) Warnf(string, ...any)  {}
+
+// recorder keeps the level and the text of every line, for a test whose
+// subject is what the puller reports rather than what it stores.
+type recorder struct {
+	mu    sync.Mutex
+	lines []string
+}
+
+func (r *recorder) record(level, format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.lines = append(r.lines, level+": "+fmt.Sprintf(format, args...))
+}
+
+func (r *recorder) Debugf(format string, args ...any) { r.record("debug", format, args...) }
+func (r *recorder) Infof(format string, args ...any)  { r.record("info", format, args...) }
+func (r *recorder) Warnf(format string, args ...any)  { r.record("warn", format, args...) }
+
+// updates returns the lines reported for a completed load, oldest first.
+func (r *recorder) updates() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var out []string
+	for _, line := range r.lines {
+		if strings.Contains(line, "policies: updated") {
+			out = append(out, line)
+		}
+	}
+	return out
+}
 
 // source serves the v3 responses and records the Authorization header of
 // the last request and the number of requests.
@@ -195,6 +227,30 @@ func TestRun_LoadsTheSource(t *testing.T) {
 	byName, _ := st.last(t, "pips")["byName"].(map[string]any)
 	if _, ok := byName["subject.azp"]; !ok || len(byName) != 1 {
 		t.Errorf("data.pips.byName = %v, want subject.azp alone", byName)
+	}
+}
+
+// TestRun_ReportsTheFirstLoadAtInfoAndTheRestAtDebug: every tick loads the
+// source again, changed or not, so the loads after the first one repeat what
+// the first one said. Only the first is reported at info; at the default
+// interval of 30 seconds the rest would be 2880 identical lines a day.
+func TestRun_ReportsTheFirstLoadAtInfoAndTheRestAtDebug(t *testing.T) {
+	srv, _, _ := source(t, http.StatusOK)
+	rec := &recorder{}
+	p := New(Config{SourceURL: srv.URL, Interval: 20 * time.Millisecond}, &store{}, nil, rec)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go p.Run(ctx)
+
+	waitFor(t, "three loads", func() bool { return len(rec.updates()) >= 3 })
+	got := rec.updates()
+	if !strings.HasPrefix(got[0], "info: ") {
+		t.Errorf("the first load reported %q, want an info line", got[0])
+	}
+	for i, line := range got[1:] {
+		if !strings.HasPrefix(line, "debug: ") {
+			t.Errorf("load %d reported %q, want a debug line", i+2, line)
+		}
 	}
 }
 

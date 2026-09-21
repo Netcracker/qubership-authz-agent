@@ -35,8 +35,9 @@ import (
 
 type quiet struct{}
 
-func (quiet) Infof(string, ...any) {}
-func (quiet) Warnf(string, ...any) {}
+func (quiet) Debugf(string, ...any) {}
+func (quiet) Infof(string, ...any)  {}
+func (quiet) Warnf(string, ...any)  {}
 
 func newEngine(t *testing.T) *engine.Engine {
 	t.Helper()

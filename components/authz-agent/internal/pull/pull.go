@@ -88,6 +88,7 @@ type Tokens interface {
 
 // Logger receives the diagnostics.
 type Logger interface {
+	Debugf(format string, args ...any)
 	Infof(format string, args ...any)
 	Warnf(format string, args ...any)
 }
@@ -255,6 +256,10 @@ func (p *Puller) applyMount(ctx context.Context) {
 
 // PullOnce fetches the policy sets and the PIPs from the source and loads
 // them; the documents in the store are untouched when any step fails.
+//
+// The load is reported at info until [Puller.Run] has recorded a first
+// success, and at debug from then on, so a caller that drives PullOnce
+// itself reports every load at info.
 func (p *Puller) PullOnce(ctx context.Context) error {
 	token := ""
 	if p.tokens != nil {
@@ -294,8 +299,16 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	}
 	p.mu.Lock()
 	p.lastConversion = &conversion
+	first := p.firstSuccess.IsZero()
 	p.mu.Unlock()
-	p.log.Infof("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
+	// Every tick loads the source again, changed or not, so after the first
+	// load this line only repeats itself: 2880 identical lines a day at the
+	// default 30-second interval.
+	report := p.log.Debugf
+	if first {
+		report = p.log.Infof
+	}
+	report("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
 	return nil
 }
 
