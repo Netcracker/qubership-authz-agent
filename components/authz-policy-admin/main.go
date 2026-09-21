@@ -57,10 +57,23 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
+
+	"github.com/netcracker/qubership-core-lib-go/v3/configloader"
+	"github.com/netcracker/qubership-core-lib-go/v3/logging"
 )
+
+// logger is shared by every file of the command.
+var logger logging.Logger
+
+func init() {
+	// The environment is the only property source, as in authz-agent: the
+	// image ships no application.yaml, and the chart configures the stub
+	// through AUTHZ_POLICY_ADMIN_* variables and LOGGING_LEVEL_ROOT.
+	configloader.Init(configloader.EnvPropertySource())
+	logger = logging.GetLogger("authz-policy-admin")
+}
 
 func main() {
 	port := envOr("AUTHZ_POLICY_ADMIN_PORT", "18090")
@@ -72,18 +85,19 @@ func main() {
 
 	st, err := newStore(dataDir)
 	if err != nil {
-		log.Fatalf("authz-policy-admin: %v", err)
+		logger.Errorf("store: %v", err)
+		os.Exit(1)
 	}
 	if dataDir == "" {
-		log.Printf("warn: persistence disabled: AUTHZ_POLICY_ADMIN_DATA_DIR not set, policies live in memory only and are lost on restart")
+		logger.Warnf("persistence disabled: AUTHZ_POLICY_ADMIN_DATA_DIR not set, policies live in memory only and are lost on restart")
 	} else {
-		log.Printf("persisting policies and PIPs under %s", dataDir)
+		logger.Infof("persisting policies and PIPs under %s", dataDir)
 	}
 	// Stated on every start, because whoever reads these logs should know it:
 	// the upload API accepts policies from anyone who can reach it.
-	log.Printf("warn: the simplified-policy API is unauthenticated — deploy this only in development and test namespaces")
+	logger.Warnf("the simplified-policy API is unauthenticated — deploy this only in development and test namespaces")
 	if ds := st.Domains(); len(ds) > 0 {
-		log.Printf("domains with content: %v", ds)
+		logger.Infof("domains with content: %v", ds)
 	}
 
 	srv := &server{st: st}
@@ -91,8 +105,11 @@ func main() {
 	srv.routes(mux)
 
 	addr := "0.0.0.0:" + port
-	log.Printf("authz-policy-admin listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	logger.Infof("authz-policy-admin listening on %s", addr)
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		logger.Errorf("listening on %s: %v", addr, err)
+		os.Exit(1)
+	}
 }
 
 func envOr(key, fallback string) string {
