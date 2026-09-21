@@ -27,6 +27,10 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/baseproviders"
+	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/baseproviders/xrequestid"
+	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxhelper"
+	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxmanager"
 
 	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/engine"
@@ -59,13 +63,22 @@ results := [r |
 // are the base URLs the relays target, "" for none.
 func newPublicApp(t *testing.T, authorization bool, logs *decisionlog.Logger, collector string) *fiber.App {
 	t.Helper()
+	return newPublicAppWithLog(t, authorization, logs, collector, nil)
+}
+
+// newPublicAppWithLog is newPublicApp with the diagnostics of the request
+// path sent to log, and the platform's context middleware ahead of the
+// routes, as the platform's Fiber builder installs it in main.
+func newPublicAppWithLog(t *testing.T, authorization bool, logs *decisionlog.Logger, collector string, log Logger) *fiber.App {
+	t.Helper()
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": publicPolicy, "authz.rego": testAuthz}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
 	srv := Register(fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true}), eng, logs,
-		Options{Authorization: authorization, CollectorURL: collector, NDBuiltinCache: true})
+		Options{Authorization: authorization, CollectorURL: collector, NDBuiltinCache: true, Log: log})
 	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
+	app.Use(platformContext)
 	srv.RegisterPublic(app)
 	return app
 }
@@ -92,6 +105,93 @@ func call(t *testing.T, app *fiber.App, method, path, body string, headers map[s
 }
 
 var admin = map[string]string{"Authorization": "Bearer m2m", "Incoming-Token": "Bearer admin"}
+
+// contextIDs keeps the request id of the context every line was written
+// under, which is the id the platform log format prints as request_id.
+type contextIDs struct{ seen []string }
+
+func (r *contextIDs) record(ctx context.Context) {
+	if id, err := xrequestid.Of(ctx); err == nil {
+		r.seen = append(r.seen, id.GetRequestId())
+	}
+}
+
+func (r *contextIDs) DebugC(ctx context.Context, _ string, _ ...any) { r.record(ctx) }
+func (r *contextIDs) WarnC(ctx context.Context, _ string, _ ...any)  { r.record(ctx) }
+func (r *contextIDs) ErrorC(ctx context.Context, _ string, _ ...any) { r.record(ctx) }
+
+// platformContext is the middleware the platform's Fiber builder installs
+// ahead of the routes: it builds the propagated context from the headers as
+// they arrived, and copies what is propagated back into the response.
+func platformContext(c *fiber.Ctx) error {
+	headers := map[string]any{}
+	for key, value := range c.Request().Header.All() {
+		headers[string(key)] = string(value)
+	}
+	c.SetUserContext(ctxmanager.InitContext(context.Background(), headers))
+	if err := ctxhelper.AddResponsePropagatableContextData(c.UserContext(), c.Response().Header.Add); err != nil {
+		return err
+	}
+	return c.Next()
+}
+
+// TestPublic_TheRequestIdNamesTheRequestEverywhere: the decision log reads
+// the request header and a log line reads the propagated context, so support
+// holding one of two ids finds nothing under the other. A request that
+// arrives without an X-Request-Id is given one, and the context built from
+// that same absent header holds an id of its own, which the generated one
+// replaces; a request that brings an id keeps it in all three places.
+func TestPublic_TheRequestIdNamesTheRequestEverywhere(t *testing.T) {
+	ctxmanager.Register(baseproviders.Get())
+	for _, tc := range []struct{ name, given string }{
+		{"no request id was sent", ""},
+		{"the caller sent a request id", "id-from-the-caller"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			logs, events, stop := collector(t)
+			defer stop()
+			lines := &contextIDs{}
+			app := newPublicAppWithLog(t, false, logs, "", lines)
+
+			req := httptest.NewRequest(http.MethodPost, "/access/v1/check/resource",
+				strings.NewReader(`{"type":"ORDER","operation":"READ"}`))
+			req.Header.Set("Incoming-Token", "Bearer admin")
+			if tc.given != "" {
+				req.Header.Set(fiber.HeaderXRequestID, tc.given)
+			}
+			resp, err := app.Test(req, 5000)
+			if err != nil {
+				t.Fatalf("POST /access/v1/check/resource: %v", err)
+			}
+			defer func() { _ = resp.Body.Close() }()
+			if resp.StatusCode != http.StatusOK {
+				t.Fatalf("POST /access/v1/check/resource = %d, want 200", resp.StatusCode)
+			}
+
+			logged := nextEvent(t, events).RequestContext.HTTP.Headers["x-request-id"]
+			if len(logged) != 1 {
+				t.Fatalf("the decision log recorded x-request-id %q, want one value", logged)
+			}
+			if tc.given != "" && logged[0] != tc.given {
+				t.Fatalf("the decision was logged under request id %q, want %q, the one the caller sent", logged[0], tc.given)
+			}
+			if tc.given == "" && len(logged[0]) != 36 {
+				t.Fatalf("the decision was logged under request id %q, want a generated UUID", logged[0])
+			}
+			if got := resp.Header.Get(fiber.HeaderXRequestID); got != logged[0] {
+				t.Errorf("the response carries request id %q, want %q, the one the decision was logged under", got, logged[0])
+			}
+			if len(lines.seen) == 0 {
+				t.Fatal("no line was written under the request's context, so the id it carries cannot be checked")
+			}
+			for i, got := range lines.seen {
+				if got != logged[0] {
+					t.Errorf("line %d was written under request id %q, want %q, the one the decision was logged under", i+1, got, logged[0])
+				}
+			}
+		})
+	}
+}
 
 // TestPublic_CheckResource: the v1 route answers a bare boolean and the v2
 // route {"decision": bool}, both as JSON, from the first result.

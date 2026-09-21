@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -71,6 +72,13 @@ allow if {
 
 func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, health func() Report) (*fiber.App, *engine.Engine) {
 	t.Helper()
+	return newAppWithLog(t, authorization, logs, health, nil)
+}
+
+// newAppWithLog is newApp with the diagnostics of the request path sent to
+// log, for a test whose subject is what the surface reports.
+func newAppWithLog(t *testing.T, authorization bool, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
+	t.Helper()
 	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
@@ -82,7 +90,7 @@ func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, health f
 		t.Fatal(err)
 	}
 	app := fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
-	Register(app, eng, logs, Options{Authorization: authorization, Health: health, NDBuiltinCache: true})
+	Register(app, eng, logs, Options{Authorization: authorization, Health: health, NDBuiltinCache: true, Log: log})
 	return app, eng
 }
 
@@ -232,6 +240,91 @@ func TestDataAPI_GuardedByPolicy(t *testing.T) {
 	}
 	if code, _, _ := do(t, app, http.MethodPatch, "/v1/data/authn", `[{"op":"add","path":"/k","value":1}]`, auth); code != 401 {
 		t.Fatalf("PATCH is not allowed by the test policy: %d", code)
+	}
+}
+
+// levels keeps the level of every line, for a test whose subject is what the
+// request path reports rather than what it answers.
+type levels struct{ lines []string }
+
+func (l *levels) record(level, format string, args ...any) {
+	l.lines = append(l.lines, level+": "+fmt.Sprintf(format, args...))
+}
+
+func (l *levels) DebugC(_ context.Context, format string, args ...any) {
+	l.record("debug", format, args...)
+}
+func (l *levels) WarnC(_ context.Context, format string, args ...any) {
+	l.record("warn", format, args...)
+}
+func (l *levels) ErrorC(_ context.Context, format string, args ...any) {
+	l.record("error", format, args...)
+}
+
+// at returns the lines reported at one level.
+func (l *levels) at(level string) []string {
+	var out []string
+	for _, line := range l.lines {
+		if strings.HasPrefix(line, level+": ") {
+			out = append(out, line)
+		}
+	}
+	return out
+}
+
+// TestDataAPI_ReportsARefusal: a request the guard turns away answers 401 and
+// nothing else, so an operator asked why a caller is refused has only the
+// caller's word for it unless the refusal is reported. It is the policy's
+// verdict rather than a failure of the service, so it is a warning, and a
+// request the same guard admits is not reported at all.
+func TestDataAPI_ReportsARefusal(t *testing.T) {
+	reported := &levels{}
+	app, _ := newAppWithLog(t, true, nil, nil, reported)
+
+	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "x"}`, nil); code != 401 {
+		t.Fatalf("PUT without the secret = %d, want 401", code)
+	}
+	warnings := reported.at("warn")
+	if len(warnings) != 1 {
+		t.Fatalf("a refused PUT reported %v, want one warning", reported.lines)
+	}
+	if !strings.Contains(warnings[0], "method=PUT") || !strings.Contains(warnings[0], "path=/v1/data/users") {
+		t.Errorf("the refusal reported %q, want the method PUT and the path /v1/data/users", warnings[0])
+	}
+	if got := reported.at("error"); len(got) != 0 {
+		t.Errorf("a refused request reported %v at error, want none: the policy decided, nothing failed", got)
+	}
+
+	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "alice"}`,
+		map[string]string{"Authorization": "Bearer s3cr3t"}); code != 204 {
+		t.Fatalf("PUT with the secret = %d, want 204", code)
+	}
+	if got := reported.at("warn"); len(got) != 1 {
+		t.Errorf("after a permitted PUT the warnings are %v, want only the refusal's", got)
+	}
+}
+
+// TestDecide_ReportsTheDecisionAtDebug: the decision is the line a policy
+// author asks for, and it names the document and whether it was defined. It
+// is debug because every request writes one, and it carries neither the
+// input nor the result: those hold the caller's token and claims, and the
+// decision log is where they are recorded.
+func TestDecide_ReportsTheDecisionAtDebug(t *testing.T) {
+	reported := &levels{}
+	app, _ := newAppWithLog(t, false, nil, nil, reported)
+
+	if code, _, _ := do(t, app, http.MethodPost, "/v1/data/authorize", `{"input": {"user": "alice"}}`, nil); code != 200 {
+		t.Fatalf("POST /v1/data/authorize = %d, want 200", code)
+	}
+	debug := reported.at("debug")
+	if len(debug) != 1 {
+		t.Fatalf("one decision reported %v, want one debug line", reported.lines)
+	}
+	if !strings.Contains(debug[0], "path=authorize") || !strings.Contains(debug[0], "defined=true") {
+		t.Errorf("the decision reported %q, want the path authorize and defined=true", debug[0])
+	}
+	if strings.Contains(debug[0], "alice") {
+		t.Errorf("the decision reported %q, which carries the input; the decision log records that", debug[0])
 	}
 }
 
