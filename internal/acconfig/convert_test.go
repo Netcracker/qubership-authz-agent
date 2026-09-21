@@ -15,9 +15,7 @@
 package acconfig
 
 import (
-	"bytes"
-	"io"
-	"log"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -26,16 +24,24 @@ import (
 	"authz-agent/internal/simplifiedpolicies"
 )
 
-// discardLogger returns a logger that swallows all output but can be checked
-// via the testLogger below.
-func discardLogger() *log.Logger {
-	return log.New(io.Discard, "", 0)
+// recordingLogger keeps every warning a conversion reported, in order.
+type recordingLogger struct {
+	warnings []string
 }
 
-// testLogger captures log lines for assertion.
-func testLogger() (*log.Logger, *bytes.Buffer) {
-	var buf bytes.Buffer
-	return log.New(&buf, "", 0), &buf
+func (r *recordingLogger) Warnf(format string, args ...any) {
+	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
+}
+
+// Count is the number of warnings reported.
+func (r *recordingLogger) Count() int { return len(r.warnings) }
+
+// String joins the warnings one per line, for a failure message.
+func (r *recordingLogger) String() string { return strings.Join(r.warnings, "\n") }
+
+// discardLogger returns a logger for a test the warnings are not about.
+func discardLogger() Logger {
+	return &recordingLogger{}
 }
 
 // ── Real v3 fixtures — all DEFAULT type, expect empty result ─────────────────
@@ -121,12 +127,12 @@ func TestConvertPolicySets_SimplifiedFixture(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
-	logger, logBuf := testLogger()
+	logger := &recordingLogger{}
 	got, _, err := ConvertPolicySets(raw, logger)
 	if err != nil {
 		t.Fatalf("ConvertPolicySets: %v", err)
 	}
-	logOutput := logBuf.String()
+	logOutput := logger.String()
 
 	// The fixture has DEFAULT, no-type (DEFAULT), malformed-target, malformed-op
 	// sets plus valid SIMPLIFIED sets. The malformed sets generate log lines.

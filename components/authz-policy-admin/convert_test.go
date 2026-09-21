@@ -16,13 +16,17 @@ package main
 
 import (
 	"encoding/json"
-	"io"
-	"log"
 	"testing"
 
 	"authz-agent/internal/acconfig"
 	"authz-agent/internal/simplifiedpolicies"
 )
+
+// discardWarnings drops what the production converter reports; this test is
+// about the documents it produces.
+type discardWarnings struct{}
+
+func (discardWarnings) Warnf(string, ...any) {}
 
 // The stub only earns its keep if what it serves is what the production
 // converter can read back. This test closes the loop in milliseconds; before
@@ -44,7 +48,7 @@ func TestV3RoundTripThroughProductionConverter(t *testing.T) {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
 
-	got, _, err := acconfig.ConvertPolicySets(raw, log.New(io.Discard, "", 0))
+	got, _, err := acconfig.ConvertPolicySets(raw, discardWarnings{})
 	if err != nil {
 		t.Fatalf("ConvertPolicySets: %v", err)
 	}
@@ -70,7 +74,7 @@ func TestPIPRoundTripThroughProductionConverter(t *testing.T) {
 		t.Fatalf("marshal v3 envelope: %v", err)
 	}
 
-	got, err := acconfig.ConvertPIPs(raw, log.New(io.Discard, "", 0))
+	got, err := acconfig.ConvertPIPs(raw, discardWarnings{})
 	if err != nil {
 		t.Fatalf("ConvertPIPs: %v", err)
 	}

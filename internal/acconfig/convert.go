@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -66,13 +65,20 @@ type Stats struct {
 	Policies int `json:"policies"`
 }
 
+// Logger receives what a conversion had to drop. The caller passes the
+// service's logger, so a dropped policy set reaches the platform log at the
+// level its operator filters on.
+type Logger interface {
+	Warnf(format string, args ...any)
+}
+
 // ConvertPolicySets parses a raw V3PolicySetsResponse JSON body and converts
 // all SIMPLIFIED policy sets into simplified policies. DEFAULT policy sets (and
 // those with an absent "type" key) are silently skipped. A policy set with an
 // unparseable target is logged loudly and its policies are dropped entirely; a
 // rule whose targets cannot be mapped to an operation and a role set is logged
 // and skipped. The returned Stats carry the skip counts.
-func ConvertPolicySets(raw []byte, logger *log.Logger) ([]simplifiedpolicies.Policy, Stats, error) {
+func ConvertPolicySets(raw []byte, logger Logger) ([]simplifiedpolicies.Policy, Stats, error) {
 	var resp V3PolicySetsResponse
 	var stats Stats
 	if err := json.Unmarshal(raw, &resp); err != nil {
@@ -86,7 +92,7 @@ func ConvertPolicySets(raw []byte, logger *log.Logger) ([]simplifiedpolicies.Pol
 // ConvertPIPs parses a raw V3PIPsResponse JSON body and converts the PIP list
 // to a slice of pips.SimplifiedPIP, silently skipping types that the agent does
 // not handle (FILTERED, PERMISSION_SCOPE, MAPPING, and GENERAL with beanName).
-func ConvertPIPs(raw []byte, logger *log.Logger) ([]pips.SimplifiedPIP, error) {
+func ConvertPIPs(raw []byte, logger Logger) ([]pips.SimplifiedPIP, error) {
 	var resp V3PIPsResponse
 	if err := json.Unmarshal(raw, &resp); err != nil {
 		return nil, fmt.Errorf("acconfig: parse pips response: %w", err)
@@ -95,7 +101,7 @@ func ConvertPIPs(raw []byte, logger *log.Logger) ([]pips.SimplifiedPIP, error) {
 }
 
 // convertPolicySets iterates the policy-set list and dispatches SIMPLIFIED ones.
-func convertPolicySets(sets []PolicySetV3, logger *log.Logger, stats *Stats) []simplifiedpolicies.Policy {
+func convertPolicySets(sets []PolicySetV3, logger Logger, stats *Stats) []simplifiedpolicies.Policy {
 	var result []simplifiedpolicies.Policy
 	for _, ps := range sets {
 		if ps.Type != "SIMPLIFIED" {
@@ -110,7 +116,7 @@ func convertPolicySets(sets []PolicySetV3, logger *log.Logger, stats *Stats) []s
 // convertPolicySet converts one SIMPLIFIED policy set into zero or more
 // simplified policies. If the policy-set target is unparseable, all derived
 // policies are dropped and the problem is logged.
-func convertPolicySet(ps PolicySetV3, logger *log.Logger, stats *Stats) []simplifiedpolicies.Policy {
+func convertPolicySet(ps PolicySetV3, logger Logger, stats *Stats) []simplifiedpolicies.Policy {
 	stats.PolicySets++
 
 	var resourceType string
@@ -121,7 +127,7 @@ func convertPolicySet(ps PolicySetV3, logger *log.Logger, stats *Stats) []simpli
 		resourceType = "ALL"
 	default:
 		stats.PolicySetsSkipped++
-		logger.Printf("warn: acconfig: policy set %q (id=%s): unparseable target %q — all derived policies skipped",
+		logger.Warnf("acconfig: policy set %q (id=%s): unparseable target %q — all derived policies skipped",
 			ps.Name, ps.PolicySetID, ps.Target)
 		return nil
 	}
@@ -149,7 +155,7 @@ func convertPolicySet(ps PolicySetV3, logger *log.Logger, stats *Stats) []simpli
 			operation, roles, ok := resolveOperationAndRoles(policyTarget, parseTarget(rule.Target))
 			if !ok {
 				stats.RulesSkipped++
-				logger.Printf("warn: acconfig: policy set %q, rule %q: policy target %q and rule target %q do not yield an operation and a role set — rule skipped",
+				logger.Warnf("acconfig: policy set %q, rule %q: policy target %q and rule target %q do not yield an operation and a role set — rule skipped",
 					ps.Name, rule.RuleID, policy.Target, rule.Target)
 				continue
 			}
@@ -405,7 +411,7 @@ func rolesToAny(roles []string) []any {
 // convertPIPs converts the v3 PIP list, filtering out types the agent does not
 // support. Filtering is silent for the same reason DEFAULT policy sets are
 // silent: these types are normal data in access-control.
-func convertPIPs(v3pips []PIPV3, _ *log.Logger) []pips.SimplifiedPIP {
+func convertPIPs(v3pips []PIPV3, _ Logger) []pips.SimplifiedPIP {
 	result := make([]pips.SimplifiedPIP, 0, len(v3pips))
 	for _, p := range v3pips {
 		sp, ok := convertPIP(p)

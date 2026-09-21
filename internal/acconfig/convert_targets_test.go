@@ -16,8 +16,6 @@ package acconfig
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"os"
 	"strings"
 	"testing"
@@ -337,7 +335,7 @@ func TestConvertPolicySets_RealDev4Payload(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read fixture: %v", err)
 	}
-	logger, logBuf := testLogger()
+	logger := &recordingLogger{}
 	got, stats, err := ConvertPolicySets(raw, logger)
 	if err != nil {
 		t.Fatalf("ConvertPolicySets: %v", err)
@@ -345,10 +343,11 @@ func TestConvertPolicySets_RealDev4Payload(t *testing.T) {
 
 	if stats.PolicySetsSkipped != 0 || stats.RulesSkipped != 0 {
 		t.Fatalf("expected zero skips on the real payload, got %+v; log=%s",
-			stats, truncate(logBuf.String(), 2000))
+			stats, truncate(logger.String(), 2000))
 	}
-	if strings.Contains(logBuf.String(), "warn:") {
-		t.Errorf("expected no warnings, got: %s", truncate(logBuf.String(), 2000))
+	if logger.Count() != 0 {
+		t.Errorf("ConvertPolicySets(real payload) reported %d warnings, want 0: %s",
+			logger.Count(), truncate(logger.String(), 2000))
 	}
 	if stats.PolicySets != 1294 {
 		t.Errorf("expected 1294 SIMPLIFIED policy sets, got %d", stats.PolicySets)
@@ -414,7 +413,7 @@ func TestConvertPIP_CarriesContractExtension(t *testing.T) {
 		"response":{"extract":"$.data.ids[*].id","coerce":"array","onMissing":"defaultValue"}
 	}]}`)
 
-	got, err := ConvertPIPs(raw, log.New(io.Discard, "", 0))
+	got, err := ConvertPIPs(raw, discardLogger())
 	if err != nil {
 		t.Fatalf("ConvertPIPs: %v", err)
 	}
@@ -452,7 +451,7 @@ func TestConvertPIP_MalformedExtensionIsDroppedNotFatal(t *testing.T) {
 		"name":"subject.bad","pipType":"GENERAL","url":"http://pip/x","response":"not-an-object"
 	}]}`)
 
-	got, err := ConvertPIPs(raw, log.New(io.Discard, "", 0))
+	got, err := ConvertPIPs(raw, discardLogger())
 	if err != nil {
 		t.Fatalf("a malformed response block must not fail the whole pull: %v", err)
 	}

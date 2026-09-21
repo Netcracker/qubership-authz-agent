@@ -27,7 +27,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -126,9 +125,6 @@ type Puller struct {
 	tokens Tokens
 	log    Logger
 	client *http.Client
-	// stdlog adapts the diagnostics for the converter, which logs through
-	// the standard library.
-	stdlog *log.Logger
 
 	mu             sync.Mutex
 	status         Status
@@ -152,7 +148,6 @@ func New(cfg Config, store Putter, tokens Tokens, logger Logger) *Puller {
 		tokens: tokens,
 		log:    logger,
 		client: &http.Client{Timeout: cfg.HTTPTimeout},
-		stdlog: log.New(writerFunc(func(p []byte) { logger.Warnf("policies: %s", strings.TrimSpace(string(p))) }), "", 0),
 	}
 }
 
@@ -273,7 +268,7 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("fetch pips: %w", err)
 	}
-	policyList, stats, err := acconfig.ConvertPolicySets(policySets, p.stdlog)
+	policyList, stats, err := acconfig.ConvertPolicySets(policySets, p.log)
 	if err != nil {
 		return fmt.Errorf("convert policySets: %w", err)
 	}
@@ -282,7 +277,7 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 		p.log.Warnf("policies: conversion dropped data: %d/%d policy sets and %d/%d rules could not be converted (%d policies produced)",
 			stats.PolicySetsSkipped, stats.PolicySets, stats.RulesSkipped, stats.Rules, stats.Policies)
 	}
-	pipList, err := acconfig.ConvertPIPs(pipsRaw, p.stdlog)
+	pipList, err := acconfig.ConvertPIPs(pipsRaw, p.log)
 	if err != nil {
 		return fmt.Errorf("convert pips: %w", err)
 	}
@@ -429,11 +424,4 @@ func readHashed(path string) ([]byte, string, error) {
 	}
 	sum := sha256.Sum256(raw)
 	return raw, hex.EncodeToString(sum[:]), nil
-}
-
-type writerFunc func(p []byte)
-
-func (w writerFunc) Write(p []byte) (int, error) {
-	w(p)
-	return len(p), nil
 }
