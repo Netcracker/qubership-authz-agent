@@ -84,13 +84,15 @@ func (s *Server) requestID(c *fiber.Ctx) error {
 	id := utils.UUIDv4()
 	c.Request().Header.Set(fiber.HeaderXRequestID, id)
 	c.Response().Header.Set(fiber.HeaderXRequestID, id)
+	// A process whose context providers were never registered has no
+	// propagated id for the generated one to disagree with, and the header
+	// carries it there on its own; the platform's Fiber builder registers
+	// them before any route runs.
 	ctx, err := ctxmanager.SetContextObject(c.UserContext(), xrequestid.X_REQUEST_ID_COTEXT_NAME,
 		xrequestid.NewXRequestIdContextObject(id))
-	if err != nil {
-		s.opts.Log.DebugC(c.UserContext(), "request id %s was not set on the context: %v", id, err)
-		return c.Next()
+	if err == nil {
+		c.SetUserContext(ctx)
 	}
-	c.SetUserContext(ctx)
 	return c.Next()
 }
 

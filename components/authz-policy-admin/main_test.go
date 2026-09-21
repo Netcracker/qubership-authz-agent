@@ -59,29 +59,56 @@ func records(t *testing.T) *reported {
 // who has to decide whether that is acceptable there. A start that keeps the
 // policies in memory says that too, because the next restart serves nothing.
 func TestBuild_ReportsWhatTheRunIs(t *testing.T) {
-	for name, dataDir := range map[string]string{"with a data directory": t.TempDir(), "with none": ""} {
+	// The directory carries a domain from an earlier run, which the start
+	// names: a restart that silently served nothing would look the same in
+	// the log as one that loaded everything.
+	seeded := t.TempDir()
+	if err := os.WriteFile(filepath.Join(seeded, policiesFilePrefix+"BSS.json"), []byte(bssPolicies), 0o644); err != nil {
+		t.Fatalf("seed file: %v", err)
+	}
+	for name, dataDir := range map[string]string{"with a data directory": seeded, "with none": ""} {
 		t.Run(name, func(t *testing.T) {
 			rec := records(t)
 			mux, addr, err := build(dataDir, "18090")
 			if err != nil {
 				t.Fatalf("build(%q) = %v", dataDir, err)
 			}
-			if addr != "0.0.0.0:18090" {
-				t.Errorf("build listens on %q, want 0.0.0.0:18090", addr)
-			}
-			if mux == nil {
-				t.Fatal("build returned no routes")
-			}
-			if !rec.contains("warn", "unauthenticated") {
-				t.Errorf("the run reported %v, want a warning that the API is unauthenticated", rec.lines)
-			}
-			if dataDir == "" && !rec.contains("warn", "persistence disabled") {
-				t.Errorf("the run reported %v, want a warning that nothing is persisted", rec.lines)
-			}
-			if dataDir != "" && !rec.contains("info", dataDir) {
-				t.Errorf("the run reported %v, want the directory the policies are kept in", rec.lines)
-			}
+			assertServes(t, mux, addr)
+			assertReportsTheRun(t, rec, dataDir)
 		})
+	}
+}
+
+// assertServes fails unless build returned routes and the address its port
+// makes.
+func assertServes(t *testing.T, mux *http.ServeMux, addr string) {
+	t.Helper()
+	if mux == nil {
+		t.Fatal("build returned no routes")
+	}
+	if addr != "0.0.0.0:18090" {
+		t.Errorf("build listens on %q, want 0.0.0.0:18090", addr)
+	}
+}
+
+// assertReportsTheRun fails unless the start reported that the upload API is
+// open, and where the policies are kept or that they are kept nowhere.
+func assertReportsTheRun(t *testing.T, rec *reported, dataDir string) {
+	t.Helper()
+	if !rec.contains("warn", "unauthenticated") {
+		t.Errorf("the run reported %v, want a warning that the API is unauthenticated", rec.lines)
+	}
+	if dataDir == "" {
+		if !rec.contains("warn", "persistence disabled") {
+			t.Errorf("the run reported %v, want a warning that nothing is persisted", rec.lines)
+		}
+		return
+	}
+	if !rec.contains("info", dataDir) {
+		t.Errorf("the run reported %v, want the directory the policies are kept in", rec.lines)
+	}
+	if !rec.contains("info", "BSS") {
+		t.Errorf("the run reported %v, want the domain it loaded from that directory", rec.lines)
 	}
 }
 

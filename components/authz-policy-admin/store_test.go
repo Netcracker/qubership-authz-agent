@@ -298,64 +298,77 @@ func TestMalformedDomainFileSkipsOnlyThatDomain(t *testing.T) {
 	}
 }
 
+// seedUnreadable puts a directory where each kind of file belongs, so that
+// reading one returns an error that is not "no such file", the absent case.
+func seedUnreadable(t *testing.T, dir string) {
+	t.Helper()
+	for _, name := range []string{policiesFilePrefix + "DIR.json", pipsFilePrefix + "DIR.json", stateFileName} {
+		if err := os.Mkdir(filepath.Join(dir, name), 0o755); err != nil {
+			t.Fatalf("seed directory: %v", err)
+		}
+	}
+}
+
+// seedUnparsable writes content no JSON decoder accepts.
+func seedUnparsable(t *testing.T, dir string) {
+	t.Helper()
+	for _, name := range []string{pipsFilePrefix + "BROKEN.json", stateFileName} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("{not json"), 0o644); err != nil {
+			t.Fatalf("seed file: %v", err)
+		}
+	}
+}
+
+// seedNotADomain writes a file whose name holds something the domain pattern
+// refuses.
+func seedNotADomain(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, policiesFilePrefix+"not a domain.json"), []byte(bssPolicies), 0o644); err != nil {
+		t.Fatalf("seed file: %v", err)
+	}
+}
+
+// assertOnlyBSSSurvived fails unless the export and the status name the one
+// domain the store could read.
+func assertOnlyBSSSurvived(t *testing.T, mux *http.ServeMux) {
+	t.Helper()
+	var resp v3PolicySetsResponse
+	decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
+	if len(resp.PolicySets) != 1 || resp.PolicySets[0].Domain != "BSS" {
+		t.Errorf("the export holds %+v, want only the BSS policy set the store could read", resp.PolicySets)
+	}
+	var status struct {
+		Revision int      `json:"revision"`
+		Domains  []string `json:"domains"`
+	}
+	decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "").Body.Bytes(), &status)
+	if status.Revision != 0 {
+		t.Errorf("revision = %d, want 0: no state the store could read", status.Revision)
+	}
+	if len(status.Domains) != 1 || status.Domains[0] != "BSS" {
+		t.Errorf("domains = %v, want BSS alone", status.Domains)
+	}
+}
+
 // A restart reads whatever the volume holds, which is the last run's files
 // plus anything an operator put there by hand. Each kind of unusable file is
 // reported and skipped, and the domains the store can read still load: a stub
 // that refused to start over one bad file would take the namespace's whole
 // policy surface with it.
 func TestUnusableFilesInTheDataDirectoryAreSkipped(t *testing.T) {
-	seedGood := func(t *testing.T, dir string) {
-		t.Helper()
-		if err := os.WriteFile(filepath.Join(dir, policiesFilePrefix+"BSS.json"), []byte(bssPolicies), 0o644); err != nil {
-			t.Fatalf("seed file: %v", err)
-		}
-	}
 	cases := map[string]func(t *testing.T, dir string){
-		"a file the store cannot read": func(t *testing.T, dir string) {
-			// A directory where a file belongs: os.ReadFile returns an error
-			// that is not "no such file", which is the absent case.
-			for _, name := range []string{policiesFilePrefix + "DIR.json", pipsFilePrefix + "DIR.json", stateFileName} {
-				if err := os.Mkdir(filepath.Join(dir, name), 0o755); err != nil {
-					t.Fatalf("seed directory: %v", err)
-				}
-			}
-		},
-		"a file the store cannot parse": func(t *testing.T, dir string) {
-			for _, name := range []string{pipsFilePrefix + "BROKEN.json", stateFileName} {
-				if err := os.WriteFile(filepath.Join(dir, name), []byte("{not json"), 0o644); err != nil {
-					t.Fatalf("seed file: %v", err)
-				}
-			}
-		},
-		"a file name that is not a domain": func(t *testing.T, dir string) {
-			if err := os.WriteFile(filepath.Join(dir, policiesFilePrefix+"not a domain.json"), []byte(bssPolicies), 0o644); err != nil {
-				t.Fatalf("seed file: %v", err)
-			}
-		},
+		"a file the store cannot read":     seedUnreadable,
+		"a file the store cannot parse":    seedUnparsable,
+		"a file name that is not a domain": seedNotADomain,
 	}
 	for name, seed := range cases {
 		t.Run(name, func(t *testing.T) {
 			dir := t.TempDir()
 			seed(t, dir)
-			seedGood(t, dir)
-
-			mux := newTestServer(t, dir)
-			var resp v3PolicySetsResponse
-			decode(t, do(t, mux, http.MethodGet, "/access/v3/config/policySets", "").Body.Bytes(), &resp)
-			if len(resp.PolicySets) != 1 || resp.PolicySets[0].Domain != "BSS" {
-				t.Errorf("the export holds %+v, want only the BSS policy set the store could read", resp.PolicySets)
+			if err := os.WriteFile(filepath.Join(dir, policiesFilePrefix+"BSS.json"), []byte(bssPolicies), 0o644); err != nil {
+				t.Fatalf("seed file: %v", err)
 			}
-			var status struct {
-				Revision int      `json:"revision"`
-				Domains  []string `json:"domains"`
-			}
-			decode(t, do(t, mux, http.MethodGet, "/authz-policy-admin/hash", "").Body.Bytes(), &status)
-			if status.Revision != 0 {
-				t.Errorf("revision = %d, want 0: no state the store could read", status.Revision)
-			}
-			if len(status.Domains) != 1 || status.Domains[0] != "BSS" {
-				t.Errorf("domains = %v, want BSS alone", status.Domains)
-			}
+			assertOnlyBSSSurvived(t, newTestServer(t, dir))
 		})
 	}
 }
