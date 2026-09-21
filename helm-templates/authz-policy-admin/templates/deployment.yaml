@@ -68,6 +68,8 @@ spec:
               containerPort: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}
               protocol: TCP
           env:
+            - name: LOGGING_LEVEL_ROOT
+              value: '{{ .Values.LOG_LEVEL }}'
             - name: AUTHZ_POLICY_ADMIN_PORT
               value: '{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
             # Uploaded policies and PIPs are written here as policies.json /

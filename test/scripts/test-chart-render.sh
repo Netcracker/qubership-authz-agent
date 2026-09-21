@@ -193,12 +193,22 @@ done
 # whole block is compared, so a rollingUpdate left under Recreate would show.
 strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | sed '$d'; }
 
+# Renders a chart and returns the value of one environment variable, "" when
+# the chart renders none. The empty string is what the absent case has to
+# produce: an unguarded grep ends the whole run under `set -e`, and a suite
+# that stops says less than one that names the check that failed.
+env_value_of() {
+  local chart="$1" name="$2"
+  shift 2
+  helm template t "${chart}" "$@" 2>&1 \
+    | grep -A1 "name: ${name}$" \
+    | awk -F"'" '/value:/ && !seen {print $2; seen=1}' || true
+}
+
 env_value() {
   local name="$1"
   shift
-  helm template t "${CHART_DIR}" "$@" \
-    | grep -A1 "name: ${name}$" \
-    | awk -F"'" '/value:/ && !seen {print $2; seen=1}'
+  env_value_of "${CHART_DIR}" "${name}" "$@"
 }
 
 # ── Default install: the platform convention, not an empty list ──────────
@@ -828,6 +838,41 @@ if [[ "$(helm template t "${CHART_DIR}" --set MONITORING_ENABLED=false 2>&1 || t
 else
   fail "a PodMonitor renders with MONITORING_ENABLED false"
 fi
+
+# ── Log level ────────────────────────────────────────────────────────────
+#
+# Both services log through the platform logger, which resolves its root level
+# from logging.level.root, and LOGGING_LEVEL_ROOT is the variable that sets
+# that property. Without this env entry the level could only be changed by
+# editing the Deployment, so what the charts have to render is the variable,
+# under the name the logger reads, on both services.
+for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
+  name="$(basename "${chart}")"
+  rendered="$(env_value_of "${chart}" LOGGING_LEVEL_ROOT)"
+  if [[ "${rendered}" == "info" ]]; then
+    pass "${name} renders LOGGING_LEVEL_ROOT info by default"
+  else
+    fail "${name} renders LOGGING_LEVEL_ROOT '${rendered}', expected info"
+  fi
+
+  raised="$(env_value_of "${chart}" LOGGING_LEVEL_ROOT --set LOG_LEVEL=debug)"
+  if [[ "${raised}" == "debug" ]]; then
+    pass "${name} renders LOGGING_LEVEL_ROOT from LOG_LEVEL"
+  else
+    fail "${name} renders LOGGING_LEVEL_ROOT '${raised}' for LOG_LEVEL=debug, expected debug"
+  fi
+
+  # A level the logger does not parse leaves it at info, which reads in
+  # production as a level that was set and did nothing; the schema refuses it
+  # at install time instead.
+  for bad_level in verbose ""; do
+    if helm template t "${chart}" --set "LOG_LEVEL=${bad_level}" >/dev/null 2>&1; then
+      fail "${name} accepted LOG_LEVEL '${bad_level}', which the logger does not parse"
+    else
+      pass "${name} refuses LOG_LEVEL '${bad_level}'"
+    fi
+  done
+done
 
 echo
 if (( failures > 0 )); then

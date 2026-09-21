@@ -98,6 +98,12 @@ MESH_ROUTES_ENABLED: true
 # deliberately used and the newest build must win on restart.
 IMAGE_PULL_POLICY: IfNotPresent
 
+# Root log level of the platform logger, rendered as LOGGING_LEVEL_ROOT, the
+# variable the logger reads logging.level.root from. debug adds a line per
+# decision on the request path and a line per tick of the policy pull; info
+# leaves both out.
+LOG_LEVEL: info
+
 # authz-agent-specific runtime configuration.
 AUTHZ_TRUSTED_PROVIDERS_FILE: /etc/authz/trusted-providers.json
 

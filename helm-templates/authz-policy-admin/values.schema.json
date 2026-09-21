@@ -162,6 +162,24 @@
         "Never"
       ]
     },
+    "LOG_LEVEL": {
+      "$id": "#/properties/LOG_LEVEL",
+      "type": "string",
+      "title": "The LOG_LEVEL schema",
+      "description": "Root log level of the service, passed to the container as LOGGING_LEVEL_ROOT",
+      "default": "info",
+      "examples": [
+        "info",
+        "debug"
+      ],
+      "enum": [
+        "debug",
+        "info",
+        "warn",
+        "error",
+        "fatal"
+      ]
+    },
     "AUTHZ_POLICY_ADMIN_PORT": {
       "$id": "#/properties/AUTHZ_POLICY_ADMIN_PORT",
       "type": "integer",
