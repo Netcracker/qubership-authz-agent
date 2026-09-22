@@ -5,11 +5,7 @@
       {
         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
         "component": "PARITY",
-        "createdBy": "service-account-parity-m2m",
-        "createdWhen": 1790067903277,
         "domain": "PARITY_ISOLATED",
-        "lastModifiedBy": "service-account-parity-m2m",
-        "lastModifiedWhen": 1790067903277,
         "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_REG_CONFIG_EXPORT_PolicySet",
         "policies": [
           {
@@ -59,11 +55,73 @@
       },
       {
         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-        "createdBy": "service-account-parity-m2m",
-        "createdWhen": 1790067903302,
+        "externalId": "parity-config-export-b",
+        "name": "config-export-b plain",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "config-export-b reader",
+            "policyId": "77bf521d-ede1-007e-bf05-31ac5e2ec5a1",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "config-export-b read-allow",
+                "ruleId": "52eca080-ff20-9535-0528-b4619cfdd967",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-mt-b"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-mt-b"
+          }
+        ],
+        "policySetId": "3752e811-aa67-f53d-c057-e6a67e0da8cd",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "parity-mt-b",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-config-export-iterating",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "config-export iterating",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "config-export scoped",
+            "policyId": "5d7f6022-91f4-e843-35d8-70429993ac9f",
+            "rules": [
+              {
+                "condition": "subject.permissionScope.region CONTAINS resource.region",
+                "effect": "ALLOW",
+                "name": "config-export region-granted",
+                "ruleId": "fd0e6283-1aa9-c2f7-4225-f270f4c618a7",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "18cc872e-fe1b-271e-c1c0-10ae26521369",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
         "externalId": "parity-config-export-plain",
-        "lastModifiedBy": "service-account-parity-m2m",
-        "lastModifiedWhen": 1790067903302,
         "name": "config-export plain",
         "policies": [
           {
@@ -121,38 +179,20 @@
         "type": "DEFAULT"
       },
       {
-        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-        "createdBy": "service-account-parity-m2m",
-        "createdWhen": 1790067903355,
-        "externalId": "parity-config-export-iterating",
-        "iterate": {
-          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-          "foreach": "subject.permissionScope"
-        },
-        "lastModifiedBy": "service-account-parity-m2m",
-        "lastModifiedWhen": 1790067903355,
-        "name": "config-export iterating",
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "externalId": "parity-config-export-empty-rules",
+        "name": "config-export empty-rules",
         "policies": [
           {
-            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-            "name": "config-export scoped",
-            "policyId": "5d7f6022-91f4-e843-35d8-70429993ac9f",
-            "rules": [
-              {
-                "condition": "subject.permissionScope.region CONTAINS resource.region",
-                "effect": "ALLOW",
-                "name": "config-export region-granted",
-                "ruleId": "fd0e6283-1aa9-c2f7-4225-f270f4c618a7",
-                "ruleType": "DEFAULT",
-                "target": "operation == 'READ'",
-                "tenantId": "default"
-              }
-            ],
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "name": "config-export no-rules",
+            "policyId": "d5b578ed-0465-8b4f-eb28-ea32c805caf8",
+            "rules": [],
             "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
             "tenantId": "default"
           }
         ],
-        "policySetId": "18cc872e-fe1b-271e-c1c0-10ae26521369",
+        "policySetId": "ea4c2bef-b7dd-030b-d113-6b529c37b216",
         "policySets": [],
         "status": "ACTIVE",
         "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
@@ -160,58 +200,15 @@
         "type": "DEFAULT"
       },
       {
-        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-        "createdBy": "service-account-parity-m2m",
-        "createdWhen": 1790067903440,
-        "externalId": "parity-config-export-b",
-        "lastModifiedBy": "service-account-parity-m2m",
-        "lastModifiedWhen": 1790067903440,
-        "name": "config-export-b plain",
-        "policies": [
-          {
-            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-            "name": "config-export-b reader",
-            "policyId": "77bf521d-ede1-007e-bf05-31ac5e2ec5a1",
-            "rules": [
-              {
-                "condition": "true",
-                "effect": "ALLOW",
-                "name": "config-export-b read-allow",
-                "ruleId": "52eca080-ff20-9535-0528-b4619cfdd967",
-                "ruleType": "DEFAULT",
-                "target": "operation == 'READ'",
-                "tenantId": "parity-mt-b"
-              }
-            ],
-            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-            "tenantId": "parity-mt-b"
-          }
-        ],
-        "policySetId": "3752e811-aa67-f53d-c057-e6a67e0da8cd",
-        "policySets": [],
-        "status": "ACTIVE",
-        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
-        "tenantId": "parity-mt-b",
-        "type": "DEFAULT"
-      },
-      {
         "combiningAlgorithm": "PERMIT_UNLESS_DENY",
-        "createdBy": "service-account-parity-m2m",
-        "createdWhen": 1790067903334,
         "externalId": "parity-config-export-nested",
-        "lastModifiedBy": "service-account-parity-m2m",
-        "lastModifiedWhen": 1790067903334,
         "name": "config-export nested-outer",
         "policies": [],
         "policySetId": "6712764e-aae1-df2f-ee70-87adf5cd02c7",
         "policySets": [
           {
             "combiningAlgorithm": "DENY_UNLESS_PERMIT",
-            "createdBy": "service-account-parity-m2m",
-            "createdWhen": 1790067903334,
             "externalId": "parity-config-export-nested",
-            "lastModifiedBy": "service-account-parity-m2m",
-            "lastModifiedWhen": 1790067903334,
             "name": "config-export nested-inner",
             "policies": [
               {
@@ -241,31 +238,6 @@
             "type": "DEFAULT"
           }
         ],
-        "status": "ACTIVE",
-        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
-        "tenantId": "default",
-        "type": "DEFAULT"
-      },
-      {
-        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
-        "createdBy": "service-account-parity-m2m",
-        "createdWhen": 1790067903391,
-        "externalId": "parity-config-export-empty-rules",
-        "lastModifiedBy": "service-account-parity-m2m",
-        "lastModifiedWhen": 1790067903391,
-        "name": "config-export empty-rules",
-        "policies": [
-          {
-            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
-            "name": "config-export no-rules",
-            "policyId": "d5b578ed-0465-8b4f-eb28-ea32c805caf8",
-            "rules": [],
-            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-            "tenantId": "default"
-          }
-        ],
-        "policySetId": "ea4c2bef-b7dd-030b-d113-6b529c37b216",
-        "policySets": [],
         "status": "ACTIVE",
         "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
         "tenantId": "default",
