@@ -32,7 +32,9 @@ const setTargetService = "parity-st-svc"
 // resourceType == 'T' AND resource.x == 'v' is refused at upload, while the
 // regular policy sets of products put resourceType == 'T' AND resource.service
 // == '…' on the set. So either the PAP accepts some resource attributes on a set
-// target and refuses others, or the refusal recorded had another cause. Each case
+// target and refuses others, or the refusal recorded had another cause; the two
+// policies of that fixture share one policyId, and
+// TestRound7SetTargetRefusalCases records that shape on its own. Each case
 // uploads one set with one attribute in its target and records the upload
 // status: resource.service, the attribute product sets read; resource.uri under
 // MATCH and resource.id, the attributes product rules read; resource.x, the

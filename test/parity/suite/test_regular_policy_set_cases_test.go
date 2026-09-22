@@ -288,7 +288,11 @@ func regularPolicySetCases() []regularCase {
 	}
 
 	// A missing attribute in the target of a set, a policy, or a rule, beside a
-	// sibling at the same level that allows when resource.s is 'y'.
+	// sibling at the same level that allows when resource.s is 'y'. The set case
+	// builds both policies from the key reader, so they carry one policyId, and
+	// the recorded 400 is as likely the shared id as the target;
+	// TestRound7SetTargetRefusalCases separates the two, and the fixture stays
+	// as recorded.
 	{
 		id := "missing-attribute-in-set-target"
 		b := regularBuilder{caseID: id}

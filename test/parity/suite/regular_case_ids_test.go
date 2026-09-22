@@ -16,7 +16,10 @@
 
 package paritysuite
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 // regularCaseLists are the functions that build regular cases. A new list is
 // added here, or its ids are checked by nothing.
@@ -35,6 +38,60 @@ var regularCaseLists = map[string]func() []regularCase{
 	"barePathRegularCases":     barePathRegularCases,
 	"denyPredicateCases":       denyPredicateCases,
 	"terminalEffectCases":      terminalEffectCases,
+	"setTargetRefusalCases":    setTargetRefusalCases,
+	"round7FilterCases":        round7FilterCases,
+}
+
+// casesSharingElementIDs are the regular cases whose one upload carries one
+// policyId twice: two-sets-whose-policies-share-one-id, which asks the PAP about
+// the shared id, and missing-attribute-in-set-target, whose fixture is kept as
+// it was recorded.
+var casesSharingElementIDs = map[string]struct{}{
+	"missing-attribute-in-set-target":      {},
+	"two-sets-whose-policies-share-one-id": {},
+}
+
+// Every set, policy, and rule of one upload carries an id of its own, unless the
+// case is listed in casesSharingElementIDs. missing-attribute-in-set-target
+// built two policies from one key, so both carried one policyId, and the PAP's
+// refusal was read as a refusal of the set target.
+func TestRegularCaseElementIDsAreUnique(t *testing.T) {
+	for list, build := range regularCaseLists {
+		for _, tc := range build() {
+			if _, shared := casesSharingElementIDs[tc.id]; shared {
+				continue
+			}
+			for i, upload := range tc.uploads {
+				owners := map[string][]string{}
+				collectElementIDs(upload.sets, owners)
+				for id, names := range owners {
+					if len(names) > 1 {
+						t.Errorf("%s: case %q upload %d: id %s is carried by %v", list, tc.id, i+1, id, names)
+					}
+				}
+			}
+		}
+	}
+}
+
+// collectElementIDs records, for every policySetId, policyId, and ruleId under v,
+// the kind and name of each element carrying it.
+func collectElementIDs(v any, owners map[string][]string) {
+	switch typed := v.(type) {
+	case map[string]any:
+		for _, field := range []string{"policySetId", "policyId", "ruleId"} {
+			if id, ok := typed[field].(string); ok {
+				owners[id] = append(owners[id], field+" of "+fmt.Sprint(typed["name"]))
+			}
+		}
+		for _, value := range typed {
+			collectElementIDs(value, owners)
+		}
+	case []any:
+		for _, element := range typed {
+			collectElementIDs(element, owners)
+		}
+	}
 }
 
 // Every regular case has an id of its own across every list, and every request of

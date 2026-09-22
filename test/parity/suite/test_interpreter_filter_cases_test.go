@@ -185,8 +185,8 @@ func interpreterFilterCases() []regularCase {
 	}
 
 	// A target that reads the resource, in the policy and in the rule, on a filter
-	// request that carries no resource. missing-attribute-in-set-target records
-	// that the PAP refuses such a target on a set; f3 records that a condition
+	// request that carries no resource. set-target-reads-unknown-attribute records
+	// that the PAP accepts such a target on a set; f3 records that a condition
 	// reading the resource does not keep the predicate out. The check request
 	// carries the attribute the target reads and is the control.
 	for _, level := range []string{"policy", "rule"} {
