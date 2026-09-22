@@ -58,6 +58,31 @@ func (s *ParitySuite) mustAnonymousTokenBundle() TokenBundle {
 	}
 }
 
+// emptyPolicySetsOnCleanup registers a cleanup that replaces the regular sets
+// uploaded under each of externalIDs in the tenant of cfg with an empty list. A
+// regular set that names a PIP declaration no longer in the isolated domain
+// makes access-control refuse every check request on the stand with 400, so a
+// test that uploads sets and empties the domain when it ends has to empty the
+// sets first; cleanups run last registered first, so this one is registered
+// after the domain's.
+func (s *ParitySuite) emptyPolicySetsOnCleanup(cfg Config, externalIDs ...string) {
+	s.T().Helper()
+	ctx := context.Background()
+	m2m := s.mustM2MToken()
+	s.T().Cleanup(func() {
+		for _, externalID := range externalIDs {
+			status, _, err := HelperPutPolicySets(ctx, cfg, m2m, externalID, []any{})
+			if err != nil {
+				s.T().Logf("empty the policy sets of %s: %v", externalID, err)
+				continue
+			}
+			if status < http.StatusOK || status >= http.StatusMultipleChoices {
+				s.T().Logf("empty the policy sets of %s: status %d", externalID, status)
+			}
+		}
+	})
+}
+
 func (s *ParitySuite) requireGolden(id ParityEndpointID, subCase string, actual any) {
 	s.T().Helper()
 	if err := s.comparator.Compare(id, subCase, actual); err != nil {

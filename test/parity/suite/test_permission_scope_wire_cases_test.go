@@ -158,6 +158,7 @@ func (s *ParitySuite) TestPermissionScopeWireCases() {
 		return
 	}
 
+	s.emptyPolicySetsOnCleanup(s.cfg, "parity-permission-scope-wire")
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, "parity-permission-scope-wire", []any{set})
 	s.Require().NoError(err)
 	s.Run("upload-the-set", func() {

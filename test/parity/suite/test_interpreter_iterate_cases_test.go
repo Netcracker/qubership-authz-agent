@@ -124,6 +124,7 @@ func (s *ParitySuite) TestInterpreterIterateAlgorithmCases() {
 		return
 	}
 
+	s.emptyPolicySetsOnCleanup(s.cfg, "parity-scope-iterate-algorithms")
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, "parity-scope-iterate-algorithms", sets)
 	s.Require().NoError(err)
 	s.Run("upload-the-sets", func() {
@@ -340,6 +341,7 @@ func (s *ParitySuite) TestInterpreterIterateNodeAlgorithmCases() {
 	if pipStatus < http.StatusOK || pipStatus >= http.StatusMultipleChoices {
 		return
 	}
+	s.emptyPolicySetsOnCleanup(s.cfg, "parity-scope-node-algorithms")
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, "parity-scope-node-algorithms", sets)
 	s.Require().NoError(err)
 	s.Run("upload-the-sets", func() {

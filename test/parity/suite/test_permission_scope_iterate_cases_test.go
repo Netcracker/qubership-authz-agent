@@ -163,6 +163,7 @@ func (s *ParitySuite) TestPermissionScopeIterateCases() {
 		return
 	}
 
+	s.emptyPolicySetsOnCleanup(s.cfg, "parity-permission-scope-iterate")
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, "parity-permission-scope-iterate", []any{set})
 	s.Require().NoError(err)
 	s.Run("upload-the-set", func() {

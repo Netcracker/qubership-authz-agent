@@ -118,8 +118,8 @@ func regularResourceType(caseID string) string {
 // to reproduce, and run on the legacy profile only.
 //
 // Each case records the status of every upload and, when all were accepted, the
-// status and the answer of every request. A case's sets stay on the stand after the
-// run; their resource types are the case's own, and a rerun replaces them.
+// status and the answer of every request. The resource types are the case's own,
+// and the sets are emptied when the test ends.
 func (s *ParitySuite) TestRegularPolicySetCases() {
 	s.runRegularCases(regularPolicySetCases())
 }
@@ -129,6 +129,12 @@ func (s *ParitySuite) TestRegularPolicySetCases() {
 // upload status is a golden of its own, so a set the PAP refuses is a recorded
 // result rather than a failed case, and the requests of a refused case are skipped
 // because they would record a DENY the rules never produced.
+//
+// When the test ends, every externalID the cases uploaded under is emptied and
+// then the isolated domain is, in that order, so that no set outlives the PIP
+// declarations it names. A set that does poisons the stand for every group that
+// runs after it: access-control refuses every check request with 400, not only
+// the ones the set's target matches.
 func (s *ParitySuite) runRegularCases(cases []regularCase) {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("regular policy sets are evaluated by access-control only; authz-agent loads simplified policies")
@@ -140,6 +146,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
 		}
 	})
+	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
 			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
@@ -182,6 +189,23 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			}
 		})
 	}
+}
+
+// regularExternalIDs lists the externalIDs the cases upload under, each once, in
+// the order of their first upload.
+func regularExternalIDs(cases []regularCase) []string {
+	var ids []string
+	seen := map[string]struct{}{}
+	for _, tc := range cases {
+		for _, upload := range tc.uploads {
+			if _, dup := seen[upload.externalID]; dup {
+				continue
+			}
+			seen[upload.externalID] = struct{}{}
+			ids = append(ids, upload.externalID)
+		}
+	}
+	return ids
 }
 
 func regularPolicySetCases() []regularCase {

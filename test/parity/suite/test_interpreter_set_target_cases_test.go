@@ -16,20 +16,12 @@
 
 package paritysuite
 
-import (
-	"context"
-	"strings"
-)
+import "strings"
 
 // setTargetService is the value every set target of the set-target cases compares
 // resource.service with. It is this group's own, so a set whose target names no
 // resource type applies to no request of another case.
 const setTargetService = "parity-st-svc"
-
-// setTargetUntypedExternalID is the externalID of the one set whose target names
-// no resource type. That set is emptied when the test ends, because a set the
-// PAP accepted under that target would apply to every request on the stand.
-const setTargetUntypedExternalID = "parity-set-target-reads-service-without-resource-type"
 
 // Whether the PAP accepts a set whose target reads an attribute of the resource,
 // and what such a target does on a request that carries the attribute, one that
@@ -63,15 +55,6 @@ const setTargetUntypedExternalID = "parity-set-target-reads-service-without-reso
 // filtered to them and leave every golden already committed alone. Legacy profile
 // only, like every regular case.
 func (s *ParitySuite) TestInterpreterSetTargetCases() {
-	if !isAuthzAgentProfile(s.cfg.Profile) {
-		ctx := context.Background()
-		m2m := s.mustM2MToken()
-		s.T().Cleanup(func() {
-			if _, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, setTargetUntypedExternalID, []any{}); err != nil {
-				s.T().Logf("empty %s: %v", setTargetUntypedExternalID, err)
-			}
-		})
-	}
 	s.runRegularCases(setTargetCases())
 }
 
