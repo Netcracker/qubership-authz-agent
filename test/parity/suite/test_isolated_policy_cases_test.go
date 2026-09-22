@@ -55,6 +55,9 @@ type isolatedRequest struct {
 	resource  any
 	headers   map[string]string
 	filter    bool
+	// omitOperation sends a filter request with no operation parameter at all,
+	// where an empty operation would fall back to LIST.
+	omitOperation bool
 }
 
 // parityNoHeaderPIP is a HEADER PIP with no defaultValue, a declaration no seeded
@@ -306,7 +309,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 					resourceType := valueOr(req.typ, tc.resourceType)
 					opts := PerCallOptions{CustomHeaders: req.headers}
 					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, resourceType, valueOr(req.operation, "LIST"), s.mustTokenBundle(UserProfileReader), opts)
+						s.runPendingFilterV1OutcomeCase(subCase, resourceType, req.filterOperation(), s.mustTokenBundle(UserProfileReader), opts)
 						return
 					}
 					s.runPendingCheckResourceV1OutcomeCase(
@@ -319,6 +322,15 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			}
 		})
 	}
+}
+
+// filterOperation is the operation parameter of a filter request: LIST unless the
+// request names one, and none at all when omitOperation is set.
+func (r isolatedRequest) filterOperation() string {
+	if r.omitOperation {
+		return ""
+	}
+	return valueOr(r.operation, "LIST")
 }
 
 func valueOr(value, fallback string) string {

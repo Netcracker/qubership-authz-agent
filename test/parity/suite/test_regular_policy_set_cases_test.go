@@ -168,7 +168,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 				s.Run(req.name, func() {
 					subCase := "regular/" + tc.id + "/" + req.name
 					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, valueOr(req.operation, "LIST"), s.mustTokenBundle(UserProfileReader), PerCallOptions{})
+						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, req.filterOperation(), s.mustTokenBundle(UserProfileReader), PerCallOptions{})
 						return
 					}
 					s.runPendingCheckResourceV1OutcomeCase(
