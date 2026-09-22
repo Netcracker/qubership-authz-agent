@@ -23,12 +23,16 @@ import (
 
 // failedPIPAlgorithms are the combining algorithms the failed-PIP cases are run
 // under, one case each, with the suffix that makes the case's PIP names and
-// pip-mock paths its own.
+// pip-mock paths its own. They are the two algorithms under which a permit is
+// not terminal, so every rule of the policy is evaluated whatever order the
+// stand evaluates them in. Under DENY_UNLESS_PERMIT and PERMIT_OVERRIDES the
+// first permitting rule ends the policy, the rule reading the failed PIP is
+// evaluated only when the stand happens to order it first, and five recording
+// runs on fresh stands answered the same request both ways; those two
+// algorithms have no answer to record.
 var failedPIPAlgorithms = []struct{ key, name, suffix string }{
-	{"deny-unless-permit", "DENY_UNLESS_PERMIT", "DenyUnlessPermit"},
 	{"permit-unless-deny", "PERMIT_UNLESS_DENY", "PermitUnlessDeny"},
 	{"deny-overrides", "DENY_OVERRIDES", "DenyOverrides"},
-	{"permit-overrides", "PERMIT_OVERRIDES", "PermitOverrides"},
 }
 
 // failedPIPCase holds the PIP declarations and the pinned pip-mock routes of one
@@ -43,23 +47,24 @@ type failedPIPCase struct {
 }
 
 // A rule whose condition reads a GENERAL PIP that failed, beside a rule of the
-// same policy that allows, under each of the four combining algorithms.
-// approve-failed-allow-beside-allow records this shape with a missing resource
-// key and answers true under all four, which is what says an unresolvable value
-// makes one rule inapplicable and leaves its neighbor alone. A failed PIP is the
-// other way an operand fails to resolve, and whether the two are the same event
-// decides whether an evaluator can drop the abort altogether.
+// same policy that allows, under the two combining algorithms whose answer does
+// not depend on the order of the rules. approve-failed-allow-beside-allow records
+// this shape with a missing resource key and answers true under all four
+// algorithms, which is what says an unresolvable value makes one rule
+// inapplicable and leaves its neighbor alone. A failed PIP is the other way an
+// operand fails to resolve, and whether the two are the same event decides
+// whether an evaluator can drop the abort altogether.
 //
 // Each case reads PIPs of its own, named and routed after its algorithm, and
-// runs alone with the pip-mock call log read after it. Access-control caches a
-// PIP answer per subject and tenant across requests, so four cases that read
-// three PIP names in turn see what the earlier cases left in the cache rather
-// than what pip-mock answers now, and the-pips-were-read then fails on the case
-// whose PIPs were never called. Twelve names and twelve paths give every case a
-// cold cache. Every case declares all twelve, because each case's upload of the
-// domain replaces its PIP declarations while the sets of the earlier cases are
-// still on the stand, and a set that names a declaration the domain no longer
-// holds makes access-control refuse every check request with 400.
+// runs alone with the pip-mock call log read after it, so the-pips-were-read
+// counts the case's own paths and a PIP answer that outlived the case that
+// fetched it, which TestRound7PIPCacheCases rules out for a declaration with
+// cacheable false, could not be mistaken for a fresh one. Every case declares
+// all six, because each case's
+// upload of the domain replaces its PIP declarations while the sets of the
+// earlier case are still on the stand, and a set that names a declaration the
+// domain no longer holds makes access-control refuse every check request with
+// 400.
 //
 // The operations split the shapes: READ an ALLOW that reads the PIP answering
 // 500 beside an ALLOW, UPDATE the same with 404, DELETE a DENY that reads the
