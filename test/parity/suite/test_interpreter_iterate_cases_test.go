@@ -279,3 +279,110 @@ func iterateBindingCases() []regularCase {
 
 	return cases
 }
+
+// iterateNodeAlgorithmPairs are the set and iterate-node algorithm pairs of
+// TestInterpreterIterateNodeAlgorithmCases, each the other's opposite on a pass
+// that denies beside a pass that permits.
+var iterateNodeAlgorithmPairs = []struct{ key, set, node string }{
+	{"set-deny-unless-permit-node-permit-unless-deny", "DENY_UNLESS_PERMIT", "PERMIT_UNLESS_DENY"},
+	{"set-permit-unless-deny-node-deny-unless-permit", "PERMIT_UNLESS_DENY", "DENY_UNLESS_PERMIT"},
+}
+
+// Which algorithm combines the passes of an iterating set when the set and its
+// iterate node name different ones. Every recorded iterating set, and every case
+// of TestInterpreterIterateAlgorithmCases, gives the two the same algorithm, so
+// nothing records which of the two the passes are combined by.
+//
+// Each set holds one policy under DENY_OVERRIDES with a DENY rule, region not
+// granted, and an ALLOW rule with no condition, so under two grants the region
+// of the first grant is permitted by its own pass and denied by the other. The
+// set and the node take opposite algorithms: with the passes combined by the
+// node, region-of-the-first-grant is false under a PERMIT_UNLESS_DENY node and
+// true under a DENY_UNLESS_PERMIT node; combined by the set, the answers swap.
+// region-of-no-grant is denied by both passes and is the control that the DENY
+// rule is live. The PIP, the wire body and the cache wait are
+// permission-scope-wire's.
+//
+// The cases live in their own test function so that a recording run can be
+// filtered to them and leave every golden already committed alone. Legacy profile
+// only.
+func (s *ParitySuite) TestInterpreterIterateNodeAlgorithmCases() {
+	if isAuthzAgentProfile(s.cfg.Profile) {
+		s.T().Skip("iterate is a regular policy set field; the agent loads simplified policies")
+	}
+	ctx := context.Background()
+	m2m := s.mustM2MToken()
+	s.T().Cleanup(func() {
+		if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
+			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
+		}
+	})
+
+	var sets []any
+	for _, pair := range iterateNodeAlgorithmPairs {
+		b := regularBuilder{caseID: "scope-node-" + pair.key}
+		rt := regularResourceType("scope-node-" + pair.key)
+		set := b.iteratingSet("set", "resourceType == '"+rt+"'", pair.set, "subject.permissionScope", []any{
+			b.policy("scoped", readerTarget, "DENY_OVERRIDES",
+				b.rule("region-not-granted", "operation == 'READ'",
+					"subject.permissionScope.region NOT CONTAINS resource.region", "DENY", nil),
+				b.rule("read-allow", "operation == 'READ'", "true", "ALLOW", nil)),
+		})
+		set["iterate"].(map[string]any)["combiningAlgorithm"] = pair.node
+		sets = append(sets, set)
+	}
+
+	pipStatus, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, []any{permissionScopeWirePIP}, nil)
+	s.Require().NoError(err)
+	s.Run("declare-the-pip", func() {
+		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "scope-node/declare-the-pip", &model.PolicyLoadOutcome{Status: pipStatus})
+	})
+	if pipStatus < http.StatusOK || pipStatus >= http.StatusMultipleChoices {
+		return
+	}
+	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, "parity-scope-node-algorithms", sets)
+	s.Require().NoError(err)
+	s.Run("upload-the-sets", func() {
+		s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, "scope-node/upload-the-sets", &model.PolicyLoadOutcome{Status: setStatus})
+	})
+	if setStatus < http.StatusOK || setStatus >= http.StatusMultipleChoices {
+		return
+	}
+
+	scopePath := permissionScopeWirePath(parityReaderSubjectID)
+	s.Require().NoError(s.pipMock.ResetCalls(ctx))
+	s.Require().NoError(s.pipMock.PinRoute(ctx, scopePath, PipStubResponse{
+		StatusCode: http.StatusOK,
+		Body:       permissionScopeWireBody(parityReaderSubjectID, []permissionScopeGrant{{"region": {"r1"}}, {"region": {"r2"}}}),
+	}))
+	// Outlive the cachePeriod of the declaration, as permission-scope-wire does,
+	// so the body pinned above is the one the requests see.
+	time.Sleep(2 * time.Second)
+	for _, pair := range iterateNodeAlgorithmPairs {
+		for _, req := range iterateAlgorithmRequests {
+			s.Run(pair.key+"/"+req.name, func() {
+				s.runPendingCheckResourceV1OutcomeCase(
+					"scope-node/"+pair.key+"/"+req.name,
+					model.CheckAccessRequest{
+						Operation: "READ",
+						Type:      regularResourceType("scope-node-" + pair.key),
+						Resource:  req.resource,
+					},
+					s.mustTokenBundle(UserProfileReader),
+					PerCallOptions{},
+				)
+			})
+		}
+	}
+	s.Run("the-pip-was-read", func() {
+		calls, err := s.pipMock.GetCalls(ctx)
+		s.Require().NoError(err)
+		read := 0
+		for _, call := range calls {
+			if call.Path == scopePath {
+				read++
+			}
+		}
+		s.Assert().Positive(read, "pip-mock calls to %s over the iterate node algorithm cases", scopePath)
+	})
+}

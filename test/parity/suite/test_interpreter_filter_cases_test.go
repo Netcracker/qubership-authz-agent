@@ -20,8 +20,8 @@ package paritysuite
 // groups of predicates, with no operation, and with a target that reads the
 // resource. The recorded filter cases all reach a rule with a predicate: the
 // condition of such a rule is not applied (f1-false-condition-beside-predicate,
-// filter-allow-rule-condition-false), a DENY rule's predicate is left out
-// (filter-allow-and-deny-rules), and the predicates of a nested set and of a
+// filter-allow-rule-condition-false), a DENY rule's predicate is left out under
+// DENY_UNLESS_PERMIT (filter-allow-and-deny-rules), and the predicates of a nested set and of a
 // simplified policy beside a set are grouped in parentheses (filter-nested-sets,
 // filter-set-beside-simplified-policy). ALLOW with no predicate is recorded for a
 // simplified policy only (agg-ols-plus-rls).

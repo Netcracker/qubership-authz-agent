@@ -124,5 +124,29 @@ func (s *ParitySuite) TestTranslatorMatchDialectCases() {
 			{name: "a-segment-in-place-of-the-placeholder", resource: map[string]any{"id": "match-md12", "uri": "/v1/42/items"}},
 			{name: "the-braces-themselves", resource: map[string]any{"id": "match-md12", "uri": "/v1/{id}/items"}},
 		}},
+
+		// A pair of parentheses as a metacharacter: one or more characters within
+		// a segment, or the two literal characters.
+		{id: "md13-parentheses", resourceType: "PARITY_SUITE_MATCH_MD13", condition: "resource.uri MATCH /v1/()/items", requests: []isolatedRequest{
+			{name: "one-character-segment", resource: map[string]any{"id": "match-md13", "uri": "/v1/a/items"}},
+			{name: "longer-segment", resource: map[string]any{"id": "match-md13", "uri": "/v1/abc/items"}},
+			{name: "empty-segment", resource: map[string]any{"id": "match-md13", "uri": "/v1//items"}},
+			{name: "two-segments", resource: map[string]any{"id": "match-md13", "uri": "/v1/a/b/items"}},
+			{name: "the-parentheses-themselves", resource: map[string]any{"id": "match-md13", "uri": "/v1/()/items"}},
+		}},
+		// Which characters a star covers within a segment: a dot is the control,
+		// the others sit outside every class of URI characters a matcher may pick.
+		{id: "md14-star-over-characters-outside-a-uri", resourceType: "PARITY_SUITE_MATCH_MD14", condition: "resource.uri MATCH /v1/*", requests: []isolatedRequest{
+			{name: "dot", resource: map[string]any{"id": "match-md14", "uri": "/v1/a.b"}},
+			{name: "space", resource: map[string]any{"id": "match-md14", "uri": "/v1/a b"}},
+			{name: "angle-bracket", resource: map[string]any{"id": "match-md14", "uri": "/v1/a<b"}},
+			{name: "non-ascii-letters", resource: map[string]any{"id": "match-md14", "uri": "/v1/яблоко"}},
+			{name: "double-quote", resource: map[string]any{"id": "match-md14", "uri": "/v1/a\"b"}},
+		}},
+		{id: "md15-two-question-marks", resourceType: "PARITY_SUITE_MATCH_MD15", condition: "resource.uri MATCH /v1/??", requests: []isolatedRequest{
+			{name: "two-characters", resource: map[string]any{"id": "match-md15", "uri": "/v1/ab"}},
+			{name: "one-character", resource: map[string]any{"id": "match-md15", "uri": "/v1/a"}},
+			{name: "three-characters", resource: map[string]any{"id": "match-md15", "uri": "/v1/abc"}},
+		}},
 	})
 }

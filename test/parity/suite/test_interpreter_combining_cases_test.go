@@ -78,6 +78,35 @@ func combiningCases() []regularCase {
 		})
 	}
 
+	// The same two policies and requests, with the first policy under
+	// DENY_OVERRIDES of its own. The algorithm-* cases record a policy with no
+	// rule under its own DENY_OVERRIDES only as the lone policy of a
+	// DENY_OVERRIDES set, where a denial and inapplicability both read false;
+	// beside a policy that allows READ the two read apart.
+	{
+		id := "policy-without-a-rule-under-its-own-deny-overrides"
+		b := regularBuilder{caseID: id}
+		rt := regularResourceType(id)
+		cases = append(cases, regularCase{
+			id:           id,
+			resourceType: rt,
+			uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
+				b.set("set", "resourceType == '"+rt+"'", "DENY_OVERRIDES", []any{
+					b.policy("creates", readerTarget, "DENY_OVERRIDES",
+						b.rule("create-allow", "operation == 'CREATE'", "true", "ALLOW", nil),
+						b.rule("probe-allow-first", "operation == 'PROBE'", "true", "ALLOW", nil)),
+					b.policy("reads", readerTarget, "DENY_UNLESS_PERMIT",
+						b.rule("read-allow", "operation == 'READ'", "true", "ALLOW", nil),
+						b.rule("probe-allow-second", "operation == 'PROBE'", "true", "ALLOW", nil)),
+				}, nil),
+			}}},
+			requests: []isolatedRequest{
+				{name: "read-allowed-by-one-policy-without-a-rule-in-the-other", operation: "READ", resource: map[string]any{"id": "reg-mixed-do-own"}},
+				{name: "probe-allowed-by-both-policies", operation: "PROBE", resource: map[string]any{"id": "reg-mixed-do-own"}},
+			},
+		})
+	}
+
 	// One DENY_UNLESS_PERMIT policy under PERMIT_UNLESS_DENY. READ reaches no rule:
 	// false means the policy's default deny counts as a denial; true means the
 	// policy was not applicable and the set permitted by default. CREATE reaches

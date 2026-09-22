@@ -309,13 +309,14 @@ func configExportPIPs() []any {
 	}
 }
 
-// configExportFilteredPIP declares a FILTERED PIP with the top-level resourceType
-// that parityFilteredPIP lacks, which is the field h3-filtered-pip-plain-reference
-// records the PAP refusing the declaration without.
+// configExportFilteredPIP declares a FILTERED PIP under a name ending in .filtered
+// and with a top-level resourceType, two shapes no accepted declaration records;
+// parityFilteredPIP, whose declaration h3-filtered-pip-plain-reference records
+// as refused, has neither.
 func configExportFilteredPIP() map[string]any {
 	rt := regularResourceType(configExportCaseID)
 	return map[string]any{
-		"name":              configExportPIPPrefix + "Filtered",
+		"name":              configExportPIPPrefix + ".filtered",
 		"url":               parityPipMockBase + "/" + configExportCaseID + "-filtered",
 		"httpMethod":        "POST",
 		"pipType":           "FILTERED",

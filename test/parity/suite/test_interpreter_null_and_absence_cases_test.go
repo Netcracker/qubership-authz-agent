@@ -63,9 +63,11 @@ func orProbePair(id, resourceType, operand string, requests ...isolatedRequest) 
 // with no match and a recursive descent that finds nothing are recorded only under
 // CONTAINS, where an empty selection and an aborted rule both answer false (j9,
 // j10), and an index past the end and a wildcard to a key no element has are not
-// recorded at all. Each path is sent through orProbePair with != and alone with IS
-// NULL, so a null selection (IS NULL true, probe true) is told from an aborted rule
-// (probe false).
+// recorded at all. What a JSON Path selects is a collection, and j5-array-index
+// records == over one as false for a value it holds, so the probes use the
+// collection operators: each path is sent through orProbePair with NOT CONTAINS
+// and alone with IS EMPTY, so an empty selection (IS EMPTY true, probe true) is
+// told from an aborted rule (probe false).
 //
 // The relational operators compare numerically once the attribute is a number
 // (c3-greater-than-string-number), while == compares the string forms and is false
@@ -140,8 +142,8 @@ func (s *ParitySuite) TestInterpreterNullAndAbsenceCases() {
 		{"np3-index-past-the-end", "PARITY_SUITE_NUL_NP3", "resource.list[5]"},
 		{"np4-wildcard-to-a-missing-key", "PARITY_SUITE_NUL_NP4", "resource.items[*].nokey"},
 	} {
-		cases = append(cases, orProbePair(path.key, path.rt, path.path+" != 'v'", probe("nothing-selected", populated))...)
-		cases = append(cases, isolatedCase{id: path.key + "-is-null", resourceType: path.rt + "_NULL", condition: path.path + " IS NULL", requests: []isolatedRequest{
+		cases = append(cases, orProbePair(path.key, path.rt, path.path+" NOT CONTAINS 'v'", probe("nothing-selected", populated))...)
+		cases = append(cases, isolatedCase{id: path.key + "-is-empty", resourceType: path.rt + "_EMPTY", condition: path.path + " IS EMPTY", requests: []isolatedRequest{
 			probe("nothing-selected", populated),
 		}})
 	}

@@ -31,6 +31,10 @@ var regularCaseLists = map[string]func() []regularCase{
 	"setTargetCases":           setTargetCases,
 	"substitutionRegularCases": substitutionRegularCases,
 	"permissionListCases":      permissionListCases,
+	"accessOperatorCases":      accessOperatorCases,
+	"barePathRegularCases":     barePathRegularCases,
+	"denyPredicateCases":       denyPredicateCases,
+	"terminalEffectCases":      terminalEffectCases,
 }
 
 // Every regular case has an id of its own across every list, and every request of

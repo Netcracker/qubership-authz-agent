@@ -17,14 +17,16 @@
 package paritysuite
 
 // What a form that is always false alone does to the rest of its condition and to
-// the rules beside it. Five forms are recorded as accepted by the PAP and false for
+// the rules beside it. Four forms are recorded as accepted by the PAP and false for
 // a value they describe: resource['x'] == 'v' (j7-bracket-path), resource.x != null
 // (x26-null-literal/attribute-present), MATCH against a pattern taken from an
-// attribute (a2-match-attribute-pattern), MATCH against a /…/ regex literal
-// (x34-regex-literal) and subject allowed 'READ' on resource (u7-has-access). Alone,
-// a leaf that is false and a rule that was ended look the same, and the two
-// readings differ for every policy that has an OR, a DENY rule, or a second ALLOW
-// rule beside the form.
+// attribute (a2-match-attribute-pattern) and MATCH against a /…/ regex literal
+// (x34-regex-literal). Alone, a leaf that is false and a rule that was ended look
+// the same, and the two readings differ for every policy that has an OR, a DENY
+// rule, or a second ALLOW rule beside the form. subject allowed 'READ' on resource
+// (u7-has-access) is recorded false too, on a policy whose condition refers to
+// the policy's own decision; TestInterpreterAccessOperatorCases sends it beside
+// a policy for the operation it names.
 //
 // The df cases put each form through orProbePair: a true probe means the form is a
 // false leaf and OR went on to resource.a == 'y'; a false probe means the form
@@ -48,7 +50,6 @@ func (s *ParitySuite) TestInterpreterDeadFormCases() {
 	cases = append(cases, orProbePair("df2-null-literal", "PARITY_SUITE_DEAD_DF2", "resource.x != null", probe)...)
 	cases = append(cases, orProbePair("df3-match-against-an-attribute", "PARITY_SUITE_DEAD_DF3", "resource.x MATCH resource.p", probe)...)
 	cases = append(cases, orProbePair("df4-match-against-a-regex-literal", "PARITY_SUITE_DEAD_DF4", "resource.x MATCH /ab.*/", probe)...)
-	cases = append(cases, orProbePair("df5-allowed-on-resource", "PARITY_SUITE_DEAD_DF5", "subject allowed 'READ' on resource", probe)...)
 	s.runIsolatedCases(cases)
 
 	// runRegularCases skips the whole test on the authz-agent profile, and the
