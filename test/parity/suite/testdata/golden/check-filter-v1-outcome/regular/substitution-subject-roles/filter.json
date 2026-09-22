@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_ROLES.a.eq(\"ROLE_PARITY_READER\")",
+    "mongodbFilterCondition": "{ { \"a\": [ \"ROLE_PARITY_READER\" ] } }",
+    "rsqlFilterCondition": "a==\"ROLE_PARITY_READER\"",
+    "sqlFilterCondition": "a='ROLE_PARITY_READER'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "8f6da4bf-5cc7-1ada-b718-48f6404cf7a9"
+      },
+      "data": {
+        "8f6da4bf-5cc7-1ada-b718-48f6404cf7a9": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "ROLE_PARITY_READER"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

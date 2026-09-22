@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_STRING.a.eq(\"v\")",
+    "mongodbFilterCondition": "{ { \"a\": [ \"v\" ] } }",
+    "rsqlFilterCondition": "a==\"v\"",
+    "sqlFilterCondition": "a='v'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "413b916d-b8fc-f32c-fb83-d6ee5c7f0bce"
+      },
+      "data": {
+        "413b916d-b8fc-f32c-fb83-d6ee5c7f0bce": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "v"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

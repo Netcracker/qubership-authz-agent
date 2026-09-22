@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_TOKEN_SCALAR.a.eq(\"finance\")",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"finance\" } ] } }",
+    "rsqlFilterCondition": "a==\"finance\"",
+    "sqlFilterCondition": "a='finance'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "dfd3cf92-7290-1d22-978b-a7fd57998a88"
+      },
+      "data": {
+        "dfd3cf92-7290-1d22-978b-a7fd57998a88": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "finance"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

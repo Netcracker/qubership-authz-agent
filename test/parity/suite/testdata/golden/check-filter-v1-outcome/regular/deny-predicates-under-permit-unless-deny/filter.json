@@ -1,0 +1,47 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_PERMIT_UNLESS_DENY.c.eq(3)).not()).and((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_PERMIT_UNLESS_DENY.d.eq(4)).not())",
+    "mongodbFilterCondition": "{ \"$and\": [ {{ \"c\": 3 }}, {{ \"d\": 4 }} ] }",
+    "rsqlFilterCondition": "c!=3;d!=4",
+    "sqlFilterCondition": "NOT (c=3) AND NOT (d=4)",
+    "customFilterCondition": {
+      "logic": {
+        "op": "AND",
+        "apply": [
+          {
+            "op": "NOT",
+            "apply": [
+              {
+                "path": "2c920fa6-2709-7f4c-7d62-0af9c2927a54"
+              }
+            ]
+          },
+          {
+            "op": "NOT",
+            "apply": [
+              {
+                "path": "c18ec572-06ed-84a6-c2d7-26ba75ae2df1"
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "2c920fa6-2709-7f4c-7d62-0af9c2927a54": {
+          "predicate": "c:3:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        },
+        "c18ec572-06ed-84a6-c2d7-26ba75ae2df1": {
+          "predicate": "d:4:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        }
+      }
+    }
+  }
+}
