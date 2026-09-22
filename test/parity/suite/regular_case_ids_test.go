@@ -40,6 +40,7 @@ var regularCaseLists = map[string]func() []regularCase{
 	"terminalEffectCases":      terminalEffectCases,
 	"setTargetRefusalCases":    setTargetRefusalCases,
 	"round7FilterCases":        round7FilterCases,
+	"failedPIPScopeCases":      failedPIPScopeCases,
 }
 
 // casesSharingElementIDs are the regular cases whose one upload carries one
