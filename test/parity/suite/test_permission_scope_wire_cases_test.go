@@ -30,12 +30,12 @@ import (
 // TestPermissionScopeIterateCases never answer each other's requests.
 const permissionScopeWireResourceType = "PARITY_SUITE_SCOPE_WIRE"
 
-// permissionScopeWirePath is the path access-control derives from a
-// PERMISSION_SCOPE declaration, not a path the declaration carries. The client
-// formats pip.getUrl() + "/api/v1/permission-scope/user/%s/policies?inherited=true"
-// with the subject id (PermissionScopePipServiceImpl.java:31,47), so the stub — which
-// matches a path literally and drops the query — is pinned at the derived path and
-// the declaration's url ends where the derived part begins.
+// permissionScopeWirePath is the path a PERMISSION_SCOPE declaration is read at,
+// which is not the path the declaration carries. The declared url is a prefix:
+// "/api/v1/permission-scope/user/<subject id>/policies?inherited=true" is appended
+// to it, as the stub's recorded calls show. The stub matches a path literally and
+// drops the query, so it is pinned at the appended path and the declaration's url
+// ends where that part begins.
 func permissionScopeWirePath(subjectID string) string {
 	return fmt.Sprintf("/api/v1/permission-scope/user/%s/policies", subjectID)
 }
@@ -44,8 +44,8 @@ func permissionScopeWirePath(subjectID string) string {
 // path of its own, since access-control appends one.
 //
 // cacheable is written false and is not honoured: the PAP answers the declaration
-// with cacheable true and a cachePeriod, and the client caches a scope per
-// (subject, tenant) for that many seconds (PermissionScopePipServiceImpl.java:49-54).
+// with cacheable true and a cachePeriod, and a scope is then cached per
+// (subject, tenant) for that many seconds.
 // cachePeriod is therefore declared as one second and each shape waits it out, so a
 // re-pinned body reaches the next request instead of the previous shape's grants
 // being served from the cache.
@@ -58,13 +58,13 @@ var permissionScopeWirePIP = map[string]any{
 }
 
 // permissionScopeGrant is one entry of a permission scope as the backend sends it:
-// a set of values per scope item key. castResponseToPermissionsScopes turns every
-// policy of every permissionScope entry into one Scope whose items are the policy's
-// scopeItems keyed by key, with the value ids as the set
-// (PermissionScopeInformationPointLoader.java:44-61).
+// a set of values per scope item key. Every policy of every permissionScope entry
+// becomes one scope, whose items are that policy's scopeItems keyed by key with the
+// value ids as the set — established by pinning bodies at the stub until a scope
+// reached the evaluator.
 type permissionScopeGrant map[string][]string
 
-// permissionScopeWireBody builds the PermissionScopeBEResponse the client parses:
+// permissionScopeWireBody builds the response body that is parsed into a scope:
 // {"permissionScope":[{ ..., "policies":[{"scopeItems":[{"key":k,"values":[{"id":v}]}]}]}]}.
 // Every grant becomes one policy, so a body with two grants is a subject holding two
 // scopes and a body with one grant is a subject holding one.
