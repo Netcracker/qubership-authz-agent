@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_HEADER_SCALAR.a.eq(\"parity-header-value\")",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"parity-header-value\" } ] } }",
+    "rsqlFilterCondition": "a==\"parity-header-value\"",
+    "sqlFilterCondition": "a='parity-header-value'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "b0bf57c1-9030-3438-d96f-c2518cd6995f"
+      },
+      "data": {
+        "b0bf57c1-9030-3438-d96f-c2518cd6995f": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "parity-header-value"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES_WITHOUT_CUSTOM_PREDICATE.b.eq(2)).or(PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES_WITHOUT_CUSTOM_PREDICATE.a.eq(1))).and((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES_WITHOUT_CUSTOM_PREDICATE.c.eq(3)).not()).and((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES_WITHOUT_CUSTOM_PREDICATE.d.eq(4)).not())",
+    "mongodbFilterCondition": "{ \"$and\": [ { \"$or\": [ {{ \"b\": 2 }}, {{ \"a\": 1 }} ] }, {{ \"c\": 3 }}, {{ \"d\": 4 }} ] }",
+    "rsqlFilterCondition": "(b==2,a==1);c!=3;d!=4",
+    "sqlFilterCondition": "(b=2 OR a=1) AND NOT (c=3) AND NOT (d=4)",
+    "customFilterCondition": null
+  }
+}

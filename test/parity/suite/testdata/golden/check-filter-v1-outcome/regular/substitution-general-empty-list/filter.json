@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_EMPTY_LIST.a.eq(\"\")",
+    "mongodbFilterCondition": "{ { \"a\": [  ] } }",
+    "rsqlFilterCondition": "a==",
+    "sqlFilterCondition": "a=NULL",
+    "customFilterCondition": {
+      "logic": {
+        "path": "2628f35c-fce9-83c8-cd87-8e81361fd388"
+      },
+      "data": {
+        "2628f35c-fce9-83c8-cd87-8e81361fd388": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": []
+          }
+        }
+      }
+    }
+  }
+}
