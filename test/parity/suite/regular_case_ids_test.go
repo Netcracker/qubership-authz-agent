@@ -23,7 +23,7 @@ import "testing"
 var regularCaseLists = map[string]func() []regularCase{
 	"regularPolicySetCases":    regularPolicySetCases,
 	"translatorPolicySetCases": translatorPolicySetCases,
-	"translatorFailedPIPCases": translatorFailedPIPCases,
+	"failedPIPRegularCases":    failedPIPRegularCases,
 	"deadFormRegularCases":     deadFormRegularCases,
 	"combiningCases":           combiningCases,
 	"interpreterFilterCases":   interpreterFilterCases,

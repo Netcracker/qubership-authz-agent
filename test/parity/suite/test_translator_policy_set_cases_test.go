@@ -16,57 +16,6 @@
 
 package paritysuite
 
-import (
-	"context"
-	"net/http"
-)
-
-// translatorPipRoutes are the pip-mock paths the failed-PIP cases pin, and the
-// status each one answers with. The healthy route is the control: a condition that
-// reads it allows, so a case where every answer is false is not explained by
-// pip-mock being unreachable or by the declaration being dropped.
-var translatorPipRoutes = map[string]PipStubResponse{
-	"/api/v1/pip/translator-broken": {StatusCode: http.StatusInternalServerError, Body: map[string]string{"error": "parity translator case"}},
-	"/api/v1/pip/translator-gone":   {StatusCode: http.StatusNotFound, Body: map[string]string{"error": "parity translator case"}},
-	"/api/v1/pip/translator-live":   {StatusCode: http.StatusOK, Body: map[string]string{"value": "v"}},
-}
-
-// translatorFailedPIPs declare the three GENERAL PIPs of the failed-PIP cases,
-// shaped like the accepted declarations under testdata/fixtures. The live one reads
-// $.value out of the body, so its condition compares a value rather than an object.
-// Every fixture declaration names the consuming resource type in
-// requestAttributes; these declarations are read by one case per combining
-// algorithm and so name the group instead. The field is request-body content, not
-// something access-control matches on.
-var translatorFailedPIPs = []any{
-	map[string]any{
-		"name":              "subject.parityTranslatorBroken",
-		"url":               parityPipMockBase + "/translator-broken",
-		"httpMethod":        "POST",
-		"pipType":           "GENERAL",
-		"requestAttributes": map[string]string{"resourceType": "PARITY_SUITE_TRANSLATOR_PIP"},
-		"cacheable":         false,
-	},
-	map[string]any{
-		"name":              "subject.parityTranslatorGone",
-		"url":               parityPipMockBase + "/translator-gone",
-		"httpMethod":        "POST",
-		"pipType":           "GENERAL",
-		"requestAttributes": map[string]string{"resourceType": "PARITY_SUITE_TRANSLATOR_PIP"},
-		"cacheable":         false,
-	},
-	map[string]any{
-		"name":              "subject.parityTranslatorLive",
-		"url":               parityPipMockBase + "/translator-live",
-		"httpMethod":        "POST",
-		"pipType":           "GENERAL",
-		"type":              "JSON",
-		"jsonPath":          "$.value",
-		"requestAttributes": map[string]string{"resourceType": "PARITY_SUITE_TRANSLATOR_PIP"},
-		"cacheable":         false,
-	},
-}
-
 // withRuleID replaces the rule id regularBuilder derived from the case and the
 // rule's key. Two rules of two different sets carry the same id only where the case
 // is about that collision.
@@ -77,10 +26,10 @@ func withRuleID(rule map[string]any, id string) map[string]any {
 
 // Answers of access-control that a translator of regular policy sets cannot be
 // written without, and that no golden records: what a set decides when the only
-// rules it holds are DENY rules none of which applied, what a rule whose condition
-// reads a PIP that failed does to the rule beside it, what check/filter returns for
-// a resource type whose policy is a deny list, and what the filter carries when two
-// sets name one rule id.
+// rules it holds are DENY rules none of which applied, what check/filter returns
+// for a resource type whose policy is a deny list, and what the filter carries
+// when two sets name one rule id. What a rule whose condition reads a PIP that
+// failed does to the rule beside it is TestRound7FailedPIPCases.
 //
 // The other cases of the regular set format are in TestRegularPolicySetCases; these
 // live in their own test function so that a recording run can be filtered to them
@@ -90,39 +39,9 @@ func withRuleID(rule map[string]any, id string) map[string]any {
 // response, because a set the PAP accepted and never evaluated answers DENY to
 // every request. A refused set upload is recorded as a golden of its own and ends
 // its case before any request is sent, so a refusal and a DENY are never the same
-// golden; a refused PIP declaration fails the case outright in runRegularCases and
-// records nothing, which is louder still.
+// golden.
 func (s *ParitySuite) TestTranslatorPolicySetCases() {
-	ctx := context.Background()
-	for path, response := range translatorPipRoutes {
-		s.Require().NoError(s.pipMock.PinRoute(ctx, path, response), "pin %s", path)
-	}
-
 	s.runRegularCases(translatorPolicySetCases())
-
-	// The failed-PIP cases run one at a time, because the call log is read after
-	// each of them. A log read once after all four would pass on a case whose PIPs
-	// were never called as long as another case reached the same paths, and that is
-	// the reading the check exists to rule out: a run in which access-control never
-	// called pip-mock records the same DENY column as a run in which it called and
-	// the call failed.
-	for _, tc := range translatorFailedPIPCases() {
-		s.Require().NoError(s.pipMock.ResetCalls(ctx))
-		s.runRegularCases([]regularCase{tc})
-		s.Run(tc.id+"/the-pips-were-read", func() {
-			calls, err := s.pipMock.GetCalls(ctx)
-			s.Require().NoError(err)
-			read := map[string]int{}
-			for _, call := range calls {
-				if _, pinned := translatorPipRoutes[call.Path]; pinned {
-					read[call.Path]++
-				}
-			}
-			for path := range translatorPipRoutes {
-				s.Assert().Positive(read[path], "pip-mock calls to %s over the requests of %s", path, tc.id)
-			}
-		})
-	}
 }
 
 func translatorPolicySetCases() []regularCase {
@@ -328,60 +247,6 @@ func translatorPolicySetCases() []regularCase {
 			requests: []isolatedRequest{
 				{name: "filter", filter: true},
 				{name: "check-list", operation: "LIST", resource: map[string]any{"id": "tr-distinct-ids"}},
-			},
-		})
-	}
-
-	return cases
-}
-
-// translatorFailedPIPCases are the cases of TestTranslatorPolicySetCases that read a
-// PIP, kept apart from the others because the test runs them one at a time and reads
-// the pip-mock call log after each.
-func translatorFailedPIPCases() []regularCase {
-	var cases []regularCase
-
-	// A rule whose condition reads a GENERAL PIP that failed, beside a rule of the
-	// same policy that allows. approve-failed-allow-beside-allow records this shape
-	// with a missing resource key and answers true under all four algorithms, which
-	// is what says an unresolvable value makes one rule inapplicable and leaves its
-	// neighbor alone. A failed PIP is the other way an operand fails to resolve,
-	// and whether the two are the same event decides whether a translator can drop
-	// the abort altogether.
-	//
-	// The operations split the shapes: READ an ALLOW that reads the PIP answering
-	// 500 beside an ALLOW, UPDATE the same with 404, DELETE a DENY that reads the
-	// 500 beside an ALLOW, and PROBE the rule that reads the live PIP alone.
-	for _, algorithm := range []struct{ key, name string }{
-		{"deny-unless-permit", "DENY_UNLESS_PERMIT"},
-		{"permit-unless-deny", "PERMIT_UNLESS_DENY"},
-		{"deny-overrides", "DENY_OVERRIDES"},
-		{"permit-overrides", "PERMIT_OVERRIDES"},
-	} {
-		id := "failed-pip-beside-allow-" + algorithm.key
-		b := regularBuilder{caseID: id}
-		rt := regularResourceType(id)
-		cases = append(cases, regularCase{
-			id:           id,
-			resourceType: rt,
-			pips:         translatorFailedPIPs,
-			uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
-				b.set("set", "resourceType == '"+rt+"'", algorithm.name, []any{
-					b.policy("reader", readerTarget, algorithm.name,
-						b.rule("read-allow-reads-the-broken-pip", "operation == 'READ'", "subject.parityTranslatorBroken != 'x'", "ALLOW", nil),
-						b.rule("read-allow", "operation == 'READ'", "true", "ALLOW", nil),
-						b.rule("update-allow-reads-the-gone-pip", "operation == 'UPDATE'", "subject.parityTranslatorGone != 'x'", "ALLOW", nil),
-						b.rule("update-allow", "operation == 'UPDATE'", "true", "ALLOW", nil),
-						b.rule("delete-deny-reads-the-broken-pip", "operation == 'DELETE'", "subject.parityTranslatorBroken != 'x'", "DENY", nil),
-						b.rule("delete-allow", "operation == 'DELETE'", "true", "ALLOW", nil),
-						b.rule("probe-allow-reads-the-live-pip", "operation == 'PROBE'", "subject.parityTranslatorLive == 'v'", "ALLOW", nil)),
-				}, nil),
-			}}},
-			requests: []isolatedRequest{
-				{name: "failed-allow-beside-allow", operation: "READ", resource: map[string]any{"id": "tr-failed-pip"}},
-				{name: "missing-allow-beside-allow", operation: "UPDATE", resource: map[string]any{"id": "tr-failed-pip"}},
-				{name: "failed-deny-beside-allow", operation: "DELETE", resource: map[string]any{"id": "tr-failed-pip"}},
-				{name: "live-pip-alone", operation: "PROBE", resource: map[string]any{"id": "tr-failed-pip"}},
 			},
 		})
 	}
