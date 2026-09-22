@@ -152,6 +152,7 @@ missing.
 | `TestInterpreterOperationAllCases` | Whether a simplified policy with `operation: ALL` evaluates its condition, and whether its predicate reaches a filter | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/isolated/` |
 | `TestInterpreterRegularLoadCases` | Whether the policy-set upload accepts `subject.isM2M`, an undeclared subject attribute, `operation` and `subject.permissions.<suffix>` in a rule condition. Legacy profile only | `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/` |
 | `TestInterpreterSetTargetCases` | Whether the policy-set upload accepts a set whose target reads `resource.service`, `resource.uri` under `MATCH`, `resource.id`, an attribute no policy names, and `resource.service` with no `resourceType` beside it; and what such a target decides on a request that carries the attribute, another value, no such attribute, no such attribute beside a sibling set that allows on its own, and on a filter request. Legacy profile only; the set with no `resourceType` is emptied when the test ends | `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
+| `TestInterpreterTenantClaimCases` | What a `tenant-id` claim in the token does to a decision, status included: a claim for tenant A against tenant A, against tenant B by the query parameter and by the `Tenant` header, and with no tenant named; a claim for tenant B with no tenant named; a claim for a tenant no stand has and an empty claim against tenant A; the claim in the end-user token beside a claimless M2M token; and a claimless M2M token as the control. The policy is in tenant A only. The cases that name tenant B skip without a two-tenant stand and on the `authz-agent` profile | `check-resource-v1-outcome/tenant-claim/` |
 | `TestInterpreterConfigExportCases` | What `GET /access/v3/config/policySets` and `GET /access/v3/config/pips`, the reads the agent loads its configuration from, carry for regular sets of every form, two simplified policies, and one PIP of each type, read with the tenant of the upload, the other tenant, no tenant, an unknown tenant, and a tenant in the query beside another in the `Tenant` header. The recorded body drops the envelope's `hash` and `lastModificationTimestamp` and keeps only the elements the case uploaded, ordered by their text. Legacy profile only; the reads that name tenant B skip without a two-tenant stand | `load-simplified-policies-v1/config-export/`, `load-policy-sets-v1/config-export/`, `config-policy-sets-v3/config-export/`, `config-pips-v3/config-export/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
@@ -195,6 +196,17 @@ at least one case carries a token minted outside tenant A's realm; access-contro
 `Incoming-Token`, because the tenant of a decision comes from `tenant_id` or the `Tenant` header and never from the
 end-user token. That is what `t3` and `t4` record: tenant B's user reading tenant A's data succeeds, since only the
 query parameter and the header select a tenant.
+
+`TestInterpreterTenantClaimCases` mints its tokens from five more clients of the `parity` realm, declared in
+[`parity-realm.json`](../k8s/parity/idp-seed/parity-realm.json) with a hardcoded `tenant-id` claim: `parity-m2m-tenant-a`
+and `parity-end-user-tenant-a` carry `default`, the kind harness's tenant; `parity-m2m-tenant-b` carries the placeholder
+`parity-tenant-b`; `parity-m2m-tenant-unknown` carries `7f3c2e1a-0b9d-4c6e-8a5f-2d1b3c4e5f60`; and
+`parity-m2m-tenant-empty` carries the empty string. On a stand whose tenant A is not `default`, `parity-m2m-tenant-a`
+and `parity-end-user-tenant-a` have to carry tenant A's identifier, and on a two-tenant stand `parity-m2m-tenant-b`
+has to carry tenant B's; the test decodes each token and fails when the claim is not the value it assumes.
+`PARITY_CLAIM_{M2M_TENANT_A,M2M_TENANT_B,M2M_TENANT_UNKNOWN,M2M_TENANT_EMPTY,END_USER_TENANT_A}_CLIENT_{ID,SECRET}`
+override the client ids and secrets. The cases against tenant A run on every stand; the cases that name tenant B
+need the legacy PAP and the same four `PARITY_MT_TENANT_*` variables as `TestTenantScopedDecisions`.
 
 Tenant A's wildcard row (`t9b`) has `component`, `resourceType`, and `operation` all set to `ALL`. The legacy PAP
 accepts `resourceType: ALL` only on a global-access policy, and

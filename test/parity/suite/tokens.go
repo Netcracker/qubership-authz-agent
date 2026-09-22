@@ -114,6 +114,24 @@ func (tf *TokenFactory) M2MToken() (string, error) {
 	})
 }
 
+// M2MTokenFor returns a cached client_credentials access token of the given
+// client, for the cases whose token has to carry a claim the suite's M2M client
+// does not add.
+func (tf *TokenFactory) M2MTokenFor(client ClientCredentials) (string, error) {
+	return tf.cachedToken("m2m:"+client.ID, func() (tokenEntry, error) {
+		return tf.clientCredentialsGrant(client.ID, client.Secret)
+	})
+}
+
+// EndUserTokenVia returns a cached password-grant access token for username
+// issued by the given client rather than by the suite's end-user client, for the
+// cases whose token has to carry a claim only that client adds.
+func (tf *TokenFactory) EndUserTokenVia(client ClientCredentials, username string) (string, error) {
+	return tf.cachedToken("enduser:"+client.ID+":"+username, func() (tokenEntry, error) {
+		return tf.passwordGrantVia(client, username)
+	})
+}
+
 // EndUserToken returns a cached access token for the given UserProfile,
 // minting a fresh one via password grant against parity-end-user if the
 // cache entry is missing or close to expiry.
@@ -158,10 +176,14 @@ func (tf *TokenFactory) clientCredentialsGrant(clientID, clientSecret string) (t
 }
 
 func (tf *TokenFactory) passwordGrant(username string) (tokenEntry, error) {
+	return tf.passwordGrantVia(ClientCredentials{ID: tf.cfg.EndUserClientID, Secret: tf.cfg.EndUserClientSecret}, username)
+}
+
+func (tf *TokenFactory) passwordGrantVia(client ClientCredentials, username string) (tokenEntry, error) {
 	form := url.Values{}
 	form.Set("grant_type", "password")
-	form.Set("client_id", tf.cfg.EndUserClientID)
-	form.Set("client_secret", tf.cfg.EndUserClientSecret)
+	form.Set("client_id", client.ID)
+	form.Set("client_secret", client.Secret)
 	form.Set("username", username)
 	form.Set("password", tf.cfg.EndUserPassword)
 	form.Set("scope", "openid")
