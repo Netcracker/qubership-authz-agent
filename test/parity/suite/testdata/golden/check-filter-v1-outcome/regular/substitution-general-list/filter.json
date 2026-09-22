@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_LIST.a.eq(\"a\", \"b\")",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"a\" }, { \"$uuid\": \"b\" } ] } }",
+    "rsqlFilterCondition": "a==\"a\", \"b\"",
+    "sqlFilterCondition": "a='a', 'b'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "401c375c-60f5-d85d-6495-bb6e640194bf"
+      },
+      "data": {
+        "401c375c-60f5-d85d-6495-bb6e640194bf": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
