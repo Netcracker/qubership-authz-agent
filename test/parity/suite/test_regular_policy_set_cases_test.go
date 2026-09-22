@@ -174,7 +174,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 					}
 					s.runPendingCheckResourceV1OutcomeCase(
 						subCase,
-						model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: tc.resourceType, Resource: req.resource},
+						model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: valueOr(req.typ, tc.resourceType), Resource: req.resource},
 						s.mustTokenBundle(UserProfileReader),
 						opts,
 					)

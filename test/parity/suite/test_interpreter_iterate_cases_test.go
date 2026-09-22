@@ -24,13 +24,15 @@ import (
 	"authz-agent/test/parity/suite/model"
 )
 
-// iterateAlgorithms are the combining algorithms whose answer depends on how the
-// passes of an iterating set are combined. Under DENY_UNLESS_PERMIT, the one
-// algorithm recorded (permission-scope-wire), a pass that permits decides and the
-// question does not arise.
+// iterateAlgorithms are the accepted combining algorithms other than
+// DENY_UNLESS_PERMIT, the one recorded (permission-scope-wire). Under
+// PERMIT_UNLESS_DENY and DENY_OVERRIDES a denying pass and a permitting pass
+// meet; PERMIT_OVERRIDES is the fourth column of the algorithm table, where a
+// permitting pass is expected to decide as under DENY_UNLESS_PERMIT.
 var iterateAlgorithms = []struct{ key, name string }{
 	{"permit-unless-deny", "PERMIT_UNLESS_DENY"},
 	{"deny-overrides", "DENY_OVERRIDES"},
+	{"permit-overrides", "PERMIT_OVERRIDES"},
 }
 
 // iterateAlgorithmResourceType is the resource type of the iterating set built for
@@ -40,33 +42,41 @@ func iterateAlgorithmResourceType(key string) string {
 }
 
 // iterateAlgorithmGrants are the grant shapes each iterating set is asked under:
-// two grants for two regions, and no grant at all.
+// two grants for two regions, one grant, and no grant at all. Under one grant
+// there is one pass and nothing to combine, so the answer is the pass's own
+// under every algorithm; it is the boundary between the two-grant and the
+// no-grant shapes.
 var iterateAlgorithmGrants = []struct {
 	name   string
 	grants []permissionScopeGrant
 }{
 	{"two-grants-one-region-each", []permissionScopeGrant{{"region": {"r1"}}, {"region": {"r2"}}}},
+	{"one-grant", []permissionScopeGrant{{"region": {"r1"}}}},
 	{"no-grants", nil},
 }
 
 // iterateAlgorithmRequests ask for the region of the first grant, of the second,
 // and of neither. Under two grants each region is denied by one pass and permitted
-// by the other, so the two answers say how the passes combine; r9 is denied by
-// both passes and is the control that the DENY rule is live.
+// by the other, so the two answers say how the passes combine; under one grant
+// r2 is denied by the only pass, like r9; r9 is denied by every pass and is the
+// control that the DENY rule is live.
 var iterateAlgorithmRequests = []isolatedRequest{
 	{name: "region-of-the-first-grant", resource: map[string]any{"id": "scope-alg", "region": "r1"}},
 	{name: "region-of-the-second-grant", resource: map[string]any{"id": "scope-alg", "region": "r2"}},
 	{name: "region-of-no-grant", resource: map[string]any{"id": "scope-alg", "region": "r9"}},
 }
 
-// How the passes of an iterating set are combined once the set's algorithm can
-// deny, and what the set decides when there is no pass at all. permission-scope-wire
+// How the passes of an iterating set are combined under each accepted algorithm
+// other than the recorded one, and what the set decides under one pass and
+// under no pass at all. permission-scope-wire
 // records that iterate.foreach over subject.permissionScope evaluates the set once
 // per grant, under DENY_UNLESS_PERMIT, where the first pass that permits decides.
 // Under PERMIT_UNLESS_DENY and DENY_OVERRIDES a pass that denies and a pass that
 // permits meet, and the readings differ: the permits are joined and one permitting
-// pass permits the set, or one denying pass denies it. No grant at all is a third
-// column: a set over zero passes permits by default, or has nothing to permit.
+// pass permits the set, or one denying pass denies it; under PERMIT_OVERRIDES
+// the permitting pass is expected to win, as under DENY_UNLESS_PERMIT. One grant
+// is the shape with nothing to combine. No grant at all is the last column: a
+// set over zero passes permits by default, or has nothing to permit.
 //
 // Each set holds a DENY rule, region not granted, and an ALLOW rule with no
 // condition, so under two grants the region of either grant is denied by the pass

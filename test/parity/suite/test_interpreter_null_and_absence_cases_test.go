@@ -42,11 +42,13 @@ func orProbePair(id, resourceType, operand string, requests ...isolatedRequest) 
 // condition below.
 //
 // Over a null value the recorded answers are per operator: > does not end the
-// rule (n3-greater-than-null-or-true is true) and its value is not recorded, IS
-// EMPTY is false (n4), NOT IN is true and NOT CONTAINS is false (n1, n2). The other
-// relational operators, IS NOT NULL and IS NOT EMPTY are not recorded over null,
-// and IS NOT NULL is recorded over an absent key only inside a guarded chain
-// (s12a).
+// rule (n3-greater-than-null-or-true is true) and its value alone is not
+// recorded, IS EMPTY is false (n4), NOT IN is true and NOT CONTAINS is false (n1,
+// n2). The four relational operators, IS NOT NULL and IS NOT EMPTY are not
+// recorded alone over null, and IS NOT NULL is recorded over an absent key only
+// inside a guarded chain (s12a). The nl cases record each of them alone, so the
+// operator-by-state table has a value in every relational cell rather than in
+// two.
 //
 // Over an absent key the recorded answers split the operators into two groups:
 // IS NULL is true (s6a), == and != and > end the rule (s1b, s2b, s5), and so do
@@ -92,7 +94,8 @@ func (s *ParitySuite) TestInterpreterNullAndAbsenceCases() {
 
 	var cases []isolatedCase
 
-	// null under the relational operators > is not recorded for.
+	// null under each relational operator alone; the second request of each is
+	// the control that the operator answers true for a number.
 	cases = append(cases,
 		isolatedCase{id: "nl1-less-than-over-null", resourceType: "PARITY_SUITE_NUL_NL1", condition: "resource.n < 5", requests: []isolatedRequest{
 			{name: "null", resource: map[string]any{"id": "nul-nl1", "n": nil}},
@@ -101,6 +104,14 @@ func (s *ParitySuite) TestInterpreterNullAndAbsenceCases() {
 		isolatedCase{id: "nl2-greater-or-equal-over-null", resourceType: "PARITY_SUITE_NUL_NL2", condition: "resource.n >= 5", requests: []isolatedRequest{
 			{name: "null", resource: map[string]any{"id": "nul-nl2", "n": nil}},
 			{name: "number-at-the-boundary", resource: map[string]any{"id": "nul-nl2", "n": json.Number("5")}},
+		}},
+		isolatedCase{id: "nl5-greater-than-over-null", resourceType: "PARITY_SUITE_NUL_NL5", condition: "resource.n > 5", requests: []isolatedRequest{
+			{name: "null", resource: map[string]any{"id": "nul-nl5", "n": nil}},
+			{name: "number-above", resource: map[string]any{"id": "nul-nl5", "n": json.Number("6")}},
+		}},
+		isolatedCase{id: "nl6-less-or-equal-over-null", resourceType: "PARITY_SUITE_NUL_NL6", condition: "resource.n <= 5", requests: []isolatedRequest{
+			{name: "null", resource: map[string]any{"id": "nul-nl6", "n": nil}},
+			{name: "number-at-the-boundary", resource: map[string]any{"id": "nul-nl6", "n": json.Number("5")}},
 		}},
 		isolatedCase{id: "nl3-is-not-null-over-null", resourceType: "PARITY_SUITE_NUL_NL3", condition: "resource.x IS NOT NULL", requests: []isolatedRequest{
 			{name: "null", resource: map[string]any{"id": "nul-nl3", "x": nil}},

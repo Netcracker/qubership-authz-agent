@@ -16,7 +16,10 @@
 
 package paritysuite
 
-import "context"
+import (
+	"context"
+	"strings"
+)
 
 // setTargetService is the value every set target of the set-target cases compares
 // resource.service with. It is this group's own, so a set whose target names no
@@ -153,6 +156,34 @@ func setTargetCases() []regularCase {
 				{name: "attribute-absent", resource: form.absent},
 				{name: "attribute-absent-beside-the-sibling", resource: withSibling},
 				{name: "filter", filter: true},
+			},
+		})
+	}
+
+	// A set target that spells the resource type in lower case, against a
+	// request in upper case. x28-policy-resource-type-lowercase records that a
+	// simplified policy's resource type matches a request whatever the case;
+	// the set target is a condition, and the recorded conditions compare case
+	// insensitively (c5-string-equals-other-case) but the resourceType operand
+	// of a set target is not among them. the-request-in-the-same-case is the
+	// control.
+	{
+		id := "set-target-resource-type-in-lower-case"
+		b := regularBuilder{caseID: id}
+		rt := regularResourceType(id)
+		lower := strings.ToLower(rt)
+		cases = append(cases, regularCase{
+			id:           id,
+			resourceType: rt,
+			uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
+				b.set("set", "resourceType == '"+lower+"'", "DENY_UNLESS_PERMIT", []any{
+					b.policy("reader", readerTarget, "DENY_UNLESS_PERMIT",
+						b.rule("read", "operation == 'READ'", "true", "ALLOW", nil)),
+				}, nil),
+			}}},
+			requests: []isolatedRequest{
+				{name: "the-request-in-upper-case", typ: rt, resource: map[string]any{"id": "reg-st-case"}},
+				{name: "the-request-in-the-same-case", typ: lower, resource: map[string]any{"id": "reg-st-case"}},
 			},
 		})
 	}
