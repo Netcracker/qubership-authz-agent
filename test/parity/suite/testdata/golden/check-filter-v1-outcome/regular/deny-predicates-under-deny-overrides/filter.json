@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES.b.eq(2)).or(PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES.a.eq(1))).and((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES.c.eq(3)).not()).and((PARITY_SUITE_REG_DENY_PREDICATES_UNDER_DENY_OVERRIDES.d.eq(4)).not())",
+    "mongodbFilterCondition": "{ \"$and\": [ { \"$or\": [ {{ \"b\": 2 }}, {{ \"a\": 1 }} ] }, {{ \"c\": 3 }}, {{ \"d\": 4 }} ] }",
+    "rsqlFilterCondition": "(b==2,a==1);c!=3;d!=4",
+    "sqlFilterCondition": "(b=2 OR a=1) AND NOT (c=3) AND NOT (d=4)",
+    "customFilterCondition": {
+      "logic": {
+        "op": "AND",
+        "apply": [
+          {
+            "op": "OR",
+            "apply": [
+              {
+                "path": "9c930d28-8548-917e-152d-0504745dc30a"
+              },
+              {
+                "path": "f5e8c3d8-283a-d90f-f949-2861811d14c0"
+              }
+            ]
+          },
+          {
+            "op": "NOT",
+            "apply": [
+              {
+                "path": "a8ff9a60-9086-41af-cb53-8b5fef3c1c00"
+              }
+            ]
+          },
+          {
+            "op": "NOT",
+            "apply": [
+              {
+                "path": "207d252f-a9ca-d86f-e839-9067cb663250"
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "f5e8c3d8-283a-d90f-f949-2861811d14c0": {
+          "predicate": "a:1:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        },
+        "9c930d28-8548-917e-152d-0504745dc30a": {
+          "predicate": "b:2:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        },
+        "207d252f-a9ca-d86f-e839-9067cb663250": {
+          "predicate": "d:4:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        },
+        "a8ff9a60-9086-41af-cb53-8b5fef3c1c00": {
+          "predicate": "c:3:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        }
+      }
+    }
+  }
+}
