@@ -83,6 +83,13 @@ func (s *ParitySuite) TestRound7PIPCacheCases() {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("regular policy sets are evaluated by access-control only; authz-agent loads simplified policies")
 	}
+	s.runPIPCacheCase(pipCacheCaseID, pipCachePIPRoute, pipCachePIP)
+}
+
+// runPIPCacheCase runs the rounds of pipCacheRounds against pip, a GENERAL PIP
+// that reads route and takes its value from $.value. The set, its resource type
+// and the golden names derive from caseID.
+func (s *ParitySuite) runPIPCacheCase(caseID, route string, pip map[string]any) {
 	ctx := context.Background()
 	m2m := s.mustM2MToken()
 	s.T().Cleanup(func() {
@@ -91,28 +98,28 @@ func (s *ParitySuite) TestRound7PIPCacheCases() {
 		}
 	})
 
-	b := regularBuilder{caseID: pipCacheCaseID}
-	rt := regularResourceType(pipCacheCaseID)
+	b := regularBuilder{caseID: caseID}
+	rt := regularResourceType(caseID)
 	set := b.set("set", "resourceType == '"+rt+"'", "DENY_UNLESS_PERMIT", []any{
 		b.policy("reader", readerTarget, "DENY_UNLESS_PERMIT",
-			b.rule("read-when-v1", "operation == 'READ'", "subject.parityCacheProbe == 'v1'", "ALLOW", nil),
-			b.rule("probe-when-v2", "operation == 'PROBE'", "subject.parityCacheProbe == 'v2'", "ALLOW", nil)),
+			b.rule("read-when-v1", "operation == 'READ'", pip["name"].(string)+" == 'v1'", "ALLOW", nil),
+			b.rule("probe-when-v2", "operation == 'PROBE'", pip["name"].(string)+" == 'v2'", "ALLOW", nil)),
 	}, nil)
 
-	pipStatus, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, []any{pipCachePIP}, nil)
+	pipStatus, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, []any{pip}, nil)
 	s.Require().NoError(err)
 	s.Run("declare-the-pip", func() {
-		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, pipCacheCaseID+"/declare-the-pip", &model.PolicyLoadOutcome{Status: pipStatus})
+		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, caseID+"/declare-the-pip", &model.PolicyLoadOutcome{Status: pipStatus})
 	})
 	if pipStatus < http.StatusOK || pipStatus >= http.StatusMultipleChoices {
 		return
 	}
-	externalID := "parity-" + pipCacheCaseID
+	externalID := "parity-" + caseID
 	s.emptyPolicySetsOnCleanup(s.cfg, externalID)
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, externalID, []any{set})
 	s.Require().NoError(err)
 	s.Run("upload-the-set", func() {
-		s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, pipCacheCaseID+"/upload-the-set", &model.PolicyLoadOutcome{Status: setStatus})
+		s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, caseID+"/upload-the-set", &model.PolicyLoadOutcome{Status: setStatus})
 	})
 	if setStatus < http.StatusOK || setStatus >= http.StatusMultipleChoices {
 		return
@@ -122,7 +129,7 @@ func (s *ParitySuite) TestRound7PIPCacheCases() {
 	var pinnedAt time.Time
 	for _, round := range pipCacheRounds {
 		if round.value != pinned {
-			s.Require().NoError(s.pipMock.PinRoute(ctx, pipCachePIPRoute, PipStubResponse{
+			s.Require().NoError(s.pipMock.PinRoute(ctx, route, PipStubResponse{
 				StatusCode: http.StatusOK,
 				Body:       map[string]any{"value": round.value},
 			}))
@@ -140,24 +147,26 @@ func (s *ParitySuite) TestRound7PIPCacheCases() {
 			s.Require().NoError(s.pipMock.ResetCalls(ctx))
 			name := round.name + "-" + strings.ToLower(operation)
 			s.Run(name, func() {
-				s.runPendingCheckResourceV1OutcomeCase(
-					pipCacheCaseID+"/"+name,
+				status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
 					model.CheckAccessRequest{Operation: operation, Type: rt, Resource: map[string]any{"id": "reg-pip-cache"}},
-					s.mustTokenBundle(UserProfileReader),
-					PerCallOptions{},
-				)
+					s.mustTokenBundle(UserProfileReader), PerCallOptions{})
+				s.Require().NoError(err)
+				// The call log is read before the golden is compared, since a golden
+				// not yet recorded skips the rest of the subtest.
 				calls, err := s.pipMock.GetCalls(ctx)
 				s.Require().NoError(err)
 				read := 0
 				for _, call := range calls {
-					if call.Path == pipCachePIPRoute {
+					if call.Path == route {
 						read++
 					}
 				}
-				s.T().Logf("pip-mock received %d call(s) to %s over %s, %s after %s was pinned", read, pipCachePIPRoute, name, time.Since(pinnedAt).Round(time.Second), pinned)
+				s.T().Logf("pip-mock received %d call(s) to %s over %s, %s after %s was pinned", read, route, name, time.Since(pinnedAt).Round(time.Second), pinned)
 				if round.after == 0 {
-					s.Assert().Positive(read, "pip-mock calls to %s over %s", pipCachePIPRoute, name)
+					s.Assert().Positive(read, "pip-mock calls to %s over %s", route, name)
 				}
+				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, caseID+"/"+name,
+					&model.CheckResourceOutcome{Status: status, Decision: decision})
 			})
 		}
 	}

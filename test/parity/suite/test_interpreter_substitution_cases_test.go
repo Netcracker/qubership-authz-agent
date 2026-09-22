@@ -169,16 +169,7 @@ func substitutionCases() []substitutionCase {
 		id := "substitution-" + source.key
 		b := regularBuilder{caseID: id}
 		rt := regularResourceType(id)
-		rule := b.rule("list", "operation == 'LIST'", "true", "ALLOW", map[string]string{
-			"rsqlPredicate":    "a==${" + source.placeholder + "}",
-			"sqlPredicate":     "a=${" + source.placeholder + "}",
-			"mongodbPredicate": `{ "a": ${` + source.placeholder + `} }`,
-			"predicate":        "${resourceType}.a.eq(${" + source.placeholder + "})",
-		})
-		rule["customPredicate"] = map[string]any{
-			"predicate": "a:${p}",
-			"params":    map[string]any{"p": source.placeholder},
-		}
+		rule := substitutionRule(b, source.placeholder)
 		var pips []any
 		if source.pip != nil {
 			pips = []any{source.pip}
@@ -196,6 +187,22 @@ func substitutionCases() []substitutionCase {
 		}})
 	}
 	return cases
+}
+
+// substitutionRule builds the LIST rule of a substitution case: an ALLOW rule
+// that names placeholder in all five predicate fields.
+func substitutionRule(b regularBuilder, placeholder string) map[string]any {
+	rule := b.rule("list", "operation == 'LIST'", "true", "ALLOW", map[string]string{
+		"rsqlPredicate":    "a==${" + placeholder + "}",
+		"sqlPredicate":     "a=${" + placeholder + "}",
+		"mongodbPredicate": `{ "a": ${` + placeholder + `} }`,
+		"predicate":        "${resourceType}.a.eq(${" + placeholder + "})",
+	})
+	rule["customPredicate"] = map[string]any{
+		"predicate": "a:${p}",
+		"params":    map[string]any{"p": placeholder},
+	}
+	return rule
 }
 
 // substitutionRegularCases lists the regular cases of the substitution matrix

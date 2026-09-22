@@ -77,8 +77,14 @@ func (s *ParitySuite) TestRound7FailedPIPCases() {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("regular policy sets are evaluated by access-control only; authz-agent loads simplified policies")
 	}
+	s.runFailedPIPCases(failedPIPCases())
+}
+
+// runFailedPIPCases pins the routes of each case, runs its regular case alone,
+// and asserts that pip-mock saw a call to every pinned route over its requests.
+func (s *ParitySuite) runFailedPIPCases(cases []failedPIPCase) {
 	ctx := context.Background()
-	for _, tc := range failedPIPCases() {
+	for _, tc := range cases {
 		for path, response := range tc.routes {
 			s.Require().NoError(s.pipMock.PinRoute(ctx, path, response), "pin %s", path)
 		}
