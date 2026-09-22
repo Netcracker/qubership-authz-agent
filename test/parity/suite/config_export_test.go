@@ -50,22 +50,64 @@ func TestNarrowConfigExport_KeepsOnlyMarkedElementsInTextOrder(t *testing.T) {
 	}
 }
 
-// An array nested inside a kept element is recorded as it came, unmarked elements
-// included: only the arrays of the envelope are narrowed.
-func TestNarrowConfigExport_NestedArraysAreKeptWhole(t *testing.T) {
+// An array nested inside a kept element keeps every element, unmarked ones
+// included, and holds them sorted by their JSON text: the PAP lists the policies
+// of a set in an order that differs between two reads of one stand.
+func TestNarrowConfigExport_NestedArraysAreSortedAndKeptWhole(t *testing.T) {
 	t.Parallel()
-	body := []byte(`{"policySets": [{"name": "Marked", "policies": [{"name": "unrelated"}, {"name": "alsoUnrelated"}]}]}`)
+	body := []byte(`{"policySets": [{"name": "Marked", "policies": [
+		{"name": "unrelated", "rules": [{"ruleId": "b"}, {"ruleId": "a"}]},
+		{"name": "alsoUnrelated"}
+	]}]}`)
+
+	got := narrowConfigExport(200, body, []string{"Marked"})
+
+	want := &model.ConfigExportOutcome{Status: 200, Export: map[string]any{
+		"policySets": []any{map[string]any{
+			"name": "Marked",
+			"policies": []any{
+				map[string]any{"name": "alsoUnrelated"},
+				map[string]any{"name": "unrelated", "rules": []any{map[string]any{"ruleId": "a"}, map[string]any{"ruleId": "b"}}},
+			},
+		}},
+	}}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("narrowConfigExport() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// The write stamps the PAP puts on a set, a policy, and a rule are removed at every
+// depth, so two reads of one fixture on two stands record one golden; a field
+// with another name beside them stays.
+func TestNarrowConfigExport_WriteStampsAreRemovedAtEveryDepth(t *testing.T) {
+	t.Parallel()
+	body := []byte(`{"policySets": [{"name": "Marked", "createdWhen": 1, "lastModifiedWhen": 2,
+		"createdBy": "svc", "lastModifiedBy": "svc", "policies": [
+			{"name": "p", "createdWhen": 3, "rules": [{"ruleId": "r", "lastModifiedWhen": 4, "lastModifiedBy": "svc"}]}
+		]}]}`)
 
 	got := narrowConfigExport(200, body, []string{"Marked"})
 
 	want := &model.ConfigExportOutcome{Status: 200, Export: map[string]any{
 		"policySets": []any{map[string]any{
 			"name":     "Marked",
-			"policies": []any{map[string]any{"name": "unrelated"}, map[string]any{"name": "alsoUnrelated"}},
+			"policies": []any{map[string]any{"name": "p", "rules": []any{map[string]any{"ruleId": "r"}}}},
 		}},
 	}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("narrowConfigExport() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// Two reads that list the nested policies in opposite orders narrow to one
+// golden.
+func TestNarrowConfigExport_NestedOrderDoesNotReachTheGolden(t *testing.T) {
+	t.Parallel()
+	first := []byte(`{"policySets": [{"name": "Marked", "policies": [{"name": "a"}, {"name": "b"}]}]}`)
+	second := []byte(`{"policySets": [{"name": "Marked", "policies": [{"name": "b"}, {"name": "a"}]}]}`)
+
+	if diff := cmp.Diff(narrowConfigExport(200, first, []string{"Marked"}), narrowConfigExport(200, second, []string{"Marked"})); diff != "" {
+		t.Errorf("narrowConfigExport() of two policy orders differs (-first +second):\n%s", diff)
 	}
 }
 

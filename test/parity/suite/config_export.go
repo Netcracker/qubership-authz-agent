@@ -26,10 +26,19 @@ import (
 // with every write to the PAP and are removed before the body is recorded.
 var configExportEnvelopeFields = []string{"hash", "lastModificationTimestamp"}
 
+// configExportElementFields are the fields the PAP stamps on every exported set,
+// policy, and rule at write time, and that differ between two stands or two
+// uploads of one fixture: the wall-clock write times and the writing client.
+// They are removed at every depth before the body is recorded.
+var configExportElementFields = []string{"createdWhen", "lastModifiedWhen", "createdBy", "lastModifiedBy"}
+
 // narrowConfigExport turns a v3 export response into its golden shape: the fields
-// in configExportEnvelopeFields are removed from the envelope, and every array of
-// the envelope is reduced to the elements whose JSON text contains one of
-// markers, sorted by that text. Nested arrays are left as they are. A body that
+// in configExportEnvelopeFields are removed from the envelope, every array of the
+// envelope is reduced to the elements whose JSON text contains one of markers, and
+// inside the kept elements the fields in configExportElementFields are removed
+// and every array is sorted by the JSON text of its elements, at every depth. The
+// PAP lists the policies of a set and the rules of a policy in an order that
+// differs from one read to the next, so the golden holds them sorted. A body that
 // is not a JSON object is kept as text in Body, with Export nil.
 func narrowConfigExport(status int, body []byte, markers []string) *model.ConfigExportOutcome {
 	var export map[string]any
@@ -44,11 +53,7 @@ func narrowConfigExport(status int, body []byte, markers []string) *model.Config
 		if !isArray {
 			continue
 		}
-		type keyed struct {
-			text    string
-			element any
-		}
-		kept := []keyed{}
+		kept := []any{}
 		for _, element := range elements {
 			text, err := json.Marshal(element)
 			if err != nil {
@@ -56,17 +61,55 @@ func narrowConfigExport(status int, body []byte, markers []string) *model.Config
 			}
 			for _, marker := range markers {
 				if strings.Contains(string(text), marker) {
-					kept = append(kept, keyed{text: string(text), element: element})
+					kept = append(kept, element)
 					break
 				}
 			}
 		}
-		sort.Slice(kept, func(i, j int) bool { return kept[i].text < kept[j].text })
-		narrowed := make([]any, 0, len(kept))
-		for _, k := range kept {
-			narrowed = append(narrowed, k.element)
-		}
-		export[key] = narrowed
+		export[key] = canonicalExportValue(kept)
 	}
 	return &model.ConfigExportOutcome{Status: status, Export: export}
+}
+
+// canonicalExportValue removes configExportElementFields from every object under
+// v and sorts every array under v by the JSON text of its canonicalized elements.
+func canonicalExportValue(v any) any {
+	switch typed := v.(type) {
+	case map[string]any:
+		for _, field := range configExportElementFields {
+			delete(typed, field)
+		}
+		for key, value := range typed {
+			typed[key] = canonicalExportValue(value)
+		}
+		return typed
+	case []any:
+		return sortByJSONText(typed, canonicalExportValue)
+	default:
+		return v
+	}
+}
+
+// sortByJSONText applies canonicalize to every element of elements and returns
+// them sorted by their JSON text. An element that does not marshal is left out.
+func sortByJSONText(elements []any, canonicalize func(any) any) []any {
+	type keyed struct {
+		text    string
+		element any
+	}
+	kept := make([]keyed, 0, len(elements))
+	for _, element := range elements {
+		element = canonicalize(element)
+		text, err := json.Marshal(element)
+		if err != nil {
+			continue
+		}
+		kept = append(kept, keyed{text: string(text), element: element})
+	}
+	sort.Slice(kept, func(i, j int) bool { return kept[i].text < kept[j].text })
+	sorted := make([]any, 0, len(kept))
+	for _, k := range kept {
+		sorted = append(sorted, k.element)
+	}
+	return sorted
 }
