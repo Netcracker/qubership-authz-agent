@@ -28,6 +28,7 @@ var regularCaseLists = map[string]func() []regularCase{
 	"combiningCases":           combiningCases,
 	"interpreterFilterCases":   interpreterFilterCases,
 	"iterateBindingCases":      iterateBindingCases,
+	"setTargetCases":           setTargetCases,
 }
 
 // Every regular case has an id of its own across every list, and every request of

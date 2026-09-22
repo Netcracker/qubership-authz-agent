@@ -48,6 +48,11 @@ const (
 	PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME
 	// PSUITE_LOAD_POLICY_SETS is the PAP upload of regular policy sets.
 	PSUITE_LOAD_POLICY_SETS
+	// PSUITE_CONFIG_POLICY_SETS_V3 is the export of every policy set the PAP
+	// holds, which the agent reads instead of the uploads.
+	PSUITE_CONFIG_POLICY_SETS_V3
+	// PSUITE_CONFIG_PIPS_V3 is the export of every PIP declaration the PAP holds.
+	PSUITE_CONFIG_PIPS_V3
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -132,6 +137,14 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_LOAD_POLICY_SETS, Name: "load-policy-sets-v1", HTTPMethod: "PUT",
 		PathTmpl: "/access/v1/policySets/externalId/{externalId}", GoldenDir: "load-policy-sets-v1",
 	},
+	PSUITE_CONFIG_POLICY_SETS_V3: {
+		ID: PSUITE_CONFIG_POLICY_SETS_V3, Name: "config-policy-sets-v3", HTTPMethod: "GET",
+		PathTmpl: "/access/v3/config/policySets", GoldenDir: "config-policy-sets-v3",
+	},
+	PSUITE_CONFIG_PIPS_V3: {
+		ID: PSUITE_CONFIG_PIPS_V3, Name: "config-pips-v3", HTTPMethod: "GET",
+		PathTmpl: "/access/v3/config/pips", GoldenDir: "config-pips-v3",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -177,6 +190,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.CheckResourceOutcome{}
 	case PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME:
 		return &model.FilterOutcome{}
+	case PSUITE_CONFIG_POLICY_SETS_V3, PSUITE_CONFIG_PIPS_V3:
+		return &model.ConfigExportOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }
