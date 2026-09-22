@@ -1,0 +1,100 @@
+{
+  "permission-list-mapping-for-another-role": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "perms=in=()",
+        "sqlFilterCondition": "perms IN (NULL)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-list-mapping-for-the-role": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "perms=in=(\"parity_permission\")",
+        "sqlFilterCondition": "perms IN ('parity_permission')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-list-mapping-with-an-empty-list": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "perms=in=()",
+        "sqlFilterCondition": "perms IN (NULL)",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-list-no-mapping": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-list-scopes-and-roles": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "scopes=in=(\"openid\", \"profile\", \"email\")",
+        "sqlFilterCondition": "roles IN ('ROLE_PARITY_READER')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-list-two-mappings-with-different-permissions": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "perms=in=(\"parity_other_permission\", \"parity_permission\")",
+        "sqlFilterCondition": "perms IN ('parity_other_permission', 'parity_permission')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "permission-list-two-mappings-with-the-same-permission": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "perms=in=(\"parity_permission\")",
+        "sqlFilterCondition": "perms IN ('parity_permission')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "nb1-greater-or-equal-at-a-fractional-boundary": {
+    "check-resource-v1-outcome/isolated/integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place-as-a-string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nb2-less-or-equal-at-a-fractional-boundary": {
+    "check-resource-v1-outcome/isolated/integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/one-decimal-place-as-a-string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nl1-less-than-over-null": {
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-below": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nl2-greater-or-equal-over-null": {
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-at-the-boundary": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nl3-is-not-null-over-null": {
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/string": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nl4-is-not-empty-over-null": {
+    "check-resource-v1-outcome/isolated/collection-with-an-element": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nl5-greater-than-over-null": {
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-above": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nl6-less-or-equal-over-null": {
+    "check-resource-v1-outcome/isolated/null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/number-at-the-boundary": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn1-is-empty-over-absence": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn1-is-empty-over-absence-control": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn2-is-not-empty-over-absence": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn2-is-not-empty-over-absence-control": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn3-not-match-over-absence": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn3-not-match-over-absence-control": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn4-not-contains-any-over-absence": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn4-not-contains-any-over-absence-control": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn5-is-not-subset-over-absence": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nn5-is-not-subset-over-absence-control": {
+    "check-resource-v1-outcome/isolated/key-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np1-filter-expression-without-a-match": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np1-filter-expression-without-a-match-control": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np1-filter-expression-without-a-match-is-empty": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np2-recursive-descent-without-a-match": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np2-recursive-descent-without-a-match-control": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np2-recursive-descent-without-a-match-is-empty": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np3-index-past-the-end": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np3-index-past-the-end-control": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np3-index-past-the-end-is-empty": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np4-wildcard-to-a-missing-key": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np4-wildcard-to-a-missing-key-control": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "np4-wildcard-to-a-missing-key-is-empty": {
+    "check-resource-v1-outcome/isolated/nothing-selected": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "access-operator-chain": {
+    "check-resource-v1-outcome/regular/five-nested-decisions": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/four-nested-decisions": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/one-nested-decision": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/six-nested-decisions": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/three-nested-decisions": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/two-nested-decisions": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "access-operator-reads-another-operation": {
+    "check-resource-v1-outcome/regular/delete-when-read-is-allowed": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/delete-when-read-is-denied": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-allowed": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-denied": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-when-read-is-allowed": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-when-read-is-denied": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "oa1-operation-all-with-a-condition": {
+    "check-resource-v1-outcome/isolated/delete-condition-false": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/delete-condition-true": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-condition-false": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-condition-true": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "oa2-operation-all-with-a-predicate": {
+    "check-filter-v1-outcome/isolated/filter-list": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "all==1",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/isolated/filter-read": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "all==1",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

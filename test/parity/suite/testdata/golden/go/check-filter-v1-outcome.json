@@ -1,4 +1,59 @@
 {
+  "regular/distinct-rule-ids-in-two-sets/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "(second==2),(first==1)",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-condition-without-predicate-beside-a-predicate/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "b==2",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-four-groups-on-one-type/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "(regular1==1),(simplified1==1,simplified2==2),(regular2==2)",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-rule-with-a-condition-and-no-predicate/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-rule-without-condition-or-predicate/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
   "regular/filter-set-beside-simplified-policy/filter": {
     "status": 200,
     "result": {
@@ -6,6 +61,94 @@
       "filterCondition": "",
       "mongodbFilterCondition": "",
       "rsqlFilterCondition": "(simplified==1),(regular==1)",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-target-reads-the-resource-in-the-policy/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-target-reads-the-resource-in-the-rule/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-under-a-deny-list-beside-an-allow/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "(area!=alpha),(area==open)",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-under-a-deny-list/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "area!=alpha;area!=beta",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-without-an-operation/filter-with-no-operation": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "read==1",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-without-an-operation/filter-with-read": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "read==1",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/filter-without-an-operation/filter-with-the-operation-all": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/set-target-reads-id/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
       "sqlFilterCondition": "",
       "customFilterCondition": null
     }
