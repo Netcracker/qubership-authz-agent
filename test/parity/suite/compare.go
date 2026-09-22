@@ -191,12 +191,22 @@ func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 // though its authz-agent ordering currently matches the golden — a future
 // variation in either side's array handling shouldn't re-red-flag a
 // set-semantic leaf that already matches today.
+//
+// Every check/filter row goes through normalizeFilterOrder as well: access-control
+// joins the predicates of the applicable rules in an order that differs between
+// runs at every level of the expression, in every dialect, and in the apply
+// arrays of customFilterCondition, and the two sub-case rewrites of this function
+// cover only the leaves where that was first seen.
 func normalizeComparable(id ParityEndpointID, subCase string, v any) any {
 	if id == PSUITE_ROW_6_CHECK_FILTER_V1 && subCase == "agg-two-predicates" {
-		return normalizeFilterTopLevelCommaTerms(v)
+		v = normalizeFilterTopLevelCommaTerms(v)
 	}
 	if id == PSUITE_ROW_10_CHECK_FILTER_V2 && (subCase == "general-pip-dict" || subCase == "general-pip-list") {
-		return normalizeFilterInClauseElements(v)
+		v = normalizeFilterInClauseElements(v)
+	}
+	switch id {
+	case PSUITE_ROW_6_CHECK_FILTER_V1, PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, PSUITE_ROW_10_CHECK_FILTER_V2:
+		return normalizeFilterOrder(v)
 	}
 	return v
 }
