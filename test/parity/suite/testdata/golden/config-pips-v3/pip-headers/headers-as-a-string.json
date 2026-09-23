@@ -1,0 +1,18 @@
+{
+  "status": 200,
+  "export": {
+    "pips": [
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED_B",
+        "headers": "X-A,X-B",
+        "httpMethod": "POST",
+        "name": "subject.parityR10Headers",
+        "pipType": "GENERAL",
+        "tenantId": "default",
+        "type": "UUID",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-headers"
+      }
+    ]
+  }
+}
