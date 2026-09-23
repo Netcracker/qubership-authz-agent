@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": {
+      "logic": {
+        "path": "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2"
+      },
+      "data": {
+        "f57e56d9-7df8-0aad-bbb5-3ba0874c394a_0_75a8911c-1880-b778-e539-b648301858b2": {
+          "predicate": "region:${p}",
+          "params": {
+            "p": [
+              "r2",
+              "r1"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
