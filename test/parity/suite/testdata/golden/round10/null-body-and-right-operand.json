@@ -1,0 +1,22 @@
+{
+  "nb-equals-an-absent-claim": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nb-in-an-absent-header": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nb-null-body-equals-a-value": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nb-null-body-is-empty": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nb-null-body-is-null": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

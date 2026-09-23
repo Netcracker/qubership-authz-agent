@@ -10,6 +10,50 @@
       "customFilterCondition": null
     }
   },
+  "regular/failed-pip-allow-without-predicate/filter-list-when-the-pip-was-read": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-allow-without-predicate/filter-update": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-deny-without-predicate/filter-list-when-the-pip-was-read": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "regular/failed-pip-deny-without-predicate/filter-update": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
   "regular/filter-condition-without-predicate-beside-a-predicate/filter": {
     "status": 200,
     "result": {
@@ -151,6 +195,32 @@
       "rsqlFilterCondition": "",
       "sqlFilterCondition": "",
       "customFilterCondition": null
+    }
+  },
+  "regular/substitution-general-repeated-values/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_REPEATED_VALUES.a.eq(\"a\", \"b\")",
+      "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"a\" }, { \"$uuid\": \"b\" } ] } }",
+      "rsqlFilterCondition": "a==\"a\", \"b\"",
+      "sqlFilterCondition": "a='a', 'b'",
+      "customFilterCondition": {
+        "logic": {
+          "path": "bcae5bbf-f527-80d1-7f03-b56370dfe16e"
+        },
+        "data": {
+          "bcae5bbf-f527-80d1-7f03-b56370dfe16e": {
+            "predicate": "a:${p}",
+            "params": {
+              "p": [
+                "a",
+                "b"
+              ]
+            }
+          }
+        }
+      }
     }
   },
   "scope-filter/no-grants/filter-all-fields-deny-unless-permit": {
@@ -878,6 +948,666 @@
       "rsqlFilterCondition": "scoped==1",
       "sqlFilterCondition": "",
       "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/empty-region-beside-r1/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/no-grants/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-empty-region/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/one-grant-r1/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "DENY",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-not-found/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/scope-service-unparsed-body/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-objects/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-a-list-of-one-object/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/deny-unless-permit-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/deny-unless-permit-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/deny-unless-permit-set-node-without-algorithm/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-deny-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-deny-unless-permit-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-permit-overrides-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
+    }
+  },
+  "scope-set-algorithm/unparsed-body-as-one-object/permit-unless-deny-set-permit-unless-deny-node/filter": {
+    "status": 500,
+    "result": {
+      "calculationResult": "",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": ""
     }
   },
   "semantics/f1-false-condition-beside-predicate": {

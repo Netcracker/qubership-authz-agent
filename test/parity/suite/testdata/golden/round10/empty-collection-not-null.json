@@ -1,0 +1,17 @@
+{
+  "ec-is-not-null-over-an-empty-array": {
+    "check-resource-v1-outcome/isolated/list-empty": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/list-of-one": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ec-is-not-null-over-an-empty-array-alone": {
+    "check-resource-v1-outcome/isolated/list-empty": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/list-of-one": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "ec-is-not-null-over-an-empty-array-control": {
+    "check-resource-v1-outcome/isolated/list-empty": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/list-of-one": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

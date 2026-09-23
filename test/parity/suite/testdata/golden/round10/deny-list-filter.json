@@ -1,0 +1,34 @@
+{
+  "deny-list-without-predicate": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check-list-uri-in-the-list": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/check-list-uri-outside-the-list": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "deny-list-without-predicate-beside-a-predicate": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check-list-uri-in-the-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/check-list-uri-outside-the-list": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

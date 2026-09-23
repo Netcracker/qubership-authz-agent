@@ -1,0 +1,62 @@
+{
+  "nc-contains": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-contains-alone": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-contains-any": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-contains-any-alone": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-contains-any-control": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-contains-control": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-in": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-in-alone": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-in-control": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-is-subset": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-is-subset-alone": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-is-subset-control": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-match": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-match-alone": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "nc-match-control": {
+    "check-resource-v1-outcome/isolated/x-null": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

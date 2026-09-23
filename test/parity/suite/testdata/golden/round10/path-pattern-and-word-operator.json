@@ -1,0 +1,31 @@
+{
+  "pp-less-than-or-equal-to": {
+    "check-resource-v1-outcome/isolated/x-5": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-6": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pp-less-than-or-equal-without-to": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "pp-match-slash-pattern": {
+    "check-resource-v1-outcome/isolated/x-abc": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-ab-dot-c-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-ab-dot-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-abc-slash": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pp-match-slash-pattern-alone": {
+    "check-resource-v1-outcome/isolated/x-abc": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/x-slash-ab-dot-c-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-ab-dot-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-abc-slash": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pp-match-slash-pattern-control": {
+    "check-resource-v1-outcome/isolated/x-abc": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-ab-dot-c-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-ab-dot-slash": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/x-slash-abc-slash": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

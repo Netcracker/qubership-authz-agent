@@ -1,0 +1,74 @@
+{
+  "eh-header-equals-empty-string": {
+    "check-resource-v1-outcome/isolated/header-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/header-empty": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "eh-header-is-empty": {
+    "check-resource-v1-outcome/isolated/header-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-empty": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "eh-header-is-null": {
+    "check-resource-v1-outcome/isolated/header-absent": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-empty": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "eh-header-resource-in": {
+    "check-resource-v1-outcome/isolated/header-absent": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/header-empty": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-contains-any": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-contains-any-or-true": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-contains-any-or-true-control": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-is-subset": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-is-subset-or-true": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-is-subset-or-true-control": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-match": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-match-or-true": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-match-or-true-control": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-not-in": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-not-in-or-true": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sv-header-not-in-or-true-control": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}
