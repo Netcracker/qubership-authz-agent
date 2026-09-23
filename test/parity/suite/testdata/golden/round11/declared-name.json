@@ -1,0 +1,20 @@
+{
+  "dm-is-m2m-declared": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "dm-is-m2m-undeclared": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "dm-same-pip-under-another-name": {
+    "check-resource-v1-outcome/isolated/header-yes": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "um-suffixed-mapping": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "um-unsuffixed-mapping": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

@@ -950,6 +950,28 @@
       "customFilterCondition": null
     }
   },
+  "scope-node-under-a-set/no-grants/deny-unless-permit-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "ALLOW",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
+  "scope-node-under-a-set/one-grant-r1/deny-unless-permit-set-permit-unless-deny-node/filter": {
+    "status": 200,
+    "result": {
+      "calculationResult": "USE_FILTER_CONDITION",
+      "filterCondition": "",
+      "mongodbFilterCondition": "",
+      "rsqlFilterCondition": "region=in=(\"r1\")",
+      "sqlFilterCondition": "",
+      "customFilterCondition": null
+    }
+  },
   "scope-set-algorithm/empty-region-beside-r1/deny-unless-permit-set-deny-overrides-node/filter": {
     "status": 200,
     "result": {

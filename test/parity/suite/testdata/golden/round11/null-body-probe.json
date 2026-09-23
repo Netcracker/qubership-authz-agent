@@ -1,0 +1,10 @@
+{
+  "pn-null-body-is-empty": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pn-null-body-is-empty-control": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

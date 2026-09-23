@@ -1,0 +1,12 @@
+{
+  "calls-read-once": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":1,"requestAttributes":{"case":"calls-read-once"}}
+  },
+  "calls-read-twice": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated": {"calls":2,"requestAttributes":{"case":"calls-read-twice"}}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "lr-absent-key-on-the-right": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "lr-absent-key-on-the-right-control": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "lr-null-literal-equals": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "lr-null-literal-equals-control": {
+    "check-resource-v1-outcome/isolated/x-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}
