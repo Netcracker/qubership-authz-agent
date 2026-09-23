@@ -94,9 +94,9 @@ func (s *ParitySuite) TestRound10UndeclaredPlaceholderCheckCases() {
 }
 
 // What IN, CONTAINS, CONTAINS ANY, IS SUBSET and MATCH answer over a resource
-// attribute that is null. Over null, NOT IN is true, NOT CONTAINS is false (n1,
-// n2) and NOT MATCH is false (m1), so the negated operators do not complement the
-// plain ones, and the plain ones are recorded over null nowhere. The agent's
+// attribute that is null. Over null, NOT IN is true (n1), and NOT CONTAINS and NOT
+// MATCH are false (n2, m1) alone, where a false operand and an ended rule look the
+// same; the plain operators are recorded over null nowhere. The agent's
 // condition parser accepts every condition here.
 //
 // Each operator is asked alone, which records its value if it has one, and

@@ -50,6 +50,19 @@ func round9PolicyCase(id, policyAlgorithm string, rules func(b regularBuilder) [
 	})
 }
 
+// round9PredicatePolicy is a DENY_UNLESS_PERMIT policy whose one rule allows LIST
+// with the predicate allowed==1.
+func round9PredicatePolicy(b regularBuilder) map[string]any {
+	return b.policy("with-a-predicate", readerTarget, "DENY_UNLESS_PERMIT", allowWithPredicate(b, "list-with-a-predicate", "allowed==1"))
+}
+
+// round9UpdateOnlyPolicy is a DENY_UNLESS_PERMIT policy whose one rule allows
+// UPDATE, so on LIST it has no rule that applies and denies.
+func round9UpdateOnlyPolicy(b regularBuilder) map[string]any {
+	return b.policy("update-only", readerTarget, "DENY_UNLESS_PERMIT",
+		b.rule("update-allow", "operation == 'UPDATE'", "true", "ALLOW", nil))
+}
+
 // allowWithPredicate is an ALLOW rule on LIST whose predicate is rsql.
 func allowWithPredicate(b regularBuilder, key, rsql string) map[string]any {
 	return b.rule(key, "operation == 'LIST'", "true", "ALLOW", map[string]string{"rsqlPredicate": rsql})
@@ -184,19 +197,12 @@ func round9FilterAlgebraCases() []regularCase {
 	pud.requests = append(append([]isolatedRequest(nil), round9FilterRequests...), isolatedRequest{name: "filter-update", filter: true, operation: "UPDATE"})
 	cases = append(cases, pud)
 
-	predicatePolicy := func(b regularBuilder) map[string]any {
-		return b.policy("with-a-predicate", readerTarget, "DENY_UNLESS_PERMIT", allowWithPredicate(b, "list-with-a-predicate", "allowed==1"))
-	}
 	cases = append(cases,
 		round9SetCase("deny-overrides-set-with-a-policy-without-a-list-rule", "DENY_OVERRIDES", func(b regularBuilder) []any {
-			return []any{
-				predicatePolicy(b),
-				b.policy("update-only", readerTarget, "DENY_UNLESS_PERMIT",
-					b.rule("update-allow", "operation == 'UPDATE'", "true", "ALLOW", nil)),
-			}
+			return []any{round9PredicatePolicy(b), round9UpdateOnlyPolicy(b)}
 		}),
 		round9SetCase("deny-overrides-set-with-the-predicate-policy-alone", "DENY_OVERRIDES", func(b regularBuilder) []any {
-			return []any{predicatePolicy(b)}
+			return []any{round9PredicatePolicy(b)}
 		}),
 	)
 
@@ -208,7 +214,7 @@ func round9FilterAlgebraCases() []regularCase {
 			return []any{
 				b.policy("denies", readerTarget, "DENY_OVERRIDES",
 					b.rule("list-deny", "operation == 'LIST'", form.condition, "DENY", nil)),
-				predicatePolicy(b),
+				round9PredicatePolicy(b),
 			}
 		}))
 	}

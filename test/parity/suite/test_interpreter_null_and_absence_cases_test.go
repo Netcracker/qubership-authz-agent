@@ -43,19 +43,18 @@ func orProbePair(id, resourceType, operand string, requests ...isolatedRequest) 
 //
 // Over a null value the recorded answers are per operator: > does not end the
 // rule (n3-greater-than-null-or-true is true) and its value alone is not
-// recorded, IS EMPTY is false (n4), NOT IN is true and NOT CONTAINS is false (n1,
-// n2). The four relational operators, IS NOT NULL and IS NOT EMPTY are not
+// recorded, NOT IN is true (n1), and IS EMPTY and NOT CONTAINS are false (n4, n2)
+// alone, where a false leaf and an aborted rule look the same. The four relational operators, IS NOT NULL and IS NOT EMPTY are not
 // recorded alone over null, and IS NOT NULL is recorded over an absent key only
 // inside a guarded chain (s12a). The nl cases record each of them alone, so the
 // operator-by-state table has a value in every relational cell rather than in
 // two.
 //
-// Over an absent key the recorded answers split the operators into two groups:
-// IS NULL is true (s6a), == and != and > end the rule (s1b, s2b, s5), and so do
-// NOT IN and NOT CONTAINS (s3, s4). IS EMPTY and IS NOT EMPTY are recorded as false
-// (s7, l9) but only alone, where a false leaf and an aborted rule look the same;
-// NOT MATCH, NOT CONTAINS ANY and IS NOT SUBSET are recorded over null (m1, m2,
-// m3) and not over absence at all. The nn cases put each of them through
+// Over an absent key IS NULL is true (s6a) and == ends the rule (s10). !=, >, NOT
+// IN and NOT CONTAINS (s2b, s5, s3, s4), IS EMPTY and IS NOT EMPTY (s7, l9) are
+// recorded as false but only alone, where a false leaf and an aborted rule look
+// the same. NOT MATCH, NOT CONTAINS ANY and IS NOT SUBSET are recorded over null
+// (m1, m2, m3) and not over absence at all. The nn cases put each of them through
 // orProbePair.
 //
 // The np cases do the same for a JSON Path that selects nothing. A plain path to an

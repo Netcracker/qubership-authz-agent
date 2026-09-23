@@ -55,6 +55,9 @@ var regularCaseLists = map[string]func() []regularCase{
 	"pipScopeRegularCases":                      pipScopeRegularCases,
 	"repeatedValuesRegularCases":                repeatedValuesRegularCases,
 	"policyWithoutAlgorithmCases":               policyWithoutAlgorithmCases,
+	"round11FailedPIPOnTheRightCases":           round11FailedPIPOnTheRightCases,
+	"round11ScopeOutsideIterateCases":           round11ScopeOutsideIterateCases,
+	"round11FilterCases":                        round11FilterCases,
 }
 
 // casesSharingElementIDs are the regular cases whose one upload carries one
