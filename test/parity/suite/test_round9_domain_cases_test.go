@@ -251,6 +251,10 @@ func (s *ParitySuite) TestRound9TwinPIPDeclarationCases() {
 			}
 			for domain, twin := range round9TwinRoutes {
 				s.T().Logf("%s: pip-mock received %d call(s) to %s, the declaration of %s", req.name, read[twin.route], twin.route, domain)
+				pipCall := s.pipCallOutcomeOf(calls, twin.route)
+				s.Run("pip-calls-to-the-declaration-of-"+domain, func() {
+					s.requirePendingGolden(PSUITE_PIP_CALL, "twin-pip/"+req.name+"/"+domain, pipCall)
+				})
 			}
 			s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "twin-pip/"+req.name,
 				&model.CheckResourceOutcome{Status: status, Decision: decision})

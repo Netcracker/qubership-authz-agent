@@ -101,7 +101,6 @@ func (s *ParitySuite) TestRound8FailedPIPScopeCases() {
 		s.T().Skip("regular policy sets are evaluated by access-control only; authz-agent loads simplified policies")
 	}
 	ctx := context.Background()
-	m2m := s.mustM2MToken()
 	cases := failedPIPScopeCases()
 	s.T().Cleanup(func() {
 		if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
@@ -122,67 +121,73 @@ func (s *ParitySuite) TestRound8FailedPIPScopeCases() {
 	}
 	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, shape := range failedPIPScopeShapes {
-		tc := failedPIPScopeCase(shape.key, shape.pip, shape.sets)
-		s.Run(tc.id, func() {
-			s.Require().NoError(s.pipMock.PinRoute(ctx, shape.route, PipStubResponse{
-				StatusCode: http.StatusInternalServerError,
-				Body:       map[string]string{"error": "parity failed-pip scope case"},
-			}))
-			upload := tc.uploads[0]
-			// byClass collects the outcome of every upload whose request read the PIP
-			// (true) or skipped it (false).
-			byClass := map[bool][]model.CheckResourceOutcome{}
-			for attempt := 1; attempt <= failedPIPScopeUploads; attempt++ {
-				uploadStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
-				s.Require().NoError(err)
-				if attempt == 1 {
-					s.Run("upload-1", func() {
-						s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, "regular/"+tc.id+"/upload-1", &model.PolicyLoadOutcome{Status: uploadStatus})
-					})
-				}
-				if uploadStatus < http.StatusOK || uploadStatus >= http.StatusMultipleChoices {
-					return
-				}
-				s.Require().NoError(s.pipMock.ResetCalls(ctx))
-				checkStatus, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
-					model.CheckAccessRequest{Operation: "READ", Type: tc.resourceType, Resource: tc.requests[0].resource},
-					s.mustTokenBundle(UserProfileReader), PerCallOptions{})
-				s.Require().NoError(err)
-				calls, err := s.pipMock.GetCalls(ctx)
-				s.Require().NoError(err)
-				read := 0
-				for _, call := range calls {
-					if call.Path == shape.route {
-						read++
-					}
-				}
-				s.T().Logf("upload %d of %s: pip-mock received %d call(s) to %s, status %d, decision %t",
-					attempt, tc.id, read, shape.route, checkStatus, decision)
-				byClass[read > 0] = append(byClass[read > 0], model.CheckResourceOutcome{Status: checkStatus, Decision: decision})
-			}
-			for _, class := range []struct {
-				name string
-				read bool
-			}{
-				{"read-when-the-pip-was-read", true},
-				{"read-when-the-pip-was-skipped", false},
-			} {
-				s.Run(class.name, func() {
-					outcomes := byClass[class.read]
-					if len(outcomes) == 0 {
-						s.T().Skipf("pip-mock saw a call to %s from %d of the %d uploads of %s and none from %d; no upload in the class of this golden, "+
-							"so the stand may keep one order across uploads: rerun the case on another stand",
-							shape.route, len(byClass[true]), failedPIPScopeUploads, tc.id, len(byClass[false]))
-					}
-					for _, outcome := range outcomes[1:] {
-						s.Require().Equal(outcomes[0], outcome, "outcomes of the %d uploads of %s whose request %s the PIP: %v",
-							len(outcomes), tc.id, map[bool]string{true: "read", false: "skipped"}[class.read], outcomes)
-					}
-					s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "regular/"+tc.id+"/"+class.name, &outcomes[0])
-				})
-			}
+		s.runFailedPIPScopeCase(failedPIPScopeCase(shape.key, shape.pip, shape.sets), shape.route, PipStubResponse{
+			StatusCode: http.StatusInternalServerError,
+			Body:       map[string]string{"error": "parity failed-pip scope case"},
 		})
 	}
+}
+
+// runFailedPIPScopeCase pins response at route, uploads the sets of tc
+// failedPIPScopeUploads times, sends tc's one request after each upload, and
+// records one golden per class of upload: read-when-the-pip-was-read for the
+// uploads whose request pip-mock saw a call on route from, and
+// read-when-the-pip-was-skipped for the others. The answers of a class have to
+// agree before the first is recorded, and a class no upload fell into is
+// skipped with both counts. The sets are emptied when the test ends by the
+// caller's emptyPolicySetsOnCleanup.
+func (s *ParitySuite) runFailedPIPScopeCase(tc regularCase, route string, response PipStubResponse) {
+	ctx := context.Background()
+	m2m := s.mustM2MToken()
+	s.Run(tc.id, func() {
+		s.Require().NoError(s.pipMock.PinRoute(ctx, route, response))
+		upload := tc.uploads[0]
+		// byClass collects the outcome of every upload whose request read the PIP
+		// (true) or skipped it (false).
+		byClass := map[bool][]model.CheckResourceOutcome{}
+		for attempt := 1; attempt <= failedPIPScopeUploads; attempt++ {
+			uploadStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
+			s.Require().NoError(err)
+			if attempt == 1 {
+				s.Run("upload-1", func() {
+					s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, "regular/"+tc.id+"/upload-1", &model.PolicyLoadOutcome{Status: uploadStatus})
+				})
+			}
+			if uploadStatus < http.StatusOK || uploadStatus >= http.StatusMultipleChoices {
+				return
+			}
+			s.Require().NoError(s.pipMock.ResetCalls(ctx))
+			checkStatus, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
+				model.CheckAccessRequest{Operation: "READ", Type: tc.resourceType, Resource: tc.requests[0].resource},
+				s.mustTokenBundle(UserProfileReader), PerCallOptions{})
+			s.Require().NoError(err)
+			read := s.pipCalls(route)
+			s.T().Logf("upload %d of %s: pip-mock received %d call(s) to %s, status %d, decision %t",
+				attempt, tc.id, read, route, checkStatus, decision)
+			byClass[read > 0] = append(byClass[read > 0], model.CheckResourceOutcome{Status: checkStatus, Decision: decision})
+		}
+		for _, class := range []struct {
+			name string
+			read bool
+		}{
+			{"read-when-the-pip-was-read", true},
+			{"read-when-the-pip-was-skipped", false},
+		} {
+			s.Run(class.name, func() {
+				outcomes := byClass[class.read]
+				if len(outcomes) == 0 {
+					s.T().Skipf("pip-mock saw a call to %s from %d of the %d uploads of %s and none from %d; no upload in the class of this golden, "+
+						"so the stand may keep one order across uploads: rerun the case on another stand",
+						route, len(byClass[true]), failedPIPScopeUploads, tc.id, len(byClass[false]))
+				}
+				for _, outcome := range outcomes[1:] {
+					s.Require().Equal(outcomes[0], outcome, "outcomes of the %d uploads of %s whose request %s the PIP: %v",
+						len(outcomes), tc.id, map[bool]string{true: "read", false: "skipped"}[class.read], outcomes)
+				}
+				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "regular/"+tc.id+"/"+class.name, &outcomes[0])
+			})
+		}
+	})
 }
 
 // failedPIPScopeCases builds the regular case of every shape of
@@ -199,21 +204,32 @@ func failedPIPScopeCases() []regularCase {
 // its PIP, its one upload, and the one request TestRound8FailedPIPScopeCases
 // sends after every upload, which runRegularCases would send once.
 func failedPIPScopeCase(key, pip string, sets func(b regularBuilder, rt, pip string) []any) regularCase {
-	id := fmt.Sprintf("failed-pip-%s-beside-an-allowing-%s", key, key)
+	return failedPIPScopeCaseWith(fmt.Sprintf("failed-pip-%s-beside-an-allowing-%s", key, key), map[string]any{
+		"name":      pip,
+		"url":       parityPipMockBase + "/scope-broken-" + key,
+		"cacheable": false,
+	}, sets)
+}
+
+// failedPIPScopeCaseWith builds a case of the failed-pip-scope shape under id,
+// reading the GENERAL PIP whose name, url, and any other field pip holds; the
+// fields every such declaration shares are added here.
+func failedPIPScopeCaseWith(id string, pip map[string]any, sets func(b regularBuilder, rt, pip string) []any) regularCase {
 	b := regularBuilder{caseID: id}
 	rt := regularResourceType(id)
+	declaration := map[string]any{
+		"httpMethod":        "POST",
+		"pipType":           "GENERAL",
+		"requestAttributes": map[string]string{"resourceType": rt},
+	}
+	for field, value := range pip {
+		declaration[field] = value
+	}
 	return regularCase{
 		id:           id,
 		resourceType: rt,
-		pips: []any{map[string]any{
-			"name":              pip,
-			"url":               parityPipMockBase + "/scope-broken-" + key,
-			"httpMethod":        "POST",
-			"pipType":           "GENERAL",
-			"requestAttributes": map[string]string{"resourceType": rt},
-			"cacheable":         false,
-		}},
-		uploads:  []regularUpload{{externalID: "parity-" + id, sets: sets(b, rt, pip)}},
-		requests: []isolatedRequest{{name: "read", operation: "READ", resource: map[string]any{"id": "reg-failed-pip-scope"}}},
+		pips:         []any{declaration},
+		uploads:      []regularUpload{{externalID: "parity-" + id, sets: sets(b, rt, pip["name"].(string))}},
+		requests:     []isolatedRequest{{name: "read", operation: "READ", resource: map[string]any{"id": "reg-failed-pip-scope"}}},
 	}
 }

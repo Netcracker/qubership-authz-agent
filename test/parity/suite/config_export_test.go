@@ -137,3 +137,50 @@ func TestNarrowConfigExport_NonObjectBodyIsKeptAsText(t *testing.T) {
 		t.Errorf("narrowConfigExport() mismatch (-want +got):\n%s", diff)
 	}
 }
+
+// A PAP read whose body is an object keeps its scalar fields and narrows each
+// array value to the marked elements, in text order; an array nested inside a
+// kept element is kept whole.
+func TestNarrowPAPRead_ObjectBodyNarrowsItsArrays(t *testing.T) {
+	t.Parallel()
+	body := []byte(`{"level": "custom", "permissions": [
+		{"permission": "zzz_marked", "pipNames": ["b", "a"]},
+		{"permission": "unrelated"},
+		{"permission": "aaa_marked"}
+	]}`)
+
+	got := narrowPAPRead(200, body, []string{"marked"})
+
+	want := &model.PapReadOutcome{Status: 200, Body: map[string]any{
+		"level": "custom",
+		"permissions": []any{
+			map[string]any{"permission": "aaa_marked"},
+			map[string]any{"permission": "zzz_marked", "pipNames": []any{"a", "b"}},
+		},
+	}}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("narrowPAPRead() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// A PAP read whose body is an array keeps the marked elements.
+func TestNarrowPAPRead_ArrayBodyKeepsTheMarkedElements(t *testing.T) {
+	t.Parallel()
+	got := narrowPAPRead(200, []byte(`[{"name": "b_marked"}, {"name": "other"}]`), []string{"marked"})
+
+	want := &model.PapReadOutcome{Status: 200, Body: []any{map[string]any{"name": "b_marked"}}}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("narrowPAPRead() mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// An error answer keeps its status and drops its body, which carries a
+// timestamp.
+func TestNarrowPAPRead_ErrorBodyIsDropped(t *testing.T) {
+	t.Parallel()
+	got := narrowPAPRead(404, []byte(`{"timestamp": "2026-09-23T10:00:00Z", "status": 404}`), []string{"marked"})
+
+	if diff := cmp.Diff(&model.PapReadOutcome{Status: 404}, got); diff != "" {
+		t.Errorf("narrowPAPRead() mismatch (-want +got):\n%s", diff)
+	}
+}

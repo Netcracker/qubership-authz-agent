@@ -59,6 +59,9 @@ const (
 	// PSUITE_PIP_CALL is what pip-mock received from the service under test on
 	// one PIP route over one request.
 	PSUITE_PIP_CALL
+	// PSUITE_PAP_READ is a GET the suite sends to the PAP outside the v3
+	// export; the path is the case's.
+	PSUITE_PAP_READ
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -159,6 +162,10 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_PIP_CALL, Name: "pip-call", HTTPMethod: "POST",
 		PathTmpl: "/api/v1/pip", GoldenDir: "pip-call",
 	},
+	PSUITE_PAP_READ: {
+		ID: PSUITE_PAP_READ, Name: "pap-read", HTTPMethod: "GET",
+		PathTmpl: "/access/v1", GoldenDir: "pap-read",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -208,6 +215,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.ConfigExportOutcome{}
 	case PSUITE_PIP_CALL:
 		return &model.PipCallOutcome{}
+	case PSUITE_PAP_READ:
+		return &model.PapReadOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }

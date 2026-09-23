@@ -360,6 +360,12 @@ func (s *ParitySuite) pipCallOutcome(route string) *model.PipCallOutcome {
 	s.T().Helper()
 	calls, err := s.pipMock.GetCalls(context.Background())
 	s.Require().NoError(err, "read the pip-mock call log for %s", route)
+	return s.pipCallOutcomeOf(calls, route)
+}
+
+// pipCallOutcomeOf is pipCallOutcome over a call log already read.
+func (s *ParitySuite) pipCallOutcomeOf(calls []PipStubCall, route string) *model.PipCallOutcome {
+	s.T().Helper()
 	outcome := &model.PipCallOutcome{}
 	for _, call := range calls {
 		if call.Path != route {

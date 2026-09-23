@@ -148,6 +148,10 @@ func (s *ParitySuite) TestRow02CheckResourceV1FailedGeneralPIP() {
 			}
 		}
 		s.T().Logf("/api/v1/pip/sem-broken received %d call(s) while deciding P3b", brokenCalls)
+		pipCall := s.pipCallOutcomeOf(calls, "/api/v1/pip/sem-broken")
+		s.Run("pip-calls", func() {
+			s.requirePendingGolden(PSUITE_PIP_CALL, "semantics/p3b-true-or-failed-pip", pipCall)
+		})
 		s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1, "semantics/p3b-true-or-failed-pip", &decision)
 	})
 }

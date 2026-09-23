@@ -113,3 +113,56 @@ func sortByJSONText(elements []any, canonicalize func(any) any) []any {
 	}
 	return sorted
 }
+
+// narrowPAPRead turns the answer to a GET of the PAP into its golden shape: the
+// status, and for a 2xx JSON body the body narrowed as narrowConfigExport
+// narrows the envelope. A body that is an array, and every array that is a value
+// of a body that is an object, keep only the elements whose JSON text contains
+// one of markers; what is kept is canonicalized by canonicalExportValue, so an
+// array nested inside a kept element keeps every element, sorted. A 2xx body
+// that is not JSON is kept as text, and an error body is dropped, since it
+// carries a timestamp.
+func narrowPAPRead(status int, body []byte, markers []string) *model.PapReadOutcome {
+	outcome := &model.PapReadOutcome{Status: status}
+	if status < 200 || status > 299 {
+		return outcome
+	}
+	var decoded any
+	if err := json.Unmarshal(body, &decoded); err != nil {
+		outcome.Body = string(body)
+		return outcome
+	}
+	switch typed := decoded.(type) {
+	case []any:
+		outcome.Body = keepMarked(typed, markers)
+	case map[string]any:
+		for key, value := range typed {
+			if elements, isArray := value.([]any); isArray {
+				typed[key] = keepMarked(elements, markers)
+			}
+		}
+		outcome.Body = typed
+	default:
+		outcome.Body = decoded
+	}
+	return outcome
+}
+
+// keepMarked returns the elements whose JSON text contains one of markers,
+// canonicalized and sorted by canonicalExportValue.
+func keepMarked(elements []any, markers []string) any {
+	kept := []any{}
+	for _, element := range elements {
+		text, err := json.Marshal(element)
+		if err != nil {
+			continue
+		}
+		for _, marker := range markers {
+			if strings.Contains(string(text), marker) {
+				kept = append(kept, element)
+				break
+			}
+		}
+	}
+	return canonicalExportValue(kept)
+}

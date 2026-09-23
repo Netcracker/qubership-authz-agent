@@ -47,9 +47,10 @@ var terminalEffectPIP = map[string]any{
 // reads the PIP. rule-on-a-allows sends a = y, where the first rule allows on
 // its own; the-pip-decides sends a = n, the control that the PIP rule is live
 // and the PIP is called when it is needed. The call log is read after each
-// request and logged, not compared: the order the rules are evaluated in is not
-// fixed by anything the suite can see, so the count under a = y is the
-// observation, whatever it is, and the count under a = n has to be positive.
+// request and logged. Under a = n the count has to be positive and is recorded
+// as a pip-call golden. Under a = y it is logged only: the order the rules are
+// evaluated in is not fixed by anything the suite can see, so the count is the
+// observation of one stand.
 //
 // The case lives in its own test function so that a recording run can be
 // filtered to it and leave every golden already committed alone. Legacy profile
@@ -82,6 +83,7 @@ func (s *ParitySuite) TestInterpreterTerminalEffectCases() {
 			s.T().Logf("pip-mock received %d call(s) to %s over %s", read, terminalEffectPIPRoute, req.name)
 			if req.name == "the-pip-decides" {
 				s.Assert().Positive(read, "pip-mock calls to %s over %s", terminalEffectPIPRoute, req.name)
+				s.requirePendingGolden(PSUITE_PIP_CALL, "regular/"+tc.id+"/"+req.name, s.pipCallOutcomeOf(calls, terminalEffectPIPRoute))
 			}
 		})
 	}

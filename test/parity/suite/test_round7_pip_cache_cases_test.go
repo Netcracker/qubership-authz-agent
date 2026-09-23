@@ -165,6 +165,10 @@ func (s *ParitySuite) runPIPCacheCase(caseID, route string, pip map[string]any) 
 				if round.after == 0 {
 					s.Assert().Positive(read, "pip-mock calls to %s over %s", route, name)
 				}
+				pipCall := s.pipCallOutcomeOf(calls, route)
+				s.Run("pip-calls", func() {
+					s.requirePendingGolden(PSUITE_PIP_CALL, caseID+"/"+name, pipCall)
+				})
 				s.requirePendingGolden(PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, caseID+"/"+name,
 					&model.CheckResourceOutcome{Status: status, Decision: decision})
 			})

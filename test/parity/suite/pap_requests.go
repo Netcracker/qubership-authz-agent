@@ -52,3 +52,17 @@ func HelperDeleteSetCustomization(ctx context.Context, cfg Config, m2mToken, lev
 	}
 	return doRequest(req)
 }
+
+// HelperGetPAP sends a GET to path on the PAP with the suite's M2M token and the
+// tenant of cfg, plus query.
+func HelperGetPAP(ctx context.Context, cfg Config, m2mToken, path string, query url.Values) (int, []byte, error) {
+	values := url.Values{"tenant_id": []string{cfg.TenantID}}
+	for key, list := range query {
+		values[key] = list
+	}
+	req, err := buildRequest(ctx, http.MethodGet, buildURL(cfg.ACBaseURL, path, values.Encode()), nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
