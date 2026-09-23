@@ -23,7 +23,7 @@ import (
 )
 
 // substitutionHeader is the header the HEADER PIP of the substitution cases
-// reads; it is not one HeadersFilter strips.
+// reads; it is not one the thin client strips (prohibitedHeaders).
 const substitutionHeader = "x-parity-sub-header"
 
 // substitutionSource is one source a placeholder can name, with the PIP that

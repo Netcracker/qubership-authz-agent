@@ -38,15 +38,29 @@ func HelperImportCustomization(ctx context.Context, cfg Config, m2mToken, level 
 
 // HelperDeleteSetCustomization deletes the customization of the policy set
 // setID at level, with every customization of its policies and rules. The PAP
-// refuses to replace or delete a set that still has a customization, so a test
-// that customizes a set runs this before it empties the set.
+// answers 204.
 func HelperDeleteSetCustomization(ctx context.Context, cfg Config, m2mToken, level, setID string) (int, []byte, error) {
 	endpoint := buildURL(
 		cfg.ACBaseURL,
-		"/access/v1/customization/policySet/"+url.PathEscape(setID),
+		"/access/v1/config/customization/policySet/"+url.PathEscape(setID),
 		url.Values{"tenant_id": []string{cfg.TenantID}, "level": []string{level}, "recursive": []string{"true"}}.Encode(),
 	)
 	req, err := buildRequest(ctx, http.MethodDelete, endpoint, nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
+// HelperDeactivatePolicySet sets the status of the policy set setID to
+// INACTIVE. An inactive set decides nothing and is left out of the v3 export.
+func HelperDeactivatePolicySet(ctx context.Context, cfg Config, m2mToken, setID string) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		"/access/v1/policySets/"+url.PathEscape(setID)+"/deactivate",
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPatch, endpoint, nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
 	if err != nil {
 		return 0, nil, err
 	}

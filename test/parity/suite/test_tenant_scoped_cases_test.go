@@ -54,14 +54,12 @@ func (s *ParitySuite) TestTenantScopedDecisions() {
 	ctx := context.Background()
 	s.seedTenant(ctx, stand.A, tenantAFixtureFS)
 	s.seedTenant(ctx, stand.B, tenantBFixtureFS)
-	// The limits are strings on purpose. A PIP alias standing as one operand of a
-	// condition resolves to PipReturnType.SINGLE, whose SinglePipDataConverter
-	// casts the JSONPath match to String unconditionally, so a JSON number raises
-	// a ClassCastException, the rule fails with a DenyEffectException logged as
-	// "Can not calculate rule with id ...", and every t8 case denies for a reason
-	// that has nothing to do with tenants. As strings the comparison operators
-	// still coerce, so 50 <= "10" is false and 50 <= "100" is true, and the
-	// t8a/t8b split is the tenant difference these cases exist to record.
+	// The limits are strings on purpose. A GENERAL PIP answering a JSON number
+	// fails every condition that reads it (nv-number-*), so every t8 case would
+	// deny for a reason that has nothing to do with tenants. As strings the
+	// comparison operators still coerce, so 50 <= "10" is false and 50 <= "100" is
+	// true, and the t8a/t8b split is the tenant difference these cases exist to
+	// record.
 	s.Require().NoError(s.pipMock.PinRoute(ctx, "/api/v1/pip/mt-limit-a", PipStubResponse{StatusCode: http.StatusOK, Body: map[string]any{"value": "10"}}))
 	s.Require().NoError(s.pipMock.PinRoute(ctx, "/api/v1/pip/mt-limit-b", PipStubResponse{StatusCode: http.StatusOK, Body: map[string]any{"value": "100"}}))
 

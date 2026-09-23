@@ -72,6 +72,16 @@ func failedPIPFilterCase(id, algorithm, effect string) regularCase {
 	return tc
 }
 
+// failedPIPFilterLiveReadSkippable names the request that may decide without
+// reading the live PIP: check/resource on UPDATE in the ALLOW case, where the
+// unconditional ALLOW beside the rule reading the PIP permits a
+// DENY_UNLESS_PERMIT policy on its own when the stand evaluates it first. A
+// filter request reads the PIP whatever the order, since the neighbor's
+// predicate does not end the policy.
+var failedPIPFilterLiveReadSkippable = map[string]bool{
+	"regular/failed-pip-allow-without-predicate/check-update": true,
+}
+
 // failedPIPFilterCases are the two policies of TestRound10FailedPIPFilterCases.
 func failedPIPFilterCases() []regularCase {
 	return []regularCase{
@@ -103,7 +113,8 @@ func failedPIPFilterCases() []regularCase {
 // PIP's route while it ran, and recorded under -when-the-pip-was-read or
 // -when-the-pip-was-skipped. A stand keeps one order across uploads, so one run
 // records one class; the other class is recorded by a stand with the other
-// order. The UPDATE requests have to reach the live PIP.
+// order. The UPDATE requests have to reach the live PIP, except the one in
+// failedPIPFilterLiveReadSkippable, whose answer is the same either way.
 //
 // The cases live in their own test function so that a recording run can be
 // filtered to them and leave every golden already committed alone. Legacy
@@ -157,7 +168,9 @@ func (s *ParitySuite) TestRound10FailedPIPFilterCases() {
 						tc.id, req.name, broken, failedPIPFilterBrokenRoute, live, failedPIPFilterLiveRoute)
 					subCase := "regular/" + tc.id + "/" + req.name
 					if req.operation == "UPDATE" {
-						s.Assert().Positive(live, "pip-mock calls to %s over %s", failedPIPFilterLiveRoute, subCase)
+						if !failedPIPFilterLiveReadSkippable[subCase] {
+							s.Assert().Positive(live, "pip-mock calls to %s over %s", failedPIPFilterLiveRoute, subCase)
+						}
 					} else if broken > 0 {
 						subCase += "-when-the-pip-was-read"
 					} else {

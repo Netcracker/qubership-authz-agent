@@ -32,10 +32,10 @@ import (
 // tail is almost always a bug, not latency.
 var defaultHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
-// prohibitedHeaders is the HeadersFilter allowlist from
-// access-control-java-libs/.../ProhibitedHeaders.java:11-22. Per D-V item 5
-// the Go helper strips these case-insensitively from any caller-supplied
-// headers map before setting them on the outgoing request.
+// prohibitedHeaders are the headers the legacy thin client refuses to pass
+// through from a caller. Per D-V item 5 the Go helper strips these
+// case-insensitively from any caller-supplied headers map before setting them
+// on the outgoing request.
 var prohibitedHeaders = map[string]struct{}{
 	"authorization": {},
 	"tenant":        {},
@@ -85,8 +85,8 @@ func buildQuery(cfg Config, opts PerCallOptions, extra url.Values) string {
 	return v.Encode()
 }
 
-// filterCustomHeaders drops the HeadersFilter-prohibited entries from a
-// caller-supplied header map. Matches the Java filterHeaders behavior.
+// filterCustomHeaders drops the prohibited entries from a caller-supplied
+// header map, as the legacy thin client does.
 func filterCustomHeaders(in map[string]string) map[string]string {
 	if len(in) == 0 {
 		return nil
@@ -119,7 +119,7 @@ func applyAuthHeaders(req *http.Request, tokens TokenBundle) {
 
 // buildRequest constructs an http.Request for the given method / url / body
 // shape, applies auth headers, adds Content-Type when a body is present, and
-// merges any custom headers after the HeadersFilter pass.
+// merges any custom headers after filterCustomHeaders.
 func buildRequest(ctx context.Context, method, fullURL string, body any, tokens TokenBundle, opts PerCallOptions) (*http.Request, error) {
 	var reader io.Reader
 	if body != nil {

@@ -19,6 +19,7 @@ package paritysuite
 import (
 	"context"
 	"net/http"
+	"testing"
 
 	"authz-agent/test/parity/suite/model"
 )
@@ -95,8 +96,12 @@ func customizationRegularCases() []regularCase {
 // three requests and the export are sent before the customization, the control
 // that the set is on the stand and decides as uploaded, and after it; PROBE is
 // true both times, the control that the set is still loaded. The import status
-// is recorded; the customization is deleted when the test ends, before the set
-// is emptied, since the PAP refuses to replace a set that has one.
+// is recorded.
+//
+// When the test ends, the customization is deleted and the set is emptied by
+// its externalId. The import drops the set's externalId, so emptying may miss
+// the set; the cleanup then reads the v3 export, deactivates a set still there,
+// and fails the test naming it, since the next run's upload would meet it.
 //
 // The case lives in its own test function so that a recording run can be
 // filtered to it. Legacy profile only: customizations are the PAP's.
@@ -107,14 +112,21 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	ctx := context.Background()
 	m2m := s.mustM2MToken()
 	tc, customization, setID := customizationCase()
+	// The cleanups run after the suite has handed s.T() back to its parent, so
+	// they report through the test they were registered in.
+	t := s.T()
 	deleteCustomization := func() {
 		status, body, err := HelperDeleteSetCustomization(ctx, s.cfg, m2m, customizationLevel, setID)
-		s.T().Logf("delete the %s customization of set %s: status %d, %v, %s", customizationLevel, setID, status, err, body)
+		t.Logf("delete the %s customization of set %s: status %d, %v, %s", customizationLevel, setID, status, err, body)
 	}
-	// A customization a failed run left behind makes the upload below fail.
+	// A customization a failed run left behind would make the answers recorded
+	// before the import depend on that run.
 	deleteCustomization()
+	// Cleanups run last registered first: the customization is deleted, the set
+	// is emptied by its externalId, and then the export is checked.
+	t.Cleanup(func() { s.requireSetGone(t, m2m, tc.resourceType, setID) })
 	s.emptyPolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
-	s.T().Cleanup(deleteCustomization)
+	t.Cleanup(deleteCustomization)
 
 	upload := tc.uploads[0]
 	uploadStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
@@ -137,6 +149,26 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 		return
 	}
 	s.runCustomizationRequests(tc, "after")
+}
+
+// requireSetGone reads the v3 export and, if the set setID is still in it,
+// deactivates the set and fails t. The set is found by resourceType, the marker
+// its target carries.
+func (s *ParitySuite) requireSetGone(t *testing.T, m2m, resourceType, setID string) {
+	ctx := context.Background()
+	status, body, err := HelperGetConfigExport(ctx, s.cfg, PSUITE_CONFIG_POLICY_SETS_V3, m2m, PerCallOptions{})
+	if err != nil || status != http.StatusOK {
+		t.Errorf("read the v3 export after the cleanup: status %d, %v, %s", status, err, body)
+		return
+	}
+	export := narrowConfigExport(status, body, []string{resourceType})
+	sets, _ := export.Export["policySets"].([]any)
+	if len(sets) == 0 {
+		return
+	}
+	deactivated, answer, err := HelperDeactivatePolicySet(ctx, s.cfg, m2m, setID)
+	t.Errorf("policy set %s is still in the v3 export after its customization was deleted and its externalId emptied; "+
+		"deactivate answered %d, %v, %s", setID, deactivated, err, answer)
 }
 
 // runCustomizationRequests sends the requests of tc and reads the v3 export of
