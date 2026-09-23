@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r1\")).or(PARITY_SUITE_REG_SCOPE_FILTER_ALL_FIELDS_DENY_UNLESS_PERMIT.region.in(\"r2\"))",
+    "mongodbFilterCondition": "{ \"$or\": [ { { \"region\": [ \"r1\" ] } },{ { \"region\": [ \"r2\" ] } } ] }",
+    "rsqlFilterCondition": "(region=in=(\"r1\")),(region=in=(\"r2\"))",
+    "sqlFilterCondition": "(region IN ('r1')) or (region IN ('r2'))",
+    "customFilterCondition": {
+      "logic": {
+        "op": "OR",
+        "apply": [
+          {
+            "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+          },
+          {
+            "path": "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_1_edd0b173-e7bc-629c-c3d2-bc58960cf482"
+          }
+        ]
+      },
+      "data": {
+        "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_1_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+          "predicate": "region:${p}",
+          "params": {
+            "p": [
+              "r2"
+            ]
+          }
+        },
+        "b5933a5f-5196-2ee6-d99a-c0fa5ae1f7b1_0_edd0b173-e7bc-629c-c3d2-bc58960cf482": {
+          "predicate": "region:${p}",
+          "params": {
+            "p": [
+              "r1"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
