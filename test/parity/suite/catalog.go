@@ -53,6 +53,12 @@ const (
 	PSUITE_CONFIG_POLICY_SETS_V3
 	// PSUITE_CONFIG_PIPS_V3 is the export of every PIP declaration the PAP holds.
 	PSUITE_CONFIG_PIPS_V3
+	// PSUITE_IMPORT_CUSTOMIZATION is the PAP import of policy customizations at
+	// one level, which disable or replace an uploaded rule.
+	PSUITE_IMPORT_CUSTOMIZATION
+	// PSUITE_PIP_CALL is what pip-mock received from the service under test on
+	// one PIP route over one request.
+	PSUITE_PIP_CALL
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -145,6 +151,14 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_CONFIG_PIPS_V3, Name: "config-pips-v3", HTTPMethod: "GET",
 		PathTmpl: "/access/v3/config/pips", GoldenDir: "config-pips-v3",
 	},
+	PSUITE_IMPORT_CUSTOMIZATION: {
+		ID: PSUITE_IMPORT_CUSTOMIZATION, Name: "import-customization-v1", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/config/customization/import", GoldenDir: "import-customization-v1",
+	},
+	PSUITE_PIP_CALL: {
+		ID: PSUITE_PIP_CALL, Name: "pip-call", HTTPMethod: "POST",
+		PathTmpl: "/api/v1/pip", GoldenDir: "pip-call",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -184,7 +198,7 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.CheckResourcesResponse{}
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
-	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS:
+	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS, PSUITE_IMPORT_CUSTOMIZATION:
 		return &model.PolicyLoadOutcome{}
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
 		return &model.CheckResourceOutcome{}
@@ -192,6 +206,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.FilterOutcome{}
 	case PSUITE_CONFIG_POLICY_SETS_V3, PSUITE_CONFIG_PIPS_V3:
 		return &model.ConfigExportOutcome{}
+	case PSUITE_PIP_CALL:
+		return &model.PipCallOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }

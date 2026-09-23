@@ -319,3 +319,68 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 		DefinitionUpdatedWhen: "",
 	}
 }
+
+// sendRegularRequest sends req against resourceType as parity-reader and
+// returns the outcome with the endpoint its golden is filed under, as
+// runRegularCases records it.
+func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedRequest) (ParityEndpointID, any) {
+	s.T().Helper()
+	ctx := context.Background()
+	opts := PerCallOptions{CustomHeaders: req.headers}
+	if req.filter {
+		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, resourceType, req.filterOperation(), s.mustTokenBundle(UserProfileReader), opts)
+		s.Require().NoError(err)
+		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded}
+	}
+	status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
+		model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: valueOr(req.typ, resourceType), Resource: req.resource},
+		s.mustTokenBundle(UserProfileReader), opts)
+	s.Require().NoError(err)
+	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision}
+}
+
+// pipCalls counts the calls pip-mock received on route since its call log was
+// last reset.
+func (s *ParitySuite) pipCalls(route string) int {
+	s.T().Helper()
+	calls, err := s.pipMock.GetCalls(context.Background())
+	s.Require().NoError(err, "read the pip-mock call log for %s", route)
+	read := 0
+	for _, call := range calls {
+		if call.Path == route {
+			read++
+		}
+	}
+	return read
+}
+
+// pipCallOutcome reads the pip-mock call log for route into the golden shape
+// PipCallOutcome.
+func (s *ParitySuite) pipCallOutcome(route string) *model.PipCallOutcome {
+	s.T().Helper()
+	calls, err := s.pipMock.GetCalls(context.Background())
+	s.Require().NoError(err, "read the pip-mock call log for %s", route)
+	outcome := &model.PipCallOutcome{}
+	for _, call := range calls {
+		if call.Path != route {
+			continue
+		}
+		outcome.Calls++
+		if outcome.Calls > 1 {
+			continue
+		}
+		body, isObject := call.Body.(map[string]any)
+		if attributes, ok := body["requestAttributes"]; isObject && ok {
+			outcome.RequestAttributes = attributes
+			continue
+		}
+		raw := call.BodyRaw
+		if raw == "" && call.Body != nil {
+			encoded, err := json.Marshal(call.Body)
+			s.Require().NoError(err)
+			raw = string(encoded)
+		}
+		outcome.Body = raw
+	}
+	return outcome
+}
