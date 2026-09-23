@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_TYPE.a.eq(USER)",
+    "mongodbFilterCondition": "{ { \"a\": USER } }",
+    "rsqlFilterCondition": "a==USER",
+    "sqlFilterCondition": "a=USER",
+    "customFilterCondition": {
+      "logic": {
+        "path": "da5892b5-17d8-4b82-6b64-16d7941e0f2a"
+      },
+      "data": {
+        "da5892b5-17d8-4b82-6b64-16d7941e0f2a": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": "USER"
+          }
+        }
+      }
+    }
+  }
+}
