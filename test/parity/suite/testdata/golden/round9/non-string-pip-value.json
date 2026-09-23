@@ -1,0 +1,16 @@
+{
+  "non-string-pip-beside-allow-deny-overrides": {
+    "check-resource-v1-outcome/regular/boolean-allow-beside-allow": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/number-allow-beside-allow": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/number-deny-beside-allow": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/string-pip-alone": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "non-string-pip-beside-allow-permit-unless-deny": {
+    "check-resource-v1-outcome/regular/boolean-allow-beside-allow": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/number-allow-beside-allow": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/number-deny-beside-allow": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/string-pip-alone": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

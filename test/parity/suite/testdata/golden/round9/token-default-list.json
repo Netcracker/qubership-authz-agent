@@ -1,0 +1,14 @@
+{
+  "td-header-default-contains": {
+    "check-resource-v1-outcome/isolated/no-header": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "td-token-default-contains": {
+    "check-resource-v1-outcome/isolated/claim-absent": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "td-token-default-equals-the-string": {
+    "check-resource-v1-outcome/isolated/claim-absent": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

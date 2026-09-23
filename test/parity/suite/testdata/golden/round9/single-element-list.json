@@ -1,0 +1,38 @@
+{
+  "sl-claim-contains": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-claim-equals": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-claim-in": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-claim-not-equals": {
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-header-contains": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-header-equals": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-header-in": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "sl-header-not-equals": {
+    "check-resource-v1-outcome/isolated/header-a": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/header-b": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "substitution-subject-id": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_ID.a.eq(00000000-0000-0000-0000-000000000101)",
+        "mongodbFilterCondition": "{ { \"a\": 00000000-0000-0000-0000-000000000101 } }",
+        "rsqlFilterCondition": "a==00000000-0000-0000-0000-000000000101",
+        "sqlFilterCondition": "a=00000000-0000-0000-0000-000000000101",
+        "customFilterCondition": {
+          "logic": {
+            "path": "8202cb00-abbc-dd00-448a-9e75ed04cbda"
+          },
+          "data": {
+            "8202cb00-abbc-dd00-448a-9e75ed04cbda": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": "00000000-0000-0000-0000-000000000101"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "substitution-subject-name": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_NAME.a.eq(parity-reader)",
+        "mongodbFilterCondition": "{ { \"a\": parity-reader } }",
+        "rsqlFilterCondition": "a==parity-reader",
+        "sqlFilterCondition": "a=parity-reader",
+        "customFilterCondition": {
+          "logic": {
+            "path": "60839c58-b428-adf6-f84c-a023c1bf8812"
+          },
+          "data": {
+            "60839c58-b428-adf6-f84c-a023c1bf8812": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": "parity-reader"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "substitution-subject-type": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_TYPE.a.eq(USER)",
+        "mongodbFilterCondition": "{ { \"a\": USER } }",
+        "rsqlFilterCondition": "a==USER",
+        "sqlFilterCondition": "a=USER",
+        "customFilterCondition": {
+          "logic": {
+            "path": "da5892b5-17d8-4b82-6b64-16d7941e0f2a"
+          },
+          "data": {
+            "da5892b5-17d8-4b82-6b64-16d7941e0f2a": {
+              "predicate": "a:${p}",
+              "params": {
+                "p": "USER"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

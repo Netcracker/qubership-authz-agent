@@ -1,0 +1,16 @@
+{
+  "pa-equals-over-an-array": {
+    "check-resource-v1-outcome/isolated/array-of-only-v": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/array-of-v-and-w": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/array-without-v": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/string-v": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "pa-not-equals-over-an-array": {
+    "check-resource-v1-outcome/isolated/array-of-only-v": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/array-of-v-and-w": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/array-without-v": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/string-w": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}
