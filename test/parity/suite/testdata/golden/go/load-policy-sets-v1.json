@@ -42,6 +42,8 @@
   "regular/only-deny-rules-permit-unless-deny/upload-1": {"status":200},
   "regular/permit-unless-deny-without-rules/upload-1": {"status":200},
   "regular/policy-without-an-algorithm-and-a-rule-beside-an-allowing-policy/upload-1": {"status":200},
+  "regular/r14-failing-pip-in-a-policy-target-allow/upload-1": {"status":400},
+  "regular/r14-failing-pip-in-a-set-target-allow/upload-1": {"status":400},
   "regular/repeated-rule-id-in-two-sets/upload-1": {"status":200},
   "regular/repeated-rule-id-in-two-sets/upload-2": {"status":500},
   "regular/reupload-replaces-sets/upload-1": {"status":200},
