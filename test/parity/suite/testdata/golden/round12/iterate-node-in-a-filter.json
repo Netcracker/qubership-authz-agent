@@ -1,0 +1,34 @@
+{
+  "fn-nested-deny-overrides-iterate-node-no-grants": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "allowed==1",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check-list-in-region-r1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/check-list-in-region-r2": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fn-nested-deny-overrides-iterate-node-one-grant-r1": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "(allowed==1),(region=in=(\"r1\"))",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check-list-in-region-r1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/check-list-in-region-r2": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
