@@ -58,6 +58,18 @@ type isolatedRequest struct {
 	// omitOperation sends a filter request with no operation parameter at all,
 	// where an empty operation would fall back to LIST.
 	omitOperation bool
+	// m2mOnly sends the service's M2M token alone, with no end-user token, so
+	// the subject is the service account rather than parity-reader.
+	m2mOnly bool
+}
+
+// requestTokens returns the tokens req is sent with: parity-reader's bundle, or the
+// M2M token alone for an m2mOnly request.
+func (s *ParitySuite) requestTokens(req isolatedRequest) TokenBundle {
+	if req.m2mOnly {
+		return TokenBundle{M2M: s.mustM2MToken()}
+	}
+	return s.mustTokenBundle(UserProfileReader)
 }
 
 // parityNoHeaderPIP is a HEADER PIP with no defaultValue, a declaration no seeded
@@ -309,13 +321,13 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 					resourceType := valueOr(req.typ, tc.resourceType)
 					opts := PerCallOptions{CustomHeaders: req.headers}
 					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, resourceType, req.filterOperation(), s.mustTokenBundle(UserProfileReader), opts)
+						s.runPendingFilterV1OutcomeCase(subCase, resourceType, req.filterOperation(), s.requestTokens(req), opts)
 						return
 					}
 					s.runPendingCheckResourceV1OutcomeCase(
 						subCase,
 						model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: resourceType, Resource: req.resource},
-						s.mustTokenBundle(UserProfileReader),
+						s.requestTokens(req),
 						opts,
 					)
 				})

@@ -176,13 +176,13 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 					subCase := "regular/" + tc.id + "/" + req.name
 					opts := PerCallOptions{CustomHeaders: req.headers}
 					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, req.filterOperation(), s.mustTokenBundle(UserProfileReader), opts)
+						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, req.filterOperation(), s.requestTokens(req), opts)
 						return
 					}
 					s.runPendingCheckResourceV1OutcomeCase(
 						subCase,
 						model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: valueOr(req.typ, tc.resourceType), Resource: req.resource},
-						s.mustTokenBundle(UserProfileReader),
+						s.requestTokens(req),
 						opts,
 					)
 				})

@@ -320,21 +320,21 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 	}
 }
 
-// sendRegularRequest sends req against resourceType as parity-reader and
-// returns the outcome with the endpoint its golden is filed under, as
-// runRegularCases records it.
+// sendRegularRequest sends req against resourceType as parity-reader, or with
+// the M2M token alone for an m2mOnly request, and returns the outcome with the
+// endpoint its golden is filed under, as runRegularCases records it.
 func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedRequest) (ParityEndpointID, any) {
 	s.T().Helper()
 	ctx := context.Background()
 	opts := PerCallOptions{CustomHeaders: req.headers}
 	if req.filter {
-		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, resourceType, req.filterOperation(), s.mustTokenBundle(UserProfileReader), opts)
+		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, resourceType, req.filterOperation(), s.requestTokens(req), opts)
 		s.Require().NoError(err)
 		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded}
 	}
 	status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
 		model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: valueOr(req.typ, resourceType), Resource: req.resource},
-		s.mustTokenBundle(UserProfileReader), opts)
+		s.requestTokens(req), opts)
 	s.Require().NoError(err)
 	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision}
 }

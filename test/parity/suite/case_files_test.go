@@ -95,6 +95,8 @@ type requestSpec struct {
 	Resource  any               `json:"resource"`
 	Headers   map[string]string `json:"headers"`
 	Filter    bool              `json:"filter"`
+	// Subject "m2m" sends the M2M token alone; empty sends parity-reader.
+	Subject string `json:"subject"`
 }
 
 // readCaseFile reads testdata/cases/<name>. Numbers in a resource keep their

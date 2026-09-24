@@ -44,7 +44,7 @@ func (s *ParitySuite) runCaseFile(name string) {
 		for _, r := range c.Requests {
 			requests = append(requests, isolatedRequest{
 				name: r.Name, operation: r.Operation, typ: r.Type, resource: withResourceType(r.Resource, rt),
-				headers: r.Headers, filter: r.Filter,
+				headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m",
 			})
 		}
 		if len(c.Sets) == 0 {

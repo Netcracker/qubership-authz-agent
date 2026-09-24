@@ -1,0 +1,8952 @@
+{
+ "about": "Every operand pair of ==, != the PAP may accept that no earlier golden evaluated. Each condition is <pair> OR resource.a == 'y': true-value sends a = 'n' and values under which the comparison should hold, false-value sends a = 'y' and values under which it should not.",
+ "resourceTypePrefix": "PARITY_SUITE_R15_",
+ "pins": {},
+ "pips": {
+  "token": {
+   "name": "subject.parityR15Department",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "p15-eq-lit-bool-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-lit-bool-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": true
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         true,
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "true == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": true
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        true,
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "true == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": true
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       true,
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "true == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-bool-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "5 == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-lit-num-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": 5
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": 4
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "5 == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": 5
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": 4
+      }
+     }
+    }
+   ],
+   "condition": "5 == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-num-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-str-operation-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "'READ' == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-lit-str-operation-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "'v' == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-lit-str-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "v",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "'v' == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-str-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "v",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "'v' == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-str-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'the resource' == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-lit-str-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'v' == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-operation-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == true OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == 5 OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == subject.parityR15Department OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "READ"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "READ",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == resource.items[0].y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "READ"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "READ",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == resource.o.y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "READ"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "READ",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == resource.y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == resource OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == resourceType OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == subject.id OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == subject.name OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == subject.serviceAccount OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-operation-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation == subject.type OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-pip-lit-bool",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-lit-num",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-operation",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.parityR15Department == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-pip-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-res-jsonpath",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "finance"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "finance",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-res-nested",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "finance"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "finance",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-res-path",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "finance"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "finance",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-resource",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-resourcetype",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-subj-id",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-subj-name",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-subj-serviceaccount",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-pip-subj-type",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": true
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": 5
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "READ"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": [
+         "READ",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource.items[0].x == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-res-jsonpath-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "finance"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": [
+         "finance",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v",
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v",
+        "y": "zz"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "o": {
+       "y": "zz"
+      }
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "y": "zz"
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "the resource"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "the resource"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "{{resourceType}}"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": [
+         "{{resourceType}}",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "00000000-0000-0000-0000-000000000101"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": [
+         "00000000-0000-0000-0000-000000000101",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "parity-reader"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": [
+         "parity-reader",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": null
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-jsonpath-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "USER"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": [
+         "USER",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": true
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-lit-str-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == 'v' OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-lit-str-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == 'zz' OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "READ"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": [
+        "READ",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource.o.x == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-res-nested-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "finance"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": [
+        "finance",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      },
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "items": [
+       {
+        "y": "zz"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.o.x == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v",
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v",
+       "y": "zz"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      },
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "y": "zz"
+     }
+    }
+   ],
+   "condition": "resource.o.x == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "the resource"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "the resource"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "{{resourceType}}"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": [
+        "{{resourceType}}",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "parity-reader"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": [
+        "parity-reader",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": null
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": null
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-nested-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "USER"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": [
+        "USER",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-res-path-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": "READ"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": [
+       "READ",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource.x == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-res-path-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": "v",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": "v",
+      "o": {
+       "y": "zz"
+      }
+     }
+    }
+   ],
+   "condition": "resource.x == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-resource-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "the resource"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "the resource"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "the resource"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "the resource"
+      }
+     }
+    }
+   ],
+   "condition": "resource == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "the resource"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "the resource"
+     }
+    }
+   ],
+   "condition": "resource == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resource-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resourceType == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-resourcetype-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "{{resourceType}}"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "{{resourceType}}",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resourceType == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "{{resourceType}}"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "{{resourceType}}",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resourceType == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "{{resourceType}}"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "{{resourceType}}",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "resourceType == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-resourcetype-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.id == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-subj-id-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "00000000-0000-0000-0000-000000000101"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "00000000-0000-0000-0000-000000000101",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.id == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "00000000-0000-0000-0000-000000000101"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "00000000-0000-0000-0000-000000000101",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "subject.id == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "00000000-0000-0000-0000-000000000101"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "00000000-0000-0000-0000-000000000101",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "subject.id == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-id-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.name == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-subj-name-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "parity-reader"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "parity-reader",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.name == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "parity-reader"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "parity-reader",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "subject.name == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "parity-reader"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "parity-reader",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "subject.name == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-name-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.serviceAccount == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": null
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": null
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": null
+      }
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": null
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": null
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-serviceaccount-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.type == operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-eq-subj-type-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "USER"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "USER",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.type == resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "USER"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "USER",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "subject.type == resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "USER"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "USER",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "subject.type == resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-eq-subj-type-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type == subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-lit-bool-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": true
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "true != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": true
+      }
+     }
+    }
+   ],
+   "condition": "true != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": true
+     }
+    }
+   ],
+   "condition": "true != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-bool-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "5 != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-lit-num-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": 4
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": 5
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "5 != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": 4
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": 5
+      }
+     }
+    }
+   ],
+   "condition": "5 != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": 4
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": 5
+     }
+    }
+   ],
+   "condition": "5 != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-num-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-operation-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "'v' != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-lit-str-operation-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "'READ' != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-lit-str-pip-true-value",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "condition": "'v' != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-pip-false-value",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'finance' != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": 5
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "'v' != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": 5
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "v"
+      }
+     }
+    }
+   ],
+   "condition": "'v' != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'the resource' != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-resourcetype-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "condition": "'v' != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-resourcetype-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'{{resourceType}}' != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-id-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "condition": "'v' != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-id-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'00000000-0000-0000-0000-000000000101' != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-name-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "condition": "'v' != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-name-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'parity-reader' != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'v' != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-type-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "condition": "'v' != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-lit-str-subj-type-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "'USER' != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-operation-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != true OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != 5 OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-lit-str-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != 'v' OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-lit-str-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != 'READ' OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != subject.parityR15Department OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "READ"
+       }
+      ]
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != resource.items[0].y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "READ"
+      }
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != resource.o.y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "READ"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != resource.y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != resource OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != resourceType OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != subject.id OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != subject.name OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != subject.serviceAccount OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-operation-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation != subject.type OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-pip-lit-bool",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-lit-num",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-operation",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.parityR15Department != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-pip-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-res-jsonpath",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "finance"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-res-nested",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "finance"
+      }
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-res-path",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "finance"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-resource",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-resourcetype",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-subj-id",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-subj-name",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-subj-serviceaccount",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-pip-subj-type",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.parityR15Department != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": true
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": 5
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": [
+         "READ",
+         "zz"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "READ"
+       }
+      ]
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource.items[0].x != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-res-jsonpath-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": [
+         "finance",
+         "zz"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "finance"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v",
+        "y": "zz"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v",
+        "y": "v"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "o": {
+       "y": "zz"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "o": {
+       "y": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "y": "zz"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "y": "v"
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": "the resource"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "the resource"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": [
+         "{{resourceType}}",
+         "zz"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "{{resourceType}}"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": [
+         "00000000-0000-0000-0000-000000000101",
+         "zz"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "00000000-0000-0000-0000-000000000101"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": [
+         "parity-reader",
+         "zz"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "parity-reader"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": null
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-jsonpath-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "x": [
+         "USER",
+         "zz"
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "x": "USER"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.items[0].x != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": true
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": 5
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "READ",
+        "zz"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "READ"
+      }
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource.o.x != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-res-nested-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "finance",
+        "zz"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "finance"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      },
+      "items": [
+       {
+        "y": "zz"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource.o.x != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v",
+       "y": "zz"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v",
+       "y": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      },
+      "y": "zz"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "y": "v"
+     }
+    }
+   ],
+   "condition": "resource.o.x != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "the resource"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "the resource"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "{{resourceType}}",
+        "zz"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "{{resourceType}}"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "00000000-0000-0000-0000-000000000101",
+        "zz"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "00000000-0000-0000-0000-000000000101"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "parity-reader",
+        "zz"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "parity-reader"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": null
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": null
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-nested-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "USER",
+        "zz"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "USER"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-path-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": [
+       "READ",
+       "zz"
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": "READ"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource.x != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-res-path-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": "v",
+      "o": {
+       "y": "zz"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": "v",
+      "o": {
+       "y": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.x != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-path-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": "the resource"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": "the resource"
+     }
+    }
+   ],
+   "condition": "resource.x != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-path-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": [
+       "{{resourceType}}",
+       "zz"
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": "{{resourceType}}"
+     }
+    }
+   ],
+   "condition": "resource.x != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-res-path-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "x": null
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "x": null
+     }
+    }
+   ],
+   "condition": "resource.x != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resource != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-resource-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "the resource"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": [
+         "the resource",
+         "zz"
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resource != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "the resource"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": [
+        "the resource",
+        "zz"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resource != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "the resource"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": [
+       "the resource",
+       "zz"
+      ]
+     }
+    }
+   ],
+   "condition": "resource != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resource-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resource != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-lit-str-true-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    }
+   ],
+   "condition": "resourceType != 'v' OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-lit-str-false-value",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != '{{resourceType}}' OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "resourceType != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-resourcetype-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "{{resourceType}}"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "resourceType != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "{{resourceType}}"
+      }
+     }
+    }
+   ],
+   "condition": "resourceType != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "{{resourceType}}"
+     }
+    }
+   ],
+   "condition": "resourceType != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-resourcetype-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.id != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-subj-id-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "00000000-0000-0000-0000-000000000101"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.id != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "00000000-0000-0000-0000-000000000101"
+      }
+     }
+    }
+   ],
+   "condition": "subject.id != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "00000000-0000-0000-0000-000000000101"
+     }
+    }
+   ],
+   "condition": "subject.id != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-id-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.id != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.name != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-subj-name-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "parity-reader"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.name != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "parity-reader"
+      }
+     }
+    }
+   ],
+   "condition": "subject.name != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "parity-reader"
+     }
+    }
+   ],
+   "condition": "subject.name != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-name-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.name != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.serviceAccount != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": null
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": null
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": null
+      }
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": null
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": null
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-serviceaccount-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.serviceAccount != subject.type OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-lit-bool",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != true OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-lit-num",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != 5 OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-operation",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "subject.type != operation OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-ne-subj-type-pip",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != subject.parityR15Department OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-res-jsonpath",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "items": [
+       {
+        "y": "v"
+       }
+      ]
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "items": [
+       {
+        "y": "USER"
+       }
+      ]
+     }
+    }
+   ],
+   "condition": "subject.type != resource.items[0].y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-res-nested",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "y": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "y": "USER"
+      }
+     }
+    }
+   ],
+   "condition": "subject.type != resource.o.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-res-path",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "y": "v"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "y": "USER"
+     }
+    }
+   ],
+   "condition": "subject.type != resource.y OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-resource",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != resource OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-resourcetype",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != resourceType OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-subj-id",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != subject.id OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-subj-name",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != subject.name OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-subj-serviceaccount",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != subject.serviceAccount OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-ne-subj-type-subj-type",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.type != subject.type OR resource.a == 'y'"
+  }
+ ]
+}
