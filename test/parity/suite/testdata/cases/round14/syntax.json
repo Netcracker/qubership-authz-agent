@@ -1,0 +1,1128 @@
+{
+ "about": "Which operand pairs and lexical forms the PAP accepts: operands of a kind an operator may not take, true and false beside a connective, subject.isM2M alone, and the spellings of operators, numbers, booleans, strings, lists and attribute names. A form the PAP accepts is checked once, so its golden says how it evaluates.",
+ "resourceTypePrefix": "PARITY_SUITE_R14_",
+ "pins": {
+  "/api/v1/pip/r14-string": {
+   "statusCode": 200,
+   "body": "v"
+  }
+ },
+ "pips": {
+  "string": {
+   "name": "subject.parityR14String",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-string",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR14String"
+   },
+   "cacheable": false
+  },
+  "m2m": {
+   "name": "subject.isM2M",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-string",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.isM2M"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "sx-roles-equals",
+   "condition": "subject.roles == 'ROLE_PARITY_READER'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-roles-on-the-right-of-equals",
+   "condition": "resource.x == subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-two-literals-equal",
+   "condition": "'v' == 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-roles-greater-than",
+   "condition": "subject.roles > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-roles-is-null",
+   "condition": "subject.roles IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-subject-id-is-empty",
+   "condition": "subject.id IS EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-literal-is-empty",
+   "condition": "'v' IS EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-resource-type-is-empty",
+   "condition": "resourceType IS EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-subject-id-contains",
+   "condition": "subject.id CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-literal-contains",
+   "condition": "'v' CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-roles-on-the-right-of-contains",
+   "condition": "resource.l CONTAINS subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-subject-id-contains-any",
+   "condition": "subject.id CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-subject-id-on-the-right-of-contains-any",
+   "condition": "resource.l CONTAINS ANY subject.id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-literal-is-subset",
+   "condition": "'v' IS SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-roles-match",
+   "condition": "subject.roles MATCH ROLE*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-literal-match",
+   "condition": "'v' MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-pip-on-the-right-of-match",
+   "condition": "resource.x MATCH subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-roles-in",
+   "condition": "subject.roles IN 'ROLE_PARITY_READER'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-subject-id-on-the-right-of-in",
+   "condition": "resource.x IN subject.id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-literal-on-the-right-of-in-alone",
+   "condition": "resource.x IN 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-true-or",
+   "condition": "true OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-and-true",
+   "condition": "resource.a == 'y' AND true",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-true-and-false",
+   "condition": "true AND false",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-whole-true-lower-case",
+   "condition": "true",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-whole-true-upper-case",
+   "condition": "TRUE",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-whole-false-upper-case",
+   "condition": "FALSE",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-is-m2m-alone",
+   "condition": "subject.isM2M",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-is-m2m-beside-or",
+   "condition": "subject.isM2M OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-is-m2m-declared-alone",
+   "about": "subject.isM2M alone is a condition, and a PIP of that name is declared, so a refusal can only come from a rule on the name itself.",
+   "condition": "subject.isM2M",
+   "pips": [
+    "m2m"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-is-m2m-declared-beside-or",
+   "about": "subject.isM2M alone is a condition, and a PIP of that name is declared, so a refusal can only come from a rule on the name itself.",
+   "condition": "subject.isM2M OR resource.a == 'y'",
+   "pips": [
+    "m2m"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-equals-word",
+   "condition": "resource.x EQUALS 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-not-equals-words",
+   "condition": "resource.x NOT EQUALS 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-greater-or-equal-words",
+   "condition": "resource.n GREATER THAN OR EQUAL TO 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-less-or-equal-words",
+   "condition": "resource.n LESS THAN OR EQUAL TO 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-single-equals",
+   "condition": "resource.x = 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-leading-zeros",
+   "condition": "resource.n == 005",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-negative-leading-zero",
+   "condition": "resource.n == -05",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-negative-decimal",
+   "condition": "resource.n > -0.5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-small-negative-decimal",
+   "condition": "resource.n > -0.001",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-negative-zero",
+   "condition": "resource.n > -0.0",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-exponent",
+   "condition": "resource.n == 5e0",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-decimal-without-integer-part",
+   "condition": "resource.n > .5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-trailing-dot",
+   "condition": "resource.n == 5.",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-boolean-upper-case",
+   "condition": "resource.b == TRUE",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-boolean-lower-case",
+   "condition": "resource.b == true",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-boolean-mixed-case",
+   "condition": "resource.b == True",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-boolean-as-string",
+   "condition": "resource.b == 'true'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-empty-string-literal",
+   "condition": "resource.x != ''",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-doubled-quote",
+   "condition": "resource.x == 'it''s'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-list-without-spaces",
+   "condition": "resource.x IN 'v','w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-list-with-spaces-before-commas",
+   "condition": "resource.x IN 'v' , 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-numbers-list-without-spaces",
+   "condition": "resource.n IN 5,6",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-bare-path",
+   "condition": "x == 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-bare-nested-path",
+   "condition": "l[0] == 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-attribute-with-digits",
+   "condition": "resource.x1 IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-attribute-with-dash",
+   "condition": "resource.x-y IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sx-attribute-with-underscore",
+   "condition": "resource.x_y IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "b": true,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

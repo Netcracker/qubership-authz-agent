@@ -219,6 +219,7 @@ missing.
 | `TestRound13PAPSyntaxCases` | Whether the PAP accepts a literal left over after a comparison, and an attribute as a list element | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/` |
 | `TestRound13CellCases` | What each operator answers over an absent key, `null`, `[]`, an empty JSON Path selection, an index past the end, a HEADER PIP with no header, a GENERAL PIP whose body is `null`, and a GENERAL PIP that answers 500, in every cell of the operator-by-state table no golden fixes; every operator over the failing PIP also on the left of a true `OR` | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/` |
 | `TestRound13FailingPIPInADenyRuleCases` | Whether a GENERAL PIP that answers 500 ends the `DENY` rule that reads it or the whole answer, under every operator, in a `PERMIT_UNLESS_DENY` policy. Legacy profile only | `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/` |
+| `TestRound14OperandKindCases`, `…RightStateCases`, `…ValueCases`, `…SyntaxCases`, `…JSONPathCases`, `…TargetCases`, `…IteratePassCases` | Forms of the condition language no earlier case asks: every kind of operand on either side of every operator, the right operand in each special state, the JSON types of a resource value against literals of each type, operand pairs and lexical forms the PAP may refuse, JSON Path forms, and a failed PIP, an absent attribute, or `subject.permissionScope` outside `iterate` in the target of a rule, a policy, and a set, and how the filter writes an `iterate` pass that gives two groups. All but `…IteratePassCases` are data, see [Cases kept as data](#cases-kept-as-data) | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
 | `TestInterpreterConfigExportCases` | What `GET /access/v3/config/policySets` and `GET /access/v3/config/pips`, the reads the agent loads its configuration from, carry for regular sets of every form, two simplified policies, and one PIP of each type, read with the tenant of the upload, the other tenant, no tenant, an unknown tenant, and a tenant in the query beside another in the `Tenant` header. The recorded body drops the envelope's `hash` and `lastModificationTimestamp` and keeps only the elements the case uploaded, ordered by their text. Legacy profile only; the reads that name tenant B skip without a two-tenant stand | `load-simplified-policies-v1/config-export/`, `load-policy-sets-v1/config-export/`, `config-policy-sets-v3/config-export/`, `config-pips-v3/config-export/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
@@ -231,12 +232,29 @@ profiles they send the requests of a case whose upload was accepted, and on the 
 pull after each upload. `TestIsolatedPolicyCases`, `TestIsolatedConditionFormCases`,
 `TestTranslatorMatchDialectCases`, `TestTranslatorValueSemanticsCases`, `TestInterpreterNullAndAbsenceCases`,
 `TestInterpreterPermissionCaseCases`, `TestInterpreterDeadFormCases`, `TestInterpreterOperationAllCases`,
-`TestInterpreterBarePathCases`, `TestInterpreterPIPDeclarationCases` and the `TestRound9*`, `TestRound10*`, `TestRound11*` and `TestRound13*` functions
+`TestInterpreterBarePathCases`, `TestInterpreterPIPDeclarationCases` and the `TestRound9*`, `TestRound10*`, `TestRound11*`, `TestRound13*` and `TestRound14*` functions
 that upload one policy at a time share the
 `PARITY_ISOLATED` domain and the `runIsolatedCases` runner behind it, and differ in which cases they carry, so that a
 recording run can be filtered to one of them. `TestRegularPolicySetCases`, `TestPermissionScopeIterateCases`,
-`TestTranslatorPolicySetCases`, the `TestRound12*` and `TestRound13*` functions and the `TestInterpreter*` functions that upload regular sets reach the same domain for
+`TestTranslatorPolicySetCases`, the `TestRound12*`, `TestRound13*` and `TestRound14*` functions and the `TestInterpreter*` functions that upload regular sets reach the same domain for
 the PIPs their sets read, and are filtered the same way.
+
+### Cases kept as data
+
+The cases of a function that only uploads PIPs, simplified policies, and policy sets and then sends requests can live in
+a JSON file under `suite/testdata/cases/` instead of Go; the function calls `runCaseFile` with the file's path. A file
+declares the pip-mock routes to pin, the PIPs its cases name by key, and the cases. A case without `sets` is a
+simplified policy with `condition` on `READ`, or on `operation` when set, for the reader; a case with `sets` is one
+upload of policy sets, whose ids the suite derives from the case id as it does for Go cases. `{{resourceType}}` in a
+condition, a target, or a resource string stands for the case's resource type, and `{{resourceTypeLowerCase}}` for the
+same in lower case. The format is defined by `caseFile` in `suite/case_files_test.go`. `about`, on the file and on a
+case, is a note for the reader; nothing reads it. `TestCaseFilesAreWellFormed` reads every file without a stand and
+fails on an unknown field, a PIP a case names and its file does not declare, and a case id two cases share: run `go test
+-run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
+
+A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
+generator and rerun it rather than the JSON. Cases that wait between steps or change the stand in between, such as a
+cache expiry or a customization import, stay in Go.
 
 To record goldens, run one function per fresh stand:
 

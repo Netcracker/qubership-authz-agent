@@ -1,0 +1,7472 @@
+{
+ "about": "What every binary operator gives when its right operand is an absent key, null, [], an empty JSON Path selection, an index past the end, a HEADER PIP without its header, a GENERAL PIP whose body is null, or a GENERAL PIP that answers 500. The prefixes ra, rx, re, rs, ro, rh, rn and rf name those states in that order. A case ending in -alone is the comparison by itself; one ending in -or stands on the left of OR resource.a == 'y', so true tells a false comparison from a rule the comparison ended. The r14-*-in-a-deny-rule-* cases tell an ended rule from a failed answer.",
+ "resourceTypePrefix": "PARITY_SUITE_R14_",
+ "pins": {
+  "/api/v1/pip/r14-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r14-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 14 case"
+   }
+  }
+ },
+ "pips": {
+  "noheader": {
+   "name": "subject.parityNoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-no-such-header",
+   "cacheable": false
+  },
+  "nullbody": {
+   "name": "subject.parityR14NullBody",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-null-body",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR14NullBody"
+   },
+   "cacheable": false
+  },
+  "failing": {
+   "name": "subject.parityR14Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR14Failing"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ra-equals-alone",
+   "condition": "resource.v == resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-equals-or",
+   "condition": "resource.v == resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-equals-alone",
+   "condition": "resource.v != resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-equals-or",
+   "condition": "resource.v != resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-less-than-alone",
+   "condition": "resource.n < resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-less-than-or",
+   "condition": "resource.n < resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-less-or-equal-alone",
+   "condition": "resource.n <= resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-less-or-equal-or",
+   "condition": "resource.n <= resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-greater-than-alone",
+   "condition": "resource.n > resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-greater-than-or",
+   "condition": "resource.n > resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-greater-or-equal-alone",
+   "condition": "resource.n >= resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-greater-or-equal-or",
+   "condition": "resource.n >= resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-in-alone",
+   "condition": "resource.v IN resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-in-or",
+   "condition": "resource.v IN resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-in-alone",
+   "condition": "resource.v NOT IN resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-in-or",
+   "condition": "resource.v NOT IN resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-contains-alone",
+   "condition": "resource.l CONTAINS resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-contains-or",
+   "condition": "resource.l CONTAINS resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-contains-or",
+   "condition": "resource.l NOT CONTAINS resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-contains-any-or",
+   "condition": "resource.l CONTAINS ANY resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-is-subset-alone",
+   "condition": "resource.l IS SUBSET resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-is-subset-or",
+   "condition": "resource.l IS SUBSET resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-match-alone",
+   "condition": "resource.v MATCH resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-match-or",
+   "condition": "resource.v MATCH resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-match-alone",
+   "condition": "resource.v NOT MATCH resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ra-not-match-or",
+   "condition": "resource.v NOT MATCH resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ra-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-equals-alone",
+   "condition": "resource.v == resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-equals-or",
+   "condition": "resource.v == resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-equals-alone",
+   "condition": "resource.v != resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-equals-or",
+   "condition": "resource.v != resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-less-than-alone",
+   "condition": "resource.n < resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-less-than-or",
+   "condition": "resource.n < resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-less-or-equal-alone",
+   "condition": "resource.n <= resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-less-or-equal-or",
+   "condition": "resource.n <= resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-greater-than-alone",
+   "condition": "resource.n > resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-greater-than-or",
+   "condition": "resource.n > resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-greater-or-equal-alone",
+   "condition": "resource.n >= resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-greater-or-equal-or",
+   "condition": "resource.n >= resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-in-alone",
+   "condition": "resource.v IN resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-in-or",
+   "condition": "resource.v IN resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-in-alone",
+   "condition": "resource.v NOT IN resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-in-or",
+   "condition": "resource.v NOT IN resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-contains-alone",
+   "condition": "resource.l CONTAINS resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-contains-or",
+   "condition": "resource.l CONTAINS resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-contains-or",
+   "condition": "resource.l NOT CONTAINS resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-contains-any-or",
+   "condition": "resource.l CONTAINS ANY resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-is-subset-alone",
+   "condition": "resource.l IS SUBSET resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-is-subset-or",
+   "condition": "resource.l IS SUBSET resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-match-alone",
+   "condition": "resource.v MATCH resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-match-or",
+   "condition": "resource.v MATCH resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-match-alone",
+   "condition": "resource.v NOT MATCH resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "rx-not-match-or",
+   "condition": "resource.v NOT MATCH resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rx-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-equals-alone",
+   "condition": "resource.v == resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-equals-or",
+   "condition": "resource.v == resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-equals-alone",
+   "condition": "resource.v != resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-equals-or",
+   "condition": "resource.v != resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-less-than-alone",
+   "condition": "resource.n < resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-less-than-or",
+   "condition": "resource.n < resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-less-or-equal-alone",
+   "condition": "resource.n <= resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-less-or-equal-or",
+   "condition": "resource.n <= resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-greater-than-alone",
+   "condition": "resource.n > resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-greater-than-or",
+   "condition": "resource.n > resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-greater-or-equal-alone",
+   "condition": "resource.n >= resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-greater-or-equal-or",
+   "condition": "resource.n >= resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-in-alone",
+   "condition": "resource.v IN resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-in-or",
+   "condition": "resource.v IN resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-in-alone",
+   "condition": "resource.v NOT IN resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-in-or",
+   "condition": "resource.v NOT IN resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-contains-alone",
+   "condition": "resource.l CONTAINS resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-contains-or",
+   "condition": "resource.l CONTAINS resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-contains-or",
+   "condition": "resource.l NOT CONTAINS resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-contains-any-or",
+   "condition": "resource.l CONTAINS ANY resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-is-subset-alone",
+   "condition": "resource.l IS SUBSET resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-is-subset-or",
+   "condition": "resource.l IS SUBSET resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-match-alone",
+   "condition": "resource.v MATCH resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-match-or",
+   "condition": "resource.v MATCH resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-match-alone",
+   "condition": "resource.v NOT MATCH resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "re-not-match-or",
+   "condition": "resource.v NOT MATCH resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-re-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-equals-alone",
+   "condition": "resource.v == resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-equals-or",
+   "condition": "resource.v == resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-equals-alone",
+   "condition": "resource.v != resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-equals-or",
+   "condition": "resource.v != resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-less-than-alone",
+   "condition": "resource.n < resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-less-than-or",
+   "condition": "resource.n < resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-less-or-equal-alone",
+   "condition": "resource.n <= resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-less-or-equal-or",
+   "condition": "resource.n <= resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-greater-than-alone",
+   "condition": "resource.n > resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-greater-than-or",
+   "condition": "resource.n > resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-greater-or-equal-alone",
+   "condition": "resource.n >= resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-greater-or-equal-or",
+   "condition": "resource.n >= resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-in-alone",
+   "condition": "resource.v IN resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-in-or",
+   "condition": "resource.v IN resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-in-alone",
+   "condition": "resource.v NOT IN resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-in-or",
+   "condition": "resource.v NOT IN resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-contains-alone",
+   "condition": "resource.l CONTAINS resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-contains-or",
+   "condition": "resource.l CONTAINS resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-contains-or",
+   "condition": "resource.l NOT CONTAINS resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-contains-any-or",
+   "condition": "resource.l CONTAINS ANY resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-is-subset-alone",
+   "condition": "resource.l IS SUBSET resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-is-subset-or",
+   "condition": "resource.l IS SUBSET resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-match-alone",
+   "condition": "resource.v MATCH resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-match-or",
+   "condition": "resource.v MATCH resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-match-alone",
+   "condition": "resource.v NOT MATCH resource.items[?(@.type=='zzz')].id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rs-not-match-or",
+   "condition": "resource.v NOT MATCH resource.items[?(@.type=='zzz')].id OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rs-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-equals-alone",
+   "condition": "resource.v == resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-equals-or",
+   "condition": "resource.v == resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-equals-alone",
+   "condition": "resource.v != resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-equals-or",
+   "condition": "resource.v != resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-less-than-alone",
+   "condition": "resource.n < resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-less-than-or",
+   "condition": "resource.n < resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-less-or-equal-alone",
+   "condition": "resource.n <= resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-less-or-equal-or",
+   "condition": "resource.n <= resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-greater-than-alone",
+   "condition": "resource.n > resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-greater-than-or",
+   "condition": "resource.n > resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-greater-or-equal-alone",
+   "condition": "resource.n >= resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-greater-or-equal-or",
+   "condition": "resource.n >= resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-in-alone",
+   "condition": "resource.v IN resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-in-or",
+   "condition": "resource.v IN resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-in-alone",
+   "condition": "resource.v NOT IN resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-in-or",
+   "condition": "resource.v NOT IN resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-contains-alone",
+   "condition": "resource.l CONTAINS resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-contains-or",
+   "condition": "resource.l CONTAINS resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-contains-or",
+   "condition": "resource.l NOT CONTAINS resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-contains-any-or",
+   "condition": "resource.l CONTAINS ANY resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-is-subset-alone",
+   "condition": "resource.l IS SUBSET resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-is-subset-or",
+   "condition": "resource.l IS SUBSET resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-match-alone",
+   "condition": "resource.v MATCH resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-match-or",
+   "condition": "resource.v MATCH resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-match-alone",
+   "condition": "resource.v NOT MATCH resource.list[5]",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-not-match-or",
+   "condition": "resource.v NOT MATCH resource.list[5] OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-ro-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-equals-alone",
+   "condition": "resource.v == subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-equals-or",
+   "condition": "resource.v == subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-equals-alone",
+   "condition": "resource.v != subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-equals-or",
+   "condition": "resource.v != subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-less-than-alone",
+   "condition": "resource.n < subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-less-than-or",
+   "condition": "resource.n < subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-less-or-equal-alone",
+   "condition": "resource.n <= subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-less-or-equal-or",
+   "condition": "resource.n <= subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-greater-than-alone",
+   "condition": "resource.n > subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-greater-than-or",
+   "condition": "resource.n > subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-greater-or-equal-alone",
+   "condition": "resource.n >= subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-greater-or-equal-or",
+   "condition": "resource.n >= subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-in-alone",
+   "condition": "resource.v IN subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-in-or",
+   "condition": "resource.v IN subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-in-alone",
+   "condition": "resource.v NOT IN subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-in-or",
+   "condition": "resource.v NOT IN subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-contains-alone",
+   "condition": "resource.l CONTAINS subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-contains-or",
+   "condition": "resource.l CONTAINS subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-contains-or",
+   "condition": "resource.l NOT CONTAINS subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-contains-any-or",
+   "condition": "resource.l CONTAINS ANY subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-is-subset-alone",
+   "condition": "resource.l IS SUBSET subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-is-subset-or",
+   "condition": "resource.l IS SUBSET subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-match-alone",
+   "condition": "resource.v MATCH subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-match-or",
+   "condition": "resource.v MATCH subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-match-alone",
+   "condition": "resource.v NOT MATCH subject.parityNoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rh-not-match-or",
+   "condition": "resource.v NOT MATCH subject.parityNoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rh-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-equals-alone",
+   "condition": "resource.v == subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-equals-or",
+   "condition": "resource.v == subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-equals-alone",
+   "condition": "resource.v != subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-equals-or",
+   "condition": "resource.v != subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-less-than-alone",
+   "condition": "resource.n < subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-less-than-or",
+   "condition": "resource.n < subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-less-or-equal-alone",
+   "condition": "resource.n <= subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-less-or-equal-or",
+   "condition": "resource.n <= subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-greater-than-alone",
+   "condition": "resource.n > subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-greater-than-or",
+   "condition": "resource.n > subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-greater-or-equal-alone",
+   "condition": "resource.n >= subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-greater-or-equal-or",
+   "condition": "resource.n >= subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-in-alone",
+   "condition": "resource.v IN subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-in-or",
+   "condition": "resource.v IN subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-in-alone",
+   "condition": "resource.v NOT IN subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-in-or",
+   "condition": "resource.v NOT IN subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-contains-alone",
+   "condition": "resource.l CONTAINS subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-contains-or",
+   "condition": "resource.l CONTAINS subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-contains-or",
+   "condition": "resource.l NOT CONTAINS subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-contains-any-or",
+   "condition": "resource.l CONTAINS ANY subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-is-subset-alone",
+   "condition": "resource.l IS SUBSET subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-is-subset-or",
+   "condition": "resource.l IS SUBSET subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-match-alone",
+   "condition": "resource.v MATCH subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-match-or",
+   "condition": "resource.v MATCH subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-match-alone",
+   "condition": "resource.v NOT MATCH subject.parityR14NullBody",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rn-not-match-or",
+   "condition": "resource.v NOT MATCH subject.parityR14NullBody OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rn-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-equals-alone",
+   "condition": "resource.v == subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-equals-or",
+   "condition": "resource.v == subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-equals-alone",
+   "condition": "resource.v != subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-equals-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-equals-or",
+   "condition": "resource.v != subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-equals-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-less-than-alone",
+   "condition": "resource.n < subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-less-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-less-than-or",
+   "condition": "resource.n < subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-less-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-less-or-equal-alone",
+   "condition": "resource.n <= subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-less-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-less-or-equal-or",
+   "condition": "resource.n <= subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-less-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-greater-than-alone",
+   "condition": "resource.n > subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-greater-than-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-greater-than-or",
+   "condition": "resource.n > subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-greater-than-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-greater-or-equal-alone",
+   "condition": "resource.n >= subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-greater-or-equal-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-greater-or-equal-or",
+   "condition": "resource.n >= subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-greater-or-equal-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-in-alone",
+   "condition": "resource.v IN subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-in-or",
+   "condition": "resource.v IN subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-in-alone",
+   "condition": "resource.v NOT IN subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-in-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-in-or",
+   "condition": "resource.v NOT IN subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-in-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-contains-alone",
+   "condition": "resource.l CONTAINS subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-contains-or",
+   "condition": "resource.l CONTAINS subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-contains-alone",
+   "condition": "resource.l NOT CONTAINS subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-contains-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-contains-or",
+   "condition": "resource.l NOT CONTAINS subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-contains-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-contains-any-alone",
+   "condition": "resource.l CONTAINS ANY subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-contains-any-or",
+   "condition": "resource.l CONTAINS ANY subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-contains-any-alone",
+   "condition": "resource.l NOT CONTAINS ANY subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-contains-any-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-contains-any-or",
+   "condition": "resource.l NOT CONTAINS ANY subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-contains-any-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-is-subset-alone",
+   "condition": "resource.l IS SUBSET subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-is-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-is-subset-or",
+   "condition": "resource.l IS SUBSET subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-is-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-is-not-subset-alone",
+   "condition": "resource.l IS NOT SUBSET subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-is-not-subset-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-is-not-subset-or",
+   "condition": "resource.l IS NOT SUBSET subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-is-not-subset-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-match-alone",
+   "condition": "resource.v MATCH subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-match-or",
+   "condition": "resource.v MATCH subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-match-alone",
+   "condition": "resource.v NOT MATCH subject.parityR14Failing",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-match-alone",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rf-not-match-or",
+   "condition": "resource.v NOT MATCH subject.parityR14Failing OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-rf-not-match-or",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-not-empty-or",
+   "about": "IS NOT EMPTY over a GENERAL PIP whose body is null, beside a true OR: true says the operand was false, false that it ended the rule. Round 13 asked the operator alone (cn-is-not-empty-alone), where both read false.",
+   "condition": "subject.parityR14NullBody IS NOT EMPTY OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-cn-is-not-empty-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-equals",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-not-equals",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v != resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-less-than",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n < resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-less-or-equal",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n <= resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-greater-than",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n > resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-greater-or-equal",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n >= resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-in",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v IN resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-not-in",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v NOT IN resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-contains",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-not-contains",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-contains-any",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-not-contains-any",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS ANY resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-is-subset",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l IS SUBSET resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-is-not-subset",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l IS NOT SUBSET resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-match",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v MATCH resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-absent-key-on-the-right-in-a-deny-rule-not-match",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v NOT MATCH resource.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-equals",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-not-equals",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v != resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-less-than",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n < resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-less-or-equal",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n <= resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-greater-than",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n > resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-greater-or-equal",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n >= resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-in",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v IN resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-not-in",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v NOT IN resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-contains",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-not-contains",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-contains-any",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-not-contains-any",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS ANY resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-is-subset",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l IS SUBSET resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-is-not-subset",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l IS NOT SUBSET resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-match",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v MATCH resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-index-past-the-end-on-the-right-in-a-deny-rule-not-match",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v NOT MATCH resource.list[5]",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-equals",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-not-equals",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v != subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-less-than",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n < subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-less-or-equal",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n <= subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-greater-than",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n > subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-greater-or-equal",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n >= subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-in",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v IN subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-not-in",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v NOT IN subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-contains",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-not-contains",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-contains-any",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-not-contains-any",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS ANY subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-is-subset",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l IS SUBSET subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-is-not-subset",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l IS NOT SUBSET subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-match",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v MATCH subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-failing-pip-on-the-right-in-a-deny-rule-not-match",
+   "about": "The only DENY rule of a PERMIT_UNLESS_DENY policy: true says the comparison ended its rule alone, false that it failed the answer or held; the -alone case of the same comparison says whether it could hold.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v NOT MATCH subject.parityR14Failing",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r14-right-state",
+      "v": "v",
+      "n": 5,
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
