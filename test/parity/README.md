@@ -304,9 +304,8 @@ override the client ids and secrets. The cases against tenant A run on every sta
 need the legacy PAP and the same four `PARITY_MT_TENANT_*` variables as `TestTenantScopedDecisions`.
 
 Tenant A's wildcard row (`t9b`) has `component`, `resourceType`, and `operation` all set to `ALL`. The legacy PAP
-accepts `resourceType: ALL` only on a global-access policy, and
-`SimplifiedPolicyMappingService.isGlobalAccessSimplifiedPolicy` decides that on `component == "ALL"` alone — a global
-policy must also carry `operation: ALL` and no `condition` and no `rsqlPredicate`. With any other `component` the
+accepts `resourceType: ALL` only on a global-access policy, and it takes a policy for one on `component == "ALL"`
+alone; such a policy must also carry `operation: ALL` and no `condition` and no `rsqlPredicate`. With any other `component` the
 upload is rejected with `simplified policy 'resourceType' field ALL is only allowed for global access policy`, in every
 tenant including the default one; nothing about the rule is tenant-specific.
 
