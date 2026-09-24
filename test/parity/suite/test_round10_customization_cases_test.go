@@ -100,10 +100,9 @@ func customizationRegularCases() []regularCase {
 //
 // When the test ends, the customization is deleted and the set is emptied by
 // its externalId. The import drops the set's externalId, so emptying misses the
-// set; the cleanup then reads the v3 export and deactivates the set, which
-// stays in the export as INACTIVE. The test fails only if the set is still
-// active after that. Each recording runs on a fresh stack, so the inactive set
-// reaches no other case.
+// set; the cleanup then deletes the set by its id, which the PAP refuses with
+// 400 while the customization exists. The test fails if the v3 export still
+// lists the set after that.
 //
 // The case lives in its own test function so that a recording run can be
 // filtered to it. Legacy profile only: customizations are the PAP's.
@@ -125,8 +124,8 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	// before the import depend on that run.
 	deleteCustomization()
 	// Cleanups run last registered first: the customization is deleted, the set
-	// is emptied by its externalId, and then the export is checked.
-	t.Cleanup(func() { s.requireSetInactive(t, m2m, tc.resourceType, setID) })
+	// is emptied by its externalId, and then it is deleted by its id.
+	t.Cleanup(func() { s.requireSetDeleted(t, m2m, tc.resourceType, setID) })
 	s.emptyPolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
 	t.Cleanup(deleteCustomization)
 
@@ -153,24 +152,22 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	s.runCustomizationRequests(tc, "after")
 }
 
-// requireSetInactive deactivates the set setID if the v3 export lists it as
-// active, and fails t if it is still active after that. The import drops the
-// set's externalId, so emptying the externalId leaves the set in place, and the
-// suite knows no PAP call that removes it; deactivation keeps it in the export
-// as INACTIVE, where it decides nothing (inactive-set). The set is found by resourceType, the marker
-// its target carries, and then by its policySetId.
-func (s *ParitySuite) requireSetInactive(t *testing.T, m2m, resourceType, setID string) {
+// requireSetDeleted deletes the set setID if the v3 export still lists it, and
+// fails t if the export lists it after that. The import drops the set's
+// externalId, so emptying the externalId leaves the set in place; the PAP deletes
+// it by its id once its customization is gone. The set is found by resourceType,
+// the marker its target carries, and then by its policySetId.
+func (s *ParitySuite) requireSetDeleted(t *testing.T, m2m, resourceType, setID string) {
 	ctx := context.Background()
 	status, found := s.exportedSetStatus(t, m2m, resourceType, setID)
-	if !found || status == "INACTIVE" {
+	if !found {
 		return
 	}
-	deactivated, answer, err := HelperDeactivatePolicySet(ctx, s.cfg, m2m, setID)
-	t.Logf("deactivate policy set %s, whose status in the v3 export is %q: status %d, %v, %s", setID, status, deactivated, err, answer)
-	status, found = s.exportedSetStatus(t, m2m, resourceType, setID)
-	if found && status != "INACTIVE" {
-		t.Errorf("policy set %s has status %q in the v3 export after its customization was deleted, its externalId emptied, "+
-			"and deactivate answered %d", setID, status, deactivated)
+	deleted, answer, err := HelperDeletePolicySet(ctx, s.cfg, m2m, setID)
+	t.Logf("delete policy set %s, whose status in the v3 export is %q: status %d, %v, %s", setID, status, deleted, err, answer)
+	if status, found = s.exportedSetStatus(t, m2m, resourceType, setID); found {
+		t.Errorf("policy set %s is in the v3 export with status %q after its customization was deleted, its externalId emptied, "+
+			"and delete answered %d", setID, status, deleted)
 	}
 }
 

@@ -52,15 +52,16 @@ func HelperDeleteSetCustomization(ctx context.Context, cfg Config, m2mToken, lev
 	return doRequest(req)
 }
 
-// HelperDeactivatePolicySet sets the status of the policy set setID to
-// INACTIVE. An inactive set decides nothing and is left out of the v3 export.
-func HelperDeactivatePolicySet(ctx context.Context, cfg Config, m2mToken, setID string) (int, []byte, error) {
+// HelperDeletePolicySet deletes the policy set setID. The PAP answers 200, and
+// 400 while the set still has a customization: delete that first with
+// [HelperDeleteSetCustomization].
+func HelperDeletePolicySet(ctx context.Context, cfg Config, m2mToken, setID string) (int, []byte, error) {
 	endpoint := buildURL(
 		cfg.ACBaseURL,
-		"/access/v1/policySets/"+url.PathEscape(setID)+"/deactivate",
+		"/access/v1/policySets/"+url.PathEscape(setID),
 		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
 	)
-	req, err := buildRequest(ctx, http.MethodPatch, endpoint, nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	req, err := buildRequest(ctx, http.MethodDelete, endpoint, nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
 	if err != nil {
 		return 0, nil, err
 	}

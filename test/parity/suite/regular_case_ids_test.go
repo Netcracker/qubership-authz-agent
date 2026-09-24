@@ -61,6 +61,16 @@ var regularCaseLists = map[string]func() []regularCase{
 	"round12ScopeOutsideIterateControlCases":    round12ScopeOutsideIterateControlCases,
 	"round12NotApplicableFilterCases":           round12NotApplicableFilterCases,
 	"round12IterateNodeInAFilterCases":          round12IterateNodeInAFilterCases,
+	"round13IterateCases": func() []regularCase {
+		var cases []regularCase
+		for _, shape := range round13ScopeShapes {
+			cases = append(cases, round13IterateCases(shape.name)...)
+		}
+		return cases
+	},
+	"round13ScopeOutsideIterateCases":   round13ScopeOutsideIterateCases,
+	"round13FilterCases":                round13FilterCases,
+	"round13FailingPIPInADenyRuleCases": round13FailingPIPInADenyRuleCases,
 }
 
 // casesSharingElementIDs are the regular cases whose one upload carries one
