@@ -110,9 +110,19 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("customizations are applied by the access-control PAP; authz-policy-admin has none")
 	}
+	tc, customization, setID := customizationCase()
+	s.runCustomizationCase(tc, customization, setID)
+}
+
+// runCustomizationCase uploads tc's PIPs and its one upload, sends its requests,
+// imports customization at customizationLevel, and sends them again. Every
+// golden is filed under tc.id: the upload, the import, and the requests and the
+// v3 export of each stage. When the test ends, the customization is deleted,
+// the set is emptied by its externalId and deleted by its id, and the isolated
+// domain that holds tc's PIPs is emptied, in that order.
+func (s *ParitySuite) runCustomizationCase(tc regularCase, customization []any, setID string) {
 	ctx := context.Background()
 	m2m := s.mustM2MToken()
-	tc, customization, setID := customizationCase()
 	// The cleanups run after the suite has handed s.T() back to its parent, so
 	// they report through the test they were registered in.
 	t := s.T()
@@ -123,17 +133,29 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	// A customization a failed run left behind would make the answers recorded
 	// before the import depend on that run.
 	deleteCustomization()
+	if len(tc.pips) > 0 {
+		t.Cleanup(func() {
+			if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
+				t.Logf("empty domain %s: %v", isolatedCaseDomain, err)
+			}
+		})
+	}
 	// Cleanups run last registered first: the customization is deleted, the set
-	// is emptied by its externalId, and then it is deleted by its id.
+	// is emptied by its externalId, it is deleted by its id, and then the PIPs go.
 	t.Cleanup(func() { s.requireSetDeleted(t, m2m, tc.resourceType, setID) })
 	s.emptyPolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
 	t.Cleanup(deleteCustomization)
 
+	if len(tc.pips) > 0 {
+		status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, nil)
+		s.Require().NoError(err)
+		s.Require().Equal(http.StatusOK, status, "upload of %d PIPs into %s", len(tc.pips), isolatedCaseDomain)
+	}
 	upload := tc.uploads[0]
 	uploadStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
 	s.Require().NoError(err)
 	s.Run("upload-1", func() {
-		s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, customizationCaseID+"/upload-1", &model.PolicyLoadOutcome{Status: uploadStatus})
+		s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, tc.id+"/upload-1", &model.PolicyLoadOutcome{Status: uploadStatus})
 	})
 	if uploadStatus < http.StatusOK || uploadStatus >= http.StatusMultipleChoices {
 		return
@@ -144,7 +166,7 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	s.Require().NoError(err)
 	s.T().Logf("import the %s customization: status %d, %s", customizationLevel, importStatus, body)
 	s.Run("import", func() {
-		s.requirePendingGolden(PSUITE_IMPORT_CUSTOMIZATION, customizationCaseID+"/import", &model.PolicyLoadOutcome{Status: importStatus})
+		s.requirePendingGolden(PSUITE_IMPORT_CUSTOMIZATION, tc.id+"/import", &model.PolicyLoadOutcome{Status: importStatus})
 	})
 	if importStatus < http.StatusOK || importStatus >= http.StatusMultipleChoices {
 		return
@@ -193,14 +215,14 @@ func (s *ParitySuite) exportedSetStatus(t *testing.T, m2m, resourceType, setID s
 }
 
 // runCustomizationRequests sends the requests of tc and reads the v3 export of
-// its set, recording both under stage.
+// its set, recording both under tc.id and stage.
 func (s *ParitySuite) runCustomizationRequests(tc regularCase, stage string) {
 	ctx := context.Background()
 	s.Run(stage, func() {
 		for _, req := range tc.requests {
 			s.Run(req.name, func() {
 				s.runPendingCheckResourceV1OutcomeCase(
-					customizationCaseID+"/"+stage+"/"+req.name,
+					tc.id+"/"+stage+"/"+req.name,
 					model.CheckAccessRequest{Operation: req.operation, Type: tc.resourceType, Resource: req.resource},
 					s.mustTokenBundle(UserProfileReader),
 					PerCallOptions{},
@@ -210,7 +232,7 @@ func (s *ParitySuite) runCustomizationRequests(tc regularCase, stage string) {
 		s.Run("export-policy-sets", func() {
 			status, body, err := HelperGetConfigExport(ctx, s.cfg, PSUITE_CONFIG_POLICY_SETS_V3, s.mustM2MToken(), PerCallOptions{})
 			s.Require().NoError(err)
-			s.requirePendingGolden(PSUITE_CONFIG_POLICY_SETS_V3, customizationCaseID+"/"+stage, narrowConfigExport(status, body, []string{tc.resourceType}))
+			s.requirePendingGolden(PSUITE_CONFIG_POLICY_SETS_V3, tc.id+"/"+stage, narrowConfigExport(status, body, []string{tc.resourceType}))
 		})
 	})
 }

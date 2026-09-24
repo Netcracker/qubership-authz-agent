@@ -97,6 +97,12 @@ type requestSpec struct {
 	Filter    bool              `json:"filter"`
 	// Subject "m2m" sends the M2M token alone; empty sends parity-reader.
 	Subject string `json:"subject"`
+	// ClassifyBy names a pip-mock route. The request's golden is then recorded
+	// under <name>-when-the-pip-was-read when the route received a call while
+	// the request ran, and under <name>-when-the-pip-was-skipped when it did
+	// not, so that an answer that depends on the order access-control evaluates
+	// the children of a node in is filed with that order. Regular cases only.
+	ClassifyBy string `json:"classifyBy"`
 }
 
 // readCaseFile reads testdata/cases/<name>. Numbers in a resource keep their
@@ -147,8 +153,9 @@ func withResourceType(v any, rt string) any {
 
 // TestCaseFilesAreWellFormed reads every file under testdata/cases the way
 // runCaseFile does, so that a misspelled field, a PIP a case names and its file
-// does not declare, or an id two cases share fails here rather than on a stand
-// spent recording it. Case ids are golden paths, so they are unique across
+// does not declare, an id two cases share, or a classifyBy on an isolated case
+// or on a route the file does not pin fails here rather than on a stand spent
+// recording it. Case ids are golden paths, so they are unique across
 // files as well as within one.
 func TestCaseFilesAreWellFormed(t *testing.T) {
 	root := filepath.Join("testdata", "cases")
@@ -175,6 +182,17 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 			}
 			if len(c.Requests) == 0 {
 				t.Errorf("%s: case %s sends no request", name, c.ID)
+			}
+			for _, r := range c.Requests {
+				if r.ClassifyBy == "" {
+					continue
+				}
+				if len(c.Sets) == 0 {
+					t.Errorf("%s: case %s request %s sets classifyBy, which only a regular case reads", name, c.ID, r.Name)
+				}
+				if _, ok := f.Pins[r.ClassifyBy]; !ok {
+					t.Errorf("%s: case %s request %s is classified by %s, which the file does not pin", name, c.ID, r.Name, r.ClassifyBy)
+				}
 			}
 		}
 		return nil

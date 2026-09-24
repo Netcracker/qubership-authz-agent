@@ -61,6 +61,9 @@ type isolatedRequest struct {
 	// m2mOnly sends the service's M2M token alone, with no end-user token, so
 	// the subject is the service account rather than parity-reader.
 	m2mOnly bool
+	// classifyBy is the pip-mock route whose call log files the golden of a
+	// regular case's request under its order class; see requestSpec.ClassifyBy.
+	classifyBy string
 }
 
 // requestTokens returns the tokens req is sent with: parity-reader's bundle, or the

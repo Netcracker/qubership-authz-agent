@@ -52,6 +52,7 @@ var regularCaseLists = map[string]func() []regularCase{
 	"round10DenyListFilterCases":                round10DenyListFilterCases,
 	"failedPIPFilterCases":                      failedPIPFilterCases,
 	"customizationRegularCases":                 customizationRegularCases,
+	"customizationUnderIterateRegularCases":     customizationUnderIterateRegularCases,
 	"pipScopeRegularCases":                      pipScopeRegularCases,
 	"repeatedValuesRegularCases":                repeatedValuesRegularCases,
 	"policyWithoutAlgorithmCases":               policyWithoutAlgorithmCases,

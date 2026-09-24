@@ -174,6 +174,19 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			for _, req := range tc.requests {
 				s.Run(req.name, func() {
 					subCase := "regular/" + tc.id + "/" + req.name
+					if req.classifyBy != "" {
+						s.Require().NoError(s.pipMock.ResetCalls(ctx))
+						id, outcome := s.sendRegularRequest(tc.resourceType, req)
+						read := s.pipCalls(req.classifyBy)
+						s.T().Logf("%s: pip-mock received %d call(s) to %s", subCase, read, req.classifyBy)
+						if read > 0 {
+							subCase += "-when-the-pip-was-read"
+						} else {
+							subCase += "-when-the-pip-was-skipped"
+						}
+						s.requirePendingGolden(id, subCase, outcome)
+						return
+					}
 					opts := PerCallOptions{CustomHeaders: req.headers}
 					if req.filter {
 						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, req.filterOperation(), s.requestTokens(req), opts)
