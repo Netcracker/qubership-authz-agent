@@ -104,31 +104,51 @@ func (s *ParitySuite) TestRound11FailedPIPOnTheRightScopeCases() {
 	}
 }
 
-// round11ScopeOutsideIterateCases builds a set that reads subject.permissionScope
-// without iterating: IS EMPTY over the scope key on READ, the same on the left of
-// a true OR on UPDATE, and IS NULL over it on PROBE.
+// round11ScopeOutsideIterateCases builds the case of
+// TestRound11ScopeOutsideIterateCases.
 func round11ScopeOutsideIterateCases() []regularCase {
-	id := "scope-is-empty-outside-iterate"
+	return []regularCase{scopeOutsideIterateCase("scope-is-empty-outside-iterate", false)}
+}
+
+// scopeOutsideIterateCase builds a set that reads subject.permissionScope
+// without iterating: IS EMPTY over the scope key on READ, the same on the left of
+// a true OR on UPDATE, and IS NULL over it on PROBE. withControl adds to the same
+// policy a rule on CONTROL whose condition is true and reads no scope, and on
+// MIXED a rule under IS EMPTY over the scope key beside a rule whose condition is
+// true, with a request on each of the two operations.
+func scopeOutsideIterateCase(id string, withControl bool) regularCase {
 	b := regularBuilder{caseID: id}
 	rt := regularResourceType(id)
-	return []regularCase{{
+	rules := []any{
+		b.rule("region-is-empty", "operation == 'READ'", "subject.permissionScope.region IS EMPTY", "ALLOW", nil),
+		b.rule("region-is-empty-or-true", "operation == 'UPDATE'", "subject.permissionScope.region IS EMPTY OR resource.a == 'y'", "ALLOW", nil),
+		b.rule("region-is-null", "operation == 'PROBE'", "subject.permissionScope.region IS NULL", "ALLOW", nil),
+	}
+	requests := []isolatedRequest{
+		{name: "read-under-is-empty", resource: map[string]any{"id": "r11-scope-outside"}},
+		{name: "update-under-is-empty-or-true", operation: "UPDATE", resource: map[string]any{"id": "r11-scope-outside", "a": "y"}},
+		{name: "probe-under-is-null", operation: "PROBE", resource: map[string]any{"id": "r11-scope-outside"}},
+	}
+	if withControl {
+		rules = append(rules,
+			b.rule("control-without-scope", "operation == 'CONTROL'", "true", "ALLOW", nil),
+			b.rule("mixed-region-is-empty", "operation == 'MIXED'", "subject.permissionScope.region IS EMPTY", "ALLOW", nil),
+			b.rule("mixed-true", "operation == 'MIXED'", "true", "ALLOW", nil))
+		requests = append(requests,
+			isolatedRequest{name: "control-without-scope", operation: "CONTROL", resource: map[string]any{"id": "r11-scope-outside"}},
+			isolatedRequest{name: "scope-read-beside-a-true-rule", operation: "MIXED", resource: map[string]any{"id": "r11-scope-outside"}})
+	}
+	return regularCase{
 		id:           id,
 		resourceType: rt,
 		pips:         []any{permissionScopeWirePIP},
 		uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
 			b.set("set", "resourceType == '"+rt+"'", "DENY_UNLESS_PERMIT", []any{
-				b.policy("scoped", readerTarget, "DENY_UNLESS_PERMIT",
-					b.rule("region-is-empty", "operation == 'READ'", "subject.permissionScope.region IS EMPTY", "ALLOW", nil),
-					b.rule("region-is-empty-or-true", "operation == 'UPDATE'", "subject.permissionScope.region IS EMPTY OR resource.a == 'y'", "ALLOW", nil),
-					b.rule("region-is-null", "operation == 'PROBE'", "subject.permissionScope.region IS NULL", "ALLOW", nil)),
+				b.policy("scoped", readerTarget, "DENY_UNLESS_PERMIT", rules...),
 			}, nil),
 		}}},
-		requests: []isolatedRequest{
-			{name: "read-under-is-empty", resource: map[string]any{"id": "r11-scope-outside"}},
-			{name: "update-under-is-empty-or-true", operation: "UPDATE", resource: map[string]any{"id": "r11-scope-outside", "a": "y"}},
-			{name: "probe-under-is-null", operation: "PROBE", resource: map[string]any{"id": "r11-scope-outside"}},
-		},
-	}}
+		requests: requests,
+	}
 }
 
 // What subject.permissionScope.<key> resolves to in a set that does not iterate.
@@ -137,11 +157,12 @@ func round11ScopeOutsideIterateCases() []regularCase {
 // list all produce (nn1, n4, nc-contains). IS EMPTY on READ is true over an empty
 // list only. On UPDATE it stands on the left of an OR whose right operand holds:
 // true over a null or an empty list, false over an absent attribute, which ends
-// the rule (nn1).
+// the rule (nn1). IS NULL on PROBE is true over each of the three.
 //
 // The scope service answers two grants, r1 and r2, as in the iterate binding
-// cases. IS NULL on PROBE is the control that the rule is reached: it is true
-// over each of the three.
+// cases. All three rules read the scope, so a false on each does not show that
+// the policy is reached; TestRound12ScopeOutsideIterateControlCases adds a rule
+// that reads none.
 //
 // The case lives in its own test function so that a recording run can be
 // filtered to it and leave every golden already committed alone. Legacy profile
@@ -150,14 +171,19 @@ func (s *ParitySuite) TestRound11ScopeOutsideIterateCases() {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("iterate is a regular policy set field; the agent loads simplified policies")
 	}
-	ctx := context.Background()
-	s.Require().NoError(s.pipMock.PinRoute(ctx, permissionScopeWirePath(parityReaderSubjectID), PipStubResponse{
+	s.pinTwoScopeGrants()
+	s.runRegularCases(round11ScopeOutsideIterateCases())
+}
+
+// pinTwoScopeGrants pins the scope service to two grants for parity-reader,
+// region r1 and region r2, and waits out the cachePeriod of
+// permissionScopeWirePIP, as permission-scope-wire does.
+func (s *ParitySuite) pinTwoScopeGrants() {
+	s.Require().NoError(s.pipMock.PinRoute(context.Background(), permissionScopeWirePath(parityReaderSubjectID), PipStubResponse{
 		StatusCode: http.StatusOK,
 		Body:       permissionScopeWireBody(parityReaderSubjectID, []permissionScopeGrant{{"region": {"r1"}}, {"region": {"r2"}}}),
 	}))
-	// Outlive the cachePeriod of the declaration, as permission-scope-wire does.
 	time.Sleep(2 * time.Second)
-	s.runRegularCases(round11ScopeOutsideIterateCases())
 }
 
 // iterateNodeUnderSetCaseID prefixes the goldens of

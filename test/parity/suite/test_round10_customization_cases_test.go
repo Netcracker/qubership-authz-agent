@@ -99,9 +99,11 @@ func customizationRegularCases() []regularCase {
 // is recorded.
 //
 // When the test ends, the customization is deleted and the set is emptied by
-// its externalId. The import drops the set's externalId, so emptying may miss
-// the set; the cleanup then reads the v3 export, deactivates a set still there,
-// and fails the test naming it, since the next run's upload would meet it.
+// its externalId. The import drops the set's externalId, so emptying misses the
+// set; the cleanup then reads the v3 export and deactivates the set, which
+// stays in the export as INACTIVE. The test fails only if the set is still
+// active after that. Each recording runs on a fresh stack, so the inactive set
+// reaches no other case.
 //
 // The case lives in its own test function so that a recording run can be
 // filtered to it. Legacy profile only: customizations are the PAP's.
@@ -124,7 +126,7 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	deleteCustomization()
 	// Cleanups run last registered first: the customization is deleted, the set
 	// is emptied by its externalId, and then the export is checked.
-	t.Cleanup(func() { s.requireSetGone(t, m2m, tc.resourceType, setID) })
+	t.Cleanup(func() { s.requireSetInactive(t, m2m, tc.resourceType, setID) })
 	s.emptyPolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
 	t.Cleanup(deleteCustomization)
 
@@ -151,24 +153,46 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 	s.runCustomizationRequests(tc, "after")
 }
 
-// requireSetGone reads the v3 export and, if the set setID is still in it,
-// deactivates the set and fails t. The set is found by resourceType, the marker
-// its target carries.
-func (s *ParitySuite) requireSetGone(t *testing.T, m2m, resourceType, setID string) {
+// requireSetInactive deactivates the set setID if the v3 export lists it as
+// active, and fails t if it is still active after that. The import drops the
+// set's externalId, so emptying the externalId leaves the set in place, and the
+// suite knows no PAP call that removes it; deactivation keeps it in the export
+// as INACTIVE, where it decides nothing (inactive-set). The set is found by resourceType, the marker
+// its target carries, and then by its policySetId.
+func (s *ParitySuite) requireSetInactive(t *testing.T, m2m, resourceType, setID string) {
 	ctx := context.Background()
-	status, body, err := HelperGetConfigExport(ctx, s.cfg, PSUITE_CONFIG_POLICY_SETS_V3, m2m, PerCallOptions{})
-	if err != nil || status != http.StatusOK {
-		t.Errorf("read the v3 export after the cleanup: status %d, %v, %s", status, err, body)
-		return
-	}
-	export := narrowConfigExport(status, body, []string{resourceType})
-	sets, _ := export.Export["policySets"].([]any)
-	if len(sets) == 0 {
+	status, found := s.exportedSetStatus(t, m2m, resourceType, setID)
+	if !found || status == "INACTIVE" {
 		return
 	}
 	deactivated, answer, err := HelperDeactivatePolicySet(ctx, s.cfg, m2m, setID)
-	t.Errorf("policy set %s is still in the v3 export after its customization was deleted and its externalId emptied; "+
-		"deactivate answered %d, %v, %s", setID, deactivated, err, answer)
+	t.Logf("deactivate policy set %s, whose status in the v3 export is %q: status %d, %v, %s", setID, status, deactivated, err, answer)
+	status, found = s.exportedSetStatus(t, m2m, resourceType, setID)
+	if found && status != "INACTIVE" {
+		t.Errorf("policy set %s has status %q in the v3 export after its customization was deleted, its externalId emptied, "+
+			"and deactivate answered %d", setID, status, deactivated)
+	}
+}
+
+// exportedSetStatus returns the status of the set setID in the v3 export, and
+// whether the export lists the set at all. A failed read is reported through t
+// as a set not found.
+func (s *ParitySuite) exportedSetStatus(t *testing.T, m2m, resourceType, setID string) (string, bool) {
+	status, body, err := HelperGetConfigExport(context.Background(), s.cfg, PSUITE_CONFIG_POLICY_SETS_V3, m2m, PerCallOptions{})
+	if err != nil || status != http.StatusOK {
+		t.Errorf("read the v3 export after the cleanup: status %d, %v, %s", status, err, body)
+		return "", false
+	}
+	export := narrowConfigExport(status, body, []string{resourceType})
+	sets, _ := export.Export["policySets"].([]any)
+	for _, set := range sets {
+		fields, _ := set.(map[string]any)
+		if fields["policySetId"] == setID {
+			setStatus, _ := fields["status"].(string)
+			return setStatus, true
+		}
+	}
+	return "", false
 }
 
 // runCustomizationRequests sends the requests of tc and reads the v3 export of

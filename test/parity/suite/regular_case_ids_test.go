@@ -58,6 +58,9 @@ var regularCaseLists = map[string]func() []regularCase{
 	"round11FailedPIPOnTheRightCases":           round11FailedPIPOnTheRightCases,
 	"round11ScopeOutsideIterateCases":           round11ScopeOutsideIterateCases,
 	"round11FilterCases":                        round11FilterCases,
+	"round12ScopeOutsideIterateControlCases":    round12ScopeOutsideIterateControlCases,
+	"round12NotApplicableFilterCases":           round12NotApplicableFilterCases,
+	"round12IterateNodeInAFilterCases":          round12IterateNodeInAFilterCases,
 }
 
 // casesSharingElementIDs are the regular cases whose one upload carries one
