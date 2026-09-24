@@ -1,0 +1,167 @@
+{
+ "about": "An entitlements read that fails, in the target of an ALLOW rule, a policy and a nested set, with every node under DENY_UNLESS_PERMIT: false means the node does not apply, true that it permits. Round 15 asked the same under a DENY rule. The test function pins the entitlements service to answer 500.",
+ "resourceTypePrefix": "PARITY_SUITE_R17_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "e17-failing-entitlements-in-an-allow-rule-target",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "subject.entitledResources.of('PARITY_R17_ENT').as('Owner') CONTAINS 'e1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e17-failing-entitlements-in-a-policy-target",
+   "about": "The rule under the policy does not permit, so true can only come from the policy target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.entitledResources.of('PARITY_R17_ENT').as('Owner') CONTAINS 'e1'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e17-failing-entitlements-in-a-set-target",
+   "about": "The rule under the set does not permit, so true can only come from the set target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject.entitledResources.of('PARITY_R17_ENT').as('Owner') CONTAINS 'e1'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "resource.a == 'zz'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e17-failing-entitlements-beside-an-allow-rule",
+   "about": "The control: a sibling ALLOW rule that permits for a-y, so a-y is true unless the failing target fails the decision.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "gated",
+         "target": "subject.entitledResources.of('PARITY_R17_ENT').as('Owner') CONTAINS 'e1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "open",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r17"
+     }
+    }
+   ]
+  }
+ ]
+}

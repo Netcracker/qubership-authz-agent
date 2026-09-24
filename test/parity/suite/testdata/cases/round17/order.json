@@ -1,0 +1,401 @@
+{
+ "about": "t16-28 of round 16 answered ALLOW on three stands and DENY on four, with no failing PIP to classify the stand by. Each case here drops one part of it. Record this file on at least five stands and report, per case, the answer on each stand. A case counts as stable only across stands on which o17-t16-28-as-it-was answered both ways; the part whose removal makes the answer stable is the part the order depends on. The reader has two scope grants, regions r1 and r2; subject.parityR17Failing answers 500 and no condition reads it, as in t16-28.",
+ "resourceTypePrefix": "PARITY_SUITE_R17_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/r17-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "failing": {
+   "name": "subject.parityR17Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-failing",
+   "requestAttributes": {
+    "case": "r17-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o17-t16-28-as-it-was",
+   "about": "t16-28 unchanged, the control.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o17-t16-28-without-the-empty-set",
+   "about": "Without the sibling set that has no rules.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o17-t16-28-inner-set-not-iterating",
+   "about": "The inner set does not iterate.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o17-t16-28-without-the-scoped-allow",
+   "about": "Without the ALLOW whose target reads the scope.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "o17-t16-28-without-the-predicate",
+   "about": "Without the ALLOW that carries the predicate.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}
