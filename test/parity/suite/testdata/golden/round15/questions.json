@@ -1,0 +1,272 @@
+{
+  "q15-a-one-element-list-body-contains": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-a-one-element-list-body-equals": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-a-one-element-list-body-is-null": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-a-text-body-contains": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-a-text-body-equals": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-a-text-body-is-null": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-an-object-body-contains": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-an-object-body-equals": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-an-object-body-is-null": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-attribute-list-on-the-right-of-contains-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-attribute-list-on-the-right-of-equals-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-attribute-list-on-the-right-of-equals-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-attribute-list-on-the-right-of-not-contains-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-attribute-list-on-the-right-of-not-equals-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-general-list-on-the-right-of-contains-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-general-list-on-the-right-of-equals-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-general-list-on-the-right-of-equals-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-general-list-on-the-right-of-not-contains-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-general-list-on-the-right-of-not-equals-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-general-list-on-the-right-of-not-equals-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-groups-of-a-nested-set-beside-a-predicate": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-groups-of-a-top-level-set-beside-a-predicate": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-header-list-on-the-right-of-contains-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-header-list-on-the-right-of-equals-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-header-list-on-the-right-of-equals-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-header-list-on-the-right-of-not-contains-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-header-list-on-the-right-of-not-equals-or": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-is-m2m-and": {
+    "check-resource-v1-outcome/regular/reader": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/service-account": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-is-m2m-or": {
+    "check-resource-v1-outcome/regular/reader": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/service-account": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-jsonpath-filter-anyof": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-filter-empty": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-filter-less-or-equal": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-filter-nin": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-filter-size": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-filter-subsetof": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-function-first": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-function-keys": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-function-last": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-function-max": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-function-min": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-nested-filter": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-jsonpath-regex-partial-match": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-match-over-a-non-string-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/boolean": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/object": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-match-over-a-wildcard-path-text": {
+    "check-resource-v1-outcome/isolated/path-text": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-match-over-the-path-text": {
+    "check-resource-v1-outcome/isolated/path-text": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-not-match-over-a-non-string-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/boolean": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/integer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/object": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-null-body-on-the-right-of-contains-any-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-null-body-on-the-right-of-not-contains-any-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-null-on-the-right-of-in-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-null-on-the-right-of-not-in-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-number-leading-zero-decimal": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-number-negative-decimal-with-a-trailing-zero": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "q15-number-negative-decimal-with-zero-fraction": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-number-negative-zero-integer": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "q15-number-zero-decimal": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-whole-resource-contains": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "q15-whole-resource-is-empty": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "q15-whole-resource-literal-less-than": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "q15-whole-resource-not-in": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

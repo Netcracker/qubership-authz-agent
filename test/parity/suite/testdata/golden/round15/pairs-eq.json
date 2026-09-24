@@ -1,0 +1,1662 @@
+{
+  "p15-eq-lit-bool-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-lit-bool-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-bool-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-lit-num-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-num-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-str-operation-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-lit-str-operation-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-lit-str-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-str-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-str-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-lit-str-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-operation-lit-bool": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-lit-num": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-pip": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-res-jsonpath": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-res-nested": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-res-path": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-resource": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-resourcetype": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-subj-id": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-subj-name": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-subj-serviceaccount": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-operation-subj-type": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-pip-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-pip-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-pip-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-res-jsonpath-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-jsonpath-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-lit-str-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-lit-str-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-res-nested-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-nested-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-res-path-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-res-path-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-resource-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resource-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-resourcetype-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-resourcetype-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-subj-id-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-id-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-subj-name-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-name-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-serviceaccount-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-eq-subj-type-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-eq-subj-type-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-lit-bool-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-bool-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-lit-num-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-num-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-operation-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-lit-str-operation-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-lit-str-pip-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-pip-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-resourcetype-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-resourcetype-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-id-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-id-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-name-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-name-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-type-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-lit-str-subj-type-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-operation-lit-bool": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-lit-num": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-lit-str-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-lit-str-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-pip": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-res-jsonpath": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-res-nested": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-res-path": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-resource": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-resourcetype": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-subj-id": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-subj-name": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-subj-serviceaccount": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-operation-subj-type": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-pip-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-pip-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-pip-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-res-jsonpath-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-jsonpath-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-res-nested-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-nested-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-path-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-res-path-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-path-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-path-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-res-path-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-resource-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resource-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-lit-str-false-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-lit-str-true-value": {
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-resourcetype-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-resourcetype-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-subj-id-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-id-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-subj-name-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-name-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-serviceaccount-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-lit-bool": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-lit-num": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-operation": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "p15-ne-subj-type-pip": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-res-jsonpath": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-res-nested": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-res-path": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-resource": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-resourcetype": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-subj-id": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-subj-name": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-subj-serviceaccount": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "p15-ne-subj-type-subj-type": {
+    "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/true-value": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

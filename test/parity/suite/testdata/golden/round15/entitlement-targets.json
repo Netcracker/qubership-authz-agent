@@ -1,0 +1,23 @@
+{
+  "q15-failing-entitlements-in-a-policy-target": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-failing-entitlements-in-a-rule-target": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-failing-entitlements-in-a-set-target": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "q15-failing-nested-decision-in-a-policy-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q15-failing-nested-decision-in-a-rule-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "q15-failing-nested-decision-in-a-set-target": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  }
+}
