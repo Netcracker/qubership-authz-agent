@@ -1,0 +1,22 @@
+{
+  "o18-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o18-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o18-empty-policy-permit-unless-deny": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o18-empty-set-target-true": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o18-empty-set-without-policies": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o18-t16-28-as-it-was": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

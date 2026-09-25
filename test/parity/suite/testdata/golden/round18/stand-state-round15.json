@@ -1,0 +1,32 @@
+{
+  "s18q-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s18q-general-list": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s18q-general-list-control": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s18q-is-m2m-and": {
+    "check-resource-v1-outcome/regular/reader": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s18q-is-m2m-and-control": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s18q-is-m2m-or": {
+    "check-resource-v1-outcome/regular/reader": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s18q-is-m2m-or-control": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
