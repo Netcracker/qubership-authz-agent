@@ -111,9 +111,9 @@ func failedPIPFilterCases() []regularCase {
 // the stand evaluates the rules of the policy, which the stand does not define,
 // so every LIST request is classed by whether pip-mock saw a call to the failed
 // PIP's route while it ran, and recorded under -when-the-pip-was-read or
-// -when-the-pip-was-skipped. A stand keeps one order across uploads, so one run
-// records one class; the other class is recorded by a stand with the other
-// order. The UPDATE requests have to reach the live PIP, except the one in
+// -when-the-pip-was-skipped. One run records one class for each request, and
+// the other class takes runs on other stands; round 20 saw the order change
+// per case, not once per stand. The UPDATE requests have to reach the live PIP, except the one in
 // failedPIPFilterLiveReadSkippable, whose answer is the same either way.
 //
 // The cases live in their own test function so that a recording run can be

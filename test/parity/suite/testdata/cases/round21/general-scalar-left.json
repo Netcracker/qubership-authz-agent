@@ -1,0 +1,844 @@
+{
+ "about": "A GENERAL PIP whose body is the number 5 or the boolean true, on the left of IN, CONTAINS, NOT CONTAINS and CONTAINS ANY. Round 20 showed such a body matching nothing on the right of ==, !=, IN, NOT IN, and on the left of NOT CONTAINS ANY; on these four left sides the goldens do not tell a false comparison from an ended rule. Each comparison stands in the OR probe of an ALLOW rule and of a DENY rule, asked with resource.a 'n' and 'y'. The right side holds the body's own text, so a body compared as text would match.",
+ "resourceTypePrefix": "PARITY_SUITE_R21G_",
+ "pins": {
+  "/api/v1/pip/r21-num": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r21-bool": {
+   "statusCode": 200,
+   "body": true
+  }
+ },
+ "pips": {
+  "num": {
+   "name": "subject.parityR21Num",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r21-num",
+   "requestAttributes": {
+    "case": "r21-num"
+   }
+  },
+  "bool": {
+   "name": "subject.parityR21Bool",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r21-bool",
+   "requestAttributes": {
+    "case": "r21-bool"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "g21-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-in-in-an-allow-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num IN '5','x' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Num IN '5','x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-in-in-a-deny-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num IN '5','x' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Num IN '5','x' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-contains-in-an-allow-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num CONTAINS '5' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Num CONTAINS '5' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-contains-in-a-deny-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num CONTAINS '5' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Num CONTAINS '5' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-not-contains-in-an-allow-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num NOT CONTAINS '5' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Num NOT CONTAINS '5' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-not-contains-in-a-deny-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num NOT CONTAINS '5' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Num NOT CONTAINS '5' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-contains-any-in-an-allow-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num CONTAINS ANY '5','x' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Num CONTAINS ANY '5','x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-num-contains-any-in-a-deny-rule",
+   "about": "The body of subject.parityR21Num is 5. The condition is `subject.parityR21Num CONTAINS ANY '5','x' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Num CONTAINS ANY '5','x' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-in-in-an-allow-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool IN 'true','x' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Bool IN 'true','x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-in-in-a-deny-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool IN 'true','x' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Bool IN 'true','x' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-contains-in-an-allow-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool CONTAINS 'true' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Bool CONTAINS 'true' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-contains-in-a-deny-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool CONTAINS 'true' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Bool CONTAINS 'true' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-not-contains-in-an-allow-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool NOT CONTAINS 'true' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Bool NOT CONTAINS 'true' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-not-contains-in-a-deny-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool NOT CONTAINS 'true' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Bool NOT CONTAINS 'true' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-contains-any-in-an-allow-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool CONTAINS ANY 'true','x' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21Bool CONTAINS ANY 'true','x' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-bool-contains-any-in-a-deny-rule",
+   "about": "The body of subject.parityR21Bool is true. The condition is `subject.parityR21Bool CONTAINS ANY 'true','x' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "num",
+    "bool"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21Bool CONTAINS ANY 'true','x' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "g21-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  }
+ ]
+}
