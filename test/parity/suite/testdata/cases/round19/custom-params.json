@@ -1,0 +1,242 @@
+{
+ "about": "The parameters of a customPredicate in check/filter, written with text around the placeholder name; the filter answer shows which name each parameter resolves to.",
+ "resourceTypePrefix": "PARITY_SUITE_R19P_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "a19-custom-param-0",
+   "about": "A customPredicate parameter written as 'subject.id'. Control: the bare name.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "subject.id"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "a19-custom-param-1",
+   "about": "A customPredicate parameter written as 'x subject.id'. A word before the name, separated by a space.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "x subject.id"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "a19-custom-param-2",
+   "about": "A customPredicate parameter written as ' subject.id'. A leading space.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": " subject.id"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "a19-custom-param-3",
+   "about": "A customPredicate parameter written as 'xsubject.id'. Text glued to the front of the name.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "xsubject.id"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "a19-custom-param-4",
+   "about": "A customPredicate parameter written as 'subject.id subject.name'. Two names: which one the parameter takes.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "subject.id subject.name"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "a19-custom-param-5",
+   "about": "A customPredicate parameter written as 'subject.name '. A trailing space.",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "subject.name "
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

@@ -225,6 +225,7 @@ missing.
 | `TestRound16CustomizationUnderIterateCases` | `TestRound10CustomizationCases` with the set iterating over one grant: whether a customization applies to the rules of an iterating set. Legacy profile only | `load-policy-sets-v1/customization-under-iterate/`, `import-customization-v1/customization-under-iterate/`, `check-resource-v1-outcome/customization-under-iterate/`, `config-policy-sets-v3/customization-under-iterate/` |
 | `TestRound17QuestionsCases`, `…EntitlementTargetCases`, `…HypothesesCases`, `…ResidualCases`, `…PipOperandsCases`, `…ValuesCases`, `…OrderCases` | The readings round 16 left open: whether a permission scope read in an `iterate` pass, a list on the right of `==`, and `operation` in a policy or set target fail the request with 400; a failing entitlements read in the target of an `ALLOW` rule, a policy, and a set; two nulls under each operator; whether a string equals a list or an object whose text it holds; PIP operands and value types no earlier case combined; and the parts of round 16's `t16-28`, whose filter answer differed between stands. `…EntitlementTargetCases` pins the entitlements service to answer 500. Record `…OrderCases` on several stands. Data, see [Cases kept as data](#cases-kept-as-data) | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
 | `TestRound18StandStateCases`, `…StandStateRound15Cases`, `…StandStateReverseCases`, `…ScopeOneGrantCases`, `…QuestionsCases`, `…ScopeOneGrantTwoValuesCases`, `…ResidualCases`, `…ValuesCases`, `…OrderCases` | Whether the 400s round 17 recorded for its residual DENY twins and the round 15 400s are rules or the state of the stand, with a control DENY rule after each suspect; what makes a permission scope read in an `iterate` pass fail with 400 under one grant; a GENERAL list in a DENY rule and GENERAL number and boolean bodies under `IS SUBSET`; which part of round 16's `t16-28` depends on the order of children; and what fuzzing still reaches. Every file with regular sets opens and closes with a control. Record `…StandState…` on fresh stands and `…OrderCases` on several. Data, see [Cases kept as data](#cases-kept-as-data) | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
+| `TestRound19QuestionsCases`, `…Reask…Cases`, `…LexerCases`, `…CustomParamsCases`, `…ContextCases`, `…ContextOneGrantCases`, `…ContextTwoGrantsCases`, `…KPathsCases`, `…StandRuleCases` | The cases whose round 15, 17, and 18 check goldens answered 400 because an earlier case dropped a PIP a loaded set still read, asked again with every name kept; where that state reaches; how the text of a condition is read (a comma inside a list element, tabs and carriage returns, `true` in another letter case, keys with punctuation); the parameters of a `customPredicate`; operand contexts and condition shapes no golden reached; and the rules round 18 left open. `…StandRuleCases` breaks the stand on purpose; record it on a stand of its own. Data, see [Cases kept as data](#cases-kept-as-data) | `load-simplified-policies-v1/isolated/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/isolated/`, `load-policy-sets-v1/regular/`, `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/` |
 | `TestInterpreterConfigExportCases` | What `GET /access/v3/config/policySets` and `GET /access/v3/config/pips`, the reads the agent loads its configuration from, carry for regular sets of every form, two simplified policies, and one PIP of each type, read with the tenant of the upload, the other tenant, no tenant, an unknown tenant, and a tenant in the query beside another in the `Tenant` header. The recorded body drops the envelope's `hash` and `lastModificationTimestamp` and keeps only the elements the case uploaded, ordered by their text. Legacy profile only; the reads that name tenant B skip without a two-tenant stand | `load-simplified-policies-v1/config-export/`, `load-policy-sets-v1/config-export/`, `config-policy-sets-v3/config-export/`, `config-pips-v3/config-export/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
@@ -255,6 +256,17 @@ condition, a target, or a resource string stands for the case's resource type, a
 same in lower case. The format is defined by `caseFile` in `suite/case_files_test.go`. `about`, on the file and on a
 case, is a note for the reader; nothing reads it.
 
+A rule's `predicates` maps each predicate field of the rule to its value: a string for `rsqlPredicate`,
+`sqlPredicate`, `mongodbPredicate`, and `predicate`, and an object with `params` and `predicate` for `customPredicate`.
+
+A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
+replaces the whole PIP declaration of the suite's domain with its own PIPs, none included, and a case with `sets`
+replaces it only when it names a PIP. The sets of the file's earlier cases stay loaded, and while one of them reads a
+GENERAL, TOKEN, or HEADER PIP that the current declaration no longer names, access-control answers every check of the
+function with 400, until a later case declares that name again. So from round 19 on, a case with `sets` that names PIPs
+also names one PIP of every name an earlier case with `sets` of the file named; `TestCaseFilesAreWellFormed` checks it,
+except in `round19/stand-rule.json`, which asks about that state.
+
 A request of a case with `sets` may set `classifyBy` to a route the file pins. Its golden is then filed under
 `<request>-when-the-pip-was-read` when pip-mock received a call on that route while the request ran, and under
 `<request>-when-the-pip-was-skipped` when it did not. Access-control evaluates the children of a node in an order that
@@ -262,11 +274,11 @@ differs between stands, and an answer that depends on whether a failing PIP was 
 stand used. A stand keeps one order, so a recording run writes one of the two names.
 
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
-file does not declare, a case id two cases share, and a `classifyBy` on a case without `sets` or on a route the file does
-not pin: run `go test -run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
+file does not declare, a case id two cases share, a `classifyBy` on a case without `sets` or on a route the file does
+not pin, and a round 19 or later file whose case with `sets` drops a PIP name: run `go test -run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
 
 A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
-generator and rerun it rather than the JSON. The round 16 files have no generator in the repository. Cases that wait between steps or change the stand in between, such as a
+generator and rerun it rather than the JSON. The round 16 and round 19 files have no generator in the repository. Cases that wait between steps or change the stand in between, such as a
 cache expiry or a customization import, stay in Go.
 
 To record goldens, run one function per fresh stand:

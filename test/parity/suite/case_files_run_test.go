@@ -83,7 +83,11 @@ func buildSet(b regularBuilder, set setSpec, rt string) map[string]any {
 	for _, p := range set.Policies {
 		rules := make([]any, 0, len(p.Rules))
 		for _, r := range p.Rules {
-			rules = append(rules, b.rule(r.Key, sub(r.Target), sub(r.Condition), r.Effect, r.Predicates))
+			rule := b.rule(r.Key, sub(r.Target), sub(r.Condition), r.Effect, nil)
+			for field, predicate := range r.Predicates {
+				rule[field] = predicate
+			}
+			rules = append(rules, rule)
 		}
 		policies = append(policies, b.policy(p.Key, sub(p.Target), p.Algorithm, rules...))
 	}

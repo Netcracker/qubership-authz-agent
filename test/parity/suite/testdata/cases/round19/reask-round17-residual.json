@@ -1,0 +1,1239 @@
+{
+ "about": "The cases of round17/residual.json whose check goldens answered 400 because an earlier case of that file dropped a PIP a loaded set still read (round 18). The same cases again, each also declaring one PIP of every name an earlier case of this file declared, so the declaration never loses a name. Controls open and close the file.",
+ "resourceTypePrefix": "PARITY_SUITE_R19X_",
+ "pins": {
+  "/api/v1/pip/r17-residual-011-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-012-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-014-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-015-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-016-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-017-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-018-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-019-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-020-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-021-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-022-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-023-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-024-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-026-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r17-residual-027-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-030-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r17-residual-031-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-034-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-035-right": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 17 case"
+   }
+  },
+  "/api/v1/pip/r17-residual-037-right": {
+   "statusCode": 200,
+   "body": true
+  }
+ },
+ "pips": {
+  "r17-residual-011-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-011-right",
+   "requestAttributes": {
+    "case": "r17-residual-011-right"
+   }
+  },
+  "r17-residual-012-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-012-right",
+   "requestAttributes": {
+    "case": "r17-residual-012-right"
+   }
+  },
+  "r17-residual-014-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-014-right",
+   "requestAttributes": {
+    "case": "r17-residual-014-right"
+   }
+  },
+  "r17-residual-015-subject-parityfzdepartment": {
+   "name": "subject.parityR17FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "r17-residual-015-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-015-right",
+   "requestAttributes": {
+    "case": "r17-residual-015-right"
+   }
+  },
+  "r17-residual-016-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-016-right",
+   "requestAttributes": {
+    "case": "r17-residual-016-right"
+   }
+  },
+  "r17-residual-017-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-017-right",
+   "requestAttributes": {
+    "case": "r17-residual-017-right"
+   }
+  },
+  "r17-residual-018-subject-parityfzdepartment": {
+   "name": "subject.parityR17FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "r17-residual-018-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-018-right",
+   "requestAttributes": {
+    "case": "r17-residual-018-right"
+   }
+  },
+  "r17-residual-019-subject-parityfzdepartment": {
+   "name": "subject.parityR17FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "r17-residual-019-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-019-right",
+   "requestAttributes": {
+    "case": "r17-residual-019-right"
+   }
+  },
+  "r17-residual-020-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-020-right",
+   "requestAttributes": {
+    "case": "r17-residual-020-right"
+   }
+  },
+  "r17-residual-021-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-021-right",
+   "requestAttributes": {
+    "case": "r17-residual-021-right"
+   }
+  },
+  "r17-residual-022-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-022-right",
+   "requestAttributes": {
+    "case": "r17-residual-022-right"
+   }
+  },
+  "r17-residual-023-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-023-right",
+   "requestAttributes": {
+    "case": "r17-residual-023-right"
+   }
+  },
+  "r17-residual-024-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-024-right",
+   "requestAttributes": {
+    "case": "r17-residual-024-right"
+   }
+  },
+  "r17-residual-026-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-026-right",
+   "requestAttributes": {
+    "case": "r17-residual-026-right"
+   }
+  },
+  "r17-residual-027-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-027-right",
+   "requestAttributes": {
+    "case": "r17-residual-027-right"
+   }
+  },
+  "r17-residual-030-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-030-right",
+   "requestAttributes": {
+    "case": "r17-residual-030-right"
+   }
+  },
+  "r17-residual-031-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-031-right",
+   "requestAttributes": {
+    "case": "r17-residual-031-right"
+   }
+  },
+  "r17-residual-034-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-034-right",
+   "requestAttributes": {
+    "case": "r17-residual-034-right"
+   }
+  },
+  "r17-residual-035-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-035-right",
+   "requestAttributes": {
+    "case": "r17-residual-035-right"
+   }
+  },
+  "r17-residual-037-subject-parityfzright": {
+   "name": "subject.parityR17FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-residual-037-right",
+   "requestAttributes": {
+    "case": "r17-residual-037-right"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "x19-round17-residual-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-016-in-a-deny-rule",
+   "pips": [
+    "r17-residual-016-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IS SUBSET subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-017-in-a-deny-rule",
+   "pips": [
+    "r17-residual-017-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": 5.5,
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-020-in-a-deny-rule",
+   "pips": [
+    "r17-residual-020-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IS NOT SUBSET subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-021-in-a-deny-rule",
+   "pips": [
+    "r17-residual-021-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x IS NOT SUBSET subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "o": {
+       "x": -5
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-022-in-a-deny-rule",
+   "pips": [
+    "r17-residual-022-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x IS NOT SUBSET subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "o": {
+       "x": 5.0
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-023-in-a-deny-rule",
+   "pips": [
+    "r17-residual-023-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "o": {
+       "x": false
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-024-in-a-deny-rule",
+   "pips": [
+    "r17-residual-024-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x IS NOT SUBSET subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "o": {
+       "x": true
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-025-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x > null OR resource.items[*].x > null",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-026-in-a-deny-rule",
+   "pips": [
+    "r17-residual-026-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x IS SUBSET subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": 6
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-027-in-a-deny-rule",
+   "pips": [
+    "r17-residual-027-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": 6
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-028-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x IN null AND resource.items[*].x IS NOT EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-029-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x >= null AND resource.items[*].x CONTAINS null",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-030-in-a-deny-rule",
+   "pips": [
+    "r17-residual-030-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": 5
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-031-in-a-deny-rule",
+   "pips": [
+    "r17-residual-031-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-032-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS null OR resource.items[*].x IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-033-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x CONTAINS ANY null OR resource.items[*].x IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-034-in-a-deny-rule",
+   "pips": [
+    "r17-residual-034-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": false
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-035-in-a-deny-rule",
+   "pips": [
+    "r17-residual-035-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": {
+         "k": "v"
+        }
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-036-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x CONTAINS ANY null AND resource.items[*].x IS NOT EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-037-in-a-deny-rule",
+   "pips": [
+    "r17-residual-037-subject-parityfzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY subject.parityR17FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [
+       {
+        "x": {
+         "k": "v"
+        }
+       }
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-038-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT IN null AND resource.items[*].x > resource.y",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "y": "v",
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-r17-residual-039-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x CONTAINS resource.y OR resource.items[0].x IS SUBSET null",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "items": [],
+      "y": "v",
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-round17-residual-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  }
+ ]
+}

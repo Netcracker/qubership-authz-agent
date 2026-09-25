@@ -81,11 +81,13 @@ type policySpec struct {
 }
 
 type ruleSpec struct {
-	Key        string            `json:"key"`
-	Target     string            `json:"target"`
-	Condition  string            `json:"condition"`
-	Effect     string            `json:"effect"`
-	Predicates map[string]string `json:"predicates"`
+	Key       string `json:"key"`
+	Target    string `json:"target"`
+	Condition string `json:"condition"`
+	Effect    string `json:"effect"`
+	// Predicates holds the rule's predicate fields by name: a string for each
+	// dialect, and an object for customPredicate.
+	Predicates map[string]any `json:"predicates"`
 }
 
 type requestSpec struct {
@@ -170,6 +172,7 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 			t.Error(err)
 			return nil
 		}
+		checkKeepsPIPNames(t, name, f)
 		for _, c := range f.Cases {
 			if other, ok := seen[c.ID]; ok {
 				t.Errorf("%s: case id %s is also used in %s", name, c.ID, other)
@@ -202,5 +205,49 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 	}
 	if len(seen) == 0 {
 		t.Fatalf("no case under %s", root)
+	}
+}
+
+// dropsPIPNamesOnPurpose lists the case files that let a case declare fewer PIP
+// names than the cases before it, because the file asks what that does.
+var dropsPIPNamesOnPurpose = map[string]bool{"round19/stand-rule.json": true}
+
+// checkKeepsPIPNames fails a file of round 19 or later in which a case with
+// sets names PIPs without naming every PIP name that an earlier case with sets
+// of the file named. A PIP upload replaces the whole declaration of the
+// suite's domain, the sets of earlier cases stay loaded, and while a loaded set
+// reads a PIP the declaration no longer names, access-control answers every
+// check with 400. Cases without sets run before any set is loaded.
+func checkKeepsPIPNames(t *testing.T, name string, f caseFile) {
+	t.Helper()
+	var round int
+	if _, err := fmt.Sscanf(name, "round%d/", &round); err != nil || round < 19 || dropsPIPNamesOnPurpose[filepath.ToSlash(name)] {
+		return
+	}
+	pipName := func(key string) string {
+		if decl, ok := f.PIPs[key].(map[string]any); ok {
+			if n, ok := decl["name"].(string); ok {
+				return n
+			}
+		}
+		return key
+	}
+	declared := map[string]bool{}
+	for _, c := range f.Cases {
+		if len(c.Sets) == 0 || len(c.PIPs) == 0 {
+			continue
+		}
+		names := map[string]bool{}
+		for _, key := range c.PIPs {
+			names[pipName(key)] = true
+		}
+		for n := range declared {
+			if !names[n] {
+				t.Errorf("%s: case %s declares its PIPs without %s, which an earlier case declared", name, c.ID, n)
+			}
+		}
+		for n := range names {
+			declared[n] = true
+		}
 	}
 }
