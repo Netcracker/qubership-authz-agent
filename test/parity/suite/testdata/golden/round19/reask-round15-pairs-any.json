@@ -1,0 +1,207 @@
+{
+  "x19-p15-contains-any-res-jsonpath-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-res-nested-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-res-path-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissions-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-ent": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-list-num": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-list-str-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-list-str-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-lit-num": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-lit-str-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-lit-str-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-res-jsonpath": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-res-nested": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-res-path": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-subj-permissions": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-subj-roles": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-permissionscope-subj-scopes": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-roles-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-contains-any-subj-scopes-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-ent-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-res-jsonpath-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-res-nested-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-res-path-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissions-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-ent": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-list-num": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-list-str-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-list-str-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-lit-num": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-lit-str-false-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-lit-str-true-value": {
+    "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-res-jsonpath": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-res-nested": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-res-path": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-subj-permissions": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-subj-roles": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-permissionscope-subj-scopes": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-roles-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-p15-not-contains-any-subj-scopes-subj-permissionscope": {
+    "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-round15-pairs-any-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "x19-round15-pairs-any-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

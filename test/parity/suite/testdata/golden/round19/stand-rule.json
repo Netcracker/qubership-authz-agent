@@ -1,0 +1,55 @@
+{
+  "s19-control-after-recovery": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-control-after-the-mapping-is-dropped": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-control-of-another-type-while-broken": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-control-while-broken": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-declares-both": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-drops-mapping": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-filter-while-broken": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-reads-a": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-reads-b-only": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s19-reads-mapping": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

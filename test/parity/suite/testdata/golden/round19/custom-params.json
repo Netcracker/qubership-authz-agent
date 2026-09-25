@@ -1,0 +1,120 @@
+{
+  "a19-custom-param-0": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "01d7860a-ea3c-3f5c-a968-ed9674714250"
+          },
+          "data": {
+            "01d7860a-ea3c-3f5c-a968-ed9674714250": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": "00000000-0000-0000-0000-000000000101"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "a19-custom-param-1": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "3932edf7-432f-beba-2072-bc7ce4eb693c"
+          },
+          "data": {
+            "3932edf7-432f-beba-2072-bc7ce4eb693c": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "a19-custom-param-2": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "a19-custom-param-4": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "b1a66fce-d2fb-388c-3b74-04b5f0dea558"
+          },
+          "data": {
+            "b1a66fce-d2fb-388c-3b74-04b5f0dea558": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": "00000000-0000-0000-0000-000000000101"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "a19-custom-param-5": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "8ac047c5-8072-0908-fbb0-7f13a0ca21a1"
+          },
+          "data": {
+            "8ac047c5-8072-0908-fbb0-7f13a0ca21a1": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": "parity-reader"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
