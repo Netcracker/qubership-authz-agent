@@ -1,0 +1,63 @@
+{
+  "c21-000563": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "c21-001291": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "c21-010223": {
+    "check-filter-v1-outcome/regular/filter-when-the-pip-was-read": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-when-the-pip-was-skipped": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "c21-018835": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "c21-021515": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "c21-028976": {
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y-when-the-pip-was-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

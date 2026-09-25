@@ -1,0 +1,17 @@
+{
+  "o21-c20-007506": {
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y-when-the-pip-was-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o21-order-one-grant-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "o21-order-one-grant-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
