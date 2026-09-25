@@ -45,19 +45,21 @@ func (s *ParitySuite) runCaseFile(name string) {
 			requests = append(requests, isolatedRequest{
 				name: r.Name, operation: r.Operation, typ: r.Type, resource: withResourceType(r.Resource, rt),
 				headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m", classifyBy: r.ClassifyBy,
+				tenantID: r.TenantID, pipCalls: r.PIPCalls,
 			})
 		}
 		if len(c.Sets) == 0 {
 			isolated = append(isolated, isolatedCase{
-				id: c.ID, resourceType: rt, operation: c.Operation,
+				id: c.ID, resourceType: rt, domain: c.Domain, operation: c.Operation, roles: c.Roles,
 				condition: resourceTypeReplacer(rt).Replace(c.Condition), pips: pips, requests: requests,
 			})
 			continue
 		}
 		b := regularBuilder{caseID: c.ID}
+		ruleIDs := regularBuilder{caseID: valueOr(c.RuleIDsOf, c.ID)}
 		sets := make([]any, 0, len(c.Sets))
 		for _, set := range c.Sets {
-			sets = append(sets, buildSet(b, set, rt))
+			sets = append(sets, buildSet(b, ruleIDs, set, rt))
 		}
 		regular = append(regular, regularCase{
 			id: c.ID, resourceType: rt, pips: pips,
@@ -76,14 +78,16 @@ func (s *ParitySuite) runCaseFile(name string) {
 }
 
 // buildSet turns set into the wire form regularBuilder writes, with the
-// resource type placeholders in every target and condition replaced.
-func buildSet(b regularBuilder, set setSpec, rt string) map[string]any {
+// resource type placeholders in every target and condition replaced. Rule ids
+// come from ruleIDs, and every other id from b.
+func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any {
 	sub := resourceTypeReplacer(rt).Replace
 	policies := make([]any, 0, len(set.Policies))
 	for _, p := range set.Policies {
 		rules := make([]any, 0, len(p.Rules))
 		for _, r := range p.Rules {
 			rule := b.rule(r.Key, sub(r.Target), sub(r.Condition), r.Effect, nil)
+			rule["ruleId"] = ruleIDs.id("rule/" + r.Key)
 			for field, predicate := range r.Predicates {
 				rule[field] = predicate
 			}
@@ -93,9 +97,12 @@ func buildSet(b regularBuilder, set setSpec, rt string) map[string]any {
 	}
 	var nested []any
 	for _, n := range set.Sets {
-		nested = append(nested, buildSet(b, n, rt))
+		nested = append(nested, buildSet(b, ruleIDs, n, rt))
 	}
 	out := b.set(set.Key, sub(set.Target), set.Algorithm, policies, nested)
+	if set.Status != "" {
+		out["status"] = set.Status
+	}
 	if set.Iterate != nil {
 		out["iterate"] = map[string]any{"foreach": set.Iterate.Foreach, "combiningAlgorithm": set.Iterate.Algorithm}
 	}

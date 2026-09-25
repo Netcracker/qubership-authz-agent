@@ -1,0 +1,383 @@
+{
+ "about": "Second goldens for rules one earlier golden pins, through fields the case format lacked before round 24: an empty tenant_id, the roles of a simplified policy, the pip-mock calls one request makes, an INACTIVE set, and a rule id another loaded set already has. Each case's about names the golden it seconds.",
+ "resourceTypePrefix": "PARITY_SUITE_R24X_",
+ "pins": {
+  "/api/v1/pip/r24-twice": {
+   "statusCode": 200,
+   "body": {
+    "value": "b"
+   }
+  }
+ },
+ "pips": {
+  "twice": {
+   "name": "subject.parityR24Twice",
+   "url": "http://pip-mock:8090/api/v1/pip/r24-twice",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "case": "r24-twice"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "s24-empty-tenant-id",
+   "about": "Seconds tenant/t5-empty-tenant-id: a request with tenant_id present and empty is decided in the default tenant. The simplified policy allows the reader unconditionally; read-in-the-stand-tenant is the control.",
+   "requests": [
+    {
+     "name": "read-with-an-empty-tenant",
+     "resource": {
+      "id": "r24"
+     },
+     "tenantId": ""
+    },
+    {
+     "name": "filter-with-an-empty-tenant",
+     "filter": true,
+     "operation": "READ",
+     "tenantId": ""
+    },
+    {
+     "name": "read-in-the-stand-tenant",
+     "resource": {
+      "id": "r24"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-role-in-mixed-case",
+   "about": "Seconds x29-policy-role-lowercase: the policy's role matches the reader's ROLE_PARITY_READER ignoring case. Here the role is Role_Parity_Reader, and the filter endpoint asks too.",
+   "roles": [
+    "Role_Parity_Reader"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "s24-no-role-beside-a-condition",
+   "about": "Seconds x31-policy-without-roles: the PAP refuses a simplified policy with an empty role list. Here the policy also has a condition. The load golden is the answer; the read runs only if the upload is accepted.",
+   "condition": "resource.a == 'y'",
+   "roles": [],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-calls-read-twice-under-and",
+   "about": "Seconds pip-call/isolated/calls-read-twice: a GENERAL PIP that one condition reads twice is called once per read. Here the reads are the two operands of AND, and the PIP answers b, so both run and the read is true.",
+   "condition": "subject.parityR24Twice != 'a' AND subject.parityR24Twice == 'b'",
+   "pips": [
+    "twice"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     },
+     "pipCalls": "/api/v1/pip/r24-twice"
+    }
+   ]
+  },
+  {
+   "id": "s24-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-calls-read-twice-in-a-rule",
+   "about": "Seconds pip-call/isolated/calls-read-twice in the condition of an ALLOW rule of a regular set: the PIP answers b, so == 'a' is false, OR reads the PIP again, and the read is true.",
+   "pips": [
+    "twice"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR24Twice == 'a' OR subject.parityR24Twice == 'b'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     },
+     "pipCalls": "/api/v1/pip/r24-twice"
+    }
+   ]
+  },
+  {
+   "id": "s24-inactive-nested-set-allows",
+   "about": "Seconds regular/inactive-set: an INACTIVE set does not apply. Here it is nested in an ACTIVE DENY_UNLESS_PERMIT set and holds the only rule that allows, so the read is false.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "inactive",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "INACTIVE"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-inactive-nested-set-denies",
+   "about": "Seconds regular/inactive-set from the other side: an ACTIVE DENY_OVERRIDES set allows, and its nested INACTIVE set denies unconditionally. The deny does not apply, so the read is true.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "inactive",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "deny",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_OVERRIDES",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "status": "INACTIVE"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-rule-id-first",
+   "about": "Loads the rule whose id s24-rule-id-repeated repeats; the read is true.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-rule-id-repeated",
+   "about": "Seconds regular/repeated-rule-id-in-two-sets/upload-2: an upload under another external id whose rule has the id of a rule already loaded, here the ALLOW rule of s24-rule-id-first, with no predicate. The load golden is the answer; the read runs only if the upload is accepted.",
+   "ruleIdsOf": "s24-rule-id-first",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -326,7 +326,7 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedRequest) (ParityEndpointID, any) {
 	s.T().Helper()
 	ctx := context.Background()
-	opts := PerCallOptions{CustomHeaders: req.headers}
+	opts := req.callOptions()
 	if req.filter {
 		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, resourceType, req.filterOperation(), s.requestTokens(req), opts)
 		s.Require().NoError(err)
@@ -337,6 +337,22 @@ func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedReques
 		s.requestTokens(req), opts)
 	s.Require().NoError(err)
 	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision}
+}
+
+// runPIPCallRequest clears the pip-mock call log, sends req against
+// resourceType, and records what the route req.pipCalls received as the
+// pip-call golden subCase beside the request's own golden. The call log is read
+// before either golden is compared, since a golden not yet recorded skips the
+// rest of the subtest.
+func (s *ParitySuite) runPIPCallRequest(subCase, resourceType string, req isolatedRequest) {
+	s.T().Helper()
+	s.Require().NoError(s.pipMock.ResetCalls(context.Background()))
+	id, outcome := s.sendRegularRequest(resourceType, req)
+	calls := s.pipCallOutcome(req.pipCalls)
+	s.Run("pip-calls", func() {
+		s.requirePendingGolden(PSUITE_PIP_CALL, subCase, calls)
+	})
+	s.requirePendingGolden(id, subCase, outcome)
 }
 
 // pipCalls counts the calls pip-mock received on route since its call log was

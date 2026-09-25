@@ -57,6 +57,18 @@ type caseSpec struct {
 	PIPs      []string      `json:"pips"`
 	Sets      []setSpec     `json:"sets"`
 	Requests  []requestSpec `json:"requests"`
+	// Roles replaces the roles of an isolated case's policy, which are
+	// ROLE_PARITY_READER when the field is absent; an empty list uploads the
+	// policy with no role.
+	Roles []string `json:"roles"`
+	// Domain names the domain an isolated case uploads its PIPs and policy
+	// into, isolatedCaseDomain when empty. The function empties every domain its
+	// cases named when it ends.
+	Domain string `json:"domain"`
+	// RuleIDsOf names an earlier case with sets in the same file. The rule ids
+	// of this case are then derived from that case's id rather than its own, so
+	// a rule whose key an earlier rule also has uploads with that rule's id.
+	RuleIDsOf string `json:"ruleIdsOf"`
 }
 
 type setSpec struct {
@@ -66,6 +78,8 @@ type setSpec struct {
 	Iterate   *iterateSpec `json:"iterate"`
 	Policies  []policySpec `json:"policies"`
 	Sets      []setSpec    `json:"sets"`
+	// Status is the set's status, ACTIVE when empty.
+	Status string `json:"status"`
 }
 
 type iterateSpec struct {
@@ -105,6 +119,13 @@ type requestSpec struct {
 	// not, so that an answer that depends on the order access-control evaluates
 	// the children of a node in is filed with that order. Regular cases only.
 	ClassifyBy string `json:"classifyBy"`
+	// TenantID replaces the stand's tenant in the tenant_id query parameter
+	// when present; an empty string sends tenant_id with an empty value.
+	TenantID *string `json:"tenantId"`
+	// PIPCalls names a pip-mock route. The call log is cleared before the
+	// request, and what the route received while the request ran is recorded
+	// as a pip-call golden under the request's own name.
+	PIPCalls string `json:"pipCalls"`
 }
 
 // readCaseFile reads testdata/cases/<name>. Numbers in a resource keep their
@@ -155,10 +176,12 @@ func withResourceType(v any, rt string) any {
 
 // TestCaseFilesAreWellFormed reads every file under testdata/cases the way
 // runCaseFile does, so that a misspelled field, a PIP a case names and its file
-// does not declare, an id two cases share, or a classifyBy on an isolated case
-// or on a route the file does not pin fails here rather than on a stand spent
-// recording it. Case ids are golden paths, so they are unique across
-// files as well as within one.
+// does not declare, an id two cases share, a classifyBy on an isolated case or
+// on a route the file does not pin, a pipCalls on a route the file does not pin
+// or beside classifyBy, roles or domain on a case with sets, or a ruleIdsOf
+// that names no earlier case with sets of the file fails here rather than on a
+// stand spent recording it. Case ids are golden paths, so they are unique
+// across files as well as within one.
 func TestCaseFilesAreWellFormed(t *testing.T) {
 	root := filepath.Join("testdata", "cases")
 	seen := map[string]string{}
@@ -173,11 +196,23 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 			return nil
 		}
 		checkKeepsPIPNames(t, name, f)
+		earlierRegular := map[string]bool{}
 		for _, c := range f.Cases {
 			if other, ok := seen[c.ID]; ok {
 				t.Errorf("%s: case id %s is also used in %s", name, c.ID, other)
 			}
 			seen[c.ID] = name
+			if len(c.Sets) > 0 {
+				if c.Roles != nil || c.Domain != "" {
+					t.Errorf("%s: case %s sets roles or domain, which only a case without sets reads", name, c.ID)
+				}
+				if c.RuleIDsOf != "" && !earlierRegular[c.RuleIDsOf] {
+					t.Errorf("%s: case %s takes its rule ids from %q, which is no earlier case with sets of the file", name, c.ID, c.RuleIDsOf)
+				}
+				earlierRegular[c.ID] = true
+			} else if c.RuleIDsOf != "" {
+				t.Errorf("%s: case %s sets ruleIdsOf, which only a case with sets reads", name, c.ID)
+			}
 			for _, key := range c.PIPs {
 				if _, ok := f.PIPs[key]; !ok {
 					t.Errorf("%s: case %s names the PIP %q, which the file does not declare", name, c.ID, key)
@@ -187,6 +222,14 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 				t.Errorf("%s: case %s sends no request", name, c.ID)
 			}
 			for _, r := range c.Requests {
+				if r.PIPCalls != "" {
+					if _, ok := f.Pins[r.PIPCalls]; !ok {
+						t.Errorf("%s: case %s request %s records the calls to %s, which the file does not pin", name, c.ID, r.Name, r.PIPCalls)
+					}
+					if r.ClassifyBy != "" {
+						t.Errorf("%s: case %s request %s sets both pipCalls and classifyBy, which each clear the call log", name, c.ID, r.Name)
+					}
+				}
 				if r.ClassifyBy == "" {
 					continue
 				}

@@ -230,6 +230,7 @@ missing.
 | `TestRound21OrderCases`, `…OrderOneGrantCases`, `…OrderTwoGrantsCases`, `…GeneralScalarLeftCases`, `…RightErrorFirstCases`, `…ContextCases`, `…ContextOneGrantCases`, `…ContextTwoGrantsCases` | The seven round 20 context cases whose answer changed between stands, each request classed by the GENERAL PIP its failing rule reads; a number or boolean GENERAL body on the left of `IN`, `CONTAINS`, `NOT CONTAINS`, and `CONTAINS ANY`, in an ALLOW rule and in a DENY rule; a failing GENERAL PIP on the right of `==` and `!=` beside each special state on the left; and the operand contexts round 20 left unreached. Record the order functions, and the two context functions with `iterate` passes, whose files class three cases, on several stands until both classes of each classed request show. Data, see [Cases kept as data](#cases-kept-as-data) | `check-resource-v1-outcome/regular/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/regular/`, `load-policy-sets-v1/regular/`, `load-simplified-policies-v1/isolated/` |
 | `TestRound22OrderLevelsCases`, `…ContextOneGrantCases` | A child that fails the decision beside a sibling that permits, as two ALLOW rules of a policy, two policies of a set, two nested sets, and two sets at the top, under `DENY_UNLESS_PERMIT` and `PERMIT_OVERRIDES`, each with a check and a filter request classed by the failing PIP; and the two operand contexts round 21 left unreached. Record `TestRound22OrderLevelsCases` on several stands; a request that shows one class on every stand is an answer too. Data, see [Cases kept as data](#cases-kept-as-data) | `check-resource-v1-outcome/regular/`, `check-filter-v1-outcome/regular/`, `load-policy-sets-v1/regular/` |
 | `TestRound23SecondCarrierConditionsCases`, `…SetsCases`, `…FilterCases`, `…PAPCases`, `…ScopeNoGrantsCases`, `…ScopeTwoGrantsCases` | The rules that exactly one earlier golden pins, asked again through another request, position, placement or set shape: comparison cells, targets that cannot be evaluated, filter grouping and `iterate` nodes, and PAP refusals. Most uploads of the PAP file are refused, and its load goldens are the answer. Data, see [Cases kept as data](#cases-kept-as-data) | `check-resource-v1-outcome/regular/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/regular/`, `load-policy-sets-v1/regular/`, `load-simplified-policies-v1/isolated/` |
+| `TestRound24SecondCarrierFormatCases`, `…SecondDomainCases` | The rules that exactly one earlier golden pins and that round 23 could not ask again for want of a field in the case format: a request with an empty `tenant_id`, a simplified policy whose role differs from the reader's in letter case or that has no role, the pip-mock calls of a request that reads one GENERAL PIP twice, an `INACTIVE` nested set, a rule id that another loaded set already has, and a GENERAL PIP name declared in two domains. `…SecondDomainCases` also uploads into `PARITY_ISOLATED_B`. Several uploads are refused, and their load goldens are the answer. Data, see [Cases kept as data](#cases-kept-as-data) | `check-resource-v1-outcome/regular/`, `check-resource-v1-outcome/isolated/`, `check-filter-v1-outcome/isolated/`, `load-policy-sets-v1/regular/`, `load-simplified-policies-v1/isolated/`, `pip-call/isolated/`, `pip-call/regular/` |
 | `TestInterpreterConfigExportCases` | What `GET /access/v3/config/policySets` and `GET /access/v3/config/pips`, the reads the agent loads its configuration from, carry for regular sets of every form, two simplified policies, and one PIP of each type, read with the tenant of the upload, the other tenant, no tenant, an unknown tenant, and a tenant in the query beside another in the `Tenant` header. The recorded body drops the envelope's `hash` and `lastModificationTimestamp` and keeps only the elements the case uploaded, ordered by their text. Legacy profile only; the reads that name tenant B skip without a two-tenant stand | `load-simplified-policies-v1/config-export/`, `load-policy-sets-v1/config-export/`, `config-policy-sets-v3/config-export/`, `config-pips-v3/config-export/` |
 
 The cases sent repeatedly (`…MissingAttributeBesideAllowingPolicy`) fail when identical requests get different
@@ -263,8 +264,19 @@ case, is a note for the reader; nothing reads it.
 A rule's `predicates` maps each predicate field of the rule to its value: a string for `rsqlPredicate`,
 `sqlPredicate`, `mongodbPredicate`, and `predicate`, and an object with `params` and `predicate` for `customPredicate`.
 
+Optional fields change one part of the upload or the request; without them a case uploads and asks as described above.
+
+| Field | On | Effect |
+| --- | --- | --- |
+| `roles` | A case without `sets` | The roles of the simplified policy instead of `ROLE_PARITY_READER`; `[]` uploads the policy with no role |
+| `domain` | A case without `sets` | The domain the case uploads its PIPs and policy into instead of `PARITY_ISOLATED`. The function empties every domain its cases named when it ends |
+| `ruleIdsOf` | A case with `sets` | The id of an earlier case with `sets` in the same file. Rule ids are derived from that case's id, so a rule whose key an earlier rule also has uploads with that rule's id; set and policy ids stay the case's own |
+| `status` | A set | The set's status instead of `ACTIVE`, such as `INACTIVE` |
+| `tenantId` | A request | The value of the `tenant_id` query parameter instead of the stand's tenant; `""` sends the parameter with an empty value |
+| `pipCalls` | A request | A route the file pins. The pip-mock call log is cleared before the request, and what the route received while the request ran is recorded under `pip-call/<kind>/<case>/<request>` beside the request's own golden |
+
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
-replaces the whole PIP declaration of the suite's domain with its own PIPs, none included, and a case with `sets`
+replaces the whole PIP declaration of its domain, the suite's unless it names another, with its own PIPs, none included, and a case with `sets`
 replaces it only when it names a PIP. The sets of the file's earlier cases stay loaded, and while one of them reads a
 GENERAL, TOKEN, or HEADER PIP that the current declaration no longer names, access-control answers every check of the
 function with 400, until a later case declares that name again. So from round 19 on, a case with `sets` that names PIPs
@@ -280,10 +292,12 @@ request, so both names of a request take runs on several stands. A filter reques
 
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
 file does not declare, a case id two cases share, a `classifyBy` on a case without `sets` or on a route the file does
-not pin, and a round 19 or later file whose case with `sets` drops a PIP name: run `go test -run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
+not pin, a `pipCalls` on a route the file does not pin or beside `classifyBy`, `roles` or `domain` on a case with `sets`,
+a `ruleIdsOf` that names no earlier case with `sets` of the file, and a round 19 or later file whose case with `sets`
+drops a PIP name: run `go test -run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
 
 A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
-generator and rerun it rather than the JSON. The round 16 to 23 files have no generator in the repository. Cases that wait between steps or change the stand in between, such as a
+generator and rerun it rather than the JSON. The round 16 to 24 files have no generator in the repository. Cases that wait between steps or change the stand in between, such as a
 cache expiry or a customization import, stay in Go.
 
 To record goldens, run one function per fresh stand:

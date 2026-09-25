@@ -52,7 +52,8 @@ type regularUpload struct {
 
 // regularBuilder builds the policy set, policy, and rule objects of one case. Every
 // id is derived from the case id and the element's path, so a rerun uploads the
-// same ids and replaces its own sets, and two cases never share an id.
+// same ids and replaces its own sets, and two cases share no id unless a case
+// file takes one case's rule ids from another with ruleIdsOf.
 type regularBuilder struct{ caseID string }
 
 func (b regularBuilder) id(path string) string {
@@ -187,7 +188,11 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 						s.requirePendingGolden(id, subCase, outcome)
 						return
 					}
-					opts := PerCallOptions{CustomHeaders: req.headers}
+					if req.pipCalls != "" {
+						s.runPIPCallRequest(subCase, tc.resourceType, req)
+						return
+					}
+					opts := req.callOptions()
 					if req.filter {
 						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, req.filterOperation(), s.requestTokens(req), opts)
 						return

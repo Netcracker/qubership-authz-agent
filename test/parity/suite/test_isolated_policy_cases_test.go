@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"slices"
 
 	"authz-agent/test/parity/suite/model"
 )
@@ -44,6 +45,9 @@ type isolatedCase struct {
 	rsql         string
 	pips         []any
 	requests     []isolatedRequest
+	// domain is the domain the case uploads into, isolatedCaseDomain when
+	// empty.
+	domain string
 }
 
 // isolatedRequest is a check/resource request, or a check/filter request when
@@ -64,6 +68,18 @@ type isolatedRequest struct {
 	// classifyBy is the pip-mock route whose call log files the golden of a
 	// regular case's request under its order class; see requestSpec.ClassifyBy.
 	classifyBy string
+	// tenantID replaces the stand's tenant in the tenant_id query parameter
+	// when non-nil; see requestSpec.TenantID.
+	tenantID *string
+	// pipCalls is the pip-mock route whose calls during the request are
+	// recorded as a pip-call golden; see requestSpec.PIPCalls.
+	pipCalls string
+}
+
+// callOptions returns the per-call options req is sent with: its headers and
+// its tenant.
+func (r isolatedRequest) callOptions() PerCallOptions {
+	return PerCallOptions{CustomHeaders: r.headers, TenantID: r.tenantID}
 }
 
 // requestTokens returns the tokens req is sent with: parity-reader's bundle, or the
@@ -272,19 +288,29 @@ func (s *ParitySuite) TestIsolatedPolicyCases() {
 	s.runIsolatedCases(cases)
 }
 
-// runIsolatedCases uploads each case alone into isolatedCaseDomain and records the
-// upload status and, when the PAP accepts the case, the status and the answer of
-// every request. The upload status is a golden of its own, so a form the PAP
-// refuses is a recorded result rather than a failed case. On the authz-agent
-// profile the upload status is not compared (authz-policy-admin accepts anything)
-// and the requests are.
+// runIsolatedCases uploads each case alone into isolatedCaseDomain, or into the
+// domain the case names, and records the upload status and, when the PAP
+// accepts the case, the status and the answer of every request. The upload
+// status is a golden of its own, so a form the PAP refuses is a recorded result
+// rather than a failed case. On the authz-agent profile the upload status is
+// not compared (authz-policy-admin accepts anything) and the requests are.
+//
+// When it ends, it empties every domain its cases uploaded into.
 func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 	reader := []string{"ROLE_PARITY_READER"}
 
 	ctx := context.Background()
+	domains := []string{isolatedCaseDomain}
+	for _, tc := range cases {
+		if tc.domain != "" && !slices.Contains(domains, tc.domain) {
+			domains = append(domains, tc.domain)
+		}
+	}
 	s.T().Cleanup(func() {
-		if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
-			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
+		for _, domain := range domains {
+			if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, domain, nil, nil); err != nil {
+				s.T().Logf("empty domain %s: %v", domain, err)
+			}
 		}
 	})
 	for _, tc := range cases {
@@ -301,13 +327,17 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			if tc.roles != nil {
 				policy["roles"] = tc.roles
 			}
+			if tc.domain != "" {
+				// a policy id another domain already holds would be refused for that id
+				policy["id"] = regularBuilder{caseID: tc.id}.id("simplified/" + tc.domain)
+			}
 			if tc.condition != "" {
 				policy["condition"] = tc.condition
 			}
 			if tc.rsql != "" {
 				policy["rsqlPredicate"] = tc.rsql
 			}
-			status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, []any{policy})
+			status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy})
 			s.Require().NoError(err)
 
 			if !isAuthzAgentProfile(s.cfg.Profile) {
@@ -322,7 +352,11 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 				s.Run(req.name, func() {
 					subCase := "isolated/" + tc.id + "/" + req.name
 					resourceType := valueOr(req.typ, tc.resourceType)
-					opts := PerCallOptions{CustomHeaders: req.headers}
+					if req.pipCalls != "" {
+						s.runPIPCallRequest(subCase, resourceType, req)
+						return
+					}
+					opts := req.callOptions()
 					if req.filter {
 						s.runPendingFilterV1OutcomeCase(subCase, resourceType, req.filterOperation(), s.requestTokens(req), opts)
 						return
