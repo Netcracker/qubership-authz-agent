@@ -1,0 +1,291 @@
+{
+ "about": "The same question for the round 15 rules: the case whose 400 opened the regular 400s of round 15's question file (a GENERAL list on the right of == in a DENY rule) and the two subject.isM2M cases that answered 400 after it, each followed by a control. If their 400 is a rule, every control is true.",
+ "resourceTypePrefix": "PARITY_SUITE_R18_",
+ "pins": {
+  "/api/v1/pip/s18q-general-list-right": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "s18q-general-list-subject-parityr18qgenerallist": {
+   "name": "subject.parityR18QGeneralList",
+   "url": "http://pip-mock:8090/api/v1/pip/s18q-general-list-right",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "s18q-general-list-right"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "s18q-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18q-general-list",
+   "pips": [
+    "s18q-general-list-subject-parityr18qgenerallist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == subject.parityR18QGeneralList",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r18",
+      "v": "v"
+     }
+    }
+   ],
+   "about": "Round 15 q15-general-list-on-the-right-of-equals-in-a-deny-rule, which answered 400."
+  },
+  {
+   "id": "s18q-general-list-control",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18q-is-m2m-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any-subject",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true",
+         "condition": "subject.isM2M OR resource.a == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "service-account",
+     "resource": {
+      "id": "r18",
+      "a": "y"
+     },
+     "subject": "m2m"
+    }
+   ],
+   "about": "Round 15 q15-is-m2m-or, which answered 400."
+  },
+  {
+   "id": "s18q-is-m2m-or-control",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18q-is-m2m-and",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any-subject",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true",
+         "condition": "subject.isM2M AND resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "service-account",
+     "resource": {
+      "id": "r18",
+      "a": "y"
+     },
+     "subject": "m2m"
+    }
+   ],
+   "about": "Round 15 q15-is-m2m-and, which answered 400."
+  },
+  {
+   "id": "s18q-is-m2m-and-control",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1164 @@
+{
+ "about": "Comparisons no golden reached after round 17, one probe per behaviour: a null element on the left of CONTAINS and CONTAINS ANY and on the right of IN beside scalars and an empty object; a GENERAL body 5 or true, and a HEADER list, on the right of IS SUBSET and IS NOT SUBSET beside the value types a probe reaches first. Each is <comparison> OR resource.a == 'y', asked with a = 'n' and a = 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R18_",
+ "pins": {
+  "/api/v1/pip/r18-k18-is-subset-002": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-subset-003": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-subset-004": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-subset-005": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-subset-006": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-subset-007": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-subset-008": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-subset-009": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-012": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-013": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-014": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-015": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-016": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-017": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-018": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-019": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-k18-is-not-subset-020": {
+   "statusCode": 200,
+   "body": true
+  }
+ },
+ "pips": {
+  "header": {
+   "name": "subject.parityR18List",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r18-list",
+   "cacheable": false
+  },
+  "general-k18-is-subset-002": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-002",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-002"
+   }
+  },
+  "general-k18-is-subset-003": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-003",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-003"
+   }
+  },
+  "general-k18-is-subset-004": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-004",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-004"
+   }
+  },
+  "general-k18-is-subset-005": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-005",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-005"
+   }
+  },
+  "general-k18-is-subset-006": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-006",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-006"
+   }
+  },
+  "general-k18-is-subset-007": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-007",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-007"
+   }
+  },
+  "general-k18-is-subset-008": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-008",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-008"
+   }
+  },
+  "general-k18-is-subset-009": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-subset-009",
+   "requestAttributes": {
+    "case": "r18-k18-is-subset-009"
+   }
+  },
+  "general-k18-is-not-subset-012": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-012",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-012"
+   }
+  },
+  "general-k18-is-not-subset-013": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-013",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-013"
+   }
+  },
+  "general-k18-is-not-subset-014": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-014",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-014"
+   }
+  },
+  "general-k18-is-not-subset-015": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-015",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-015"
+   }
+  },
+  "general-k18-is-not-subset-016": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-016",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-016"
+   }
+  },
+  "general-k18-is-not-subset-017": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-017",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-017"
+   }
+  },
+  "general-k18-is-not-subset-018": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-018",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-018"
+   }
+  },
+  "general-k18-is-not-subset-019": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-019",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-019"
+   }
+  },
+  "general-k18-is-not-subset-020": {
+   "name": "subject.parityR18General",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-k18-is-not-subset-020",
+   "requestAttributes": {
+    "case": "r18-k18-is-not-subset-020"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "v18-in-000",
+   "condition": "5 IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-in-001",
+   "condition": "'' IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-in-002",
+   "condition": "5.0 IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-003",
+   "condition": "resource.x CONTAINS 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-004",
+   "condition": "resource.x CONTAINS '' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-005",
+   "condition": "resource.x CONTAINS 5.0 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-in-006",
+   "condition": "resource.x IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": {},
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": {},
+      "y": [
+       null
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-007",
+   "condition": "resource.x CONTAINS resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": {},
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": {},
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-any-008",
+   "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": "v",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": "v",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-any-009",
+   "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-any-010",
+   "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": 5.0,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": 5.0,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18-contains-any-011",
+   "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": {},
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       null
+      ],
+      "y": {},
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-000",
+   "condition": "resource.y IS SUBSET subject.parityR18List OR resource.a == 'y'",
+   "pips": [
+    "header"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r18-list": "v,w"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r18-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-001",
+   "condition": "resource.y IS SUBSET subject.parityR18List OR resource.a == 'y'",
+   "pips": [
+    "header"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r18-list": "5,6"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r18-list": "5,6"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-002",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-002"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-003",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-003"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-004",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-004"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": 5.0,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": 5.0,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-005",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-005"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-006",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-006"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-007",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-007"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-008",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-008"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-subset-009",
+   "condition": "resource.y IS SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-subset-009"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-010",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18List OR resource.a == 'y'",
+   "pips": [
+    "header"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r18-list": "v,w"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r18-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-011",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18List OR resource.a == 'y'",
+   "pips": [
+    "header"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r18-list": "5,6"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r18-list": "5,6"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-012",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-012"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": 5.0,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": 5.0,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-013",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-013"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-014",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-014"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-015",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-015"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-016",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-016"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": "v",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-017",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-017"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-018",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-018"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": true,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-019",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-019"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k18-is-not-subset-020",
+   "condition": "resource.y IS NOT SUBSET subject.parityR18General OR resource.a == 'y'",
+   "pips": [
+    "general-k18-is-not-subset-020"
+   ],
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}
