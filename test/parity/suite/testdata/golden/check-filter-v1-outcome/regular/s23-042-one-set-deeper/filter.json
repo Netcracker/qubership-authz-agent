@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R23F_S23_042_ONE_SET_DEEPER.a.eq(\"a\", \"b\")",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"a\" }, { \"$uuid\": \"b\" } ] } }",
+    "rsqlFilterCondition": "a==\"a\", \"b\"",
+    "sqlFilterCondition": "a='a', 'b'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "93a2b91a-c011-1f5b-674e-df82845b867f"
+      },
+      "data": {
+        "93a2b91a-c011-1f5b-674e-df82845b867f": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "a",
+              "b"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
