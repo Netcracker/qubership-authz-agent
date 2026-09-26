@@ -1,0 +1,13 @@
+{
+  "s24-control-after-the-second-domain": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s24-twin-first-domain": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s24-twin-second-domain-refused": {
+    "load-simplified-policies-v1/isolated": {"status":409}
+  }
+}

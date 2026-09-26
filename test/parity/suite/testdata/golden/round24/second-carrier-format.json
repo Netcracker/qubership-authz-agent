@@ -1,0 +1,69 @@
+{
+  "s24-calls-read-twice-in-a-rule": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"r24-twice"}}
+  },
+  "s24-calls-read-twice-under-and": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read": {"calls":2,"requestAttributes":{"case":"r24-twice"}}
+  },
+  "s24-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s24-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s24-empty-tenant-id": {
+    "check-filter-v1-outcome/isolated/filter-with-an-empty-tenant": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/isolated/read-in-the-stand-tenant": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-with-an-empty-tenant": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s24-inactive-nested-set-allows": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s24-inactive-nested-set-denies": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s24-no-role-beside-a-condition": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "s24-role-in-mixed-case": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "s24-rule-id-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "s24-rule-id-repeated": {
+    "load-policy-sets-v1/regular/upload-1": {"status":500}
+  }
+}
