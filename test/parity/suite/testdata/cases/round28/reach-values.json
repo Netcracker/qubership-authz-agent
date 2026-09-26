@@ -1,0 +1,614 @@
+{
+ "about": "Values the specification reads by a default no golden checked. A number beyond the double range read as text; jsonPath functions after [*] and over values they do not take (an empty list, strings, an object, a number); an index over an object; jsonPath filters over an element without the key and over a key of another type. Each comparison is `<comparison> OR resource.a == 'y'`, asked with resource.a 'n' and 'y': true, false, or the rule ended when both answer false.",
+ "resourceTypePrefix": "PARITY_SUITE_R28V_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r28reach-num-infinity-text",
+   "about": "resource.x is the JSON number 1e400, beyond the double range. True if legacy reads it as a double, whose text is Infinity.",
+   "condition": "resource.x == 'Infinity' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "x": 1e400,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "x": 1e400,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-num-bigdecimal-text",
+   "about": "resource.x is the JSON number 1e400. True if legacy keeps it as BigDecimal, whose text is 1E+400.",
+   "condition": "resource.x == '1E+400' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "x": 1e400,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "x": 1e400,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-num-negative-infinity-text",
+   "about": "resource.x is the JSON number -1e400. True if legacy reads it as a double, -Infinity.",
+   "condition": "resource.x == '-Infinity' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "x": -1e400,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "x": -1e400,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-num-greater",
+   "about": "resource.x is the JSON number 1e400. True unless legacy refuses the request or cannot compare it.",
+   "condition": "resource.x > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "x": 1e400,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "x": 1e400,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-min-after-star",
+   "about": "resource.l is [1, 2]. True if min() after [*] takes the minimum of the selected values; the specification reads it as missing.",
+   "condition": "resource.l[*].min() == 1.0 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       1,
+       2
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       1,
+       2
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-first-after-star",
+   "about": "resource.l is [\"v\", \"w\"]. True if first() after [*] takes the first selected value.",
+   "condition": "resource.l[*].first() == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-length-after-star",
+   "about": "resource.l is [\"ab\", \"c\"]. True if length() after [*] counts the selected values.",
+   "condition": "resource.l[*].length() == 2 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "ab",
+       "c"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "ab",
+       "c"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-min-of-empty",
+   "about": "resource.l.min() over an empty list. `!=` ends the rule over a missing value and is true over null: the specification reads the function's result as missing.",
+   "condition": "resource.l.min() != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-min-of-strings",
+   "about": "resource.l.min() over a list of one string. `!=` ends the rule over a missing value and is true over null: the specification reads the function's result as missing.",
+   "condition": "resource.l.min() != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "a"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "a"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-min-of-object",
+   "about": "resource.o.min() over an object. `!=` ends the rule over a missing value and is true over null: the specification reads the function's result as missing.",
+   "condition": "resource.o.min() != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": {
+       "k": 1
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": {
+       "k": 1
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-keys-of-list",
+   "about": "resource.l.keys() over a list. `!=` ends the rule over a missing value and is true over null: the specification reads the function's result as missing.",
+   "condition": "resource.l.keys() != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "a"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "a"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-length-of-number",
+   "about": "resource.n.length() over a number. `!=` ends the rule over a missing value and is true over null: the specification reads the function's result as missing.",
+   "condition": "resource.n.length() != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "n": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "n": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-first-of-empty",
+   "about": "resource.l.first() over an empty list. `!=` ends the rule over a missing value and is true over null: the specification reads the function's result as missing.",
+   "condition": "resource.l.first() != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfn-length-of-number-is-one",
+   "about": "resource.n is the number 5. True if length() counts the digits of a number; the rule ends if a number has no length.",
+   "condition": "resource.n.length() == 1 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "n": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "n": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-index-on-object",
+   "about": "resource.o is the object {\"0\": \"v\"}. True if an index over an object reads the key of that text.",
+   "condition": "resource.o[0] == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": {
+       "0": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": {
+       "0": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-index-on-string",
+   "about": "resource.o is the string \"v\". An index over a scalar: missing (the rule ends) or null (true).",
+   "condition": "resource.o[0] != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "o": "v",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "o": "v",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfilter-missing-ne",
+   "about": "Item b has no k. True if [?(@.k != 'v')] selects an item without the key.",
+   "condition": "resource.items[?(@.k != 'v')].id CONTAINS 'b' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "v"
+       },
+       {
+        "id": "b"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfilter-number-vs-text",
+   "about": "Item a has k the string \"5\". True if the number 5 selects it.",
+   "condition": "resource.items[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "5"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "5"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfilter-text-vs-number",
+   "about": "Item a has k the number 5. True if the string '5' selects it.",
+   "condition": "resource.items[?(@.k == '5')].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfilter-bool-vs-text",
+   "about": "Item a has k the string \"true\". True if the boolean true selects it.",
+   "condition": "resource.items[?(@.k == true)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "true"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "true"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfilter-anyof-scalar",
+   "about": "Item a has k the string \"v\", not a list. True if anyof reads a scalar as a list of one.",
+   "condition": "resource.items[?(@.k anyof ['v'])].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "v"
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": "v"
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28reach-jpfilter-size-of-number",
+   "about": "Item a has k the number 5. True if size reads a number as one value.",
+   "condition": "resource.items[?(@.k size 1)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "items": [
+       {
+        "id": "a",
+        "k": 5
+       }
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

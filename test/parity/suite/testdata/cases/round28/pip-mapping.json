@@ -1,0 +1,1253 @@
+{
+ "about": "MAPPING keys over every kind of source: subject.roles, a TOKEN and a HEADER PIP with and without a value, a GENERAL PIP whose body is a list, one string, a number, null or [] or that answers 500 or 404, a FILTERED PIP, subject.permissions itself, another MAPPING PIP, a permission scope inside and outside iterate, an undeclared name, subject.id, and keys without the subject. prefix. The MAPPING PIP grants PARITY_R28_P on the key's value and PARITY_R28_Q on the reader's role, so a failed key that takes the whole attribute away shows on Q as well. The DENY rule under PERMIT_UNLESS_DENY tells a failed decision (false) from an ended rule (true).",
+ "resourceTypePrefix": "PARITY_SUITE_R28P_",
+ "pins": {
+  "/api/v1/pip/r28pip-g-ok-list": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/r28pip-g-ok-one": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r28pip-g-ok-number": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r28pip-g-null": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r28pip-g-empty": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/r28pip-g-fail500": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 28 case"
+   }
+  },
+  "/api/v1/pip/r28pip-g-fail404": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 28 case"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "parityr28f-filtered-0": {
+   "name": "subject.parityR28F.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "resourceType": "PARITY_R28_FILTERED",
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-list",
+   "requestAttributes": {
+    "case": "r28pip-filtered"
+   }
+  },
+  "parityr28g-0": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-list",
+   "requestAttributes": {
+    "case": "r28pip-g-ok-list"
+   }
+  },
+  "parityr28h-0": {
+   "name": "subject.parityR28H",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r28-h",
+   "cacheable": false
+  },
+  "parityr28t-0": {
+   "name": "subject.parityR28T",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "permissionscope-0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "permissions-parityr28m-0": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28G": {
+     "w": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28other-0": {
+   "name": "subject.permissions.parityR28Other",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_O"
+     ]
+    }
+   }
+  },
+  "parityr28g-1": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-number",
+   "requestAttributes": {
+    "case": "r28pip-g-ok-number"
+   }
+  },
+  "permissions-parityr28m-1": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28G": {
+     "5": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "parityr28g-2": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-one",
+   "requestAttributes": {
+    "case": "r28pip-g-ok-one"
+   }
+  },
+  "permissions-parityr28m-2": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28F.filtered": {
+     "w": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "parityr28t-1": {
+   "name": "subject.parityR28T",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "permissions-parityr28m-3": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28T": {
+     "finance": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28m-4": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28H": {
+     "v": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "parityr28g-3": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-fail500",
+   "requestAttributes": {
+    "case": "r28pip-g-fail500"
+   }
+  },
+  "permissions-parityr28m-5": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28G": {
+     "v": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28m-6": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.permissions": {
+     "PARITY_R28_O": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28m-7": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.id": {
+     "00000000-0000-0000-0000-000000000101": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "parityr28g-4": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-null",
+   "requestAttributes": {
+    "case": "r28pip-g-null"
+   }
+  },
+  "parityr28g-5": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-empty",
+   "requestAttributes": {
+    "case": "r28pip-g-empty"
+   }
+  },
+  "permissions-parityr28m-8": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.permissionScope.region": {
+     "v": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28m-9": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28Nope": {
+     "v": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28m-10": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28m-11": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.parityR28H": {
+     "w": [
+      "PARITY_R28_P"
+     ]
+    },
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "parityr28g-6": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-fail404",
+   "requestAttributes": {
+    "case": "r28pip-g-fail404"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r28pip-mapping-token-absent-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28T' granting PARITY_R28_P on 'finance'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28t-1",
+    "permissions-parityr28m-3"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-header-absent-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28H' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28h-0",
+    "permissions-parityr28m-4"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-fail500-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28g-3",
+    "permissions-parityr28m-5"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-header-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28H' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r28-h": "v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r28-h": "v"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28h-0",
+    "permissions-parityr28m-4"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-id-p-simplified-reader",
+   "about": "MAPPING key 'subject.id' granting PARITY_R28_P on '00000000-0000-0000-0000-000000000101'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "permissions-parityr28m-7"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-ok-one-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28g-2",
+    "permissions-parityr28m-5"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-null-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28g-4",
+    "permissions-parityr28m-5"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-empty-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28g-5",
+    "permissions-parityr28m-5"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-scope-p-simplified-reader",
+   "about": "MAPPING key 'subject.permissionScope.region' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "permissions-parityr28m-8"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-undeclared-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28Nope' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "permissions-parityr28m-9"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-non-subject-p-simplified-reader",
+   "about": "MAPPING key 'roles' granting PARITY_R28_P on 'ROLE_PARITY_READER'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "permissions-parityr28m-10"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-header-list-p-simplified-reader",
+   "about": "MAPPING key 'subject.parityR28H' granting PARITY_R28_P on 'w'; subject.roles grants PARITY_R28_Q; the use: simplified",
+   "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r28-h": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r28-h": "v,w"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28h-0",
+    "permissions-parityr28m-11"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-ok-list-p-rule-target-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'w'; subject.roles grants PARITY_R28_Q; the use: rule_target",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-0",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-0",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-ok-number-p-deny-rule-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on '5'; subject.roles grants PARITY_R28_Q; the use: deny_rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-1",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-1",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-filtered-p-rule-target-reader",
+   "about": "MAPPING key 'subject.parityR28F.filtered' granting PARITY_R28_P on 'w'; subject.roles grants PARITY_R28_Q; the use: rule_target",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-2",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-2",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-self-p-rule-condition-reader",
+   "about": "MAPPING key 'subject.permissions' granting PARITY_R28_P on 'PARITY_R28_O'; subject.roles grants PARITY_R28_Q; the use: rule_condition",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-2",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-6",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-self-p-deny-rule-reader",
+   "about": "MAPPING key 'subject.permissions' granting PARITY_R28_P on 'PARITY_R28_O'; subject.roles grants PARITY_R28_Q; the use: deny_rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-2",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-6",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-scope-p-iterate-reader",
+   "about": "MAPPING key 'subject.permissionScope.region' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: iterate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     },
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-2",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-8",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-fail500-q-rule-condition-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: rule_condition",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_Q' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-3",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-5",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-fail500-p-deny-rule-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: deny_rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-3",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-5",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-fail404-p-deny-rule-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: deny_rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-6",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-5",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-fail500-p-filter-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: filter",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "v=in=(${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-3",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-5",
+    "permissions-parityr28other-0"
+   ]
+  },
+  {
+   "id": "r28pip-mapping-general-fail500-p-rule-target-reader",
+   "about": "MAPPING key 'subject.parityR28G' granting PARITY_R28_P on 'v'; subject.roles grants PARITY_R28_Q; the use: rule_target",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissions CONTAINS 'PARITY_R28_P' OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-3",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-5",
+    "permissions-parityr28other-0"
+   ]
+  }
+ ]
+}

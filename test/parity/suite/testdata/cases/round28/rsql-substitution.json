@@ -1,0 +1,1306 @@
+{
+ "about": "How check/filter negates a DENY predicate whose placeholder brings a value with a metacharacter: a GENERAL body of one element holding ==, a comma, a semicolon, a quote, a parenthesis, a space, a backslash, a non-ASCII letter or an asterisk; an empty GENERAL list; a HEADER value; a MAPPING permission; subject.roles; resourceType. Each placeholder bare and in a list, under DENY_OVERRIDES and PERMIT_UNLESS_DENY. Controls: blocked==1, whose negation the goldens show as blocked!=1.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "pins": {
+  "/api/v1/pip/r28-rsql-list": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-empty": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/r28-rsql-comma": {
+   "statusCode": 200,
+   "body": [
+    "x,y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-semi": {
+   "statusCode": 200,
+   "body": [
+    "x;y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-dq": {
+   "statusCode": 200,
+   "body": [
+    "x\"y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-sq": {
+   "statusCode": 200,
+   "body": [
+    "x'y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-paren": {
+   "statusCode": 200,
+   "body": [
+    "(x)"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-eqeq": {
+   "statusCode": 200,
+   "body": [
+    "x==y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-ne": {
+   "statusCode": 200,
+   "body": [
+    "x!=y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-space": {
+   "statusCode": 200,
+   "body": [
+    "x y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-bs": {
+   "statusCode": 200,
+   "body": [
+    "x\\y"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-unicode": {
+   "statusCode": 200,
+   "body": [
+    "é日本"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-star": {
+   "statusCode": 200,
+   "body": [
+    "x*"
+   ]
+  },
+  "/api/v1/pip/r28-rsql-mixed": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y==z,w"
+   ]
+  }
+ },
+ "pips": {
+  "gList": {
+   "name": "subject.parityR28List",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-list",
+   "requestAttributes": {
+    "case": "r28-rsql-list"
+   }
+  },
+  "gEmpty": {
+   "name": "subject.parityR28Empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-empty",
+   "requestAttributes": {
+    "case": "r28-rsql-empty"
+   }
+  },
+  "gComma": {
+   "name": "subject.parityR28Comma",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-comma",
+   "requestAttributes": {
+    "case": "r28-rsql-comma"
+   }
+  },
+  "gSemi": {
+   "name": "subject.parityR28Semi",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-semi",
+   "requestAttributes": {
+    "case": "r28-rsql-semi"
+   }
+  },
+  "gDq": {
+   "name": "subject.parityR28Dq",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-dq",
+   "requestAttributes": {
+    "case": "r28-rsql-dq"
+   }
+  },
+  "gSq": {
+   "name": "subject.parityR28Sq",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-sq",
+   "requestAttributes": {
+    "case": "r28-rsql-sq"
+   }
+  },
+  "gParen": {
+   "name": "subject.parityR28Paren",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-paren",
+   "requestAttributes": {
+    "case": "r28-rsql-paren"
+   }
+  },
+  "gEqEq": {
+   "name": "subject.parityR28EqEq",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-eqeq",
+   "requestAttributes": {
+    "case": "r28-rsql-eqeq"
+   }
+  },
+  "gNe": {
+   "name": "subject.parityR28Ne",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-ne",
+   "requestAttributes": {
+    "case": "r28-rsql-ne"
+   }
+  },
+  "gSpace": {
+   "name": "subject.parityR28Space",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-space",
+   "requestAttributes": {
+    "case": "r28-rsql-space"
+   }
+  },
+  "gBs": {
+   "name": "subject.parityR28Bs",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-bs",
+   "requestAttributes": {
+    "case": "r28-rsql-bs"
+   }
+  },
+  "gUnicode": {
+   "name": "subject.parityR28Unicode",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-unicode",
+   "requestAttributes": {
+    "case": "r28-rsql-unicode"
+   }
+  },
+  "gStar": {
+   "name": "subject.parityR28Star",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-star",
+   "requestAttributes": {
+    "case": "r28-rsql-star"
+   }
+  },
+  "gMixed": {
+   "name": "subject.parityR28Mixed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28-rsql-mixed",
+   "requestAttributes": {
+    "case": "r28-rsql-mixed"
+   }
+  },
+  "header": {
+   "name": "subject.parityR28Header",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r28-header",
+   "cacheable": false
+  },
+  "token": {
+   "name": "subject.parityR28Token",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "mapping-meta": {
+   "name": "subject.permissions.PARITY_R28_META",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p,q",
+      "p\"q",
+      "p==q"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r28rsql-substitution-control-first",
+   "about": "Control: a DENY rule blocked==1 under PERMIT_UNLESS_DENY; the goldens show blocked!=1.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1",
+          "sqlPredicate": "blocked=1",
+          "predicate": "${resourceType}.blocked.eq(1)",
+          "mongodbPredicate": "{ \"blocked\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-comma-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Comma}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution, rsql negation tree.",
+   "pips": [
+    "gComma"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Comma}",
+          "sqlPredicate": "a=${subject.parityR28Comma}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Comma})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Comma} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-dq-out",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a=out=(${subject.parityR28Dq}). The filter shows how each dialect negates it.",
+   "pips": [
+    "gDq",
+    "gComma"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=out=(${subject.parityR28Dq})",
+          "sqlPredicate": "a NOT IN (${subject.parityR28Dq})",
+          "predicate": "${resourceType}.a.notIn(${subject.parityR28Dq})",
+          "mongodbPredicate": "{ \"a\": { \"$nin\": ${subject.parityR28Dq} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-empty-in",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a=in=(${subject.parityR28Empty}). The filter shows how each dialect negates it; tells apart: rsql negation empty in.",
+   "pips": [
+    "gEmpty",
+    "gComma",
+    "gDq"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.parityR28Empty})",
+          "sqlPredicate": "a IN (${subject.parityR28Empty})",
+          "predicate": "${resourceType}.a.in(${subject.parityR28Empty})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.parityR28Empty} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-eqeq-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28EqEq}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution, rsql negation tree.",
+   "pips": [
+    "gEqEq",
+    "gComma",
+    "gDq",
+    "gEmpty"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28EqEq}",
+          "sqlPredicate": "a=${subject.parityR28EqEq}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28EqEq})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28EqEq} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-list-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28List}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution.",
+   "pips": [
+    "gList",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28List}",
+          "sqlPredicate": "a=${subject.parityR28List}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28List})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28List} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-mixed-lt",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a=lt=${subject.parityR28Mixed}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution, rsql negation eq only.",
+   "pips": [
+    "gMixed",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=lt=${subject.parityR28Mixed}",
+          "sqlPredicate": "a<${subject.parityR28Mixed}",
+          "predicate": "${resourceType}.a.lt(${subject.parityR28Mixed})",
+          "mongodbPredicate": "{ \"a\": { \"$lt\": ${subject.parityR28Mixed} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-paren-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Paren}. The filter shows how each dialect negates it.",
+   "pips": [
+    "gParen",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Paren}",
+          "sqlPredicate": "a=${subject.parityR28Paren}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Paren})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Paren} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-semi-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Semi}. The filter shows how each dialect negates it; tells apart: rsql negation both joins.",
+   "pips": [
+    "gSemi",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Semi}",
+          "sqlPredicate": "a=${subject.parityR28Semi}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Semi})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Semi} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-space-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Space}. The filter shows how each dialect negates it.",
+   "pips": [
+    "gSpace",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Space}",
+          "sqlPredicate": "a=${subject.parityR28Space}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Space})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Space} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-sq-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Sq}. The filter shows how each dialect negates it.",
+   "pips": [
+    "gSq",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Sq}",
+          "sqlPredicate": "a=${subject.parityR28Sq}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Sq})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Sq} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-star-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Star}. The filter shows how each dialect negates it.",
+   "pips": [
+    "gStar",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Star}",
+          "sqlPredicate": "a=${subject.parityR28Star}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Star})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Star} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-general-unicode-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Unicode}. The filter shows how each dialect negates it.",
+   "pips": [
+    "gUnicode",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Unicode}",
+          "sqlPredicate": "a=${subject.parityR28Unicode}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Unicode})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Unicode} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-mapping-eq",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.permissions}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution.",
+   "pips": [
+    "mapping-meta",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.permissions}",
+          "sqlPredicate": "a=${subject.permissions}",
+          "predicate": "${resourceType}.a.eq(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": ${subject.permissions} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-rtype",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate t==${resourceType}. The filter shows how each dialect negates it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "predicate": "${resourceType}.t.eq(${resourceType})",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-do-token",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==${subject.parityR28Token}. The filter shows how each dialect negates it.",
+   "pips": [
+    "token",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode",
+    "mapping-meta"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Token}",
+          "sqlPredicate": "a=${subject.parityR28Token}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Token})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Token} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-pud-general-bs-lt",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a=lt=${subject.parityR28Bs}. The filter shows how each dialect negates it; tells apart: rsql negation tree.",
+   "pips": [
+    "gBs",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode",
+    "mapping-meta",
+    "token"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=lt=${subject.parityR28Bs}",
+          "sqlPredicate": "a<${subject.parityR28Bs}",
+          "predicate": "${resourceType}.a.lt(${subject.parityR28Bs})",
+          "mongodbPredicate": "{ \"a\": { \"$lt\": ${subject.parityR28Bs} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-pud-general-empty-in",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a=in=(${subject.parityR28Empty}). The filter shows how each dialect negates it; tells apart: rsql negation empty in.",
+   "pips": [
+    "gEmpty",
+    "gComma",
+    "gDq",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode",
+    "mapping-meta",
+    "token",
+    "gBs"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.parityR28Empty})",
+          "sqlPredicate": "a IN (${subject.parityR28Empty})",
+          "predicate": "${resourceType}.a.in(${subject.parityR28Empty})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.parityR28Empty} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-pud-general-ne-eq",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a==${subject.parityR28Ne}. The filter shows how each dialect negates it; tells apart: rsql negation before substitution, rsql negation tree.",
+   "pips": [
+    "gNe",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode",
+    "mapping-meta",
+    "token",
+    "gBs"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Ne}",
+          "sqlPredicate": "a=${subject.parityR28Ne}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Ne})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Ne} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-pud-header-x-eq-y",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a==${subject.parityR28Header}, header x-parity-r28-header: x==y. The filter shows how each dialect negates it; tells apart: rsql negation before substitution, rsql negation tree.",
+   "pips": [
+    "header",
+    "gComma",
+    "gDq",
+    "gEmpty",
+    "gEqEq",
+    "gList",
+    "gMixed",
+    "gParen",
+    "gSemi",
+    "gSpace",
+    "gSq",
+    "gStar",
+    "gUnicode",
+    "mapping-meta",
+    "token",
+    "gBs",
+    "gNe"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR28Header}",
+          "sqlPredicate": "a=${subject.parityR28Header}",
+          "predicate": "${resourceType}.a.eq(${subject.parityR28Header})",
+          "mongodbPredicate": "{ \"a\": ${subject.parityR28Header} }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "headers": {
+      "x-parity-r28-header": "x==y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-pud-roles-out",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a=out=(${subject.roles}). The filter shows how each dialect negates it; tells apart: rsql negation tree.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=out=(${subject.roles})",
+          "sqlPredicate": "a NOT IN (${subject.roles})",
+          "predicate": "${resourceType}.a.notIn(${subject.roles})",
+          "mongodbPredicate": "{ \"a\": { \"$nin\": ${subject.roles} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28rsql-substitution-control-last",
+   "about": "Control: a DENY rule blocked==1 under PERMIT_UNLESS_DENY; the goldens show blocked!=1.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1",
+          "sqlPredicate": "blocked=1",
+          "predicate": "${resourceType}.blocked.eq(1)",
+          "mongodbPredicate": "{ \"blocked\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}
