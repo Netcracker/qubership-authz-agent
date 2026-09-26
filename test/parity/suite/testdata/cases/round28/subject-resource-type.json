@@ -1,0 +1,290 @@
+{
+ "about": "How a scalar placeholder enters a filter predicate when its value holds characters the filter dialects reserve. ${resourceType} is the scalar a case can fill with any text: each case loads a set whose target is resourceType == '<type>' for a type that holds such characters, and one ALLOW rule on LIST whose rsql, sql, mongodb and querydsl predicates each read ${resourceType} unquoted. The filter request asks for that type; the check beside it, on LIST, says whether the set applies to the type at all. The goldens so far put only letters, digits and _ into a scalar placeholder, and show it unquoted.",
+ "resourceTypePrefix": "PARITY_SUITE_R28T_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r28subj-rt-01",
+   "about": "The resource type is \"PARITY_SUITE_R28T_01_x\\\"}, {\\\"b\\\": 1\".",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R28T_01_x\"}, {\"b\": 1'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }",
+          "predicate": "x.t.eq(${resourceType})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_01_x\"}, {\"b\": 1"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_01_x\"}, {\"b\": 1",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-rt-02",
+   "about": "The resource type is \"PARITY_SUITE_R28T_02_x=in=(a,b)\".",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R28T_02_x=in=(a,b)'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }",
+          "predicate": "x.t.eq(${resourceType})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_02_x=in=(a,b)"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_02_x=in=(a,b)",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-rt-03",
+   "about": "The resource type is \"PARITY_SUITE_R28T_03_r28!~<>x\".",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R28T_03_r28!~<>x'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }",
+          "predicate": "x.t.eq(${resourceType})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_03_r28!~<>x"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_03_r28!~<>x",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-rt-04",
+   "about": "The resource type is \"PARITY_SUITE_R28T_04_r28[$].x\".",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R28T_04_r28[$].x'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }",
+          "predicate": "x.t.eq(${resourceType})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_04_r28[$].x"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_04_r28[$].x",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-rt-05",
+   "about": "The resource type is \"PARITY_SUITE_R28T_05_r28;x\".",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R28T_05_r28;x'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }",
+          "predicate": "x.t.eq(${resourceType})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_05_r28;x"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_05_r28;x",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-rt-06",
+   "about": "The resource type is \"PARITY_SUITE_R28T_06_x\\\\y\".",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == 'PARITY_SUITE_R28T_06_x\\y'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": ${resourceType} }",
+          "predicate": "x.t.eq(${resourceType})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "type": "PARITY_SUITE_R28T_06_x\\y"
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "type": "PARITY_SUITE_R28T_06_x\\y",
+     "resource": {
+      "id": "r28"
+     }
+    }
+   ]
+  }
+ ]
+}

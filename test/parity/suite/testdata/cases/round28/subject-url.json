@@ -1,0 +1,291 @@
+{
+ "about": "How a placeholder value enters the url of a GENERAL PIP when it holds characters a URL reserves. The PIP's url ends with ${resource.u}. pip-mock has a route for each path that a plausible reading of the url gives (the value as it is, cut at ?; cut at # as well; encoded as a path segment; encoded as a form value), and each route answers its own marker. The condition is subject.parityR28Url == resource.want OR resource.a == 'y': the request whose want is the marker that came back is true, and when no route answers the PIP fails, and a-y is false as well.",
+ "resourceTypePrefix": "PARITY_SUITE_R28U_",
+ "pins": {
+  "/api/v1/pip/r28u/x y": {
+   "statusCode": 200,
+   "body": [
+    "u-m1"
+   ]
+  },
+  "/api/v1/pip/r28u/x+y": {
+   "statusCode": 200,
+   "body": [
+    "u-m2"
+   ]
+  },
+  "/api/v1/pip/r28u/r28#x": {
+   "statusCode": 200,
+   "body": [
+    "u-m3"
+   ]
+  },
+  "/api/v1/pip/r28u/r28": {
+   "statusCode": 200,
+   "body": [
+    "u-m4"
+   ]
+  },
+  "/api/v1/pip/r28u/r28?x": {
+   "statusCode": 200,
+   "body": [
+    "u-m5"
+   ]
+  },
+  "/api/v1/pip/r28u/x/y": {
+   "statusCode": 200,
+   "body": [
+    "u-m6"
+   ]
+  },
+  "/api/v1/pip/r28u/r28%x": {
+   "statusCode": 200,
+   "body": [
+    "u-m7"
+   ]
+  },
+  "/api/v1/pip/r28u/r28&x": {
+   "statusCode": 200,
+   "body": [
+    "u-m8"
+   ]
+  }
+ },
+ "pips": {
+  "url": {
+   "name": "subject.parityR28Url",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28u/${resource.u}",
+   "requestAttributes": {
+    "case": "r28u"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r28subj-url-01",
+   "about": "resource.u is \"x y\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m1",
+     "resource": {
+      "want": "u-m1",
+      "a": "n",
+      "u": "x y",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "want-u-m2",
+     "resource": {
+      "want": "u-m2",
+      "a": "n",
+      "u": "x y",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "x y",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-url-02",
+   "about": "resource.u is \"r28#x\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m3",
+     "resource": {
+      "want": "u-m3",
+      "a": "n",
+      "u": "r28#x",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "want-u-m4",
+     "resource": {
+      "want": "u-m4",
+      "a": "n",
+      "u": "r28#x",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "r28#x",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-url-03",
+   "about": "resource.u is \"r28?x\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m4",
+     "resource": {
+      "want": "u-m4",
+      "a": "n",
+      "u": "r28?x",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "want-u-m5",
+     "resource": {
+      "want": "u-m5",
+      "a": "n",
+      "u": "r28?x",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "r28?x",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-url-04",
+   "about": "resource.u is \"x+y\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m2",
+     "resource": {
+      "want": "u-m2",
+      "a": "n",
+      "u": "x+y",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "x+y",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-url-05",
+   "about": "resource.u is \"x/y\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m6",
+     "resource": {
+      "want": "u-m6",
+      "a": "n",
+      "u": "x/y",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "x/y",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-url-06",
+   "about": "resource.u is \"r28%x\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m7",
+     "resource": {
+      "want": "u-m7",
+      "a": "n",
+      "u": "r28%x",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "r28%x",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-url-07",
+   "about": "resource.u is \"r28&x\".",
+   "condition": "subject.parityR28Url == resource.want OR resource.a == 'y'",
+   "pips": [
+    "url"
+   ],
+   "requests": [
+    {
+     "name": "want-u-m8",
+     "resource": {
+      "want": "u-m8",
+      "a": "n",
+      "u": "r28&x",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "r28&x",
+      "id": "r28"
+     }
+    }
+   ]
+  }
+ ]
+}
