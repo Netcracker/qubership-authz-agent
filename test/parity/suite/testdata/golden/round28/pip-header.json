@@ -1,0 +1,64 @@
+{
+  "r28pip-header-authorization-canonical-no-default-simplified-none": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-header-authorization-no-default-simplified-none": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-header-content-type-no-default-simplified-none": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-cookie-no-default-simplified-v": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-empty-no-default-simplified-none": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-header-host-no-default-rule-condition-none": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28pip-header-host-no-default-simplified-none": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-incoming-token-no-default-rule-condition-none": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28pip-header-lower-default-eq-default-simplified-empty": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-mixed-default-eq-default-simplified-empty": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-mixed-no-default-simplified-absent": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-padded-no-default-rule-condition-v": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28pip-header-padded-no-default-simplified-v": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28pip-header-tenant-no-default-simplified-none": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  }
+}

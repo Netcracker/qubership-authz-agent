@@ -1,0 +1,191 @@
+{
+  "r28subj-user-01-filter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(x' OR '1'='1).and(x.n.eq(parity-r28-u1))",
+        "mongodbFilterCondition": "{ { \"t\": x' OR '1'='1, \"n\": parity-r28-u1 } }",
+        "rsqlFilterCondition": "t==x' OR '1'='1;n==parity-r28-u1",
+        "sqlFilterCondition": "t=x' OR '1'='1 AND n=parity-r28-u1",
+        "customFilterCondition": {
+          "logic": {
+            "path": "74ac1278-cfe1-ee65-27b9-4c9d645a0cf9"
+          },
+          "data": {
+            "74ac1278-cfe1-ee65-27b9-4c9d645a0cf9": {
+              "predicate": "t:${i};n:${n}",
+              "params": {
+                "i": "x' OR '1'='1",
+                "n": "parity-r28-u1"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28subj-user-01-identity": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-01-url": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-s-m1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-s-m2": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-02-filter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(x\\y).and(x.n.eq(parity-r28-u2))",
+        "mongodbFilterCondition": "{ { \"t\": x\\y, \"n\": parity-r28-u2 } }",
+        "rsqlFilterCondition": "t==x\\y;n==parity-r28-u2",
+        "sqlFilterCondition": "t=x\\y AND n=parity-r28-u2",
+        "customFilterCondition": {
+          "logic": {
+            "path": "d1f90536-82ed-bbd4-6ed1-f73172e78c31"
+          },
+          "data": {
+            "d1f90536-82ed-bbd4-6ed1-f73172e78c31": {
+              "predicate": "t:${i};n:${n}",
+              "params": {
+                "i": "x\\y",
+                "n": "parity-r28-u2"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28subj-user-02-identity": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-02-url": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-s-m3": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-03-filter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(x y).and(x.n.eq(parity-r28-u3))",
+        "mongodbFilterCondition": "{ { \"t\": x y, \"n\": parity-r28-u3 } }",
+        "rsqlFilterCondition": "t==x y;n==parity-r28-u3",
+        "sqlFilterCondition": "t=x y AND n=parity-r28-u3",
+        "customFilterCondition": {
+          "logic": {
+            "path": "f2013d76-b790-ad9b-a0fa-e946e5ae3b12"
+          },
+          "data": {
+            "f2013d76-b790-ad9b-a0fa-e946e5ae3b12": {
+              "predicate": "t:${i};n:${n}",
+              "params": {
+                "i": "x y",
+                "n": "parity-r28-u3"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28subj-user-03-identity": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-03-url": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-s-m4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-s-m5": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-04-filter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(r28#x).and(x.n.eq(parity-r28-u4))",
+        "mongodbFilterCondition": "{ { \"t\": r28#x, \"n\": parity-r28-u4 } }",
+        "rsqlFilterCondition": "t==r28#x;n==parity-r28-u4",
+        "sqlFilterCondition": "t=r28#x AND n=parity-r28-u4",
+        "customFilterCondition": {
+          "logic": {
+            "path": "f746c5cc-3700-ca1a-17e4-3504b0673982"
+          },
+          "data": {
+            "f746c5cc-3700-ca1a-17e4-3504b0673982": {
+              "predicate": "t:${i};n:${n}",
+              "params": {
+                "i": "r28#x",
+                "n": "parity-r28-u4"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28subj-user-04-identity": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-04-url": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/want-s-m6": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/want-s-m7": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-05-filter": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "x.t.eq(r28?x).and(x.n.eq(parity-r28-u5))",
+        "mongodbFilterCondition": "{ { \"t\": r28?x, \"n\": parity-r28-u5 } }",
+        "rsqlFilterCondition": "t==r28?x;n==parity-r28-u5",
+        "sqlFilterCondition": "t=r28?x AND n=parity-r28-u5",
+        "customFilterCondition": {
+          "logic": {
+            "path": "6c05292f-07e3-d86b-fe94-a2d1573caf5f"
+          },
+          "data": {
+            "6c05292f-07e3-d86b-fe94-a2d1573caf5f": {
+              "predicate": "t:${i};n:${n}",
+              "params": {
+                "i": "r28?x",
+                "n": "parity-r28-u5"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r28subj-user-05-identity": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r28subj-user-05-url": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/want-s-m7": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/want-s-m8": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}
