@@ -1,5 +1,5 @@
 {
- "about": "How the subject's id and name enter a filter predicate and a GENERAL PIP's url when they hold characters the filter dialects or a URL reserve. The requests name users the parity realm has only after subject-realm-users.json is added to it; each request states the sub and preferred_username claims its token must carry, and the suite fails before sending it when the token carries others. For each user: a control that subject.id and subject.name are those values; a filter whose predicates read ${subject.id} and ${subject.name} in all four dialects and in a customPredicate; and a GENERAL PIP whose url ends with ${subject.id}, routed as in subject-url.json.",
+ "about": "How the subject's id enters a filter predicate and a GENERAL PIP's url when it holds characters the filter dialects or a URL reserve. The usernames are plain: Keycloak refuses such characters in a username. The requests name users the parity realm has only after the users of testdata/realm/round28-subject-users.json are added to it; each request states the sub and preferred_username claims its token must carry, and the suite fails before sending it when the token carries others. For each user: a control that subject.id and subject.name are those values; a filter whose predicates read ${subject.id} and ${subject.name} in all four dialects and in a customPredicate; and a GENERAL PIP whose url ends with ${subject.id}, routed as in subject-url.json.",
  "resourceTypePrefix": "PARITY_SUITE_R28S_",
  "pins": {
   "/api/v1/pip/r28s/x' OR '1'='1": {
@@ -66,7 +66,7 @@
  "cases": [
   {
    "id": "r28subj-user-01-identity",
-   "about": "The subject is \"parity-r28-x' or '1'='1\" with id \"x' OR '1'='1\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
+   "about": "The subject is \"parity-r28-u1\" with id \"x' OR '1'='1\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
    "condition": "subject.id == resource.i AND subject.name == resource.n OR resource.a == 'y'",
    "requests": [
     {
@@ -74,13 +74,13 @@
      "resource": {
       "a": "n",
       "i": "x' OR '1'='1",
-      "n": "parity-r28-x' or '1'='1",
+      "n": "parity-r28-u1",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x' or '1'='1",
+     "subject": "user:parity-r28-u1",
      "subjectClaims": {
       "sub": "x' OR '1'='1",
-      "preferred_username": "parity-r28-x' or '1'='1"
+      "preferred_username": "parity-r28-u1"
      }
     },
     {
@@ -88,20 +88,20 @@
      "resource": {
       "a": "y",
       "i": "x' OR '1'='1",
-      "n": "parity-r28-x' or '1'='1",
+      "n": "parity-r28-u1",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x' or '1'='1",
+     "subject": "user:parity-r28-u1",
      "subjectClaims": {
       "sub": "x' OR '1'='1",
-      "preferred_username": "parity-r28-x' or '1'='1"
+      "preferred_username": "parity-r28-u1"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-01-url",
-   "about": "The subject is \"parity-r28-x' or '1'='1\" with id \"x' OR '1'='1\". The url ends with ${subject.id}.",
+   "about": "The subject is \"parity-r28-u1\" with id \"x' OR '1'='1\". The url ends with ${subject.id}.",
    "condition": "subject.parityR28SubjectUrl == resource.want OR resource.a == 'y'",
    "pips": [
     "url"
@@ -114,10 +114,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x' or '1'='1",
+     "subject": "user:parity-r28-u1",
      "subjectClaims": {
       "sub": "x' OR '1'='1",
-      "preferred_username": "parity-r28-x' or '1'='1"
+      "preferred_username": "parity-r28-u1"
      }
     },
     {
@@ -127,10 +127,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x' or '1'='1",
+     "subject": "user:parity-r28-u1",
      "subjectClaims": {
       "sub": "x' OR '1'='1",
-      "preferred_username": "parity-r28-x' or '1'='1"
+      "preferred_username": "parity-r28-u1"
      }
     },
     {
@@ -140,17 +140,17 @@
       "a": "y",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x' or '1'='1",
+     "subject": "user:parity-r28-u1",
      "subjectClaims": {
       "sub": "x' OR '1'='1",
-      "preferred_username": "parity-r28-x' or '1'='1"
+      "preferred_username": "parity-r28-u1"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-01-filter",
-   "about": "The subject is \"parity-r28-x' or '1'='1\" with id \"x' OR '1'='1\".",
+   "about": "The subject is \"parity-r28-u1\" with id \"x' OR '1'='1\".",
    "sets": [
     {
      "key": "set",
@@ -190,17 +190,17 @@
     {
      "name": "filter",
      "filter": true,
-     "subject": "user:parity-r28-x' or '1'='1",
+     "subject": "user:parity-r28-u1",
      "subjectClaims": {
       "sub": "x' OR '1'='1",
-      "preferred_username": "parity-r28-x' or '1'='1"
+      "preferred_username": "parity-r28-u1"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-02-identity",
-   "about": "The subject is \"parity-r28-x\\\\y\" with id \"x\\\\y\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
+   "about": "The subject is \"parity-r28-u2\" with id \"x\\\\y\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
    "condition": "subject.id == resource.i AND subject.name == resource.n OR resource.a == 'y'",
    "requests": [
     {
@@ -208,13 +208,13 @@
      "resource": {
       "a": "n",
       "i": "x\\y",
-      "n": "parity-r28-x\\y",
+      "n": "parity-r28-u2",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x\\y",
+     "subject": "user:parity-r28-u2",
      "subjectClaims": {
       "sub": "x\\y",
-      "preferred_username": "parity-r28-x\\y"
+      "preferred_username": "parity-r28-u2"
      }
     },
     {
@@ -222,20 +222,20 @@
      "resource": {
       "a": "y",
       "i": "x\\y",
-      "n": "parity-r28-x\\y",
+      "n": "parity-r28-u2",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x\\y",
+     "subject": "user:parity-r28-u2",
      "subjectClaims": {
       "sub": "x\\y",
-      "preferred_username": "parity-r28-x\\y"
+      "preferred_username": "parity-r28-u2"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-02-url",
-   "about": "The subject is \"parity-r28-x\\\\y\" with id \"x\\\\y\". The url ends with ${subject.id}.",
+   "about": "The subject is \"parity-r28-u2\" with id \"x\\\\y\". The url ends with ${subject.id}.",
    "condition": "subject.parityR28SubjectUrl == resource.want OR resource.a == 'y'",
    "pips": [
     "url"
@@ -248,10 +248,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x\\y",
+     "subject": "user:parity-r28-u2",
      "subjectClaims": {
       "sub": "x\\y",
-      "preferred_username": "parity-r28-x\\y"
+      "preferred_username": "parity-r28-u2"
      }
     },
     {
@@ -261,17 +261,17 @@
       "a": "y",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x\\y",
+     "subject": "user:parity-r28-u2",
      "subjectClaims": {
       "sub": "x\\y",
-      "preferred_username": "parity-r28-x\\y"
+      "preferred_username": "parity-r28-u2"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-02-filter",
-   "about": "The subject is \"parity-r28-x\\\\y\" with id \"x\\\\y\".",
+   "about": "The subject is \"parity-r28-u2\" with id \"x\\\\y\".",
    "sets": [
     {
      "key": "set",
@@ -311,17 +311,17 @@
     {
      "name": "filter",
      "filter": true,
-     "subject": "user:parity-r28-x\\y",
+     "subject": "user:parity-r28-u2",
      "subjectClaims": {
       "sub": "x\\y",
-      "preferred_username": "parity-r28-x\\y"
+      "preferred_username": "parity-r28-u2"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-03-identity",
-   "about": "The subject is \"parity-r28-x y\" with id \"x y\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
+   "about": "The subject is \"parity-r28-u3\" with id \"x y\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
    "condition": "subject.id == resource.i AND subject.name == resource.n OR resource.a == 'y'",
    "requests": [
     {
@@ -329,13 +329,13 @@
      "resource": {
       "a": "n",
       "i": "x y",
-      "n": "parity-r28-x y",
+      "n": "parity-r28-u3",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x y",
+     "subject": "user:parity-r28-u3",
      "subjectClaims": {
       "sub": "x y",
-      "preferred_username": "parity-r28-x y"
+      "preferred_username": "parity-r28-u3"
      }
     },
     {
@@ -343,20 +343,20 @@
      "resource": {
       "a": "y",
       "i": "x y",
-      "n": "parity-r28-x y",
+      "n": "parity-r28-u3",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x y",
+     "subject": "user:parity-r28-u3",
      "subjectClaims": {
       "sub": "x y",
-      "preferred_username": "parity-r28-x y"
+      "preferred_username": "parity-r28-u3"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-03-url",
-   "about": "The subject is \"parity-r28-x y\" with id \"x y\". The url ends with ${subject.id}.",
+   "about": "The subject is \"parity-r28-u3\" with id \"x y\". The url ends with ${subject.id}.",
    "condition": "subject.parityR28SubjectUrl == resource.want OR resource.a == 'y'",
    "pips": [
     "url"
@@ -369,10 +369,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x y",
+     "subject": "user:parity-r28-u3",
      "subjectClaims": {
       "sub": "x y",
-      "preferred_username": "parity-r28-x y"
+      "preferred_username": "parity-r28-u3"
      }
     },
     {
@@ -382,10 +382,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x y",
+     "subject": "user:parity-r28-u3",
      "subjectClaims": {
       "sub": "x y",
-      "preferred_username": "parity-r28-x y"
+      "preferred_username": "parity-r28-u3"
      }
     },
     {
@@ -395,17 +395,17 @@
       "a": "y",
       "id": "r28"
      },
-     "subject": "user:parity-r28-x y",
+     "subject": "user:parity-r28-u3",
      "subjectClaims": {
       "sub": "x y",
-      "preferred_username": "parity-r28-x y"
+      "preferred_username": "parity-r28-u3"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-03-filter",
-   "about": "The subject is \"parity-r28-x y\" with id \"x y\".",
+   "about": "The subject is \"parity-r28-u3\" with id \"x y\".",
    "sets": [
     {
      "key": "set",
@@ -445,17 +445,17 @@
     {
      "name": "filter",
      "filter": true,
-     "subject": "user:parity-r28-x y",
+     "subject": "user:parity-r28-u3",
      "subjectClaims": {
       "sub": "x y",
-      "preferred_username": "parity-r28-x y"
+      "preferred_username": "parity-r28-u3"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-04-identity",
-   "about": "The subject is \"parity-r28-r28#x\" with id \"r28#x\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
+   "about": "The subject is \"parity-r28-u4\" with id \"r28#x\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
    "condition": "subject.id == resource.i AND subject.name == resource.n OR resource.a == 'y'",
    "requests": [
     {
@@ -463,13 +463,13 @@
      "resource": {
       "a": "n",
       "i": "r28#x",
-      "n": "parity-r28-r28#x",
+      "n": "parity-r28-u4",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28#x",
+     "subject": "user:parity-r28-u4",
      "subjectClaims": {
       "sub": "r28#x",
-      "preferred_username": "parity-r28-r28#x"
+      "preferred_username": "parity-r28-u4"
      }
     },
     {
@@ -477,20 +477,20 @@
      "resource": {
       "a": "y",
       "i": "r28#x",
-      "n": "parity-r28-r28#x",
+      "n": "parity-r28-u4",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28#x",
+     "subject": "user:parity-r28-u4",
      "subjectClaims": {
       "sub": "r28#x",
-      "preferred_username": "parity-r28-r28#x"
+      "preferred_username": "parity-r28-u4"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-04-url",
-   "about": "The subject is \"parity-r28-r28#x\" with id \"r28#x\". The url ends with ${subject.id}.",
+   "about": "The subject is \"parity-r28-u4\" with id \"r28#x\". The url ends with ${subject.id}.",
    "condition": "subject.parityR28SubjectUrl == resource.want OR resource.a == 'y'",
    "pips": [
     "url"
@@ -503,10 +503,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28#x",
+     "subject": "user:parity-r28-u4",
      "subjectClaims": {
       "sub": "r28#x",
-      "preferred_username": "parity-r28-r28#x"
+      "preferred_username": "parity-r28-u4"
      }
     },
     {
@@ -516,10 +516,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28#x",
+     "subject": "user:parity-r28-u4",
      "subjectClaims": {
       "sub": "r28#x",
-      "preferred_username": "parity-r28-r28#x"
+      "preferred_username": "parity-r28-u4"
      }
     },
     {
@@ -529,17 +529,17 @@
       "a": "y",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28#x",
+     "subject": "user:parity-r28-u4",
      "subjectClaims": {
       "sub": "r28#x",
-      "preferred_username": "parity-r28-r28#x"
+      "preferred_username": "parity-r28-u4"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-04-filter",
-   "about": "The subject is \"parity-r28-r28#x\" with id \"r28#x\".",
+   "about": "The subject is \"parity-r28-u4\" with id \"r28#x\".",
    "sets": [
     {
      "key": "set",
@@ -579,17 +579,17 @@
     {
      "name": "filter",
      "filter": true,
-     "subject": "user:parity-r28-r28#x",
+     "subject": "user:parity-r28-u4",
      "subjectClaims": {
       "sub": "r28#x",
-      "preferred_username": "parity-r28-r28#x"
+      "preferred_username": "parity-r28-u4"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-05-identity",
-   "about": "The subject is \"parity-r28-r28?x\" with id \"r28?x\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
+   "about": "The subject is \"parity-r28-u5\" with id \"r28?x\". True with resource.a 'n' says the id and the name reach the condition as the realm gives them.",
    "condition": "subject.id == resource.i AND subject.name == resource.n OR resource.a == 'y'",
    "requests": [
     {
@@ -597,13 +597,13 @@
      "resource": {
       "a": "n",
       "i": "r28?x",
-      "n": "parity-r28-r28?x",
+      "n": "parity-r28-u5",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28?x",
+     "subject": "user:parity-r28-u5",
      "subjectClaims": {
       "sub": "r28?x",
-      "preferred_username": "parity-r28-r28?x"
+      "preferred_username": "parity-r28-u5"
      }
     },
     {
@@ -611,20 +611,20 @@
      "resource": {
       "a": "y",
       "i": "r28?x",
-      "n": "parity-r28-r28?x",
+      "n": "parity-r28-u5",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28?x",
+     "subject": "user:parity-r28-u5",
      "subjectClaims": {
       "sub": "r28?x",
-      "preferred_username": "parity-r28-r28?x"
+      "preferred_username": "parity-r28-u5"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-05-url",
-   "about": "The subject is \"parity-r28-r28?x\" with id \"r28?x\". The url ends with ${subject.id}.",
+   "about": "The subject is \"parity-r28-u5\" with id \"r28?x\". The url ends with ${subject.id}.",
    "condition": "subject.parityR28SubjectUrl == resource.want OR resource.a == 'y'",
    "pips": [
     "url"
@@ -637,10 +637,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28?x",
+     "subject": "user:parity-r28-u5",
      "subjectClaims": {
       "sub": "r28?x",
-      "preferred_username": "parity-r28-r28?x"
+      "preferred_username": "parity-r28-u5"
      }
     },
     {
@@ -650,10 +650,10 @@
       "a": "n",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28?x",
+     "subject": "user:parity-r28-u5",
      "subjectClaims": {
       "sub": "r28?x",
-      "preferred_username": "parity-r28-r28?x"
+      "preferred_username": "parity-r28-u5"
      }
     },
     {
@@ -663,17 +663,17 @@
       "a": "y",
       "id": "r28"
      },
-     "subject": "user:parity-r28-r28?x",
+     "subject": "user:parity-r28-u5",
      "subjectClaims": {
       "sub": "r28?x",
-      "preferred_username": "parity-r28-r28?x"
+      "preferred_username": "parity-r28-u5"
      }
     }
    ]
   },
   {
    "id": "r28subj-user-05-filter",
-   "about": "The subject is \"parity-r28-r28?x\" with id \"r28?x\".",
+   "about": "The subject is \"parity-r28-u5\" with id \"r28?x\".",
    "sets": [
     {
      "key": "set",
@@ -713,10 +713,10 @@
     {
      "name": "filter",
      "filter": true,
-     "subject": "user:parity-r28-r28?x",
+     "subject": "user:parity-r28-u5",
      "subjectClaims": {
       "sub": "r28?x",
-      "preferred_username": "parity-r28-r28?x"
+      "preferred_username": "parity-r28-u5"
      }
     }
    ]

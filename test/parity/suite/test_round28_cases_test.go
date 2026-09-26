@@ -48,8 +48,10 @@ func (s *ParitySuite) TestRound28ReachValuesCases() { s.runCaseFile("round28/rea
 // TestRound28ReachSetsCases runs round28/reach-sets.json.
 func (s *ParitySuite) TestRound28ReachSetsCases() { s.runCaseFile("round28/reach-sets.json") }
 
-// TestRound28ReachScopeNoPipCases runs round28/reach-scope-no-pip.json. It
-// expects a stand where no domain declares a permission scope PIP.
+// TestRound28ReachScopeNoPipCases runs round28/reach-scope-no-pip.json. Its
+// cases declare no permission scope PIP, and each iterating request records the
+// calls to the pinned scope route, so a scope PIP that an earlier run of the
+// suite left on the stand shows in the goldens.
 func (s *ParitySuite) TestRound28ReachScopeNoPipCases() {
 	s.runCaseFile("round28/reach-scope-no-pip.json")
 }

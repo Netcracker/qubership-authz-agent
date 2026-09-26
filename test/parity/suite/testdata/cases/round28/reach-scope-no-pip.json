@@ -1,8 +1,56 @@
 {
- "about": "Iterate sets in a tenant whose declaration names no PERMISSION_SCOPE PIP. The specification reads no grants: the node's outcome without grants (DENY_UNLESS_PERMIT denies, PERMIT_UNLESS_DENY permits). Alternatives: 500, as when the scope service fails.",
+ "about": "Iterate sets in a tenant whose declaration names no PERMISSION_SCOPE PIP. The specification reads no grants: the node's outcome without grants (DENY_UNLESS_PERMIT denies, PERMIT_UNLESS_DENY permits). Alternatives: 500, as when the scope service fails. Each case declares one HEADER PIP, which replaces whatever the domain declared before. The scope route is pinned with a grant and its calls are recorded: a call means that some scope PIP still reaches pip-mock, and the grant then changes the answer, so a stand that keeps a scope PIP from an earlier run shows in the goldens.",
  "resourceTypePrefix": "PARITY_SUITE_R28N_",
- "pins": {},
- "pips": {},
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "header": {
+   "name": "subject.parityR18List",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r18-list",
+   "cacheable": false
+  }
+ },
  "cases": [
   {
    "id": "r28reach-scope-no-pip-control-first",
@@ -42,6 +90,9 @@
   {
    "id": "r28reach-scope-no-pip-deny-unless-permit",
    "about": "An iterate set under DENY_UNLESS_PERMIT with one ALLOW rule, node algorithm DENY_UNLESS_PERMIT.",
+   "pips": [
+    "header"
+   ],
    "sets": [
     {
      "key": "set",
@@ -74,7 +125,8 @@
      "resource": {
       "a": "n",
       "id": "r28"
-     }
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
     },
     {
      "name": "filter",
@@ -85,6 +137,9 @@
   {
    "id": "r28reach-scope-no-pip-permit-unless-deny",
    "about": "An iterate set under PERMIT_UNLESS_DENY with one DENY rule, node algorithm PERMIT_UNLESS_DENY.",
+   "pips": [
+    "header"
+   ],
    "sets": [
     {
      "key": "set",
@@ -117,11 +172,47 @@
      "resource": {
       "a": "n",
       "id": "r28"
-     }
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
     },
     {
      "name": "filter",
      "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r28reach-scope-no-pip-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r28"
+     }
     }
    ]
   }

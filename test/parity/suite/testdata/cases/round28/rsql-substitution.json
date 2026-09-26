@@ -1,5 +1,5 @@
 {
- "about": "How check/filter negates a DENY predicate whose placeholder brings a value with a metacharacter: a GENERAL body of one element holding ==, a comma, a semicolon, a quote, a parenthesis, a space, a backslash, a non-ASCII letter or an asterisk; an empty GENERAL list; a HEADER value; a MAPPING permission; subject.roles; resourceType. Each placeholder bare and in a list, under DENY_OVERRIDES and PERMIT_UNLESS_DENY. Controls: blocked==1, whose negation the goldens show as blocked!=1.",
+ "about": "How check/filter negates a DENY predicate whose placeholder brings a value with a metacharacter: a GENERAL body of one element holding ==, a comma, a semicolon, a quote, a parenthesis, a space, a backslash, a non-ASCII letter or an asterisk; an empty GENERAL list; a HEADER value; a MAPPING permission; subject.roles; resourceType. Each placeholder once, bare or in a list, under DENY_OVERRIDES or PERMIT_UNLESS_DENY; the empty list under both. Controls: blocked==1, whose negation the goldens show as blocked!=1.",
  "resourceTypePrefix": "PARITY_SUITE_",
  "pins": {
   "/api/v1/pip/r28-rsql-list": {

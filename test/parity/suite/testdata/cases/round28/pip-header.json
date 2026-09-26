@@ -1,5 +1,5 @@
 {
- "about": "HEADER PIP declarations no golden varies: the header's name in another case than the request's, with spaces around it, empty, blank or missing, the headers that carry the tokens (Authorization, Incoming-Token), Tenant, Cookie, and the headers the suite's client adds on its own (Host, Content-Type); defaultValue beside an empty header. A condition over a header no case chooses asks only IS NOT NULL, so no golden holds a token. Each leaf is <comparison> OR resource.a == 'y', asked with a = n and a = y.",
+ "about": "HEADER PIP declarations no golden varies: the header's name in another case than the request's, with spaces around it, or empty, the headers that carry the tokens (Authorization, Incoming-Token), Tenant, Cookie, and the headers the suite's client adds on its own (Host, Content-Type); defaultValue beside an empty header. A condition over a header no case chooses asks only IS NOT NULL, so no golden holds a token. Each leaf is <comparison> OR resource.a == 'y', asked with a = n and a = y.",
  "resourceTypePrefix": "PARITY_SUITE_R28P_",
  "pins": {
   "/api/v1/pip/r28pip-g-ok-list": {
