@@ -46,6 +46,30 @@ func TestBuildQuery_TenantID(t *testing.T) {
 	}
 }
 
+func TestBuildQuery_UserID(t *testing.T) {
+	t.Parallel()
+	cfg := Config{TenantID: "configured"}
+	empty := ""
+	user := "00000000-0000-0000-0000-000000000101"
+	cases := []struct {
+		name string
+		opts PerCallOptions
+		want string
+	}{
+		{"no userId by default", PerCallOptions{}, "tenant_id=configured"},
+		{"a user id is sent", PerCallOptions{UserID: &user}, "tenant_id=configured&userId=00000000-0000-0000-0000-000000000101"},
+		{"an empty user id sends an empty userId", PerCallOptions{UserID: &empty}, "tenant_id=configured&userId="},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := buildQuery(cfg, tc.opts, nil); got != tc.want {
+				t.Errorf("buildQuery(%+v) = %q, want %q", tc.opts, got, tc.want)
+			}
+		})
+	}
+}
+
 // The Tenant header travels only through TenantHeader: the same name in
 // CustomHeaders is stripped, as the thin client strips it.
 func TestBuildRequest_TenantHeader(t *testing.T) {

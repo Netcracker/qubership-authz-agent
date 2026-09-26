@@ -284,6 +284,19 @@ Optional fields change one part of the upload or the request; without them a cas
 | `subject` | A request | `m2m` sends the M2M token alone. `user:<username>` sends the token of that user of the parity realm, which logs in with the suite's end-user client and `PARITY_END_USER_PASSWORD`, beside the M2M token. Without it the request is parity-reader's |
 | `subjectClaims` | A request with a `user:` subject | Claim values, such as `sub` and `preferred_username`, that the user's token must carry. The suite decodes the token and fails before sending the request when a claim is missing or differs |
 | `pipCalls` | A request | A route the file pins. The pip-mock call log is cleared before the request, and what the route received while the request ran is recorded under `pip-call/<kind>/<case>/<request>` beside the request's own golden |
+| `entitlements` | The file | A pip-mock answer, `{statusCode, body}`, that entitlements-mock gives to the user-entitlements lookup of parity-reader for the whole function |
+| `policyOmit` | A case without `sets` | Names of members the simplified policy is uploaded without, such as `applicableForFrontend` |
+| `policy` | A case without `sets` | Members merged into the simplified policy after `policyOmit`: they add a member, replace one, or set one to `null`. Strings take the resource type placeholders |
+| `policiesQuery` | A case without `sets` | Text appended after `&` to the query of the upload that carries the policy, such as `applicableForFrontend=true`; the uploads before it keep the plain query |
+| `customize` | A case with `sets` | Customization steps that run after the upload and the case's requests; see below |
+| `fields` | A set, a policy, or a rule | Members merged last into the uploaded object, after the ones the suite derives and after `predicates`: they add a member, replace one, or set one to `null`. Strings take the resource type placeholders |
+| `omitStatus` | A set | `true` uploads the set with no `status` member |
+| `userId` | A request | The value of the `userId` query parameter of a check, filter, or bulk request; `""` sends the parameter with an empty value |
+| `emptyOperation` | A request | `true` sends `operation=` on a filter request and `"operation": ""` in a check body |
+| `pauseMs` | A request | Milliseconds the suite waits before sending the request, after the call log of `pipCalls` or `classifyBy` is cleared |
+| `pipHeaders` | A request with `pipCalls` | Header names whose values in the first call on the route the pip-call golden records under `headers`, by lower-case name: `null` where the call did not carry the header, `<m2m token>` or `<user token>` for a token of the request, `<other token>` for another `authorization`, `<tenant_id>` or `<other>` for `tenant`, and any other value as it is |
+| `bulk` | A request | Items `{id, operation, type, resource}` sent to `check/resource/bulk` with the request's subject, headers, `tenantId`, and `userId`; an item without `type` takes the case's resource type. The golden, `check-resource-bulk-v1-outcome/<kind>/<case>/<request>`, holds the status and, on 200, the allowed ids sorted |
+| `bulkOperations` | A request | Items `{id, operations, type, resource}` sent to `check/resource/bulk/operations` the same way. The golden, `check-resource-bulk-operations-v1-outcome/<kind>/<case>/<request>`, holds the status and, on 200, the allowed ids of each operation sorted |
 
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
 replaces the whole PIP declaration of its domain, the suite's unless it names another, with its own PIPs, none included, and a case with `sets`
@@ -300,16 +313,37 @@ differs between stands, and an answer that depends on whether a failing PIP was 
 stand used. The order is chosen per case, not once per stand, and a recording run writes one of the two names for each
 request, so both names of a request take runs on several stands. A filter request is classed the same way.
 
+A step of `customize` has a `name`, a `level`, and `requests`, and makes one call to the customization API of the PAP,
+whose status is recorded under the step's name:
+
+| The step sets | The call | Golden |
+| --- | --- | --- |
+| `delete: {key, recursive}` | `DELETE /access/v1/config/customization/policySet/<id>` for the set with that key, with `recursive` when the step gives it | `delete-customization-v1/regular/<case>/<step>` |
+| `pips` | `POST /access/v1/pip/customization/import` with the entries as written | `import-pip-customization-v1/regular/<case>/<step>` |
+| `sets`, or `body` | `POST /access/v1/config/customization/import` with the entries `sets` builds, or `body` exactly as written | `import-customization-v1/regular/<case>/<step>` |
+
+An entry of `sets` takes the shape of a set of the case: `key` names a set, a policy, or a rule and is replaced by the id the upload
+derives from it, `algorithm`, `sets`, `iterate`, and `predicates` are renamed or merged as the upload does, and every
+other member is sent as written. `level` is sent as written, and `omitLevel: true` sends no level. After the call the
+step's requests run, with golden paths as the case's own requests have. Before the upload and after the last step the
+suite deletes, with no golden, the customization of every set a step's `sets` names at its top level and of every PIP
+its `pips` names, at the step's level, or at both `PROJECT` and `CUSTOMER` when the step names another level or none.
+
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
 file does not declare, a case id two cases share, a `classifyBy` on a case without `sets` or on a route the file does
 not pin, a `pipCalls` on a route the file does not pin or beside `classifyBy`, a `subject` other than `m2m` or
-`user:<username>`, `subjectClaims` without a `user:` subject, `roles` or `domain` on a case with `sets`,
-a `ruleIdsOf` that names no earlier case with `sets` of the file, and a round 19 or later file whose case with `sets`
-drops a PIP name: run `go test -run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
+`user:<username>`, `subjectClaims` without a `user:` subject, a field of a case without `sets` on a case with `sets` or
+the other way round, a `ruleIdsOf` that names no earlier case with `sets` of the file, two requests or two steps of a
+case with one name, a step with neither `level` nor `omitLevel`, a step that sets more than one of `delete`, `pips`, and
+`sets` or `body`, a customization entry with no key or a PIP customization with no name, `status` beside `omitStatus`,
+`pipHeaders` without `pipCalls`, `emptyOperation` beside `operation`, a negative `pauseMs`, a bulk request with a
+`filter`, `resource`, `operation`, `type`, or `classifyBy` of its own or an item that is not an object, and a round 19
+or later file whose case with `sets` drops a PIP name: run `go test -run TestCaseFilesAreWellFormed
+./test/parity/suite/` before handing a file over for recording.
 
 A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
-generator and rerun it rather than the JSON. The round 16 to 28 files have no generator in the repository. Cases that wait between steps or change the stand in between, such as a
-cache expiry or a customization import, stay in Go.
+generator and rerun it rather than the JSON. The round 16 to 28 files have no generator in the repository. Cases that
+change the stand in ways the fields above do not cover, such as a second tenant or a v3 export, stay in Go.
 
 To record goldens, run one function per fresh stand:
 

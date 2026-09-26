@@ -16,11 +16,16 @@ package paritysuite
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -45,6 +50,10 @@ type caseFile struct {
 	// PIPs holds the PIP declarations the cases name by key.
 	PIPs  map[string]any `json:"pips"`
 	Cases []caseSpec     `json:"cases"`
+	// Entitlements, when present, is the answer entitlements-mock gives to the
+	// user-entitlements lookup of parity-reader from before the first case to
+	// the end of the function.
+	Entitlements *PipStubResponse `json:"entitlements"`
 }
 
 type caseSpec struct {
@@ -69,6 +78,67 @@ type caseSpec struct {
 	// of this case are then derived from that case's id rather than its own, so
 	// a rule whose key an earlier rule also has uploads with that rule's id.
 	RuleIDsOf string `json:"ruleIdsOf"`
+	// PolicyOmit names members the simplified policy of a case without sets is
+	// uploaded without, such as applicableForFrontend.
+	PolicyOmit []string `json:"policyOmit"`
+	// Policy is merged into the simplified policy of a case without sets after
+	// PolicyOmit is applied, so it adds a member, replaces one, or sets one to
+	// null. Its strings take the resource type placeholders.
+	Policy map[string]any `json:"policy"`
+	// PoliciesQuery is appended as written, after &, to the query of the upload
+	// that carries the simplified policy of a case without sets. The uploads
+	// before it, which empty the policies and replace the PIPs, keep the plain
+	// query.
+	PoliciesQuery string `json:"policiesQuery"`
+	// Customize holds the customization steps of a case with sets, which run in
+	// order after the upload and the case's own requests; see customizeStep.
+	Customize []customizeStep `json:"customize"`
+}
+
+// customizeStep is one call to the customization API of the PAP, recorded as a
+// status golden under the step's name, followed by the requests that observe
+// its effect. A step with Delete deletes the customization of one set; a step
+// with PIPs imports those PIP customizations; any other step imports the
+// policy customizations Sets builds, or Body in their place.
+//
+// Before the upload of the case and after its last step, the runner deletes,
+// with no golden, the customization of every set that a step's Sets names at
+// its top level and of every PIP that a step's PIPs names. It deletes each at
+// the level of the step, or at both PROJECT and CUSTOMER where the step names
+// another level or none, so that a customization an earlier run left behind
+// does not reach the goldens.
+type customizeStep struct {
+	Name string `json:"name"`
+	// Level is the level query parameter, sent as written; see OmitLevel.
+	Level *string `json:"level"`
+	// OmitLevel sends the step with no level parameter at all.
+	OmitLevel bool `json:"omitLevel"`
+	// Sets holds the customization entries, in the shape of setSpec. The key of
+	// an entry, a policy, or a rule is replaced by the id the upload derives
+	// from it, so a key the case's sets use names that object; algorithm, sets,
+	// iterate, and predicates are renamed or merged as the upload does; every
+	// other member is sent as written, with the resource type placeholders
+	// replaced. An entry that is not an object, and a sets, policies, or rules
+	// member that is not a list, are sent as written.
+	Sets []any `json:"sets"`
+	// Body, when present, is the whole import body, sent exactly as written,
+	// JSON null included, in place of the list Sets builds. The cleanup does not
+	// read it.
+	Body json.RawMessage `json:"body"`
+	// PIPs holds PIP customization entries as the PAP reads them. Each names
+	// the PIP it customizes in name.
+	PIPs []any `json:"pips"`
+	// Delete deletes the customization of the set with key Delete.Key.
+	Delete   *customizeDelete `json:"delete"`
+	Requests []requestSpec    `json:"requests"`
+}
+
+// customizeDelete names the set whose customization a step deletes. Recursive
+// is the recursive query parameter, which also deletes the customizations of
+// the set's policies and rules; nil sends no parameter.
+type customizeDelete struct {
+	Key       string `json:"key"`
+	Recursive *bool  `json:"recursive"`
 }
 
 type setSpec struct {
@@ -80,6 +150,10 @@ type setSpec struct {
 	Sets      []setSpec    `json:"sets"`
 	// Status is the set's status, ACTIVE when empty.
 	Status string `json:"status"`
+	// OmitStatus uploads the set with no status member.
+	OmitStatus bool `json:"omitStatus"`
+	// Fields is merged last into the set; see mergeFields.
+	Fields map[string]any `json:"fields"`
 }
 
 type iterateSpec struct {
@@ -92,6 +166,8 @@ type policySpec struct {
 	Target    string     `json:"target"`
 	Algorithm string     `json:"algorithm"`
 	Rules     []ruleSpec `json:"rules"`
+	// Fields is merged last into the policy; see mergeFields.
+	Fields map[string]any `json:"fields"`
 }
 
 type ruleSpec struct {
@@ -102,6 +178,8 @@ type ruleSpec struct {
 	// Predicates holds the rule's predicate fields by name: a string for each
 	// dialect, and an object for customPredicate.
 	Predicates map[string]any `json:"predicates"`
+	// Fields is merged last into the rule, after Predicates; see mergeFields.
+	Fields map[string]any `json:"fields"`
 }
 
 type requestSpec struct {
@@ -134,6 +212,25 @@ type requestSpec struct {
 	// request, and what the route received while the request ran is recorded
 	// as a pip-call golden under the request's own name.
 	PIPCalls string `json:"pipCalls"`
+	// PIPHeaders names headers, beside PIPCalls, whose values in the first call
+	// on the route the pip-call golden records; see forwardedHeaders.
+	PIPHeaders []string `json:"pipHeaders"`
+	// UserID is sent as the userId query parameter of the check, the filter,
+	// or the bulk request; "" sends it with an empty value.
+	UserID *string `json:"userId"`
+	// EmptyOperation sends the operation with an empty value: operation= on a
+	// filter request, "operation": "" in a check body.
+	EmptyOperation bool `json:"emptyOperation"`
+	// PauseMs is how many milliseconds the runner waits before sending the
+	// request, after the call log of PIPCalls or ClassifyBy is cleared.
+	PauseMs int `json:"pauseMs"`
+	// Bulk sends the request as check/resource/bulk with these items; see
+	// bulkItems. The golden records the status and the sorted allowed ids.
+	Bulk []any `json:"bulk"`
+	// BulkOperations sends the request as check/resource/bulk/operations with
+	// these items; see bulkItems. The golden records the status and, per
+	// operation, the sorted allowed ids.
+	BulkOperations []any `json:"bulkOperations"`
 }
 
 // readCaseFile reads testdata/cases/<name>. Numbers in a resource keep their
@@ -182,15 +279,243 @@ func withResourceType(v any, rt string) any {
 	}
 }
 
+// derivedID derives the id of the object at path, such as set/outer or
+// rule/allow, of the case caseID. A rerun derives the same id, so an upload
+// replaces what the last run of the case uploaded.
+func derivedID(caseID, path string) string {
+	sum := sha256.Sum256([]byte(caseID + "/" + path))
+	return fmt.Sprintf("%x-%x-%x-%x-%x", sum[0:4], sum[4:6], sum[6:8], sum[8:10], sum[10:16])
+}
+
+// mergeFields merges fields into object, the wire form of a set, a policy,
+// a rule, or a simplified policy, with the resource type placeholders of rt
+// replaced in its strings. A member fields sets to null stays in object as
+// null. The runner merges fields last, so a member it names replaces the one
+// the runner derived.
+func mergeFields(object, fields map[string]any, rt string) {
+	for name, value := range fields {
+		object[name] = withResourceType(value, rt)
+	}
+}
+
+// customKinds maps a kind of customization entry to the member that holds its
+// id and the prefix of the path its id is derived from.
+var customKinds = map[string]struct {
+	idMember, prefix string
+}{
+	"set":    {"policySetId", "set/"},
+	"policy": {"policyId", "policy/"},
+	"rule":   {"ruleId", "rule/"},
+}
+
+// customChildren maps the member of a customization entry that lists children
+// to the kind of the children and the member the wire form lists them under.
+var customChildren = map[string]struct{ kind, wire string }{
+	"sets":     {"set", "policySets"},
+	"policies": {"policy", "policies"},
+	"rules":    {"rule", "rules"},
+}
+
+// customEntry returns the wire form of e, a customization entry of kind set,
+// policy, or rule of the case caseID, as customizeStep.Sets describes it. A
+// rule's id is derived from ruleIDsOf when it is not empty, as the upload
+// derives it.
+func customEntry(caseID, ruleIDsOf, kind string, e any, rt string) any {
+	entry, ok := e.(map[string]any)
+	if !ok {
+		return e
+	}
+	idCase := caseID
+	if kind == "rule" && ruleIDsOf != "" {
+		idCase = ruleIDsOf
+	}
+	key, _ := entry["key"].(string)
+	out := map[string]any{customKinds[kind].idMember: derivedID(idCase, customKinds[kind].prefix+key)}
+	for name, value := range entry {
+		switch name {
+		case "key":
+		case "algorithm":
+			out["combiningAlgorithm"] = value
+		case "sets", "policies", "rules":
+			child := customChildren[name]
+			list, ok := value.([]any)
+			if !ok {
+				out[child.wire] = value
+				continue
+			}
+			wire := make([]any, len(list))
+			for i, c := range list {
+				wire[i] = customEntry(caseID, ruleIDsOf, child.kind, c, rt)
+			}
+			out[child.wire] = wire
+		case "predicates":
+			predicates, _ := value.(map[string]any)
+			for field, predicate := range predicates {
+				out[field] = predicate
+			}
+		case "iterate":
+			iterate, _ := value.(map[string]any)
+			out["iterate"] = map[string]any{"foreach": iterate["foreach"], "combiningAlgorithm": iterate["algorithm"]}
+		default:
+			out[name] = withResourceType(value, rt)
+		}
+	}
+	return out
+}
+
+// customizationLevels are the levels a cleanup deletes at when a step names
+// no level of them.
+var customizationLevels = []string{"PROJECT", "CUSTOMER"}
+
+// cleanupLevels returns the levels the cleanup of st deletes at: its own when
+// it is PROJECT or CUSTOMER, and both otherwise.
+func cleanupLevels(st customizeStep) []string {
+	if !st.OmitLevel && st.Level != nil && slices.Contains(customizationLevels, *st.Level) {
+		return []string{*st.Level}
+	}
+	return customizationLevels
+}
+
+// customizationCleanup returns the deletes, as customizeStep describes them,
+// that the runner sends before the upload of the case caseID and, in reverse
+// order, after its last step: the set customizations first, each level and set
+// once, then the PIP customizations. They record no golden.
+func customizationCleanup(caseID string, steps []customizeStep, rt string) []papCall {
+	var sets, pips []papCall
+	seen := map[string]bool{}
+	for _, st := range steps {
+		for _, level := range cleanupLevels(st) {
+			for _, e := range st.Sets {
+				entry, ok := e.(map[string]any)
+				if !ok {
+					continue
+				}
+				key, _ := entry["key"].(string)
+				path := "/access/v1/config/customization/policySet/" + derivedID(caseID, "set/"+key)
+				if seen[level+" "+path] {
+					continue
+				}
+				seen[level+" "+path] = true
+				sets = append(sets, papCall{method: http.MethodDelete, path: path,
+					query: url.Values{"level": {level}, "recursive": {"true"}}})
+			}
+			for _, e := range st.PIPs {
+				entry, _ := e.(map[string]any)
+				name, _ := entry["name"].(string)
+				path := "/access/v1/pip/customization/pip/" + url.PathEscape(resourceTypeReplacer(rt).Replace(name))
+				if seen[level+" "+path] {
+					continue
+				}
+				seen[level+" "+path] = true
+				pips = append(pips, papCall{method: http.MethodDelete, path: path, query: url.Values{"level": {level}}})
+			}
+		}
+	}
+	return append(sets, pips...)
+}
+
+// customizeStepCall returns the call st sends for the case caseID, whose rule
+// ids come from ruleIDsOf when it is not empty, and the endpoint its status
+// golden is filed under.
+func customizeStepCall(caseID, ruleIDsOf string, st customizeStep, rt string) (papCall, ParityEndpointID) {
+	query := url.Values{}
+	if !st.OmitLevel && st.Level != nil {
+		query.Set("level", *st.Level)
+	}
+	switch {
+	case st.Delete != nil:
+		if st.Delete.Recursive != nil {
+			query.Set("recursive", strconv.FormatBool(*st.Delete.Recursive))
+		}
+		return papCall{method: http.MethodDelete, query: query,
+			path: "/access/v1/config/customization/policySet/" + derivedID(caseID, "set/"+st.Delete.Key),
+		}, PSUITE_DELETE_CUSTOMIZATION
+	case st.PIPs != nil:
+		return papCall{method: http.MethodPost, path: Meta(PSUITE_IMPORT_PIP_CUSTOMIZATION).PathTmpl, query: query,
+			body: withResourceType(st.PIPs, rt)}, PSUITE_IMPORT_PIP_CUSTOMIZATION
+	}
+	var body any = st.Body
+	if st.Body == nil {
+		entries := make([]any, len(st.Sets))
+		for i, e := range st.Sets {
+			entries[i] = customEntry(caseID, ruleIDsOf, "set", e, rt)
+		}
+		body = entries
+	}
+	return papCall{method: http.MethodPost, path: Meta(PSUITE_IMPORT_CUSTOMIZATION).PathTmpl, query: query, body: body},
+		PSUITE_IMPORT_CUSTOMIZATION
+}
+
+// bulkItems returns the body of a bulk request of a case whose resource type
+// is rt: each item as written, with the resource type placeholders replaced,
+// and with type rt where the item names none.
+func bulkItems(items []any, rt string) []any {
+	out := make([]any, len(items))
+	for i, item := range items {
+		out[i] = withResourceType(item, rt)
+		if entry, ok := out[i].(map[string]any); ok {
+			if _, named := entry["type"]; !named {
+				entry["type"] = rt
+			}
+		}
+	}
+	return out
+}
+
+// forwardedHeaders returns the headers named in names that the first call to
+// route in calls carried, keyed by lower-case name, as a pip-call golden
+// records them. A header the call did not carry is null. A value equal to a
+// token of tokens, with or without Bearer, is the label <m2m token> or <user
+// token>; any other authorization value is <other token>; a tenant value is
+// <tenant_id> when it equals tenant, the request's tenant_id, and <other>
+// otherwise. Any other value is recorded as it is.
+func forwardedHeaders(calls []PipStubCall, route string, names []string, tokens TokenBundle, tenant string) map[string]any {
+	var first *PipStubCall
+	for i := range calls {
+		if calls[i].Path == route {
+			first = &calls[i]
+			break
+		}
+	}
+	out := make(map[string]any, len(names))
+	for _, n := range names {
+		name := strings.ToLower(n)
+		value, carried := "", false
+		if first != nil {
+			value, carried = first.Headers[name]
+		}
+		switch {
+		case !carried:
+			out[name] = nil
+		case tokens.M2M != "" && withoutBearer(value) == tokens.M2M:
+			out[name] = "<m2m token>"
+		case tokens.EndUser != "" && withoutBearer(value) == tokens.EndUser:
+			out[name] = "<user token>"
+		case name == "authorization":
+			out[name] = "<other token>"
+		case name == "tenant" && value == tenant:
+			out[name] = "<tenant_id>"
+		case name == "tenant":
+			out[name] = "<other>"
+		default:
+			out[name] = value
+		}
+	}
+	return out
+}
+
+// withoutBearer returns value without a leading Bearer and space, in any case.
+func withoutBearer(value string) string {
+	if len(value) >= 7 && strings.EqualFold(value[:7], "bearer ") {
+		return value[7:]
+	}
+	return value
+}
+
 // TestCaseFilesAreWellFormed reads every file under testdata/cases the way
-// runCaseFile does, so that a misspelled field, a PIP a case names and its file
-// does not declare, an id two cases share, a classifyBy on an isolated case or
-// on a route the file does not pin, a pipCalls on a route the file does not pin
-// or beside classifyBy, a subject other than m2m or user:<username>,
-// subjectClaims without a user: subject, roles or domain on a case with sets, or a ruleIdsOf
-// that names no earlier case with sets of the file fails here rather than on a
-// stand spent recording it. Case ids are golden paths, so they are unique
-// across files as well as within one.
+// runCaseFile does, so that a file caseFileProblems rejects fails here rather
+// than on a stand spent recording it. Case ids are golden paths, so they are
+// unique across files as well as within one.
 func TestCaseFilesAreWellFormed(t *testing.T) {
 	root := filepath.Join("testdata", "cases")
 	seen := map[string]string{}
@@ -205,56 +530,14 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 			return nil
 		}
 		checkKeepsPIPNames(t, name, f)
-		earlierRegular := map[string]bool{}
+		for _, problem := range caseFileProblems(f) {
+			t.Errorf("%s: %s", name, problem)
+		}
 		for _, c := range f.Cases {
 			if other, ok := seen[c.ID]; ok {
 				t.Errorf("%s: case id %s is also used in %s", name, c.ID, other)
 			}
 			seen[c.ID] = name
-			if len(c.Sets) > 0 {
-				if c.Roles != nil || c.Domain != "" {
-					t.Errorf("%s: case %s sets roles or domain, which only a case without sets reads", name, c.ID)
-				}
-				if c.RuleIDsOf != "" && !earlierRegular[c.RuleIDsOf] {
-					t.Errorf("%s: case %s takes its rule ids from %q, which is no earlier case with sets of the file", name, c.ID, c.RuleIDsOf)
-				}
-				earlierRegular[c.ID] = true
-			} else if c.RuleIDsOf != "" {
-				t.Errorf("%s: case %s sets ruleIdsOf, which only a case with sets reads", name, c.ID)
-			}
-			for _, key := range c.PIPs {
-				if _, ok := f.PIPs[key]; !ok {
-					t.Errorf("%s: case %s names the PIP %q, which the file does not declare", name, c.ID, key)
-				}
-			}
-			if len(c.Requests) == 0 {
-				t.Errorf("%s: case %s sends no request", name, c.ID)
-			}
-			for _, r := range c.Requests {
-				if r.Subject != "" && r.Subject != "m2m" && (!strings.HasPrefix(r.Subject, "user:") || r.Subject == "user:") {
-					t.Errorf("%s: case %s request %s names the subject %q, which is neither m2m nor user:<username>", name, c.ID, r.Name, r.Subject)
-				}
-				if len(r.SubjectClaims) > 0 && !strings.HasPrefix(r.Subject, "user:") {
-					t.Errorf("%s: case %s request %s sets subjectClaims without a user: subject", name, c.ID, r.Name)
-				}
-				if r.PIPCalls != "" {
-					if _, ok := f.Pins[r.PIPCalls]; !ok {
-						t.Errorf("%s: case %s request %s records the calls to %s, which the file does not pin", name, c.ID, r.Name, r.PIPCalls)
-					}
-					if r.ClassifyBy != "" {
-						t.Errorf("%s: case %s request %s sets both pipCalls and classifyBy, which each clear the call log", name, c.ID, r.Name)
-					}
-				}
-				if r.ClassifyBy == "" {
-					continue
-				}
-				if len(c.Sets) == 0 {
-					t.Errorf("%s: case %s request %s sets classifyBy, which only a regular case reads", name, c.ID, r.Name)
-				}
-				if _, ok := f.Pins[r.ClassifyBy]; !ok {
-					t.Errorf("%s: case %s request %s is classified by %s, which the file does not pin", name, c.ID, r.Name, r.ClassifyBy)
-				}
-			}
 		}
 		return nil
 	})
@@ -264,6 +547,210 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 	if len(seen) == 0 {
 		t.Fatalf("no case under %s", root)
 	}
+}
+
+// caseFileProblems returns one message for each part of f that runCaseFile
+// would not run as written: a PIP a case names and f does not declare, a field
+// the kind of case or request does not read, two fields that contradict each
+// other or of which the runner sends only one, a route f does not pin, and two
+// requests or steps of a case that would record the same golden. The field
+// comments of caseFile say where each field applies. Case ids unique across
+// files are checked by TestCaseFilesAreWellFormed.
+func caseFileProblems(f caseFile) []string {
+	var problems []string
+	report := func(format string, args ...any) { problems = append(problems, fmt.Sprintf(format, args...)) }
+	earlierRegular := map[string]bool{}
+	for _, c := range f.Cases {
+		if len(c.Sets) > 0 {
+			if c.Roles != nil || c.Domain != "" || c.PolicyOmit != nil || c.Policy != nil || c.PoliciesQuery != "" {
+				report("case %s sets roles, domain, policyOmit, policy, or policiesQuery, which only a case without sets reads", c.ID)
+			}
+			if c.RuleIDsOf != "" && !earlierRegular[c.RuleIDsOf] {
+				report("case %s takes its rule ids from %q, which is no earlier case with sets of the file", c.ID, c.RuleIDsOf)
+			}
+			earlierRegular[c.ID] = true
+			for _, set := range c.Sets {
+				problems = append(problems, setProblems(c.ID, set)...)
+			}
+		} else {
+			if c.RuleIDsOf != "" {
+				report("case %s sets ruleIdsOf, which only a case with sets reads", c.ID)
+			}
+			if c.Customize != nil {
+				report("case %s sets customize, which only a case with sets reads", c.ID)
+			}
+		}
+		for _, key := range c.PIPs {
+			if _, ok := f.PIPs[key]; !ok {
+				report("case %s names the PIP %q, which the file does not declare", c.ID, key)
+			}
+		}
+		if len(c.Requests) == 0 && len(c.Customize) == 0 {
+			report("case %s sends no request", c.ID)
+		}
+		requests := map[string]bool{}
+		checkRequests := func(list []requestSpec) {
+			for _, r := range list {
+				if requests[r.Name] {
+					report("case %s has two requests named %s, which share a golden", c.ID, r.Name)
+				}
+				requests[r.Name] = true
+				problems = append(problems, requestProblems(f, c, r)...)
+			}
+		}
+		checkRequests(c.Requests)
+		steps := map[string]bool{}
+		for _, st := range c.Customize {
+			if steps[st.Name] || st.Name == "" {
+				report("case %s has a customize step named %q, which is empty or names another step", c.ID, st.Name)
+			}
+			steps[st.Name] = true
+			problems = append(problems, stepProblems(c.ID, st)...)
+			checkRequests(st.Requests)
+		}
+	}
+	return problems
+}
+
+// setProblems returns the problems of set, a set of the case caseID, and of
+// its nested sets.
+func setProblems(caseID string, set setSpec) []string {
+	var problems []string
+	if set.OmitStatus && set.Status != "" {
+		problems = append(problems, fmt.Sprintf("case %s set %s sets both status and omitStatus", caseID, set.Key))
+	}
+	for _, nested := range set.Sets {
+		problems = append(problems, setProblems(caseID, nested)...)
+	}
+	return problems
+}
+
+// stepProblems returns the problems of st, a customize step of the case
+// caseID.
+func stepProblems(caseID string, st customizeStep) []string {
+	var problems []string
+	report := func(format string, args ...any) {
+		problems = append(problems, fmt.Sprintf("case %s step %s ", caseID, st.Name)+fmt.Sprintf(format, args...))
+	}
+	if st.Level == nil && !st.OmitLevel {
+		report("names no level and does not set omitLevel")
+	}
+	kinds := 0
+	if st.Delete != nil {
+		kinds++
+		if st.Delete.Key == "" {
+			report("deletes the customization of a set with no key")
+		}
+	}
+	if st.PIPs != nil {
+		kinds++
+	}
+	if st.Sets != nil || st.Body != nil {
+		kinds++
+	}
+	if kinds > 1 {
+		report("sets more than one of delete, pips, and sets or body, and sends only one of them")
+	}
+	for _, e := range st.PIPs {
+		entry, ok := e.(map[string]any)
+		if _, named := entry["name"].(string); !ok || !named {
+			report("imports a PIP customization %v with no name, which the cleanup deletes by name", e)
+		}
+	}
+	for _, e := range st.Sets {
+		for _, p := range customEntryProblems("set", e) {
+			report("%s", p)
+		}
+	}
+	return problems
+}
+
+// customEntryProblems returns the problems of e, a customization entry of
+// kind set, policy, or rule, and of its children: an object entry has a key,
+// predicates is an object, and iterate is an object with foreach and algorithm.
+// An entry that is not an object is sent as written and has none.
+func customEntryProblems(kind string, e any) []string {
+	entry, ok := e.(map[string]any)
+	if !ok {
+		return nil
+	}
+	var problems []string
+	if key, _ := entry["key"].(string); key == "" {
+		problems = append(problems, fmt.Sprintf("has a %s entry with no key", kind))
+	}
+	if predicates, set := entry["predicates"]; set {
+		if _, ok := predicates.(map[string]any); !ok {
+			problems = append(problems, fmt.Sprintf("has a %s entry whose predicates is not an object", kind))
+		}
+	}
+	if iterate, set := entry["iterate"]; set {
+		it, ok := iterate.(map[string]any)
+		_, foreach := it["foreach"]
+		_, algorithm := it["algorithm"]
+		if !ok || !foreach || !algorithm {
+			problems = append(problems, fmt.Sprintf("has a %s entry whose iterate is not an object with foreach and algorithm", kind))
+		}
+	}
+	for member, child := range customChildren {
+		if list, ok := entry[member].([]any); ok {
+			for _, c := range list {
+				problems = append(problems, customEntryProblems(child.kind, c)...)
+			}
+		}
+	}
+	return problems
+}
+
+// requestProblems returns the problems of r, a request of the case c of f.
+func requestProblems(f caseFile, c caseSpec, r requestSpec) []string {
+	var problems []string
+	report := func(format string, args ...any) {
+		problems = append(problems, fmt.Sprintf("case %s request %s ", c.ID, r.Name)+fmt.Sprintf(format, args...))
+	}
+	if r.Subject != "" && r.Subject != "m2m" && (!strings.HasPrefix(r.Subject, "user:") || r.Subject == "user:") {
+		report("names the subject %q, which is neither m2m nor user:<username>", r.Subject)
+	}
+	if len(r.SubjectClaims) > 0 && !strings.HasPrefix(r.Subject, "user:") {
+		report("sets subjectClaims without a user: subject")
+	}
+	if r.PIPCalls != "" {
+		if _, ok := f.Pins[r.PIPCalls]; !ok {
+			report("records the calls to %s, which the file does not pin", r.PIPCalls)
+		}
+		if r.ClassifyBy != "" {
+			report("sets both pipCalls and classifyBy, which each clear the call log")
+		}
+	} else if r.PIPHeaders != nil {
+		report("sets pipHeaders without pipCalls, whose golden records them")
+	}
+	if r.ClassifyBy != "" {
+		if len(c.Sets) == 0 {
+			report("sets classifyBy, which only a regular case reads")
+		}
+		if _, ok := f.Pins[r.ClassifyBy]; !ok {
+			report("is classified by %s, which the file does not pin", r.ClassifyBy)
+		}
+	}
+	if r.PauseMs < 0 {
+		report("pauses for %d ms", r.PauseMs)
+	}
+	if r.EmptyOperation && r.Operation != "" {
+		report("sets both operation and emptyOperation")
+	}
+	if r.Bulk != nil || r.BulkOperations != nil {
+		if r.Bulk != nil && r.BulkOperations != nil {
+			report("sets both bulk and bulkOperations")
+		}
+		if r.Filter || r.Resource != nil || r.Operation != "" || r.Type != "" || r.EmptyOperation || r.ClassifyBy != "" {
+			report("sets filter, resource, operation, type, emptyOperation, or classifyBy beside a bulk request, which reads them from its items")
+		}
+		for _, item := range append(append([]any{}, r.Bulk...), r.BulkOperations...) {
+			if _, ok := item.(map[string]any); !ok {
+				report("has the bulk item %v, which is not an object", item)
+			}
+		}
+	}
+	return problems
 }
 
 // dropsPIPNamesOnPurpose lists the case files that let a case declare fewer PIP

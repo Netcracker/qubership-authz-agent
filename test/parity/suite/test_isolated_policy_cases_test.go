@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"slices"
+	"time"
 
 	"authz-agent/test/parity/suite/model"
 )
@@ -48,6 +49,11 @@ type isolatedCase struct {
 	// domain is the domain the case uploads into, isolatedCaseDomain when
 	// empty.
 	domain string
+	// policyOmit, policy, and policiesQuery change the upload of the policy;
+	// see caseSpec. policy has its resource type placeholders replaced.
+	policyOmit    []string
+	policy        map[string]any
+	policiesQuery string
 }
 
 // isolatedRequest is a check/resource request, or a check/filter request when
@@ -80,12 +86,28 @@ type isolatedRequest struct {
 	// userClaims holds the claim values user's token must carry; see
 	// requestSpec.SubjectClaims.
 	userClaims map[string]string
+	// userID is the userId query parameter when non-nil; see
+	// requestSpec.UserID.
+	userID *string
+	// emptyOperation sends the operation with an empty value; see
+	// requestSpec.EmptyOperation.
+	emptyOperation bool
+	// pause is how long runRequest waits before sending the request.
+	pause time.Duration
+	// pipHeaders names the headers the pip-call golden of pipCalls records;
+	// see forwardedHeaders.
+	pipHeaders []string
+	// bulk and bulkOperations, when non-nil, are the items of a
+	// check/resource/bulk or a check/resource/bulk/operations request, in
+	// place of the check or filter request.
+	bulk           []any
+	bulkOperations []any
 }
 
-// callOptions returns the per-call options req is sent with: its headers and
-// its tenant.
+// callOptions returns the per-call options req is sent with: its headers, its
+// tenant, and its userId.
 func (r isolatedRequest) callOptions() PerCallOptions {
-	return PerCallOptions{CustomHeaders: r.headers, TenantID: r.tenantID}
+	return PerCallOptions{CustomHeaders: r.headers, TenantID: r.tenantID, UserID: r.userID}
 }
 
 // requestTokens returns the tokens req is sent with: parity-reader's bundle,
@@ -354,7 +376,11 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			if tc.rsql != "" {
 				policy["rsqlPredicate"] = tc.rsql
 			}
-			status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy})
+			for _, name := range tc.policyOmit {
+				delete(policy, name)
+			}
+			mergeFields(policy, tc.policy, tc.resourceType)
+			status, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy}, tc.policiesQuery)
 			s.Require().NoError(err)
 
 			if !isAuthzAgentProfile(s.cfg.Profile) {
@@ -367,23 +393,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			}
 			for _, req := range tc.requests {
 				s.Run(req.name, func() {
-					subCase := "isolated/" + tc.id + "/" + req.name
-					resourceType := valueOr(req.typ, tc.resourceType)
-					if req.pipCalls != "" {
-						s.runPIPCallRequest(subCase, resourceType, req)
-						return
-					}
-					opts := req.callOptions()
-					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, resourceType, req.filterOperation(), s.requestTokens(req), opts)
-						return
-					}
-					s.runPendingCheckResourceV1OutcomeCase(
-						subCase,
-						model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: resourceType, Resource: req.resource},
-						s.requestTokens(req),
-						opts,
-					)
+					s.runRequest("isolated/"+tc.id+"/"+req.name, tc.resourceType, req)
 				})
 			}
 		})

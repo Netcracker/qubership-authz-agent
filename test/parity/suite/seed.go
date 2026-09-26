@@ -206,13 +206,23 @@ func HelperPutPolicySets(ctx context.Context, cfg Config, m2mToken, externalID s
 // waits for the agent's next pull; the status is then 200 and says nothing about
 // the agent.
 func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
+	return UploadIsolatedPoliciesWithQuery(ctx, cfg, tokens, domain, pips, policies, "")
+}
+
+// UploadIsolatedPoliciesWithQuery is [UploadIsolatedPolicies] with policiesQuery,
+// when not empty, appended as written, after &, to the query of the last
+// upload, the one that carries policies. An example is
+// applicableForFrontend=true. The authz-agent profile ignores it, since
+// authz-policy-admin reads no query.
+func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any, policiesQuery string) (int, error) {
 	steps := []struct {
 		kind    string
 		payload []any
+		query   string
 	}{
-		{"domainPolicies", []any{}},
-		{"domainPIPs", emptyIfNil(pips)},
-		{"domainPolicies", emptyIfNil(policies)},
+		{"domainPolicies", []any{}, ""},
+		{"domainPIPs", emptyIfNil(pips), ""},
+		{"domainPolicies", emptyIfNil(policies), policiesQuery},
 	}
 	if isAuthzAgentProfile(cfg.Profile) {
 		seeder := &authzAgentInternalSeeder{cfg: cfg}
@@ -230,7 +240,11 @@ func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactor
 	}
 	status := 0
 	for _, step := range steps {
-		endpoint := buildURL(cfg.ACBaseURL, simplifiedPath(step.kind, domain), url.Values{"tenant_id": []string{cfg.TenantID}}.Encode())
+		query := url.Values{"tenant_id": []string{cfg.TenantID}}.Encode()
+		if step.query != "" {
+			query += "&" + step.query
+		}
+		endpoint := buildURL(cfg.ACBaseURL, simplifiedPath(step.kind, domain), query)
 		req, err := buildRequest(ctx, http.MethodPut, endpoint, step.payload, TokenBundle{M2M: m2m}, PerCallOptions{})
 		if err != nil {
 			return 0, err

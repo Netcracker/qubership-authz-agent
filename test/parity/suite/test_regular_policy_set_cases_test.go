@@ -18,9 +18,10 @@ package paritysuite
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
+	"iter"
 	"net/http"
+	"slices"
 	"strings"
 
 	"authz-agent/test/parity/suite/model"
@@ -43,6 +44,22 @@ type regularCase struct {
 	// uploads run in order; each replaces the sets of its own externalID.
 	uploads  []regularUpload
 	requests []isolatedRequest
+	// steps run in order after requests, and only when every upload was
+	// accepted.
+	steps []regularStep
+	// cleanup is sent before the uploads and, in reverse order, when the case
+	// ends, whatever its outcome; see customizationCleanup.
+	cleanup []papCall
+}
+
+// regularStep is one customization step of a case, as customizeStep
+// describes it: call, whose status is recorded under golden, and the requests
+// sent after it.
+type regularStep struct {
+	name     string
+	call     papCall
+	golden   ParityEndpointID
+	requests []isolatedRequest
 }
 
 type regularUpload struct {
@@ -56,10 +73,7 @@ type regularUpload struct {
 // file takes one case's rule ids from another with ruleIdsOf.
 type regularBuilder struct{ caseID string }
 
-func (b regularBuilder) id(path string) string {
-	sum := sha256.Sum256([]byte(b.caseID + "/" + path))
-	return fmt.Sprintf("%x-%x-%x-%x-%x", sum[0:4], sum[4:6], sum[6:8], sum[8:10], sum[10:16])
-}
+func (b regularBuilder) id(path string) string { return derivedID(b.caseID, path) }
 
 // set builds a policy set; an empty algorithm leaves combiningAlgorithm out.
 func (b regularBuilder) set(key, target, algorithm string, policies []any, nested []any) map[string]any {
@@ -158,6 +172,10 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 				s.Require().Less(status, http.StatusMultipleChoices, "upload of %d PIPs and %d policies into %s",
 					len(tc.pips), len(tc.simplified), isolatedCaseDomain)
 			}
+			s.sendCustomizationCleanup(slices.All(tc.cleanup))
+			if len(tc.cleanup) > 0 {
+				s.T().Cleanup(func() { s.sendCustomizationCleanup(slices.Backward(tc.cleanup)) })
+			}
 			accepted := true
 			for i, upload := range tc.uploads {
 				status, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
@@ -172,40 +190,39 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			if !accepted {
 				return
 			}
-			for _, req := range tc.requests {
-				s.Run(req.name, func() {
-					subCase := "regular/" + tc.id + "/" + req.name
-					if req.classifyBy != "" {
-						s.Require().NoError(s.pipMock.ResetCalls(ctx))
-						id, outcome := s.sendRegularRequest(tc.resourceType, req)
-						read := s.pipCalls(req.classifyBy)
-						s.T().Logf("%s: pip-mock received %d call(s) to %s", subCase, read, req.classifyBy)
-						if read > 0 {
-							subCase += "-when-the-pip-was-read"
-						} else {
-							subCase += "-when-the-pip-was-skipped"
-						}
-						s.requirePendingGolden(id, subCase, outcome)
-						return
-					}
-					if req.pipCalls != "" {
-						s.runPIPCallRequest(subCase, tc.resourceType, req)
-						return
-					}
-					opts := req.callOptions()
-					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, valueOr(req.typ, tc.resourceType), req.filterOperation(), s.requestTokens(req), opts)
-						return
-					}
-					s.runPendingCheckResourceV1OutcomeCase(
-						subCase,
-						model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: valueOr(req.typ, tc.resourceType), Resource: req.resource},
-						s.requestTokens(req),
-						opts,
-					)
+			runRequests := func(requests []isolatedRequest) {
+				for _, req := range requests {
+					s.Run(req.name, func() {
+						s.runRequest("regular/"+tc.id+"/"+req.name, tc.resourceType, req)
+					})
+				}
+			}
+			runRequests(tc.requests)
+			for _, step := range tc.steps {
+				status, _, err := HelperPAPCall(ctx, s.cfg, m2m, step.call)
+				s.Require().NoError(err)
+				s.Run(step.name, func() {
+					s.requirePendingGolden(step.golden, "regular/"+tc.id+"/"+step.name, &model.PolicyLoadOutcome{Status: status})
 				})
+				runRequests(step.requests)
 			}
 		})
+	}
+}
+
+// sendCustomizationCleanup sends each of calls and logs a failed one rather
+// than failing the test: a delete of a customization that does not exist is
+// expected.
+func (s *ParitySuite) sendCustomizationCleanup(calls iter.Seq2[int, papCall]) {
+	ctx := context.Background()
+	m2m := s.mustM2MToken()
+	for _, call := range calls {
+		status, _, err := HelperPAPCall(ctx, s.cfg, m2m, call)
+		if err != nil {
+			s.T().Logf("%s %s: %v", call.method, call.path, err)
+		} else if status >= http.StatusInternalServerError {
+			s.T().Logf("%s %s: status %d", call.method, call.path, status)
+		}
 	}
 }
 

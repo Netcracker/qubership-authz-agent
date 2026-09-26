@@ -29,3 +29,20 @@ type FilterOutcome struct {
 	Status int                       `json:"status"`
 	Result OldFilterEvaluationResult `json:"result"`
 }
+
+// CheckResourceBulkOutcome is the golden shape of a check/resource/bulk
+// request that may be refused. Status is the HTTP status. Allowed holds the
+// ids of the allowed items, sorted, and is present only when Status is 200.
+type CheckResourceBulkOutcome struct {
+	Status  int       `json:"status"`
+	Allowed *[]string `json:"allowed,omitempty"`
+}
+
+// CheckResourceBulkOperationsOutcome is the golden shape of a
+// check/resource/bulk/operations request that may be refused. Status is the
+// HTTP status. Decision maps each operation to the ids of the items it is
+// allowed on, each list sorted, and is present only when Status is 200.
+type CheckResourceBulkOperationsOutcome struct {
+	Status   int                  `json:"status"`
+	Decision *map[string][]string `json:"decision,omitempty"`
+}

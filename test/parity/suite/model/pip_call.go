@@ -20,8 +20,14 @@ package model
 // fills from placeholders; the rest of the body is the subject id and filters.
 // Body carries the first body as text where it is not an object with a
 // requestAttributes key, so a null value is told from an absent key.
+//
+// Headers holds, for a request that names headers to record, each of those
+// headers of the first call by its lower-case name: null where the call did not
+// carry it, and a token or a tenant replaced by a label naming whose it is, so
+// that a golden holds no token.
 type PipCallOutcome struct {
-	Calls             int    `json:"calls"`
-	RequestAttributes any    `json:"requestAttributes"`
-	Body              string `json:"body,omitempty"`
+	Calls             int            `json:"calls"`
+	RequestAttributes any            `json:"requestAttributes"`
+	Body              string         `json:"body,omitempty"`
+	Headers           map[string]any `json:"headers,omitempty"`
 }

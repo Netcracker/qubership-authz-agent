@@ -145,6 +145,13 @@ func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation str
 	if operation != "" {
 		extra.Set("operation", operation)
 	}
+	return HelperFilterV1Query(ctx, cfg, extra, tokens, opts)
+}
+
+// HelperFilterV1Query is [HelperFilterV1] with the endpoint's own query
+// parameters given as they are sent, so that a parameter with an empty value,
+// such as operation=, is sent rather than left out.
+func HelperFilterV1Query(ctx context.Context, cfg Config, extra url.Values, tokens TokenBundle, opts PerCallOptions) (int, model.OldFilterEvaluationResult, []byte, error) {
 	target := buildURL(cfg.ACBaseURL, v1PathCheckFilter, buildQuery(cfg, opts, extra))
 	req, err := buildRequest(ctx, http.MethodPost, target, nil, tokens, opts)
 	if err != nil {
@@ -159,6 +166,18 @@ func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation str
 		return status, decoded, raw, err
 	}
 	return status, decoded, raw, nil
+}
+
+// HelperPostV1 posts body to path of access-control with the tenant, the
+// userId, and the headers of opts, and returns the status and the raw body
+// without decoding it, so that a caller can record a refused request and send
+// a body the typed helpers would reshape.
+func HelperPostV1(ctx context.Context, cfg Config, path string, body any, tokens TokenBundle, opts PerCallOptions) (int, []byte, error) {
+	req, err := buildRequest(ctx, http.MethodPost, buildURL(cfg.ACBaseURL, path, buildQuery(cfg, opts, nil)), body, tokens, opts)
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
 }
 
 // buildURL composes base + path + ?query defensively against trailing slashes.

@@ -21,7 +21,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 	"sort"
+	"time"
 
 	"authz-agent/test/parity/suite/model"
 )
@@ -325,33 +327,104 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 // with the endpoint its golden is filed under, as runRegularCases records it.
 func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedRequest) (ParityEndpointID, any) {
 	s.T().Helper()
+	return s.sendRequest(resourceType, req, s.requestTokens(req))
+}
+
+// sendRequest is sendRegularRequest with the tokens given. A bulk request
+// sends its items, whose type bulkItems already defaults to the case's.
+func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, tokens TokenBundle) (ParityEndpointID, any) {
+	s.T().Helper()
 	ctx := context.Background()
 	opts := req.callOptions()
-	if req.filter {
-		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, valueOr(req.typ, resourceType), req.filterOperation(), s.requestTokens(req), opts)
+	switch {
+	case req.bulk != nil:
+		status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResourceBulk, req.bulk, tokens, opts)
+		s.Require().NoError(err)
+		outcome := &model.CheckResourceBulkOutcome{Status: status}
+		if status == http.StatusOK {
+			allowed := []string{}
+			s.Require().NoError(decodeJSON(raw, &allowed), "decode the allowed ids of %s", raw)
+			sort.Strings(allowed)
+			outcome.Allowed = &allowed
+		}
+		return PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME, outcome
+	case req.bulkOperations != nil:
+		status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResourceBulkOperations, req.bulkOperations, tokens, opts)
+		s.Require().NoError(err)
+		outcome := &model.CheckResourceBulkOperationsOutcome{Status: status}
+		if status == http.StatusOK {
+			decision := map[string][]string{}
+			s.Require().NoError(decodeJSON(raw, &decision), "decode the allowed ids by operation of %s", raw)
+			for _, ids := range decision {
+				sort.Strings(ids)
+			}
+			outcome.Decision = &decision
+		}
+		return PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, outcome
+	case req.filter:
+		var status int
+		var decoded model.OldFilterEvaluationResult
+		var err error
+		if req.emptyOperation {
+			query := url.Values{"resourceType": {valueOr(req.typ, resourceType)}, "operation": {""}}
+			status, decoded, _, err = HelperFilterV1Query(ctx, s.cfg, query, tokens, opts)
+		} else {
+			status, decoded, _, err = HelperFilterV1(ctx, s.cfg, valueOr(req.typ, resourceType), req.filterOperation(), tokens, opts)
+		}
 		s.Require().NoError(err)
 		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded}
 	}
+	operation := valueOr(req.operation, "READ")
+	if req.emptyOperation {
+		operation = ""
+	}
 	status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
-		model.CheckAccessRequest{Operation: valueOr(req.operation, "READ"), Type: valueOr(req.typ, resourceType), Resource: req.resource},
-		s.requestTokens(req), opts)
+		model.CheckAccessRequest{Operation: operation, Type: valueOr(req.typ, resourceType), Resource: req.resource},
+		tokens, opts)
 	s.Require().NoError(err)
 	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision}
 }
 
-// runPIPCallRequest clears the pip-mock call log, sends req against
-// resourceType, and records what the route req.pipCalls received as the
-// pip-call golden subCase beside the request's own golden. The call log is read
-// before either golden is compared, since a golden not yet recorded skips the
-// rest of the subtest.
-func (s *ParitySuite) runPIPCallRequest(subCase, resourceType string, req isolatedRequest) {
+// runRequest sends req against resourceType and compares its outcome with the
+// golden subCase. With req.classifyBy the golden is filed under the order
+// class the call log of that route shows. With req.pipCalls what the route
+// received is recorded as the pip-call golden subCase beside the request's
+// own; the call log is read before either golden is compared, since a golden
+// not yet recorded skips the rest of the subtest. Either one clears the call
+// log before req.pause starts.
+func (s *ParitySuite) runRequest(subCase, resourceType string, req isolatedRequest) {
 	s.T().Helper()
-	s.Require().NoError(s.pipMock.ResetCalls(context.Background()))
-	id, outcome := s.sendRegularRequest(resourceType, req)
-	calls := s.pipCallOutcome(req.pipCalls)
-	s.Run("pip-calls", func() {
-		s.requirePendingGolden(PSUITE_PIP_CALL, subCase, calls)
-	})
+	ctx := context.Background()
+	if req.classifyBy != "" || req.pipCalls != "" {
+		s.Require().NoError(s.pipMock.ResetCalls(ctx))
+	}
+	time.Sleep(req.pause)
+	tokens := s.requestTokens(req)
+	id, outcome := s.sendRequest(resourceType, req, tokens)
+	switch {
+	case req.classifyBy != "":
+		read := s.pipCalls(req.classifyBy)
+		s.T().Logf("%s: pip-mock received %d call(s) to %s", subCase, read, req.classifyBy)
+		if read > 0 {
+			subCase += "-when-the-pip-was-read"
+		} else {
+			subCase += "-when-the-pip-was-skipped"
+		}
+	case req.pipCalls != "":
+		calls, err := s.pipMock.GetCalls(ctx)
+		s.Require().NoError(err, "read the pip-mock call log for %s", req.pipCalls)
+		pipCalls := s.pipCallOutcomeOf(calls, req.pipCalls)
+		if len(req.pipHeaders) > 0 {
+			tenant := s.cfg.TenantID
+			if req.tenantID != nil {
+				tenant = *req.tenantID
+			}
+			pipCalls.Headers = forwardedHeaders(calls, req.pipCalls, req.pipHeaders, tokens, tenant)
+		}
+		s.Run("pip-calls", func() {
+			s.requirePendingGolden(PSUITE_PIP_CALL, subCase, pipCalls)
+		})
+	}
 	s.requirePendingGolden(id, subCase, outcome)
 }
 

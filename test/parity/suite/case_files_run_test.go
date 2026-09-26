@@ -19,16 +19,20 @@ package paritysuite
 import (
 	"context"
 	"strings"
+	"time"
 )
 
-// runCaseFile pins the file's routes and runs its isolated cases, then its
-// regular cases, each in the file's order.
+// runCaseFile pins the file's routes and its entitlements answer, and runs its
+// isolated cases, then its regular cases, each in the file's order.
 func (s *ParitySuite) runCaseFile(name string) {
 	f, err := readCaseFile(name)
 	s.Require().NoError(err)
 	ctx := context.Background()
 	for route, response := range f.Pins {
 		s.Require().NoErrorf(s.pipMock.PinRoute(ctx, route, response), "pin %s for %s", route, name)
+	}
+	if f.Entitlements != nil {
+		s.Require().NoErrorf(s.eaMock.PinEntitlementsV3ForUser(ctx, parityReaderSubjectID, *f.Entitlements), "pin the entitlements of %s", name)
 	}
 	var isolated []isolatedCase
 	var regular []regularCase
@@ -40,19 +44,12 @@ func (s *ParitySuite) runCaseFile(name string) {
 			s.Require().Truef(ok, "case %s names the PIP %q, which %s does not declare", c.ID, key, name)
 			pips = append(pips, pip)
 		}
-		requests := make([]isolatedRequest, 0, len(c.Requests))
-		for _, r := range c.Requests {
-			requests = append(requests, isolatedRequest{
-				name: r.Name, operation: r.Operation, typ: r.Type, resource: withResourceType(r.Resource, rt),
-				headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m", classifyBy: r.ClassifyBy,
-				tenantID: r.TenantID, pipCalls: r.PIPCalls, user: r.user(),
-				userClaims: r.SubjectClaims,
-			})
-		}
+		requests := caseRequests(c.Requests, rt)
 		if len(c.Sets) == 0 {
 			isolated = append(isolated, isolatedCase{
 				id: c.ID, resourceType: rt, domain: c.Domain, operation: c.Operation, roles: c.Roles,
 				condition: resourceTypeReplacer(rt).Replace(c.Condition), pips: pips, requests: requests,
+				policyOmit: c.PolicyOmit, policy: c.Policy, policiesQuery: c.PoliciesQuery,
 			})
 			continue
 		}
@@ -62,10 +59,17 @@ func (s *ParitySuite) runCaseFile(name string) {
 		for _, set := range c.Sets {
 			sets = append(sets, buildSet(b, ruleIDs, set, rt))
 		}
+		steps := make([]regularStep, 0, len(c.Customize))
+		for _, st := range c.Customize {
+			call, golden := customizeStepCall(c.ID, c.RuleIDsOf, st, rt)
+			steps = append(steps, regularStep{name: st.Name, call: call, golden: golden, requests: caseRequests(st.Requests, rt)})
+		}
 		regular = append(regular, regularCase{
 			id: c.ID, resourceType: rt, pips: pips,
 			uploads:  []regularUpload{{externalID: "parity-" + c.ID, sets: sets}},
 			requests: requests,
+			steps:    steps,
+			cleanup:  customizationCleanup(c.ID, c.Customize, rt),
 		})
 	}
 	if len(isolated) > 0 {
@@ -78,9 +82,34 @@ func (s *ParitySuite) runCaseFile(name string) {
 	}
 }
 
+// caseRequests turns the requests of a case whose resource type is rt into the
+// form the runners send.
+func caseRequests(specs []requestSpec, rt string) []isolatedRequest {
+	requests := make([]isolatedRequest, 0, len(specs))
+	for _, r := range specs {
+		req := isolatedRequest{
+			name: r.Name, operation: r.Operation, typ: r.Type, resource: withResourceType(r.Resource, rt),
+			headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m", classifyBy: r.ClassifyBy,
+			tenantID: r.TenantID, pipCalls: r.PIPCalls, user: r.user(),
+			userClaims: r.SubjectClaims,
+			userID:     r.UserID, emptyOperation: r.EmptyOperation, pipHeaders: r.PIPHeaders,
+			pause: time.Duration(r.PauseMs) * time.Millisecond,
+		}
+		if r.Bulk != nil {
+			req.bulk = bulkItems(r.Bulk, rt)
+		}
+		if r.BulkOperations != nil {
+			req.bulkOperations = bulkItems(r.BulkOperations, rt)
+		}
+		requests = append(requests, req)
+	}
+	return requests
+}
+
 // buildSet turns set into the wire form regularBuilder writes, with the
 // resource type placeholders in every target and condition replaced. Rule ids
-// come from ruleIDs, and every other id from b.
+// come from ruleIDs, and every other id from b. The fields of a set, a
+// policy, and a rule are merged last, with mergeFields.
 func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any {
 	sub := resourceTypeReplacer(rt).Replace
 	policies := make([]any, 0, len(set.Policies))
@@ -92,9 +121,12 @@ func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any 
 			for field, predicate := range r.Predicates {
 				rule[field] = predicate
 			}
+			mergeFields(rule, r.Fields, rt)
 			rules = append(rules, rule)
 		}
-		policies = append(policies, b.policy(p.Key, sub(p.Target), p.Algorithm, rules...))
+		policy := b.policy(p.Key, sub(p.Target), p.Algorithm, rules...)
+		mergeFields(policy, p.Fields, rt)
+		policies = append(policies, policy)
 	}
 	var nested []any
 	for _, n := range set.Sets {
@@ -104,9 +136,13 @@ func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any 
 	if set.Status != "" {
 		out["status"] = set.Status
 	}
+	if set.OmitStatus {
+		delete(out, "status")
+	}
 	if set.Iterate != nil {
 		out["iterate"] = map[string]any{"foreach": set.Iterate.Foreach, "combiningAlgorithm": set.Iterate.Algorithm}
 	}
+	mergeFields(out, set.Fields, rt)
 	return out
 }
 

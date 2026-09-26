@@ -62,6 +62,18 @@ const (
 	// PSUITE_PAP_READ is a GET the suite sends to the PAP outside the v3
 	// export; the path is the case's.
 	PSUITE_PAP_READ
+	// PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME is row 3 recorded with its
+	// HTTP status, for requests access-control may refuse.
+	PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME
+	// PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME is row 4 recorded
+	// with its HTTP status.
+	PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME
+	// PSUITE_IMPORT_PIP_CUSTOMIZATION is the PAP import of PIP customizations
+	// at one level.
+	PSUITE_IMPORT_PIP_CUSTOMIZATION
+	// PSUITE_DELETE_CUSTOMIZATION is the PAP delete of the customization of
+	// one policy set at one level.
+	PSUITE_DELETE_CUSTOMIZATION
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -166,6 +178,24 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_PAP_READ, Name: "pap-read", HTTPMethod: "GET",
 		PathTmpl: "/access/v1", GoldenDir: "pap-read",
 	},
+	PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME: {
+		ID: PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME, Name: "check-resource-bulk-v1-outcome", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/check/resource/bulk", GoldenDir: "check-resource-bulk-v1-outcome",
+		SortSlices: true,
+	},
+	PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME: {
+		ID: PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, Name: "check-resource-bulk-operations-v1-outcome", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/check/resource/bulk/operations", GoldenDir: "check-resource-bulk-operations-v1-outcome",
+		SortSlices: true,
+	},
+	PSUITE_IMPORT_PIP_CUSTOMIZATION: {
+		ID: PSUITE_IMPORT_PIP_CUSTOMIZATION, Name: "import-pip-customization-v1", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/pip/customization/import", GoldenDir: "import-pip-customization-v1",
+	},
+	PSUITE_DELETE_CUSTOMIZATION: {
+		ID: PSUITE_DELETE_CUSTOMIZATION, Name: "delete-customization-v1", HTTPMethod: "DELETE",
+		PathTmpl: "/access/v1/config/customization/policySet/{policySetId}", GoldenDir: "delete-customization-v1",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -205,7 +235,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.CheckResourcesResponse{}
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
-	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS, PSUITE_IMPORT_CUSTOMIZATION:
+	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS, PSUITE_IMPORT_CUSTOMIZATION,
+		PSUITE_IMPORT_PIP_CUSTOMIZATION, PSUITE_DELETE_CUSTOMIZATION:
 		return &model.PolicyLoadOutcome{}
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
 		return &model.CheckResourceOutcome{}
@@ -217,6 +248,10 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.PipCallOutcome{}
 	case PSUITE_PAP_READ:
 		return &model.PapReadOutcome{}
+	case PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME:
+		return &model.CheckResourceBulkOutcome{}
+	case PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME:
+		return &model.CheckResourceBulkOperationsOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }

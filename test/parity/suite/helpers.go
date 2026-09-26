@@ -42,10 +42,12 @@ var prohibitedHeaders = map[string]struct{}{
 }
 
 // PerCallOptions carries the optional query/header parameters a wire helper
-// supports. userID maps to D-V item 7 (the on-behalf-of userId query param);
-// customHeaders maps to the thin client's filterHeaders pathway.
+// supports. CustomHeaders maps to the thin client's filterHeaders pathway.
 type PerCallOptions struct {
-	UserID        string
+	// UserID is the userId query parameter, which asks for the decision on
+	// behalf of that user. It is sent when non-nil, and a pointer to "" sends
+	// userId with an empty value.
+	UserID        *string
 	CustomHeaders map[string]string
 
 	// TenantID replaces Config.TenantID in the tenant_id query parameter when
@@ -74,8 +76,8 @@ func buildQuery(cfg Config, opts PerCallOptions, extra url.Values) string {
 	default:
 		v.Set("tenant_id", cfg.TenantID)
 	}
-	if opts.UserID != "" {
-		v.Set("userId", opts.UserID)
+	if opts.UserID != nil {
+		v.Set("userId", *opts.UserID)
 	}
 	for key, values := range extra {
 		for _, value := range values {

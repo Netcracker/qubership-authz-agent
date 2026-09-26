@@ -81,3 +81,27 @@ func HelperGetPAP(ctx context.Context, cfg Config, m2mToken, path string, query 
 	}
 	return doRequest(req)
 }
+
+// papCall is one request to the PAP. The query holds every parameter but
+// tenant_id, which [HelperPAPCall] adds, and a nil body sends no body.
+type papCall struct {
+	method string
+	path   string
+	query  url.Values
+	body   any
+}
+
+// HelperPAPCall sends call to the PAP with the suite's M2M token and the tenant
+// of cfg, and returns the status and the body instead of failing on a non-2xx
+// status.
+func HelperPAPCall(ctx context.Context, cfg Config, m2mToken string, call papCall) (int, []byte, error) {
+	values := url.Values{"tenant_id": []string{cfg.TenantID}}
+	for key, list := range call.query {
+		values[key] = list
+	}
+	req, err := buildRequest(ctx, call.method, buildURL(cfg.ACBaseURL, call.path, values.Encode()), call.body, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
