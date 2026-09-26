@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_OP_IN_ONE.a.in(\"x\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$nin\": [ \"x\" ] } } }",
+    "rsqlFilterCondition": "a=out=(x)",
+    "sqlFilterCondition": "NOT (a IN ('x'))",
+    "customFilterCondition": null
+  }
+}
