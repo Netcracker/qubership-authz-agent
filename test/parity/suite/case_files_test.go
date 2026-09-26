@@ -111,8 +111,16 @@ type requestSpec struct {
 	Resource  any               `json:"resource"`
 	Headers   map[string]string `json:"headers"`
 	Filter    bool              `json:"filter"`
-	// Subject "m2m" sends the M2M token alone; empty sends parity-reader.
+	// Subject "m2m" sends the M2M token alone; "user:<username>" sends the
+	// token of that user of the parity realm beside the M2M token; empty sends
+	// parity-reader.
 	Subject string `json:"subject"`
+	// SubjectClaims holds claim values the token of a "user:" subject must
+	// carry, such as sub and preferred_username. The suite decodes the token and
+	// fails before sending the request when a claim is missing or differs, so a
+	// stand whose realm lacks the user, or gives it other values, records
+	// nothing.
+	SubjectClaims map[string]string `json:"subjectClaims"`
 	// ClassifyBy names a pip-mock route. The request's golden is then recorded
 	// under <name>-when-the-pip-was-read when the route received a call while
 	// the request ran, and under <name>-when-the-pip-was-skipped when it did
@@ -178,7 +186,8 @@ func withResourceType(v any, rt string) any {
 // runCaseFile does, so that a misspelled field, a PIP a case names and its file
 // does not declare, an id two cases share, a classifyBy on an isolated case or
 // on a route the file does not pin, a pipCalls on a route the file does not pin
-// or beside classifyBy, roles or domain on a case with sets, or a ruleIdsOf
+// or beside classifyBy, a subject other than m2m or user:<username>,
+// subjectClaims without a user: subject, roles or domain on a case with sets, or a ruleIdsOf
 // that names no earlier case with sets of the file fails here rather than on a
 // stand spent recording it. Case ids are golden paths, so they are unique
 // across files as well as within one.
@@ -222,6 +231,12 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 				t.Errorf("%s: case %s sends no request", name, c.ID)
 			}
 			for _, r := range c.Requests {
+				if r.Subject != "" && r.Subject != "m2m" && (!strings.HasPrefix(r.Subject, "user:") || r.Subject == "user:") {
+					t.Errorf("%s: case %s request %s names the subject %q, which is neither m2m nor user:<username>", name, c.ID, r.Name, r.Subject)
+				}
+				if len(r.SubjectClaims) > 0 && !strings.HasPrefix(r.Subject, "user:") {
+					t.Errorf("%s: case %s request %s sets subjectClaims without a user: subject", name, c.ID, r.Name)
+				}
 				if r.PIPCalls != "" {
 					if _, ok := f.Pins[r.PIPCalls]; !ok {
 						t.Errorf("%s: case %s request %s records the calls to %s, which the file does not pin", name, c.ID, r.Name, r.PIPCalls)

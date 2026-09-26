@@ -320,15 +320,15 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 	}
 }
 
-// sendRegularRequest sends req against resourceType as parity-reader, or with
-// the M2M token alone for an m2mOnly request, and returns the outcome with the
-// endpoint its golden is filed under, as runRegularCases records it.
+// sendRegularRequest sends req against its own type, or resourceType when it
+// names none, with the tokens requestTokens gives it, and returns the outcome
+// with the endpoint its golden is filed under, as runRegularCases records it.
 func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedRequest) (ParityEndpointID, any) {
 	s.T().Helper()
 	ctx := context.Background()
 	opts := req.callOptions()
 	if req.filter {
-		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, resourceType, req.filterOperation(), s.requestTokens(req), opts)
+		status, decoded, _, err := HelperFilterV1(ctx, s.cfg, valueOr(req.typ, resourceType), req.filterOperation(), s.requestTokens(req), opts)
 		s.Require().NoError(err)
 		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded}
 	}

@@ -194,7 +194,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 					}
 					opts := req.callOptions()
 					if req.filter {
-						s.runPendingFilterV1OutcomeCase(subCase, tc.resourceType, req.filterOperation(), s.requestTokens(req), opts)
+						s.runPendingFilterV1OutcomeCase(subCase, valueOr(req.typ, tc.resourceType), req.filterOperation(), s.requestTokens(req), opts)
 						return
 					}
 					s.runPendingCheckResourceV1OutcomeCase(

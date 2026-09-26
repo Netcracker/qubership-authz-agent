@@ -276,6 +276,9 @@ Optional fields change one part of the upload or the request; without them a cas
 | `ruleIdsOf` | A case with `sets` | The id of an earlier case with `sets` in the same file. Rule ids are derived from that case's id, so a rule whose key an earlier rule also has uploads with that rule's id; set and policy ids stay the case's own |
 | `status` | A set | The set's status instead of `ACTIVE`, such as `INACTIVE` |
 | `tenantId` | A request | The value of the `tenant_id` query parameter instead of the stand's tenant; `""` sends the parameter with an empty value |
+| `type` | A request | The resource type the request asks for instead of the case's, in a check and in a filter request |
+| `subject` | A request | `m2m` sends the M2M token alone. `user:<username>` sends the token of that user of the parity realm, which logs in with the suite's end-user client and `PARITY_END_USER_PASSWORD`, beside the M2M token. Without it the request is parity-reader's |
+| `subjectClaims` | A request with a `user:` subject | Claim values, such as `sub` and `preferred_username`, that the user's token must carry. The suite decodes the token and fails before sending the request when a claim is missing or differs |
 | `pipCalls` | A request | A route the file pins. The pip-mock call log is cleared before the request, and what the route received while the request ran is recorded under `pip-call/<kind>/<case>/<request>` beside the request's own golden |
 
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
@@ -295,7 +298,8 @@ request, so both names of a request take runs on several stands. A filter reques
 
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
 file does not declare, a case id two cases share, a `classifyBy` on a case without `sets` or on a route the file does
-not pin, a `pipCalls` on a route the file does not pin or beside `classifyBy`, `roles` or `domain` on a case with `sets`,
+not pin, a `pipCalls` on a route the file does not pin or beside `classifyBy`, a `subject` other than `m2m` or
+`user:<username>`, `subjectClaims` without a `user:` subject, `roles` or `domain` on a case with `sets`,
 a `ruleIdsOf` that names no earlier case with `sets` of the file, and a round 19 or later file whose case with `sets`
 drops a PIP name: run `go test -run TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.
 

@@ -45,7 +45,8 @@ func (s *ParitySuite) runCaseFile(name string) {
 			requests = append(requests, isolatedRequest{
 				name: r.Name, operation: r.Operation, typ: r.Type, resource: withResourceType(r.Resource, rt),
 				headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m", classifyBy: r.ClassifyBy,
-				tenantID: r.TenantID, pipCalls: r.PIPCalls,
+				tenantID: r.TenantID, pipCalls: r.PIPCalls, user: r.user(),
+				userClaims: r.SubjectClaims,
 			})
 		}
 		if len(c.Sets) == 0 {
@@ -107,4 +108,12 @@ func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any 
 		out["iterate"] = map[string]any{"foreach": set.Iterate.Foreach, "combiningAlgorithm": set.Iterate.Algorithm}
 	}
 	return out
+}
+
+// user returns the username of a "user:" subject, and "" for any other.
+func (r requestSpec) user() string {
+	if name, ok := strings.CutPrefix(r.Subject, "user:"); ok {
+		return name
+	}
+	return ""
 }

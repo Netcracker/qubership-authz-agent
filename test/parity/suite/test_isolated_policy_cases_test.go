@@ -74,6 +74,12 @@ type isolatedRequest struct {
 	// pipCalls is the pip-mock route whose calls during the request are
 	// recorded as a pip-call golden; see requestSpec.PIPCalls.
 	pipCalls string
+	// user names the parity realm user whose token the request carries in
+	// place of parity-reader's, when not empty; see requestSpec.Subject.
+	user string
+	// userClaims holds the claim values user's token must carry; see
+	// requestSpec.SubjectClaims.
+	userClaims map[string]string
 }
 
 // callOptions returns the per-call options req is sent with: its headers and
@@ -82,13 +88,24 @@ func (r isolatedRequest) callOptions() PerCallOptions {
 	return PerCallOptions{CustomHeaders: r.headers, TenantID: r.tenantID}
 }
 
-// requestTokens returns the tokens req is sent with: parity-reader's bundle, or the
-// M2M token alone for an m2mOnly request.
+// requestTokens returns the tokens req is sent with: parity-reader's bundle,
+// the M2M token alone for an m2mOnly request, or the bundle of req.user. The
+// token of req.user must carry req.userClaims, or the test fails before the
+// request is sent.
 func (s *ParitySuite) requestTokens(req isolatedRequest) TokenBundle {
 	if req.m2mOnly {
 		return TokenBundle{M2M: s.mustM2MToken()}
 	}
-	return s.mustTokenBundle(UserProfileReader)
+	if req.user == "" {
+		return s.mustTokenBundle(UserProfileReader)
+	}
+	token, err := s.tokens.EndUserTokenFor(req.user)
+	s.Require().NoError(err, "token of the parity realm user %q", req.user)
+	claims := s.decodeJWTClaims(token, req.user)
+	for name, want := range req.userClaims {
+		s.Require().Equal(want, claims[name], "claim %s in the token of %q", name, req.user)
+	}
+	return TokenBundle{M2M: s.mustM2MToken(), EndUser: token}
 }
 
 // parityNoHeaderPIP is a HEADER PIP with no defaultValue, a declaration no seeded
