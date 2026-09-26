@@ -1,0 +1,478 @@
+{
+ "about": "The comparisons no golden reached after round 26: a selection holding null under CONTAINS ANY, bare null (the attribute resource.null, absent here) on the right of >= and NOT CONTAINS ANY beside an index past the end, and an object on the left of NOT CONTAINS ANY beside a GENERAL PIP that answers 404. Each comparison is `<comparison> OR resource.a == 'y'` in an ALLOW rule and in a DENY rule under PERMIT_UNLESS_DENY, asked with resource.a 'n' and 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R27Z_",
+ "pins": {
+  "/api/v1/pip/r27-failing": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 27 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR27Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r27-failing",
+   "requestAttributes": {
+    "case": "r27-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "z27-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-selection-holding-null-contains-any-in-an-allow-rule",
+   "about": "resource.items is [{\"x\": null}]. The condition is `resource.items[*].x CONTAINS ANY 'v' OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.items[*].x CONTAINS ANY 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-selection-holding-null-contains-any-in-a-deny-rule",
+   "about": "resource.items is [{\"x\": null}]. The condition is `resource.items[*].x CONTAINS ANY 'v' OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x CONTAINS ANY 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-index-past-the-end-at-least-null-in-an-allow-rule",
+   "about": "resource.items is empty, and resource has no key null. The condition is `resource.items[0].x >= null OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.items[0].x >= null OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-index-past-the-end-at-least-null-in-a-deny-rule",
+   "about": "resource.items is empty, and resource has no key null. The condition is `resource.items[0].x >= null OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x >= null OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-index-past-the-end-not-contains-any-null-in-an-allow-rule",
+   "about": "resource.items is empty, and resource has no key null. The condition is `resource.items[0].x NOT CONTAINS ANY null OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY null OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-index-past-the-end-not-contains-any-null-in-a-deny-rule",
+   "about": "resource.items is empty, and resource has no key null. The condition is `resource.items[0].x NOT CONTAINS ANY null OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY null OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-object-not-contains-any-failing-pip-in-an-allow-rule",
+   "about": "resource.x is {\"k\": \"v\"}; subject.parityR27Failing answers 404. The condition is `resource.x NOT CONTAINS ANY subject.parityR27Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY subject.parityR27Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": {
+       "k": "v"
+      },
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": {
+       "k": "v"
+      },
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-object-not-contains-any-failing-pip-in-a-deny-rule",
+   "about": "resource.x is {\"k\": \"v\"}; subject.parityR27Failing answers 404. The condition is `resource.x NOT CONTAINS ANY subject.parityR27Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY subject.parityR27Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": {
+       "k": "v"
+      },
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": {
+       "k": "v"
+      },
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z27-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r27"
+     }
+    }
+   ]
+  }
+ ]
+}
