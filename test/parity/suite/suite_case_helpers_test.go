@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/url"
 	"sort"
 	"time"
 
@@ -324,7 +323,7 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 
 // sendRegularRequest sends req against its own type, or resourceType when it
 // names none, with the tokens requestTokens gives it, and returns the outcome
-// with the endpoint its golden is filed under, as runRegularCases records it.
+// with the endpoint its golden is filed under.
 func (s *ParitySuite) sendRegularRequest(resourceType string, req isolatedRequest) (ParityEndpointID, any) {
 	s.T().Helper()
 	return s.sendRequest(resourceType, req, s.requestTokens(req))
@@ -362,24 +361,13 @@ func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, toke
 		}
 		return PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, outcome
 	case req.filter:
-		var status int
-		var decoded model.OldFilterEvaluationResult
-		var err error
-		if req.emptyOperation {
-			query := url.Values{"resourceType": {valueOr(req.typ, resourceType)}, "operation": {""}}
-			status, decoded, _, err = HelperFilterV1Query(ctx, s.cfg, query, tokens, opts)
-		} else {
-			status, decoded, _, err = HelperFilterV1(ctx, s.cfg, valueOr(req.typ, resourceType), req.filterOperation(), tokens, opts)
-		}
+		query := filterV1Query(valueOr(req.typ, resourceType), req.filterOperation(), req.emptyOperation)
+		status, decoded, _, err := HelperFilterV1Query(ctx, s.cfg, query, tokens, opts)
 		s.Require().NoError(err)
 		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded}
 	}
-	operation := valueOr(req.operation, "READ")
-	if req.emptyOperation {
-		operation = ""
-	}
 	status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
-		model.CheckAccessRequest{Operation: operation, Type: valueOr(req.typ, resourceType), Resource: req.resource},
+		model.CheckAccessRequest{Operation: checkOperation(req.operation, req.emptyOperation), Type: valueOr(req.typ, resourceType), Resource: req.resource},
 		tokens, opts)
 	s.Require().NoError(err)
 	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision}
@@ -419,7 +407,7 @@ func (s *ParitySuite) runRequest(subCase, resourceType string, req isolatedReque
 			if req.tenantID != nil {
 				tenant = *req.tenantID
 			}
-			pipCalls.Headers = forwardedHeaders(calls, req.pipCalls, req.pipHeaders, tokens, tenant)
+			pipCalls.Headers = forwardedHeaders(calls, req.pipCalls, req.pipHeaders, sentHeaders(tokens, req.callOptions()), tenant)
 		}
 		s.Run("pip-calls", func() {
 			s.requirePendingGolden(PSUITE_PIP_CALL, subCase, pipCalls)

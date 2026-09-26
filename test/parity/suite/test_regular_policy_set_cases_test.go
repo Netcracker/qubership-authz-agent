@@ -67,61 +67,6 @@ type regularUpload struct {
 	sets       []any
 }
 
-// regularBuilder builds the policy set, policy, and rule objects of one case. Every
-// id is derived from the case id and the element's path, so a rerun uploads the
-// same ids and replaces its own sets, and two cases share no id unless a case
-// file takes one case's rule ids from another with ruleIdsOf.
-type regularBuilder struct{ caseID string }
-
-func (b regularBuilder) id(path string) string { return derivedID(b.caseID, path) }
-
-// set builds a policy set; an empty algorithm leaves combiningAlgorithm out.
-func (b regularBuilder) set(key, target, algorithm string, policies []any, nested []any) map[string]any {
-	set := map[string]any{
-		"policySetId": b.id("set/" + key),
-		"name":        b.caseID + " " + key,
-		"status":      "ACTIVE",
-		"target":      target,
-		"policies":    policies,
-		"policySets":  emptyIfNil(nested),
-	}
-	if algorithm != "" {
-		set["combiningAlgorithm"] = algorithm
-	}
-	return set
-}
-
-// policy builds a policy; an empty algorithm leaves combiningAlgorithm out. A
-// policy with no rules uploads an empty list rather than null, so that a case about
-// an empty rule list is about that and not about the JSON form.
-func (b regularBuilder) policy(key, target, algorithm string, rules ...any) map[string]any {
-	policy := map[string]any{
-		"policyId": b.id("policy/" + key),
-		"name":     b.caseID + " " + key,
-		"target":   target,
-		"rules":    emptyIfNil(rules),
-	}
-	if algorithm != "" {
-		policy["combiningAlgorithm"] = algorithm
-	}
-	return policy
-}
-
-// rule builds a rule with the given predicates, keyed by their field names.
-func (b regularBuilder) rule(key, target, condition, effect string, predicates map[string]string) map[string]any {
-	rule := map[string]any{
-		"ruleId":    b.id("rule/" + key),
-		"name":      b.caseID + " " + key,
-		"target":    target,
-		"condition": condition,
-		"effect":    effect,
-	}
-	for field, predicate := range predicates {
-		rule[field] = predicate
-	}
-	return rule
-}
-
 func regularResourceType(caseID string) string {
 	return "PARITY_SUITE_REG_" + strings.ToUpper(strings.ReplaceAll(caseID, "-", "_"))
 }
@@ -210,9 +155,10 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 	}
 }
 
-// sendCustomizationCleanup sends each of calls and logs a failed one rather
-// than failing the test: a delete of a customization that does not exist is
-// expected.
+// sendCustomizationCleanup sends each of calls and never fails the test. It
+// logs a call that could not be sent or that the PAP answered with 5xx. A 4xx
+// answer is not logged: before the upload the customization usually does not
+// exist, and a refused delete of it is expected.
 func (s *ParitySuite) sendCustomizationCleanup(calls iter.Seq2[int, papCall]) {
 	ctx := context.Background()
 	m2m := s.mustM2MToken()

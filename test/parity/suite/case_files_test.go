@@ -16,6 +16,7 @@ package paritysuite
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -105,7 +106,7 @@ type caseSpec struct {
 // with no golden, the customization of every set that a step's Sets names at
 // its top level and of every PIP that a step's PIPs names. It deletes each at
 // the level of the step, or at both PROJECT and CUSTOMER where the step names
-// another level or none, so that a customization an earlier run left behind
+// another level or sets OmitLevel, so that a customization an earlier run left behind
 // does not reach the goldens.
 type customizeStep struct {
 	Name string `json:"name"`
@@ -125,8 +126,9 @@ type customizeStep struct {
 	// JSON null included, in place of the list Sets builds. The cleanup does not
 	// read it.
 	Body json.RawMessage `json:"body"`
-	// PIPs holds PIP customization entries as the PAP reads them. Each names
-	// the PIP it customizes in name.
+	// PIPs holds PIP customization entries in the form the PAP reads, sent
+	// with the resource type placeholders replaced. Each names the PIP it
+	// customizes in name.
 	PIPs []any `json:"pips"`
 	// Delete deletes the customization of the set with key Delete.Key.
 	Delete   *customizeDelete `json:"delete"`
@@ -280,18 +282,18 @@ func withResourceType(v any, rt string) any {
 }
 
 // derivedID derives the id of the object at path, such as set/outer or
-// rule/allow, of the case caseID. A rerun derives the same id, so an upload
+// rule/allow, of the case caseID: the first 16 bytes of the SHA-256 of
+// caseID/path, grouped as a UUID is. A rerun derives the same id, so an upload
 // replaces what the last run of the case uploaded.
 func derivedID(caseID, path string) string {
 	sum := sha256.Sum256([]byte(caseID + "/" + path))
 	return fmt.Sprintf("%x-%x-%x-%x-%x", sum[0:4], sum[4:6], sum[6:8], sum[8:10], sum[10:16])
 }
 
-// mergeFields merges fields into object, the wire form of a set, a policy,
-// a rule, or a simplified policy, with the resource type placeholders of rt
-// replaced in its strings. A member fields sets to null stays in object as
-// null. The runner merges fields last, so a member it names replaces the one
-// the runner derived.
+// mergeFields sets each member of fields in object, the wire form of a set, a
+// policy, a rule, or a simplified policy, with the resource type placeholders
+// of rt replaced in its strings. A member already in object is replaced, and
+// a member fields sets to null is set to null rather than removed.
 func mergeFields(object, fields map[string]any, rt string) {
 	for name, value := range fields {
 		object[name] = withResourceType(value, rt)
@@ -446,6 +448,18 @@ func customizeStepCall(caseID, ruleIDsOf string, st customizeStep, rt string) (p
 		PSUITE_IMPORT_CUSTOMIZATION
 }
 
+// checkOperation returns the operation of a check request: operation, READ
+// when operation is empty, and "" when emptyOperation is set.
+func checkOperation(operation string, emptyOperation bool) string {
+	switch {
+	case emptyOperation:
+		return ""
+	case operation == "":
+		return "READ"
+	}
+	return operation
+}
+
 // bulkItems returns the body of a bulk request of a case whose resource type
 // is rt: each item as written, with the resource type placeholders replaced,
 // and with type rt where the item names none.
@@ -462,14 +476,32 @@ func bulkItems(items []any, rt string) []any {
 	return out
 }
 
+// sentHeaders returns the headers a request sent with tokens and opts
+// carries, keyed by lower-case name, as buildRequest sets them: the tokens,
+// then the headers of opts that the thin client passes through, which replace
+// a token header of the same name.
+func sentHeaders(tokens TokenBundle, opts PerCallOptions) map[string]string {
+	req, err := buildRequest(context.Background(), http.MethodPost, "http://parity.invalid/", nil, tokens, opts)
+	if err != nil {
+		panic(err) // the fixed URL always parses
+	}
+	out := make(map[string]string, len(req.Header))
+	for name, values := range req.Header {
+		out[strings.ToLower(name)] = strings.Join(values, ",")
+	}
+	return out
+}
+
 // forwardedHeaders returns the headers named in names that the first call to
 // route in calls carried, keyed by lower-case name, as a pip-call golden
-// records them. A header the call did not carry is null. A value equal to a
-// token of tokens, with or without Bearer, is the label <m2m token> or <user
-// token>; any other authorization value is <other token>; a tenant value is
-// <tenant_id> when it equals tenant, the request's tenant_id, and <other>
-// otherwise. Any other value is recorded as it is.
-func forwardedHeaders(calls []PipStubCall, route string, names []string, tokens TokenBundle, tenant string) map[string]any {
+// records them. sent holds the headers of the request that caused the call,
+// as sentHeaders returns them, and tenant its tenant_id. A header the call did
+// not carry is null. A value equal to the request's Authorization or
+// Incoming-Token, either one with or without Bearer, is the label <m2m token>
+// or <user token>; any other authorization value is <other token>; a tenant
+// value is <tenant_id> when it equals tenant and <other> otherwise. Any other
+// value is recorded as it is.
+func forwardedHeaders(calls []PipStubCall, route string, names []string, sent map[string]string, tenant string) map[string]any {
 	var first *PipStubCall
 	for i := range calls {
 		if calls[i].Path == route {
@@ -487,9 +519,9 @@ func forwardedHeaders(calls []PipStubCall, route string, names []string, tokens 
 		switch {
 		case !carried:
 			out[name] = nil
-		case tokens.M2M != "" && withoutBearer(value) == tokens.M2M:
+		case sent["authorization"] != "" && withoutBearer(value) == withoutBearer(sent["authorization"]):
 			out[name] = "<m2m token>"
-		case tokens.EndUser != "" && withoutBearer(value) == tokens.EndUser:
+		case sent["incoming-token"] != "" && withoutBearer(value) == withoutBearer(sent["incoming-token"]):
 			out[name] = "<user token>"
 		case name == "authorization":
 			out[name] = "<other token>"
@@ -554,8 +586,9 @@ func TestCaseFilesAreWellFormed(t *testing.T) {
 // the kind of case or request does not read, two fields that contradict each
 // other or of which the runner sends only one, a route f does not pin, and two
 // requests or steps of a case that would record the same golden. The field
-// comments of caseFile say where each field applies. Case ids unique across
-// files are checked by TestCaseFilesAreWellFormed.
+// comments of caseSpec, setSpec, requestSpec, and customizeStep say where each
+// field applies. TestCaseFilesAreWellFormed checks that case ids are unique
+// across files.
 func caseFileProblems(f caseFile) []string {
 	var problems []string
 	report := func(format string, args ...any) { problems = append(problems, fmt.Sprintf(format, args...)) }
@@ -667,8 +700,11 @@ func stepProblems(caseID string, st customizeStep) []string {
 
 // customEntryProblems returns the problems of e, a customization entry of
 // kind set, policy, or rule, and of its children: an object entry has a key,
-// predicates is an object, and iterate is an object with foreach and algorithm.
-// An entry that is not an object is sent as written and has none.
+// predicates is an object, iterate is an object with foreach and algorithm,
+// and no two members write the same member of the wire form, such as
+// algorithm beside combiningAlgorithm, since customEntry would then keep
+// whichever it wrote last. An entry that is not an object is sent as written
+// and has none.
 func customEntryProblems(kind string, e any) []string {
 	entry, ok := e.(map[string]any)
 	if !ok {
@@ -689,6 +725,29 @@ func customEntryProblems(kind string, e any) []string {
 		_, algorithm := it["algorithm"]
 		if !ok || !foreach || !algorithm {
 			problems = append(problems, fmt.Sprintf("has a %s entry whose iterate is not an object with foreach and algorithm", kind))
+		}
+	}
+	writers := map[string][]string{}
+	for name, value := range entry {
+		switch name {
+		case "key":
+		case "algorithm":
+			writers["combiningAlgorithm"] = append(writers["combiningAlgorithm"], name)
+		case "sets":
+			writers["policySets"] = append(writers["policySets"], name)
+		case "predicates":
+			predicates, _ := value.(map[string]any)
+			for field := range predicates {
+				writers[field] = append(writers[field], "predicates."+field)
+			}
+		default:
+			writers[name] = append(writers[name], name)
+		}
+	}
+	for wire, names := range writers {
+		if len(names) > 1 {
+			slices.Sort(names)
+			problems = append(problems, fmt.Sprintf("has a %s entry whose members %s write the same member %s", kind, strings.Join(names, " and "), wire))
 		}
 	}
 	for member, child := range customChildren {

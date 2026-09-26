@@ -15,18 +15,25 @@
 package paritysuite
 
 import (
+	"context"
 	"encoding/json"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
+	"time"
+
+	"authz-agent/test/parity/suite/model"
 
 	"github.com/google/go-cmp/cmp"
 )
 
-// The expected ids and wire forms below were produced by the executable
-// specification that replays the case files without a stand, so a runner that
-// builds another request from the same case fails here.
+// The expected ids in these tests are the derivation derivedID documents,
+// computed outside Go, and the expected wire forms follow the rules the README
+// states under "Cases kept as data"; neither is output of the code under test.
 
 func stringOf(v string) *string { return &v }
 
@@ -180,7 +187,7 @@ func TestMergeFields_ReplacesAddsAndNullsMembers(t *testing.T) {
 // Only the first call on the route counts, and a header value is replaced by
 // a label wherever it would put a token or the tenant into a golden.
 func TestForwardedHeaders(t *testing.T) {
-	tokens := TokenBundle{M2M: "m2m-token", EndUser: "user-token"}
+	sent := map[string]string{"authorization": "Bearer m2m-token", "incoming-token": "Bearer user-token"}
 	calls := []PipStubCall{
 		{Path: "/other", Headers: map[string]string{"x-a": "from another route"}},
 		{Path: "/pip", Headers: map[string]string{
@@ -193,7 +200,7 @@ func TestForwardedHeaders(t *testing.T) {
 		}},
 		{Path: "/pip", Headers: map[string]string{"x-b": "from the second call"}},
 	}
-	got := forwardedHeaders(calls, "/pip", []string{"X-A", "x-b", "authorization", "incoming-token", "x-copy", "tenant"}, tokens, "default")
+	got := forwardedHeaders(calls, "/pip", []string{"X-A", "x-b", "authorization", "incoming-token", "x-copy", "tenant"}, sent, "default")
 	want := map[string]any{
 		"x-a":            "va",
 		"x-b":            nil,
@@ -209,7 +216,7 @@ func TestForwardedHeaders(t *testing.T) {
 
 func TestForwardedHeaders_LabelsAnotherTokenAndAnotherTenant(t *testing.T) {
 	calls := []PipStubCall{{Path: "/pip", Headers: map[string]string{"authorization": "Bearer elsewhere", "tenant": "tenant-b"}}}
-	got := forwardedHeaders(calls, "/pip", []string{"authorization", "tenant"}, TokenBundle{M2M: "m2m-token"}, "default")
+	got := forwardedHeaders(calls, "/pip", []string{"authorization", "tenant"}, map[string]string{"authorization": "Bearer m2m-token"}, "default")
 	want := map[string]any{"authorization": "<other token>", "tenant": "<other>"}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("forwardedHeaders mismatch (-want +got):\n%s", diff)
@@ -280,6 +287,33 @@ func TestCaseFileProblems(t *testing.T) {
 		}, "sets filter, resource, operation, type, emptyOperation, or classifyBy beside a bulk request"},
 		{"a bulk item that is not an object", func(f *caseFile) { f.Cases[0].Requests[0].Bulk = []any{"a"} },
 			"case iso request read has the bulk item a, which is not an object"},
+		{"policyOmit on a case with sets", func(f *caseFile) { f.Cases[1].PolicyOmit = []string{"roles"} },
+			"case reg sets roles, domain, policyOmit, policy, or policiesQuery"},
+		{"policiesQuery on a case with sets", func(f *caseFile) { f.Cases[1].PoliciesQuery = "a=b" },
+			"case reg sets roles, domain, policyOmit, policy, or policiesQuery"},
+		{"a delete without a key", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].Delete = &customizeDelete{}
+		}, "case reg step step deletes the customization of a set with no key"},
+		{"a step with no name", func(f *caseFile) { f.Cases[1].Customize[0].Name = "" },
+			`case reg has a customize step named ""`},
+		{"a bulkOperations item that is not an object", func(f *caseFile) { f.Cases[0].Requests[0].BulkOperations = []any{"a"} },
+			"case iso request read has the bulk item a, which is not an object"},
+		{"emptyOperation beside bulk", func(f *caseFile) {
+			f.Cases[0].Requests[0].Bulk = []any{}
+			f.Cases[0].Requests[0].EmptyOperation = true
+		}, "beside a bulk request"},
+		{"predicates that are not an object", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer", "predicates": "a==b"}}
+		}, "has a set entry whose predicates is not an object"},
+		{"algorithm beside combiningAlgorithm", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer", "algorithm": "A", "combiningAlgorithm": "B"}}
+		}, "has a set entry whose members algorithm and combiningAlgorithm write the same member combiningAlgorithm"},
+		{"a predicate beside a member of the same name", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer",
+				"policies": []any{map[string]any{"key": "p", "rules": []any{map[string]any{
+					"key": "r", "status": "ACTIVE", "predicates": map[string]any{"status": "INACTIVE"}}}}}}}
+		}, "has a rule entry whose members predicates.status and status write the same member status"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -296,5 +330,143 @@ func TestCaseFileProblems(t *testing.T) {
 				t.Errorf("caseFileProblems = %q, want one problem containing %q", problems, tc.want)
 			}
 		})
+	}
+}
+
+// A header the case sets replaces the token header of the same name, so a
+// forwarded value is labeled by the header the request carried, not by the
+// token the suite minted.
+func TestForwardedHeaders_LabelsByTheHeadersTheRequestSent(t *testing.T) {
+	sent := sentHeaders(TokenBundle{M2M: "m2m-token", EndUser: "user-token"},
+		PerCallOptions{CustomHeaders: map[string]string{"incoming-token": "Bearer case-token", "Authorization": "dropped"}})
+	wantSent := map[string]string{"authorization": "Bearer m2m-token", "incoming-token": "Bearer case-token"}
+	if diff := cmp.Diff(wantSent, sent); diff != "" {
+		t.Errorf("sentHeaders mismatch (-want +got):\n%s", diff)
+	}
+	calls := []PipStubCall{{Path: "/pip", Headers: map[string]string{"x-fwd": "case-token", "x-minted": "user-token"}}}
+	got := forwardedHeaders(calls, "/pip", []string{"x-fwd", "x-minted"}, sent, "default")
+	want := map[string]any{"x-fwd": "<user token>", "x-minted": "user-token"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Errorf("forwardedHeaders mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// A rule's fields are merged after its predicates, so a field replaces a
+// predicate of the same name.
+func TestBuildSet_RuleFieldsReplaceAPredicate(t *testing.T) {
+	set := setSpec{Key: "outer", Policies: []policySpec{{Key: "p", Rules: []ruleSpec{{
+		Key: "r", Effect: "ALLOW",
+		Predicates: map[string]any{"rsqlPredicate": "a==b"},
+		Fields:     map[string]any{"rsqlPredicate": "c=={{resourceType}}", "status": nil},
+	}}}}}
+	rule := map[string]any{
+		"ruleId": "15d6b792-eff3-7653-87a2-fa96a7209fb5", "name": "c1 r", "target": "", "condition": "", "effect": "ALLOW",
+		"rsqlPredicate": "c==RT", "status": nil,
+	}
+	want := map[string]any{
+		"policySetId": "d82b5a69-4822-465d-d804-1c9317bcfe92", "name": "c1 outer", "status": "ACTIVE", "target": "",
+		"policies": []any{map[string]any{
+			"policyId": "e7852720-9add-579c-e70a-d2e16a6b9cbe", "name": "c1 p", "target": "", "rules": []any{rule},
+		}},
+		"policySets": []any{},
+	}
+	b := regularBuilder{caseID: "c1"}
+	if diff := cmp.Diff(want, buildSet(b, b, set, "RT")); diff != "" {
+		t.Errorf("buildSet mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// omitStatus removes the status the set would carry, and a status in fields,
+// merged after it, puts one back.
+func TestBuildSet_OmitStatus(t *testing.T) {
+	cases := []struct {
+		name       string
+		fields     map[string]any
+		wantStatus any
+		wantSet    bool
+	}{
+		{"without fields the set has no status", nil, nil, false},
+		{"a status in fields is sent", map[string]any{"status": "INACTIVE"}, "INACTIVE", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			b := regularBuilder{caseID: "c1"}
+			got := buildSet(b, b, setSpec{Key: "outer", Status: "", OmitStatus: true, Fields: tc.fields}, "RT")
+			status, set := got["status"]
+			if set != tc.wantSet || status != tc.wantStatus {
+				t.Errorf("buildSet(omitStatus, fields %v) status = %v (present %t), want %v (present %t)",
+					tc.fields, status, set, tc.wantStatus, tc.wantSet)
+			}
+		})
+	}
+}
+
+// recordedRequest is what testServer received in one request.
+type recordedRequest struct {
+	method, path, query, body string
+}
+
+// testServer answers every request with 200 and an empty JSON object, and
+// records each request it received.
+func testServer(t *testing.T) (*httptest.Server, *[]recordedRequest) {
+	t.Helper()
+	var mu sync.Mutex
+	var got []recordedRequest
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		got = append(got, recordedRequest{r.Method, r.URL.Path, r.URL.RawQuery, string(body)})
+		mu.Unlock()
+		_, _ = w.Write([]byte("{}"))
+	}))
+	t.Cleanup(srv.Close)
+	return srv, &got
+}
+
+func TestUploadIsolatedPoliciesWithQuery_ExtendsOnlyTheUploadOfThePolicies(t *testing.T) {
+	srv, got := testServer(t)
+	cfg := Config{ACBaseURL: srv.URL, TenantID: "t", Profile: "legacy"}
+	tokens := &TokenFactory{cache: map[string]tokenEntry{"m2m": {accessToken: "m2m-token", expiresAt: time.Now().Add(time.Hour)}}}
+	if _, err := UploadIsolatedPoliciesWithQuery(context.Background(), cfg, tokens, "D", nil, []any{}, "applicableForFrontend=true"); err != nil {
+		t.Fatal(err)
+	}
+	var queries []string
+	for _, r := range *got {
+		queries = append(queries, r.method+" "+r.path+"?"+r.query)
+	}
+	want := []string{
+		"PUT /access/v1/simplifiedPolicies/domainPolicies/D?tenant_id=t",
+		"PUT /access/v1/simplifiedPolicies/domainPIPs/D?tenant_id=t",
+		"PUT /access/v1/simplifiedPolicies/domainPolicies/D?tenant_id=t&applicableForFrontend=true",
+	}
+	if diff := cmp.Diff(want, queries); diff != "" {
+		t.Errorf("UploadIsolatedPoliciesWithQuery requests mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestEmptyOperation_WireForms(t *testing.T) {
+	srv, got := testServer(t)
+	cfg := Config{ACBaseURL: srv.URL, TenantID: "t"}
+	ctx := context.Background()
+	if _, _, _, err := HelperFilterV1Query(ctx, cfg, filterV1Query("RT", "LIST", true), TokenBundle{}, PerCallOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err := HelperFilterV1Query(ctx, cfg, filterV1Query("RT", "LIST", false), TokenBundle{}, PerCallOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err := HelperCheckResourceV1(ctx, cfg, model.CheckAccessRequest{Operation: checkOperation("UPDATE", true), Type: "RT"}, TokenBundle{}, PerCallOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err := HelperCheckResourceV1(ctx, cfg, model.CheckAccessRequest{Operation: checkOperation("", false), Type: "RT"}, TokenBundle{}, PerCallOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	want := []recordedRequest{
+		{"POST", "/access/v1/check/filter", "operation=&resourceType=RT&tenant_id=t", ""},
+		{"POST", "/access/v1/check/filter", "operation=LIST&resourceType=RT&tenant_id=t", ""},
+		{"POST", "/access/v1/check/resource", "tenant_id=t", `{"operation":"","type":"RT"}`},
+		{"POST", "/access/v1/check/resource", "tenant_id=t", `{"operation":"READ","type":"RT"}`},
+	}
+	if diff := cmp.Diff(want, *got, cmp.AllowUnexported(recordedRequest{})); diff != "" {
+		t.Errorf("requests mismatch (-want +got):\n%s", diff)
 	}
 }

@@ -138,14 +138,24 @@ func HelperPreviewCheckResourcesByOperationsV1(ctx context.Context, cfg Config, 
 // resourceType reaches the server and triggers the @NotNull validation
 // (row 29 relies on this for 400 assertions).
 func HelperFilterV1(ctx context.Context, cfg Config, resourceType, operation string, tokens TokenBundle, opts PerCallOptions) (int, model.OldFilterEvaluationResult, []byte, error) {
+	return HelperFilterV1Query(ctx, cfg, filterV1Query(resourceType, operation, false), tokens, opts)
+}
+
+// filterV1Query returns the resourceType and operation parameters of a filter
+// request, each left out when empty, except that emptyOperation sends
+// operation with an empty value.
+func filterV1Query(resourceType, operation string, emptyOperation bool) url.Values {
 	extra := url.Values{}
 	if resourceType != "" {
 		extra.Set("resourceType", resourceType)
 	}
-	if operation != "" {
+	switch {
+	case emptyOperation:
+		extra.Set("operation", "")
+	case operation != "":
 		extra.Set("operation", operation)
 	}
-	return HelperFilterV1Query(ctx, cfg, extra, tokens, opts)
+	return extra
 }
 
 // HelperFilterV1Query is [HelperFilterV1] with the endpoint's own query

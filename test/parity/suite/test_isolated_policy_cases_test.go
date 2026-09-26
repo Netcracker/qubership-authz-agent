@@ -50,7 +50,8 @@ type isolatedCase struct {
 	// empty.
 	domain string
 	// policyOmit, policy, and policiesQuery change the upload of the policy;
-	// see caseSpec. policy has its resource type placeholders replaced.
+	// see caseSpec. The resource type placeholders in policy are replaced when
+	// it is merged.
 	policyOmit    []string
 	policy        map[string]any
 	policiesQuery string

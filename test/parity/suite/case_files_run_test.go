@@ -106,46 +106,6 @@ func caseRequests(specs []requestSpec, rt string) []isolatedRequest {
 	return requests
 }
 
-// buildSet turns set into the wire form regularBuilder writes, with the
-// resource type placeholders in every target and condition replaced. Rule ids
-// come from ruleIDs, and every other id from b. The fields of a set, a
-// policy, and a rule are merged last, with mergeFields.
-func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any {
-	sub := resourceTypeReplacer(rt).Replace
-	policies := make([]any, 0, len(set.Policies))
-	for _, p := range set.Policies {
-		rules := make([]any, 0, len(p.Rules))
-		for _, r := range p.Rules {
-			rule := b.rule(r.Key, sub(r.Target), sub(r.Condition), r.Effect, nil)
-			rule["ruleId"] = ruleIDs.id("rule/" + r.Key)
-			for field, predicate := range r.Predicates {
-				rule[field] = predicate
-			}
-			mergeFields(rule, r.Fields, rt)
-			rules = append(rules, rule)
-		}
-		policy := b.policy(p.Key, sub(p.Target), p.Algorithm, rules...)
-		mergeFields(policy, p.Fields, rt)
-		policies = append(policies, policy)
-	}
-	var nested []any
-	for _, n := range set.Sets {
-		nested = append(nested, buildSet(b, ruleIDs, n, rt))
-	}
-	out := b.set(set.Key, sub(set.Target), set.Algorithm, policies, nested)
-	if set.Status != "" {
-		out["status"] = set.Status
-	}
-	if set.OmitStatus {
-		delete(out, "status")
-	}
-	if set.Iterate != nil {
-		out["iterate"] = map[string]any{"foreach": set.Iterate.Foreach, "combiningAlgorithm": set.Iterate.Algorithm}
-	}
-	mergeFields(out, set.Fields, rt)
-	return out
-}
-
 // user returns the username of a "user:" subject, and "" for any other.
 func (r requestSpec) user() string {
 	if name, ok := strings.CutPrefix(r.Subject, "user:"); ok {
