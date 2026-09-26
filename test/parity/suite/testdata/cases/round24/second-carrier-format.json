@@ -176,7 +176,7 @@
   },
   {
    "id": "s24-inactive-nested-set-allows",
-   "about": "Seconds regular/inactive-set: an INACTIVE set does not apply. Here it is nested in an ACTIVE DENY_UNLESS_PERMIT set and holds the only rule that allows, so the read is false.",
+   "about": "Seconds regular/inactive-set, where a top-level INACTIVE set does not apply. Here the INACTIVE set is nested in an ACTIVE DENY_UNLESS_PERMIT set and holds the only rule that allows. Recorded true: a nested INACTIVE set still applies.",
    "sets": [
     {
      "key": "set",
@@ -219,7 +219,7 @@
   },
   {
    "id": "s24-inactive-nested-set-denies",
-   "about": "Seconds regular/inactive-set from the other side: an ACTIVE DENY_OVERRIDES set allows, and its nested INACTIVE set denies unconditionally. The deny does not apply, so the read is true.",
+   "about": "Seconds regular/inactive-set from the other side: an ACTIVE DENY_OVERRIDES set allows, and its nested INACTIVE set denies unconditionally. Recorded false: the nested INACTIVE set still denies.",
    "sets": [
     {
      "key": "set",
