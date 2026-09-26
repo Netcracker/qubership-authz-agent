@@ -255,7 +255,9 @@ that upload one policy at a time share the
 `PARITY_ISOLATED` domain and the `runIsolatedCases` runner behind it, and differ in which cases they carry, so that a
 recording run can be filtered to one of them. `TestRegularPolicySetCases`, `TestPermissionScopeIterateCases`,
 `TestTranslatorPolicySetCases`, the `TestRound12*` to `TestRound18*` functions and the `TestInterpreter*` functions that upload regular sets reach the same domain for
-the PIPs their sets read, and are filtered the same way.
+the PIPs their sets read, and are filtered the same way. A case of `runRegularCases` that uploads PIPs or simplified
+policies records the status of that upload under `load-simplified-policies-v1/regular/<case>/declare-the-domain`, and
+a case whose upload the PAP refused ends after that golden.
 
 ### Cases kept as data
 
@@ -300,7 +302,9 @@ Optional fields change one part of the upload or the request; without them a cas
 
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
 replaces the whole PIP declaration of its domain, the suite's unless it names another, with its own PIPs, none included, and a case with `sets`
-replaces it only when it names a PIP. The sets of the file's earlier cases stay loaded, and while one of them reads a
+replaces it only when it names a PIP. The status of that upload is recorded under
+`load-simplified-policies-v1/regular/<case>/declare-the-domain`: the first of its three PUTs the PAP refused, or else
+the last. After a refusal the case ends there, with no set upload and no requests, and the next case runs. The sets of the file's earlier cases stay loaded, and while one of them reads a
 GENERAL, TOKEN, or HEADER PIP that the current declaration no longer names, access-control answers every check of the
 function with 400, until a later case declares that name again. So from round 19 on, a case with `sets` that names PIPs
 also names one PIP of every name an earlier case with `sets` of the file named; `TestCaseFilesAreWellFormed` checks it,

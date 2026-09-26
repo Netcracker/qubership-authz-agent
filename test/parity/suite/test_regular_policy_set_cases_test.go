@@ -90,6 +90,13 @@ func (s *ParitySuite) TestRegularPolicySetCases() {
 // result rather than a failed case, and the requests of a refused case are skipped
 // because they would record a DENY the rules never produced.
 //
+// A case with PIPs or simplified policies first uploads them into the isolated
+// domain and records that status as regular/<case>/declare-the-domain: the first
+// of the three PUTs of [UploadIsolatedPolicies] that was not accepted, or else the
+// last. When the PAP refused it, the case ends after that golden, before its
+// customization cleanup, its sets, and its requests, since the sets would name PIPs
+// that were never declared.
+//
 // When the test ends, every externalID the cases uploaded under is emptied and
 // then the isolated domain is, in that order, so that no set outlives the PIP
 // declarations it names. A set that does poisons the stand for every group that
@@ -112,10 +119,12 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
 				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified)
 				s.Require().NoError(err)
-				s.Require().GreaterOrEqual(status, http.StatusOK, "upload of %d PIPs and %d policies into %s",
-					len(tc.pips), len(tc.simplified), isolatedCaseDomain)
-				s.Require().Less(status, http.StatusMultipleChoices, "upload of %d PIPs and %d policies into %s",
-					len(tc.pips), len(tc.simplified), isolatedCaseDomain)
+				s.Run("declare-the-domain", func() {
+					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "regular/"+tc.id+"/declare-the-domain", &model.PolicyLoadOutcome{Status: status})
+				})
+				if status < http.StatusOK || status >= http.StatusMultipleChoices {
+					return
+				}
 			}
 			s.sendCustomizationCleanup(slices.All(tc.cleanup))
 			if len(tc.cleanup) > 0 {
