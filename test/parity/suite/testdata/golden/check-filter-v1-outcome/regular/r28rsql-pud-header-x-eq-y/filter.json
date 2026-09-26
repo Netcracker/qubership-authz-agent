@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_PUD_HEADER_X_EQ_Y.a.eq(\"x==y\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"x==y\" } ] } }",
+    "rsqlFilterCondition": "a!=\"x==y\"",
+    "sqlFilterCondition": "NOT (a='x==y')",
+    "customFilterCondition": null
+  }
+}

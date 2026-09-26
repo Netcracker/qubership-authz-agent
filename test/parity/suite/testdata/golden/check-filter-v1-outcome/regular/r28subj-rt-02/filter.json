@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "x.t.eq(PARITY_SUITE_R28T_02_x=in=(a,b))",
+    "mongodbFilterCondition": "{ { \"t\": PARITY_SUITE_R28T_02_x=in=(a,b) } }",
+    "rsqlFilterCondition": "t==PARITY_SUITE_R28T_02_x=in=(a,b)",
+    "sqlFilterCondition": "t=PARITY_SUITE_R28T_02_x=in=(a,b)",
+    "customFilterCondition": null
+  }
+}
