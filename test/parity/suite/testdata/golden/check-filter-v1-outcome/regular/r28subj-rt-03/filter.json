@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "x.t.eq(PARITY_SUITE_R28T_03_r28!~\u003c\u003ex)",
+    "mongodbFilterCondition": "{ { \"t\": PARITY_SUITE_R28T_03_r28!~\u003c\u003ex } }",
+    "rsqlFilterCondition": "t==PARITY_SUITE_R28T_03_r28!~\u003c\u003ex",
+    "sqlFilterCondition": "t=PARITY_SUITE_R28T_03_r28!~\u003c\u003ex",
+    "customFilterCondition": null
+  }
+}
