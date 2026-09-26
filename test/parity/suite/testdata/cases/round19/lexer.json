@@ -1,0 +1,1000 @@
+{
+ "about": "How the text of a condition is read: a comma inside a quoted element of a list, empty list elements, spaces around list commas, tabs and carriage returns beside a space or inside a two-word operator, a list, or brackets, true and false in another letter case as the whole condition, keys with punctuation, and brackets right after resource. Each probe is <comparison> OR resource.a == 'y', asked with a = 'n' and a = 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R19A_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "a19-list-comma-inside-an-element",
+   "about": "A comma inside a quoted element of a two-element list. x = 'v' holds if the element splits at the comma; x = 'v,w' holds if each quoted string is one element.",
+   "condition": "resource.x IN 'v,w', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p02-a-n",
+     "resource": {
+      "x": "z",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p02-a-y",
+     "resource": {
+      "x": "z",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-comma-inside-an-element-not-in",
+   "about": "The same list under NOT IN.",
+   "condition": "resource.x NOT IN 'v,w', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-comma-inside-an-element-contains-any",
+   "about": "The same list on the right of CONTAINS ANY.",
+   "condition": "resource.l CONTAINS ANY 'v,w', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "l": [
+       "w"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "l": [
+       "w"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "l": [
+       "v,w"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "l": [
+       "v,w"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-comma-inside-a-single-string",
+   "about": "Control: one quoted string with a comma in it and no second element.",
+   "condition": "resource.x IN 'v,w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": "v,w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-trailing-empty-without-a-space",
+   "about": "'v','' with no space after the comma. x = '' holds if the empty last element is kept.",
+   "condition": "resource.x IN 'v','' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-trailing-empty-after-a-space",
+   "about": "Control: 'v', '' with a space after the comma.",
+   "condition": "resource.x IN 'v', '' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-two-empties-without-a-space",
+   "about": "'','' with no space after the comma. x = '' holds if the list keeps an element.",
+   "condition": "resource.x IN '','' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-two-empties-under-not-in",
+   "about": "The same list under NOT IN.",
+   "condition": "resource.x NOT IN '','' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-leading-space-inside-an-element",
+   "about": "A space inside the quotes of a list element. x = 'v' holds if list elements are trimmed.",
+   "condition": "resource.x IN ' v', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": " v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": " v",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-single-string-leading-space",
+   "about": "Control: a single quoted string with a leading space.",
+   "condition": "resource.x IN ' v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "x": " v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "x": " v",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-list-spaces-on-both-sides-of-a-comma",
+   "about": "Two spaces on each side of a list comma: the PAP accepts or refuses the text.",
+   "condition": "resource.x IN 'v'  ,  'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "z",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "z",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-tab-inside-contains-any",
+   "about": "A tab after the space inside the two-word operator CONTAINS ANY.",
+   "condition": "resource.l CONTAINS \tANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-tab-inside-greater-than",
+   "about": "A tab after the space inside GREATER THAN.",
+   "condition": "resource.x GREATER \tTHAN 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-tab-after-a-list-comma",
+   "about": "A tab after a list comma.",
+   "condition": "resource.x IN 'v', \t'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-tab-inside-brackets",
+   "about": "A tab inside the brackets of a path.",
+   "condition": "resource.l[ \t0] == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-carriage-return-beside-a-space",
+   "about": "A carriage return after the space between two operands, where a tab after a space is accepted (s16-tab-beside-a-space).",
+   "condition": "resource.x == \r'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-trailing-carriage-return",
+   "about": "A carriage return at the end.",
+   "condition": "resource.x == 'v' OR resource.a == 'y'\r",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-carriage-return-for-a-space",
+   "about": "A carriage return in place of the space between two operands, where a tab is refused (sx-tab).",
+   "condition": "resource.x ==\r'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-whole-true-upper",
+   "about": "True as the whole condition: whether the PAP accepts true and false in another letter case, and what the check answers.",
+   "condition": "True",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-whole-true-mixed",
+   "about": "tRuE as the whole condition: whether the PAP accepts true and false in another letter case, and what the check answers.",
+   "condition": "tRuE",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-whole-false-upper",
+   "about": "False as the whole condition: whether the PAP accepts true and false in another letter case, and what the check answers.",
+   "condition": "False",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-whole-false-mixed",
+   "about": "fALSE as the whole condition: whether the PAP accepts true and false in another letter case, and what the check answers.",
+   "condition": "fALSE",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-colon",
+   "about": "A key with : in it: whether the PAP accepts resource.k:m, and whether the check reads the key k:m.",
+   "condition": "resource.k:m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k:m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k:m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k:m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k:m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-dollar",
+   "about": "A key with $ in it: whether the PAP accepts resource.k$m, and whether the check reads the key k$m.",
+   "condition": "resource.k$m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k$m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k$m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k$m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k$m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-tilde",
+   "about": "A key with ~ in it: whether the PAP accepts resource.k~m, and whether the check reads the key k~m.",
+   "condition": "resource.k~m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k~m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k~m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k~m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k~m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-at",
+   "about": "A key with @ in it: whether the PAP accepts resource.k@m, and whether the check reads the key k@m.",
+   "condition": "resource.k@m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k@m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k@m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k@m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k@m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-bang",
+   "about": "A key with ! in it: whether the PAP accepts resource.k!m, and whether the check reads the key k!m.",
+   "condition": "resource.k!m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k!m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k!m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k!m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k!m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-amp",
+   "about": "A key with & in it: whether the PAP accepts resource.k&m, and whether the check reads the key k&m.",
+   "condition": "resource.k&m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k&m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k&m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k&m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k&m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-key-with-a-bar",
+   "about": "A key with | in it: whether the PAP accepts resource.k|m, and whether the check reads the key k|m.",
+   "condition": "resource.k|m == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "k|m": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "k|m": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "k|m": "w",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "k|m": "w",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "a19-root-bracket-reads-a-nested-resource",
+   "about": "resource['x'] reads as absent in every golden. The resource holds a key resource with x in it, a key resource['x'], or a key x, to show which of them the condition reads.",
+   "condition": "resource['x'] == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "p00-a-n",
+     "resource": {
+      "resource": {
+       "x": "v"
+      },
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p00-a-y",
+     "resource": {
+      "resource": {
+       "x": "v"
+      },
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p01-a-n",
+     "resource": {
+      "resource['x']": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p01-a-y",
+     "resource": {
+      "resource['x']": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    },
+    {
+     "name": "p02-a-n",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "n"
+     }
+    },
+    {
+     "name": "p02-a-y",
+     "resource": {
+      "x": "v",
+      "id": "r19",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

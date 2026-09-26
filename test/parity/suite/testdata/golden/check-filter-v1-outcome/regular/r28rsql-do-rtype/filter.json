@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_RTYPE.t.eq(PARITY_SUITE_R28RSQL_DO_RTYPE)).not()",
+    "mongodbFilterCondition": "{ { \"t\": PARITY_SUITE_R28RSQL_DO_RTYPE } }",
+    "rsqlFilterCondition": "t!=PARITY_SUITE_R28RSQL_DO_RTYPE",
+    "sqlFilterCondition": "NOT (t=PARITY_SUITE_R28RSQL_DO_RTYPE)",
+    "customFilterCondition": null
+  }
+}

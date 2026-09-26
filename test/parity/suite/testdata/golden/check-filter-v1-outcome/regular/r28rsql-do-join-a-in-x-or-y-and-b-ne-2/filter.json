@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_R28RSQL_DO_JOIN_A_IN_X_OR_Y_AND_B_NE_2.a.in(\"x\", \"y\")).and(PARITY_SUITE_R28RSQL_DO_JOIN_A_IN_X_OR_Y_AND_B_NE_2.b.ne(2))).not()",
+    "mongodbFilterCondition": "{ { \"$or\": [ { \"a\": { \"$nin\": [ \"x\", \"y\" ] } }, { \"b\": { \"$eq\": 2 } } ] } }",
+    "rsqlFilterCondition": "a=out=(x;y),b==2",
+    "sqlFilterCondition": "NOT (a IN ('x', 'y') AND b\u003c\u003e2)",
+    "customFilterCondition": null
+  }
+}

@@ -1,0 +1,523 @@
+{
+ "about": "Condition forms the PAP may accept or refuse that no earlier golden settles: spaces, tabs and line feeds around tokens and inside strings, a condition of spaces only, spaces in lists and in brackets, characters inside attribute names and MATCH patterns, words used as bare attribute names, null next to a key named null, steps after a subject attribute, a dash in a PIP name, the FILTERED form, and a 20-digit number. Where the form is accepted, the probe says how it evaluates; where only the status is in question, the probe is true through an operand the form does not touch.",
+ "resourceTypePrefix": "PARITY_SUITE_R16S_",
+ "pips": {
+  "dash": {
+   "name": "subject.parityR16S-dash",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r16s-dash",
+   "cacheable": false
+  },
+  "filtered": {
+   "name": "subject.parityR16SFiltered",
+   "url": "http://pip-mock:8090/api/v1/pip/r16s-filtered",
+   "httpMethod": "POST",
+   "pipType": "FILTERED",
+   "resourceType": "PARITY_SUITE_R16S_S16_FILTERED_FORM",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_R16S_S16_FILTERED_FORM"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "s16-no-spaces-around-equals",
+   "about": "== written without the spaces around it. The probe's x is v, so an accepted form that compares x reads true.",
+   "condition": "resource.x=='v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-no-space-before-or",
+   "about": "OR written right after the closing quote of a string, with no space before it.",
+   "condition": "resource.x == 'v'OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-tab-beside-a-space",
+   "about": "A tab next to the space after ==, where x16 tested a tab in place of the space. The probe's x is v.",
+   "condition": "resource.x == \t'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-trailing-newline",
+   "about": "A line feed after the last token. Spaces at the ends are accepted (the leading- and trailing-space goldens).",
+   "condition": "resource.x == 'v' OR resource.a == 'y'\n",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-tab-inside-a-string",
+   "about": "A tab inside a string literal; the probe's x holds the same tab, so an accepted string that keeps it reads true.",
+   "condition": "resource.x == 'a\tb' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "a\tb"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-double-space-inside-a-string",
+   "about": "Two spaces inside a string literal, where two spaces between tokens are refused (g6a).",
+   "condition": "resource.x == 'a  b' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "a  b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-blank-condition",
+   "about": "A condition of one space. Accepted as no condition, the policy permits the probe; refused, the probe is denied.",
+   "condition": " ",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-list-two-spaces-after-a-comma",
+   "about": "Two spaces after the comma of an IN list, where one space before the comma is accepted (sx-list-with-spaces-before-commas).",
+   "condition": "resource.x IN 'v',  'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-entitled-as-space-before-a-comma",
+   "about": "A space before the comma between the .as() arguments; the probe is true through its first operand, so only the upload status is in question.",
+   "condition": "resource.a == 'y' OR subject.entitledResources.of('x').as('y' , 'z') IS EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-boolean-list",
+   "about": "true and false as the elements of an IN list. The probe's b is true.",
+   "condition": "resource.b IN true, false OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "b": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-non-ascii-letter-in-a-path",
+   "about": "A non-ASCII letter inside an attribute name; the probe has the key xü with the value v.",
+   "condition": "resource.xü == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "xü": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-slash-in-a-path",
+   "about": "A slash inside an attribute name. The probe has both a key x/y and a nested x.y, both v.",
+   "condition": "resource.x/y == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x/y": "v",
+      "x": {
+       "y": "v"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-digit-first-path-step",
+   "about": "A path step that starts with a digit; the probe has the key 1x with the value v.",
+   "condition": "resource.1x == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "1x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-trailing-dot-in-a-path",
+   "about": "A path that ends with a dot; the probe is true through its first operand, so only the upload status is in question.",
+   "condition": "resource.a == 'y' OR resource.x. IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-empty-brackets-in-a-path",
+   "about": "Empty brackets as a path step; only the upload status is in question.",
+   "condition": "resource.a == 'y' OR resource.l[] IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-spaces-inside-brackets",
+   "about": "One space on each side of an index in brackets. The probe's l is [v], so an index read as 0 reads true.",
+   "condition": "resource.l[ 0 ] == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "l": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-double-space-inside-brackets",
+   "about": "Two spaces inside the brackets of a path; only the upload status is in question.",
+   "condition": "resource.a == 'y' OR resource.l[0  ] IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-double-quotes-in-a-path-filter",
+   "about": "A JSON Path filter that quotes its string with double quotes; the item of type a has the id q.",
+   "condition": "resource.items[?(@.type == \"a\")].id CONTAINS 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       },
+       {
+        "type": "b",
+        "id": "r"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-prefix-in-another-case",
+   "about": "Resource with a capital R: a bare path whose first step is Resource, or the resource prefix. The probe has x but no key Resource.",
+   "condition": "Resource.x == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-bare-to",
+   "about": "TO alone as an operand, a word that is only a part of an operator; the probe has the key TO with the value v.",
+   "condition": "TO == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "TO": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-bare-on",
+   "about": "on alone as an operand, the word of subject allowed … on resource; the probe has the key on with the value v.",
+   "condition": "on == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "on": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-null-key-on-the-left",
+   "about": "null on the left when the resource has a key named null with the value v.",
+   "condition": "null == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "null": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-null-key-on-the-right",
+   "about": "null on the right when the resource has a key named null with the same value as x.",
+   "condition": "resource.x == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "v",
+      "null": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-subject-id-with-a-step",
+   "about": "A step after subject.id, with no PIP of that name declared.",
+   "condition": "subject.id.x IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-bare-entitled-resources",
+   "about": "subject.entitledResources without .of().as(), with no PIP of that name declared.",
+   "condition": "subject.entitledResources IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-pip-name-with-a-dash",
+   "about": "A declared HEADER PIP whose name has a dash, read in a condition; the probe sends the header with the value v.",
+   "condition": "subject.parityR16S-dash == 'v' OR resource.a == 'y'",
+   "pips": [
+    "dash"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r16s-dash": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-pip-name-with-a-dash-control",
+   "about": "The control of s16-pip-name-with-a-dash: the same declaration with a condition that does not read it, so the upload status shows whether the declaration alone is refused.",
+   "condition": "resource.a == 'y'",
+   "pips": [
+    "dash"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-filtered-form",
+   "about": "The FILTERED form on a PIP declared FILTERED with a resourceType; the probe is true through its first operand, so only the upload status is in question.",
+   "condition": "resource.a == 'y' OR subject.parityR16SFiltered FILTERED 'READ' IS NOT NULL",
+   "pips": [
+    "filtered"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-match-pattern-non-ascii",
+   "about": "A MATCH pattern with a non-ASCII letter; the probe's x starts with it.",
+   "condition": "resource.x MATCH ü* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "üx"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-match-pattern-plus",
+   "about": "A MATCH pattern with a plus sign; the probe's x is the pattern text itself.",
+   "condition": "resource.x MATCH a+ OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "a+"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-match-pattern-reserved-word",
+   "about": "resource alone as a MATCH pattern; the probe's x is the word resource.",
+   "condition": "resource.x MATCH resource OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "x": "resource"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s16-number-of-twenty-digits",
+   "about": "An integer literal of 20 digits, more than a long holds; the probe's n is the same number.",
+   "condition": "resource.n == 12345678901234567890 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r16",
+      "a": "n",
+      "n": 12345678901234567890
+     }
+    }
+   ]
+  }
+ ]
+}

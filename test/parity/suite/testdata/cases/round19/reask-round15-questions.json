@@ -1,0 +1,724 @@
+{
+ "about": "The cases of round15/questions.json whose check goldens answered 400 because an earlier case of that file dropped a PIP a loaded set still read (round 18). The same cases again, each also declaring one PIP of every name an earlier case of this file declared, so the declaration never loses a name. Controls open and close the file.",
+ "resourceTypePrefix": "PARITY_SUITE_R19X_",
+ "pins": {
+  "/api/v1/pip/r15-list": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/r15-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r15-object": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/r15-single": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r15-text": {
+   "statusCode": 200,
+   "bodyRaw": "v"
+  }
+ },
+ "pips": {
+  "glist": {
+   "name": "subject.parityR15GeneralList",
+   "url": "http://pip-mock:8090/api/v1/pip/r15-list",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR15GeneralList"
+   },
+   "cacheable": false
+  },
+  "header": {
+   "name": "subject.parityR15List",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r15-list",
+   "cacheable": false
+  },
+  "nullbody": {
+   "name": "subject.parityR15NullBody",
+   "url": "http://pip-mock:8090/api/v1/pip/r15-null-body",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR15NullBody"
+   },
+   "cacheable": false
+  },
+  "object": {
+   "name": "subject.parityR15Object",
+   "url": "http://pip-mock:8090/api/v1/pip/r15-object",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR15Object"
+   },
+   "cacheable": false
+  },
+  "single": {
+   "name": "subject.parityR15Single",
+   "url": "http://pip-mock:8090/api/v1/pip/r15-single",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR15Single"
+   },
+   "cacheable": false
+  },
+  "text": {
+   "name": "subject.parityR15Text",
+   "url": "http://pip-mock:8090/api/v1/pip/r15-text",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR15Text"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "x19-round15-questions-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-general-list-on-the-right-of-equals-in-a-deny-rule",
+   "pips": [
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == subject.parityR15GeneralList",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "v": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-general-list-on-the-right-of-not-equals-in-a-deny-rule",
+   "pips": [
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v != subject.parityR15GeneralList",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "v": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-general-list-on-the-right-of-contains-in-a-deny-rule",
+   "pips": [
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS subject.parityR15GeneralList",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "l": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-general-list-on-the-right-of-not-contains-in-a-deny-rule",
+   "pips": [
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS subject.parityR15GeneralList",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "l": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-attribute-list-on-the-right-of-equals-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == resource.l2",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "v": "v",
+      "l2": [
+       "v",
+       "w"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-attribute-list-on-the-right-of-not-equals-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v != resource.l2",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "v": "v",
+      "l2": [
+       "v",
+       "w"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-attribute-list-on-the-right-of-contains-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS resource.l2",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "l": [
+       "v"
+      ],
+      "l2": [
+       "v",
+       "w"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-attribute-list-on-the-right-of-not-contains-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS resource.l2",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "l": [
+       "v"
+      ],
+      "l2": [
+       "v",
+       "w"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-header-list-on-the-right-of-equals-in-a-deny-rule",
+   "pips": [
+    "header",
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v == subject.parityR15List",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "v": "v"
+     },
+     "headers": {
+      "x-parity-r15-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-header-list-on-the-right-of-not-equals-in-a-deny-rule",
+   "pips": [
+    "header",
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.v != subject.parityR15List",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "v": "v"
+     },
+     "headers": {
+      "x-parity-r15-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-header-list-on-the-right-of-contains-in-a-deny-rule",
+   "pips": [
+    "header",
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS subject.parityR15List",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "l": [
+       "v"
+      ]
+     },
+     "headers": {
+      "x-parity-r15-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-header-list-on-the-right-of-not-contains-in-a-deny-rule",
+   "pips": [
+    "header",
+    "glist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l NOT CONTAINS subject.parityR15List",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r15",
+      "l": [
+       "v"
+      ]
+     },
+     "headers": {
+      "x-parity-r15-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-is-m2m-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any-subject",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true",
+         "condition": "subject.isM2M OR resource.a == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    },
+    {
+     "name": "service-account",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "x19-q15-is-m2m-and",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any-subject",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true",
+         "condition": "subject.isM2M AND resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    },
+    {
+     "name": "service-account",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "x19-round15-questions-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  }
+ ]
+}

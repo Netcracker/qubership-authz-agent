@@ -1,0 +1,3097 @@
+{
+ "about": "Condition shapes no golden has reached, such as a comparison as the first or the second operand of AND, OR in a policy or set target, and a single literal after IN. Each case sets one condition at the place its id names; the load answer shows whether the PAP accepts it, and the read answers for the condition.",
+ "resourceTypePrefix": "PARITY_SUITE_R19K_",
+ "pins": {},
+ "pips": {
+  "k": {
+   "name": "subject.parityK19",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-k19",
+   "cacheable": false
+  },
+  "kx": {
+   "name": "subject.parityK19.x",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-k19-x",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "k19-000",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.a == 'y' AND subject.parityK19.x NOT IN -5 OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-001",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.a == 'y' AND a NOT CONTAINS ANY '' OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-002",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND null IS SUBSET -5",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-003",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject denied '' on resource AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-004",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.parityK19.x NOT MATCH null AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-005",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND subject denied '' on resource",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-006",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND a IN ''",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-007",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR null IN -5.5 AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-008",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.parityK19.x NOT CONTAINS ANY -5.5 AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-009",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND subject.isM2M",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-010",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject.permissions.PARITY FILTERED '' > subject.l[0] AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-011",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "-5.5 != a AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-012",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND 5 != subject.parityK19.x",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-013",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "a NOT CONTAINS subject.parityK19.x AND resource.a == 'y' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-014",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND a > a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-015",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND a IN a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-016",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR a IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-017",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR a IS EMPTY",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-018",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.parityK19.x IS EMPTY AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-019",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND '' IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-020",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND null CONTAINS a OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-021",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject.parityK19.x CONTAINS a AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-022",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject allowed '' on resource AND resource.a == 'y' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-023",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND subject allowed '' on resource OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-024",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "null > a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-025",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "-5.5 > a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-026",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "-5 IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-027",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "5.5 IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-028",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "-5.5 IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-029",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "TRUE IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-030",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "a IN subject.parityK19.x",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-031",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.parityK19.x IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-032",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "-5.5 IN '' AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-033",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject.isM2M",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-034",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "a IS SUBSET a AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-035",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR a CONTAINS ANY a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-036",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND a CONTAINS ANY a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-037",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject.id MATCH /a/**",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-038",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject denied '' on resource OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-039",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject denied '' on resource",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-040",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND a IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-041",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR a IS EMPTY AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-042",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND a IS EMPTY",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-043",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND a IS SUBSET a OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-044",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR a IS SUBSET a AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-045",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND a IS SUBSET a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-046",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.isM2M AND resource.a == 'y' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-047",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' AND subject.isM2M OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-048",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject.isM2M AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-049",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND subject.isM2M",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-050",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR a CONTAINS ANY a AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-051",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND a CONTAINS ANY a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-052",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.id MATCH /a/** AND resource.a == 'y' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-053",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject.id MATCH /a/** AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-054",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND subject.id MATCH /a/**",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-055",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR subject denied '' on resource AND resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-056",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "resource.a == 'y' OR resource.a == 'y' AND subject denied '' on resource",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-057",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.permissions.PARITY FILTERED '' = subject.permissions.PARITY FILTERED 'v'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-058",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.permissions.PARITY FILTERED '' IS SUBSET subject.permissions.PARITY FILTERED ''",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-059",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.l[0] IN subject.permissions.PARITY FILTERED ''",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-060",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "5 = subject.permissions.PARITY FILTERED ''",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-061",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.permissions.PARITY FILTERED '' IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-062",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.permissions.PARITY FILTERED '' CONTAINS a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-063",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.l[0] > subject.l[0]",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-064",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.l[0] MATCH subject.l[0]",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-065",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.l[0] IS SUBSET subject.l[0]",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-066",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.isM2M",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-067",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "5 = subject.l[0]",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-068",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "a IN subject.l[0]",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-069",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.l[0] IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-070",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "condition": "subject.l[0] CONTAINS a",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-071",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "TRUE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-072",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "TRUE",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-073",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "TRUE",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-074",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "TRUE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-075",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "resource.a CONTAINS ANY 5",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-076",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "subject denied 'v' on resource",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-077",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "subject.isM2M OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-078",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "resource.a IS SUBSET 5",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-079",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.a CONTAINS ANY 5",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-080",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.a > 5",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-081",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject denied 'v' on resource",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-082",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.a MATCH /a/b",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-083",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.isM2M OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-084",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.a IS SUBSET 5",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-085",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.a CONTAINS ANY 5",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-086",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.a > 5",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-087",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject denied 'v' on resource",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-088",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.a IS NULL",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-089",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject.isM2M OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "k19-090",
+   "pips": [
+    "k",
+    "kx"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.a IS SUBSET 5",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "k19",
+      "a": "y",
+      "o": {
+       "x": "v"
+      },
+      "l": [
+       "v",
+       "w"
+      ]
+     },
+     "headers": {
+      "x-parity-k19": "v",
+      "x-parity-k19-x": "v"
+     }
+    }
+   ]
+  }
+ ]
+}

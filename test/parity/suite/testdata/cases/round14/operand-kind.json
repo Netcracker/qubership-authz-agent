@@ -1,0 +1,2844 @@
+{
+ "about": "What value or state each kind of operand gives: subject.id, name, type, and serviceAccount, resourceType, the whole resource, literals, GENERAL and TOKEN PIPs, subject.roles and scopes, and lists from a GENERAL and a TOKEN PIP. Each kind stands on the left of every operator it may stand on and on the right of the comparison, membership, and containment operators. The request carries in x the value the operand is expected to give.",
+ "resourceTypePrefix": "PARITY_SUITE_R14_",
+ "pins": {
+  "/api/v1/pip/r14-string": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r14-list": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "string": {
+   "name": "subject.parityR14String",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-string",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR14String"
+   },
+   "cacheable": false
+  },
+  "token": {
+   "name": "subject.parityR14Department",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "list": {
+   "name": "subject.parityR14List",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-list",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR14List"
+   },
+   "cacheable": false
+  },
+  "tokenlist": {
+   "name": "subject.parityR14Roles",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "$.realm_access.roles",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ok-subject-id-equals",
+   "condition": "subject.id == '00000000-0000-0000-0000-000000000101'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-not-equals",
+   "condition": "subject.id != '00000000-0000-0000-0000-000000000101'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-equals-other",
+   "condition": "subject.id == 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-is-null",
+   "condition": "subject.id IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-is-not-null",
+   "condition": "subject.id IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-match",
+   "condition": "subject.id MATCH 000*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-in",
+   "condition": "subject.id IN '00000000-0000-0000-0000-000000000101', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-not-in",
+   "condition": "subject.id NOT IN '00000000-0000-0000-0000-000000000101', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-greater-than",
+   "condition": "subject.id > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-on-the-right",
+   "condition": "resource.x == subject.id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-on-the-right-not-equals",
+   "condition": "resource.x != subject.id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-on-the-right-of-less-than",
+   "condition": "resource.x < subject.id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-id-literal-on-the-left",
+   "condition": "'00000000-0000-0000-0000-000000000101' == subject.id",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "00000000-0000-0000-0000-000000000101",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-equals",
+   "condition": "subject.name == 'parity-reader'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-not-equals",
+   "condition": "subject.name != 'parity-reader'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-equals-other",
+   "condition": "subject.name == 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-is-null",
+   "condition": "subject.name IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-is-not-null",
+   "condition": "subject.name IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-match",
+   "condition": "subject.name MATCH par*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-in",
+   "condition": "subject.name IN 'parity-reader', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-not-in",
+   "condition": "subject.name NOT IN 'parity-reader', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-greater-than",
+   "condition": "subject.name > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-on-the-right",
+   "condition": "resource.x == subject.name",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-on-the-right-not-equals",
+   "condition": "resource.x != subject.name",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-on-the-right-of-less-than",
+   "condition": "resource.x < subject.name",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-name-literal-on-the-left",
+   "condition": "'parity-reader' == subject.name",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "parity-reader",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-equals",
+   "condition": "subject.type == 'USER'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-not-equals",
+   "condition": "subject.type != 'USER'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-equals-other",
+   "condition": "subject.type == 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-is-null",
+   "condition": "subject.type IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-is-not-null",
+   "condition": "subject.type IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-match",
+   "condition": "subject.type MATCH USE*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-in",
+   "condition": "subject.type IN 'USER', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-not-in",
+   "condition": "subject.type NOT IN 'USER', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-greater-than",
+   "condition": "subject.type > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-on-the-right",
+   "condition": "resource.x == subject.type",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-on-the-right-not-equals",
+   "condition": "resource.x != subject.type",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-on-the-right-of-less-than",
+   "condition": "resource.x < subject.type",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-type-literal-on-the-left",
+   "condition": "'USER' == subject.type",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "USER",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-equals",
+   "condition": "subject.parityR14String == 'v'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-not-equals",
+   "condition": "subject.parityR14String != 'v'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-equals-other",
+   "condition": "subject.parityR14String == 'zz'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-is-null",
+   "condition": "subject.parityR14String IS NULL",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-is-not-null",
+   "condition": "subject.parityR14String IS NOT NULL",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-match",
+   "condition": "subject.parityR14String MATCH v*",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-in",
+   "condition": "subject.parityR14String IN 'v', 'zz'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-not-in",
+   "condition": "subject.parityR14String NOT IN 'v', 'zz'",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-greater-than",
+   "condition": "subject.parityR14String > 5",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-on-the-right",
+   "condition": "resource.x == subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-on-the-right-not-equals",
+   "condition": "resource.x != subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-on-the-right-of-less-than",
+   "condition": "resource.x < subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-literal-on-the-left",
+   "condition": "'v' == subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-on-the-right-of-in",
+   "condition": "resource.x IN subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-string-on-the-right-of-not-in",
+   "condition": "resource.x NOT IN subject.parityR14String",
+   "pips": [
+    "string"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-equals",
+   "condition": "subject.parityR14Department == 'finance'",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-not-equals",
+   "condition": "subject.parityR14Department != 'finance'",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-equals-other",
+   "condition": "subject.parityR14Department == 'zz'",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-is-null",
+   "condition": "subject.parityR14Department IS NULL",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-is-not-null",
+   "condition": "subject.parityR14Department IS NOT NULL",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-match",
+   "condition": "subject.parityR14Department MATCH fin*",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-in",
+   "condition": "subject.parityR14Department IN 'finance', 'zz'",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-not-in",
+   "condition": "subject.parityR14Department NOT IN 'finance', 'zz'",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-greater-than",
+   "condition": "subject.parityR14Department > 5",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-on-the-right",
+   "condition": "resource.x == subject.parityR14Department",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-on-the-right-not-equals",
+   "condition": "resource.x != subject.parityR14Department",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-on-the-right-of-less-than",
+   "condition": "resource.x < subject.parityR14Department",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-literal-on-the-left",
+   "condition": "'finance' == subject.parityR14Department",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-on-the-right-of-in",
+   "condition": "resource.x IN subject.parityR14Department",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-claim-on-the-right-of-not-in",
+   "condition": "resource.x NOT IN subject.parityR14Department",
+   "pips": [
+    "token"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "finance",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-service-account-is-null",
+   "condition": "subject.serviceAccount IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-service-account-is-not-null",
+   "condition": "subject.serviceAccount IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-service-account-equals-or",
+   "condition": "subject.serviceAccount == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-service-account-not-equals",
+   "condition": "subject.serviceAccount != 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-service-account-on-the-right-or",
+   "condition": "resource.x == subject.serviceAccount OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-equals",
+   "condition": "resourceType == '{{resourceType}}'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-equals-lower-case",
+   "condition": "resourceType == '{{resourceTypeLowerCase}}'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-match",
+   "condition": "resourceType MATCH PARITY_SUITE_R14_*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-in",
+   "condition": "resourceType IN '{{resourceType}}', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-on-the-right",
+   "condition": "resource.x == resourceType",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-literal-on-the-left",
+   "condition": "'{{resourceType}}' == resourceType",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-resource-type-is-null",
+   "condition": "resourceType IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "{{resourceType}}",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-is-null",
+   "condition": "resource IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-is-not-null",
+   "condition": "resource IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-equals-or",
+   "condition": "resource == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-not-equals-or",
+   "condition": "resource != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-greater-than-or",
+   "condition": "resource > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-in-or",
+   "condition": "resource IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-whole-resource-on-the-right-or",
+   "condition": "resource.x == resource OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-string-equals",
+   "condition": "'v' == resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-string-not-equals",
+   "condition": "'v' != resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-number-less-than",
+   "condition": "4 < resource.n",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-number-greater-than",
+   "condition": "6 > resource.n",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-string-in",
+   "condition": "'v' IN resource.l",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-string-not-in",
+   "condition": "'v' NOT IN resource.l",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-string-is-null",
+   "condition": "'v' IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-string-is-not-null",
+   "condition": "'v' IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-two-literals-less-than",
+   "condition": "4 < 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-two-strings-less-than",
+   "condition": "'a' < 'b'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-literal-number-equals-string",
+   "condition": "5 == resource.x",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "n": 5,
+      "l": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-contains",
+   "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-not-contains",
+   "condition": "subject.roles NOT CONTAINS 'ROLE_PARITY_READER'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-contains-other",
+   "condition": "subject.roles CONTAINS 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-contains-any",
+   "condition": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-not-contains-any",
+   "condition": "subject.roles NOT CONTAINS ANY 'zz', 'yy'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-is-subset",
+   "condition": "subject.roles IS SUBSET 'ROLE_PARITY_READER', 'ROLE_PARITY_OTHER', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-is-not-subset",
+   "condition": "subject.roles IS NOT SUBSET 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-is-empty",
+   "condition": "subject.roles IS EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-is-not-empty",
+   "condition": "subject.roles IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-in-on-the-right",
+   "condition": "resource.x IN subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-contains-any-on-the-right",
+   "condition": "resource.l CONTAINS ANY subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-is-subset-on-the-right",
+   "condition": "resource.l IS SUBSET subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-contains-on-the-right",
+   "condition": "resource.l CONTAINS subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-not-in-on-the-right",
+   "condition": "resource.x NOT IN subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-not-contains-on-the-right",
+   "condition": "resource.l NOT CONTAINS subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-equals-on-the-right",
+   "condition": "resource.x == subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-roles-not-equals-on-the-right",
+   "condition": "resource.x != subject.roles",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-contains",
+   "condition": "subject.scopes CONTAINS 'openid'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-not-contains",
+   "condition": "subject.scopes NOT CONTAINS 'openid'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-contains-other",
+   "condition": "subject.scopes CONTAINS 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-contains-any",
+   "condition": "subject.scopes CONTAINS ANY 'openid', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-not-contains-any",
+   "condition": "subject.scopes NOT CONTAINS ANY 'zz', 'yy'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-is-subset",
+   "condition": "subject.scopes IS SUBSET 'openid', 'zz', 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-is-not-subset",
+   "condition": "subject.scopes IS NOT SUBSET 'zz'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-is-empty",
+   "condition": "subject.scopes IS EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-is-not-empty",
+   "condition": "subject.scopes IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-in-on-the-right",
+   "condition": "resource.x IN subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-contains-any-on-the-right",
+   "condition": "resource.l CONTAINS ANY subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-is-subset-on-the-right",
+   "condition": "resource.l IS SUBSET subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-contains-on-the-right",
+   "condition": "resource.l CONTAINS subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-not-in-on-the-right",
+   "condition": "resource.x NOT IN subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-not-contains-on-the-right",
+   "condition": "resource.l NOT CONTAINS subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-equals-on-the-right",
+   "condition": "resource.x == subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-subject-scopes-not-equals-on-the-right",
+   "condition": "resource.x != subject.scopes",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "openid",
+      "l": [
+       "openid"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-contains",
+   "condition": "subject.parityR14List CONTAINS 'v'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-not-contains",
+   "condition": "subject.parityR14List NOT CONTAINS 'v'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-contains-other",
+   "condition": "subject.parityR14List CONTAINS 'zz'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-contains-any",
+   "condition": "subject.parityR14List CONTAINS ANY 'v', 'zz'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-not-contains-any",
+   "condition": "subject.parityR14List NOT CONTAINS ANY 'zz', 'yy'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-is-subset",
+   "condition": "subject.parityR14List IS SUBSET 'v', 'w', 'zz'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-is-not-subset",
+   "condition": "subject.parityR14List IS NOT SUBSET 'zz'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-is-empty",
+   "condition": "subject.parityR14List IS EMPTY",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-is-not-empty",
+   "condition": "subject.parityR14List IS NOT EMPTY",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-in-on-the-right",
+   "condition": "resource.x IN subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-contains-any-on-the-right",
+   "condition": "resource.l CONTAINS ANY subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-is-subset-on-the-right",
+   "condition": "resource.l IS SUBSET subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-contains-on-the-right",
+   "condition": "resource.l CONTAINS subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-not-in-on-the-right",
+   "condition": "resource.x NOT IN subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-not-contains-on-the-right",
+   "condition": "resource.l NOT CONTAINS subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-equals-on-the-right",
+   "condition": "resource.x == subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-general-list-not-equals-on-the-right",
+   "condition": "resource.x != subject.parityR14List",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-contains",
+   "condition": "subject.parityR14Roles CONTAINS 'ROLE_PARITY_READER'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-not-contains",
+   "condition": "subject.parityR14Roles NOT CONTAINS 'ROLE_PARITY_READER'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-contains-other",
+   "condition": "subject.parityR14Roles CONTAINS 'zz'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-contains-any",
+   "condition": "subject.parityR14Roles CONTAINS ANY 'ROLE_PARITY_READER', 'zz'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-not-contains-any",
+   "condition": "subject.parityR14Roles NOT CONTAINS ANY 'zz', 'yy'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-is-subset",
+   "condition": "subject.parityR14Roles IS SUBSET 'ROLE_PARITY_READER', 'zz', 'zz'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-is-not-subset",
+   "condition": "subject.parityR14Roles IS NOT SUBSET 'zz'",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-is-empty",
+   "condition": "subject.parityR14Roles IS EMPTY",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-is-not-empty",
+   "condition": "subject.parityR14Roles IS NOT EMPTY",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-in-on-the-right",
+   "condition": "resource.x IN subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-contains-any-on-the-right",
+   "condition": "resource.l CONTAINS ANY subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-is-subset-on-the-right",
+   "condition": "resource.l IS SUBSET subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-contains-on-the-right",
+   "condition": "resource.l CONTAINS subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-not-in-on-the-right",
+   "condition": "resource.x NOT IN subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-not-contains-on-the-right",
+   "condition": "resource.l NOT CONTAINS subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-equals-on-the-right",
+   "condition": "resource.x == subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ok-token-list-not-equals-on-the-right",
+   "condition": "resource.x != subject.parityR14Roles",
+   "pips": [
+    "tokenlist"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14",
+      "x": "ROLE_PARITY_READER",
+      "l": [
+       "ROLE_PARITY_READER"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

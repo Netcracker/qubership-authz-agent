@@ -165,6 +165,94 @@ func (ds *legacyPapSeeder) putJSON(ctx context.Context, endpoint, token string, 
 	return nil
 }
 
+// HelperPutSimplifiedPolicies uploads policies into domain on the legacy PAP and
+// returns the status and body instead of failing on a non-2xx status, so a case
+// can record that access-control refused the upload.
+func HelperPutSimplifiedPolicies(ctx context.Context, cfg Config, m2mToken, domain string, policies []any) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		simplifiedPath("domainPolicies", domain),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPut, endpoint, policies, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
+// HelperPutPolicySets uploads regular policy sets under externalID on the legacy
+// PAP, replacing the sets uploaded earlier under the same externalID, and returns
+// the status and body instead of failing on a non-2xx status.
+func HelperPutPolicySets(ctx context.Context, cfg Config, m2mToken, externalID string, sets []any) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		"/access/v1/policySets/externalId/"+url.PathEscape(externalID),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodPut, endpoint, sets, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
+// UploadIsolatedPolicies replaces the PIPs and the policies of domain with the given
+// ones and returns the status of the first upload that was not accepted, or of the
+// last one. It empties the policies before replacing the PIPs, so no policy still
+// references a PIP being removed. On the legacy profile the status is the PAP's,
+// which refuses a declaration or a condition it does not accept. On the authz-agent
+// profile the uploads go to authz-policy-admin, which accepts anything, and the call
+// waits for the agent's next pull; the status is then 200 and says nothing about
+// the agent.
+func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
+	steps := []struct {
+		kind    string
+		payload []any
+	}{
+		{"domainPolicies", []any{}},
+		{"domainPIPs", emptyIfNil(pips)},
+		{"domainPolicies", emptyIfNil(policies)},
+	}
+	if isAuthzAgentProfile(cfg.Profile) {
+		seeder := &authzAgentInternalSeeder{cfg: cfg}
+		for _, step := range steps {
+			if err := seeder.putACStub(ctx, simplifiedPath(step.kind, domain), step.payload); err != nil {
+				return 0, err
+			}
+		}
+		awaitPull(ctx)
+		return http.StatusOK, nil
+	}
+	m2m, err := tokens.M2MToken()
+	if err != nil {
+		return 0, fmt.Errorf("mint M2M token for upload: %w", err)
+	}
+	status := 0
+	for _, step := range steps {
+		endpoint := buildURL(cfg.ACBaseURL, simplifiedPath(step.kind, domain), url.Values{"tenant_id": []string{cfg.TenantID}}.Encode())
+		req, err := buildRequest(ctx, http.MethodPut, endpoint, step.payload, TokenBundle{M2M: m2m}, PerCallOptions{})
+		if err != nil {
+			return 0, err
+		}
+		status, _, err = doRequest(req)
+		if err != nil {
+			return status, err
+		}
+		if status < http.StatusOK || status >= http.StatusMultipleChoices {
+			return status, nil
+		}
+	}
+	return status, nil
+}
+
+func emptyIfNil(items []any) []any {
+	if items == nil {
+		return []any{}
+	}
+	return items
+}
+
 // pullSettleDelay is how long to wait after writing to the authz-policy-admin before the
 // agent can be assumed to have applied the change.
 //

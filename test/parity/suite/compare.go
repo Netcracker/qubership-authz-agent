@@ -16,7 +16,9 @@ package paritysuite
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -66,6 +68,9 @@ func (gc *GoldenComparator) Compare(id ParityEndpointID, subCase string, actual 
 	goldenPath := gc.GoldenPath(id, subCase)
 
 	raw, err := os.ReadFile(goldenPath)
+	if errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("%w: %s", ErrGoldenNotRecorded, goldenPath)
+	}
 	if err != nil {
 		return fmt.Errorf("read golden %s: %w", goldenPath, err)
 	}
@@ -186,12 +191,22 @@ func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 // though its authz-agent ordering currently matches the golden — a future
 // variation in either side's array handling shouldn't re-red-flag a
 // set-semantic leaf that already matches today.
+//
+// Every check/filter row goes through normalizeFilterOrder as well: access-control
+// joins the predicates of the applicable rules in an order that differs between
+// runs at every level of the expression, in every dialect, and in the apply
+// arrays of customFilterCondition, and the two sub-case rewrites of this function
+// cover only the leaves where that was first seen.
 func normalizeComparable(id ParityEndpointID, subCase string, v any) any {
 	if id == PSUITE_ROW_6_CHECK_FILTER_V1 && subCase == "agg-two-predicates" {
-		return normalizeFilterTopLevelCommaTerms(v)
+		v = normalizeFilterTopLevelCommaTerms(v)
 	}
 	if id == PSUITE_ROW_10_CHECK_FILTER_V2 && (subCase == "general-pip-dict" || subCase == "general-pip-list") {
-		return normalizeFilterInClauseElements(v)
+		v = normalizeFilterInClauseElements(v)
+	}
+	switch id {
+	case PSUITE_ROW_6_CHECK_FILTER_V1, PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, PSUITE_ROW_10_CHECK_FILTER_V2:
+		return normalizeFilterOrder(v)
 	}
 	return v
 }
@@ -279,6 +294,12 @@ func normalizeRsqlInElements(expr string) string {
 	}
 	return out.String()
 }
+
+// ErrGoldenNotRecorded is returned by [GoldenComparator.Compare] when no golden
+// file exists for the case. A case whose golden is expected to exist treats it
+// as a failure; a case written ahead of its golden capture skips on it (see
+// requirePendingGolden).
+var ErrGoldenNotRecorded = errors.New("golden not recorded")
 
 // GoldenMismatchError carries the diff text so the testify assertion layer
 // can surface it via s.T().Errorf without re-invoking cmp.Diff.

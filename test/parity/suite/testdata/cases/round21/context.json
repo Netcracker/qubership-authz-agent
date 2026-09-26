@@ -1,0 +1,520 @@
+{
+ "about": "Operand kinds and states in places, effects, algorithms, positions, and iterate passes that no golden combined. Each case's about lists the pairs it reaches as dimension=value: op the operator; lk and rk the kind of the left and the right operand; ls and rs the state or value shape of each; place where the comparison stands; eff the effect of its rule; alg the combining algorithm that combines its outcome; pos its position in OR and AND; iter whether it is in an iterate pass with one grant or several; ep the endpoint; out the comparison's outcome (T, F, ABORT for an ended rule, ERR for a failed decision, 400).",
+ "resourceTypePrefix": "PARITY_SUITE_R21C_",
+ "pins": {
+  "/api/v1/pip/c21-000696-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 21 case"
+   }
+  },
+  "/api/v1/pip/c21-009393-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  },
+  "/api/v1/pip/c21-031706-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  },
+  "/api/v1/pip/c21-001957-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 21 case"
+   }
+  },
+  "/api/v1/pip/c21-007399-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c21-007399-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c21-016236-r": {
+   "statusCode": 200,
+   "body": 5
+  }
+ },
+ "pips": {
+  "c21-000696-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-000696-r",
+   "requestAttributes": {
+    "case": "c21-000696-r"
+   }
+  },
+  "c21-009393-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-009393-l",
+   "requestAttributes": {
+    "case": "c21-009393-l"
+   }
+  },
+  "c21-031706-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-031706-l",
+   "requestAttributes": {
+    "case": "c21-031706-l"
+   }
+  },
+  "c21-001957-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-001957-r",
+   "requestAttributes": {
+    "case": "c21-001957-r"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c21-007399-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-007399-l",
+   "requestAttributes": {
+    "case": "c21-007399-l"
+   }
+  },
+  "c21-007399-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-007399-r",
+   "requestAttributes": {
+    "case": "c21-007399-r"
+   }
+  },
+  "c21-016236-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c21-016236-r",
+   "requestAttributes": {
+    "case": "c21-016236-r"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "c21-000696",
+   "pips": [
+    "c21-000696-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.serviceAccount < subject.parityCxGR OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "4 pairs of context dimensions no golden reached, among them lk=subj.serviceAccount, out=ERR; lk=subj.serviceAccount, rk=pip:GENERAL; ls=NULL, out=ERR; ls=NULL, rk=pip:GENERAL"
+  },
+  {
+   "id": "c21-009393",
+   "pips": [
+    "c21-009393-generalL",
+    "c21-000696-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxGL CONTAINS ANY resource.m[0]",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [
+       null
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [
+       null
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "3 pairs of context dimensions no golden reached, among them ls=single_odd, alg=DENY_UNLESS_PERMIT; ls=single_odd, pos=and-later; ls=single_odd, rk=res:jsonpath"
+  },
+  {
+   "id": "c21-031706",
+   "pips": [
+    "c21-031706-generalL",
+    "c21-000696-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL CONTAINS resource.p.y AND resourceType == '{{resourceType}}'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": null
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": null
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "3 pairs of context dimensions no golden reached, among them ls=single_odd, alg=DENY_OVERRIDES; ls=single_odd, eff=DENY; ls=single_odd, pos=and-first"
+  },
+  {
+   "id": "c21-001957",
+   "pips": [
+    "c21-001957-generalR",
+    "c21-009393-generalL"
+   ],
+   "condition": "resourceType == 'PARITY_CX_NONE' OR resource.x NOT CONTAINS subject.parityCxGR",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "x": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "x": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[bool], rs=ERROR"
+  },
+  {
+   "id": "c21-002445",
+   "pips": [
+    "scope",
+    "c21-000696-generalR",
+    "c21-009393-generalL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.id NOT IN subject.permissionScope.tag",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.id, rs=SCOPE_OUTSIDE"
+  },
+  {
+   "id": "c21-005631",
+   "pips": [
+    "scope",
+    "c21-000696-generalR",
+    "c21-009393-generalL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType NOT IN subject.permissionScope.zone OR resource.a == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=resourceType, rs=SCOPE_OUTSIDE"
+  },
+  {
+   "id": "c21-007399",
+   "pips": [
+    "c21-007399-generalL",
+    "c21-007399-generalR",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL IS NOT SUBSET subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[num], rs=SCALAR_ODD"
+  },
+  {
+   "id": "c21-016236",
+   "pips": [
+    "c21-016236-generalR",
+    "c21-009393-generalL",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR resource.l[*] IS NOT SUBSET subject.parityCxGR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rs=SCALAR_ODD"
+  }
+ ]
+}

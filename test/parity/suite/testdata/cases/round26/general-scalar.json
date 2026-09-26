@@ -1,0 +1,4330 @@
+{
+ "about": "A GENERAL PIP whose body is the number 5 or the boolean true, mostly on the right of the operators that compare values and collections, and on the left of > and NOT MATCH, beside each kind of other side; and GENERAL text and list bodies beside the collection operators. Each comparison is `<comparison> OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. Where both answers are false, the same condition in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n', tells an ended rule (true) from a failed decision (false).",
+ "resourceTypePrefix": "PARITY_SUITE_R26G_",
+ "pins": {
+  "/api/v1/pip/r26-g-000-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-001-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-001-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-002-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-003-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-004-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-005-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-006-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-007-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-008-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-009-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-010-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-011-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-012-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-013-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-014-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-015-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-016-left": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-017-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-018-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-019-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-020-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-021-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-022-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-023-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-024-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-025-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-026-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-027-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-028-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-029-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-030-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-031-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-032-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-033-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-034-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-035-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-036-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-037-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-038-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-039-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-040-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-041-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-042-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-043-left": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r26-g-043-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-044-left": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-044-right": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-045-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-046-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-046-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-047-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-047-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-048-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-048-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-049-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-049-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-050-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-050-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-051-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-051-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-052-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-053-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-054-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-055-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-056-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-057-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-058-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-059-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-060-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-061-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-062-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-062-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-063-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-063-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-064-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-065-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-066-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-067-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-068-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-068-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-069-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-070-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-071-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-071-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-072-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-073-left": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/r26-g-073-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r26-g-074-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r26-g-075-right": {
+   "statusCode": 200,
+   "body": true
+  }
+ },
+ "pips": {
+  "z26-g-000-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-000-right",
+   "requestAttributes": {
+    "case": "r26-g-000-right"
+   }
+  },
+  "z26-g-001-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-001-left",
+   "requestAttributes": {
+    "case": "r26-g-001-left"
+   }
+  },
+  "z26-g-001-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-001-right",
+   "requestAttributes": {
+    "case": "r26-g-001-right"
+   }
+  },
+  "z26-g-002-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-002-right",
+   "requestAttributes": {
+    "case": "r26-g-002-right"
+   }
+  },
+  "z26-g-003-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-003-right",
+   "requestAttributes": {
+    "case": "r26-g-003-right"
+   }
+  },
+  "z26-g-004-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-004-right",
+   "requestAttributes": {
+    "case": "r26-g-004-right"
+   }
+  },
+  "z26-g-005-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-005-right",
+   "requestAttributes": {
+    "case": "r26-g-005-right"
+   }
+  },
+  "z26-g-006-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-006-right",
+   "requestAttributes": {
+    "case": "r26-g-006-right"
+   }
+  },
+  "z26-g-007-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-007-right",
+   "requestAttributes": {
+    "case": "r26-g-007-right"
+   }
+  },
+  "z26-g-008-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-008-right",
+   "requestAttributes": {
+    "case": "r26-g-008-right"
+   }
+  },
+  "z26-g-009-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-009-right",
+   "requestAttributes": {
+    "case": "r26-g-009-right"
+   }
+  },
+  "z26-g-010-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-010-right",
+   "requestAttributes": {
+    "case": "r26-g-010-right"
+   }
+  },
+  "z26-g-011-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-011-right",
+   "requestAttributes": {
+    "case": "r26-g-011-right"
+   }
+  },
+  "z26-g-012-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-012-right",
+   "requestAttributes": {
+    "case": "r26-g-012-right"
+   }
+  },
+  "z26-g-013-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-013-right",
+   "requestAttributes": {
+    "case": "r26-g-013-right"
+   }
+  },
+  "z26-g-014-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-014-right",
+   "requestAttributes": {
+    "case": "r26-g-014-right"
+   }
+  },
+  "z26-g-015-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-015-right",
+   "requestAttributes": {
+    "case": "r26-g-015-right"
+   }
+  },
+  "z26-g-016-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-016-left",
+   "requestAttributes": {
+    "case": "r26-g-016-left"
+   }
+  },
+  "z26-g-017-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-017-right",
+   "requestAttributes": {
+    "case": "r26-g-017-right"
+   }
+  },
+  "z26-g-018-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-018-right",
+   "requestAttributes": {
+    "case": "r26-g-018-right"
+   }
+  },
+  "z26-g-019-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-019-right",
+   "requestAttributes": {
+    "case": "r26-g-019-right"
+   }
+  },
+  "z26-g-020-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-020-right",
+   "requestAttributes": {
+    "case": "r26-g-020-right"
+   }
+  },
+  "z26-g-021-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-021-right",
+   "requestAttributes": {
+    "case": "r26-g-021-right"
+   }
+  },
+  "z26-g-022-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-022-right",
+   "requestAttributes": {
+    "case": "r26-g-022-right"
+   }
+  },
+  "z26-g-023-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-023-right",
+   "requestAttributes": {
+    "case": "r26-g-023-right"
+   }
+  },
+  "z26-g-024-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-024-right",
+   "requestAttributes": {
+    "case": "r26-g-024-right"
+   }
+  },
+  "z26-g-025-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-025-right",
+   "requestAttributes": {
+    "case": "r26-g-025-right"
+   }
+  },
+  "z26-g-026-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-026-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-026-right",
+   "requestAttributes": {
+    "case": "r26-g-026-right"
+   }
+  },
+  "z26-g-027-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-027-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-027-right",
+   "requestAttributes": {
+    "case": "r26-g-027-right"
+   }
+  },
+  "z26-g-028-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-028-right",
+   "requestAttributes": {
+    "case": "r26-g-028-right"
+   }
+  },
+  "z26-g-029-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-029-right",
+   "requestAttributes": {
+    "case": "r26-g-029-right"
+   }
+  },
+  "z26-g-030-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-030-right",
+   "requestAttributes": {
+    "case": "r26-g-030-right"
+   }
+  },
+  "z26-g-031-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-031-right",
+   "requestAttributes": {
+    "case": "r26-g-031-right"
+   }
+  },
+  "z26-g-032-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-032-right",
+   "requestAttributes": {
+    "case": "r26-g-032-right"
+   }
+  },
+  "z26-g-033-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-033-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-033-right",
+   "requestAttributes": {
+    "case": "r26-g-033-right"
+   }
+  },
+  "z26-g-034-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-034-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-034-right",
+   "requestAttributes": {
+    "case": "r26-g-034-right"
+   }
+  },
+  "z26-g-035-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-035-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-035-right",
+   "requestAttributes": {
+    "case": "r26-g-035-right"
+   }
+  },
+  "z26-g-036-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-036-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-036-right",
+   "requestAttributes": {
+    "case": "r26-g-036-right"
+   }
+  },
+  "z26-g-037-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-037-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-037-right",
+   "requestAttributes": {
+    "case": "r26-g-037-right"
+   }
+  },
+  "z26-g-038-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-038-right",
+   "requestAttributes": {
+    "case": "r26-g-038-right"
+   }
+  },
+  "z26-g-039-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-039-right",
+   "requestAttributes": {
+    "case": "r26-g-039-right"
+   }
+  },
+  "z26-g-040-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-040-right",
+   "requestAttributes": {
+    "case": "r26-g-040-right"
+   }
+  },
+  "z26-g-041-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-041-right",
+   "requestAttributes": {
+    "case": "r26-g-041-right"
+   }
+  },
+  "z26-g-042-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-042-right",
+   "requestAttributes": {
+    "case": "r26-g-042-right"
+   }
+  },
+  "z26-g-043-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-043-left",
+   "requestAttributes": {
+    "case": "r26-g-043-left"
+   }
+  },
+  "z26-g-043-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-043-right",
+   "requestAttributes": {
+    "case": "r26-g-043-right"
+   }
+  },
+  "z26-g-044-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-044-left",
+   "requestAttributes": {
+    "case": "r26-g-044-left"
+   }
+  },
+  "z26-g-044-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-044-right",
+   "requestAttributes": {
+    "case": "r26-g-044-right"
+   }
+  },
+  "z26-g-045-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-045-right",
+   "requestAttributes": {
+    "case": "r26-g-045-right"
+   }
+  },
+  "z26-g-046-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-046-left",
+   "requestAttributes": {
+    "case": "r26-g-046-left"
+   }
+  },
+  "z26-g-046-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-046-right",
+   "requestAttributes": {
+    "case": "r26-g-046-right"
+   }
+  },
+  "z26-g-047-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-047-left",
+   "requestAttributes": {
+    "case": "r26-g-047-left"
+   }
+  },
+  "z26-g-047-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-047-right",
+   "requestAttributes": {
+    "case": "r26-g-047-right"
+   }
+  },
+  "z26-g-048-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-048-left",
+   "requestAttributes": {
+    "case": "r26-g-048-left"
+   }
+  },
+  "z26-g-048-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-048-right",
+   "requestAttributes": {
+    "case": "r26-g-048-right"
+   }
+  },
+  "z26-g-049-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-049-left",
+   "requestAttributes": {
+    "case": "r26-g-049-left"
+   }
+  },
+  "z26-g-049-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-049-right",
+   "requestAttributes": {
+    "case": "r26-g-049-right"
+   }
+  },
+  "z26-g-050-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-050-left",
+   "requestAttributes": {
+    "case": "r26-g-050-left"
+   }
+  },
+  "z26-g-050-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-050-right",
+   "requestAttributes": {
+    "case": "r26-g-050-right"
+   }
+  },
+  "z26-g-051-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-051-left",
+   "requestAttributes": {
+    "case": "r26-g-051-left"
+   }
+  },
+  "z26-g-051-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-051-right",
+   "requestAttributes": {
+    "case": "r26-g-051-right"
+   }
+  },
+  "z26-g-052-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-052-right",
+   "requestAttributes": {
+    "case": "r26-g-052-right"
+   }
+  },
+  "z26-g-053-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-053-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-053-right",
+   "requestAttributes": {
+    "case": "r26-g-053-right"
+   }
+  },
+  "z26-g-054-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-054-right",
+   "requestAttributes": {
+    "case": "r26-g-054-right"
+   }
+  },
+  "z26-g-055-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-055-right",
+   "requestAttributes": {
+    "case": "r26-g-055-right"
+   }
+  },
+  "z26-g-056-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-056-right",
+   "requestAttributes": {
+    "case": "r26-g-056-right"
+   }
+  },
+  "z26-g-057-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-057-right",
+   "requestAttributes": {
+    "case": "r26-g-057-right"
+   }
+  },
+  "z26-g-058-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-058-right",
+   "requestAttributes": {
+    "case": "r26-g-058-right"
+   }
+  },
+  "z26-g-059-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-059-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-059-right",
+   "requestAttributes": {
+    "case": "r26-g-059-right"
+   }
+  },
+  "z26-g-060-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-060-right",
+   "requestAttributes": {
+    "case": "r26-g-060-right"
+   }
+  },
+  "z26-g-061-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-061-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-061-right",
+   "requestAttributes": {
+    "case": "r26-g-061-right"
+   }
+  },
+  "z26-g-062-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-062-left",
+   "requestAttributes": {
+    "case": "r26-g-062-left"
+   }
+  },
+  "z26-g-062-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-062-right",
+   "requestAttributes": {
+    "case": "r26-g-062-right"
+   }
+  },
+  "z26-g-063-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-063-left",
+   "requestAttributes": {
+    "case": "r26-g-063-left"
+   }
+  },
+  "z26-g-063-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-063-right",
+   "requestAttributes": {
+    "case": "r26-g-063-right"
+   }
+  },
+  "z26-g-064-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-064-right",
+   "requestAttributes": {
+    "case": "r26-g-064-right"
+   }
+  },
+  "z26-g-065-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-065-right",
+   "requestAttributes": {
+    "case": "r26-g-065-right"
+   }
+  },
+  "z26-g-066-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-066-right",
+   "requestAttributes": {
+    "case": "r26-g-066-right"
+   }
+  },
+  "z26-g-067-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-067-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-067-right",
+   "requestAttributes": {
+    "case": "r26-g-067-right"
+   }
+  },
+  "z26-g-068-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-068-left",
+   "requestAttributes": {
+    "case": "r26-g-068-left"
+   }
+  },
+  "z26-g-068-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-068-right",
+   "requestAttributes": {
+    "case": "r26-g-068-right"
+   }
+  },
+  "z26-g-069-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-069-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-069-right",
+   "requestAttributes": {
+    "case": "r26-g-069-right"
+   }
+  },
+  "z26-g-070-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-070-right",
+   "requestAttributes": {
+    "case": "r26-g-070-right"
+   }
+  },
+  "z26-g-071-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-071-left",
+   "requestAttributes": {
+    "case": "r26-g-071-left"
+   }
+  },
+  "z26-g-071-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-071-right",
+   "requestAttributes": {
+    "case": "r26-g-071-right"
+   }
+  },
+  "z26-g-072-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-072-right",
+   "requestAttributes": {
+    "case": "r26-g-072-right"
+   }
+  },
+  "z26-g-073-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-073-left",
+   "requestAttributes": {
+    "case": "r26-g-073-left"
+   }
+  },
+  "z26-g-073-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-073-right",
+   "requestAttributes": {
+    "case": "r26-g-073-right"
+   }
+  },
+  "z26-g-074-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-g-074-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-074-right",
+   "requestAttributes": {
+    "case": "r26-g-074-right"
+   }
+  },
+  "z26-g-075-subject-parityr26fzdepartment": {
+   "name": "subject.parityR26FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "z26-g-075-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-g-075-right",
+   "requestAttributes": {
+    "case": "r26-g-075-right"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "z26-g-000",
+   "about": "`resource.items[0].x IN subject.parityR26FzRight OR resource.items[0].x <= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = [{\"x\": null}]. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[0].x IN subject.parityR26FzRight OR resource.items[0].x <= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-000-subject-parityr26fzright"
+   ]
+  },
+  {
+   "id": "z26-g-001",
+   "about": "`resource.items[*].x == subject.parityR26FzRight OR subject.parityR26FzGeneral < subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x == subject.parityR26FzRight OR subject.parityR26FzGeneral < subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-001-subject-parityr26fzright"
+   ]
+  },
+  {
+   "id": "z26-g-002",
+   "about": "`'v' < subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzRight answers the body true.",
+   "condition": "'v' < subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-002-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-003",
+   "about": "`'v' >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzRight answers the body true.",
+   "condition": "'v' >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-003-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-004",
+   "about": "`resource.x < subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x < subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-004-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-005",
+   "about": "`resource.x < subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x < subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-005-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-006",
+   "about": "`resource.x > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-006-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-007",
+   "about": "`resource.x > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-007-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-008",
+   "about": "`resource.x == subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x == subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-008-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-009",
+   "about": "`resource.x == subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x == subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-009-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-010",
+   "about": "`resource.x != subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x != subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-010-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-011",
+   "about": "`resource.x != subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x != subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-011-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-012",
+   "about": "`resource.x <= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x <= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-012-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-013",
+   "about": "`resource.x >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-013-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-014",
+   "about": "`resource.x >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-014-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-015",
+   "about": "`resource.x IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-015-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-016",
+   "about": "`subject.parityR26FzGeneral NOT MATCH v* OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the body true.",
+   "condition": "subject.parityR26FzGeneral NOT MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-016-subject-parityr26fzgeneral",
+    "z26-g-000-subject-parityr26fzright"
+   ]
+  },
+  {
+   "id": "z26-g-017",
+   "about": "`resource.x NOT IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x NOT IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-017-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-018",
+   "about": "`resource.x NOT IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x NOT IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-018-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-019",
+   "about": "`resource.x CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-019-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-020",
+   "about": "`resource.x CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-020-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-021",
+   "about": "`resource.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-021-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-022",
+   "about": "`resource.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-022-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-023",
+   "about": "`resource.items[*].x < subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.items[*].x < subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-023-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-024",
+   "about": "`resource.items[*].x > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-024-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-025",
+   "about": "`resource.items[*].x >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.items[*].x >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-025-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-026",
+   "about": "`subject.parityR26FzList > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-026-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-027",
+   "about": "`subject.parityR26FzList < subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzList < subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-027-subject-parityr26fzlist",
+    "z26-g-027-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-028",
+   "about": "`resource.items[*].x != subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x != subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-028-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-029",
+   "about": "`resource.items[*].x <= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x <= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-029-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-030",
+   "about": "`resource.items[*].x IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-030-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-031",
+   "about": "`resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = false. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": false,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": false,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-031-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-032",
+   "about": "`resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = 5. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": 5,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": 5,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-032-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-033",
+   "about": "`subject.parityR26FzList >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-033-subject-parityr26fzlist",
+    "z26-g-033-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-034",
+   "about": "`subject.parityR26FzList != subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList != subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-034-subject-parityr26fzlist",
+    "z26-g-034-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-035",
+   "about": "`subject.parityR26FzList == subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList == subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-035-subject-parityr26fzlist",
+    "z26-g-035-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-036",
+   "about": "`subject.parityR26FzList <= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList <= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-036-subject-parityr26fzlist",
+    "z26-g-036-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-037",
+   "about": "`subject.parityR26FzList IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-037-subject-parityr26fzlist",
+    "z26-g-037-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-038",
+   "about": "`resource.x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-038-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-039",
+   "about": "`resource.x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-039-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-040",
+   "about": "`resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-040-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-041",
+   "about": "`resource.x IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-041-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-042",
+   "about": "`resource.x IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-042-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-043",
+   "about": "`subject.parityR26FzGeneral > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the body [\"v\"]. subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzGeneral > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-043-subject-parityr26fzgeneral",
+    "z26-g-043-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-044",
+   "about": "`subject.parityR26FzGeneral > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the body true. subject.parityR26FzRight answers the text body \"v\".",
+   "condition": "subject.parityR26FzGeneral > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-044-subject-parityr26fzgeneral",
+    "z26-g-044-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-045",
+   "about": "`resource.o.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": {\"k\": \"v\"}}. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.o.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": {
+        "k": "v"
+       }
+      },
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": {
+        "k": "v"
+       }
+      },
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-045-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-046",
+   "about": "`subject.parityR26FzGeneral > subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzGeneral > subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-046-subject-parityr26fzgeneral",
+    "z26-g-046-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-047",
+   "about": "`subject.parityR26FzGeneral == subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzGeneral == subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-047-subject-parityr26fzgeneral",
+    "z26-g-047-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-048",
+   "about": "`subject.parityR26FzGeneral >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzGeneral >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-048-subject-parityr26fzgeneral",
+    "z26-g-048-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-049",
+   "about": "`subject.parityR26FzGeneral IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzGeneral IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-049-subject-parityr26fzgeneral",
+    "z26-g-049-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-050",
+   "about": "`subject.parityR26FzGeneral <= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzGeneral <= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-050-subject-parityr26fzgeneral",
+    "z26-g-050-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-051",
+   "about": "`subject.parityR26FzGeneral != subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzGeneral != subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-051-subject-parityr26fzgeneral",
+    "z26-g-051-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-052",
+   "about": "`resource.items[*].x NOT IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x NOT IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-052-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-053",
+   "about": "`subject.parityR26FzList NOT IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList NOT IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-053-subject-parityr26fzlist",
+    "z26-g-053-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-054",
+   "about": "`resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = null. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-054-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-055",
+   "about": "`resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries x = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-055-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-056",
+   "about": "`resource.items[*].x CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-056-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-057",
+   "about": "`resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": true}. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": true
+      },
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": true
+      },
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-057-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-058",
+   "about": "`resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": \"v\"}. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-058-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-059",
+   "about": "`subject.parityR26FzList CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzList CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-059-subject-parityr26fzlist",
+    "z26-g-059-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-060",
+   "about": "`resource.items[*].x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-060-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-061",
+   "about": "`subject.parityR26FzList IS SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-061-subject-parityr26fzlist",
+    "z26-g-061-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-062",
+   "about": "`subject.parityR26FzGeneral NOT IN subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzGeneral NOT IN subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-062-subject-parityr26fzgeneral",
+    "z26-g-062-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-063",
+   "about": "`subject.parityR26FzGeneral CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzGeneral CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-063-subject-parityr26fzgeneral",
+    "z26-g-063-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-064",
+   "about": "`resource.items[0].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = [{\"x\": 5.5}]. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.items[0].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": 5.5
+       }
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": 5.5
+       }
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-064-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-065",
+   "about": "`resource.items[*].x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-065-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-066",
+   "about": "`resource.items[*].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-066-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-067",
+   "about": "`subject.parityR26FzList NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-067-subject-parityr26fzlist",
+    "z26-g-067-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-068",
+   "about": "`subject.parityR26FzGeneral IS SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzGeneral IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-068-subject-parityr26fzgeneral",
+    "z26-g-068-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-069",
+   "about": "`subject.parityR26FzList IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-069-subject-parityr26fzlist",
+    "z26-g-069-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-070",
+   "about": "`resource.items[0].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = [{\"x\": 5.0}]. subject.parityR26FzRight answers the body true.",
+   "condition": "resource.items[0].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-070-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-071",
+   "about": "`subject.parityR26FzGeneral NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzGeneral NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-071-subject-parityr26fzgeneral",
+    "z26-g-071-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-072",
+   "about": "`resource.items[*].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = an empty list. subject.parityR26FzRight answers the body 5.",
+   "condition": "resource.items[*].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-072-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-073",
+   "about": "`subject.parityR26FzGeneral IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzGeneral answers the text body \"v\". subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzGeneral IS NOT SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-073-subject-parityr26fzgeneral",
+    "z26-g-073-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-074",
+   "about": "`subject.parityR26FzList NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent empty. subject.parityR26FzRight answers the body 5.",
+   "condition": "subject.parityR26FzList NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-074-subject-parityr26fzlist",
+    "z26-g-074-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral"
+   ]
+  },
+  {
+   "id": "z26-g-075",
+   "about": "`subject.parityR26FzDepartment CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzDepartment reads the token claim department, 'finance' in the reader's token. subject.parityR26FzRight answers the body true.",
+   "condition": "subject.parityR26FzDepartment CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-g-075-subject-parityr26fzdepartment",
+    "z26-g-075-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-g-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-016-in-a-deny-rule",
+   "about": "The condition `subject.parityR26FzGeneral NOT MATCH v* OR resource.a == 'y'` of z26-g-016 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-016-subject-parityr26fzgeneral",
+    "z26-g-000-subject-parityr26fzright",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR26FzGeneral NOT MATCH v* OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-019-in-a-deny-rule",
+   "about": "The condition `resource.x CONTAINS subject.parityR26FzRight OR resource.a == 'y'` of z26-g-019 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-019-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": null,
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-031-in-a-deny-rule",
+   "about": "The condition `resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-031 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-031-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": false,
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-032-in-a-deny-rule",
+   "about": "The condition `resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-032 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-032-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": 5,
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-038-in-a-deny-rule",
+   "about": "The condition `resource.x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'` of z26-g-038 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-038-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": null,
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-040-in-a-deny-rule",
+   "about": "The condition `resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-040 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-040-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": null,
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-045-in-a-deny-rule",
+   "about": "The condition `resource.o.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-045 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-045-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "x": {
+        "k": "v"
+       }
+      },
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-054-in-a-deny-rule",
+   "about": "The condition `resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-054 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-054-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": null,
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-055-in-a-deny-rule",
+   "about": "The condition `resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-055 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-055-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "x": [],
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-057-in-a-deny-rule",
+   "about": "The condition `resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-057 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-057-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "x": true
+      },
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-058-in-a-deny-rule",
+   "about": "The condition `resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-058 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-058-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "x": "v"
+      },
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-064-in-a-deny-rule",
+   "about": "The condition `resource.items[0].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-064 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-064-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "x": 5.5
+       }
+      ],
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-066-in-a-deny-rule",
+   "about": "The condition `resource.items[*].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-066 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-066-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "items": [],
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-070-in-a-deny-rule",
+   "about": "The condition `resource.items[0].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-070 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-070-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[0].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-072-in-a-deny-rule",
+   "about": "The condition `resource.items[*].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-072 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-072-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "items": [],
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-074-in-a-deny-rule",
+   "about": "The condition `subject.parityR26FzList NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-074 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-074-subject-parityr26fzlist",
+    "z26-g-074-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-075-subject-parityr26fzdepartment"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR26FzList NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r26"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": ""
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-075-in-a-deny-rule",
+   "about": "The condition `subject.parityR26FzDepartment CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-g-075 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-g-075-subject-parityr26fzdepartment",
+    "z26-g-075-subject-parityr26fzright",
+    "z26-g-001-subject-parityr26fzgeneral",
+    "z26-g-026-subject-parityr26fzlist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR26FzDepartment CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-g-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  }
+ ]
+}

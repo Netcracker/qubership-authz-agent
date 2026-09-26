@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_GENERAL_STAR_EQ.a.eq(\"x*\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"x*\" } ] } }",
+    "rsqlFilterCondition": "a!=\"x*\"",
+    "sqlFilterCondition": "NOT (a='x*')",
+    "customFilterCondition": null
+  }
+}

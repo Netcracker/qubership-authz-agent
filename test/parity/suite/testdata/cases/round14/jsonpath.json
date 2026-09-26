@@ -1,0 +1,1548 @@
+{
+ "about": "Which JSON Path forms the PAP accepts in an attribute and what they select: negative indexes, slices, unions, wildcards, recursive descent, filters with comparisons, existence, &&, ||, in and =~, functions, bracketed keys, and the root $. Each condition runs alone and on the left of OR resource.a == 'y', over one resource.",
+ "resourceTypePrefix": "PARITY_SUITE_R14_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "jp-negative-index-alone",
+   "condition": "resource.list[-1] == 'c'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-negative-index-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-negative-index-or",
+   "condition": "resource.list[-1] == 'c' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-negative-index-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-negative-index-past-the-start-alone",
+   "condition": "resource.list[-5] IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-negative-index-past-the-start-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-negative-index-past-the-start-or",
+   "condition": "resource.list[-5] IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-negative-index-past-the-start-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-slice-alone",
+   "condition": "resource.list[0:2] CONTAINS 'b'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-slice-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-slice-or",
+   "condition": "resource.list[0:2] CONTAINS 'b' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-slice-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-slice-open-end-alone",
+   "condition": "resource.list[1:] CONTAINS 'c'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-slice-open-end-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-slice-open-end-or",
+   "condition": "resource.list[1:] CONTAINS 'c' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-slice-open-end-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-union-of-indexes-alone",
+   "condition": "resource.list[0,2] CONTAINS 'c'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-union-of-indexes-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-union-of-indexes-or",
+   "condition": "resource.list[0,2] CONTAINS 'c' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-union-of-indexes-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-wildcard-alone",
+   "condition": "resource.items[*].id CONTAINS 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-wildcard-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-wildcard-or",
+   "condition": "resource.items[*].id CONTAINS 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-wildcard-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-recursive-descent-alone",
+   "condition": "resource..id CONTAINS 's'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-recursive-descent-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-recursive-descent-or",
+   "condition": "resource..id CONTAINS 's' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-recursive-descent-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-greater-than-alone",
+   "condition": "resource.items[?(@.n > 2)].id CONTAINS 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-greater-than-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-greater-than-or",
+   "condition": "resource.items[?(@.n > 2)].id CONTAINS 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-greater-than-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-not-equals-alone",
+   "condition": "resource.items[?(@.type != 'a')].id CONTAINS 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-not-equals-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-not-equals-or",
+   "condition": "resource.items[?(@.type != 'a')].id CONTAINS 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-not-equals-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-exists-alone",
+   "condition": "resource.items[?(@.n)].id CONTAINS 'q'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-exists-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-exists-or",
+   "condition": "resource.items[?(@.n)].id CONTAINS 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-exists-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-and-alone",
+   "condition": "resource.items[?(@.type == 'a' && @.n > 0)].id CONTAINS 'q'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-and-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-and-or",
+   "condition": "resource.items[?(@.type == 'a' && @.n > 0)].id CONTAINS 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-and-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-or-alone",
+   "condition": "resource.items[?(@.type == 'z' || @.n > 2)].id CONTAINS 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-or-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-or-or",
+   "condition": "resource.items[?(@.type == 'z' || @.n > 2)].id CONTAINS 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-or-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-on-a-number-selecting-one-alone",
+   "condition": "resource.items[?(@.n == 3)].id == 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-on-a-number-selecting-one-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-on-a-number-selecting-one-or",
+   "condition": "resource.items[?(@.n == 3)].id == 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-on-a-number-selecting-one-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-in-alone",
+   "condition": "resource.items[?(@.type in ['a'])].id CONTAINS 'q'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-in-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-in-or",
+   "condition": "resource.items[?(@.type in ['a'])].id CONTAINS 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-in-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-regex-alone",
+   "condition": "resource.items[?(@.type =~ /a/)].id CONTAINS 'q'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-regex-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-regex-or",
+   "condition": "resource.items[?(@.type =~ /a/)].id CONTAINS 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-regex-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-function-length-alone",
+   "condition": "resource.list.length() == 3",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-function-length-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-function-length-or",
+   "condition": "resource.list.length() == 3 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-function-length-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-bracket-key-alone",
+   "condition": "resource['list'][0] == 'a'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-bracket-key-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-bracket-key-or",
+   "condition": "resource['list'][0] == 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-bracket-key-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-bracket-key-inside-alone",
+   "condition": "resource.o['k'].id == 's'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-bracket-key-inside-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-bracket-key-inside-or",
+   "condition": "resource.o['k'].id == 's' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-bracket-key-inside-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-dollar-root-alone",
+   "condition": "$.list[0] == 'a'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-dollar-root-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-dollar-root-or",
+   "condition": "$.list[0] == 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-dollar-root-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-index-then-key-alone",
+   "condition": "resource.items[1].id == 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-index-then-key-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-index-then-key-or",
+   "condition": "resource.items[1].id == 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-index-then-key-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-with-spaces-alone",
+   "condition": "resource.items[?(@.type == 'b')].id == 'r'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-with-spaces-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-filter-with-spaces-or",
+   "condition": "resource.items[?(@.type == 'b')].id == 'r' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-filter-with-spaces-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-wildcard-compared-with-equals-alone",
+   "condition": "resource.list[*] == 'a'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-wildcard-compared-with-equals-alone",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "jp-wildcard-compared-with-equals-or",
+   "condition": "resource.list[*] == 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r14-jp-wildcard-compared-with-equals-or",
+      "a": "y",
+      "list": [
+       "a",
+       "b",
+       "c"
+      ],
+      "items": [
+       {
+        "type": "a",
+        "id": "q",
+        "n": 1
+       },
+       {
+        "type": "b",
+        "id": "r",
+        "n": 3
+       }
+      ],
+      "o": {
+       "k": {
+        "id": "s"
+       }
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

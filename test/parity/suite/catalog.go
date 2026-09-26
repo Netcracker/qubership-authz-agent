@@ -38,6 +38,30 @@ const (
 	PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2
 	PSUITE_ROW_9_PREVIEW_BULK_OPERATIONS_V2
 	PSUITE_ROW_10_CHECK_FILTER_V2
+	// PSUITE_LOAD_SIMPLIFIED_POLICIES is the PAP upload of simplified policies,
+	// used by the cases that record whether access-control accepts a condition.
+	PSUITE_LOAD_SIMPLIFIED_POLICIES
+	// PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME is row 2 recorded with its HTTP
+	// status, for requests access-control may refuse.
+	PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME
+	// PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME is row 6 recorded with its HTTP status.
+	PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME
+	// PSUITE_LOAD_POLICY_SETS is the PAP upload of regular policy sets.
+	PSUITE_LOAD_POLICY_SETS
+	// PSUITE_CONFIG_POLICY_SETS_V3 is the export of every policy set the PAP
+	// holds, which the agent reads instead of the uploads.
+	PSUITE_CONFIG_POLICY_SETS_V3
+	// PSUITE_CONFIG_PIPS_V3 is the export of every PIP declaration the PAP holds.
+	PSUITE_CONFIG_PIPS_V3
+	// PSUITE_IMPORT_CUSTOMIZATION is the PAP import of policy customizations at
+	// one level, which disable or replace an uploaded rule.
+	PSUITE_IMPORT_CUSTOMIZATION
+	// PSUITE_PIP_CALL is what pip-mock received from the service under test on
+	// one PIP route over one request.
+	PSUITE_PIP_CALL
+	// PSUITE_PAP_READ is a GET the suite sends to the PAP outside the v3
+	// export; the path is the case's.
+	PSUITE_PAP_READ
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -106,6 +130,42 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		PathTmpl: "/access/v2/check/filter", GoldenDir: "check-filter-v2",
 		IgnoreObligations: true,
 	},
+	PSUITE_LOAD_SIMPLIFIED_POLICIES: {
+		ID: PSUITE_LOAD_SIMPLIFIED_POLICIES, Name: "load-simplified-policies-v1", HTTPMethod: "PUT",
+		PathTmpl: "/access/v1/simplifiedPolicies/domainPolicies/{domain}", GoldenDir: "load-simplified-policies-v1",
+	},
+	PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME: {
+		ID: PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, Name: "check-resource-v1-outcome", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/check/resource", GoldenDir: "check-resource-v1-outcome",
+	},
+	PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME: {
+		ID: PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, Name: "check-filter-v1-outcome", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/check/filter", GoldenDir: "check-filter-v1-outcome",
+	},
+	PSUITE_LOAD_POLICY_SETS: {
+		ID: PSUITE_LOAD_POLICY_SETS, Name: "load-policy-sets-v1", HTTPMethod: "PUT",
+		PathTmpl: "/access/v1/policySets/externalId/{externalId}", GoldenDir: "load-policy-sets-v1",
+	},
+	PSUITE_CONFIG_POLICY_SETS_V3: {
+		ID: PSUITE_CONFIG_POLICY_SETS_V3, Name: "config-policy-sets-v3", HTTPMethod: "GET",
+		PathTmpl: "/access/v3/config/policySets", GoldenDir: "config-policy-sets-v3",
+	},
+	PSUITE_CONFIG_PIPS_V3: {
+		ID: PSUITE_CONFIG_PIPS_V3, Name: "config-pips-v3", HTTPMethod: "GET",
+		PathTmpl: "/access/v3/config/pips", GoldenDir: "config-pips-v3",
+	},
+	PSUITE_IMPORT_CUSTOMIZATION: {
+		ID: PSUITE_IMPORT_CUSTOMIZATION, Name: "import-customization-v1", HTTPMethod: "POST",
+		PathTmpl: "/access/v1/config/customization/import", GoldenDir: "import-customization-v1",
+	},
+	PSUITE_PIP_CALL: {
+		ID: PSUITE_PIP_CALL, Name: "pip-call", HTTPMethod: "POST",
+		PathTmpl: "/api/v1/pip", GoldenDir: "pip-call",
+	},
+	PSUITE_PAP_READ: {
+		ID: PSUITE_PAP_READ, Name: "pap-read", HTTPMethod: "GET",
+		PathTmpl: "/access/v1", GoldenDir: "pap-read",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -145,6 +205,18 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.CheckResourcesResponse{}
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
+	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS, PSUITE_IMPORT_CUSTOMIZATION:
+		return &model.PolicyLoadOutcome{}
+	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
+		return &model.CheckResourceOutcome{}
+	case PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME:
+		return &model.FilterOutcome{}
+	case PSUITE_CONFIG_POLICY_SETS_V3, PSUITE_CONFIG_PIPS_V3:
+		return &model.ConfigExportOutcome{}
+	case PSUITE_PIP_CALL:
+		return &model.PipCallOutcome{}
+	case PSUITE_PAP_READ:
+		return &model.PapReadOutcome{}
 	}
 	panic(fmt.Sprintf("paritysuite: no golden factory for ParityEndpointID %d", int(id)))
 }
