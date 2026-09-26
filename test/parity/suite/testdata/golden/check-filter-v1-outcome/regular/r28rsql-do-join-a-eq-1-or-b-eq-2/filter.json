@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_OR_B_EQ_2.a.eq(1)).or(PARITY_SUITE_R28RSQL_DO_JOIN_A_EQ_1_OR_B_EQ_2.b.eq(2))).not()",
+    "mongodbFilterCondition": "{ { \"$and\": [ { \"a\": 1 }, { \"b\": 2 } ] } }",
+    "rsqlFilterCondition": "a!=1 and b!=2",
+    "sqlFilterCondition": "NOT (a=1 OR b=2)",
+    "customFilterCondition": null
+  }
+}

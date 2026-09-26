@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_MAPPING_EQ.a.eq(\"p==q\", \"p,q\", \"p\"q\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"p==q\" }, { \"$uuid\": \"p,q\" }, { \"$uuid\": \"p\"q\" } ] } }",
+    "rsqlFilterCondition": "a!=\"p==q\", \"p,q\", \"p\"q\"",
+    "sqlFilterCondition": "NOT (a='p==q', 'p,q', 'p\"q')",
+    "customFilterCondition": null
+  }
+}
