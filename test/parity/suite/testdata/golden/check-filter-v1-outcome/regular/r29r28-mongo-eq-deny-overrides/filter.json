@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R29M_R29R28_MONGO_EQ_DENY_OVERRIDES.a.eq(\"v\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$ne\": \"v\" } } }",
+    "rsqlFilterCondition": "a!=v",
+    "sqlFilterCondition": "NOT (a='v')",
+    "customFilterCondition": null
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": {
+      "logic": {
+        "path": "ad50bdeb-bc36-7527-9a2c-aed9a812697b"
+      },
+      "data": {
+        "ad50bdeb-bc36-7527-9a2c-aed9a812697b": {
+          "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+          "params": {
+            "p": "PARITY_SUITE_R29F_R29PIPFIELD_CUSTOM_PARAM_RESOURCE_TYPE"
+          }
+        }
+      }
+    }
+  }
+}
