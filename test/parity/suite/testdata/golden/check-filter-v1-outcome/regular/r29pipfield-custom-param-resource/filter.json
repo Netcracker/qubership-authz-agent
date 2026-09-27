@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": {
+      "logic": {
+        "path": "62f5b7f4-4cb3-ca52-560a-e1cfe3ce074d"
+      },
+      "data": {
+        "62f5b7f4-4cb3-ca52-560a-e1cfe3ce074d": {
+          "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+          "params": {
+            "p": "resource"
+          }
+        }
+      }
+    }
+  }
+}
