@@ -1,0 +1,30 @@
+{
+  "r29r28-mongo-eq-deny-overrides": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R29M_R29R28_MONGO_EQ_DENY_OVERRIDES.a.eq(\"v\")).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$ne\": \"v\" } } }",
+        "rsqlFilterCondition": "a!=v",
+        "sqlFilterCondition": "NOT (a='v')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29r28-mongo-eq-permit-unless-deny": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R29M_R29R28_MONGO_EQ_PERMIT_UNLESS_DENY.a.eq(\"v\")).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$ne\": \"v\" } } }",
+        "rsqlFilterCondition": "a!=v",
+        "sqlFilterCondition": "NOT (a='v')",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

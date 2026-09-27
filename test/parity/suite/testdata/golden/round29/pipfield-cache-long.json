@@ -1,0 +1,16 @@
+{
+  "r29pipfield-long-cacheable-alone": {
+    "check-resource-v1-outcome/isolated/after-70s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-70s": {"calls":1,"requestAttributes":{"case":"r29pipfield-long-cacheable-alone"}},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-long-cacheable-alone"}}
+  },
+  "r29pipfield-long-period-120": {
+    "check-resource-v1-outcome/isolated/after-70s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-70s": {"calls":1,"requestAttributes":{"case":"r29pipfield-long-period-120"}},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-long-period-120"}}
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "r29fields-tenant-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29fields-tenant-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29fields-tenant-custom-rule-other": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29fields-tenant-policy-other": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29fields-tenant-rule-default": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29fields-tenant-rule-other": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29fields-tenant-set-other": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

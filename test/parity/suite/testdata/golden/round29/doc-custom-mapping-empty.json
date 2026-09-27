@@ -1,0 +1,13 @@
+{
+  "r29doc-empty-custom-mapping": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29doc-empty-custom-mapping-in-a-deny-rule": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

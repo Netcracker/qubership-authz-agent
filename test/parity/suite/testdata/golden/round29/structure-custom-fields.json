@@ -1,0 +1,146 @@
+{
+  "r29structure-custom-delete-level-omitted": {
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-import": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "delete-customization-v1/regular/delete": {"status":400},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-delete-level-other": {
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-import": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "delete-customization-v1/regular/delete": {"status":400},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-delete-recursive-false": {
+    "check-resource-v1-outcome/regular/read-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-import": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "delete-customization-v1/regular/delete": {"status":204},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-delete-recursive-omitted": {
+    "check-resource-v1-outcome/regular/read-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-import": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "delete-customization-v1/regular/delete": {"status":204},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-delete-recursive-true": {
+    "check-resource-v1-outcome/regular/read-after-delete": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-after-import": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "delete-customization-v1/regular/delete": {"status":204},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-fields-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-fields-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-invalid-level-other": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-level-omitted": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-meta-component": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-meta-domain": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-meta-externalid": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-meta-tenantid": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-meta-type": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-tenant-policy": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-tenant-rule": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-tenant-set": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-validate-algorithm": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

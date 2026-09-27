@@ -1,0 +1,20 @@
+{
+  "r29pipfield-ra-general": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-ra-header-list": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-ra-header-list","x":"v,w"}}
+  },
+  "r29pipfield-ra-mapping": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r29pipfield-ra-token-default-list": {
+    "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-ra-token-default-list","x":["d1","d2"]}}
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "r29pap-policy-target-over-256-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":500}
+  },
+  "r29pap-policy-target-over-256-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-effect-filter-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "r29pap-rule-effect-filter-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-effect-permit-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "r29pap-rule-effect-permit-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-effect-use-filter-condition-bad": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-effect-use-filter-condition-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-id-not-uuid-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "r29pap-rule-id-not-uuid-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-name-over-256-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":500}
+  },
+  "r29pap-rule-name-over-256-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-rule-predicate-over-1024-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":500}
+  },
+  "r29pap-rule-predicate-over-1024-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-set-status-unknown-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":400}
+  },
+  "r29pap-set-status-unknown-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-set-target-over-256-bad": {
+    "load-policy-sets-v1/regular/upload-1": {"status":500}
+  },
+  "r29pap-set-target-over-256-ok": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-sets-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pap-sets-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "r29pipfield-cache-cacheable-false-period-2": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/after-4s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-4s": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-cacheable-false-period-2"}},
+    "pip-call/isolated/again": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-cacheable-false-period-2"}},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-cacheable-false-period-2"}}
+  },
+  "r29pipfield-cache-cacheable-period-0": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/after-4s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-4s": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/again": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-cacheable-period-0"}}
+  },
+  "r29pipfield-cache-cacheable-period-2": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/after-4s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-4s": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/again": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-cacheable-period-2"}}
+  },
+  "r29pipfield-cache-cacheable-without-period": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/after-4s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-4s": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/again": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-cacheable-without-period"}}
+  },
+  "r29pipfield-cache-neither": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/after-4s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-4s": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/again": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-neither"}}
+  },
+  "r29pipfield-cache-period-2-without-cacheable": {
+    "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/after-4s": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/again": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/first": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/after-4s": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/again": {"calls":0,"requestAttributes":null},
+    "pip-call/isolated/first": {"calls":1,"requestAttributes":{"case":"r29pipfield-cache-period-2-without-cacheable"}}
+  }
+}

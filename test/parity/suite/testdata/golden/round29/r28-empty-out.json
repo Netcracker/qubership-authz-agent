@@ -1,0 +1,32 @@
+{
+  "r29r28-empty-out-deny-overrides": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R29E_R29R28_EMPTY_OUT_DENY_OVERRIDES.a.notIn(\"\")).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$in\": [  ] } } }",
+        "rsqlFilterCondition": "a=in=()",
+        "sqlFilterCondition": "NOT (a NOT IN (NULL))",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r29r28-empty-out-permit-unless-deny": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "(PARITY_SUITE_R29E_R29R28_EMPTY_OUT_PERMIT_UNLESS_DENY.a.notIn(\"\")).not()",
+        "mongodbFilterCondition": "{ { \"a\": { \"$in\": [  ] } } }",
+        "rsqlFilterCondition": "a=in=()",
+        "sqlFilterCondition": "NOT (a NOT IN (NULL))",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

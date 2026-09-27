@@ -1,0 +1,161 @@
+{
+  "r29structure-custom-add-policy-by-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-add-root": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-add-rule-by-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-disable-nested-set-at-the-top": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-disable-nested-set-by-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-disable-policy": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-disable-set": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-invalid-add-rule-without-effect": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-invalid-disable-unknown-rule": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-invalid-replace-rule-without-effect": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-invalid-unknown-policy-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-invalid-unknown-set-path": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-levels": {
+    "check-resource-v1-outcome/regular/read-after-customer": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-customer": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-after-project": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/customer": {"status":200},
+    "import-customization-v1/regular/project": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-replace-policy": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-replace-policy-partial": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-replace-set": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-of-another-type-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-replace-set-partial": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-of-another-type-after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-of-another-type-before": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/import": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-custom-two-imports": {
+    "check-resource-v1-outcome/regular/read-after-first": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-after-second": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-after-second": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/update-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/first": {"status":200},
+    "import-customization-v1/regular/second": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-customization-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29structure-customization-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,4 +1,7 @@
 {
+  "r28pip-mapping-general-fail500-p-rule-target-reader": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
+  },
   "r28pip-mapping-general-fail500-p-simplified-reader": {
     "load-simplified-policies-v1/isolated": {"status":400}
   },
@@ -31,8 +34,14 @@
   "r28pip-mapping-non-subject-p-simplified-reader": {
     "load-simplified-policies-v1/isolated": {"status":400}
   },
+  "r28pip-mapping-scope-p-iterate-reader": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
+  },
   "r28pip-mapping-scope-p-simplified-reader": {
     "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r28pip-mapping-self-p-rule-condition-reader": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
   },
   "r28pip-mapping-token-absent-p-simplified-reader": {
     "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},

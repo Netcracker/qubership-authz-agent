@@ -1,0 +1,50 @@
+{
+  "r29pipfield-level-allow": {
+    "check-resource-v1-outcome/regular/external-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/external-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/internal-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/internal-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reader-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/external-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/internal-a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-remote"}},
+    "pip-call/regular/m2m-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/reader-a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-remote"}}
+  },
+  "r29pipfield-level-deny": {
+    "check-resource-v1-outcome/regular/external-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/external-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/internal-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/internal-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/external-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/internal-a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-remote"}},
+    "pip-call/regular/m2m-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/reader-a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-remote"}}
+  },
+  "r29pipfield-level-is-empty": {
+    "check-resource-v1-outcome/regular/external-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/external-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/internal-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/internal-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/m2m-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/reader-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/external-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/internal-a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-remote"}},
+    "pip-call/regular/m2m-a-n": {"calls":0,"requestAttributes":null},
+    "pip-call/regular/reader-a-n": {"calls":1,"requestAttributes":{"case":"r29pipfield-remote"}}
+  }
+}

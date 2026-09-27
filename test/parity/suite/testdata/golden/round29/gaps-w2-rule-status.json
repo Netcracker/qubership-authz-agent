@@ -1,0 +1,30 @@
+{
+  "r29gaps-w2-rule-status-active-allow": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-w2-rule-status-active-deny": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-w2-rule-status-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-w2-rule-status-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-w2-rule-status-inactive-allow": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-w2-rule-status-inactive-deny": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

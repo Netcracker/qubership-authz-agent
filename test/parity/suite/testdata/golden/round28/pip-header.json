@@ -15,13 +15,17 @@
     "check-resource-v1-outcome/isolated/a-y": {"status":200,"decision":true},
     "load-simplified-policies-v1/isolated": {"status":200}
   },
+  "r28pip-header-empty-no-default-rule-condition-none": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":400}
+  },
   "r28pip-header-empty-no-default-simplified-none": {
     "load-simplified-policies-v1/isolated": {"status":400}
   },
   "r28pip-header-host-no-default-rule-condition-none": {
     "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r28pip-header-host-no-default-simplified-none": {
     "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
@@ -31,7 +35,8 @@
   "r28pip-header-incoming-token-no-default-rule-condition-none": {
     "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r28pip-header-lower-default-eq-default-simplified-empty": {
     "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":true},
@@ -51,7 +56,8 @@
   "r28pip-header-padded-no-default-rule-condition-v": {
     "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
     "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r28pip-header-padded-no-default-simplified-v": {
     "check-resource-v1-outcome/isolated/a-n": {"status":200,"decision":false},

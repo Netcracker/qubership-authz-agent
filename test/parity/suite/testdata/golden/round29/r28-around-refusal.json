@@ -1,0 +1,29 @@
+{
+  "r29r28-dual-general-elsewhere": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29r28-dual-token-here": {
+    "load-simplified-policies-v1/isolated": {"status":409}
+  },
+  "r29r28-key-general-redeclared": {
+    "check-resource-v1-outcome/isolated/from-general-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/from-general-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/from-token-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/from-token-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29r28-key-mapping-loaded": {
+    "check-resource-v1-outcome/isolated/from-general-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/from-general-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/from-token-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/from-token-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r29r28-key-token-elsewhere": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

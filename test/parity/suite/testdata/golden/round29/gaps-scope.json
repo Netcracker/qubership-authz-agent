@@ -1,0 +1,26 @@
+{
+  "r29gaps-scope-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-scope-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29gaps-scope-plain-string-values": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 500,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "check-resource-v1-outcome/regular/a-n": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/a-y": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

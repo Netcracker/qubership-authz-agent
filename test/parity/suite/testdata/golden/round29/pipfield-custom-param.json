@@ -1,0 +1,147 @@
+{
+  "r29pipfield-custom-param-resource": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "62f5b7f4-4cb3-ca52-560a-e1cfe3ce074d"
+          },
+          "data": {
+            "62f5b7f4-4cb3-ca52-560a-e1cfe3ce074d": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": "resource"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pipfield-custom-param-resource-owner": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "030a1f69-9e55-c1b3-f871-fb67a66ae25e"
+          },
+          "data": {
+            "030a1f69-9e55-c1b3-f871-fb67a66ae25e": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pipfield-custom-param-resource-type": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "ad50bdeb-bc36-7527-9a2c-aed9a812697b"
+          },
+          "data": {
+            "ad50bdeb-bc36-7527-9a2c-aed9a812697b": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": "PARITY_SUITE_R29F_R29PIPFIELD_CUSTOM_PARAM_RESOURCE_TYPE"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pipfield-custom-param-subject-id": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "4539aeb1-6311-1ba2-e264-e13cfa9c0af6"
+          },
+          "data": {
+            "4539aeb1-6311-1ba2-e264-e13cfa9c0af6": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": "00000000-0000-0000-0000-000000000101"
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pipfield-custom-param-x": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": {
+          "logic": {
+            "path": "90899965-06f0-f3fe-abce-07e5d418e9d1"
+          },
+          "data": {
+            "90899965-06f0-f3fe-abce-07e5d418e9d1": {
+              "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+              "params": {
+                "p": null
+              }
+            }
+          }
+        }
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pipfield-mapping-own-name-placeholder": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}
