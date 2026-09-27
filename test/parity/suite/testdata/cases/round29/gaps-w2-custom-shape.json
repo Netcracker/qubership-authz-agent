@@ -1,0 +1,299 @@
+{
+ "about": "Customization imports whose body the JSON binder cannot read into sets, policies and rules: an object instead of a list (the step field body, sent as written), an entry that is a number, a set added with a policy that is a number, and a path entry whose policies field is a string (an element or a children field that is not an object or a list is sent as written). The expected reading refuses each import with 400; the alternatives accept it, either changing nothing or skipping what is not an object. The import golden is the import's status; the read after it shows the set unchanged.",
+ "resourceTypePrefix": "PARITY_SUITE_R29K_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29gaps-w2-custom-shape-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-custom-body-object",
+   "about": "The import body is the object {} instead of a list. 400 if the import is refused; 200 if it is accepted. Read before and after with a = 'y': true, unless an accepted import changed the set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "body": {},
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "a": "y",
+        "id": "r29"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-custom-entry-a-number",
+   "about": "The import body is [5]: an entry that is a number. 400 if the import is refused; 200 if it is accepted. Read before and after with a = 'y': true, unless an accepted import changed the set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      5
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "a": "y",
+        "id": "r29"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-custom-added-set-with-a-number-policy",
+   "about": "The import adds a set, whose target is false, holding the policy 5. 400 if the import is refused; 200 if it is accepted. Read before and after with a = 'y': true, unless an accepted import changed the set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "added",
+       "name": "added",
+       "target": "false",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        5
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "a": "y",
+        "id": "r29"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-custom-policies-a-string",
+   "about": "A path entry names the uploaded set with policies the string \"x\". 400 if the import is refused; 200 if it is accepted. Read before and after with a = 'y': true, unless an accepted import changed the set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": "x"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "a": "y",
+        "id": "r29"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-custom-shape-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

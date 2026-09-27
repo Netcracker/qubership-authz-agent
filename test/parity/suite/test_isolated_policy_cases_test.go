@@ -57,8 +57,9 @@ type isolatedCase struct {
 	policiesQuery string
 }
 
-// isolatedRequest is a check/resource request, or a check/filter request when
-// filter is set, against the case's policy.
+// isolatedRequest is a check/resource request against the case's policy, or a
+// check/filter request when filter is set, or a bulk or bulk operations check
+// when bulk or bulkOperations is set.
 type isolatedRequest struct {
 	name      string
 	operation string

@@ -39,7 +39,7 @@ func stringOf(v string) *string { return &v }
 
 func boolOf(v bool) *bool { return &v }
 
-func TestDerivedID_MatchesTheSpecificationDerivation(t *testing.T) {
+func TestDerivedID_IsTheFirst16BytesOfTheSHA256OfThePath(t *testing.T) {
 	if got, want := derivedID("c1", "set/outer"), "d82b5a69-4822-465d-d804-1c9317bcfe92"; got != want {
 		t.Errorf(`derivedID("c1", "set/outer") = %s, want %s`, got, want)
 	}

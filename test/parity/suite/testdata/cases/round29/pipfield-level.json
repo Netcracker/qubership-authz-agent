@@ -1,0 +1,371 @@
+{
+ "about": "Remote PIPs for users whose token carries the claim level: m2m, external, internal. Needs the users of pipfield-realm-users.json in the parity realm and a user-attribute mapper of the end-user client that puts the user attribute level into the claim level; subjectClaims checks it. parity-reader, without the claim, is the control.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-remote": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "remote": {
+   "name": "subject.parityR29Remote",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-remote",
+   "requestAttributes": {
+    "case": "r29pipfield-remote"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-level-allow",
+   "about": "GENERAL PIP, allow form",
+   "pips": [
+    "remote"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR29Remote == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "external-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "external-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "internal-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    },
+    {
+     "name": "internal-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-level-deny",
+   "about": "GENERAL PIP, deny form",
+   "pips": [
+    "remote"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR29Remote == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "external-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "external-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "internal-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    },
+    {
+     "name": "internal-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-level-is-empty",
+   "about": "GENERAL PIP, is empty form",
+   "pips": [
+    "remote"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR29Remote IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    },
+    {
+     "name": "external-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "external-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "internal-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    },
+    {
+     "name": "internal-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-internal",
+     "subjectClaims": {
+      "level": "internal"
+     }
+    }
+   ]
+  }
+ ]
+}

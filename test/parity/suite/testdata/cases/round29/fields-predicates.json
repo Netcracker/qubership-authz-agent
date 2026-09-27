@@ -1,0 +1,150 @@
+{
+ "about": "The predicate keys of a simplified policy: rsqlPredicate at the top level, and a predicates object with mongodbPredicate. The suite's seeded fixtures send sqlPredicate, mongodbPredicate and querydslPredicate at the top level instead, and legacy stores them; no golden shows what they do. Each policy has no condition, so check/resource allows it; the filter says which keys became predicates of which dialect (a policy without any predicate is ALLOW).",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29fields-predicates-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-predicates-every-key",
+   "about": "rsqlPredicate a==rsql, top-level sqlPredicate, mongodbPredicate and querydslPredicate, and predicates.mongodbPredicate. The filter's mongodb text says which mongodb key counts, its querydsl text whether querydslPredicate does, its sql text whether top-level sqlPredicate does.",
+   "policy": {
+    "sqlPredicate": "a='sql'",
+    "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-top\"}",
+    "querydslPredicate": "{{resourceType}}.a.eq(\"querydsl\")",
+    "rsqlPredicate": "a==rsql",
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}"
+    }
+   },
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29fields-predicates-seeded-shape",
+   "about": "Only the top-level keys the seeded fixtures send: sqlPredicate, mongodbPredicate and querydslPredicate. USE_FILTER_CONDITION with their texts if they count; ALLOW if none does.",
+   "policy": {
+    "sqlPredicate": "a='sql'",
+    "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-top\"}",
+    "querydslPredicate": "{{resourceType}}.a.eq(\"querydsl\")"
+   },
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29fields-predicates-nested-only",
+   "about": "Only predicates.mongodbPredicate, inside the predicates object. USE_FILTER_CONDITION with the mongodb text if it counts; ALLOW if not.",
+   "policy": {
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}"
+    }
+   },
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29fields-predicates-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

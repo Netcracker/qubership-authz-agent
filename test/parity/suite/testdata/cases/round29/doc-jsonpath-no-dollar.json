@@ -1,0 +1,97 @@
+{
+ "about": "A GENERAL jsonPath without the leading $ (\"groups\"), over the body {\"groups\": [\"v\"], \"n\": 5}. True if the path is read from the root, as $.groups; a path that selects nothing reads as a null body.",
+ "resourceTypePrefix": "PARITY_SUITE_R29D_",
+ "pins": {
+  "/api/v1/pip/r29doc-no-dollar": {
+   "statusCode": 200,
+   "body": {
+    "groups": [
+     "v"
+    ],
+    "n": 5
+   }
+  }
+ },
+ "pips": {
+  "nodollar": {
+   "name": "subject.parityR29DocNoDollar",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29doc-no-dollar",
+   "type": "JSON",
+   "jsonPath": "groups"
+  }
+ },
+ "cases": [
+  {
+   "id": "r29doc-general-json-path-without-dollar",
+   "about": "jsonPath \"groups\".",
+   "condition": "subject.parityR29DocNoDollar == 'v' OR resource.a == 'y'",
+   "pips": [
+    "nodollar"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-general-json-path-without-dollar-in-a-deny-rule",
+   "about": "jsonPath \"groups\". The same condition in a DENY rule: an ended rule allows, a failed decision denies.",
+   "pips": [
+    "nodollar"
+   ],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityR29DocNoDollar == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

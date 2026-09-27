@@ -1,0 +1,106 @@
+{
+ "about": "A DENY rule whose rsql predicate is a=out=(${p}) over a GENERAL PIP answering an empty list. The negation turns =out= into =in=, and the empty list leaves a=in=(); round 28 asked the mirror image, a=in=(${p}), whose negation a=out=() comes out either way.",
+ "resourceTypePrefix": "PARITY_SUITE_R29E_",
+ "pins": {
+  "/api/v1/pip/r29-empty": {
+   "statusCode": 200,
+   "body": []
+  }
+ },
+ "pips": {
+  "empty": {
+   "name": "subject.parityR29Empty",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-empty",
+   "requestAttributes": {
+    "case": "subject.parityR29Empty"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-empty-out-deny-overrides",
+   "about": "The DENY rule under DENY_OVERRIDES.",
+   "pips": [
+    "empty"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=out=(${subject.parityR29Empty})",
+          "sqlPredicate": "a NOT IN (${subject.parityR29Empty})",
+          "predicate": "${resourceType}.a.notIn(${subject.parityR29Empty})",
+          "mongodbPredicate": "{ \"a\": { \"$nin\": ${subject.parityR29Empty} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29r28-empty-out-permit-unless-deny",
+   "about": "The DENY rule under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "empty"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=out=(${subject.parityR29Empty})",
+          "sqlPredicate": "a NOT IN (${subject.parityR29Empty})",
+          "predicate": "${resourceType}.a.notIn(${subject.parityR29Empty})",
+          "mongodbPredicate": "{ \"a\": { \"$nin\": ${subject.parityR29Empty} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

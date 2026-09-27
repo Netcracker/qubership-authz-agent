@@ -1,0 +1,168 @@
+{
+ "about": "Whether the permission scope service's answer lives past one request. The iterating set is read once, at once again, and 5 s later, with cachePeriod 3; then, 5 s after, with a declaration without cachePeriod, twice at once. pipCalls on the scope route records each read.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope-3": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 3
+  },
+  "scope-default": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090"
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-scope-period-3",
+   "about": "scope PIP with cachePeriod 3",
+   "pips": [
+    "scope-3"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    },
+    {
+     "name": "after-5s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies",
+     "pauseMs": 5000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-scope-without-period",
+   "about": "scope PIP without cachePeriod",
+   "pips": [
+    "scope-default"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies",
+     "pauseMs": 5000
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    }
+   ]
+  }
+ ]
+}
