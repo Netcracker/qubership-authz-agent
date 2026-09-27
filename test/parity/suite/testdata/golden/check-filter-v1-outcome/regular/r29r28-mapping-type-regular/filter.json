@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R29T_R29R28_MAPPING_TYPE_REGULAR.a.in(\"parity_r29_p2\", \"parity_r29_p1\")",
+    "mongodbFilterCondition": "{ { \"a\": { \"$in\": [ { \"$uuid\": \"parity_r29_p2\" }, { \"$uuid\": \"parity_r29_p1\" } ] } } }",
+    "rsqlFilterCondition": "a=in=(\"parity_r29_p2\", \"parity_r29_p1\")",
+    "sqlFilterCondition": "a IN ('parity_r29_p2', 'parity_r29_p1')",
+    "customFilterCondition": null
+  }
+}
