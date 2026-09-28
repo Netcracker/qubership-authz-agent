@@ -143,6 +143,15 @@ func TestCustomizeStepCall(t *testing.T) {
 			customizeStep{Level: stringOf("CUSTOMER"), Delete: &customizeDelete{Key: "outer", Recursive: boolOf(false)}},
 			papCall{method: http.MethodDelete, path: set, query: url.Values{"level": {"CUSTOMER"}, "recursive": {"false"}}},
 			PSUITE_DELETE_CUSTOMIZATION},
+		{"pipBody is sent in place of the list, with the placeholders replaced",
+			customizeStep{Level: stringOf("CUSTOMER"), PIPBody: json.RawMessage(`{"name":"subject.{{resourceType}}","cachePeriod":5}`)},
+			papCall{method: http.MethodPost, path: "/access/v1/pip/customization/import", query: url.Values{"level": {"CUSTOMER"}},
+				body: map[string]any{"name": "subject.RT", "cachePeriod": json.Number("5")}},
+			PSUITE_IMPORT_PIP_CUSTOMIZATION},
+		{"a PIP delete sends the PIP's name, and omitLevel no level",
+			customizeStep{Level: stringOf("CUSTOMER"), OmitLevel: true, Delete: &customizeDelete{PIP: "subject.{{resourceType}}"}},
+			papCall{method: http.MethodDelete, path: "/access/v1/pip/customization/pip/subject.RT", query: url.Values{}},
+			PSUITE_DELETE_PIP_CUSTOMIZATION},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -249,6 +258,34 @@ func TestCustomizationCleanup_SkipsAPIPEntryThatIsNotAnObject(t *testing.T) {
 	}
 }
 
+// pipBody names the PIPs it customizes as pips does, whether it holds one entry
+// or a list of them, so the cleanup deletes those PIPs; a body that is neither
+// names none.
+func TestCustomizationCleanup_DeletesThePIPsPIPBodyNames(t *testing.T) {
+	cases := []struct {
+		name string
+		body string
+		want []string
+	}{
+		{"one entry", `{"name":"subject.a"}`, []string{"subject.a"}},
+		{"a list", `[{"name":"subject.a"},"not an object",{"name":"subject.b"}]`, []string{"subject.a", "subject.b"}},
+		{"a string", `"subject.a"`, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			steps := []customizeStep{{Name: "import", Level: stringOf("CUSTOMER"), PIPBody: json.RawMessage(tc.body)}}
+			var want []papCall
+			for _, name := range tc.want {
+				want = append(want, papCall{method: http.MethodDelete, path: "/access/v1/pip/customization/pip/" + name,
+					query: url.Values{"level": {"CUSTOMER"}}})
+			}
+			if diff := cmp.Diff(want, customizationCleanup("c1", steps, "RT"), cmp.AllowUnexported(papCall{})); diff != "" {
+				t.Errorf("customizationCleanup mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func TestCaseFileProblems(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -271,7 +308,7 @@ func TestCaseFileProblems(t *testing.T) {
 		{"a step with no level", func(f *caseFile) { f.Cases[1].Customize[0].Level = nil },
 			"case reg step step names no level"},
 		{"a step with sets and pips", func(f *caseFile) { f.Cases[1].Customize[0].PIPs = []any{map[string]any{"name": "subject.a"}} },
-			"case reg step step sets more than one of delete, pips, and sets or body"},
+			"case reg step step sets more than one of delete, pips or pipBody, and sets or body"},
 		{"a PIP customization with no name", func(f *caseFile) {
 			f.Cases[1].Customize[0].Sets = nil
 			f.Cases[1].Customize[0].PIPs = []any{map[string]any{"status": "INACTIVE"}}
@@ -314,6 +351,29 @@ func TestCaseFileProblems(t *testing.T) {
 			f.Cases[1].Customize[0].Sets = nil
 			f.Cases[1].Customize[0].Delete = &customizeDelete{}
 		}, "case reg step step deletes the customization of a set with no key"},
+		{"a PIP delete", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].Delete = &customizeDelete{PIP: "subject.a"}
+		}, ""},
+		{"a delete of both a set and a PIP", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].Delete = &customizeDelete{Key: "outer", PIP: "subject.a"}
+		}, "case reg step step deletes the customization of both a set and a PIP"},
+		{"recursive on a PIP delete", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].Delete = &customizeDelete{PIP: "subject.a", Recursive: boolOf(true)}
+		}, "case reg step step sets recursive on the delete of a PIP customization"},
+		{"pipBody beside pips", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].PIPs = []any{map[string]any{"name": "subject.a"}}
+			f.Cases[1].Customize[0].PIPBody = json.RawMessage(`{"name":"subject.a"}`)
+		}, "case reg step step sets both pips and pipBody"},
+		{"pipBody beside sets", func(f *caseFile) { f.Cases[1].Customize[0].PIPBody = json.RawMessage(`{"name":"subject.a"}`) },
+			"case reg step step sets more than one of delete, pips or pipBody, and sets or body"},
+		{"a pipBody object with no name", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].PIPBody = json.RawMessage(`{"status":"INACTIVE"}`)
+		}, "imports a PIP customization map[status:INACTIVE] with no name"},
 		{"a step with no name", func(f *caseFile) { f.Cases[1].Customize[0].Name = "" },
 			`case reg has a customize step named ""`},
 		{"a bulkOperations item that is not an object", func(f *caseFile) { f.Cases[0].Requests[0].BulkOperations = []any{"a"} },

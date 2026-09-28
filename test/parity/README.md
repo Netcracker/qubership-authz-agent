@@ -336,7 +336,8 @@ whose status is recorded under the step's name:
 | The step sets | The call | Golden |
 | --- | --- | --- |
 | `delete: {key, recursive}` | `DELETE /access/v1/config/customization/policySet/<id>` for the set with that key, with `recursive` when the step gives it | `delete-customization-v1/regular/<case>/<step>` |
-| `pips` | `POST /access/v1/pip/customization/import` with the entries as written, the resource type placeholders replaced; an entry may be something other than an object | `import-pip-customization-v1/regular/<case>/<step>` |
+| `delete: {pip}` | `DELETE /access/v1/pip/customization/pip/<name>` for the PIP with that name, the resource type placeholders replaced | `delete-pip-customization-v1/regular/<case>/<step>` |
+| `pips`, or `pipBody` | `POST /access/v1/pip/customization/import` with the entries as written, or `pipBody` as the whole body, which need not be a list, the resource type placeholders replaced; an entry may be something other than an object | `import-pip-customization-v1/regular/<case>/<step>` |
 | `sets`, or `body` | `POST /access/v1/config/customization/import` with the entries `sets` builds, or `body` exactly as written | `import-customization-v1/regular/<case>/<step>` |
 
 An entry of `sets` takes the shape of a set of the case: `key` names a set, a policy, or a rule and is replaced by the
@@ -344,18 +345,19 @@ id the upload derives from it, `algorithm`, `sets`, `iterate`, and `predicates` 
 does, and every other member is sent as written. `level` is sent as written, and `omitLevel: true` sends no level. After
 the call the step's requests run, with golden paths as the case's own requests have. Before the upload and after the
 last step the suite deletes, with no golden, the customization of every set a step's `sets` names at its top level and
-of every PIP its `pips` names, at the step's level, or at both `PROJECT` and `CUSTOMER` when the step names another
-level or sets `omitLevel`.
+of every PIP an object of its `pips` or `pipBody` names, at the step's level, or at both `PROJECT` and `CUSTOMER` when
+the step names another level or sets `omitLevel`.
 
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
 file does not declare, a case id two cases share, a `classifyBy` on a case without `sets` or on a route the file does
 not pin, a `pipCalls` on a route the file does not pin or beside `classifyBy`, a `subject` other than `m2m` or
 `user:<username>`, `subjectClaims` without a `user:` subject, a field of a case without `sets` on a case with `sets` or
 the other way round, a `ruleIdsOf` that names no earlier case with `sets` of the file, two requests or two steps of a
-case with one name, a step with neither `level` nor `omitLevel`, a step that sets more than one of `delete`, `pips`, and
-`sets` or `body`, a customization entry with no key or with `omitFields`, two members of one entry that the suite would
-send as the same member, such as `algorithm` beside `combiningAlgorithm`, a PIP customization object with no name,
-`status` beside `omitStatus`, `pipHeaders` without `pipCalls`, `emptyOperation` beside `operation`, a negative
+case with one name, a step with neither `level` nor `omitLevel`, a step that sets more than one of `delete`, `pips` or
+`pipBody`, and `sets` or `body`, `pips` beside `pipBody`, a `delete` that names both a set and a PIP or neither, a
+`recursive` on the delete of a PIP, a customization entry with no key or with `omitFields`, two members of one entry
+that the suite would send as the same member, such as `algorithm` beside `combiningAlgorithm`, a PIP customization
+object of `pips` or `pipBody` with no name, `status` beside `omitStatus`, `pipHeaders` without `pipCalls`, `emptyOperation` beside `operation`, a negative
 `pauseMs`, a bulk request with a `filter`, `resource`, `operation`, `type`, or `classifyBy` of its own or an item that
 is not an object, and a round 19 or later file whose case with `sets` drops a PIP name: run `go test -run
 TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for recording.

@@ -99,16 +99,16 @@ type caseSpec struct {
 
 // customizeStep is one call to the customization API of the PAP, recorded as a
 // status golden under the step's name, followed by the requests that observe
-// its effect. A step with Delete deletes the customization of one set; a step
-// with PIPs imports those PIP customizations; any other step imports the
-// policy customizations Sets builds, or Body in their place.
+// its effect. A step with Delete deletes the customization of one set or one
+// PIP; a step with PIPs or PIPBody imports PIP customizations; any other step
+// imports the policy customizations Sets builds, or Body in their place.
 //
 // Before the upload of the case and after its last step, the runner deletes,
 // with no golden, the customization of every set that a step's Sets names at
-// its top level and of every PIP that a step's PIPs names. It deletes each at
-// the level of the step, or at both PROJECT and CUSTOMER where the step names
-// another level or sets OmitLevel, so that a customization an earlier run left behind
-// does not reach the goldens.
+// its top level and of every PIP that an object of a step's PIPs or PIPBody
+// names. It deletes each at the level of the step, or at both PROJECT and
+// CUSTOMER where the step names another level or sets OmitLevel, so that a
+// customization an earlier run left behind does not reach the goldens.
 type customizeStep struct {
 	Name string `json:"name"`
 	// Level is the level query parameter, sent as written; see OmitLevel.
@@ -131,16 +131,26 @@ type customizeStep struct {
 	// with the resource type placeholders replaced. Each names the PIP it
 	// customizes in name.
 	PIPs []any `json:"pips"`
-	// Delete deletes the customization of the set with key Delete.Key.
+	// PIPBody, when present, is the whole body of a PIP customization import,
+	// sent with the resource type placeholders replaced, in place of the list
+	// PIPs builds. It may be something other than a list, such as a single
+	// entry. The cleanup reads the name of the object it holds, or of each
+	// object of the list it holds.
+	PIPBody json.RawMessage `json:"pipBody"`
+	// Delete deletes the customization of the set with key Delete.Key, or of
+	// the PIP named Delete.PIP.
 	Delete   *customizeDelete `json:"delete"`
 	Requests []requestSpec    `json:"requests"`
 }
 
-// customizeDelete names the set whose customization a step deletes. Recursive
-// is the recursive query parameter, which also deletes the customizations of
-// the set's policies and rules; nil sends no parameter.
+// customizeDelete names the set or the PIP whose customization a step deletes:
+// the set with key Key, or the PIP named PIP, whose resource type placeholders
+// are replaced. Recursive is the recursive query parameter of a set's delete,
+// which also deletes the customizations of the set's policies and rules; nil
+// sends no parameter.
 type customizeDelete struct {
 	Key       string `json:"key"`
+	PIP       string `json:"pip"`
 	Recursive *bool  `json:"recursive"`
 }
 
@@ -411,7 +421,7 @@ func customizationCleanup(caseID string, steps []customizeStep, rt string) []pap
 				sets = append(sets, papCall{method: http.MethodDelete, path: path,
 					query: url.Values{"level": {level}, "recursive": {"true"}}})
 			}
-			for _, e := range st.PIPs {
+			for _, e := range stepPIPEntries(st) {
 				entry, ok := e.(map[string]any)
 				if !ok {
 					continue
@@ -429,6 +439,34 @@ func customizationCleanup(caseID string, steps []customizeStep, rt string) []pap
 	return append(sets, pips...)
 }
 
+// stepPIPEntries returns the PIP customization entries of st: its PIPs, or
+// the object PIPBody holds, or the members of the list it holds. A body that
+// is neither yields none.
+func stepPIPEntries(st customizeStep) []any {
+	if st.PIPBody == nil {
+		return st.PIPs
+	}
+	switch body := decodeRaw(st.PIPBody).(type) {
+	case []any:
+		return body
+	case map[string]any:
+		return []any{body}
+	}
+	return nil
+}
+
+// decodeRaw returns raw decoded as the case file is, numbers as json.Number,
+// or raw itself when it is not valid JSON.
+func decodeRaw(raw json.RawMessage) any {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	var v any
+	if err := dec.Decode(&v); err != nil {
+		return raw
+	}
+	return v
+}
+
 // customizeStepCall returns the call st sends for the case caseID, whose rule
 // ids come from ruleIDsOf when it is not empty, and the endpoint its status
 // golden is filed under.
@@ -438,6 +476,10 @@ func customizeStepCall(caseID, ruleIDsOf string, st customizeStep, rt string) (p
 		query.Set("level", *st.Level)
 	}
 	switch {
+	case st.Delete != nil && st.Delete.PIP != "":
+		return papCall{method: http.MethodDelete, query: query,
+			path: "/access/v1/pip/customization/pip/" + url.PathEscape(resourceTypeReplacer(rt).Replace(st.Delete.PIP)),
+		}, PSUITE_DELETE_PIP_CUSTOMIZATION
 	case st.Delete != nil:
 		if st.Delete.Recursive != nil {
 			query.Set("recursive", strconv.FormatBool(*st.Delete.Recursive))
@@ -445,6 +487,9 @@ func customizeStepCall(caseID, ruleIDsOf string, st customizeStep, rt string) (p
 		return papCall{method: http.MethodDelete, query: query,
 			path: "/access/v1/config/customization/policySet/" + derivedID(caseID, "set/"+st.Delete.Key),
 		}, PSUITE_DELETE_CUSTOMIZATION
+	case st.PIPBody != nil:
+		return papCall{method: http.MethodPost, path: Meta(PSUITE_IMPORT_PIP_CUSTOMIZATION).PathTmpl, query: query,
+			body: withResourceType(decodeRaw(st.PIPBody), rt)}, PSUITE_IMPORT_PIP_CUSTOMIZATION
 	case st.PIPs != nil:
 		return papCall{method: http.MethodPost, path: Meta(PSUITE_IMPORT_PIP_CUSTOMIZATION).PathTmpl, query: query,
 			body: withResourceType(st.PIPs, rt)}, PSUITE_IMPORT_PIP_CUSTOMIZATION
@@ -684,20 +729,28 @@ func stepProblems(caseID string, st customizeStep) []string {
 	kinds := 0
 	if st.Delete != nil {
 		kinds++
-		if st.Delete.Key == "" {
-			report("deletes the customization of a set with no key")
+		switch {
+		case st.Delete.Key == "" && st.Delete.PIP == "":
+			report("deletes the customization of a set with no key, or of a PIP with no name")
+		case st.Delete.Key != "" && st.Delete.PIP != "":
+			report("deletes the customization of both a set and a PIP, and sends only the PIP's delete")
+		case st.Delete.PIP != "" && st.Delete.Recursive != nil:
+			report("sets recursive on the delete of a PIP customization, which does not send it")
 		}
 	}
-	if st.PIPs != nil {
+	if st.PIPs != nil || st.PIPBody != nil {
 		kinds++
+	}
+	if st.PIPs != nil && st.PIPBody != nil {
+		report("sets both pips and pipBody, and sends only pipBody")
 	}
 	if st.Sets != nil || st.Body != nil {
 		kinds++
 	}
 	if kinds > 1 {
-		report("sets more than one of delete, pips, and sets or body, and sends only one of them")
+		report("sets more than one of delete, pips or pipBody, and sets or body, and sends only one of them")
 	}
-	for _, e := range st.PIPs {
+	for _, e := range stepPIPEntries(st) {
 		entry, ok := e.(map[string]any)
 		if !ok {
 			continue // sent as written, like a set entry that is not an object

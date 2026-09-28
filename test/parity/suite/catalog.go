@@ -74,6 +74,9 @@ const (
 	// PSUITE_DELETE_CUSTOMIZATION is the PAP delete of the customization of
 	// one policy set at one level.
 	PSUITE_DELETE_CUSTOMIZATION
+	// PSUITE_DELETE_PIP_CUSTOMIZATION is the PAP delete of the customization
+	// of one PIP at the level the call names.
+	PSUITE_DELETE_PIP_CUSTOMIZATION
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -196,6 +199,10 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_DELETE_CUSTOMIZATION, Name: "delete-customization-v1", HTTPMethod: "DELETE",
 		PathTmpl: "/access/v1/config/customization/policySet/{policySetId}", GoldenDir: "delete-customization-v1",
 	},
+	PSUITE_DELETE_PIP_CUSTOMIZATION: {
+		ID: PSUITE_DELETE_PIP_CUSTOMIZATION, Name: "delete-pip-customization-v1", HTTPMethod: "DELETE",
+		PathTmpl: "/access/v1/pip/customization/pip/{name}", GoldenDir: "delete-pip-customization-v1",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -236,7 +243,7 @@ func NewGoldenTarget(id ParityEndpointID) any {
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
 	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS, PSUITE_IMPORT_CUSTOMIZATION,
-		PSUITE_IMPORT_PIP_CUSTOMIZATION, PSUITE_DELETE_CUSTOMIZATION:
+		PSUITE_IMPORT_PIP_CUSTOMIZATION, PSUITE_DELETE_CUSTOMIZATION, PSUITE_DELETE_PIP_CUSTOMIZATION:
 		return &model.PolicyLoadOutcome{}
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
 		return &model.CheckResourceOutcome{}
