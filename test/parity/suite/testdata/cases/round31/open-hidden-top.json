@@ -1,0 +1,333 @@
+{
+ "about": "Customizations of a top-level set uploaded DRAFT or ARCHIVED, which round 30 found the customization does not see: a disable of a set uploaded INACTIVE was refused (r30pairs-none-001), and a replace of an ARCHIVED or a DRAFT set added a set beside it (r30pairs-one-002, r30open-replace-draft-to-active). First, a disable of a DRAFT and of an ARCHIVED set: refused (400) if the customization does not see them, accepted (200) if it refuses only to disable a set that is INACTIVE already. Second, a PROJECT replace of an ARCHIVED set, then a CUSTOMER path into the same id that adds a policy: accepted, and read after true, if the path finds the set the replace added; refused if it finds the ARCHIVED set first. Each case reads before and after; read of a set out of service is false.",
+ "resourceTypePrefix": "PARITY_SUITE_R31O_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r31open-hidden-top-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31open-disable-active-top",
+   "about": "Control: the disable of the set, uploaded ACTIVE, is accepted, and read after is false.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r31"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "disable",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r31"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31open-disable-draft-top",
+   "about": "The set is uploaded DRAFT; the import disables it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "DRAFT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r31"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "disable",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r31"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31open-disable-archived-top",
+   "about": "The set is uploaded ARCHIVED; the import disables it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "ARCHIVED"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r31"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "disable",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r31"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31open-path-into-added-beside-archived",
+   "about": "The set is uploaded ARCHIVED. PROJECT replaces its name, target and algorithm, which adds a set with its id and no policies (read after false). CUSTOMER then names the id with a policy that allows READ and no field of the set's own.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "ARCHIVED"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r31"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "replace",
+     "level": "PROJECT",
+     "sets": [
+      {
+       "key": "set",
+       "name": "set added beside",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == '{{resourceType}}'"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-replace",
+       "resource": {
+        "id": "r31"
+       }
+      }
+     ]
+    },
+    {
+     "name": "path",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-read",
+           "name": "added read",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after-path",
+       "resource": {
+        "id": "r31"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31open-hidden-top-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
