@@ -1,0 +1,36 @@
+{
+  "r31open-disable-active-top": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":true},
+    "import-customization-v1/regular/disable": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-disable-archived-top": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/disable": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-disable-draft-top": {
+    "check-resource-v1-outcome/regular/read-after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/disable": {"status":400},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-hidden-top-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-hidden-top-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r31open-path-into-added-beside-archived": {
+    "check-resource-v1-outcome/regular/read-after-path": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-after-replace": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-before": {"status":200,"decision":false},
+    "import-customization-v1/regular/path": {"status":200},
+    "import-customization-v1/regular/replace": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
