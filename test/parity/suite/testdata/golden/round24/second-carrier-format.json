@@ -2,6 +2,7 @@
   "s24-calls-read-twice-in-a-rule": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
     "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
     "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"r24-twice"}}
   },
   "s24-calls-read-twice-under-and": {

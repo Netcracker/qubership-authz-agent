@@ -1,15 +1,19 @@
 {
   "r14-failing-pip-in-a-policy-target-deny": {
-    "load-policy-sets-v1/regular/upload-1": {"status":400}
+    "load-policy-sets-v1/regular/upload-1": {"status":400},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-failing-pip-in-a-rule-target-allow": {
-    "load-policy-sets-v1/regular/upload-1": {"status":400}
+    "load-policy-sets-v1/regular/upload-1": {"status":400},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-failing-pip-in-a-rule-target-deny": {
-    "load-policy-sets-v1/regular/upload-1": {"status":400}
+    "load-policy-sets-v1/regular/upload-1": {"status":400},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-failing-pip-in-a-set-target-deny": {
-    "load-policy-sets-v1/regular/upload-1": {"status":400}
+    "load-policy-sets-v1/regular/upload-1": {"status":400},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-missing-attribute-in-a-policy-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -24,7 +28,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-missing-attribute-in-a-policy-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -39,7 +44,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-missing-attribute-in-a-rule-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -54,7 +60,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-missing-attribute-in-a-rule-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -69,7 +76,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-missing-attribute-in-a-set-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -84,7 +92,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-missing-attribute-in-a-set-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -99,7 +108,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-readable-in-a-policy-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -114,7 +124,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-readable-in-a-policy-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -129,7 +140,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-readable-in-a-rule-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -144,7 +156,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-readable-in-a-rule-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -159,7 +172,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-readable-in-a-set-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -174,7 +188,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-readable-in-a-set-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -189,7 +204,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-scope-outside-iterate-in-a-policy-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -204,7 +220,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-scope-outside-iterate-in-a-policy-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -219,7 +236,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-scope-outside-iterate-in-a-rule-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -234,7 +252,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-scope-outside-iterate-in-a-rule-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -249,7 +268,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-scope-outside-iterate-in-a-set-target-allow": {
     "check-filter-v1-outcome/regular/filter": {
@@ -264,7 +284,8 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r14-scope-outside-iterate-in-a-set-target-deny": {
     "check-filter-v1-outcome/regular/filter": {
@@ -279,6 +300,7 @@
       }
     },
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   }
 }

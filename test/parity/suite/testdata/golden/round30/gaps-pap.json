@@ -1,0 +1,25 @@
+{
+  "r30gaps-general-bean-name": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r30gaps-pap-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-pap-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-policy-without-id": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r30gaps-rule-without-rule-id": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

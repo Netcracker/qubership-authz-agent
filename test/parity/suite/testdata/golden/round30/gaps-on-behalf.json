@@ -1,0 +1,33 @@
+{
+  "r30gaps-on-behalf-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-on-behalf-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30gaps-on-behalf-failed-check": {
+    "check-filter-v1-outcome/regular/filter-as-self": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/authorization-check": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-as-self": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r30gaps-on-behalf-http-500-check": {
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

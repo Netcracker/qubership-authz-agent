@@ -52,7 +52,8 @@
   "p15-in-lit-bool-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-lit-bool-subj-roles": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
@@ -126,7 +127,8 @@
   "p15-in-lit-num-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-lit-num-subj-roles": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
@@ -197,11 +199,13 @@
   },
   "p15-in-lit-str-subj-permissionscope-false-value": {
     "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-lit-str-subj-permissionscope-true-value": {
     "check-resource-v1-outcome/regular/probe": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-lit-str-subj-roles-false-value": {
     "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
@@ -253,7 +257,8 @@
   "p15-in-operation-pip": {
     "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/true-value": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-operation-res-jsonpath": {
     "check-resource-v1-outcome/regular/false-value": {"status":200,"decision":true},
@@ -273,12 +278,14 @@
   "p15-in-operation-subj-permissions": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-operation-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-operation-subj-roles": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
@@ -336,7 +343,8 @@
   "p15-in-pip-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-pip-subj-roles": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
@@ -399,7 +407,8 @@
   "p15-in-res-jsonpath-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-res-jsonpath-subj-roles": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
@@ -548,7 +557,8 @@
   "p15-in-resource-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-in-resource-subj-roles": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
@@ -1075,12 +1085,14 @@
   "p15-not-in-operation-pip": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-not-in-operation-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-not-in-pip-ent": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},
@@ -1650,7 +1662,8 @@
   "p15-not-in-subj-type-subj-permissionscope": {
     "check-resource-v1-outcome/regular/false-value": {"status":400,"decision":false},
     "check-resource-v1-outcome/regular/true-value": {"status":400,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "p15-not-in-subj-type-subj-roles": {
     "check-resource-v1-outcome/isolated/false-value": {"status":200,"decision":true},

@@ -1,0 +1,46 @@
+{
+  "r30fix-order-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30fix-order-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r30fix-pairs-none-001": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r30fix-pairs-q-003-r17": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "f17a!=PARITY_SUITE_R30X_R30FIX_PAIRS_Q_003_R17,f17b!=v1;f17c!=v2",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/selected": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r30fix-pairs-q-003-r19": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "((PARITY_SUITE_R30X_R30FIX_PAIRS_Q_003_R19.f19a.in(\"p1\", \"p2\")).or(PARITY_SUITE_R30X_R30FIX_PAIRS_Q_003_R19.f19b.eq(\"v1\"))).not()",
+        "mongodbFilterCondition": "{ { \"$and\": [ { \"f19a\": { \"$nin\": [ { \"$uuid\": \"p1\" }, { \"$uuid\": \"p2\" } ] } }, { \"f19b\": \"v1\" } ] } }",
+        "rsqlFilterCondition": "f19a=out=(\"p1\", \"p2\");f19b!=v1",
+        "sqlFilterCondition": "NOT (f19a IN ('p1', 'p2') OR f19b='v1')",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/selected": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

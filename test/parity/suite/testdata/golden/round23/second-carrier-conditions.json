@@ -1,7 +1,8 @@
 {
   "s23-000-allow-rule-or-left": {
     "check-resource-v1-outcome/regular/p23-y": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-001-allow-rule-or-left": {
     "check-resource-v1-outcome/regular/p23-y": {"status":200,"decision":false},
@@ -13,15 +14,18 @@
   },
   "s23-003-deny-rule": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-004-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-005-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-006-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
@@ -33,47 +37,58 @@
   },
   "s23-008-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-009-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-010-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-011-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-012-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-013-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-014-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-015-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-016-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-017-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-018-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-019-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
@@ -113,15 +128,18 @@
   },
   "s23-028-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-029-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-030-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
-    "load-policy-sets-v1/regular/upload-1": {"status":200}
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s23-031-deny-rule-nested": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
