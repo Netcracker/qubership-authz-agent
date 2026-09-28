@@ -1,0 +1,538 @@
+{
+ "about": "Forms real configurations use and no golden sends, with synthetic names: rules and policies without an id in one upload, and a condition or target that is a JSON boolean rather than text. Round 30 recorded one rule without ruleId as accepted (r30gaps-rule-without-rule-id).",
+ "resourceTypePrefix": "PARITY_SUITE_R32G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r32gaps-corpus-ids-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-two-rules-without-rule-id",
+   "about": "One policy holds two rules, neither with a ruleId. Upload 400 if the two missing ids count as one id twice; 200 if each gets an id of its own. Then read-a-y and read-b-y are true and read-none is false; if one entry replaces the other, read-a-y or read-b-y is false.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "omitFields": [
+          "ruleId"
+         ]
+        },
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "omitFields": [
+          "ruleId"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "b": "n"
+     }
+    },
+    {
+     "name": "read-b-y",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "y"
+     }
+    },
+    {
+     "name": "read-none",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-two-rules-with-a-null-rule-id",
+   "about": "As r32gaps-two-rules-without-rule-id, with ruleId null in both rules instead of absent. Then read-a-y and read-b-y are true and read-none is false; if one entry replaces the other, read-a-y or read-b-y is false.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "ruleId": null
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "ruleId": null
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "b": "n"
+     }
+    },
+    {
+     "name": "read-b-y",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "y"
+     }
+    },
+    {
+     "name": "read-none",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-two-policies-without-policy-id",
+   "about": "One set holds two policies, neither with a policyId. Upload 400 if the two missing ids count as one id twice; 200 if each gets an id of its own. Then read-a-y and read-b-y are true and read-none is false; if one entry replaces the other, read-a-y or read-b-y is false.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader-a",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "omitFields": [
+        "policyId"
+       ]
+      },
+      {
+       "key": "reader-b",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "omitFields": [
+        "policyId"
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "b": "n"
+     }
+    },
+    {
+     "name": "read-b-y",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "y"
+     }
+    },
+    {
+     "name": "read-none",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-rules-without-rule-id-in-two-sets",
+   "about": "One upload holds two sets, each with one rule without ruleId. Upload 400 if the two missing ids count as one id twice across the upload; 200 if each gets an id of its own. Then read-a-y and read-b-y are true and read-none is false; if one entry replaces the other, read-a-y or read-b-y is false.",
+   "sets": [
+    {
+     "key": "set-a",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader-a",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "omitFields": [
+          "ruleId"
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "set-b",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader-b",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "omitFields": [
+          "ruleId"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "b": "n"
+     }
+    },
+    {
+     "name": "read-b-y",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "y"
+     }
+    },
+    {
+     "name": "read-none",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "b": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-condition-boolean-true",
+   "about": "The simplified policy's condition is the JSON boolean true, not text. Upload 200 and the condition true if the boolean binds to the text field, as a set's description does (round 31); 400 if a condition takes text only.",
+   "condition": "true",
+   "policy": {
+    "condition": true
+   },
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-condition-boolean-false",
+   "about": "The simplified policy's condition is the JSON boolean false, not text. Upload 200 and the condition false if the boolean binds to the text field, as a set's description does (round 31); 400 if a condition takes text only.",
+   "condition": "true",
+   "policy": {
+    "condition": false
+   },
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-rule-condition-boolean-true",
+   "about": "The ALLOW rule's condition is the JSON boolean true: both requests true if it binds as the text true. Upload 400 if the field takes text only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "fields": {
+          "condition": true
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-rule-condition-boolean-false",
+   "about": "The ALLOW rule's condition is the JSON boolean false: both requests false if it binds as the text false. Upload 400 if the field takes text only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "fields": {
+          "condition": false
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-rule-target-boolean-false",
+   "about": "The ALLOW rule's target is the JSON boolean false and its condition true: both requests false if the target binds as the text false. Upload 400 if the field takes text only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "fields": {
+          "target": false
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-corpus-ids-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

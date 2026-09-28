@@ -1,0 +1,388 @@
+{
+ "about": "jsonPath over values no golden sent, each comparison as `<comparison> OR resource.a == 'y'`; then an absent key on the right of CONTAINS ANY, reached through a nested path and a list item, as the condition of the only DENY rule of a PERMIT_UNLESS_DENY policy.",
+ "resourceTypePrefix": "PARITY_SUITE_R32G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r32gaps-values-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-number-against-another-number-text",
+   "about": "The filter compares the text 6 with the number 5: false for a = n.",
+   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": "6"
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": "6"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-number-against-the-same-number-otherwise",
+   "about": "The filter compares the text 5.0 with the number 5. True for a = n if a text that reads as a number compares as that number (round 28 saw the text 5 equal to 5), false if the two compare as texts.",
+   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": "5.0"
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": "5.0"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-number-against-a-text-no-number",
+   "about": "The filter compares the text 5x, which is no number, with the number 5.",
+   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": "5x"
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": "5x"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-not-equal-boolean-against-number",
+   "about": "The filter asks != between the boolean true and the number 5. True for a = n if != holds between values of different types, false if such values are not compared at all.",
+   "condition": "resource.l[?(@.k != 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": true
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": true
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-not-equal-boolean-against-text",
+   "about": "The filter asks != between the boolean true and the text v. True for a = n if != holds between values of different types, false if such values are not compared at all.",
+   "condition": "resource.l[?(@.k != 'v')].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": true
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": true
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-min-over-a-boolean",
+   "about": "min() over [2, true]. True for a = n if min() skips the boolean (2.0), false if it counts true as 1.",
+   "condition": "resource.l.min() > 1.5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       2,
+       true
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       2,
+       true
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-index-past-the-end-after-star",
+   "about": "[5] after [*] is past the end of the list and meets an object. != is true for a = n over an empty selection; an index past the end without [*] ends the rule, and then both requests are false.",
+   "condition": "resource.l[*][5] != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "l": [
+       [
+        "v"
+       ],
+       {
+        "k": "w"
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "l": [
+       [
+        "v"
+       ],
+       {
+        "k": "w"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-absent-nested-key-on-the-right-contains-any",
+   "about": "resource.o holds no key x. The comparison is the condition of the only DENY rule of a PERMIT_UNLESS_DENY policy: true if the absent key on the right ends the rule, false if it fails the answer (r14-absent-key-on-the-right-in-a-deny-rule-contains-any reached it through resource.x).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.roles CONTAINS ANY resource.o.x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "o": {
+       "y": "1"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-absent-key-in-an-item-on-the-right-contains-any",
+   "about": "The first item holds no key x. The comparison is the condition of the only DENY rule of a PERMIT_UNLESS_DENY policy: true if the absent key on the right ends the rule, false if it fails the answer (r14-absent-key-on-the-right-in-a-deny-rule-contains-any reached it through resource.x).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY resource.items[0].x",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "l": [
+       "v"
+      ],
+      "items": [
+       {
+        "y": "1"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
