@@ -22,8 +22,9 @@ import (
 	"time"
 )
 
-// runCaseFile pins the file's routes and its entitlements answer, and runs its
-// isolated cases, then its regular cases, each in the file's order.
+// runCaseFile pins the file's routes and its entitlements answer, with the API
+// version that answer needs, and runs its isolated cases, then its regular
+// cases, each in the file's order.
 func (s *ParitySuite) runCaseFile(name string) {
 	f, err := readCaseFile(name)
 	s.Require().NoError(err)
@@ -32,6 +33,7 @@ func (s *ParitySuite) runCaseFile(name string) {
 		s.Require().NoErrorf(s.pipMock.PinRoute(ctx, route, response), "pin %s for %s", route, name)
 	}
 	if f.Entitlements != nil {
+		s.Require().NoErrorf(s.pinEntitlementsAPIVersionV3(ctx), "pin the entitlements API version of %s", name)
 		s.Require().NoErrorf(s.eaMock.PinEntitlementsV3ForUser(ctx, parityReaderSubjectID, *f.Entitlements), "pin the entitlements of %s", name)
 	}
 	var isolated []isolatedCase

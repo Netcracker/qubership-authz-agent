@@ -53,7 +53,8 @@ type caseFile struct {
 	Cases []caseSpec     `json:"cases"`
 	// Entitlements, when present, is the answer entitlements-mock gives to the
 	// user-entitlements lookup of parity-reader from before the first case to
-	// the end of the function.
+	// the end of the function. The runner also pins /api-version of
+	// entitlements-mock to major 3, so that access-control reads that lookup.
 	Entitlements *PipStubResponse `json:"entitlements"`
 }
 
@@ -156,6 +157,9 @@ type setSpec struct {
 	OmitStatus bool `json:"omitStatus"`
 	// Fields is merged last into the set; see mergeFields.
 	Fields map[string]any `json:"fields"`
+	// OmitFields names members the set is uploaded without, removed after
+	// Fields is merged.
+	OmitFields []string `json:"omitFields"`
 }
 
 type iterateSpec struct {
@@ -170,6 +174,9 @@ type policySpec struct {
 	Rules     []ruleSpec `json:"rules"`
 	// Fields is merged last into the policy; see mergeFields.
 	Fields map[string]any `json:"fields"`
+	// OmitFields names members the policy is uploaded without, removed after
+	// Fields is merged, such as policyId.
+	OmitFields []string `json:"omitFields"`
 }
 
 type ruleSpec struct {
@@ -182,6 +189,9 @@ type ruleSpec struct {
 	Predicates map[string]any `json:"predicates"`
 	// Fields is merged last into the rule, after Predicates; see mergeFields.
 	Fields map[string]any `json:"fields"`
+	// OmitFields names members the rule is uploaded without, removed after
+	// Fields is merged, such as effect or ruleId.
+	OmitFields []string `json:"omitFields"`
 }
 
 type requestSpec struct {
@@ -402,7 +412,10 @@ func customizationCleanup(caseID string, steps []customizeStep, rt string) []pap
 					query: url.Values{"level": {level}, "recursive": {"true"}}})
 			}
 			for _, e := range st.PIPs {
-				entry, _ := e.(map[string]any)
+				entry, ok := e.(map[string]any)
+				if !ok {
+					continue
+				}
 				name, _ := entry["name"].(string)
 				path := "/access/v1/pip/customization/pip/" + url.PathEscape(resourceTypeReplacer(rt).Replace(name))
 				if seen[level+" "+path] {
@@ -686,7 +699,10 @@ func stepProblems(caseID string, st customizeStep) []string {
 	}
 	for _, e := range st.PIPs {
 		entry, ok := e.(map[string]any)
-		if _, named := entry["name"].(string); !ok || !named {
+		if !ok {
+			continue // sent as written, like a set entry that is not an object
+		}
+		if _, named := entry["name"].(string); !named {
 			report("imports a PIP customization %v with no name, which the cleanup deletes by name", e)
 		}
 	}
@@ -718,6 +734,9 @@ func customEntryProblems(kind string, e any) []string {
 		if _, ok := predicates.(map[string]any); !ok {
 			problems = append(problems, fmt.Sprintf("has a %s entry whose predicates is not an object", kind))
 		}
+	}
+	if _, set := entry["omitFields"]; set {
+		problems = append(problems, fmt.Sprintf("has a %s entry with omitFields, which only an upload reads and a customization sends as written", kind))
 	}
 	if iterate, set := entry["iterate"]; set {
 		it, ok := iterate.(map[string]any)

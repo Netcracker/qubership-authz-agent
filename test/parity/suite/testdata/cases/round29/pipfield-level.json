@@ -1,5 +1,5 @@
 {
- "about": "Remote PIPs for users whose token carries the claim level: m2m, external, internal. Needs the users of pipfield-realm-users.json in the parity realm and a user-attribute mapper of the end-user client that puts the user attribute level into the claim level; subjectClaims checks it. parity-reader, without the claim, is the control.",
+ "about": "Remote PIPs for users whose token carries the claim level: m2m, external, internal. Needs the users of testdata/realm/round29-pipfield-users.json in the parity realm and a user-attribute mapper of the end-user client that puts the user attribute level into the claim level; subjectClaims checks it. parity-reader, without the claim, is the control.",
  "resourceTypePrefix": "PARITY_SUITE_R29F_",
  "pins": {
   "/api/v1/pip/r29pipfield-remote": {

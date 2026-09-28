@@ -237,6 +237,18 @@ func wellFormedCaseFile() caseFile {
 	}
 }
 
+// An entry that is not an object names no PIP, so the cleanup deletes only the
+// PIPs the other entries name.
+func TestCustomizationCleanup_SkipsAPIPEntryThatIsNotAnObject(t *testing.T) {
+	steps := []customizeStep{{Name: "import", Level: stringOf("CUSTOMER"),
+		PIPs: []any{"not an object", map[string]any{"name": "subject.a"}}}}
+	want := []papCall{{method: http.MethodDelete, path: "/access/v1/pip/customization/pip/subject.a",
+		query: url.Values{"level": {"CUSTOMER"}}}}
+	if diff := cmp.Diff(want, customizationCleanup("c1", steps, "RT"), cmp.AllowUnexported(papCall{})); diff != "" {
+		t.Errorf("customizationCleanup mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestCaseFileProblems(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -264,6 +276,13 @@ func TestCaseFileProblems(t *testing.T) {
 			f.Cases[1].Customize[0].Sets = nil
 			f.Cases[1].Customize[0].PIPs = []any{map[string]any{"status": "INACTIVE"}}
 		}, "imports a PIP customization map[status:INACTIVE] with no name"},
+		{"a PIP customization entry that is not an object", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = nil
+			f.Cases[1].Customize[0].PIPs = []any{"not an object", map[string]any{"name": "subject.a"}}
+		}, ""},
+		{"omitFields in a customization entry", func(f *caseFile) {
+			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer", "omitFields": []any{"target"}}}
+		}, "case reg step step has a set entry with omitFields, which only an upload reads"},
 		{"a nested entry with no key", func(f *caseFile) {
 			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer", "policies": []any{map[string]any{}}}}
 		}, "case reg step step has a policy entry with no key"},
@@ -367,6 +386,28 @@ func TestBuildSet_RuleFieldsReplaceAPredicate(t *testing.T) {
 		"policySetId": "d82b5a69-4822-465d-d804-1c9317bcfe92", "name": "c1 outer", "status": "ACTIVE", "target": "",
 		"policies": []any{map[string]any{
 			"policyId": "e7852720-9add-579c-e70a-d2e16a6b9cbe", "name": "c1 p", "target": "", "rules": []any{rule},
+		}},
+		"policySets": []any{},
+	}
+	b := regularBuilder{caseID: "c1"}
+	if diff := cmp.Diff(want, buildSet(b, b, set, "RT")); diff != "" {
+		t.Errorf("buildSet mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// omitFields removes members after fields is merged, from a rule, a policy,
+// and a set alike, so a member fields sets and omitFields names is not sent.
+func TestBuildSet_OmitFieldsRemovesMembersAfterFields(t *testing.T) {
+	set := setSpec{Key: "outer", OmitFields: []string{"target"}, Policies: []policySpec{{
+		Key: "p", OmitFields: []string{"policyId"}, Rules: []ruleSpec{{
+			Key: "r", Effect: "ALLOW", Fields: map[string]any{"effect": "DENY"}, OmitFields: []string{"effect", "ruleId"},
+		}},
+	}}}
+	want := map[string]any{
+		"policySetId": "d82b5a69-4822-465d-d804-1c9317bcfe92", "name": "c1 outer", "status": "ACTIVE",
+		"policies": []any{map[string]any{
+			"name": "c1 p", "target": "",
+			"rules": []any{map[string]any{"name": "c1 r", "target": "", "condition": ""}},
 		}},
 		"policySets": []any{},
 	}

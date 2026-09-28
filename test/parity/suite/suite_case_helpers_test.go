@@ -258,7 +258,22 @@ func (s *ParitySuite) pinEntitlementsV3(userID string, refs map[string]map[strin
 	s.T().Helper()
 
 	ctx := context.Background()
-	err := s.eaMock.PinRoute(ctx, "/api-version", PipStubResponse{
+	s.Require().NoError(s.pinEntitlementsAPIVersionV3(ctx))
+
+	payload := buildDirectEntitlementsResponse(refs)
+	err := s.eaMock.PinEntitlementsV3ForUser(ctx, userID, PipStubResponse{
+		StatusCode: http.StatusOK,
+		Body:       payload,
+	})
+	s.Require().NoError(err)
+}
+
+// pinEntitlementsAPIVersionV3 pins /api-version of entitlements-mock to major 3
+// under /api. Without it access-control does not read the user-entitlements
+// route that PinEntitlementsV3ForUser pins, and a decision that reads
+// entitlements fails.
+func (s *ParitySuite) pinEntitlementsAPIVersionV3(ctx context.Context) error {
+	return s.eaMock.PinRoute(ctx, "/api-version", PipStubResponse{
 		StatusCode: http.StatusOK,
 		Body: model.ApiVersionResponse{
 			Specs: []model.ApiVersionSpec{{
@@ -269,14 +284,6 @@ func (s *ParitySuite) pinEntitlementsV3(userID string, refs map[string]map[strin
 			}},
 		},
 	})
-	s.Require().NoError(err)
-
-	payload := buildDirectEntitlementsResponse(refs)
-	err = s.eaMock.PinEntitlementsV3ForUser(ctx, userID, PipStubResponse{
-		StatusCode: http.StatusOK,
-		Body:       payload,
-	})
-	s.Require().NoError(err)
 }
 
 func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.GetDirectUserEntitlementsResponse {

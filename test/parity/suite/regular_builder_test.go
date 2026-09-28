@@ -72,7 +72,8 @@ func (b regularBuilder) rule(key, target, condition, effect string, predicates m
 // buildSet turns set into the wire form regularBuilder writes, with the
 // resource type placeholders in every target and condition replaced. Rule ids
 // come from ruleIDs, and every other id from b. The fields of a set, a
-// policy, and a rule are merged last, with mergeFields.
+// policy, and a rule are merged last, with mergeFields, and then the members
+// named by each one's omitFields are removed.
 func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any {
 	sub := resourceTypeReplacer(rt).Replace
 	policies := make([]any, 0, len(set.Policies))
@@ -85,10 +86,12 @@ func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any 
 				rule[field] = predicate
 			}
 			mergeFields(rule, r.Fields, rt)
+			omitMembers(rule, r.OmitFields)
 			rules = append(rules, rule)
 		}
 		policy := b.policy(p.Key, sub(p.Target), p.Algorithm, rules...)
 		mergeFields(policy, p.Fields, rt)
+		omitMembers(policy, p.OmitFields)
 		policies = append(policies, policy)
 	}
 	var nested []any
@@ -106,5 +109,13 @@ func buildSet(b, ruleIDs regularBuilder, set setSpec, rt string) map[string]any 
 		out["iterate"] = map[string]any{"foreach": set.Iterate.Foreach, "combiningAlgorithm": set.Iterate.Algorithm}
 	}
 	mergeFields(out, set.Fields, rt)
+	omitMembers(out, set.OmitFields)
 	return out
+}
+
+// omitMembers deletes from object each member whose name is in names.
+func omitMembers(object map[string]any, names []string) {
+	for _, name := range names {
+		delete(object, name)
+	}
 }
