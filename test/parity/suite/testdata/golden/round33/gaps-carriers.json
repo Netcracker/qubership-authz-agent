@@ -1,0 +1,60 @@
+{
+  "r33gaps-carriers-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33gaps-carriers-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33gaps-jp-number-against-the-text-5-0": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r33gaps-mongo-group-of-three-in-an-iterate-pass": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "{ \"$or\": [ { { \"f\": \"3\" } },{{ \"d\": \"1\" }}, {{ \"e\": \"2\" }}, {{ \"g\": \"4\" }} ] }",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33gaps-request-attribute-other-sources": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "c": "${PARITY_R33_CONST}",
+        "case": "r33gaps-sources",
+        "n": "x-${requestId}",
+        "t": "${tenant}"
+      }
+    }
+  },
+  "r33gaps-typed-bean-is-empty": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r33gaps-typed-bean-is-null": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r33gaps-typed-pip-without-request-attributes": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":null}
+  }
+}

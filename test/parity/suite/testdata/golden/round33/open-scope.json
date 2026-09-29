@@ -1,0 +1,45 @@
+{
+  "r33open-scope-absent-key-contains-any": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33open-scope-absent-key-in": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33open-scope-absent-key-is-subset": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33open-scope-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33open-scope-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r33open-scope-empty-list-in": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33open-scope-index-past-the-end-in": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33open-scope-null-in": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r33open-scope-present-key-in": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}
