@@ -1,0 +1,53 @@
+{
+  "r32gaps-corpus-syntax-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-corpus-syntax-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-key-starting-with-at": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-lowercase-matches": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r32gaps-match-parens-inside-a-segment": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-match-parens-then-double-star": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-match-parens-then-double-star-short": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-match-question-beside-star": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-match-question-beside-star-two": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-match-two-parens": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-match-two-parens-one-segment": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}

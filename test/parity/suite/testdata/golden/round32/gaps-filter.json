@@ -1,0 +1,39 @@
+{
+  "r32gaps-dropped-deny-beside-deny-permit-overrides": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-filter-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-filter-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-mongo-group-in-an-iterate-pass": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"e\": \"2\" }}, {{ \"d\": \"1\" }},{ { \"f\": \"3\" } } ] }",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

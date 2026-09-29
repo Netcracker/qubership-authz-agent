@@ -1,0 +1,53 @@
+{
+  "r32gaps-condition-boolean-false": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-condition-boolean-true": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r32gaps-corpus-ids-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-corpus-ids-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-rule-condition-boolean-false": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-rule-condition-boolean-true": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-rule-target-boolean-false": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-rules-without-rule-id-in-two-sets": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-b-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-none": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-two-policies-without-policy-id": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-b-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-none": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r32gaps-two-rules-without-rule-id": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-b-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-none": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
