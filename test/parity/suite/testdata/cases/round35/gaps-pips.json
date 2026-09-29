@@ -1,0 +1,431 @@
+{
+ "about": "Values of PIPs at their edges, and uploads of declarations and a simplified policy that no golden sent. Each probe is `<comparison> OR resource.a == 'y'` with a = n and a = y, unless its about says otherwise; where the question is the upload, its load golden is the answer.",
+ "resourceTypePrefix": "PARITY_SUITE_R35G_",
+ "pins": {
+  "/api/v1/pip/r35gaps-raw": {
+   "statusCode": 200,
+   "bodyRaw": "\"v\""
+  },
+  "/api/v1/pip/r35gaps-null": {
+   "statusCode": 200,
+   "body": {
+    "value": null
+   }
+  }
+ },
+ "pips": {
+  "raw": {
+   "name": "subject.parityR35Raw",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-raw",
+   "requestAttributes": {
+    "case": "r35gaps-raw"
+   }
+  },
+  "null": {
+   "name": "subject.parityR35Null",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-null",
+   "requestAttributes": {
+    "case": "r35gaps-null"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "header-default-empty": {
+   "name": "subject.parityR35HeaderEmpty",
+   "pipType": "HEADER",
+   "header": "X-Parity-R35-Absent",
+   "defaultValue": "",
+   "cacheable": false
+  },
+  "header-commas": {
+   "name": "subject.parityR35HeaderCommas",
+   "pipType": "HEADER",
+   "header": "X-Parity-R35-Commas",
+   "defaultValue": "v",
+   "cacheable": false
+  },
+  "token-descendant": {
+   "name": "subject.parityR35Descendant",
+   "pipType": "TOKEN",
+   "claim": "$..parityR35None",
+   "defaultValue": "v",
+   "cacheable": false
+  },
+  "mapping-list": {
+   "name": "subject.permissions.parityR35",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": [
+     "PARITY_R35_LISTED"
+    ]
+   }
+  },
+  "mapping-good": {
+   "name": "subject.permissions.parityR35",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R35_MAPPED"
+     ]
+    }
+   }
+  },
+  "header-no-key": {
+   "name": "subject.parityR35NoHeader",
+   "pipType": "HEADER",
+   "cacheable": false
+  },
+  "token-no-key": {
+   "name": "subject.parityR35NoClaim",
+   "pipType": "TOKEN",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r35gaps-pips-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-general-raw-json-string",
+   "pips": [
+    "raw"
+   ],
+   "about": "The route answers the raw text \"v\" (a JSON string, quotes included) with Content-Type application/json: the bytes a body \"v\" gives. a = n false if it reads as a JSON string body does (ok-general-string-*: a null body); true if the string is the value.",
+   "condition": "subject.parityR35Raw == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-general-jsonpath-selects-null",
+   "pips": [
+    "null"
+   ],
+   "about": "The route answers {\"value\": null}, and the jsonPath $.value selects null. a = y true if that reads as a null body, as a jsonPath that selects nothing does; both false if the PIP fails.",
+   "condition": "subject.parityR35Null == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-header-default-empty",
+   "pips": [
+    "header-default-empty"
+   ],
+   "about": "A HEADER PIP whose header the request does not send and whose defaultValue is \"\". a = n false if the PIP has no value (== '' over a HEADER without a value is false); true if its value is the empty string.",
+   "condition": "subject.parityR35HeaderEmpty == '' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-header-only-commas",
+   "pips": [
+    "header-commas"
+   ],
+   "about": "The request sends the header with the value \",\", and the declaration has defaultValue v. The comma split drops both empty items, so the PIP has no value, and the defaultValue does not apply to a header that is sent. a = n false; true if the defaultValue applies after all. r35gaps-header-only-commas-empty-text asks whether the value is one empty string.",
+   "condition": "subject.parityR35HeaderCommas == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R35-Commas": ","
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R35-Commas": ","
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-header-only-commas-empty-text",
+   "pips": [
+    "header-commas"
+   ],
+   "about": "As r35gaps-header-only-commas, compared with the empty text. a = n false if the PIP has no value or takes the defaultValue; true if the value is one empty string.",
+   "condition": "subject.parityR35HeaderCommas == '' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R35-Commas": ","
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R35-Commas": ","
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-token-descendant-selects-nothing",
+   "pips": [
+    "token-descendant"
+   ],
+   "about": "A TOKEN PIP whose claim $..parityR35None selects nothing in the token, with defaultValue v. a = n true if the defaultValue applies, as for a claim the token lacks; false if the empty selection is an empty list.",
+   "condition": "subject.parityR35Descendant == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-mapping-table-a-list-control",
+   "pips": [
+    "mapping-good"
+   ],
+   "about": "Positive control of r35gaps-mapping-table-a-list: the MAPPING declaration with an object as the table of subject.roles. a = n true.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R35_MAPPED' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-mapping-table-a-list",
+   "pips": [
+    "mapping-list"
+   ],
+   "about": "The MAPPING declaration's customMapping gives subject.roles the list [\"PARITY_R35_LISTED\"] instead of an object from role to permissions. Upload 200 and a = n false if the key is skipped; upload 400 if the table must be an object.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R35_LISTED' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-header-without-the-header-key",
+   "pips": [
+    "header-no-key"
+   ],
+   "about": "A HEADER declaration without the key header. Upload 400 if a HEADER must name its header, as it must not name an empty one (r28pip-header-empty-no-default-simplified-none); 200 if only a blank value is refused.",
+   "condition": "subject.parityR35NoHeader IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-token-without-the-claim-key",
+   "pips": [
+    "token-no-key"
+   ],
+   "about": "A TOKEN declaration without the key claim. Upload 400 if a TOKEN must name its claim, as it must not name an empty one (r28pip-token-empty-no-default-simplified-reader); 200 if only a blank value is refused.",
+   "condition": "subject.parityR35NoClaim IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r35",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-simplified-empty-condition",
+   "about": "The simplified policy's condition is the empty string. Upload 200 and the read true if an empty condition holds, as an absent one does; upload 400 if it is refused, as an empty rule expression is; the read false if it never holds.",
+   "policy": {
+    "condition": ""
+   },
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-pips-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
