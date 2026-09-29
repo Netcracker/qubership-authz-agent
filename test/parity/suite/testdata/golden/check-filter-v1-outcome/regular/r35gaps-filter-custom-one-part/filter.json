@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "f6==v",
+    "sqlFilterCondition": "",
+    "customFilterCondition": {
+      "logic": {
+        "path": "44b0976d-7c42-ea71-dce1-20b854574065"
+      },
+      "data": {
+        "44b0976d-7c42-ea71-dce1-20b854574065": {
+          "predicate": "[{\"value\":${p},\"property\":\"f6\",\"operator\":\"in\"}]",
+          "params": {
+            "p": [
+              "ROLE_PARITY_READER"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
