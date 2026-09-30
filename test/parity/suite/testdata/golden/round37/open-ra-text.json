@@ -1,0 +1,118 @@
+{
+  "r37open-ra-filtered-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-filtered-in-text",
+        "x": "id-${subject.parityR37RaSrcFiltered.filtered}"
+      }
+    }
+  },
+  "r37open-ra-general-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-general-in-text",
+        "x": "id-${subject.parityR37RaSource}"
+      }
+    }
+  },
+  "r37open-ra-header-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-header-in-text",
+        "x": "id-${subject.parityR37RaSrcHeader}"
+      }
+    }
+  },
+  "r37open-ra-id-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-id-in-text","x":"id-${subject.id}"}}
+  },
+  "r37open-ra-is-m2m-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-is-m2m-in-text","x":"id-${subject.isM2M}"}}
+  },
+  "r37open-ra-mapping-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-mapping-in-text",
+        "x": "id-${subject.permissions.parityR37}"
+      }
+    }
+  },
+  "r37open-ra-permissions-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-permissions-in-text",
+        "x": "id-${subject.permissions}"
+      }
+    }
+  },
+  "r37open-ra-scope-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-scope-in-text",
+        "x": "id-${subject.permissionScope}"
+      }
+    }
+  },
+  "r37open-ra-service-account-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-service-account-in-text",
+        "x": "id-${subject.serviceAccount}"
+      }
+    }
+  },
+  "r37open-ra-token-in-text": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "r37open-ra-token-in-text",
+        "x": "id-${subject.parityR37RaSrcToken}"
+      }
+    }
+  },
+  "r37openratext-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r37openratext-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
