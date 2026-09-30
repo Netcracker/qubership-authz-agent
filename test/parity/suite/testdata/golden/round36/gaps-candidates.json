@@ -1,0 +1,32 @@
+{
+  "r36gaps-candidates-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r36gaps-candidates-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r36gaps-ra-empty-permissions": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r36gaps-ra-empty-resource": {
+    "check-resource-v1-outcome/isolated/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-n": {"calls":1,"requestAttributes":{"case":"r36gaps-ra-resource","l":[],"s":[]}}
+  },
+  "r36gaps-ra-no-roles": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-a-n": {"calls":1,"requestAttributes":{"case":"r36gaps-ra-roles","r":null}}
+  },
+  "r36gaps-url-builtin-without-a-value": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  },
+  "r36gaps-url-undeclared": {
+    "load-simplified-policies-v1/isolated": {"status":400}
+  }
+}
