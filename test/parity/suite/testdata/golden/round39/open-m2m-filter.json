@@ -1,0 +1,97 @@
+{
+  "r39open-m2m-filter-condition": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-filter-condition-beside-a-predicate": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-filter-condition-decided-first": {
+    "check-filter-v1-outcome/isolated/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-filter-rule-beside-a-predicate": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-filter-rule-condition": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r39open-m2m-filter-rule-decided-first": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 400,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":0,"requestAttributes":null}
+  },
+  "r39openm2mfilter-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r39openm2mfilter-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
