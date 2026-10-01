@@ -1,0 +1,30 @@
+{
+  "r41open-policy-status-active-allow": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41open-policy-status-active-deny": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41open-policy-status-inactive-allow": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41open-policy-status-inactive-deny": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41openpolicystatus-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41openpolicystatus-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

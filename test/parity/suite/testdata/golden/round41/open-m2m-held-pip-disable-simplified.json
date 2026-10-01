@@ -1,0 +1,23 @@
+{
+  "r41open-m2m-held-pip-disable-simplified": {
+    "check-resource-v1-outcome/regular/after-read": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/after-read-policy": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/before-read": {"status":400,"decision":false},
+    "check-resource-v1-outcome/regular/before-read-policy": {"status":400,"decision":false},
+    "import-pip-customization-v1/regular/disable": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r41open-m2m-held-pip-disable-simplified-policy": {
+    "check-resource-v1-outcome/isolated/read-a-y": {"status":400,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200},
+    "pip-call/isolated/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r41openm2mheldpipdisablesimplified-control-first": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r41openm2mheldpipdisablesimplified-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":400,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
