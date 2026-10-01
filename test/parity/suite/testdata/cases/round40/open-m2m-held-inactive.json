@@ -1,0 +1,145 @@
+{
+ "about": "Whether a top-level set uploaded INACTIVE holds a condition that names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}. Round 39 found that one such condition in an ACTIVE set fails every request of the tenant with 400; a top-level set with status INACTIVE takes no part in a decision (rounds 24 and 29).",
+ "resourceTypePrefix": "PARITY_SUITE_R40HIN_",
+ "pins": {
+  "/api/v1/pip/r40open-m2m-held-inactive": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR40HeldInactive",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-inactive",
+   "requestAttributes": {
+    "case": "r40open-m2m-held-inactive",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r40openm2mheldinactive-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r40open-m2m-held-inactive",
+   "pips": [
+    "held"
+   ],
+   "about": "A top-level set uploaded INACTIVE whose only rule allows on resource.a == 'y' OR subject.parityR40HeldInactive == 'v'. read-other and the last control answer 400 if the tenant holds the condition of a set whatever its status; true if it holds only a set that takes part, and read-a-y then answers false, the answer of a type no set takes part for.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR40HeldInactive == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "INACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r40",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r40open-m2m-held-inactive"
+    },
+    {
+     "name": "read-other",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R40HIN_R40OPENM2MHELDINACTIVE_CONTROL_FIRST"
+    }
+   ]
+  },
+  {
+   "id": "r40openm2mheldinactive-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
