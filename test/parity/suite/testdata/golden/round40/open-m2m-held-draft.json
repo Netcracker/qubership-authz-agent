@@ -1,0 +1,17 @@
+{
+  "r40open-m2m-held-draft": {
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-other": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read-a-y": {"calls":0,"requestAttributes":null}
+  },
+  "r40openm2mhelddraft-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r40openm2mhelddraft-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
