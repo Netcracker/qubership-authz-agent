@@ -1,23 +1,4 @@
 {
-  "isolated/r37open-ra-entitled-resources-in-text/read-a-n": {
-    "calls": 1,
-    "requestAttributes": {
-      "case": "r37open-ra-entitled-resources-in-text",
-      "x": "id-${subject.entitledResources}"
-    }
-  },
-  "isolated/r37open-ra-name-in-text/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-name-in-text","x":"id-${subject.name}"}},
-  "isolated/r37open-ra-permission-scope-in-text/read-a-n": {
-    "calls": 1,
-    "requestAttributes": {
-      "case": "r37open-ra-permission-scope-in-text",
-      "x": "id-${subject.permissionScope}"
-    }
-  },
-  "isolated/r37open-ra-roles-in-text/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-roles-in-text","x":"id-${subject.roles}"}},
-  "isolated/r37open-ra-scopes-in-text/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-scopes-in-text","x":"id-${subject.scopes}"}},
-  "isolated/r37open-ra-type-in-text/read-a-n": {"calls":1,"requestAttributes":{"case":"r37open-ra-type-in-text","x":"id-${subject.type}"}},
-  "isolated/r39open-m2m-simplified-other-role/read": {"calls":0,"requestAttributes":null},
   "pip-cache-cacheable-false/first-value-read": {"calls":1,"requestAttributes":{"resourceType":"PARITY_SUITE_REG_PIP_CACHE_CACHEABLE_FALSE"}},
   "pip-cache-cacheable-false/second-value-after-5s-probe": {"calls":1,"requestAttributes":{"resourceType":"PARITY_SUITE_REG_PIP_CACHE_CACHEABLE_FALSE"}},
   "pip-cache-cacheable-false/second-value-after-5s-read": {"calls":1,"requestAttributes":{"resourceType":"PARITY_SUITE_REG_PIP_CACHE_CACHEABLE_FALSE"}},
