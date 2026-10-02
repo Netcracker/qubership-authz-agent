@@ -1,0 +1,52 @@
+{
+  "r42open-m2m-alone-control": {
+    "check-resource-v1-outcome/isolated/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r42open-m2m-alone-policy-target": {
+    "check-resource-v1-outcome/regular/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r42open-m2m-alone-rule-condition": {
+    "check-resource-v1-outcome/regular/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r42open-m2m-alone-rule-target": {
+    "check-resource-v1-outcome/regular/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r42open-m2m-alone-set-target": {
+    "check-resource-v1-outcome/regular/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r42open-m2m-alone-simplified": {
+    "check-resource-v1-outcome/isolated/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r42open-m2m-beside-or": {
+    "check-resource-v1-outcome/isolated/level-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/isolated/reader": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "r42openm2malone-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r42openm2malone-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
