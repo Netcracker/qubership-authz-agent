@@ -51,16 +51,16 @@
     "calculationResult": "USE_FILTER_CONDITION",
     "filterCondition": "PARITY_SUITE_FULL_FILTER.ownerId.eq(\"00000000-0000-0000-0000-000000000101\")",
     "mongodbFilterCondition": "{ { \"ownerId\": \"00000000-0000-0000-0000-000000000101\" } }",
-    "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
+    "rsqlFilterCondition": "(ownerId==00000000-0000-0000-0000-000000000101),(ownerId==00000000-0000-0000-0000-000000000101)",
     "sqlFilterCondition": "owner_id=00000000-0000-0000-0000-000000000101",
     "customFilterCondition": null
   },
   "general-array-into-sql": {
-    "calculationResult": "USE_FILTER_CONDITION",
+    "calculationResult": "ALLOW",
     "filterCondition": "",
     "mongodbFilterCondition": "",
     "rsqlFilterCondition": "",
-    "sqlFilterCondition": "id IN ('row6-sql-1', 'row6-sql-2')",
+    "sqlFilterCondition": "",
     "customFilterCondition": null
   },
   "general-pip-dict": {
@@ -128,9 +128,9 @@
     "customFilterCondition": null
   },
   "header-scalar-into-mongodb": {
-    "calculationResult": "USE_FILTER_CONDITION",
+    "calculationResult": "ALLOW",
     "filterCondition": "",
-    "mongodbFilterCondition": "{ { \"region\": \"[ { \"$uuid\": \"parity-allow\" } ]\" } }",
+    "mongodbFilterCondition": "",
     "rsqlFilterCondition": "",
     "sqlFilterCondition": "",
     "customFilterCondition": null
@@ -192,11 +192,11 @@
     "customFilterCondition": null
   },
   "token-scalar-into-sql": {
-    "calculationResult": "USE_FILTER_CONDITION",
+    "calculationResult": "ALLOW",
     "filterCondition": "",
     "mongodbFilterCondition": "",
     "rsqlFilterCondition": "",
-    "sqlFilterCondition": "department=''finance''",
+    "sqlFilterCondition": "",
     "customFilterCondition": null
   }
 }

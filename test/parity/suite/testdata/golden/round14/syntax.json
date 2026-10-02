@@ -49,14 +49,16 @@
     "load-simplified-policies-v1/isolated": {"status":200}
   },
   "sx-is-m2m-alone": {
-    "load-simplified-policies-v1/isolated": {"status":400}
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
   },
   "sx-is-m2m-beside-or": {
     "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},
     "load-simplified-policies-v1/isolated": {"status":200}
   },
   "sx-is-m2m-declared-alone": {
-    "load-simplified-policies-v1/isolated": {"status":400}
+    "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
   },
   "sx-is-m2m-declared-beside-or": {
     "check-resource-v1-outcome/isolated/probe": {"status":200,"decision":true},

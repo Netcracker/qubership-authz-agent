@@ -1,7 +1,7 @@
 {
   "r29pap-global-policy-with-predicates-bad": {
     "check-resource-v1-outcome/isolated/read": {"status":200,"decision":false},
-    "load-simplified-policies-v1/isolated": {"status":200}
+    "load-simplified-policies-v1/isolated": {"status":400}
   },
   "r29pap-global-policy-with-predicates-ok": {
     "check-resource-v1-outcome/isolated/read": {"status":200,"decision":false},
@@ -39,7 +39,7 @@
   },
   "r29pap-policy-predicates-empty-bad": {
     "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
-    "load-simplified-policies-v1/isolated": {"status":200}
+    "load-simplified-policies-v1/isolated": {"status":400}
   },
   "r29pap-policy-predicates-empty-ok": {
     "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
