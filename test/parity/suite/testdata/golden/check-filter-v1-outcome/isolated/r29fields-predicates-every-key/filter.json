@@ -3,7 +3,7 @@
   "result": {
     "calculationResult": "USE_FILTER_CONDITION",
     "filterCondition": "",
-    "mongodbFilterCondition": "",
+    "mongodbFilterCondition": "{ \"a\":{\"$eq\":\"mongo-nested\"} }",
     "rsqlFilterCondition": "a==rsql",
     "sqlFilterCondition": "",
     "customFilterCondition": null
