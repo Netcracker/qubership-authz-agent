@@ -58,8 +58,8 @@ var iterateSetAlgorithmSets = []iterateSetAlgorithmSet{
 // one-grant-empty-region is a grant whose region key holds no value, alone and
 // beside a grant of r1; scope-service-not-found answers 404;
 // scope-service-unparsed-body answers 200 with {"x": 1}, and the
-// unparsed-body-as-* shapes with the three bodies of permission-scope/as-*, each
-// a body that is not a scope.
+// unparsed-body-as-* shapes with the three bodies permission-scope/as-* pinned
+// until round 42, each a body that is not a scope.
 var iterateSetAlgorithmShapes = append([]struct {
 	name     string
 	response PipStubResponse
@@ -126,10 +126,11 @@ func iterateSetAlgorithmBuildSet(spec iterateSetAlgorithmSet) map[string]any {
 // applies, and a PERMIT_UNLESS_DENY set above a child that does not apply
 // permits (algorithm-*), so the set may grant everything to a subject with no
 // grant; scope-iterate/no-grants cannot show it, since there the set and the
-// node are one algorithm. permission-scope/as-* pinned its bodies at a path the
-// client never reads, so its goldens record the scope service answering 404,
-// under DENY_UNLESS_PERMIT alone, where an empty scope is false too; a body that
-// reaches the client and does not parse is recorded under no node.
+// node are one algorithm. Until round 42, permission-scope/as-* pinned its bodies
+// at a path the client never reads, so its goldens recorded the scope service
+// answering 404, under DENY_UNLESS_PERMIT alone, where an empty scope is false
+// too; a body that reaches the client and does not parse is recorded under no
+// node.
 // A grant whose region key holds no value is recorded nowhere, and the rule
 // target reads the key with IS NOT NULL. A node that names no algorithm is
 // recorded nowhere. The agent's converter accepts every set here.

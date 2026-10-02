@@ -19,29 +19,13 @@ package paritysuite
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"authz-agent/test/parity/suite/model"
 )
 
 // permissionScopeResourceType is the resource type the iterate set targets.
 const permissionScopeResourceType = "PARITY_SUITE_SCOPE_ITERATE"
-
-// permissionScopeStubPath is the pip-mock path the PERMISSION_SCOPE PIP reads. The
-// stub matches a path literally, so every body shape is pinned to this one path in
-// turn rather than to a path of its own.
-const permissionScopeStubPath = "/api/v1/pip/permission-scope"
-
-// permissionScopePIP declares subject.permissionScope against pip-mock, the name and
-// pipType a PERMISSION_SCOPE declaration carries in
-// internal/acconfig/testdata/pipsV3_1.json. That declaration sets cachePeriod; this
-// one sets cacheable to false instead, so that a re-pinned body reaches the next
-// request. Whether it does is checked per shape, since nothing here can assume it.
-var permissionScopePIP = map[string]any{
-	"name":      "subject.permissionScope",
-	"pipType":   "PERMISSION_SCOPE",
-	"url":       "http://pip-mock:8090" + permissionScopeStubPath,
-	"cacheable": false,
-}
 
 // iteratingSet builds a policy set that carries an iterate block. regularBuilder.set
 // leaves the field out, because only a scoped set has one. algorithm is written both
@@ -53,12 +37,10 @@ func (b regularBuilder) iteratingSet(key, target, algorithm, foreach string, pol
 	return set
 }
 
-// permissionScopeBodies are the shapes the PERMISSION_SCOPE PIP may answer with. The
-// wire format is documented nowhere the suite can read, so each shape grants the
-// region r1 and the category c1 and the goldens record which ones access-control
-// parses. probe-with-a-literal-operand is what separates a parsed shape from an
-// unparsed one; the four scoped requests are read only for a shape whose probe
-// allowed.
+// permissionScopeBodies are three bodies this case pinned before it read the wire
+// format, each granting the region r1 and the category c1 in a shape guessed
+// without it. None of them is a scope, and round 10 pins them as bodies the
+// client cannot parse (permissionScopeBodyShapes).
 var permissionScopeBodies = []struct {
 	name string
 	body any
@@ -83,16 +65,13 @@ var permissionScopeRequests = []isolatedRequest{
 	{name: "resource-in-neither", resource: map[string]any{"id": "scope-iterate", "region": "r9", "category": "c9"}},
 }
 
-// What iterate.foreach over subject.permissionScope does, which no golden has
-// recorded and no document in reach describes. Product policies carry the block and
-// the agent does not read it at all; internal/acconfig/testdata/policy_setsV3_1.json
-// holds the only instance in this repository, a set whose single rule compares
-// subject.permissionScope.role with two literals.
+// What iterate.foreach over subject.permissionScope does: the set is evaluated
+// once per grant, or once over the grants merged into one map.
 //
 // The three scoped rules below are this case's own construction, not a policy copied
 // from anywhere: they split on which scope keys a grant carries, so that a run tells
 // the two readings of iterate apart. Two requests discriminate, both only for the
-// as-a-list-of-objects body, where one grant carries the region and another the
+// two-grants-one-key-each body, where one grant carries the region and another the
 // category:
 //
 //   - resource-in-the-granted-region-only, r1 with an ungranted category, and
@@ -112,15 +91,16 @@ var permissionScopeRequests = []isolatedRequest{
 // mean nothing without it. It reaches a policy of its own on operation PROBE, whose
 // condition compares the scope with a literal rather than with an attribute of the
 // resource, and it allows only once the PIP is declared, called, parsed, and readable
-// by an operator. Without it, an all-false run is equally produced by a refused
-// declaration, a shape access-control does not parse, a PIP that was never called,
-// and CONTAINS against an attribute behaving the way MATCH against an attribute
-// already does: accepted by the PAP and always false
-// (check-resource-v1-outcome/isolated/a2-match-attribute-pattern).
+// by an operator. no-grants is the second control: a well-formed body that grants
+// nothing, under which the probe denies.
+//
+// The case declares, pins, and waits as TestPermissionScopeWireCases does, and asks
+// the same of a set of its own type. Until round 42 it pinned three guessed shapes at
+// the declared url, which the client never calls: the scope service answered 404,
+// read as an empty scope, and every check of those goldens was false.
 //
 // The pip-mock call log is read after every shape, because a cached scope would
-// answer the second and third shapes with the first shape's grants and record three
-// parsed formats where one was read.
+// answer the second and third shapes with the first shape's grants.
 func (s *ParitySuite) TestPermissionScopeIterateCases() {
 	if isAuthzAgentProfile(s.cfg.Profile) {
 		s.T().Skip("iterate is a regular policy set field; the agent loads simplified policies")
@@ -154,7 +134,7 @@ func (s *ParitySuite) TestPermissionScopeIterateCases() {
 					"subject.permissionScope.region CONTAINS 'r1'", "ALLOW", nil)),
 		})
 
-	pipStatus, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, []any{permissionScopePIP}, nil)
+	pipStatus, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, []any{permissionScopeWirePIP}, nil)
 	s.Require().NoError(err)
 	s.Run("declare-the-pip", func() {
 		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "permission-scope/declare-the-pip", &model.PolicyLoadOutcome{Status: pipStatus})
@@ -173,12 +153,16 @@ func (s *ParitySuite) TestPermissionScopeIterateCases() {
 		return
 	}
 
-	for _, shape := range permissionScopeBodies {
+	scopePath := permissionScopeWirePath(parityReaderSubjectID)
+	for _, shape := range permissionScopeWireBodies {
+		// Outlive the cachePeriod of the declaration, as permission-scope-wire does,
+		// so the shape about to be pinned is the one the next request sees.
+		time.Sleep(2 * time.Second)
 		s.Run(shape.name, func() {
 			s.Require().NoError(s.pipMock.ResetCalls(ctx))
-			s.Require().NoError(s.pipMock.PinRoute(ctx, permissionScopeStubPath, PipStubResponse{
+			s.Require().NoError(s.pipMock.PinRoute(ctx, scopePath, PipStubResponse{
 				StatusCode: http.StatusOK,
-				Body:       shape.body,
+				Body:       permissionScopeWireBody(parityReaderSubjectID, shape.grants),
 			}))
 			for _, req := range permissionScopeRequests {
 				s.Run(req.name, func() {
@@ -199,12 +183,12 @@ func (s *ParitySuite) TestPermissionScopeIterateCases() {
 				s.Require().NoError(err)
 				read := 0
 				for _, call := range calls {
-					if call.Path == permissionScopeStubPath {
+					if call.Path == scopePath {
 						read++
 					}
 				}
 				s.Assert().Positive(read, "pip-mock calls to %s over %d requests with the %s body pinned",
-					permissionScopeStubPath, len(permissionScopeRequests), shape.name)
+					scopePath, len(permissionScopeRequests), shape.name)
 			})
 		})
 	}

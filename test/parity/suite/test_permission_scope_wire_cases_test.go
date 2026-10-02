@@ -102,10 +102,8 @@ var permissionScopeWireBodies = []struct {
 }
 
 // What iterate.foreach over subject.permissionScope does, asked of the wire format
-// the client actually parses. TestPermissionScopeIterateCases asks the same question
-// of three guessed shapes and its positive control denies for all three, which says
-// the shapes never reached the evaluator; the goldens of that case record a scope
-// access-control could not read rather than iterate semantics.
+// the client actually parses. TestPermissionScopeIterateCases asks the same of a set
+// of its own type, and pinned three guessed shapes until round 42.
 //
 // The set is the one that case builds — three scoped rules split by which keys a
 // grant carries, plus a probe policy on operation PROBE whose condition compares the
