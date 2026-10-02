@@ -119,44 +119,6 @@
    ]
   },
   {
-   "id": "r28rsql-do-join-a-eq-1-or-b-eq-2",
-   "about": "A DENY rule under DENY_OVERRIDES with the predicate a==1 or b==2. The filter shows how each dialect negates it; tells apart: rsql negation tree.",
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_OVERRIDES",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "rule",
-         "target": "true",
-         "condition": "true",
-         "effect": "DENY",
-         "predicates": {
-          "rsqlPredicate": "a==1 or b==2",
-          "sqlPredicate": "a=1 OR b=2",
-          "predicate": "(${resourceType}.a.eq(1)).or(${resourceType}.b.eq(2))",
-          "mongodbPredicate": "{ \"$or\": [ { \"a\": 1 }, { \"b\": 2 } ] }"
-         }
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "filter",
-     "filter": true
-    }
-   ]
-  },
-  {
    "id": "r28rsql-do-join-a-ge-5-or-b-le-2",
    "about": "A DENY rule under DENY_OVERRIDES with the predicate a=ge=5,b=le=2. The filter shows how each dialect negates it; tells apart: rsql negation eq only, rsql negation tree.",
    "sets": [
@@ -180,44 +142,6 @@
           "sqlPredicate": "a>=5 OR b<=2",
           "predicate": "(${resourceType}.a.goe(5)).or(${resourceType}.b.loe(2))",
           "mongodbPredicate": "{ \"$or\": [ { \"a\": { \"$gte\": 5 } }, { \"b\": { \"$lte\": 2 } } ] }"
-         }
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "filter",
-     "filter": true
-    }
-   ]
-  },
-  {
-   "id": "r28rsql-do-join-a-in-x-or-y-and-b-ne-2",
-   "about": "A DENY rule under DENY_OVERRIDES with the predicate a=in=(x,y);b!=2. The filter shows how each dialect negates it; tells apart: rsql negation both joins, rsql negation eq only, rsql negation tree.",
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_OVERRIDES",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "rule",
-         "target": "true",
-         "condition": "true",
-         "effect": "DENY",
-         "predicates": {
-          "rsqlPredicate": "a=in=(x,y);b!=2",
-          "sqlPredicate": "a IN ('x', 'y') AND b<>2",
-          "predicate": "(${resourceType}.a.in(\"x\", \"y\")).and(${resourceType}.b.ne(2))",
-          "mongodbPredicate": "{ \"$and\": [ { \"a\": { \"$in\": [ \"x\", \"y\" ] } }, { \"b\": { \"$ne\": 2 } } ] }"
          }
         }
        ]
@@ -294,44 +218,6 @@
           "sqlPredicate": "a<5",
           "predicate": "${resourceType}.a.lt(5)",
           "mongodbPredicate": "{ \"a\": { \"$lt\": 5 } }"
-         }
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "filter",
-     "filter": true
-    }
-   ]
-  },
-  {
-   "id": "r28rsql-do-op-in-one",
-   "about": "A DENY rule under DENY_OVERRIDES with the predicate a=in=(x). The filter shows how each dialect negates it; tells apart: rsql negation tree.",
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_OVERRIDES",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "rule",
-         "target": "true",
-         "condition": "true",
-         "effect": "DENY",
-         "predicates": {
-          "rsqlPredicate": "a=in=(x)",
-          "sqlPredicate": "a IN ('x')",
-          "predicate": "${resourceType}.a.in(\"x\")",
-          "mongodbPredicate": "{ \"a\": { \"$in\": [ \"x\" ] } }"
          }
         }
        ]

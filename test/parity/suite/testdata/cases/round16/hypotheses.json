@@ -211,28 +211,6 @@
    ]
   },
   {
-   "id": "x16-match-dstar-any-3",
-   "condition": "resource.x MATCH ** OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe-a-n",
-     "resource": {
-      "x": "v w",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "probe-a-y",
-     "resource": {
-      "x": "v w",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
    "id": "x16-match-question-no-slash-1",
    "condition": "resource.x MATCH a?b OR resource.a == 'y'",
    "requests": [

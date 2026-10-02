@@ -86,6 +86,15 @@ LEFT_MULTI = {"IS_EMPTY", "IS_NOT_EMPTY", "CONTAINS", "NOT_CONTAINS", "CONTAINS_
 RIGHT_MULTI = {"IN", "NOT_IN", "CONTAINS_ANY", "NOT_CONTAINS_ANY", "IS_SUBSET", "IS_NOT_SUBSET"}
 
 
+def read_duplicates():
+    """The ids of duplicates.tsv: cases left out because a kept case holds exactly what each of them holds."""
+    with open(os.path.join(HERE, "duplicates.tsv")) as f:
+        return {line.split("\t")[0] for line in f if line.strip() and not line.startswith("#")}
+
+
+DUPLICATES_NOTE = " The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does."
+
+
 def read_pairs():
     with open(os.path.join(HERE, "pairs.tsv")) as f:
         return [tuple(row) for row in csv.reader(f, delimiter="\t") if row and not row[0].startswith("#")]
@@ -545,7 +554,11 @@ def entitlement_targets():
     return out
 
 
-def write_questions(name, cases, about):
+def write_questions(name, cases, about, duplicates):
+    kept = [c for c in cases if c["id"] not in duplicates]
+    if len(kept) < len(cases):
+        about += DUPLICATES_NOTE
+    cases = kept
     used = sorted({p for c in cases for p in c.get("pips", [])})
     pips = {k: (PIPS[k] if k in PIPS else general_pip(k)) for k in used}
     pins = {Q_ROUTES[k]: Q_PINS[k] for k in used if k in Q_ROUTES}
@@ -556,29 +569,38 @@ def write_questions(name, cases, about):
 
 
 def main():
-    write_questions("questions", questions(), (
+    duplicates = read_duplicates()
+    pairs, choices = read_pairs(), read_choices()
+    questions_cases, entitlement_cases = questions(), entitlement_targets()
+    pair_cases = {}
+    for name, ops in FILES:
+        pair_cases[name] = [c for op, left, right in pairs if op in ops
+                            for c in cases_for(op, left, right, choices.get(case_id(op, left, right)))]
+    seen = {c["id"] for cs in [questions_cases, entitlement_cases, *pair_cases.values()] for c in cs}
+    assert duplicates <= seen, f"duplicates.tsv names cases no file adds: {sorted(duplicates - seen)}"
+    write_questions("questions", questions_cases, (
         "The forms round 14 left open: whether a rule ends or the decision fails for four right-hand states and for "
         "MATCH over a non-string; a list of two values on the right of ==, !=, CONTAINS and NOT CONTAINS from three "
         "sources; filter groups of a nested and a top-level set beside a sibling predicate; subject.isM2M beside a "
         "connective; an attribute on the right of MATCH over its own path text; GENERAL bodies that are an object, "
-        "text, or a one-element list; the whole resource in more positions; number spellings; JSON Path forms."))
-    write_questions("entitlement-targets", entitlement_targets(), (
+        "text, or a one-element list; the whole resource in more positions; number spellings; JSON Path forms."),
+        duplicates)
+    write_questions("entitlement-targets", entitlement_cases, (
         "An entitlements read and a nested decision that fails, in a rule, policy, and set target, with every node "
         "under PERMIT_UNLESS_DENY and a DENY rule: 400 means the PAP refuses the form, true that the node does not "
-        "apply, false that the decision fails. The test function pins the entitlements service to answer 500."))
-    pairs, choices = read_pairs(), read_choices()
+        "apply, false that the decision fails. The test function pins the entitlements service to answer 500."),
+        duplicates)
     for name, ops in FILES:
-        cases = []
-        for op, left, right in pairs:
-            if op in ops:
-                cases += cases_for(op, left, right, choices.get(case_id(op, left, right)))
-        used = sorted({p for c in cases for p in c.get("pips", [])})
+        cases = pair_cases[name]
+        kept = [c for c in cases if c["id"] not in duplicates]
+        used = sorted({p for c in kept for p in c.get("pips", [])})
         doc = {"about": (
             f"Every operand pair of {', '.join(WORDS[o] for o in ops)} the PAP may accept that no earlier golden "
             "evaluated. Each condition is <pair> OR resource.a == 'y': true-value sends a = 'n' and values under "
-            "which the comparison should hold, false-value sends a = 'y' and values under which it should not."),
+            "which the comparison should hold, false-value sends a = 'y' and values under which it should not."
+            + (DUPLICATES_NOTE if len(kept) < len(cases) else "")),
             "resourceTypePrefix": "PARITY_SUITE_R15_", "pins": PINS if "scope" in used else {},
-            "pips": {k: PIPS[k] for k in used}, "cases": cases}
+            "pips": {k: PIPS[k] for k in used}, "cases": kept}
         with open(os.path.join(HERE, f"pairs-{name}.json"), "w") as f:
             json.dump(doc, f, indent=1, ensure_ascii=False)
             f.write("\n")

@@ -286,52 +286,6 @@
    "domain": "PARITY_R29_PAIRS_R29PAIRS_TWO_012"
   },
   {
-   "id": "r29pairs-two-013-s",
-   "condition": "resource.g == 'w'",
-   "requests": [
-    {
-     "name": "q",
-     "headers": {
-      "x-parity-r29-pairs": "h1,h2"
-     },
-     "bulk": [
-      {
-       "id": "i1",
-       "operation": "READ",
-       "resource": {
-        "id": "i1",
-        "a": "y"
-       }
-      },
-      {
-       "id": "i2",
-       "operation": "READ",
-       "resource": {
-        "id": "i2",
-        "a": "n"
-       }
-      }
-     ]
-    }
-   ],
-   "domain": "PARITY_R29_PAIRS_R29PAIRS_TWO_013"
-  },
-  {
-   "id": "r29pairs-two-015-s",
-   "condition": "resource.g == 'w'",
-   "requests": [
-    {
-     "name": "q",
-     "headers": {
-      "x-parity-r29-pairs": "h1,h2"
-     },
-     "filter": true,
-     "operation": "READ"
-    }
-   ],
-   "domain": "PARITY_R29_PAIRS_R29PAIRS_TWO_015"
-  },
-  {
    "id": "r29pairs-two-grants-control-first",
    "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
    "sets": [

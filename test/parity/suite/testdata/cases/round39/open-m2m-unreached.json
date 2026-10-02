@@ -464,26 +464,6 @@
    ]
   },
   {
-   "id": "r39open-m2m-simplified-other-role",
-   "pips": [
-    "r39open-m2m-simplified-other-role"
-   ],
-   "roles": [
-    "ROLE_PARITY_NOBODY"
-   ],
-   "condition": "subject.parityR39M2mOtherRole == 'v'",
-   "about": "A simplified policy for READ and the role ROLE_PARITY_NOBODY, which the reader lacks, whose condition is subject.parityR39M2mOtherRole == 'v'. False if the check does not build the condition of a simplified policy for a role the subject lacks; 400 if it builds every condition of the resource type's simplified policies.",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r39"
-     },
-     "pipCalls": "/api/v1/pip/r39open-m2m-simplified-other-role"
-    }
-   ]
-  },
-  {
    "id": "r39openm2munreached-control-last",
    "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
    "sets": [

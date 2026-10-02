@@ -1807,61 +1807,6 @@
    "about": "10 pairs of context dimensions no golden reached, among them lk=subj.permissionScope, alg=root; lk=subj.permissionScope, rk=pip:TOKEN; ls=SCOPE_OUTSIDE, alg=root; ls=SCOPE_OUTSIDE, rk=pip:TOKEN"
   },
   {
-   "id": "c19-002744",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "null <= null",
-         "condition": "",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "null": [
-       true
-      ],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "null": [
-       true
-      ],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "9 pairs of context dimensions no golden reached, among them ls=list[bool], alg=DENY_UNLESS_PERMIT; ls=list[bool], pos=single; ls=list[bool], rs=list[bool]; op=LE, ls=list[bool]"
-  },
-  {
    "id": "c19-006319",
    "pips": [],
    "sets": [
@@ -2755,64 +2700,6 @@
     }
    ],
    "about": "5 pairs of context dimensions no golden reached, among them lk=subj.permissionScope, rk=operation; ls=SCOPE_OUTSIDE, rk=operation; rk=operation, alg=root; rk=operation, out=ERR"
-  },
-  {
-   "id": "c19-001742",
-   "pips": [
-    "scope",
-    "c19-018834-mapping",
-    "c19-005889-generalR",
-    "c19-007967-tokenL",
-    "c19-047342-tokenR",
-    "c19-021416-headerR",
-    "c19-005546-headerL",
-    "c19-000667-generalL"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "subject.roles IS SUBSET subject.permissionScope.zone AND resourceType == '{{resourceType}}'",
-         "condition": "",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "a": "y"
-     }
-    }
-   ],
-   "about": "5 pairs of context dimensions no golden reached, among them lk=subj.roles, out=ERR; lk=subj.roles, place=rule_target; lk=subj.roles, rk=subj.permissionScope; lk=subj.roles, rs=SCOPE_OUTSIDE"
   },
   {
    "id": "c19-005199",
@@ -6659,57 +6546,6 @@
    "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=subj.id"
   },
   {
-   "id": "c19-001114",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resource.l[0] IS SUBSET subject.scopes OR resource.a == 'y'",
-         "condition": "",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "l": [],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "l": [],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=subj.scopes"
-  },
-  {
    "id": "c19-001122",
    "pips": [
     "c19-001122-generalR",
@@ -7315,64 +7151,6 @@
    "about": "1 pair of context dimensions no golden reached, among them lk=pip:HEADER, rs=INDEX_OOB"
   },
   {
-   "id": "c19-001761",
-   "pips": [
-    "scope",
-    "c19-018834-mapping",
-    "c19-005889-generalR",
-    "c19-007967-tokenL",
-    "c19-047342-tokenR",
-    "c19-021416-headerR",
-    "c19-005546-headerL",
-    "c19-000667-generalL"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "5.5 IN subject.permissionScope.zone",
-         "condition": "",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them lk=lit:num, rs=SCOPE_OUTSIDE"
-  },
-  {
    "id": "c19-001850",
    "pips": [
     "scope",
@@ -7595,64 +7373,6 @@
     }
    ],
    "about": "1 pair of context dimensions no golden reached, among them op=IS_NOT_NULL, ls=list[bool]"
-  },
-  {
-   "id": "c19-002281",
-   "pips": [
-    "scope",
-    "c19-018834-mapping",
-    "c19-005889-generalR",
-    "c19-007967-tokenL",
-    "c19-047342-tokenR",
-    "c19-021416-headerR",
-    "c19-005546-headerL",
-    "c19-000667-generalL"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resourceType == '{{resourceType}}' AND resourceType IN subject.permissionScope.zone",
-         "condition": "",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them lk=resourceType, rs=SCOPE_OUTSIDE"
   },
   {
    "id": "c19-002461",
@@ -8478,57 +8198,6 @@
    "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=subj.permissionScope"
   },
   {
-   "id": "c19-003476",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resourceType == '{{resourceType}}' AND resource.x != resourceType",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "x": [
-       5,
-       6
-      ],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "x": [
-       5,
-       6
-      ],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them ls=list[num], rk=resourceType"
-  },
-  {
    "id": "c19-003710",
    "pips": [
     "scope",
@@ -9005,51 +8674,6 @@
    "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=subj.serviceAccount"
   },
   {
-   "id": "c19-005866",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resourceType == '{{resourceType}}' AND resource.l[*] CONTAINS subject.serviceAccount",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "l": [],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "l": [],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=subj.serviceAccount"
-  },
-  {
    "id": "c19-006168",
    "pips": [],
    "sets": [
@@ -9429,60 +9053,6 @@
    "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=list:num"
   },
   {
-   "id": "c19-007109",
-   "pips": [
-    "c19-007109-mapping",
-    "scope",
-    "c19-005889-generalR",
-    "c19-007967-tokenL",
-    "c19-047342-tokenR",
-    "c19-021416-headerR",
-    "c19-005546-headerL",
-    "c19-000667-generalL"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "subject.permissions NOT CONTAINS ANY resource.m[*] OR resource.a == 'y'",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "m": [],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "m": [],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissions, rs=EMPTY_SEL"
-  },
-  {
    "id": "c19-007248",
    "pips": [
     "c19-007248-generalR",
@@ -9702,51 +9272,6 @@
     }
    ],
    "about": "1 pair of context dimensions no golden reached, among them ls=list[bool], rk=lit:str"
-  },
-  {
-   "id": "c19-008504",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resourceType == 'PARITY_CX_NONE' OR subject.roles IS NOT SUBSET resource.m[0]",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "m": [],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "m": [],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them lk=subj.roles, rs=INDEX_OOB"
   },
   {
    "id": "c19-008844",
@@ -9973,115 +9498,6 @@
     }
    ],
    "about": "1 pair of context dimensions no golden reached, among them ls=SCOPE_OUTSIDE, rk=lit:bool"
-  },
-  {
-   "id": "c19-010500",
-   "pips": [
-    "c19-010500-generalL",
-    "c19-018834-mapping",
-    "scope",
-    "c19-005889-generalR",
-    "c19-007967-tokenL",
-    "c19-047342-tokenR",
-    "c19-021416-headerR",
-    "c19-005546-headerL"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_UNLESS_DENY",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "true",
-         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxGL CONTAINS ANY subject.roles",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them ls=PIP_NULL, rk=subj.roles"
-  },
-  {
-   "id": "c19-011923",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resourceType == 'PARITY_CX_NONE' OR subject.type == resource.m[0]",
-         "condition": "",
-         "effect": "DENY"
-        },
-        {
-         "key": "allow",
-         "target": "true",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "m": [],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "m": [],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them lk=subj.type, rs=INDEX_OOB"
   },
   {
    "id": "c19-012053",
@@ -10520,51 +9936,6 @@
     }
    ],
    "about": "1 pair of context dimensions no golden reached, among them ls=single_odd, eff=DENY"
-  },
-  {
-   "id": "c19-029913",
-   "pips": [],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "pol",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_OVERRIDES",
-       "rules": [
-        {
-         "key": "probe",
-         "target": "resource.l[*] NOT CONTAINS operation",
-         "condition": "",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "cx",
-      "l": [],
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "cx",
-      "l": [],
-      "a": "y"
-     }
-    }
-   ],
-   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=operation"
   },
   {
    "id": "c19-030589",

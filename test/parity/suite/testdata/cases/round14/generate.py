@@ -52,11 +52,21 @@ PIPS = {
 ROUTE_OF_PIP = {"string": "string", "list": "list", "nullbody": "nullbody", "failing": "failing", "m2m": "string"}
 
 
+def read_duplicates():
+    """The ids of duplicates.tsv: cases left out because a kept case holds exactly what each of them holds."""
+    with open(os.path.join(HERE, "duplicates.tsv")) as f:
+        return {line.split("\t")[0] for line in f if line.strip() and not line.startswith("#")}
+
+
+DUPLICATES = read_duplicates()
+DUPLICATES_NOTE = " The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does."
+
+
 class Group:
     """The cases of one file."""
 
     def __init__(self, name, pips, about):
-        self.name, self.pips, self.about, self.cases = name, pips, about, []
+        self.name, self.pips, self.about, self.cases, self.dropped = name, pips, about, [], []
 
     def add(self, cid, cond, requests, pips=(), about=None):
         self._append({"id": cid, "about": about, "condition": cond, "pips": list(pips), "requests": requests})
@@ -67,6 +77,9 @@ class Group:
     def _append(self, case):
         assert all(c["id"] != case["id"] for c in self.cases), case["id"]
         assert all(p in self.pips for p in case["pips"]), case["id"]
+        if case["id"] in DUPLICATES:
+            self.dropped.append(case["id"])
+            return
         for key in ("about", "pips"):
             if not case[key]:
                 del case[key]
@@ -74,7 +87,8 @@ class Group:
 
     def write(self):
         pins = {ROUTES[ROUTE_OF_PIP[k]]: PINS[ROUTE_OF_PIP[k]] for k in self.pips if k in ROUTE_OF_PIP}
-        doc = {"about": self.about, "resourceTypePrefix": "PARITY_SUITE_R14_", "pins": pins, "pips": {k: PIPS[k] for k in self.pips},
+        about = self.about + (DUPLICATES_NOTE if self.dropped else "")
+        doc = {"about": about, "resourceTypePrefix": "PARITY_SUITE_R14_", "pins": pins, "pips": {k: PIPS[k] for k in self.pips},
                "cases": self.cases}
         with open(os.path.join(HERE, self.name + ".json"), "w") as f:
             json.dump(doc, f, indent=1, ensure_ascii=False)
@@ -401,6 +415,8 @@ for effect, alg in [("DENY", "PERMIT_UNLESS_DENY"), ("ALLOW", "DENY_UNLESS_PERMI
 
 if __name__ == "__main__":
     groups = [ok, rs, vm, gr, jp, tg]
+    unmatched = DUPLICATES - {i for g in groups for i in g.dropped}
+    assert not unmatched, f"duplicates.tsv names cases no group adds: {sorted(unmatched)}"
     for g in groups:
         g.write()
     for g in groups:

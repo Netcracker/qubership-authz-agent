@@ -84,28 +84,6 @@
    ]
   },
   {
-   "id": "r42open-predicates-nested-querydsl",
-   "policy": {
-    "predicates": {
-     "querydslPredicate": "{{resourceType}}.a.eq(\"nested\")"
-    }
-   },
-   "about": "Only predicates.querydslPredicate. The querydsl text if a nested querydslPredicate counts; ALLOW if not; a refused upload if the PAP counts mongodbPredicate alone as a format.",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r42"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true,
-     "operation": "READ"
-    }
-   ]
-  },
-  {
    "id": "r42open-predicates-nested-every-format",
    "policy": {
     "predicates": {
@@ -116,54 +94,6 @@
     }
    },
    "about": "rsqlPredicate, sqlPredicate, querydslPredicate and mongodbPredicate, all inside predicates. Each dialect's text says whether its nested key counts; the mongodb text is known to.",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r42"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true,
-     "operation": "READ"
-    }
-   ]
-  },
-  {
-   "id": "r42open-predicates-top-and-nested-rsql",
-   "policy": {
-    "rsqlPredicate": "a==top",
-    "predicates": {
-     "rsqlPredicate": "a==nested"
-    }
-   },
-   "about": "The top-level rsqlPredicate a==top beside predicates.rsqlPredicate a==nested. The rsql text says which one counts, or whether both do; a refused upload if the PAP counts mongodbPredicate alone as a format.",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r42"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true,
-     "operation": "READ"
-    }
-   ]
-  },
-  {
-   "id": "r42open-predicates-top-and-nested-sql-querydsl",
-   "policy": {
-    "sqlPredicate": "a='top'",
-    "querydslPredicate": "{{resourceType}}.a.eq(\"top\")",
-    "predicates": {
-     "sqlPredicate": "a='nested'",
-     "querydslPredicate": "{{resourceType}}.a.eq(\"nested\")"
-    }
-   },
-   "about": "The top-level sqlPredicate and querydslPredicate, which 6.1.6 ignores, beside the nested ones. The sql and querydsl texts say whether the nested keys count when the top-level keys are there too; a refused upload if the PAP counts mongodbPredicate alone as a format.",
    "requests": [
     {
      "name": "read",

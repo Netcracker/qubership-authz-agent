@@ -1,5 +1,5 @@
 {
- "about": "Every operand pair of IN, NOT IN the PAP may accept that no earlier golden evaluated. Each condition is <pair> OR resource.a == 'y': true-value sends a = 'n' and values under which the comparison should hold, false-value sends a = 'y' and values under which it should not.",
+ "about": "Every operand pair of IN, NOT IN the PAP may accept that no earlier golden evaluated. Each condition is <pair> OR resource.a == 'y': true-value sends a = 'n' and values under which the comparison should hold, false-value sends a = 'y' and values under which it should not. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_R15_",
  "pins": {
   "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
@@ -1708,47 +1708,6 @@
    ]
   },
   {
-   "id": "p15-in-operation-subj-scopes",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation IN subject.scopes OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
    "id": "p15-in-pip-ent",
    "pips": [
     "token"
@@ -2815,62 +2774,6 @@
    "condition": "resource.o.x IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-in-res-nested-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "o": {
-       "x": "r1"
-      }
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "o": {
-       "x": [
-        "r1"
-       ]
-      }
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resource.o.x IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-in-res-nested-subj-permissions",
    "pips": [
     "mapping"
@@ -3040,58 +2943,6 @@
     }
    ],
    "condition": "resource.x IN resource.o.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-in-res-path-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "x": "r1"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "x": [
-       "r1"
-      ]
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resource.x IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-in-res-path-subj-permissions",
@@ -3640,54 +3491,6 @@
    "condition": "resourceType IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-in-resourcetype-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resourceType IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-in-resourcetype-subj-permissions",
    "pips": [
     "mapping"
@@ -3953,54 +3756,6 @@
    "condition": "subject.id IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-in-subj-id-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.id IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-in-subj-id-subj-permissions",
    "pips": [
     "mapping"
@@ -4264,54 +4019,6 @@
     }
    ],
    "condition": "subject.name IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-in-subj-name-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.name IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-in-subj-name-subj-permissions",
@@ -4602,54 +4309,6 @@
    "condition": "subject.serviceAccount IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-in-subj-serviceaccount-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.serviceAccount IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-in-subj-serviceaccount-subj-permissions",
    "pips": [
     "mapping"
@@ -4913,54 +4572,6 @@
     }
    ],
    "condition": "subject.type IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-in-subj-type-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.type IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-in-subj-type-subj-permissions",
@@ -5240,54 +4851,6 @@
     }
    ],
    "condition": "true NOT IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-lit-bool-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "true NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-lit-bool-subj-permissions",
@@ -5587,54 +5150,6 @@
    "condition": "5 NOT IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-not-in-lit-num-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "5 NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-lit-num-subj-permissions",
    "pips": [
     "mapping"
@@ -5907,88 +5422,6 @@
    "condition": "'v' NOT IN resource.o.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-not-in-lit-str-subj-permissionscope-true-value",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "'v' NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-lit-str-subj-permissionscope-false-value",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "'r1' NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-lit-str-subj-permissions-true-value",
    "pips": [
     "mapping"
@@ -6073,47 +5506,6 @@
    "condition": "'openid' NOT IN subject.scopes OR resource.a == 'y'"
   },
   {
-   "id": "p15-not-in-operation-ent",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN subject.entitledResources.of('PARITY_R15_ENT').as('Owner') OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-operation-list-num",
    "requests": [
     {
@@ -6179,40 +5571,6 @@
         {
          "key": "decide",
          "target": "operation NOT IN 'v', 'zz' OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-list-str-false-value",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN 'READ', 'zz' OR resource.a == 'y'",
          "condition": "true",
          "effect": "ALLOW"
         }
@@ -6298,40 +5656,6 @@
    ]
   },
   {
-   "id": "p15-not-in-operation-lit-str-false-value",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN 'READ' OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-operation-pip",
    "pips": [
     "header"
@@ -6372,156 +5696,6 @@
         {
          "key": "decide",
          "target": "operation NOT IN subject.parityR15List OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-res-jsonpath",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "items": [
-       {
-        "y": "v"
-       }
-      ]
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "items": [
-       {
-        "y": "READ"
-       },
-       {
-        "y": "zz"
-       }
-      ]
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN resource.items[*].y OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-res-nested",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "o": {
-       "y": "v"
-      }
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "o": {
-       "y": [
-        "READ",
-        "zz"
-       ]
-      }
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN resource.o.y OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-res-path",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "y": "v"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "y": [
-       "READ",
-       "zz"
-      ]
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN resource.y OR resource.a == 'y'",
          "condition": "true",
          "effect": "ALLOW"
         }
@@ -6576,132 +5750,6 @@
       "foreach": "subject.permissionScope",
       "algorithm": "DENY_UNLESS_PERMIT"
      }
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-subj-permissions",
-   "pips": [
-    "mapping"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN subject.permissions OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-subj-roles",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN subject.roles OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "p15-not-in-operation-subj-scopes",
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "operation NOT IN subject.scopes OR resource.a == 'y'",
-         "condition": "true",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
     }
    ]
   },
@@ -6931,55 +5979,6 @@
     }
    ],
    "condition": "subject.parityR15Department NOT IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-pip-subj-permissionscope",
-   "pips": [
-    "scope",
-    "token"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.parityR15Department NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-pip-subj-permissions",
@@ -7327,66 +6326,6 @@
     }
    ],
    "condition": "resource.items[0].x NOT IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-res-jsonpath-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "items": [
-       {
-        "x": [
-         "r1"
-        ]
-       }
-      ]
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "items": [
-       {
-        "x": "r1"
-       }
-      ]
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resource.items[0].x NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-res-jsonpath-subj-permissions",
@@ -7772,62 +6711,6 @@
    "condition": "resource.o.x NOT IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-not-in-res-nested-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "o": {
-       "x": [
-        "r1"
-       ]
-      }
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "o": {
-       "x": "r1"
-      }
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resource.o.x NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-res-nested-subj-permissions",
    "pips": [
     "mapping"
@@ -8044,58 +6927,6 @@
     }
    ],
    "condition": "resource.x NOT IN resource.o.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-res-path-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n",
-      "x": [
-       "r1"
-      ]
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y",
-      "x": "r1"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resource.x NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-res-path-subj-permissions",
@@ -8349,54 +7180,6 @@
     }
    ],
    "condition": "resource NOT IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-resource-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resource NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-resource-subj-permissions",
@@ -8690,54 +7473,6 @@
    "condition": "resourceType NOT IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-not-in-resourcetype-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "resourceType NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-resourcetype-subj-permissions",
    "pips": [
     "mapping"
@@ -9003,54 +7738,6 @@
    "condition": "subject.id NOT IN resource.y OR resource.a == 'y'"
   },
   {
-   "id": "p15-not-in-subj-id-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.id NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
-  },
-  {
    "id": "p15-not-in-subj-id-subj-permissions",
    "pips": [
     "mapping"
@@ -9314,54 +8001,6 @@
     }
    ],
    "condition": "subject.name NOT IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-subj-name-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.name NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-subj-name-subj-permissions",
@@ -9650,54 +8289,6 @@
     }
    ],
    "condition": "subject.serviceAccount NOT IN resource.y OR resource.a == 'y'"
-  },
-  {
-   "id": "p15-not-in-subj-serviceaccount-subj-permissionscope",
-   "pips": [
-    "scope"
-   ],
-   "requests": [
-    {
-     "name": "true-value",
-     "resource": {
-      "id": "r15",
-      "a": "n"
-     }
-    },
-    {
-     "name": "false-value",
-     "resource": {
-      "id": "r15",
-      "a": "y"
-     }
-    }
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "decide",
-         "target": "true",
-         "condition": "subject.serviceAccount NOT IN subject.permissionScope.region OR resource.a == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ],
-     "iterate": {
-      "foreach": "subject.permissionScope",
-      "algorithm": "DENY_UNLESS_PERMIT"
-     }
-    }
-   ]
   },
   {
    "id": "p15-not-in-subj-serviceaccount-subj-permissions",

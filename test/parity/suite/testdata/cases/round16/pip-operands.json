@@ -8436,75 +8436,6 @@
    ]
   },
   {
-   "id": "g16-gt-076",
-   "condition": "subject.parityR16General > 5.0 OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-gt-076"
-   ]
-  },
-  {
-   "id": "g16-eq-077",
-   "condition": "subject.parityR16General == 5.0 OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-eq-077"
-   ]
-  },
-  {
-   "id": "g16-ne-078",
-   "condition": "subject.parityR16General != 5.0 OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-ne-078"
-   ]
-  },
-  {
    "id": "g16-lt-079",
    "condition": "subject.parityR16General < null OR resource.a == 'y'",
    "requests": [
@@ -9540,29 +9471,6 @@
    ]
   },
   {
-   "id": "g16-not-match-124",
-   "condition": "subject.parityR16General NOT MATCH 5 OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-not-match-124"
-   ]
-  },
-  {
    "id": "g16-lt-125",
    "condition": "subject.parityR16General < resource.y OR resource.a == 'y'",
    "requests": [
@@ -9635,31 +9543,6 @@
    ],
    "pips": [
     "general-g16-lt-127"
-   ]
-  },
-  {
-   "id": "g16-lt-128",
-   "condition": "resource.y < subject.parityR16General OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-lt-128"
    ]
   },
   {
@@ -9843,31 +9726,6 @@
    ],
    "pips": [
     "general-g16-gt-133"
-   ]
-  },
-  {
-   "id": "g16-gt-134",
-   "condition": "resource.y > subject.parityR16General OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-gt-134"
    ]
   },
   {
@@ -10139,31 +9997,6 @@
    ]
   },
   {
-   "id": "g16-eq-143",
-   "condition": "resource.y == subject.parityR16General OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-eq-143"
-   ]
-  },
-  {
    "id": "g16-eq-144",
    "condition": "subject.parityR16General == resource.y OR resource.a == 'y'",
    "requests": [
@@ -10360,31 +10193,6 @@
    ],
    "pips": [
     "general-g16-ne-148"
-   ]
-  },
-  {
-   "id": "g16-ne-149",
-   "condition": "resource.y != subject.parityR16General OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-ne-149"
    ]
   },
   {
@@ -10587,31 +10395,6 @@
    ]
   },
   {
-   "id": "g16-le-155",
-   "condition": "resource.y <= subject.parityR16General OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-le-155"
-   ]
-  },
-  {
    "id": "g16-le-156",
    "condition": "subject.parityR16General <= resource.y OR resource.a == 'y'",
    "requests": [
@@ -10808,31 +10591,6 @@
    ],
    "pips": [
     "general-g16-ge-160"
-   ]
-  },
-  {
-   "id": "g16-ge-161",
-   "condition": "resource.y >= subject.parityR16General OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "p00-a-n",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "n"
-     }
-    },
-    {
-     "name": "p00-a-y",
-     "resource": {
-      "y": "v",
-      "id": "r16",
-      "a": "y"
-     }
-    }
-   ],
-   "pips": [
-    "general-g16-ge-161"
    ]
   },
   {

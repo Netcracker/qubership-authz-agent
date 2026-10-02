@@ -1,5 +1,5 @@
 {
- "about": "What value or state each kind of operand gives: subject.id, name, type, and serviceAccount, resourceType, the whole resource, literals, GENERAL and TOKEN PIPs, subject.roles and scopes, and lists from a GENERAL and a TOKEN PIP. Each kind stands on the left of every operator it may stand on and on the right of the comparison, membership, and containment operators. The request carries in x the value the operand is expected to give.",
+ "about": "What value or state each kind of operand gives: subject.id, name, type, and serviceAccount, resourceType, the whole resource, literals, GENERAL and TOKEN PIPs, subject.roles and scopes, and lists from a GENERAL and a TOKEN PIP. Each kind stands on the left of every operator it may stand on and on the right of the comparison, membership, and containment operators. The request carries in x the value the operand is expected to give. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_R14_",
  "pins": {
   "/api/v1/pip/r14-string": {
@@ -1855,23 +1855,6 @@
    ]
   },
   {
-   "id": "ok-subject-roles-not-equals-on-the-right",
-   "condition": "resource.x != subject.roles",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14",
-      "x": "ROLE_PARITY_READER",
-      "l": [
-       "ROLE_PARITY_READER"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
    "id": "ok-subject-scopes-contains",
    "condition": "subject.scopes CONTAINS 'openid'",
    "requests": [
@@ -2112,40 +2095,6 @@
   {
    "id": "ok-subject-scopes-not-contains-on-the-right",
    "condition": "resource.l NOT CONTAINS subject.scopes",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14",
-      "x": "openid",
-      "l": [
-       "openid"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "ok-subject-scopes-equals-on-the-right",
-   "condition": "resource.x == subject.scopes",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14",
-      "x": "openid",
-      "l": [
-       "openid"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "ok-subject-scopes-not-equals-on-the-right",
-   "condition": "resource.x != subject.scopes",
    "requests": [
     {
      "name": "probe",

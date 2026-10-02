@@ -365,45 +365,6 @@
    ]
   },
   {
-   "id": "x19-r17-residual-016-in-a-deny-rule",
-   "pips": [
-    "r17-residual-016-subject-parityfzright"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "PERMIT_UNLESS_DENY",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_UNLESS_DENY",
-       "rules": [
-        {
-         "key": "deny",
-         "target": "true",
-         "condition": "resource.x IS SUBSET subject.parityR17FzRight",
-         "effect": "DENY"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "x": {
-       "k": "v"
-      },
-      "id": "r17"
-     }
-    }
-   ]
-  },
-  {
    "id": "x19-r17-residual-017-in-a-deny-rule",
    "pips": [
     "r17-residual-017-subject-parityfzright"

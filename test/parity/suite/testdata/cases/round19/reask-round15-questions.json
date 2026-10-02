@@ -126,43 +126,6 @@
    ]
   },
   {
-   "id": "x19-q15-general-list-on-the-right-of-equals-in-a-deny-rule",
-   "pips": [
-    "glist"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "PERMIT_UNLESS_DENY",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_UNLESS_DENY",
-       "rules": [
-        {
-         "key": "deny",
-         "target": "true",
-         "condition": "resource.v == subject.parityR15GeneralList",
-         "effect": "DENY"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r15",
-      "v": "v"
-     }
-    }
-   ]
-  },
-  {
    "id": "x19-q15-general-list-on-the-right-of-not-equals-in-a-deny-rule",
    "pips": [
     "glist"

@@ -1,5 +1,5 @@
 {
- "about": "What every binary operator gives when its right operand is an absent key, null, [], an empty JSON Path selection, an index past the end, a HEADER PIP without its header, a GENERAL PIP whose body is null, or a GENERAL PIP that answers 500. The prefixes ra, rx, re, rs, ro, rh, rn and rf name those states in that order. A case ending in -alone is the comparison by itself; one ending in -or stands on the left of OR resource.a == 'y', so true tells a false comparison from a rule the comparison ended. The r14-*-in-a-deny-rule-* cases tell an ended rule from a failed answer.",
+ "about": "What every binary operator gives when its right operand is an absent key, null, [], an empty JSON Path selection, an index past the end, a HEADER PIP without its header, a GENERAL PIP whose body is null, or a GENERAL PIP that answers 500. The prefixes ra, rx, re, rs, ro, rh, rn and rf name those states in that order. A case ending in -alone is the comparison by itself; one ending in -or stands on the left of OR resource.a == 'y', so true tells a false comparison from a rule the comparison ended. The r14-*-in-a-deny-rule-* cases tell an ended rule from a failed answer. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_R14_",
  "pins": {
   "/api/v1/pip/r14-null-body": {
@@ -1171,63 +1171,6 @@
    ]
   },
   {
-   "id": "rx-match-or",
-   "condition": "resource.v MATCH resource.x OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rx-match-or",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y",
-      "x": null
-     }
-    }
-   ]
-  },
-  {
-   "id": "rx-not-match-alone",
-   "condition": "resource.v NOT MATCH resource.x",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rx-not-match-alone",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y",
-      "x": null
-     }
-    }
-   ]
-  },
-  {
-   "id": "rx-not-match-or",
-   "condition": "resource.v NOT MATCH resource.x OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rx-not-match-or",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y",
-      "x": null
-     }
-    }
-   ]
-  },
-  {
    "id": "re-equals-alone",
    "condition": "resource.v == resource.x",
    "requests": [
@@ -1767,63 +1710,6 @@
      "name": "probe",
      "resource": {
       "id": "r14-re-match-alone",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y",
-      "x": []
-     }
-    }
-   ]
-  },
-  {
-   "id": "re-match-or",
-   "condition": "resource.v MATCH resource.x OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-re-match-or",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y",
-      "x": []
-     }
-    }
-   ]
-  },
-  {
-   "id": "re-not-match-alone",
-   "condition": "resource.v NOT MATCH resource.x",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-re-not-match-alone",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y",
-      "x": []
-     }
-    }
-   ]
-  },
-  {
-   "id": "re-not-match-or",
-   "condition": "resource.v NOT MATCH resource.x OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-re-not-match-or",
       "v": "v",
       "n": 5,
       "l": [
@@ -3927,27 +3813,6 @@
    ]
   },
   {
-   "id": "rh-not-match-or",
-   "condition": "resource.v NOT MATCH subject.parityNoHeader OR resource.a == 'y'",
-   "pips": [
-    "noheader"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rh-not-match-or",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
    "id": "rn-equals-alone",
    "condition": "resource.v == subject.parityR14NullBody",
    "pips": [
@@ -4599,27 +4464,6 @@
    ]
   },
   {
-   "id": "rn-not-match-or",
-   "condition": "resource.v NOT MATCH subject.parityR14NullBody OR resource.a == 'y'",
-   "pips": [
-    "nullbody"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rn-not-match-or",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
    "id": "rf-equals-alone",
    "condition": "resource.v == subject.parityR14Failing",
    "pips": [
@@ -5218,69 +5062,6 @@
      "name": "probe",
      "resource": {
       "id": "r14-rf-match-alone",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "rf-match-or",
-   "condition": "resource.v MATCH subject.parityR14Failing OR resource.a == 'y'",
-   "pips": [
-    "failing"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rf-match-or",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "rf-not-match-alone",
-   "condition": "resource.v NOT MATCH subject.parityR14Failing",
-   "pips": [
-    "failing"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rf-not-match-alone",
-      "v": "v",
-      "n": 5,
-      "l": [
-       "v"
-      ],
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "rf-not-match-or",
-   "condition": "resource.v NOT MATCH subject.parityR14Failing OR resource.a == 'y'",
-   "pips": [
-    "failing"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-rf-not-match-or",
       "v": "v",
       "n": 5,
       "l": [

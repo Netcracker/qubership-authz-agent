@@ -106,39 +106,6 @@
    ]
   },
   {
-   "id": "r32gaps-number-against-a-text-no-number",
-   "about": "The filter compares the text 5x, which is no number, with the number 5.",
-   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "read-a-n",
-     "resource": {
-      "id": "r32",
-      "a": "n",
-      "l": [
-       {
-        "id": "a",
-        "k": "5x"
-       }
-      ]
-     }
-    },
-    {
-     "name": "read-a-y",
-     "resource": {
-      "id": "r32",
-      "a": "y",
-      "l": [
-       {
-        "id": "a",
-        "k": "5x"
-       }
-      ]
-     }
-    }
-   ]
-  },
-  {
    "id": "r32gaps-not-equal-boolean-against-number",
    "about": "The filter asks != between the boolean true and the number 5. True for a = n if != holds between values of different types, false if such values are not compared at all.",
    "condition": "resource.l[?(@.k != 5)].id CONTAINS 'a' OR resource.a == 'y'",

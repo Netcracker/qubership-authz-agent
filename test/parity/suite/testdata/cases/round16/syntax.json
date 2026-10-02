@@ -204,21 +204,6 @@
    ]
   },
   {
-   "id": "s16-digit-first-path-step",
-   "about": "A path step that starts with a digit; the probe has the key 1x with the value v.",
-   "condition": "resource.1x == 'v' OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r16",
-      "a": "n",
-      "1x": "v"
-     }
-    }
-   ]
-  },
-  {
    "id": "s16-trailing-dot-in-a-path",
    "about": "A path that ends with a dot; the probe is true through its first operand, so only the upload status is in question.",
    "condition": "resource.a == 'y' OR resource.x. IS NULL",
@@ -242,23 +227,6 @@
      "resource": {
       "id": "r16",
       "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "s16-spaces-inside-brackets",
-   "about": "One space on each side of an index in brackets. The probe's l is [v], so an index read as 0 reads true.",
-   "condition": "resource.l[ 0 ] == 'v' OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r16",
-      "a": "n",
-      "l": [
-       "v"
-      ]
      }
     }
    ]

@@ -1,5 +1,5 @@
 {
- "about": "What a target gives that reads a failed GENERAL PIP, an absent attribute, or subject.permissionScope outside iterate, at the rule, the policy, and a nested set, in check/resource and in the filter. Every node of a -deny case is under PERMIT_UNLESS_DENY, so check/resource is true when the target does not apply; every node of an -allow case is under DENY_UNLESS_PERMIT, so it is true only when the target holds or the node permits. The readable cases are the control: their target holds.",
+ "about": "What a target gives that reads a failed GENERAL PIP, an absent attribute, or subject.permissionScope outside iterate, at the rule, the policy, and a nested set, in check/resource and in the filter. Every node of a -deny case is under PERMIT_UNLESS_DENY, so check/resource is true when the target does not apply; every node of an -allow case is under DENY_UNLESS_PERMIT, so it is true only when the target holds or the node permits. The readable cases are the control: their target holds. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_R14_",
  "pins": {
   "/api/v1/pip/r14-failing": {
@@ -834,56 +834,6 @@
    ]
   },
   {
-   "id": "r14-failing-pip-in-a-policy-target-allow",
-   "pips": [
-    "failing",
-    "scope"
-   ],
-   "sets": [
-    {
-     "key": "outer",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [],
-     "sets": [
-      {
-       "key": "nested",
-       "target": "true",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "policies": [
-        {
-         "key": "decides",
-         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' AND subject.parityR14Failing == 'v'",
-         "algorithm": "DENY_UNLESS_PERMIT",
-         "rules": [
-          {
-           "key": "decide",
-           "target": "true",
-           "condition": "true",
-           "effect": "ALLOW"
-          }
-         ]
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r14-target",
-      "a": "y"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true
-    }
-   ]
-  },
-  {
    "id": "r14-missing-attribute-in-a-policy-target-allow",
    "pips": [
     "failing",
@@ -1005,56 +955,6 @@
         {
          "key": "decides",
          "target": "subject.roles CONTAINS 'ROLE_PARITY_READER' AND resource.a == 'y'",
-         "algorithm": "DENY_UNLESS_PERMIT",
-         "rules": [
-          {
-           "key": "decide",
-           "target": "true",
-           "condition": "true",
-           "effect": "ALLOW"
-          }
-         ]
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r14-target",
-      "a": "y"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true
-    }
-   ]
-  },
-  {
-   "id": "r14-failing-pip-in-a-set-target-allow",
-   "pips": [
-    "failing",
-    "scope"
-   ],
-   "sets": [
-    {
-     "key": "outer",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [],
-     "sets": [
-      {
-       "key": "nested",
-       "target": "subject.parityR14Failing == 'v'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "policies": [
-        {
-         "key": "decides",
-         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
          "algorithm": "DENY_UNLESS_PERMIT",
          "rules": [
           {

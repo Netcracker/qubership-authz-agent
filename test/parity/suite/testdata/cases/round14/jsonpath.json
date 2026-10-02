@@ -1,5 +1,5 @@
 {
- "about": "Which JSON Path forms the PAP accepts in an attribute and what they select: negative indexes, slices, unions, wildcards, recursive descent, filters with comparisons, existence, &&, ||, in and =~, functions, bracketed keys, and the root $. Each condition runs alone and on the left of OR resource.a == 'y', over one resource.",
+ "about": "Which JSON Path forms the PAP accepts in an attribute and what they select: negative indexes, slices, unions, wildcards, recursive descent, filters with comparisons, existence, &&, ||, in and =~, functions, bracketed keys, and the root $. Each condition runs alone and on the left of OR resource.a == 'y', over one resource. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_R14_",
  "pins": {},
  "pips": {},
@@ -1307,76 +1307,6 @@
      "name": "probe",
      "resource": {
       "id": "r14-jp-dollar-root-or",
-      "a": "y",
-      "list": [
-       "a",
-       "b",
-       "c"
-      ],
-      "items": [
-       {
-        "type": "a",
-        "id": "q",
-        "n": 1
-       },
-       {
-        "type": "b",
-        "id": "r",
-        "n": 3
-       }
-      ],
-      "o": {
-       "k": {
-        "id": "s"
-       }
-      }
-     }
-    }
-   ]
-  },
-  {
-   "id": "jp-index-then-key-alone",
-   "condition": "resource.items[1].id == 'r'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-jp-index-then-key-alone",
-      "a": "y",
-      "list": [
-       "a",
-       "b",
-       "c"
-      ],
-      "items": [
-       {
-        "type": "a",
-        "id": "q",
-        "n": 1
-       },
-       {
-        "type": "b",
-        "id": "r",
-        "n": 3
-       }
-      ],
-      "o": {
-       "k": {
-        "id": "s"
-       }
-      }
-     }
-    }
-   ]
-  },
-  {
-   "id": "jp-index-then-key-or",
-   "condition": "resource.items[1].id == 'r' OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r14-jp-index-then-key-or",
       "a": "y",
       "list": [
        "a",

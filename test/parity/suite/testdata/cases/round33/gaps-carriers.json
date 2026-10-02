@@ -142,39 +142,6 @@
    ]
   },
   {
-   "id": "r33gaps-jp-number-against-the-text-5",
-   "about": "The filter compares the number 5 in the resource with the text literal '5'. True for a = n if the two compare as texts or as numbers, false if a number never equals a text.",
-   "condition": "resource.l[?(@.k == '5')].id CONTAINS 'a' OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "read-a-n",
-     "resource": {
-      "id": "r33",
-      "a": "n",
-      "l": [
-       {
-        "id": "a",
-        "k": 5
-       }
-      ]
-     }
-    },
-    {
-     "name": "read-a-y",
-     "resource": {
-      "id": "r33",
-      "a": "y",
-      "l": [
-       {
-        "id": "a",
-        "k": 5
-       }
-      ]
-     }
-    }
-   ]
-  },
-  {
    "id": "r33gaps-typed-bean-is-null",
    "about": "The PIP declares pipType GENERAL and a beanName but no url (round 32 asked the same without pipType, r32gaps-pip-bean). Both requests true if the PIP gives no value and goes on, false if it fails.",
    "pips": [

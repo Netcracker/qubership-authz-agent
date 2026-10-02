@@ -52,56 +52,6 @@
    ]
   },
   {
-   "id": "r29pipfield-mapping-outside-pattern-own-name-other",
-   "about": "mapping outside pattern own name other",
-   "condition": "subject.parityR29Perms CONTAINS 'PARITY_R29_Q' OR resource.a == 'y'",
-   "pips": [
-    "outside",
-    "other"
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "r29",
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "r29",
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "r29pipfield-mapping-outside-pattern-own-name-is-null",
-   "about": "mapping outside pattern own name is null",
-   "condition": "subject.parityR29Perms IS NULL OR resource.a == 'y'",
-   "pips": [
-    "outside",
-    "other"
-   ],
-   "requests": [
-    {
-     "name": "a-n",
-     "resource": {
-      "id": "r29",
-      "a": "n"
-     }
-    },
-    {
-     "name": "a-y",
-     "resource": {
-      "id": "r29",
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
    "id": "r29pipfield-mapping-named-permissions",
    "about": "mapping named permissions",
    "condition": "subject.permissions CONTAINS 'PARITY_R29_B' OR resource.a == 'y'",

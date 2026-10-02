@@ -110,43 +110,6 @@
    ]
   },
   {
-   "id": "r33gaps-jp-filter-equals-over-an-object",
-   "about": "k is the object {\"v\": 5}. False for a = n if an object equals no number; both false if the comparison fails the path.",
-   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
-   "requests": [
-    {
-     "name": "read-a-n",
-     "resource": {
-      "id": "r33",
-      "a": "n",
-      "l": [
-       {
-        "id": "a",
-        "k": {
-         "v": 5
-        }
-       }
-      ]
-     }
-    },
-    {
-     "name": "read-a-y",
-     "resource": {
-      "id": "r33",
-      "a": "y",
-      "l": [
-       {
-        "id": "a",
-        "k": {
-         "v": 5
-        }
-       }
-      ]
-     }
-    }
-   ]
-  },
-  {
    "id": "r33gaps-jp-filter-not-equal-over-null",
    "about": "k is null under !=. True for a = n if null differs from every number; both false if the comparison fails the path.",
    "condition": "resource.l[?(@.k != 5)].id CONTAINS 'a' OR resource.a == 'y'",

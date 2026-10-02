@@ -421,49 +421,6 @@
    ]
   },
   {
-   "id": "r29fields-rule-type-unknown-deny",
-   "about": "A DENY rule with ruleType PARITY_JUNK, alone under PERMIT_UNLESS_DENY. Read: false and DENY if the rule applies, true and ALLOW if it is left out.",
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "PERMIT_UNLESS_DENY",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "PERMIT_UNLESS_DENY",
-       "rules": [
-        {
-         "key": "deny",
-         "target": "true",
-         "condition": "true",
-         "effect": "DENY",
-         "fields": {
-          "ruleType": "PARITY_JUNK"
-         }
-        }
-       ]
-      }
-     ],
-     "status": "ACTIVE"
-    }
-   ],
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "r29"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true,
-     "operation": "READ"
-    }
-   ]
-  },
-  {
    "id": "r29fields-custom-rule-type-frontend",
    "about": "The read rule allows anything. A CUSTOMER customization replaces it with every field, effect ALLOW and ruleType APPLICABLE_FOR_FRONTEND. Read after: false if a rule for the user interface is left out.",
    "sets": [

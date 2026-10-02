@@ -281,21 +281,6 @@
    "domain": "PARITY_R29_PAIRS_R29PAIRS_NONE_011"
   },
   {
-   "id": "r29pairs-none-012-s",
-   "condition": "resource.g == 'w'",
-   "requests": [
-    {
-     "name": "q",
-     "headers": {
-      "x-parity-r29-pairs": "h1,h2"
-     },
-     "filter": true,
-     "operation": "READ"
-    }
-   ],
-   "domain": "PARITY_R29_PAIRS_R29PAIRS_NONE_012"
-  },
-  {
    "id": "r29pairs-no-grant-control-first",
    "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
    "sets": [

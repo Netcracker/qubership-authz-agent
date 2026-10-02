@@ -1470,62 +1470,6 @@
    ]
   },
   {
-   "id": "k19-050",
-   "pips": [
-    "k",
-    "kx"
-   ],
-   "condition": "resource.a == 'y' OR a CONTAINS ANY a AND resource.a == 'y'",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "k19",
-      "a": "y",
-      "o": {
-       "x": "v"
-      },
-      "l": [
-       "v",
-       "w"
-      ]
-     },
-     "headers": {
-      "x-parity-k19": "v",
-      "x-parity-k19-x": "v"
-     }
-    }
-   ]
-  },
-  {
-   "id": "k19-051",
-   "pips": [
-    "k",
-    "kx"
-   ],
-   "condition": "resource.a == 'y' OR resource.a == 'y' AND a CONTAINS ANY a",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "k19",
-      "a": "y",
-      "o": {
-       "x": "v"
-      },
-      "l": [
-       "v",
-       "w"
-      ]
-     },
-     "headers": {
-      "x-parity-k19": "v",
-      "x-parity-k19-x": "v"
-     }
-    }
-   ]
-  },
-  {
    "id": "k19-052",
    "pips": [
     "k",
@@ -1638,34 +1582,6 @@
    ]
   },
   {
-   "id": "k19-056",
-   "pips": [
-    "k",
-    "kx"
-   ],
-   "condition": "resource.a == 'y' OR resource.a == 'y' AND subject denied '' on resource",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "k19",
-      "a": "y",
-      "o": {
-       "x": "v"
-      },
-      "l": [
-       "v",
-       "w"
-      ]
-     },
-     "headers": {
-      "x-parity-k19": "v",
-      "x-parity-k19-x": "v"
-     }
-    }
-   ]
-  },
-  {
    "id": "k19-057",
    "pips": [
     "k",
@@ -1756,62 +1672,6 @@
     "kx"
    ],
    "condition": "5 = subject.permissions.PARITY FILTERED ''",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "k19",
-      "a": "y",
-      "o": {
-       "x": "v"
-      },
-      "l": [
-       "v",
-       "w"
-      ]
-     },
-     "headers": {
-      "x-parity-k19": "v",
-      "x-parity-k19-x": "v"
-     }
-    }
-   ]
-  },
-  {
-   "id": "k19-061",
-   "pips": [
-    "k",
-    "kx"
-   ],
-   "condition": "subject.permissions.PARITY FILTERED '' IS NULL",
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "k19",
-      "a": "y",
-      "o": {
-       "x": "v"
-      },
-      "l": [
-       "v",
-       "w"
-      ]
-     },
-     "headers": {
-      "x-parity-k19": "v",
-      "x-parity-k19-x": "v"
-     }
-    }
-   ]
-  },
-  {
-   "id": "k19-062",
-   "pips": [
-    "k",
-    "kx"
-   ],
-   "condition": "subject.permissions.PARITY FILTERED '' CONTAINS a",
    "requests": [
     {
      "name": "read",
@@ -2127,55 +1987,6 @@
          "key": "allow",
          "target": "true",
          "condition": "TRUE",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "read",
-     "resource": {
-      "id": "k19",
-      "a": "y",
-      "o": {
-       "x": "v"
-      },
-      "l": [
-       "v",
-       "w"
-      ]
-     },
-     "headers": {
-      "x-parity-k19": "v",
-      "x-parity-k19-x": "v"
-     }
-    }
-   ]
-  },
-  {
-   "id": "k19-073",
-   "pips": [
-    "k",
-    "kx"
-   ],
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "allow",
-         "target": "TRUE",
-         "condition": "true",
          "effect": "ALLOW"
         }
        ]
