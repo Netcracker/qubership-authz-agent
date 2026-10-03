@@ -1,0 +1,240 @@
+{
+ "about": "Whether ==, <, <=, >=, IS EMPTY, NOT CONTAINS, NOT CONTAINS ANY and NOT MATCH over a resource attribute that is null are false or end the rule. Each is recorded alone (s1c, nl1, nl6, nl2, n4, n2, m2, m1), where both answer false. Of the relational operators only > is recorded on the left of an OR (n3). CONTAINS, CONTAINS ANY and MATCH end the rule over null on the left of an OR (nc-*), so their negations may too. Each operator goes through a probe and its control against a resource whose x is null and whose a is y. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "nx-equals",
+   "condition": "resource.x == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-equals-control",
+   "resourceType": "PARITY_SUITE_R11_NX_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR resource.x == 'v'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-less-than",
+   "condition": "resource.x < 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-less-than-control",
+   "resourceType": "PARITY_SUITE_R11_NX_LESS_THAN_CTL",
+   "condition": "resource.a == 'y' OR resource.x < 5",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-less-or-equal",
+   "condition": "resource.x <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-less-or-equal-control",
+   "resourceType": "PARITY_SUITE_R11_NX_LESS_OR_EQUAL_CTL",
+   "condition": "resource.a == 'y' OR resource.x <= 5",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-greater-or-equal",
+   "condition": "resource.x >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-greater-or-equal-control",
+   "resourceType": "PARITY_SUITE_R11_NX_GREATER_OR_EQUAL_CTL",
+   "condition": "resource.a == 'y' OR resource.x >= 5",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-is-empty",
+   "condition": "resource.x IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-is-empty-control",
+   "resourceType": "PARITY_SUITE_R11_NX_IS_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR resource.x IS EMPTY",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-not-contains",
+   "condition": "resource.x NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-not-contains-control",
+   "resourceType": "PARITY_SUITE_R11_NX_NOT_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR resource.x NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-not-contains-any",
+   "condition": "resource.x NOT CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-not-contains-any-control",
+   "resourceType": "PARITY_SUITE_R11_NX_NOT_CONTAINS_ANY_CTL",
+   "condition": "resource.a == 'y' OR resource.x NOT CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-not-match",
+   "condition": "resource.x NOT MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nx-not-match-control",
+   "resourceType": "PARITY_SUITE_R11_NX_NOT_MATCH_CTL",
+   "condition": "resource.a == 'y' OR resource.x NOT MATCH v*",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r11-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -80,13 +80,6 @@ func round9PredicatePolicy(b regularBuilder) map[string]any {
 	return b.policy("with-a-predicate", readerTarget, "DENY_UNLESS_PERMIT", allowWithPredicate(b, "list-with-a-predicate", "allowed==1"))
 }
 
-// round9UpdateOnlyPolicy is a DENY_UNLESS_PERMIT policy whose one rule allows
-// UPDATE, so on LIST it has no rule that applies and denies.
-func round9UpdateOnlyPolicy(b regularBuilder) map[string]any {
-	return b.policy("update-only", readerTarget, "DENY_UNLESS_PERMIT",
-		b.rule("update-allow", "operation == 'UPDATE'", "true", "ALLOW", nil))
-}
-
 // allowWithPredicate is an ALLOW rule on LIST whose predicate is rsql.
 func allowWithPredicate(b regularBuilder, key, rsql string) map[string]any {
 	return b.rule(key, "operation == 'LIST'", "true", "ALLOW", map[string]string{"rsqlPredicate": rsql})
