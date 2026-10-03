@@ -265,8 +265,8 @@ func configExportSimplifiedPolicies() []any {
 }
 
 // configExportPIPs declare a PIP of each type with a recorded acceptance, in the
-// shapes the recorded declarations use (suite-pips.json, parityPermissionsPIP,
-// permissionScopeWirePIP).
+// shapes the recorded declarations use (suite-pips.json, the permissions PIP of
+// testdata/cases/early/isolated-condition-form.json, permissionScopeWirePIP).
 func configExportPIPs() []any {
 	rt := regularResourceType(configExportCaseID)
 	return []any{
@@ -313,8 +313,8 @@ func configExportPIPs() []any {
 
 // configExportFilteredPIP declares a FILTERED PIP under a name ending in .filtered
 // and with a top-level resourceType, two shapes no accepted declaration records;
-// parityFilteredPIP, whose declaration h3-filtered-pip-plain-reference records
-// as refused, has neither.
+// the filtered PIP of testdata/cases/early/isolated-condition-form.json, whose
+// declaration h3-filtered-pip-plain-reference records as refused, has neither.
 func configExportFilteredPIP() map[string]any {
 	rt := regularResourceType(configExportCaseID)
 	return map[string]any{

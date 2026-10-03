@@ -30,7 +30,8 @@ import (
 // uses an operator form the PAP accepted in an existing golden: ==, != and IN
 // against a string literal, == true, NOT IN, NOT CONTAINS, > against a number,
 // IS NULL, and IS EMPTY. Forms and declarations the PAP may refuse are in
-// test_isolated_policy_cases_test.go, where a refusal cannot fail the seed.
+// testdata/cases/early/isolated-policy.json, run by TestIsolatedPolicyCases,
+// where a refusal cannot fail the seed.
 
 func (s *ParitySuite) TestRow02CheckResourceV1NullValueUnderOperators() {
 	s.runSemanticsCases([]semanticsCase{
