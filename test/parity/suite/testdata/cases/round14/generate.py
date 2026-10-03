@@ -9,6 +9,7 @@ reads. The cases ask for forms of the condition language no golden has recorded 
   syntax.json        operand pairs the PAP may refuse, and lexical forms of operators and literals
   jsonpath.json      jsonPath forms beyond a key, [n] and [?(@.k == 'v')]
   target.json        a failed PIP, an absent attribute, and subject.permissionScope outside iterate in each target
+  iterate-pass.json  how the filter writes an iterate pass that gives two groups
 
 A condition whose id ends in -alone is the comparison by itself; one ending in -or stands on the left of
 OR resource.a == 'y', so that true tells a false comparison from a rule the comparison ended.
@@ -413,7 +414,57 @@ for effect, alg in [("DENY", "PERMIT_UNLESS_DENY"), ("ALLOW", "DENY_UNLESS_PERMI
                         "The control: the target holds, so check/resource is false under DENY and true under ALLOW."
                         if trouble == "readable" else None)
 
+
+def iterate_pass():
+    """iterate-pass.json, which was first written in Go and keeps its regular resource types and requests."""
+    scope_route = "/api/v1/permission-scope/user/" + READER["id"] + "/policies"
+
+    def scope_body(*regions):
+        return {"statusCode": 200, "body": {"permissionScope": [{
+            "id": READER["id"], "isInherited": False, "name": "parity-reader", "type": "USER",
+            "policies": [{"scopeItems": [{"key": "region", "values": [{"id": r}]}]} for r in regions]}]}}
+
+    cases = []
+    for shape, regions in (("one-grant-r1", ("r1",)), ("two-grants-r1-and-r2", ("r1", "r2"))):
+        scoped = {"key": "scoped", "target": READER_TARGET, "algorithm": "DENY_UNLESS_PERMIT", "rules": [{
+            "key": "scoped-region-granted",
+            "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+            "condition": "subject.permissionScope.region CONTAINS resource.region", "effect": "ALLOW",
+            "predicates": {"rsqlPredicate": "region=in=(${subject.permissionScope.region})"}}]}
+        kinded = {"key": "kinded", "target": READER_TARGET, "algorithm": "DENY_UNLESS_PERMIT", "rules": [{
+            "key": "kinded-list", "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+            "condition": "true", "effect": "ALLOW", "predicates": {"rsqlPredicate": "kind==1"}}]}
+        predicate = {"key": "with-a-predicate", "target": READER_TARGET, "algorithm": "DENY_UNLESS_PERMIT",
+                     "rules": [{"key": "list-with-a-predicate", "target": "operation == 'LIST'", "condition": "true",
+                                "effect": "ALLOW", "predicates": {"rsqlPredicate": "allowed==1"}}]}
+        nested = {"key": "nested", "target": "true", "algorithm": "DENY_OVERRIDES",
+                  "iterate": {"foreach": "subject.permissionScope", "algorithm": "DENY_OVERRIDES"},
+                  "policies": [scoped, kinded]}
+        outer = {"key": "outer", "target": "resourceType == '{{resourceType}}'", "algorithm": "DENY_OVERRIDES",
+                 "policies": [predicate], "sets": [nested]}
+        cases.append({
+            "id": "r14-pass-with-two-predicates-" + shape, "pins": {scope_route: scope_body(*regions)},
+            "pips": ["scope"], "sets": [outer],
+            "requests": [{"name": "filter", "filter": True, "pauseMs": 2000}] + [
+                {"name": "check-list-in-region-" + r, "operation": "LIST", "resource": {"id": "r13-iterate", "region": r}}
+                for r in ("r1", "r2")]})
+    doc = {"about": "How the filter writes an iterate pass that gives two groups: the nested iterating set of round 13 "
+                    "whose pass holds two scoped policies with predicates, beside the allowed==1 policy. Round 13 "
+                    "showed that the groups of two passes stand as one parenthesised group of the parent; here each "
+                    "pass gives two groups of its own. Each case pins the scope service to its own answer, one grant "
+                    "of r1 or two grants of r1 and r2 (no grant gives no pass and so no group), and waits out the "
+                    "scope's cachePeriod before its first request, as permission-scope-wire does. Each sends the "
+                    "filter on LIST and check/resource on LIST in regions r1 and r2. The cases live in their own test "
+                    "function so that a recording run can be filtered to them and leave every golden already "
+                    "committed alone. Legacy profile only.",
+           "resourceTypePrefix": "PARITY_SUITE_REG_", "pins": {}, "pips": {"scope": PIPS["scope"]}, "cases": cases}
+    with open(os.path.join(HERE, "iterate-pass.json"), "w") as f:
+        json.dump(doc, f, indent=1, ensure_ascii=False)
+        f.write("\n")
+
+
 if __name__ == "__main__":
+    iterate_pass()
     groups = [ok, rs, vm, gr, jp, tg]
     unmatched = DUPLICATES - {i for g in groups for i in g.dropped}
     assert not unmatched, f"duplicates.tsv names cases no group adds: {sorted(unmatched)}"

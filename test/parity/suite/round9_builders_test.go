@@ -54,12 +54,6 @@ func round9PolicyCase(id, policyAlgorithm string, rules func(b regularBuilder) [
 	})
 }
 
-// round9PredicatePolicy is a DENY_UNLESS_PERMIT policy whose one rule allows LIST
-// with the predicate allowed==1.
-func round9PredicatePolicy(b regularBuilder) map[string]any {
-	return b.policy("with-a-predicate", readerTarget, "DENY_UNLESS_PERMIT", allowWithPredicate(b, "list-with-a-predicate", "allowed==1"))
-}
-
 // allowWithPredicate is an ALLOW rule on LIST whose predicate is rsql.
 func allowWithPredicate(b regularBuilder, key, rsql string) map[string]any {
 	return b.rule(key, "operation == 'LIST'", "true", "ALLOW", map[string]string{"rsqlPredicate": rsql})
