@@ -218,27 +218,3 @@ func interpreterFilterCases() []regularCase {
 
 	return cases
 }
-
-// What a simplified policy with operation ALL does with a condition and with a
-// predicate. x30-policy-operation-all records that ALL matches READ and DELETE for
-// a policy with neither. oa1 pairs a condition with ALL: true for a = y and false
-// for a = n on both operations means the condition is evaluated, true for all four
-// means ALL drops it, and a refused upload means the form is outside the language.
-// oa2 pairs a predicate with ALL and asks two filter operations for it.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone.
-func (s *ParitySuite) TestInterpreterOperationAllCases() {
-	s.runIsolatedCases([]isolatedCase{
-		{id: "oa1-operation-all-with-a-condition", resourceType: "PARITY_SUITE_ALL_OA1", operation: "ALL", condition: "resource.a == 'y'", requests: []isolatedRequest{
-			{name: "read-condition-true", operation: "READ", resource: map[string]any{"id": "all-oa1", "a": "y"}},
-			{name: "read-condition-false", operation: "READ", resource: map[string]any{"id": "all-oa1", "a": "n"}},
-			{name: "delete-condition-true", operation: "DELETE", resource: map[string]any{"id": "all-oa1", "a": "y"}},
-			{name: "delete-condition-false", operation: "DELETE", resource: map[string]any{"id": "all-oa1", "a": "n"}},
-		}},
-		{id: "oa2-operation-all-with-a-predicate", resourceType: "PARITY_SUITE_ALL_OA2", operation: "ALL", rsql: "all==1", requests: []isolatedRequest{
-			{name: "filter-list", operation: "LIST", filter: true},
-			{name: "filter-read", operation: "READ", filter: true},
-		}},
-	})
-}

@@ -1,0 +1,2179 @@
+{
+ "about": "What a policy contributes to its set when it has no rule that applies, and what a nested set contributes to its parent in the same state. The recorded algorithm-* cases give the set and its one policy the same algorithm and see only the set's answer, so they do not separate a policy that answers deny from a policy that is not applicable: under DENY_UNLESS_PERMIT both read as false, and under PERMIT_UNLESS_DENY both read as true. The two outcomes differ once the set combines the policy with a neighbor, and an evaluator of regular sets has to pick one. Each case gives the set an algorithm that reacts to the difference and sends the operation the policy has no rule for, and also sends an operation a live rule decides, so a set that was never consulted is told from a set that answered. The algorithms are the four the PAP loads (load-policy-sets-v1/regular/algorithm-*). Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "policy-without-a-rule-under-deny-overrides",
+   "about": "Two DENY_UNLESS_PERMIT policies under DENY_OVERRIDES, each allowing one operation. READ reaches an ALLOW in the second policy and no rule in the first: false means the first policy answered deny and the set let it override; true means the first policy was not applicable. PROBE has an ALLOW in both policies and is the control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "creates",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "create-allow",
+         "target": "operation == 'CREATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-first",
+         "target": "operation == 'PROBE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "reads",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-second",
+         "target": "operation == 'PROBE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allowed-by-one-policy-without-a-rule-in-the-other",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-do"
+     }
+    },
+    {
+     "name": "probe-allowed-by-both-policies",
+     "operation": "PROBE",
+     "resource": {
+      "id": "reg-mixed-do"
+     }
+    }
+   ]
+  },
+  {
+   "id": "policy-without-a-rule-under-its-own-deny-overrides",
+   "about": "The same two policies and requests, with the first policy under DENY_OVERRIDES of its own. The algorithm-* cases record a policy with no rule under its own DENY_OVERRIDES only as the lone policy of a DENY_OVERRIDES set, where a denial and inapplicability both read false; beside a policy that allows READ the two read apart.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "creates",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "create-allow",
+         "target": "operation == 'CREATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-first",
+         "target": "operation == 'PROBE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "reads",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-second",
+         "target": "operation == 'PROBE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allowed-by-one-policy-without-a-rule-in-the-other",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-do-own"
+     }
+    },
+    {
+     "name": "probe-allowed-by-both-policies",
+     "operation": "PROBE",
+     "resource": {
+      "id": "reg-mixed-do-own"
+     }
+    }
+   ]
+  },
+  {
+   "id": "policy-without-a-rule-under-permit-unless-deny",
+   "about": "One DENY_UNLESS_PERMIT policy under PERMIT_UNLESS_DENY. READ reaches no rule: false means the policy's default deny counts as a denial; true means the policy was not applicable and the set permitted by default. CREATE reaches the ALLOW and DELETE the DENY; both are controls.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "creates",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "create-allow",
+         "target": "operation == 'CREATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-pud"
+     }
+    },
+    {
+     "name": "create-allowed",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-pud"
+     }
+    },
+    {
+     "name": "delete-denied",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-pud"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-deny-unless-permit-in-permit-unless-deny",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-permit-unless-deny-in-permit-unless-deny",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-deny-overrides-in-permit-unless-deny",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_OVERRIDES",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-permit-overrides-in-permit-unless-deny",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-deny-unless-permit-in-deny-overrides",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "outer-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "outer-read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-permit-unless-deny-in-deny-overrides",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "outer-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "outer-read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-deny-overrides-in-deny-overrides",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "outer-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "outer-read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_OVERRIDES",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nested-no-rule-permit-overrides-in-deny-overrides",
+   "about": "The same question one level up: a nested set whose only policy has no rule for READ, under each accepted inner algorithm and under the two outer algorithms that react to the difference. Under PERMIT_UNLESS_DENY the outer set holds nothing else, so READ is true when the inner set is not applicable and false when it contributes its default denial. Under DENY_OVERRIDES the outer set holds a policy that allows READ, so READ is true when the inner set contributes no denial. An inner PERMIT_UNLESS_DENY permits READ by default and is the column where both readings answer true; it is the control for the other three. nested-outer-deny-inner-allow-* records the outer PERMIT_OVERRIDES and DENY_UNLESS_PERMIT, where a not-applicable child and a denying child read the same.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "outer-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "outer-read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "policies": [
+        {
+         "key": "inner-reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "inner-create-allow",
+           "target": "operation == 'CREATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-without-a-rule-in-the-inner-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    },
+    {
+     "name": "create-allowed-by-the-inner-set",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-nested"
+     }
+    }
+   ]
+  },
+  {
+   "id": "policy-with-a-false-target-under-permit-unless-deny",
+   "about": "A policy whose target is false, holding a DENY that would apply, under PERMIT_UNLESS_DENY. True means the target keeps the policy out of the combination; false means the policy was combined and its denial counted. The control policy is PERMIT_UNLESS_DENY itself, so that it never contributes a default denial of its own to READ, and its DELETE denial shows the set is evaluated. deny-policy-target-does-not-match asks the same under DENY_OVERRIDES, where a not-applicable policy and a permitting one read the same.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "nobody",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      },
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-denied-only-under-the-false-target",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-target"
+     }
+    },
+    {
+     "name": "delete-denied-under-the-true-target",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-target"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-deny-unless-permit-policy-permit-unless-deny",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-deny-unless-permit-policy-deny-overrides",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-deny-unless-permit-policy-permit-overrides",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-permit-unless-deny-policy-deny-unless-permit",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-permit-unless-deny-policy-deny-overrides",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-permit-unless-deny-policy-permit-overrides",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-deny-overrides-policy-deny-unless-permit",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-deny-overrides-policy-permit-unless-deny",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-deny-overrides-policy-permit-overrides",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-permit-overrides-policy-deny-unless-permit",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-permit-overrides-policy-permit-unless-deny",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-permit-overrides-policy-deny-overrides",
+   "about": "One of the twelve pairs of distinct accepted algorithms, one on the set and one on its policy, over the rules and the six requests of the algorithm-* cases, which record the diagonal of the table.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-deny",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "approve-allow-missing-attribute",
+         "target": "operation == 'APPROVE'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "approve-allow",
+         "target": "operation == 'APPROVE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "reject-deny-missing-attribute",
+         "target": "operation == 'REJECT'",
+         "condition": "resource.x == 'v'",
+         "effect": "DENY"
+        },
+        {
+         "key": "reject-allow",
+         "target": "operation == 'REJECT'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-allow-then-deny",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "update-deny-then-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "delete-deny-alone",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "create-no-rule",
+     "operation": "CREATE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "approve-failed-allow-beside-allow",
+     "operation": "APPROVE",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    },
+    {
+     "name": "reject-failed-deny-beside-allow",
+     "operation": "REJECT",
+     "resource": {
+      "id": "reg-mixed-alg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "permit-overrides-over-a-default-permit-and-a-deny",
+   "about": "PERMIT_OVERRIDES over a policy that permits by default beside a policy that denies. On the recorded requests PERMIT_OVERRIDES and DENY_UNLESS_PERMIT answer alike; here the permit comes from a deny list that did not fire rather than from an ALLOW rule, and DELETE, denied by the same deny list, is the control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "deny-list",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "delete-deny",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      },
+      {
+       "key": "denies-read",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-permitted-by-default-and-denied-by-a-rule",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-mixed-po"
+     }
+    },
+    {
+     "name": "delete-denied-by-both-policies",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-mixed-po"
+     }
+    }
+   ]
+  }
+ ]
+}
