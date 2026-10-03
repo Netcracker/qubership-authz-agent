@@ -1,0 +1,318 @@
+{
+ "about": "A rule whose condition reads a GENERAL PIP that failed, beside a rule of the same policy that allows. approve-failed-allow-beside-allow records this shape with a missing resource key and answers true under all four algorithms: an unresolvable value makes one rule inapplicable and leaves its neighbor alone. A failed PIP is the other way an operand fails to resolve, and whether the two are the same event decides whether an evaluator can drop the abort altogether. The cases run under PERMIT_UNLESS_DENY and DENY_OVERRIDES, the two algorithms under which a permit is not terminal, so every rule of the policy is evaluated whatever order the stand takes them in. Under DENY_UNLESS_PERMIT and PERMIT_OVERRIDES the first permitting rule ends the policy, the rule reading the failed PIP is evaluated only when the stand orders it first, and five recording runs on fresh stands answered the same request both ways, so those two algorithms have no answer to record. READ is an ALLOW reading the PIP answering 500 beside an ALLOW, UPDATE the same with 404, DELETE a DENY reading the 500 beside an ALLOW, and PROBE the rule reading the live PIP alone: the control that the declarations and pip-mock work, so a case where every answer is false is not explained by pip-mock being unreachable or the declarations being dropped. Each case reads PIPs of its own, named and routed after its algorithm, and fails unless pip-mock received a call on each of its three routes, so a PIP answer that outlived the case that fetched it could not be mistaken for a fresh one; TestRound7PIPCacheCases rules that out for cacheable false. Every case declares all six PIPs, because an upload of the domain replaces its declarations while the sets of the earlier case are still loaded, and a loaded set that reads a PIP the domain no longer declares makes access-control refuse every check with 400.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {
+  "/api/v1/pip/translator-broken-permit-unless-deny": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity failed-pip case"
+   }
+  },
+  "/api/v1/pip/translator-gone-permit-unless-deny": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity failed-pip case"
+   }
+  },
+  "/api/v1/pip/translator-live-permit-unless-deny": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/translator-broken-deny-overrides": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity failed-pip case"
+   }
+  },
+  "/api/v1/pip/translator-gone-deny-overrides": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity failed-pip case"
+   }
+  },
+  "/api/v1/pip/translator-live-deny-overrides": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  }
+ },
+ "pips": {
+  "broken-permit-unless-deny": {
+   "name": "subject.parityTranslatorBrokenPermitUnlessDeny",
+   "url": "http://pip-mock:8090/api/v1/pip/translator-broken-permit-unless-deny",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_FAILED_PIP_BESIDE_ALLOW_PERMIT_UNLESS_DENY"
+   },
+   "cacheable": false
+  },
+  "gone-permit-unless-deny": {
+   "name": "subject.parityTranslatorGonePermitUnlessDeny",
+   "url": "http://pip-mock:8090/api/v1/pip/translator-gone-permit-unless-deny",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_FAILED_PIP_BESIDE_ALLOW_PERMIT_UNLESS_DENY"
+   },
+   "cacheable": false
+  },
+  "live-permit-unless-deny": {
+   "name": "subject.parityTranslatorLivePermitUnlessDeny",
+   "url": "http://pip-mock:8090/api/v1/pip/translator-live-permit-unless-deny",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_FAILED_PIP_BESIDE_ALLOW_PERMIT_UNLESS_DENY"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "broken-deny-overrides": {
+   "name": "subject.parityTranslatorBrokenDenyOverrides",
+   "url": "http://pip-mock:8090/api/v1/pip/translator-broken-deny-overrides",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_FAILED_PIP_BESIDE_ALLOW_DENY_OVERRIDES"
+   },
+   "cacheable": false
+  },
+  "gone-deny-overrides": {
+   "name": "subject.parityTranslatorGoneDenyOverrides",
+   "url": "http://pip-mock:8090/api/v1/pip/translator-gone-deny-overrides",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_FAILED_PIP_BESIDE_ALLOW_DENY_OVERRIDES"
+   },
+   "cacheable": false
+  },
+  "live-deny-overrides": {
+   "name": "subject.parityTranslatorLiveDenyOverrides",
+   "url": "http://pip-mock:8090/api/v1/pip/translator-live-deny-overrides",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_FAILED_PIP_BESIDE_ALLOW_DENY_OVERRIDES"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  }
+ },
+ "cases": [
+  {
+   "id": "failed-pip-beside-allow-permit-unless-deny",
+   "pips": [
+    "broken-permit-unless-deny",
+    "gone-permit-unless-deny",
+    "live-permit-unless-deny",
+    "broken-deny-overrides",
+    "gone-deny-overrides",
+    "live-deny-overrides"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/translator-broken-permit-unless-deny",
+    "/api/v1/pip/translator-gone-permit-unless-deny",
+    "/api/v1/pip/translator-live-permit-unless-deny"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-allow-reads-the-broken-pip",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityTranslatorBrokenPermitUnlessDeny != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow-reads-the-gone-pip",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.parityTranslatorGonePermitUnlessDeny != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny-reads-the-broken-pip",
+         "target": "operation == 'DELETE'",
+         "condition": "subject.parityTranslatorBrokenPermitUnlessDeny != 'x'",
+         "effect": "DENY"
+        },
+        {
+         "key": "delete-allow",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-reads-the-live-pip",
+         "target": "operation == 'PROBE'",
+         "condition": "subject.parityTranslatorLivePermitUnlessDeny == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "failed-allow-beside-allow",
+     "operation": "READ",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    },
+    {
+     "name": "missing-allow-beside-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    },
+    {
+     "name": "failed-deny-beside-allow",
+     "operation": "DELETE",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    },
+    {
+     "name": "live-pip-alone",
+     "operation": "PROBE",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    }
+   ]
+  },
+  {
+   "id": "failed-pip-beside-allow-deny-overrides",
+   "pips": [
+    "broken-permit-unless-deny",
+    "gone-permit-unless-deny",
+    "live-permit-unless-deny",
+    "broken-deny-overrides",
+    "gone-deny-overrides",
+    "live-deny-overrides"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/translator-broken-deny-overrides",
+    "/api/v1/pip/translator-gone-deny-overrides",
+    "/api/v1/pip/translator-live-deny-overrides"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow-reads-the-broken-pip",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityTranslatorBrokenDenyOverrides != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow-reads-the-gone-pip",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.parityTranslatorGoneDenyOverrides != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny-reads-the-broken-pip",
+         "target": "operation == 'DELETE'",
+         "condition": "subject.parityTranslatorBrokenDenyOverrides != 'x'",
+         "effect": "DENY"
+        },
+        {
+         "key": "delete-allow",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-reads-the-live-pip",
+         "target": "operation == 'PROBE'",
+         "condition": "subject.parityTranslatorLiveDenyOverrides == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "failed-allow-beside-allow",
+     "operation": "READ",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    },
+    {
+     "name": "missing-allow-beside-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    },
+    {
+     "name": "failed-deny-beside-allow",
+     "operation": "DELETE",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    },
+    {
+     "name": "live-pip-alone",
+     "operation": "PROBE",
+     "resource": {
+      "id": "tr-failed-pip"
+     }
+    }
+   ]
+  }
+ ]
+}

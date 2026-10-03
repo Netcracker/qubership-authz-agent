@@ -14,7 +14,50 @@
 
 package paritysuite
 
-import "testing"
+import (
+	"errors"
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+// A case written before its golden was captured has to be told apart from a
+// case whose golden exists and disagrees: the first skips, the second fails.
+func TestCompare_MissingGoldenIsReportedAsNotRecorded(t *testing.T) {
+	t.Parallel()
+	gc := &GoldenComparator{goldenRoot: t.TempDir()}
+	decision := true
+
+	err := gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "never-recorded", &decision)
+
+	if !errors.Is(err, ErrGoldenNotRecorded) {
+		t.Fatalf("Compare with no golden file: want ErrGoldenNotRecorded, got %v", err)
+	}
+}
+
+func TestCompare_MismatchingGoldenIsNotReportedAsNotRecorded(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	dir := filepath.Join(root, "check-resource-v1")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "recorded-false.json"), []byte("false\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gc := &GoldenComparator{goldenRoot: root}
+	decision := true
+
+	err := gc.Compare(PSUITE_ROW_2_CHECK_RESOURCE_V1, "recorded-false", &decision)
+
+	var mismatch *GoldenMismatchError
+	if !errors.As(err, &mismatch) {
+		t.Fatalf("Compare(true) against golden false: want *GoldenMismatchError, got %v", err)
+	}
+	if errors.Is(err, ErrGoldenNotRecorded) {
+		t.Fatalf("Compare(true) against golden false must not report ErrGoldenNotRecorded: %v", err)
+	}
+}
 
 // TestNormalizeRsqlInElements_SortsInClauseBothDirections pins the
 // D-AF-AA (2026-04-19) comparator-allowlist contract: for RSQL `in`

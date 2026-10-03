@@ -1,0 +1,313 @@
+{
+ "about": "A set whose own policy reads the GENERAL PIP subject.parityR33Fail, whose route answers 500, beside a nested set with one unconditional ALLOW rule. The round 32 marker table read the own policy of s0n1 on every stand and its nested sets in an order that changed from stand to stand. Each check is classed by the PIP's route (classifyBy): if a set evaluates its own policies first, every stand reads the PIP, and the failed read answers false; if the nested set may come first, a stand that skips the PIP answers true. Please record this file on several fresh stands.",
+ "resourceTypePrefix": "PARITY_SUITE_R33O_",
+ "pins": {
+  "/api/v1/pip/r33open-fail": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 33 case"
+   }
+  }
+ },
+ "pips": {
+  "fail": {
+   "name": "subject.parityR33Fail",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r33open-fail",
+   "requestAttributes": {
+    "case": "r33open-fail"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r33open-own-policies-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33open-own-policy-fails-beside-an-allowing-set",
+   "about": "The set, DENY_UNLESS_PERMIT, holds the failing policy and the nested set that allows. False on every stand if the own policy comes first; true on a stand that reaches the nested set's ALLOW first and skips the PIP.",
+   "pips": [
+    "fail"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fail",
+         "target": "true",
+         "condition": "subject.parityR33Fail CONTAINS 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "n1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     },
+     "classifyBy": "/api/v1/pip/r33open-fail"
+    }
+   ]
+  },
+  {
+   "id": "r33open-own-policy-fails-beside-an-allowing-set-permit-overrides",
+   "about": "As r33open-own-policy-fails-beside-an-allowing-set, with the set PERMIT_OVERRIDES.",
+   "pips": [
+    "fail"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fail",
+         "target": "true",
+         "condition": "subject.parityR33Fail CONTAINS 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "n1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     },
+     "classifyBy": "/api/v1/pip/r33open-fail"
+    }
+   ]
+  },
+  {
+   "id": "r33open-own-policy-allows-beside-a-failing-set",
+   "about": "The mirror: the set's own policy allows unconditionally and the nested set's policy reads the failing PIP. If the own policy comes first, no stand reads the PIP and every check is true; a stand that reads it answers false.",
+   "pips": [
+    "fail"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "n1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "fail",
+           "target": "true",
+           "condition": "subject.parityR33Fail CONTAINS 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     },
+     "classifyBy": "/api/v1/pip/r33open-fail"
+    }
+   ]
+  },
+  {
+   "id": "r33open-own-policy-fails-alone",
+   "about": "Control: the failing policy alone in its set, no nested set. False: the failed PIP fails the decision.",
+   "pips": [
+    "fail"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fail",
+         "target": "true",
+         "condition": "subject.parityR33Fail CONTAINS 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33open-own-policies-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

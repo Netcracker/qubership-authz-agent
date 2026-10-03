@@ -25,9 +25,7 @@ import (
 )
 
 // Row 11 — validation of missing `operation` field on POST /access/v1/check/resource.
-// The legacy server runs CheckRequestValidator.validateInputParameters
-// (CheckRequestValidator.java:31-44) which rejects an empty operation with
-// HTTP 400. Per D-V item 12 + the Go pivot, this path reaches the server
+// The legacy server rejects an empty operation with HTTP 400. Per D-V item 12 + the Go pivot, this path reaches the server
 // because the Go helper has no client-side pre-validator short-circuit.
 // Asserted via status code + body substring — no golden.
 func (s *ParitySuite) TestRow11ValidationMissingOperation() {

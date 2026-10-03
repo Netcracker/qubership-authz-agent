@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_R28RSQL_DO_JOIN_A_GE_5_OR_B_LE_2.a.goe(5)).or(PARITY_SUITE_R28RSQL_DO_JOIN_A_GE_5_OR_B_LE_2.b.loe(2))).not()",
+    "mongodbFilterCondition": "{ { \"$and\": [ { \"a\": { \"$lt\": 5 } }, { \"b\": { \"$gtee\": 2 } } ] } }",
+    "rsqlFilterCondition": "a=lt=5;b=gt=2",
+    "sqlFilterCondition": "NOT (a\u003e=5 OR b\u003c=2)",
+    "customFilterCondition": null
+  }
+}

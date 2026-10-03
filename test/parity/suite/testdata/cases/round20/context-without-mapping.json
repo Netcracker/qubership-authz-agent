@@ -1,0 +1,220 @@
+{
+ "about": "Operand kinds and states in places, effects, algorithms, positions, and iterate passes that no golden combined. Each case's about lists the pairs it reaches as dimension=value: op the operator; lk and rk the kind of the left and the right operand; ls and rs the state or value shape of each; place where the comparison stands; eff the effect of its rule; alg the combining algorithm that combines its outcome; pos its position in OR and AND; iter whether it is in an iterate pass with one grant or several; ep the endpoint; out the comparison's outcome (T, F, ABORT for an ended rule, ERR for a failed decision, 400).",
+ "resourceTypePrefix": "PARITY_SUITE_R20C_",
+ "pins": {
+  "/api/v1/pip/c20-021477-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-015979-r": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-035604-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-001556-l": {
+   "statusCode": 200,
+   "body": [
+    5
+   ]
+  },
+  "/api/v1/pip/c20-001925-l": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-003399-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-003399-r": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/c20-019475-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-019867-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-030476-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-001075-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-001318-l": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-001553-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-001559-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-001860-r": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/c20-001908-r": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  },
+  "/api/v1/pip/c20-001918-r": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/c20-002968-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-003435-r": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/c20-003855-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-004863-r": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/c20-005184-r": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    5
+   ]
+  },
+  "/api/v1/pip/c20-007785-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-010070-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-010565-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-010565-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/c20-012596-r": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/c20-014201-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-019707-l": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  }
+ },
+ "pips": {},
+ "cases": [
+  {
+   "id": "c20-000493",
+   "pips": [],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resource.o.x NOT CONTAINS ANY subject.permissions",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        true
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        true
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=res:nested, rs=ABSENT; ls=list[bool], rk=subj.permissions"
+  }
+ ]
+}

@@ -1,0 +1,116 @@
+{
+ "about": "Whether !=, NOT IN, NOT CONTAINS and > over an absent resource key end the rule or are false. Each is recorded alone (s2b, s3, s4, s5), where a false operand and an ended rule both answer false; on the left of an OR the absent key is recorded for ==, IS NOT NULL, IS EMPTY, IS NOT EMPTY, NOT MATCH, NOT CONTAINS ANY and IS NOT SUBSET only (s10, s12a, nn1-nn5). Each operator goes through a probe and its control against a resource without x and with a = y: a true probe means the operand is false and OR went on, a false one means the operand ended the rule. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ak-not-equals",
+   "condition": "resource.x != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-not-equals-control",
+   "resourceType": "PARITY_SUITE_R11_AK_NOT_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR resource.x != 'v'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-not-in",
+   "condition": "resource.x NOT IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-not-in-control",
+   "resourceType": "PARITY_SUITE_R11_AK_NOT_IN_CTL",
+   "condition": "resource.a == 'y' OR resource.x NOT IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-not-contains",
+   "condition": "resource.x NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-not-contains-control",
+   "resourceType": "PARITY_SUITE_R11_AK_NOT_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR resource.x NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-greater-than",
+   "condition": "resource.x > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ak-greater-than-control",
+   "resourceType": "PARITY_SUITE_R11_AK_GREATER_THAN_CTL",
+   "condition": "resource.a == 'y' OR resource.x > 5",
+   "requests": [
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r11-absent",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,483 @@
+{
+ "about": "Whether the PAP accepts a set whose target reads an attribute of the resource, and what such a target does on a request that carries the attribute, one that carries another value, one that carries no such attribute, and on a filter request, which carries no resource at all. missing-attribute-in-set-target records that a set target of the form resourceType == 'T' AND resource.x == 'v' is refused at upload, while the regular policy sets of products put resourceType == 'T' AND resource.service == '...' on the set. So either the PAP accepts some resource attributes on a set target and refuses others, or the refusal recorded had another cause; the two policies of that fixture share one policyId, and TestRound7SetTargetRefusalCases records that shape on its own. Each set-target-reads-* case uploads one set with one attribute in its target and records the upload status: resource.service, the attribute product sets read; resource.uri under MATCH and resource.id, the attributes product rules read; resource.x, the control that repeats the recorded refusal; and resource.service with no resourceType beside it, the boundary of what a set target has to name. Every target compares with this file's own service, parity-st-svc, so a set whose target names no resource type applies to no request of another case. Under an accepted set, one policy allows READ and LIST without a condition, so a request the set target admits is true and a request it does not is false, and the filter carries the LIST rule's predicate when the set target lets a request with no resource through. A second set on the same resource type allows READ when resource.s is 'y', the sibling missing-attribute-in-set-target pairs with the reading set: attribute-absent-beside-the-sibling carries s and not the attribute the first set reads, so true means the first set was not applicable and false means it ended the decision the way a missing attribute ends a rule (s10-absent-or-true). attribute-absent, with no sibling to fall back on, and the filter request, where the resource is always absent, record the same target on its own. Legacy profile only; the set with no resourceType is emptied when the test ends.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "set-target-reads-service",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND resource.service == 'parity-st-svc'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "st==1"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "sibling",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "sibling-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-when-s",
+         "target": "operation == 'READ'",
+         "condition": "resource.s == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "attribute-equal",
+     "resource": {
+      "id": "reg-st",
+      "service": "parity-st-svc"
+     }
+    },
+    {
+     "name": "attribute-other",
+     "resource": {
+      "id": "reg-st",
+      "service": "parity-other-svc"
+     }
+    },
+    {
+     "name": "attribute-absent",
+     "resource": {
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "attribute-absent-beside-the-sibling",
+     "resource": {
+      "s": "y",
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "set-target-reads-uri-with-match",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND resource.uri MATCH /parity-st/**",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "st==1"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "sibling",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "sibling-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-when-s",
+         "target": "operation == 'READ'",
+         "condition": "resource.s == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "attribute-equal",
+     "resource": {
+      "id": "reg-st",
+      "uri": "/parity-st/items/1"
+     }
+    },
+    {
+     "name": "attribute-other",
+     "resource": {
+      "id": "reg-st",
+      "uri": "/parity-other/items/1"
+     }
+    },
+    {
+     "name": "attribute-absent",
+     "resource": {
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "attribute-absent-beside-the-sibling",
+     "resource": {
+      "s": "y",
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "set-target-reads-id",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND resource.id == 'reg-st-id'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "st==1"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "sibling",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "sibling-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-when-s",
+         "target": "operation == 'READ'",
+         "condition": "resource.s == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "attribute-equal",
+     "resource": {
+      "id": "reg-st-id"
+     }
+    },
+    {
+     "name": "attribute-other",
+     "resource": {
+      "id": "reg-st-other"
+     }
+    },
+    {
+     "name": "attribute-absent",
+     "resource": {
+      "a": "y"
+     }
+    },
+    {
+     "name": "attribute-absent-beside-the-sibling",
+     "resource": {
+      "s": "y",
+      "a": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "set-target-reads-unknown-attribute",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND resource.x == 'v'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "st==1"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "sibling",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "sibling-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-when-s",
+         "target": "operation == 'READ'",
+         "condition": "resource.s == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "attribute-equal",
+     "resource": {
+      "id": "reg-st",
+      "x": "v"
+     }
+    },
+    {
+     "name": "attribute-other",
+     "resource": {
+      "id": "reg-st",
+      "x": "w"
+     }
+    },
+    {
+     "name": "attribute-absent",
+     "resource": {
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "attribute-absent-beside-the-sibling",
+     "resource": {
+      "s": "y",
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "set-target-reads-service-without-resource-type",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resource.service == 'parity-st-svc'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "st==1"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "sibling",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "sibling-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-when-s",
+         "target": "operation == 'READ'",
+         "condition": "resource.s == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "attribute-equal",
+     "resource": {
+      "id": "reg-st",
+      "service": "parity-st-svc"
+     }
+    },
+    {
+     "name": "attribute-other",
+     "resource": {
+      "id": "reg-st",
+      "service": "parity-other-svc"
+     }
+    },
+    {
+     "name": "attribute-absent",
+     "resource": {
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "attribute-absent-beside-the-sibling",
+     "resource": {
+      "s": "y",
+      "id": "reg-st"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "set-target-resource-type-in-lower-case",
+   "about": "A set target that spells the resource type in lower case, against a request in upper case. x28-policy-resource-type-lowercase records that a simplified policy's resource type matches a request whatever the case; the set target is a condition, and the recorded conditions compare case insensitively (c5-string-equals-other-case) but the resourceType operand of a set target is not among them. the-request-in-the-same-case is the control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceTypeLowerCase}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "the-request-in-upper-case",
+     "type": "PARITY_SUITE_REG_SET_TARGET_RESOURCE_TYPE_IN_LOWER_CASE",
+     "resource": {
+      "id": "reg-st-case"
+     }
+    },
+    {
+     "name": "the-request-in-the-same-case",
+     "type": "parity_suite_reg_set_target_resource_type_in_lower_case",
+     "resource": {
+      "id": "reg-st-case"
+     }
+    }
+   ]
+  }
+ ]
+}

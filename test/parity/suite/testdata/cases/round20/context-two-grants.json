@@ -1,0 +1,8776 @@
+{
+ "about": "Operand kinds and states in places, effects, algorithms, positions, and iterate passes that no golden combined. Each case's about lists the pairs it reaches as dimension=value: op the operator; lk and rk the kind of the left and the right operand; ls and rs the state or value shape of each; place where the comparison stands; eff the effect of its rule; alg the combining algorithm that combines its outcome; pos its position in OR and AND; iter whether it is in an iterate pass with one grant or several; ep the endpoint; out the comparison's outcome (T, F, ABORT for an ended rule, ERR for a failed decision, 400).",
+ "resourceTypePrefix": "PARITY_SUITE_R20C_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         },
+         {
+          "key": "tag",
+          "values": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/c20-004788-l": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/c20-019495-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-012738-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/c20-045267-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-000282-r": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  },
+  "/api/v1/pip/c20-000331-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-002048-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-004347-r": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-005637-r": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/c20-008378-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-009838-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-012735-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-015240-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-001122-l": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/c20-001179-l": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-001197-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-001197-r": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  },
+  "/api/v1/pip/c20-001359-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/c20-001684-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-002055-l": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-002963-r": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/c20-004435-r": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/c20-005203-l": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/c20-006023-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-006534-r": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/c20-007452-r": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/c20-008383-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-009587-l": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-012680-r": {
+   "statusCode": 200,
+   "body": "v"
+  },
+  "/api/v1/pip/c20-013097-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-013534-r": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-018255-r": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c20-017194-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-023497-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-006227-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  },
+  "c20-019270-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-004788-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004788-l",
+   "requestAttributes": {
+    "case": "c20-004788-l"
+   }
+  },
+  "c20-035552-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-019495-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-019495-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-019495-r",
+   "requestAttributes": {
+    "case": "c20-019495-r"
+   }
+  },
+  "c20-004984-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-012738-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-012738-r",
+   "requestAttributes": {
+    "case": "c20-012738-r"
+   }
+  },
+  "c20-045267-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-045267-l",
+   "requestAttributes": {
+    "case": "c20-045267-l"
+   }
+  },
+  "c20-000004-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-000282-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-000282-r",
+   "requestAttributes": {
+    "case": "c20-000282-r"
+   }
+  },
+  "c20-000331-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-000331-l",
+   "requestAttributes": {
+    "case": "c20-000331-l"
+   }
+  },
+  "c20-002048-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-002048-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002048-r",
+   "requestAttributes": {
+    "case": "c20-002048-r"
+   }
+  },
+  "c20-002138-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "c20-002918-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-004347-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004347-r",
+   "requestAttributes": {
+    "case": "c20-004347-r"
+   }
+  },
+  "c20-005637-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-005637-r",
+   "requestAttributes": {
+    "case": "c20-005637-r"
+   }
+  },
+  "c20-007975-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-008378-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-008378-l",
+   "requestAttributes": {
+    "case": "c20-008378-l"
+   }
+  },
+  "c20-009838-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-009838-l",
+   "requestAttributes": {
+    "case": "c20-009838-l"
+   }
+  },
+  "c20-010511-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-012735-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-012735-r",
+   "requestAttributes": {
+    "case": "c20-012735-r"
+   }
+  },
+  "c20-015240-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-015240-l",
+   "requestAttributes": {
+    "case": "c20-015240-l"
+   }
+  },
+  "c20-000033-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  },
+  "c20-000078-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-000148-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-000513-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "c20-000567-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000567-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-000717-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-001042-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "c20-001065-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-001089-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-001120-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-001122-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001122-l",
+   "requestAttributes": {
+    "case": "c20-001122-l"
+   }
+  },
+  "c20-001122-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-001179-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001179-l",
+   "requestAttributes": {
+    "case": "c20-001179-l"
+   }
+  },
+  "c20-001197-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001197-l",
+   "requestAttributes": {
+    "case": "c20-001197-l"
+   }
+  },
+  "c20-001197-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001197-r",
+   "requestAttributes": {
+    "case": "c20-001197-r"
+   }
+  },
+  "c20-001359-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001359-r",
+   "requestAttributes": {
+    "case": "c20-001359-r"
+   }
+  },
+  "c20-001468-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "c20-001684-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-001684-l",
+   "requestAttributes": {
+    "case": "c20-001684-l"
+   }
+  },
+  "c20-001840-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-001859-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-002055-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002055-l",
+   "requestAttributes": {
+    "case": "c20-002055-l"
+   }
+  },
+  "c20-002267-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-002367-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-002367-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-002875-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-002908-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  },
+  "c20-002940-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-002963-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-002963-r",
+   "requestAttributes": {
+    "case": "c20-002963-r"
+   }
+  },
+  "c20-003104-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-004435-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-004435-r",
+   "requestAttributes": {
+    "case": "c20-004435-r"
+   }
+  },
+  "c20-004692-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-005046-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-005203-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-005203-l",
+   "requestAttributes": {
+    "case": "c20-005203-l"
+   }
+  },
+  "c20-006023-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-006023-l",
+   "requestAttributes": {
+    "case": "c20-006023-l"
+   }
+  },
+  "c20-006534-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-006534-r",
+   "requestAttributes": {
+    "case": "c20-006534-r"
+   }
+  },
+  "c20-006941-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-007080-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-007452-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-007452-r",
+   "requestAttributes": {
+    "case": "c20-007452-r"
+   }
+  },
+  "c20-008301-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-008383-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-008383-l",
+   "requestAttributes": {
+    "case": "c20-008383-l"
+   }
+  },
+  "c20-009587-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-009587-l",
+   "requestAttributes": {
+    "case": "c20-009587-l"
+   }
+  },
+  "c20-012680-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_PERM_V",
+      "PARITY_PERM_W"
+     ]
+    }
+   }
+  },
+  "c20-012680-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-012680-r",
+   "requestAttributes": {
+    "case": "c20-012680-r"
+   }
+  },
+  "c20-013097-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-013097-r",
+   "requestAttributes": {
+    "case": "c20-013097-r"
+   }
+  },
+  "c20-013534-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-013534-r",
+   "requestAttributes": {
+    "case": "c20-013534-r"
+   }
+  },
+  "c20-018255-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-018255-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-018255-r",
+   "requestAttributes": {
+    "case": "c20-018255-r"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "c20-029494",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == '{{resourceType}}' AND null NOT IN subject.permissionScope.tag",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "25 pairs of context dimensions no golden reached, among them lk=null, eff=-; lk=null, iter=iterN; lk=null, place=set_target; lk=null, rk=subj.permissionScope"
+  },
+  {
+   "id": "c20-017194",
+   "pips": [
+    "c20-017194-tokenL",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.parityCxTL IS NOT EMPTY AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "19 pairs of context dimensions no golden reached, among them lk=pip:TOKEN, alg=DENY_OVERRIDES; lk=pip:TOKEN, eff=-; lk=pip:TOKEN, ep=filter; lk=pip:TOKEN, iter=iterN"
+  },
+  {
+   "id": "c20-040149",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == '{{resourceType}}' AND true != resource",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "19 pairs of context dimensions no golden reached, among them lk=lit:bool, eff=-; lk=lit:bool, iter=iterN; lk=lit:bool, place=set_target; lk=lit:bool, pos=and-later"
+  },
+  {
+   "id": "c20-045102",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "null >= true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       "v",
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "18 pairs of context dimensions no golden reached, among them lk=null, ls=list[mix]; lk=null, place=policy_target; lk=null, rk=lit:bool; lk=null, rs=bool"
+  },
+  {
+   "id": "c20-029984",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == 'PARITY_CX_NONE' OR 5.5 NOT IN subject.permissions",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "17 pairs of context dimensions no golden reached, among them lk=lit:num, eff=-; lk=lit:num, place=set_target; ls=dec, eff=-; ls=dec, ep=filter"
+  },
+  {
+   "id": "c20-010437",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == 'PARITY_CX_NONE' OR resource IN null",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": 5,
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": 5,
+      "a": "y"
+     }
+    }
+   ],
+   "about": "16 pairs of context dimensions no golden reached, among them lk=resource, alg=PERMIT_UNLESS_DENY; lk=resource, eff=-; lk=resource, iter=iterN; lk=resource, place=set_target"
+  },
+  {
+   "id": "c20-043213",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == '{{resourceType}}' AND '5' < subject.serviceAccount",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "16 pairs of context dimensions no golden reached, among them lk=lit:str, alg=DENY_OVERRIDES; lk=lit:str, eff=-; lk=lit:str, ep=filter; lk=lit:str, iter=iterN"
+  },
+  {
+   "id": "c20-007845",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.type > 5.5 AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "15 pairs of context dimensions no golden reached, among them lk=subj.type, eff=-; lk=subj.type, ep=filter; lk=subj.type, iter=iterN; lk=subj.type, place=policy_target"
+  },
+  {
+   "id": "c20-012390",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == '{{resourceType}}' AND subject.serviceAccount NOT MATCH resource.m[*]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "15 pairs of context dimensions no golden reached, among them lk=subj.serviceAccount, alg=PERMIT_OVERRIDES; lk=subj.serviceAccount, eff=-; lk=subj.serviceAccount, place=policy_target; lk=subj.serviceAccount, pos=and-later"
+  },
+  {
+   "id": "c20-002243",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == 'PARITY_CX_NONE' OR null IS NOT SUBSET subject.roles",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       5,
+       6
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "14 pairs of context dimensions no golden reached, among them lk=null, eff=DENY; lk=resourceType, eff=DENY; lk=null, place=rule_target; lk=null, rk=subj.roles"
+  },
+  {
+   "id": "c20-005123",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == 'PARITY_CX_NONE' OR resource.l[0] NOT IN resource.m[0]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        5,
+        6
+       ]
+      ],
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        5,
+        6
+       ]
+      ],
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "13 pairs of context dimensions no golden reached, among them lk=res:jsonpath, eff=-; lk=res:jsonpath, place=set_target; lk=res:jsonpath, rs=INDEX_OOB; ls=list[num], alg=PERMIT_OVERRIDES"
+  },
+  {
+   "id": "c20-043272",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == 'PARITY_CX_NONE' OR subject.scopes IS SUBSET subject.permissionScope.tag",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "13 pairs of context dimensions no golden reached, among them lk=subj.scopes, alg=PERMIT_OVERRIDES; lk=subj.scopes, out=ABORT; lk=subj.scopes, place=policy_target; lk=subj.scopes, rs=ABSENT"
+  },
+  {
+   "id": "c20-043333",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == 'PARITY_CX_NONE' OR 5 IN 5, 6",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "13 pairs of context dimensions no golden reached, among them lk=lit:num, alg=DENY_OVERRIDES; lk=lit:num, place=policy_target; ls=int, alg=DENY_OVERRIDES; ls=int, eff=-"
+  },
+  {
+   "id": "c20-023497",
+   "pips": [
+    "c20-023497-tokenR",
+    "scope",
+    "c20-017194-tokenL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == '{{resourceType}}' AND resource.l[0] NOT CONTAINS ANY subject.parityCxTR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "11 pairs of context dimensions no golden reached, among them lk=res:jsonpath, place=policy_target; ls=INDEX_OOB, alg=PERMIT_OVERRIDES; ls=INDEX_OOB, eff=-; ls=INDEX_OOB, place=policy_target"
+  },
+  {
+   "id": "c20-006227",
+   "pips": [
+    "c20-006227-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions NOT CONTAINS ANY subject.permissions AND resourceType == '{{resourceType}}'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "10 pairs of context dimensions no golden reached, among them lk=subj.permissions, alg=PERMIT_OVERRIDES; lk=subj.permissions, eff=DENY; lk=subj.permissions, ep=filter; lk=subj.permissions, iter=iterN"
+  },
+  {
+   "id": "c20-010434",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR 5 IN subject.scopes",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "9 pairs of context dimensions no golden reached, among them lk=lit:num, alg=PERMIT_OVERRIDES; lk=lit:num, eff=DENY; ls=int, alg=PERMIT_OVERRIDES; rk=subj.scopes, alg=PERMIT_OVERRIDES"
+  },
+  {
+   "id": "c20-005998",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND null >= operation",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "8 pairs of context dimensions no golden reached, among them lk=null, ep=filter; lk=null, rk=operation; ls=ABSENT, rk=operation; rk=operation, alg=PERMIT_OVERRIDES"
+  },
+  {
+   "id": "c20-019270",
+   "pips": [
+    "c20-019270-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.parityCxHL MATCH null",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "8 pairs of context dimensions no golden reached, among them lk=pip:HEADER, iter=iterN; ls=hlist, alg=DENY_OVERRIDES; ls=hlist, iter=iterN; ls=hlist, place=policy_target"
+  },
+  {
+   "id": "c20-021424",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND resource IN subject.permissionScope.tag",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "8 pairs of context dimensions no golden reached, among them lk=resource, eff=DENY; lk=resource, rs=ABSENT; lk=resource, rs=EMPTY_COLL; rs=ABSENT, alg=DENY_UNLESS_PERMIT"
+  },
+  {
+   "id": "c20-003485",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "null IS NOT SUBSET null",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": {
+       "k": "v"
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "7 pairs of context dimensions no golden reached, among them lk=null, ls=object; lk=null, rs=object; ls=object, place=policy_target; op=IS_NOT_SUBSET, place=policy_target"
+  },
+  {
+   "id": "c20-011827",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == '{{resourceType}}' AND subject.permissionScope.tag NOT CONTAINS subject.name",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "7 pairs of context dimensions no golden reached, among them ls=EMPTY_COLL, place=policy_target; ls=ABSENT, rk=subj.name; ls=EMPTY_COLL, rk=subj.name; rk=subj.name, alg=PERMIT_OVERRIDES"
+  },
+  {
+   "id": "c20-024062",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR null != subject.id",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "7 pairs of context dimensions no golden reached, among them lk=null, rk=subj.id; ls=list[bool], rk=subj.id; op=NE, lk=null; op=NE, ls=list[bool]"
+  },
+  {
+   "id": "c20-047681",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.type >= resource.p.y OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": [
+        true
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": [
+        true
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "7 pairs of context dimensions no golden reached, among them lk=subj.type, alg=PERMIT_OVERRIDES; lk=subj.type, eff=DENY; lk=subj.type, rs=list[bool]; op=GE, rs=list[bool]"
+  },
+  {
+   "id": "c20-004788",
+   "pips": [
+    "c20-004788-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxGL > subject.type",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "6 pairs of context dimensions no golden reached, among them lk=pip:GENERAL, rk=subj.type; ls=PIP_NULL, alg=DENY_OVERRIDES; ls=PIP_NULL, eff=DENY; ls=PIP_NULL, rk=subj.type"
+  },
+  {
+   "id": "c20-013644",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resource <= resourceType OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "6 pairs of context dimensions no golden reached, among them lk=resource, alg=PERMIT_OVERRIDES; lk=resource, place=policy_target; ls=ABSENT, rk=resourceType; rk=resourceType, ep=filter"
+  },
+  {
+   "id": "c20-035552",
+   "pips": [
+    "c20-035552-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == '{{resourceType}}' AND operation >= subject.parityCxHR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "6 pairs of context dimensions no golden reached, among them lk=operation, out=ABORT; lk=operation, pos=and-later; lk=operation, rs=hlist; ls=value, place=policy_target"
+  },
+  {
+   "id": "c20-002701",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == 'PARITY_CX_NONE' OR subject.roles NOT CONTAINS resource.m[*]",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them lk=subj.roles, pos=or-later; lk=subj.roles, rs=EMPTY_SEL; rs=EMPTY_SEL, eff=DENY; rs=EMPTY_SEL, place=rule_target"
+  },
+  {
+   "id": "c20-019495",
+   "pips": [
+    "c20-019495-generalR",
+    "c20-019495-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxHL NOT IN subject.parityCxGR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them lk=pip:HEADER, out=ERR; lk=pip:HEADER, rs=SCALAR_ODD; op=NOT_IN, rs=SCALAR_ODD; rs=SCALAR_ODD, alg=DENY_OVERRIDES"
+  },
+  {
+   "id": "c20-037124",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND null IN resource.m[0]",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "m": [
+       5.5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "m": [
+       5.5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them ls=list[bool], rs=dec; op=IN, lk=null; op=IN, ls=list[bool]; rk=res:jsonpath, rs=dec"
+  },
+  {
+   "id": "c20-054471",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == 'PARITY_CX_NONE' OR resource.l[*] IS EMPTY",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "5 pairs of context dimensions no golden reached, among them ls=EMPTY_SEL, alg=DENY_OVERRIDES; ls=EMPTY_SEL, place=rule_target; ls=EMPTY_SEL, pos=or-later; op=IS_EMPTY, alg=DENY_OVERRIDES"
+  },
+  {
+   "id": "c20-000172",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR resource.o.x != resource",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        5,
+        6
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        5,
+        6
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "4 pairs of context dimensions no golden reached, among them ls=list[num], rk=resource; ls=list[num], rs=object; rk=resource, eff=DENY; rs=object, pos=or-later"
+  },
+  {
+   "id": "c20-008753",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "5.5 > resource.y AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "y": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "y": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "4 pairs of context dimensions no golden reached, among them lk=lit:num, rs=list[bool]; ls=dec, rs=list[bool]; op=GT, rs=list[bool]; rs=list[bool], place=policy_target"
+  },
+  {
+   "id": "c20-003535",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.permissionScope.tag CONTAINS subject.id AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "3 pairs of context dimensions no golden reached, among them ls=ABSENT, rk=subj.id; ls=EMPTY_COLL, rk=subj.id; rk=subj.id, place=policy_target"
+  },
+  {
+   "id": "c20-004984",
+   "pips": [
+    "c20-004984-tokenL",
+    "scope",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxTL >= operation",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "3 pairs of context dimensions no golden reached, among them lk=pip:TOKEN, pos=or-later; ls=PIP_EMPTY, rk=operation; rk=operation, pos=or-later"
+  },
+  {
+   "id": "c20-012738",
+   "pips": [
+    "c20-012738-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "null IN subject.parityCxGR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       "v",
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "3 pairs of context dimensions no golden reached, among them lk=null, rs=ERROR; ls=list[mix], rs=ERROR; rs=ERROR, iter=iterN"
+  },
+  {
+   "id": "c20-045267",
+   "pips": [
+    "c20-045267-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxGL CONTAINS ANY 5, 6",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "3 pairs of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=list:num; op=CONTAINS_ANY, ls=SCALAR_ODD; rk=list:num, alg=PERMIT_UNLESS_DENY"
+  },
+  {
+   "id": "c20-000004",
+   "pips": [
+    "c20-000004-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.permissionScope.tag NOT CONTAINS ANY subject.parityCxHR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=ABSENT, rk=pip:HEADER; ls=EMPTY_COLL, rk=pip:HEADER"
+  },
+  {
+   "id": "c20-000282",
+   "pips": [
+    "c20-000282-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.serviceAccount != subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.serviceAccount, rk=pip:GENERAL; ls=NULL, rk=pip:GENERAL"
+  },
+  {
+   "id": "c20-000331",
+   "pips": [
+    "c20-000331-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL CONTAINS subject.serviceAccount OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=subj.serviceAccount; op=CONTAINS, ls=SCALAR_ODD"
+  },
+  {
+   "id": "c20-002048",
+   "pips": [
+    "c20-002048-generalR",
+    "c20-002048-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions NOT CONTAINS subject.parityCxGR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.permissions, ls=value; lk=subj.permissions, rs=SCALAR_ODD"
+  },
+  {
+   "id": "c20-002138",
+   "pips": [
+    "c20-002138-tokenL",
+    "scope",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.parityCxTL NOT CONTAINS ANY subject.permissionScope.tag",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=pip:TOKEN, rs=ABSENT; lk=pip:TOKEN, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-002918",
+   "pips": [
+    "c20-002918-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions NOT CONTAINS ANY subject.permissionScope.tag",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.permissions, rs=ABSENT; lk=subj.permissions, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-002928",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR resourceType IN subject.permissionScope.tag",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=resourceType, rs=ABSENT; lk=resourceType, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-003527",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.permissionScope.tag NOT CONTAINS resource OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=ABSENT, rk=resource; ls=EMPTY_COLL, rk=resource"
+  },
+  {
+   "id": "c20-003593",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.permissionScope.tag CONTAINS ANY subject.permissionScope.tag",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=ABSENT, rk=subj.permissionScope; ls=EMPTY_COLL, rk=subj.permissionScope"
+  },
+  {
+   "id": "c20-004347",
+   "pips": [
+    "c20-004347-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS ANY subject.parityCxGR OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.permissionScope, rs=list[bool]; rs=list[bool], ep=filter"
+  },
+  {
+   "id": "c20-004383",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.type IN subject.permissionScope.tag",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.type, rs=ABSENT; lk=subj.type, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-005637",
+   "pips": [
+    "c20-005637-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.tag IS NOT SUBSET subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=ABSENT, rk=pip:GENERAL; ls=EMPTY_COLL, rk=pip:GENERAL"
+  },
+  {
+   "id": "c20-007975",
+   "pips": [
+    "c20-007975-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND subject.permissions CONTAINS null",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.permissions, rk=null; lk=subj.permissions, rs=dec"
+  },
+  {
+   "id": "c20-008249",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resource.l[0] NOT IN subject.permissionScope.tag AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=res:jsonpath, rs=ABSENT; lk=res:jsonpath, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-008378",
+   "pips": [
+    "c20-008378-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxGL MATCH null",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": 5.5,
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=pattern; op=MATCH, ls=SCALAR_ODD"
+  },
+  {
+   "id": "c20-009838",
+   "pips": [
+    "c20-009838-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL NOT MATCH resource.p.y AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=res:nested; op=NOT_MATCH, ls=SCALAR_ODD"
+  },
+  {
+   "id": "c20-010511",
+   "pips": [
+    "c20-010511-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND subject.parityCxHL IS SUBSET subject.permissionScope.tag",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=pip:HEADER, rs=ABSENT; lk=pip:HEADER, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-012735",
+   "pips": [
+    "c20-012735-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType >= subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=resourceType, rs=SCALAR_ODD; op=GE, rs=SCALAR_ODD"
+  },
+  {
+   "id": "c20-013138",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissionScope.region CONTAINS ANY subject.permissionScope.tag",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.permissionScope, rs=ABSENT; lk=subj.permissionScope, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-014615",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.type > null OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       "v",
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them lk=subj.type, rk=null; lk=subj.type, rs=list[mix]"
+  },
+  {
+   "id": "c20-015240",
+   "pips": [
+    "c20-015240-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxGL IN null",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=null; op=IN, ls=SCALAR_ODD"
+  },
+  {
+   "id": "c20-034079",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND resource.l[0] < subject.type",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        true
+       ]
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        true
+       ]
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "2 pairs of context dimensions no golden reached, among them ls=list[bool], rk=subj.type; op=LT, ls=list[bool]"
+  },
+  {
+   "id": "c20-000024",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "5.5 != subject.name AND resourceType == '{{resourceType}}'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=dec, rk=subj.name"
+  },
+  {
+   "id": "c20-000033",
+   "pips": [
+    "c20-000033-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == 'PARITY_CX_NONE' OR subject.permissions NOT CONTAINS resource.m[0]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_COLL, rk=res:jsonpath"
+  },
+  {
+   "id": "c20-000078",
+   "pips": [
+    "c20-000078-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.name == subject.parityCxHR OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.name, rs=PIP_EMPTY"
+  },
+  {
+   "id": "c20-000087",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resource.o.x NOT IN subject.scopes AND resourceType == '{{resourceType}}'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=ABSENT, rk=subj.scopes"
+  },
+  {
+   "id": "c20-000148",
+   "pips": [
+    "c20-000148-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "5.5 <= subject.parityCxHR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=lit:num, rs=hlist"
+  },
+  {
+   "id": "c20-000312",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissionScope.tag NOT CONTAINS true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_COLL, rk=lit:bool"
+  },
+  {
+   "id": "c20-000355",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND resource.x >= subject.id",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[mix], rk=subj.id"
+  },
+  {
+   "id": "c20-000357",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND resourceType >= resource.p.y",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": 5.5
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": 5.5
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=resourceType, rs=dec"
+  },
+  {
+   "id": "c20-000441",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == '{{resourceType}}' AND subject.roles IS EMPTY",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them op=IS_EMPTY, alg=PERMIT_OVERRIDES"
+  },
+  {
+   "id": "c20-000513",
+   "pips": [
+    "c20-000513-tokenL",
+    "scope",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxTL NOT CONTAINS ANY resource.m[0]",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [
+       5.5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [
+       5.5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=pip:TOKEN, rs=dec"
+  },
+  {
+   "id": "c20-000567",
+   "pips": [
+    "c20-000567-headerL",
+    "c20-000567-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxHL NOT IN subject.parityCxHR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w",
+      "x-parity-cx-r": ""
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w",
+      "x-parity-cx-r": ""
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=pip:HEADER"
+  },
+  {
+   "id": "c20-000693",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND resource.l[0] IN 5, 6",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=list:num"
+  },
+  {
+   "id": "c20-000717",
+   "pips": [
+    "c20-000717-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resource.o.x >= subject.parityCxHR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        "v",
+        5
+       ]
+      },
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        "v",
+        5
+       ]
+      },
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=res:nested, rs=hlist"
+  },
+  {
+   "id": "c20-000795",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.o.x != subject.type AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        "v",
+        5
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        "v",
+        5
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[mix], rk=subj.type"
+  },
+  {
+   "id": "c20-000948",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissionScope.tag CONTAINS subject.serviceAccount OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_COLL, rk=subj.serviceAccount"
+  },
+  {
+   "id": "c20-001042",
+   "pips": [
+    "c20-001042-tokenL",
+    "scope",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.parityCxTL < resource.m[0] OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [
+       [
+        true
+       ]
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [
+       [
+        true
+       ]
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=pip:TOKEN, rs=list[bool]"
+  },
+  {
+   "id": "c20-001065",
+   "pips": [
+    "c20-001065-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxHL < resourceType OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=resourceType"
+  },
+  {
+   "id": "c20-001089",
+   "pips": [
+    "c20-001089-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.parityCxHL >= operation AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=operation"
+  },
+  {
+   "id": "c20-001120",
+   "pips": [
+    "c20-001120-tokenR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resourceType == '{{resourceType}}' AND true <= subject.parityCxTR",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=lit:bool, rs=PIP_EMPTY"
+  },
+  {
+   "id": "c20-001122",
+   "pips": [
+    "c20-001122-generalL",
+    "c20-001122-tokenR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL CONTAINS ANY subject.parityCxTR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=ERROR, rk=pip:TOKEN"
+  },
+  {
+   "id": "c20-001179",
+   "pips": [
+    "c20-001179-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL == resource.p.y AND resourceType == '{{resourceType}}'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=PIP_NULL, rk=res:nested"
+  },
+  {
+   "id": "c20-001197",
+   "pips": [
+    "c20-001197-generalL",
+    "c20-001197-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL >= subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=pip:GENERAL"
+  },
+  {
+   "id": "c20-001359",
+   "pips": [
+    "c20-001359-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "'v' >= subject.parityCxGR OR resource.a == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=lit:str, rs=ERROR"
+  },
+  {
+   "id": "c20-001409",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "5 == resource.m[0]",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=lit:num, rs=INDEX_OOB"
+  },
+  {
+   "id": "c20-001411",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR 5.5 <= resourceType",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=dec, rk=resourceType"
+  },
+  {
+   "id": "c20-001453",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[*] IS NOT SUBSET resource.m[*]",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "m": [
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "m": [
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=res:jsonpath"
+  },
+  {
+   "id": "c20-001468",
+   "pips": [
+    "c20-001468-tokenR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[*] CONTAINS ANY subject.parityCxTR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=pip:TOKEN"
+  },
+  {
+   "id": "c20-001665",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resource.o.x == subject.name OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        5,
+        6
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        5,
+        6
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[num], rk=subj.name"
+  },
+  {
+   "id": "c20-001684",
+   "pips": [
+    "c20-001684-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL <= subject.name OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=subj.name"
+  },
+  {
+   "id": "c20-001700",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR resource.o.x == 'V'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        true
+       ]
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "o": {
+       "x": [
+        true
+       ]
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[bool], rk=lit:str"
+  },
+  {
+   "id": "c20-001840",
+   "pips": [
+    "c20-001840-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.parityCxHL >= resource.m[*]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=res:jsonpath"
+  },
+  {
+   "id": "c20-001859",
+   "pips": [
+    "c20-001859-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == '{{resourceType}}' AND subject.type >= subject.parityCxHR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.type, rs=hlist"
+  },
+  {
+   "id": "c20-002055",
+   "pips": [
+    "c20-002055-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.parityCxGL IS SUBSET subject.scopes",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=SCALAR_ODD, rk=subj.scopes"
+  },
+  {
+   "id": "c20-002267",
+   "pips": [
+    "c20-002267-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxHL IN subject.roles OR resource.a == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=subj.roles"
+  },
+  {
+   "id": "c20-002367",
+   "pips": [
+    "c20-002367-headerR",
+    "c20-002367-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.permissions IS NOT SUBSET subject.parityCxHR AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissions, rs=PIP_EMPTY"
+  },
+  {
+   "id": "c20-002819",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resource.l[*] NOT CONTAINS subject.type OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=subj.type"
+  },
+  {
+   "id": "c20-002844",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.id == resource.y OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "y": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "y": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.id, rs=EMPTY_COLL"
+  },
+  {
+   "id": "c20-002875",
+   "pips": [
+    "c20-002875-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "subject.parityCxHL > subject.name",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=subj.name"
+  },
+  {
+   "id": "c20-002908",
+   "pips": [
+    "c20-002908-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resource.l[0] NOT IN subject.permissions",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=subj.permissions"
+  },
+  {
+   "id": "c20-002940",
+   "pips": [
+    "c20-002940-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.permissions CONTAINS ANY resource.m[*]",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissions, rs=EMPTY_SEL"
+  },
+  {
+   "id": "c20-002963",
+   "pips": [
+    "c20-002963-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR true != subject.parityCxGR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=lit:bool, rs=PIP_NULL"
+  },
+  {
+   "id": "c20-003021",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.name NOT IN resource.m[*]",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.name, rs=EMPTY_SEL"
+  },
+  {
+   "id": "c20-003104",
+   "pips": [
+    "c20-003104-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resource.l[0] NOT CONTAINS subject.parityCxHR",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=pip:HEADER"
+  },
+  {
+   "id": "c20-003469",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "5 >= null AND resourceType == '{{resourceType}}'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       5,
+       6
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them op=GE, rs=list[num]"
+  },
+  {
+   "id": "c20-003660",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resourceType == 'PARITY_CX_NONE' OR resource.l[*] > resource.m[*]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       5
+      ],
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       5
+      ],
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[num], rs=EMPTY_SEL"
+  },
+  {
+   "id": "c20-004435",
+   "pips": [
+    "c20-004435-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.name != subject.parityCxGR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.name, rs=SCALAR_ODD"
+  },
+  {
+   "id": "c20-004692",
+   "pips": [
+    "c20-004692-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == '{{resourceType}}' AND subject.id <= subject.parityCxHR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.id, rs=hlist"
+  },
+  {
+   "id": "c20-004993",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "null CONTAINS operation",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "null": [
+       true
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[bool], rk=operation"
+  },
+  {
+   "id": "c20-005046",
+   "pips": [
+    "c20-005046-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true > subject.parityCxHR OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=lit:bool, rs=hlist"
+  },
+  {
+   "id": "c20-005203",
+   "pips": [
+    "c20-005203-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxGL == subject.type",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=glist, rk=subj.type"
+  },
+  {
+   "id": "c20-005326",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "resource.l[0] IS NOT SUBSET subject.scopes AND resourceType == '{{resourceType}}'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=subj.scopes"
+  },
+  {
+   "id": "c20-005537",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resource.l[0] IS SUBSET subject.scopes OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        "v",
+        5
+       ]
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        "v",
+        5
+       ]
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[mix], rk=subj.scopes"
+  },
+  {
+   "id": "c20-005782",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation < resource.y",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "y": [
+       "v",
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "y": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=operation, rs=list[mix]"
+  },
+  {
+   "id": "c20-006023",
+   "pips": [
+    "c20-006023-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL < subject.name",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=glist, rk=subj.name"
+  },
+  {
+   "id": "c20-006534",
+   "pips": [
+    "c20-006534-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.type <= subject.parityCxGR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.type, rs=glist"
+  },
+  {
+   "id": "c20-006941",
+   "pips": [
+    "c20-006941-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.parityCxHL NOT IN subject.permissions",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=hlist, rk=subj.permissions"
+  },
+  {
+   "id": "c20-007080",
+   "pips": [
+    "c20-007080-headerR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.name <= subject.parityCxHR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.name, rs=hlist"
+  },
+  {
+   "id": "c20-007452",
+   "pips": [
+    "c20-007452-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[0] <= subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       5
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       5
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=res:jsonpath, rs=glist"
+  },
+  {
+   "id": "c20-008301",
+   "pips": [
+    "c20-008301-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.permissions CONTAINS resource.m[0]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissions, rs=INDEX_OOB"
+  },
+  {
+   "id": "c20-008383",
+   "pips": [
+    "c20-008383-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL IS EMPTY",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them op=IS_EMPTY, ls=SCALAR_ODD"
+  },
+  {
+   "id": "c20-008518",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType >= resource.m[0]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=resourceType, rs=INDEX_OOB"
+  },
+  {
+   "id": "c20-009587",
+   "pips": [
+    "c20-009587-generalL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL >= resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=glist, rk=resource"
+  },
+  {
+   "id": "c20-009653",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "operation == resource.m[0] AND resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=operation, rs=INDEX_OOB"
+  },
+  {
+   "id": "c20-010107",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "child",
+       "target": "resource.l[*] < resource OR resource.a == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "pol",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=resource"
+  },
+  {
+   "id": "c20-010175",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[*] CONTAINS ANY subject.permissions",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=EMPTY_SEL, rk=subj.permissions"
+  },
+  {
+   "id": "c20-012680",
+   "pips": [
+    "c20-012680-generalR",
+    "c20-012680-mapping",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS ANY subject.parityCxGR OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissions, rs=PIP_NULL"
+  },
+  {
+   "id": "c20-013097",
+   "pips": [
+    "c20-013097-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[0] != subject.parityCxGR AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        5,
+        6
+       ]
+      ],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [
+       [
+        5,
+        6
+       ]
+      ],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[num], rs=SCALAR_ODD"
+  },
+  {
+   "id": "c20-013534",
+   "pips": [
+    "c20-013534-generalR",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource NOT IN subject.parityCxGR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=resource, rs=SCALAR_ODD"
+  },
+  {
+   "id": "c20-015604",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "operation NOT IN resource.m[*] OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=operation, rs=EMPTY_SEL"
+  },
+  {
+   "id": "c20-018255",
+   "pips": [
+    "c20-018255-generalR",
+    "c20-018255-headerL",
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-004788-generalL",
+    "c20-035552-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxHL <= subject.parityCxGR OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-l": "v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-l": "v"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=pip:HEADER, rs=ERROR"
+  },
+  {
+   "id": "c20-019234",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "resourceType == 'PARITY_CX_NONE' OR subject.permissionScope.region CONTAINS ANY resource.m[0]",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissionScope, rs=INDEX_OOB"
+  },
+  {
+   "id": "c20-019423",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissionScope.region IS NOT SUBSET resource.m[*] AND resourceType == '{{resourceType}}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.permissionScope, rs=EMPTY_SEL"
+  },
+  {
+   "id": "c20-020570",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "subject.id IN resource.m[0] AND resourceType == '{{resourceType}}'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "m": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.id, rs=INDEX_OOB"
+  },
+  {
+   "id": "c20-022538",
+   "pips": [
+    "scope",
+    "c20-017194-tokenL",
+    "c20-023497-tokenR",
+    "c20-006227-mapping",
+    "c20-019270-headerL",
+    "c20-004788-generalL",
+    "c20-035552-headerR",
+    "c20-019495-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.l[0] CONTAINS subject.name OR resource.a == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "l": [],
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=INDEX_OOB, rk=subj.name"
+  }
+ ]
+}

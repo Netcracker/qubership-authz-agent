@@ -1,0 +1,223 @@
+{
+ "about": "What IN, CONTAINS, CONTAINS ANY, IS SUBSET and MATCH answer over a resource attribute that is null. Over null, NOT IN is true (n1), and NOT CONTAINS and NOT MATCH are false (n2, m1) alone, where a false operand and an ended rule look the same; the plain operators are recorded over null nowhere. Each operator is asked alone, which records its value if it has one, and through the probe and its control, which tell a value from an ended rule; resource.a is y. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "nc-in-alone",
+   "condition": "resource.x IN 'a', 'z'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-in",
+   "condition": "resource.x IN 'a', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-in-control",
+   "resourceType": "PARITY_SUITE_R10_NC_IN_CTL",
+   "condition": "resource.a == 'y' OR resource.x IN 'a', 'z'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-contains-alone",
+   "condition": "resource.x CONTAINS 'a'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-contains",
+   "condition": "resource.x CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-contains-control",
+   "resourceType": "PARITY_SUITE_R10_NC_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR resource.x CONTAINS 'a'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-contains-any-alone",
+   "condition": "resource.x CONTAINS ANY 'a', 'z'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-contains-any",
+   "condition": "resource.x CONTAINS ANY 'a', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-contains-any-control",
+   "resourceType": "PARITY_SUITE_R10_NC_CONTAINS_ANY_CTL",
+   "condition": "resource.a == 'y' OR resource.x CONTAINS ANY 'a', 'z'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-is-subset-alone",
+   "condition": "resource.x IS SUBSET 'a', 'z'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-is-subset",
+   "condition": "resource.x IS SUBSET 'a', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-is-subset-control",
+   "resourceType": "PARITY_SUITE_R10_NC_IS_SUBSET_CTL",
+   "condition": "resource.a == 'y' OR resource.x IS SUBSET 'a', 'z'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-match-alone",
+   "condition": "resource.x MATCH a*",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-match",
+   "condition": "resource.x MATCH a* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nc-match-control",
+   "resourceType": "PARITY_SUITE_R10_NC_MATCH_CTL",
+   "condition": "resource.a == 'y' OR resource.x MATCH a*",
+   "requests": [
+    {
+     "name": "x-null",
+     "resource": {
+      "id": "r10-null",
+      "x": null,
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

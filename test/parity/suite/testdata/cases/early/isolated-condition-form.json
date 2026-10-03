@@ -1,0 +1,635 @@
+{
+ "about": "Forms the agent's own condition parser (internal/simplifiedpolicies/parser.go) accepts and no golden records: the negated operators NOT MATCH, IS NOT SUBSET and NOT CONTAINS ANY, the denied form of the access operator, the word forms GREATER THAN, LESS THAN and the two spellings of LESS THAN OR EQUAL TO, the single equals sign, the /…/ regex literal, and FALSE as a whole condition. It adds what no case sends at all: subject.scopes, subject.permissions in a condition and the MAPPING PIP that grants one, the FILTERED pipType, signed and fractional literals, and JSON Path beyond the plain and bracketed paths of isolated-policy.json. Each case asks two things: whether the PAP accepts the form, and what access-control decides once it has. A refusal settles the first and leaves the second open. Where the second question is reachable, the case sends two requests that a working operator tells apart, because a form the PAP accepts and the evaluator ignores answers false to both; resource['x'] and MATCH against an attribute are already recorded as behaving that way (j7, a2). Both pinned routes return a collection holding the value the h cases compare against, so a false decision there means the form was ignored rather than that the PIP returned nothing.",
+ "resourceTypePrefix": "PARITY_SUITE_ISO_",
+ "pins": {
+  "/api/v1/pip/iso-filtered": {
+   "statusCode": 200,
+   "body": [
+    "red",
+    "blue"
+   ]
+  },
+  "/api/v1/pip/iso-list": {
+   "statusCode": 200,
+   "body": [
+    "red",
+    "blue"
+   ]
+  }
+ },
+ "pips": {
+  "filtered": {
+   "name": "subject.parityFilteredList",
+   "url": "http://pip-mock:8090/api/v1/pip/iso-filtered",
+   "httpMethod": "POST",
+   "pipType": "FILTERED",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_ISO_H3"
+   },
+   "cacheable": false
+  },
+  "list": {
+   "name": "subject.parityList",
+   "url": "http://pip-mock:8090/api/v1/pip/iso-list",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_ISO_H5"
+   },
+   "cacheable": false
+  },
+  "permissions": {
+   "name": "subject.permissions.PARITY",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "m1-not-match",
+   "resourceType": "PARITY_SUITE_ISO_M1",
+   "about": "CONTAINS, MATCH and IS SUBSET are recorded; their negated forms are not. The case sends the null value that separates NOT IN from NOT CONTAINS in the round 2 semantics cases, where n1 is true and n2 is false.",
+   "condition": "resource.x NOT MATCH ab*",
+   "requests": [
+    {
+     "name": "pattern-matches",
+     "resource": {
+      "id": "iso-m1",
+      "x": "abc"
+     }
+    },
+    {
+     "name": "pattern-does-not-match",
+     "resource": {
+      "id": "iso-m1",
+      "x": "zzz"
+     }
+    },
+    {
+     "name": "attribute-null",
+     "resource": {
+      "id": "iso-m1",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "m2-not-contains-any",
+   "resourceType": "PARITY_SUITE_ISO_M2",
+   "about": "CONTAINS, MATCH and IS SUBSET are recorded; their negated forms are not. The case sends the null value that separates NOT IN from NOT CONTAINS in the round 2 semantics cases, where n1 is true and n2 is false.",
+   "condition": "resource.tags NOT CONTAINS ANY 'red', 'blue'",
+   "requests": [
+    {
+     "name": "one-element-shared",
+     "resource": {
+      "id": "iso-m2",
+      "tags": [
+       "red"
+      ]
+     }
+    },
+    {
+     "name": "no-element-shared",
+     "resource": {
+      "id": "iso-m2",
+      "tags": [
+       "green"
+      ]
+     }
+    },
+    {
+     "name": "attribute-null",
+     "resource": {
+      "id": "iso-m2",
+      "tags": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "m3-is-not-subset",
+   "resourceType": "PARITY_SUITE_ISO_M3",
+   "about": "CONTAINS, MATCH and IS SUBSET are recorded; their negated forms are not. The case sends the null value that separates NOT IN from NOT CONTAINS in the round 2 semantics cases, where n1 is true and n2 is false. IS SUBSET is false for an empty collection (l4), where set theory makes it true, so the empty case decides whether the two operators are complements.",
+   "condition": "resource.list IS NOT SUBSET 'a', 'b'",
+   "requests": [
+    {
+     "name": "every-element-listed",
+     "resource": {
+      "id": "iso-m3",
+      "list": [
+       "a"
+      ]
+     }
+    },
+    {
+     "name": "foreign-element",
+     "resource": {
+      "id": "iso-m3",
+      "list": [
+       "c"
+      ]
+     }
+    },
+    {
+     "name": "empty-collection",
+     "resource": {
+      "id": "iso-m3",
+      "list": []
+     }
+    },
+    {
+     "name": "attribute-null",
+     "resource": {
+      "id": "iso-m3",
+      "list": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "u8-subject-scopes-is-empty",
+   "resourceType": "PARITY_SUITE_ISO_U8",
+   "about": "subject.permissionScope is recorded as refused (g8b), and subject.isM2M was refused on access-control 5.13 and is accepted as a whole condition on 6.1.6 (g8a). subject.scopes appears in no other case; subject.permissions only as the target of a regular policy set, which the PAP accepts and which is false for a reader with no permission assigned. IS EMPTY shows whether the attribute resolves in a condition at all; CONTAINS shows what it holds on this stand.",
+   "condition": "subject.scopes IS EMPTY",
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-u8"
+     }
+    }
+   ]
+  },
+  {
+   "id": "u9-subject-scopes-contains",
+   "resourceType": "PARITY_SUITE_ISO_U9",
+   "about": "subject.permissionScope is recorded as refused (g8b), and subject.isM2M was refused on access-control 5.13 and is accepted as a whole condition on 6.1.6 (g8a). subject.scopes appears in no other case; subject.permissions only as the target of a regular policy set, which the PAP accepts and which is false for a reader with no permission assigned. IS EMPTY shows whether the attribute resolves in a condition at all; CONTAINS shows what it holds on this stand.",
+   "condition": "subject.scopes CONTAINS 'profile'",
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-u9"
+     }
+    }
+   ]
+  },
+  {
+   "id": "u10-subject-permissions-is-empty",
+   "resourceType": "PARITY_SUITE_ISO_U10",
+   "about": "subject.permissionScope is recorded as refused (g8b), and subject.isM2M was refused on access-control 5.13 and is accepted as a whole condition on 6.1.6 (g8a). subject.scopes appears in no other case; subject.permissions only as the target of a regular policy set, which the PAP accepts and which is false for a reader with no permission assigned. IS EMPTY shows whether the attribute resolves in a condition at all; CONTAINS shows what it holds on this stand. The parity users carry no assigned permission, so u10 and u11 record the negative answers; pm1 is u11's positive half.",
+   "condition": "subject.permissions IS EMPTY",
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-u10"
+     }
+    }
+   ]
+  },
+  {
+   "id": "u11-subject-permissions-contains",
+   "resourceType": "PARITY_SUITE_ISO_U11",
+   "about": "subject.permissionScope is recorded as refused (g8b), and subject.isM2M was refused on access-control 5.13 and is accepted as a whole condition on 6.1.6 (g8a). subject.scopes appears in no other case; subject.permissions only as the target of a regular policy set, which the PAP accepts and which is false for a reader with no permission assigned. IS EMPTY shows whether the attribute resolves in a condition at all; CONTAINS shows what it holds on this stand. The parity users carry no assigned permission, so u10 and u11 record the negative answers; pm1 is u11's positive half.",
+   "condition": "subject.permissions CONTAINS 'parity_permission'",
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-u11"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pm1-mapping-pip-merged-list",
+   "resourceType": "PARITY_SUITE_ISO_PM1",
+   "about": "u11 with the permission granted by subject.permissions.PARITY, a MAPPING PIP that grants parity_permission to ROLE_PARITY_READER. A PIP of this shape is how access-control assigns permissions to a role outside the simplified policies: it declares the mapping inline, and every subject.permissions.<suffix> PIP the tenant holds is merged into one subject.permissions list on the subject. The real export carries \"cacheable\": true; this declaration keeps the false every accepted fixture under testdata/fixtures uses, so that pm3 cannot be answered by a cache. The upload status also answers whether the PAP takes a MAPPING PIP at all.",
+   "condition": "subject.permissions CONTAINS 'parity_permission'",
+   "pips": [
+    "permissions"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-pm1"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pm2-mapping-pip-suffixed-reference",
+   "resourceType": "PARITY_SUITE_ISO_PM2",
+   "about": "Whether a policy can read one mapping PIP by its own name, or only the merged list pm1 reads.",
+   "condition": "subject.permissions.PARITY CONTAINS 'parity_permission'",
+   "pips": [
+    "permissions"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-pm2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pm3-mapping-pip-after-declaration-removed",
+   "resourceType": "PARITY_SUITE_ISO_PM3",
+   "about": "pm1's question with the declaration withdrawn: the upload of each case replaces the domain's PIPs, so by now PARITY_ISOLATED holds none. A false answer scopes the mapping to the declaration that carried it; a true one means it outlived that declaration, and the permission granted here is visible to every case of the tenant that reads subject.permissions. permission-policy-target records false for the same permission and the same role, so a true answer here is worth checking against that golden after the run. The case reads what pm1 uploaded and has to run after it, which the order of the cases gives it.",
+   "condition": "subject.permissions CONTAINS 'parity_permission'",
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-pm3"
+     }
+    }
+   ]
+  },
+  {
+   "id": "u12-subject-denied",
+   "resourceType": "PARITY_SUITE_ISO_U12",
+   "about": "The access operator has a denied form as well as the allowed form recorded in u7, which the PAP accepts and which is false on this stand because no entitlement source backs it.",
+   "condition": "subject denied 'READ' on resource",
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-u12"
+     }
+    }
+   ]
+  },
+  {
+   "id": "w1-greater-than-words",
+   "resourceType": "PARITY_SUITE_ISO_W1",
+   "about": "Only GREATER THAN OR EQUAL TO is recorded (x4), and the parser takes OR EQUALS TO as well as OR EQUAL TO. The case sends the boundary and its neighbor, so a form the evaluator maps to a different operator is visible.",
+   "condition": "resource.n GREATER THAN 5",
+   "requests": [
+    {
+     "name": "boundary",
+     "resource": {
+      "id": "iso-w1",
+      "n": 5
+     }
+    },
+    {
+     "name": "above-boundary",
+     "resource": {
+      "id": "iso-w1",
+      "n": 6
+     }
+    }
+   ]
+  },
+  {
+   "id": "w2-less-than-words",
+   "resourceType": "PARITY_SUITE_ISO_W2",
+   "about": "Only GREATER THAN OR EQUAL TO is recorded (x4), and the parser takes OR EQUALS TO as well as OR EQUAL TO. The case sends the boundary and its neighbor, so a form the evaluator maps to a different operator is visible.",
+   "condition": "resource.n LESS THAN 5",
+   "requests": [
+    {
+     "name": "boundary",
+     "resource": {
+      "id": "iso-w2",
+      "n": 5
+     }
+    },
+    {
+     "name": "below-boundary",
+     "resource": {
+      "id": "iso-w2",
+      "n": 4
+     }
+    }
+   ]
+  },
+  {
+   "id": "w3-less-than-or-equal-words",
+   "resourceType": "PARITY_SUITE_ISO_W3",
+   "about": "Only GREATER THAN OR EQUAL TO is recorded (x4), and the parser takes OR EQUALS TO as well as OR EQUAL TO. The case sends the boundary and its neighbor, so a form the evaluator maps to a different operator is visible.",
+   "condition": "resource.n LESS THAN OR EQUAL TO 5",
+   "requests": [
+    {
+     "name": "boundary",
+     "resource": {
+      "id": "iso-w3",
+      "n": 5
+     }
+    },
+    {
+     "name": "above-boundary",
+     "resource": {
+      "id": "iso-w3",
+      "n": 6
+     }
+    }
+   ]
+  },
+  {
+   "id": "w4-greater-than-or-equals-to-words",
+   "resourceType": "PARITY_SUITE_ISO_W4",
+   "about": "Only GREATER THAN OR EQUAL TO is recorded (x4), and the parser takes OR EQUALS TO as well as OR EQUAL TO. The case sends the boundary and its neighbor, so a form the evaluator maps to a different operator is visible.",
+   "condition": "resource.n GREATER THAN OR EQUALS TO 5",
+   "requests": [
+    {
+     "name": "boundary",
+     "resource": {
+      "id": "iso-w4",
+      "n": 5
+     }
+    },
+    {
+     "name": "below-boundary",
+     "resource": {
+      "id": "iso-w4",
+      "n": 4
+     }
+    }
+   ]
+  },
+  {
+   "id": "w5-less-than-or-equals-to-words",
+   "resourceType": "PARITY_SUITE_ISO_W5",
+   "about": "Only GREATER THAN OR EQUAL TO is recorded (x4), and the parser takes OR EQUALS TO as well as OR EQUAL TO. The case sends the boundary and its neighbor, so a form the evaluator maps to a different operator is visible.",
+   "condition": "resource.n LESS THAN OR EQUALS TO 5",
+   "requests": [
+    {
+     "name": "boundary",
+     "resource": {
+      "id": "iso-w5",
+      "n": 5
+     }
+    },
+    {
+     "name": "above-boundary",
+     "resource": {
+      "id": "iso-w5",
+      "n": 6
+     }
+    }
+   ]
+  },
+  {
+   "id": "x32-single-equal-sign",
+   "resourceType": "PARITY_SUITE_ISO_X32",
+   "about": "EQUALS and == are recorded (x2, x1), and the single equals sign the parser also accepts is not.",
+   "condition": "resource.x = 'v'",
+   "requests": [
+    {
+     "name": "attribute-matches",
+     "resource": {
+      "id": "iso-x32",
+      "x": "v"
+     }
+    },
+    {
+     "name": "attribute-differs",
+     "resource": {
+      "id": "iso-x32",
+      "x": "w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x33-condition-literal-false",
+   "resourceType": "PARITY_SUITE_ISO_X33",
+   "about": "TRUE as a whole condition is recorded (x10), and FALSE is not.",
+   "condition": "FALSE",
+   "requests": [
+    {
+     "name": "any-resource",
+     "resource": {
+      "id": "iso-x33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x34-regex-literal",
+   "resourceType": "PARITY_SUITE_ISO_X34",
+   "about": "The parser reads /…/ as a regex literal and hands it on as a plain string. MATCH with an unquoted wildcard is recorded (x5) and with a quoted one is refused (x6), so this is the third spelling.",
+   "condition": "resource.x MATCH /ab.*/",
+   "requests": [
+    {
+     "name": "pattern-matches",
+     "resource": {
+      "id": "iso-x34",
+      "x": "abc"
+     }
+    },
+    {
+     "name": "pattern-does-not-match",
+     "resource": {
+      "id": "iso-x34",
+      "x": "zzz"
+     }
+    }
+   ]
+  },
+  {
+   "id": "c10-negative-number-equals",
+   "resourceType": "PARITY_SUITE_ISO_C10",
+   "about": "Equality compares through the string form, so 5.0 does not equal 5 (c1); the relational operators compare numerically, so the string \"10\" is greater than 5 (c3, in the round 2 semantics cases, where a string comparison would answer false). No other case puts a sign or a fraction in the literal itself.",
+   "condition": "resource.n == -5",
+   "requests": [
+    {
+     "name": "exact",
+     "resource": {
+      "id": "iso-c10",
+      "n": -5
+     }
+    },
+    {
+     "name": "same-magnitude-positive",
+     "resource": {
+      "id": "iso-c10",
+      "n": 5
+     }
+    }
+   ]
+  },
+  {
+   "id": "c11-decimal-number-equals",
+   "resourceType": "PARITY_SUITE_ISO_C11",
+   "about": "Equality compares through the string form, so 5.0 does not equal 5 (c1); the relational operators compare numerically, so the string \"10\" is greater than 5 (c3, in the round 2 semantics cases, where a string comparison would answer false). No other case puts a sign or a fraction in the literal itself.",
+   "condition": "resource.n == 5.5",
+   "requests": [
+    {
+     "name": "exact",
+     "resource": {
+      "id": "iso-c11",
+      "n": 5.5
+     }
+    },
+    {
+     "name": "string",
+     "resource": {
+      "id": "iso-c11",
+      "n": "5.5"
+     }
+    },
+    {
+     "name": "trailing-zero",
+     "resource": {
+      "id": "iso-c11",
+      "n": 5.50
+     }
+    }
+   ]
+  },
+  {
+   "id": "c12-greater-than-negative",
+   "resourceType": "PARITY_SUITE_ISO_C12",
+   "about": "Equality compares through the string form, so 5.0 does not equal 5 (c1); the relational operators compare numerically, so the string \"10\" is greater than 5 (c3, in the round 2 semantics cases, where a string comparison would answer false). No other case puts a sign or a fraction in the literal itself.",
+   "condition": "resource.n > -5",
+   "requests": [
+    {
+     "name": "above-boundary",
+     "resource": {
+      "id": "iso-c12",
+      "n": -4
+     }
+    },
+    {
+     "name": "below-boundary",
+     "resource": {
+      "id": "iso-c12",
+      "n": -10
+     }
+    }
+   ]
+  },
+  {
+   "id": "j9-jsonpath-filter-expression",
+   "resourceType": "PARITY_SUITE_ISO_J9",
+   "about": "resource.list[0] and resource.items[*].id both work (j5, j6), while resource['x'] is accepted and answers false (j7). The case pairs a resource the path selects with one it does not, so that an accepted path nobody evaluates reads as two false answers.",
+   "condition": "resource.items[?(@.type=='a')].id CONTAINS 'x'",
+   "requests": [
+    {
+     "name": "selected-item-has-the-id",
+     "resource": {
+      "id": "iso-j9",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       },
+       {
+        "type": "b",
+        "id": "y"
+       }
+      ]
+     }
+    },
+    {
+     "name": "the-id-is-on-the-other-item",
+     "resource": {
+      "id": "iso-j9",
+      "items": [
+       {
+        "type": "a",
+        "id": "y"
+       },
+       {
+        "type": "b",
+        "id": "x"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "j10-jsonpath-recursive-descent",
+   "resourceType": "PARITY_SUITE_ISO_J10",
+   "about": "resource.list[0] and resource.items[*].id both work (j5, j6), while resource['x'] is accepted and answers false (j7). The case pairs a resource the path selects with one it does not, so that an accepted path nobody evaluates reads as two false answers.",
+   "condition": "resource..code CONTAINS 'x'",
+   "requests": [
+    {
+     "name": "nested-code",
+     "resource": {
+      "id": "iso-j10",
+      "o": {
+       "code": "x"
+      }
+     }
+    },
+    {
+     "name": "no-code-anywhere",
+     "resource": {
+      "id": "iso-j10",
+      "o": {
+       "other": "x"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "h3-filtered-pip-plain-reference",
+   "resourceType": "PARITY_SUITE_ISO_H3",
+   "about": "The FILTERED PIP. The agent drops the pipType on the pull path (internal/acconfig/convert.go) and refuses it on the mount path (internal/pips/validate.go), and neither the type nor the condition form that passes it an argument appears in any fixture. The three h cases separate the two: whether the declaration is accepted, whether the form is accepted on a PIP that has the type, and whether the form is accepted on one that does not. subject.parityFilteredList declares a FILTERED PIP with the fields of an accepted GENERAL one, so that a refusal is about the pipType rather than about a field the declaration left out; no fixture has made the PAP accept this pipType and the field set it requires is unknown, so the case records the upload status. subject.parityList is a GENERAL PIP returning a collection, shaped like the accepted declarations under testdata/fixtures, so that h5 measures the FILTERED condition form against a pipType the PAP is known to take.",
+   "condition": "subject.parityFilteredList CONTAINS 'red'",
+   "pips": [
+    "filtered"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-h3"
+     }
+    }
+   ]
+  },
+  {
+   "id": "h4-filtered-pip-filtered-form",
+   "resourceType": "PARITY_SUITE_ISO_H4",
+   "about": "The FILTERED PIP. The agent drops the pipType on the pull path (internal/acconfig/convert.go) and refuses it on the mount path (internal/pips/validate.go), and neither the type nor the condition form that passes it an argument appears in any fixture. The three h cases separate the two: whether the declaration is accepted, whether the form is accepted on a PIP that has the type, and whether the form is accepted on one that does not. subject.parityFilteredList declares a FILTERED PIP with the fields of an accepted GENERAL one, so that a refusal is about the pipType rather than about a field the declaration left out; no fixture has made the PAP accept this pipType and the field set it requires is unknown, so the case records the upload status. subject.parityList is a GENERAL PIP returning a collection, shaped like the accepted declarations under testdata/fixtures, so that h5 measures the FILTERED condition form against a pipType the PAP is known to take.",
+   "condition": "subject.parityFilteredList FILTERED 'red' CONTAINS 'red'",
+   "pips": [
+    "filtered"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-h4"
+     }
+    }
+   ]
+  },
+  {
+   "id": "h5-filtered-form-on-general-pip",
+   "resourceType": "PARITY_SUITE_ISO_H5",
+   "about": "The FILTERED PIP. The agent drops the pipType on the pull path (internal/acconfig/convert.go) and refuses it on the mount path (internal/pips/validate.go), and neither the type nor the condition form that passes it an argument appears in any fixture. The three h cases separate the two: whether the declaration is accepted, whether the form is accepted on a PIP that has the type, and whether the form is accepted on one that does not. subject.parityFilteredList declares a FILTERED PIP with the fields of an accepted GENERAL one, so that a refusal is about the pipType rather than about a field the declaration left out; no fixture has made the PAP accept this pipType and the field set it requires is unknown, so the case records the upload status. subject.parityList is a GENERAL PIP returning a collection, shaped like the accepted declarations under testdata/fixtures, so that h5 measures the FILTERED condition form against a pipType the PAP is known to take.",
+   "condition": "subject.parityList FILTERED 'red' CONTAINS 'red'",
+   "pips": [
+    "list"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "iso-h5"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,199 @@
+{
+ "about": "What check/filter and check/resource answer when one rule's predicate names a placeholder that cannot be resolved and a neighbor rule of the same policy has a predicate that can. x20 records that an undeclared placeholder in a simplified policy's only predicate denies the whole filter answer, and permission-list-no-mapping records the same for ${subject.permissions} with no MAPPING PIP; neither has a neighbor. undeclared-placeholder-alone is the regular-set twin of x20, without the neighbor; declared-placeholder-beside-a-predicate is the positive control, the same pair with ${subject.id}, which renders (rls-happy). No case declares a PIP. The agent's converter accepts every set here.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "undeclared-placeholder-beside-a-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-the-placeholder",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR9Undeclared}"
+         }
+        },
+        {
+         "key": "list-with-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "permissions-without-mapping-beside-a-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-the-placeholder",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})"
+         }
+        },
+        {
+         "key": "list-with-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "undeclared-placeholder-alone",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-the-placeholder",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.parityR9Undeclared}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "declared-placeholder-beside-a-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-the-placeholder",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.id}"
+         }
+        },
+        {
+         "key": "list-with-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  }
+ ]
+}

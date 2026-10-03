@@ -1,0 +1,609 @@
+{
+ "about": "What a condition answers over a null value and over an absent key, in the operators no other golden records, over a JSON Path that selects nothing, and at a fractional boundary. Over a null value the recorded answers are per operator: > does not end the rule (n3-greater-than-null-or-true is true) and its value alone is not recorded, NOT IN is true (n1), and IS EMPTY and NOT CONTAINS are false (n4, n2) alone, where a false leaf and an ended rule look the same. The nl cases record <, >=, >, <=, IS NOT NULL and IS NOT EMPTY alone over null, so the operator-by-state table has a value in every relational cell rather than in two (IS NOT NULL over an absent key is recorded only inside a guarded chain, s12a); the second request of each is the control that the operator answers true for a value. Over an absent key IS NULL is true (s6a) and == ends the rule (s10); !=, >, NOT IN and NOT CONTAINS (s2b, s5, s3, s4), IS EMPTY and IS NOT EMPTY (s7, l9) are recorded false only alone, and NOT MATCH, NOT CONTAINS ANY and IS NOT SUBSET only over null (m1, m2, m3). The nn cases put each through a probe and its control. The np cases do the same for a JSON Path that selects nothing from a resource that has the parent, where a plain path to an absent key ends the rule (s2b-neq-attribute-absent with s10): a filter expression with no match and a recursive descent that finds nothing are recorded only under CONTAINS (j9, j10), where an empty selection and an ended rule both answer false, and an index past the end and a wildcard to a key no element has are not recorded at all. A selection is a collection, and == over one is recorded nowhere, so each path goes through a probe with NOT CONTAINS and alone with IS EMPTY: an empty selection is IS EMPTY true and probe true, an ended rule probe false. The relational operators compare numerically once the attribute is a number (c3-greater-than-string-number), while == compares the string forms and is false for 5.0 against 5 (c1-number-literal/float); nb1 and nb2 send 5.0 as a number and as a string against >= 5 and <= 5, with the integer 5 as the control, which x4-greater-or-equal-words records as true. A true probe means the operand evaluated to a value and OR went on, a false probe that it ended the rule, and a false control that the fixture is broken. Every case carries a request a working operator answers true, because a condition access-control accepts and never evaluates answers false to every request. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_NUL_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "nl1-less-than-over-null",
+   "resourceType": "PARITY_SUITE_NUL_NL1",
+   "condition": "resource.n < 5",
+   "requests": [
+    {
+     "name": "null",
+     "resource": {
+      "id": "nul-nl1",
+      "n": null
+     }
+    },
+    {
+     "name": "number-below",
+     "resource": {
+      "id": "nul-nl1",
+      "n": 4
+     }
+    }
+   ]
+  },
+  {
+   "id": "nl2-greater-or-equal-over-null",
+   "resourceType": "PARITY_SUITE_NUL_NL2",
+   "condition": "resource.n >= 5",
+   "requests": [
+    {
+     "name": "null",
+     "resource": {
+      "id": "nul-nl2",
+      "n": null
+     }
+    },
+    {
+     "name": "number-at-the-boundary",
+     "resource": {
+      "id": "nul-nl2",
+      "n": 5
+     }
+    }
+   ]
+  },
+  {
+   "id": "nl5-greater-than-over-null",
+   "resourceType": "PARITY_SUITE_NUL_NL5",
+   "condition": "resource.n > 5",
+   "requests": [
+    {
+     "name": "null",
+     "resource": {
+      "id": "nul-nl5",
+      "n": null
+     }
+    },
+    {
+     "name": "number-above",
+     "resource": {
+      "id": "nul-nl5",
+      "n": 6
+     }
+    }
+   ]
+  },
+  {
+   "id": "nl6-less-or-equal-over-null",
+   "resourceType": "PARITY_SUITE_NUL_NL6",
+   "condition": "resource.n <= 5",
+   "requests": [
+    {
+     "name": "null",
+     "resource": {
+      "id": "nul-nl6",
+      "n": null
+     }
+    },
+    {
+     "name": "number-at-the-boundary",
+     "resource": {
+      "id": "nul-nl6",
+      "n": 5
+     }
+    }
+   ]
+  },
+  {
+   "id": "nl3-is-not-null-over-null",
+   "resourceType": "PARITY_SUITE_NUL_NL3",
+   "condition": "resource.x IS NOT NULL",
+   "requests": [
+    {
+     "name": "null",
+     "resource": {
+      "id": "nul-nl3",
+      "x": null
+     }
+    },
+    {
+     "name": "string",
+     "resource": {
+      "id": "nul-nl3",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nl4-is-not-empty-over-null",
+   "resourceType": "PARITY_SUITE_NUL_NL4",
+   "about": "IS EMPTY over null is recorded false (n4). If IS NOT EMPTY is false as well, null is neither empty nor non-empty; if it is true, the two operators are complements.",
+   "condition": "resource.x IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "null",
+     "resource": {
+      "id": "nul-nl4",
+      "x": null
+     }
+    },
+    {
+     "name": "collection-with-an-element",
+     "resource": {
+      "id": "nul-nl4",
+      "x": [
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn1-is-empty-over-absence",
+   "resourceType": "PARITY_SUITE_NUL_NN1",
+   "condition": "resource.x IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn1-is-empty-over-absence-control",
+   "resourceType": "PARITY_SUITE_NUL_NN1_CTL",
+   "condition": "resource.a == 'y' OR resource.x IS EMPTY",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn2-is-not-empty-over-absence",
+   "resourceType": "PARITY_SUITE_NUL_NN2",
+   "condition": "resource.x IS NOT EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn2-is-not-empty-over-absence-control",
+   "resourceType": "PARITY_SUITE_NUL_NN2_CTL",
+   "condition": "resource.a == 'y' OR resource.x IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn3-not-match-over-absence",
+   "resourceType": "PARITY_SUITE_NUL_NN3",
+   "condition": "resource.x NOT MATCH ab* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn3-not-match-over-absence-control",
+   "resourceType": "PARITY_SUITE_NUL_NN3_CTL",
+   "condition": "resource.a == 'y' OR resource.x NOT MATCH ab*",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn4-not-contains-any-over-absence",
+   "resourceType": "PARITY_SUITE_NUL_NN4",
+   "condition": "resource.tags NOT CONTAINS ANY 'p', 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn4-not-contains-any-over-absence-control",
+   "resourceType": "PARITY_SUITE_NUL_NN4_CTL",
+   "condition": "resource.a == 'y' OR resource.tags NOT CONTAINS ANY 'p', 'q'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn5-is-not-subset-over-absence",
+   "resourceType": "PARITY_SUITE_NUL_NN5",
+   "condition": "resource.list IS NOT SUBSET 'p', 'q' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nn5-is-not-subset-over-absence-control",
+   "resourceType": "PARITY_SUITE_NUL_NN5_CTL",
+   "condition": "resource.a == 'y' OR resource.list IS NOT SUBSET 'p', 'q'",
+   "requests": [
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "nul-key-absent",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "np1-filter-expression-without-a-match",
+   "resourceType": "PARITY_SUITE_NUL_NP1",
+   "condition": "resource.items[?(@.type=='zzz')].id NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np1-filter-expression-without-a-match-control",
+   "resourceType": "PARITY_SUITE_NUL_NP1_CTL",
+   "condition": "resource.a == 'y' OR resource.items[?(@.type=='zzz')].id NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np1-filter-expression-without-a-match-is-empty",
+   "resourceType": "PARITY_SUITE_NUL_NP1_EMPTY",
+   "condition": "resource.items[?(@.type=='zzz')].id IS EMPTY",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np2-recursive-descent-without-a-match",
+   "resourceType": "PARITY_SUITE_NUL_NP2",
+   "condition": "resource..nocode NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np2-recursive-descent-without-a-match-control",
+   "resourceType": "PARITY_SUITE_NUL_NP2_CTL",
+   "condition": "resource.a == 'y' OR resource..nocode NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np2-recursive-descent-without-a-match-is-empty",
+   "resourceType": "PARITY_SUITE_NUL_NP2_EMPTY",
+   "condition": "resource..nocode IS EMPTY",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np3-index-past-the-end",
+   "resourceType": "PARITY_SUITE_NUL_NP3",
+   "condition": "resource.list[5] NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np3-index-past-the-end-control",
+   "resourceType": "PARITY_SUITE_NUL_NP3_CTL",
+   "condition": "resource.a == 'y' OR resource.list[5] NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np3-index-past-the-end-is-empty",
+   "resourceType": "PARITY_SUITE_NUL_NP3_EMPTY",
+   "condition": "resource.list[5] IS EMPTY",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np4-wildcard-to-a-missing-key",
+   "resourceType": "PARITY_SUITE_NUL_NP4",
+   "condition": "resource.items[*].nokey NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np4-wildcard-to-a-missing-key-control",
+   "resourceType": "PARITY_SUITE_NUL_NP4_CTL",
+   "condition": "resource.a == 'y' OR resource.items[*].nokey NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "np4-wildcard-to-a-missing-key-is-empty",
+   "resourceType": "PARITY_SUITE_NUL_NP4_EMPTY",
+   "condition": "resource.items[*].nokey IS EMPTY",
+   "requests": [
+    {
+     "name": "nothing-selected",
+     "resource": {
+      "id": "nul-nothing-selected",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "x"
+       }
+      ],
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "nb1-greater-or-equal-at-a-fractional-boundary",
+   "resourceType": "PARITY_SUITE_NUL_NB1",
+   "condition": "resource.n >= 5",
+   "requests": [
+    {
+     "name": "integer",
+     "resource": {
+      "id": "nul-nb1",
+      "n": 5
+     }
+    },
+    {
+     "name": "one-decimal-place",
+     "resource": {
+      "id": "nul-nb1",
+      "n": 5.0
+     }
+    },
+    {
+     "name": "one-decimal-place-as-a-string",
+     "resource": {
+      "id": "nul-nb1",
+      "n": "5.0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nb2-less-or-equal-at-a-fractional-boundary",
+   "resourceType": "PARITY_SUITE_NUL_NB2",
+   "condition": "resource.n <= 5",
+   "requests": [
+    {
+     "name": "integer",
+     "resource": {
+      "id": "nul-nb2",
+      "n": 5
+     }
+    },
+    {
+     "name": "one-decimal-place",
+     "resource": {
+      "id": "nul-nb2",
+      "n": 5.0
+     }
+    },
+    {
+     "name": "one-decimal-place-as-a-string",
+     "resource": {
+      "id": "nul-nb2",
+      "n": "5.0"
+     }
+    }
+   ]
+  }
+ ]
+}

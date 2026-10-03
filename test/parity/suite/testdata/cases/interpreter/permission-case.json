@@ -1,0 +1,70 @@
+{
+ "about": "Whether subject.permissions CONTAINS compares case-insensitively. Case is ignored under == (c5-string-equals-other-case), under CONTAINS over a resource collection (vt3 asks) and under subject.roles CONTAINS (u2-subject-roles-other-case), and subject.permissions CONTAINS is the leaf product policies are built from. The MAPPING PIP grants Parity.Read, spelled in mixed case, to ROLE_PARITY_READER under its own suffix, so that it never merges with another mapping. pm1-mapping-pip-merged-list records a permission granted through a MAPPING PIP and read back in the same case, so pc3, which repeats that shape, is the control for the two cases that spell the permission in another case. pm3-mapping-pip-after-declaration-removed records that a mapping goes away with its declaration, so each case declares the PIP again.",
+ "resourceTypePrefix": "PARITY_SUITE_PERM_",
+ "pins": {},
+ "pips": {
+  "mixedcase": {
+   "name": "subject.permissions.PARITY_CASE",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "Parity.Read"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "pc1-permission-in-lower-case",
+   "resourceType": "PARITY_SUITE_PERM_PC1",
+   "condition": "subject.permissions CONTAINS 'parity.read'",
+   "pips": [
+    "mixedcase"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "perm-pc1"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pc2-permission-in-upper-case",
+   "resourceType": "PARITY_SUITE_PERM_PC2",
+   "condition": "subject.permissions CONTAINS 'PARITY.READ'",
+   "pips": [
+    "mixedcase"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "perm-pc2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pc3-permission-in-the-granted-case",
+   "resourceType": "PARITY_SUITE_PERM_PC3",
+   "condition": "subject.permissions CONTAINS 'Parity.Read'",
+   "pips": [
+    "mixedcase"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "perm-pc3"
+     }
+    }
+   ]
+  }
+ ]
+}

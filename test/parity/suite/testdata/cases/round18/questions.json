@@ -1,0 +1,411 @@
+{
+ "about": "The rules round 17 left open. A GENERAL body of two values under == and < in a DENY rule: the rule ends (true) or the decision fails (false); the condition reads no resource attribute. A GENERAL body 5 or true on the left of IS SUBSET beside a list of the same value as a string or as itself, and a body [5] or [\"5\"] on its right beside the number 5 and the string '5'. Each isolated probe is <comparison> OR resource.a == 'y', asked with a = 'n' and a = 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R18_",
+ "pins": {
+  "/api/v1/pip/r18-list": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/r18-five": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r18-true": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r18-fivelist": {
+   "statusCode": 200,
+   "body": [
+    5
+   ]
+  },
+  "/api/v1/pip/r18-fivetextlist": {
+   "statusCode": 200,
+   "body": [
+    "5"
+   ]
+  }
+ },
+ "pips": {
+  "list": {
+   "name": "subject.parityR18List",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-list",
+   "requestAttributes": {
+    "case": "r18-list"
+   }
+  },
+  "five": {
+   "name": "subject.parityR18Five",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-five",
+   "requestAttributes": {
+    "case": "r18-five"
+   }
+  },
+  "true": {
+   "name": "subject.parityR18True",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-true",
+   "requestAttributes": {
+    "case": "r18-true"
+   }
+  },
+  "fivelist": {
+   "name": "subject.parityR18FiveList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-fivelist",
+   "requestAttributes": {
+    "case": "r18-fivelist"
+   }
+  },
+  "fivetextlist": {
+   "name": "subject.parityR18FiveTextList",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r18-fivetextlist",
+   "requestAttributes": {
+    "case": "r18-fivetextlist"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "q18-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-general-list-equals-in-a-deny-rule",
+   "about": "A GENERAL body [\"v\",\"w\"] under an operator that reads one value, in a DENY rule.",
+   "pips": [
+    "list"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR18List == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-general-list-less-than-in-a-deny-rule",
+   "about": "A GENERAL body [\"v\",\"w\"] under an operator that reads one value, in a DENY rule.",
+   "pips": [
+    "list"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR18List < 5",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-five-body-is-subset",
+   "condition": "subject.parityR18Five IS SUBSET resource.y OR resource.a == 'y'",
+   "pips": [
+    "five"
+   ],
+   "requests": [
+    {
+     "name": "text-a-n",
+     "resource": {
+      "y": [
+       "5"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "y": [
+       "5"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "number-a-n",
+     "resource": {
+      "y": [
+       5
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "number-a-y",
+     "resource": {
+      "y": [
+       5
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-true-body-is-subset",
+   "condition": "subject.parityR18True IS SUBSET resource.y OR resource.a == 'y'",
+   "pips": [
+    "true"
+   ],
+   "requests": [
+    {
+     "name": "text-a-n",
+     "resource": {
+      "y": [
+       "true"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "y": [
+       "true"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "boolean-a-n",
+     "resource": {
+      "y": [
+       true
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "boolean-a-y",
+     "resource": {
+      "y": [
+       true
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-five-list-body-on-the-right-of-is-subset",
+   "condition": "resource.y IS SUBSET subject.parityR18FiveList OR resource.a == 'y'",
+   "pips": [
+    "fivelist"
+   ],
+   "requests": [
+    {
+     "name": "number-a-n",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "number-a-y",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "text-a-n",
+     "resource": {
+      "y": "5",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "y": "5",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q18-five-text-list-body-on-the-right-of-is-subset",
+   "condition": "resource.y IS SUBSET subject.parityR18FiveTextList OR resource.a == 'y'",
+   "pips": [
+    "fivetextlist"
+   ],
+   "requests": [
+    {
+     "name": "number-a-n",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "number-a-y",
+     "resource": {
+      "y": 5,
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "text-a-n",
+     "resource": {
+      "y": "5",
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "y": "5",
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

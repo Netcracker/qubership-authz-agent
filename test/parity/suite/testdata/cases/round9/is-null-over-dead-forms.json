@@ -1,0 +1,68 @@
+{
+ "about": "What IS NULL answers over the bracket path resource['x'] and the literal null, two forms the PAP accepts and that answer false under every other operator recorded (j7-bracket-path, df1, df2). IS NULL is the one operator that is true over an absent key (s6a), so a form read as an absent attribute is true here for every request. Each case is sent a resource that holds x and one that does not; dn-is-null-over-a-plain-path is the control, false and true. The agent's condition parser accepts both forms.",
+ "resourceTypePrefix": "PARITY_SUITE_R9_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "dn-is-null-over-a-bracket-path",
+   "resourceType": "PARITY_SUITE_R9_DN_BRACKET",
+   "condition": "resource['x'] IS NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r9-dead",
+      "x": "v"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r9-dead"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-null-over-the-null-literal",
+   "resourceType": "PARITY_SUITE_R9_DN_LITERAL",
+   "condition": "null IS NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r9-dead",
+      "x": "v"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r9-dead"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-null-over-a-plain-path",
+   "resourceType": "PARITY_SUITE_R9_DN_PLAIN",
+   "condition": "resource.x IS NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r9-dead",
+      "x": "v"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r9-dead"
+     }
+    }
+   ]
+  }
+ ]
+}

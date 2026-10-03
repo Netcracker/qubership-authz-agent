@@ -1,0 +1,278 @@
+{
+ "about": "MAPPING keys the PAP accepts at upload that later read a GENERAL PIP, which it refuses as a key. First: the key's name is a TOKEN in the case's domain and a GENERAL in another domain, so the upload sees a TOKEN and the decision may read either. Second: the key's name is a TOKEN in another domain when the MAPPING is loaded, and that domain then declares the name GENERAL again; the last case asks the MAPPING case's resource type. The GENERAL routes answer g, or fail with 500.",
+ "resourceTypePrefix": "PARITY_SUITE_R29A_",
+ "pins": {
+  "/api/v1/pip/r29-dual": {
+   "statusCode": 200,
+   "body": [
+    "g"
+   ]
+  },
+  "/api/v1/pip/r29-redeclared": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 29 case"
+   }
+  }
+ },
+ "pips": {
+  "dual-general": {
+   "name": "subject.parityR29Dual",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-dual",
+   "requestAttributes": {
+    "case": "subject.parityR29Dual"
+   }
+  },
+  "dual-token": {
+   "name": "subject.parityR29Dual",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username",
+   "cacheable": false
+  },
+  "dual-mapping": {
+   "name": "subject.permissions.PARITY_R29_DUAL",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.parityR29Dual": {
+     "parity-reader": [
+      "PARITY_R29_FROM_TOKEN"
+     ],
+     "g": [
+      "PARITY_R29_FROM_GENERAL"
+     ]
+    }
+   }
+  },
+  "key-token": {
+   "name": "subject.parityR29Key",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username",
+   "cacheable": false
+  },
+  "key-general": {
+   "name": "subject.parityR29Key",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-redeclared",
+   "requestAttributes": {
+    "case": "subject.parityR29Key"
+   }
+  },
+  "key-mapping": {
+   "name": "subject.permissions.PARITY_R29_KEY",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.parityR29Key": {
+     "parity-reader": [
+      "PARITY_R29_FROM_TOKEN"
+     ],
+     "g": [
+      "PARITY_R29_FROM_GENERAL"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-dual-general-elsewhere",
+   "domain": "PARITY_R29_OTHER",
+   "pips": [
+    "dual-general"
+   ],
+   "about": "Domain PARITY_R29_OTHER declares subject.parityR29Dual as a GENERAL PIP answering g.",
+   "condition": "subject.parityR29Dual == 'g' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-dual-token-here",
+   "pips": [
+    "dual-token",
+    "dual-mapping"
+   ],
+   "about": "The case's domain declares subject.parityR29Dual as a TOKEN over preferred_username (parity-reader) and a MAPPING keyed on it: parity-reader grants PARITY_R29_FROM_TOKEN, g PARITY_R29_FROM_GENERAL. The PIP itself is asked too.",
+   "condition": "resource.want == 'from-token' AND subject.permissions CONTAINS 'PARITY_R29_FROM_TOKEN' OR resource.want == 'from-general' AND subject.permissions CONTAINS 'PARITY_R29_FROM_GENERAL' OR resource.a == 'y' OR resource.want == 'name' AND subject.parityR29Dual == 'parity-reader'",
+   "requests": [
+    {
+     "name": "from-token-a-n",
+     "resource": {
+      "a": "n",
+      "want": "from-token",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "from-token-a-y",
+     "resource": {
+      "a": "y",
+      "want": "from-token",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "from-general-a-n",
+     "resource": {
+      "a": "n",
+      "want": "from-general",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "from-general-a-y",
+     "resource": {
+      "a": "y",
+      "want": "from-general",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "name-a-n",
+     "resource": {
+      "a": "n",
+      "want": "name",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-key-token-elsewhere",
+   "domain": "PARITY_R29_OTHER",
+   "pips": [
+    "key-token"
+   ],
+   "about": "Domain PARITY_R29_OTHER declares subject.parityR29Key as a TOKEN over preferred_username.",
+   "condition": "subject.parityR29Key == 'parity-reader' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-key-mapping-loaded",
+   "pips": [
+    "key-mapping"
+   ],
+   "about": "The case's domain declares a MAPPING keyed on subject.parityR29Key, which domain PARITY_R29_OTHER declares as a TOKEN.",
+   "condition": "resource.want == 'from-token' AND subject.permissions CONTAINS 'PARITY_R29_FROM_TOKEN' OR resource.want == 'from-general' AND subject.permissions CONTAINS 'PARITY_R29_FROM_GENERAL' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "from-token-a-n",
+     "resource": {
+      "a": "n",
+      "want": "from-token",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "from-token-a-y",
+     "resource": {
+      "a": "y",
+      "want": "from-token",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "from-general-a-n",
+     "resource": {
+      "a": "n",
+      "want": "from-general",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "from-general-a-y",
+     "resource": {
+      "a": "y",
+      "want": "from-general",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-key-general-redeclared",
+   "domain": "PARITY_R29_OTHER",
+   "pips": [
+    "key-general"
+   ],
+   "about": "Domain PARITY_R29_OTHER declares subject.parityR29Key again, as a GENERAL PIP whose route fails with 500. The requests ask the resource type of r29r28-key-mapping-loaded, whose policy the declaration of the case's domain still holds.",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "from-token-a-n",
+     "resource": {
+      "a": "n",
+      "want": "from-token",
+      "id": "r29"
+     },
+     "type": "PARITY_SUITE_R29A_R29R28_KEY_MAPPING_LOADED"
+    },
+    {
+     "name": "from-token-a-y",
+     "resource": {
+      "a": "y",
+      "want": "from-token",
+      "id": "r29"
+     },
+     "type": "PARITY_SUITE_R29A_R29R28_KEY_MAPPING_LOADED"
+    },
+    {
+     "name": "from-general-a-n",
+     "resource": {
+      "a": "n",
+      "want": "from-general",
+      "id": "r29"
+     },
+     "type": "PARITY_SUITE_R29A_R29R28_KEY_MAPPING_LOADED"
+    },
+    {
+     "name": "from-general-a-y",
+     "resource": {
+      "a": "y",
+      "want": "from-general",
+      "id": "r29"
+     },
+     "type": "PARITY_SUITE_R29A_R29R28_KEY_MAPPING_LOADED"
+    }
+   ]
+  }
+ ]
+}

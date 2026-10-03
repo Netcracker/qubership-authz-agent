@@ -17,18 +17,15 @@ package model
 import "encoding/json"
 
 // CheckResourcesRequest is the v2 POST /access/v2/check/resource/bulk/operations
-// request body, mirroring
-// com.netcracker.security.authorization.abac.api.client.v2.model.request.CheckResourcesRequest
-// (CheckResourcesRequest.java:17-35).
+// request body.
 type CheckResourcesRequest struct {
 	Type    string                       `json:"type"`
 	Entries []CheckResourcesRequestEntry `json:"entries"`
 }
 
-// CheckResourcesRequestEntry mirrors
-// com.netcracker.security.authorization.abac.api.client.v2.model.request.CheckResourcesRequestEntry
-// (CheckResourcesRequestEntry.java:18-35). ID and Resource use omitempty because
-// the legacy DTO is @JsonInclude(NON_NULL) per D-V item 8.
+// CheckResourcesRequestEntry is one entry of CheckResourcesRequest. ID and
+// Resource use omitempty because the legacy service leaves out null fields, per
+// D-V item 8.
 type CheckResourcesRequestEntry struct {
 	ID         *string  `json:"id,omitempty"`
 	Operations []string `json:"operations"`
@@ -36,10 +33,8 @@ type CheckResourcesRequestEntry struct {
 }
 
 // CheckResourcesResponse is the v2 POST /access/v2/check/resource/bulk/operations
-// response body, mirroring
-// com.netcracker.security.authorization.abac.api.client.v2.model.response.CheckResourcesResponse
-// (CheckResourcesResponse.java:18-37). The Decision map is
-// Map<String, Set<String>> on the Java side; Go represents it as
+// response body. The Decision map holds a set of operations per id; Go
+// represents it as
 // map[string][]string and the GoldenComparator sorts the slice values
 // order-insensitive via cmpopts.SortSlices per D-M.
 type CheckResourcesResponse struct {

@@ -1,0 +1,135 @@
+{
+ "about": "Whether the PAP refuses subject.isM2M in a condition by its name or because nothing declares it, and whether it refuses a MAPPING PIP named subject.permissions with no suffix. rule-condition-subject-is-m2m, in a regular set, and g8a-subject-is-m2m, a bare subject.isM2M in a simplified policy, recorded the refusal of an undeclared subject.isM2M on access-control 5.13, which either reason produces (6.1.6 accepts the bare form); pm1 records a MAPPING PIP with a suffix, and a declaration without one is recorded nowhere. Each case reads what it declares, with the header x-parity-r11-is-m2m set to yes where it reads the header. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {
+  "ism2m": {
+   "name": "subject.isM2M",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r11-is-m2m",
+   "cacheable": false
+  },
+  "othername": {
+   "name": "subject.parityR11IsM2M",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r11-is-m2m",
+   "cacheable": false
+  },
+  "unsuffixed": {
+   "name": "subject.permissions",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r11_unsuffixed"
+     ]
+    }
+   }
+  },
+  "suffixed": {
+   "name": "subject.permissions.PARITY_R11",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r11_suffixed"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "dm-is-m2m-declared",
+   "about": "Declares a HEADER PIP named subject.isM2M and reads it.",
+   "condition": "subject.isM2M == 'yes'",
+   "pips": [
+    "ism2m"
+   ],
+   "requests": [
+    {
+     "name": "header-yes",
+     "headers": {
+      "x-parity-r11-is-m2m": "yes"
+     },
+     "resource": {
+      "id": "r11-is-m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dm-is-m2m-undeclared",
+   "about": "A control: the same condition with nothing declared.",
+   "condition": "subject.isM2M == 'yes'",
+   "requests": [
+    {
+     "name": "header-yes",
+     "headers": {
+      "x-parity-r11-is-m2m": "yes"
+     },
+     "resource": {
+      "id": "r11-is-m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dm-same-pip-under-another-name",
+   "about": "A control: the same HEADER PIP under a name of its own.",
+   "condition": "subject.parityR11IsM2M == 'yes'",
+   "pips": [
+    "othername"
+   ],
+   "requests": [
+    {
+     "name": "header-yes",
+     "headers": {
+      "x-parity-r11-is-m2m": "yes"
+     },
+     "resource": {
+      "id": "r11-is-m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "um-unsuffixed-mapping",
+   "about": "Declares a MAPPING PIP named subject.permissions, granting the permission to the reader's role, and reads the permission.",
+   "condition": "subject.permissions CONTAINS 'parity_r11_unsuffixed'",
+   "pips": [
+    "unsuffixed"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r11-mapping"
+     }
+    }
+   ]
+  },
+  {
+   "id": "um-suffixed-mapping",
+   "about": "The control of um-unsuffixed-mapping: the same declaration named subject.permissions.PARITY_R11.",
+   "condition": "subject.permissions CONTAINS 'parity_r11_suffixed'",
+   "pips": [
+    "suffixed"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r11-mapping"
+     }
+    }
+   ]
+  }
+ ]
+}

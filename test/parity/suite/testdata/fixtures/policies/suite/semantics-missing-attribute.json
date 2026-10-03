@@ -1,0 +1,139 @@
+[
+  {
+    "_comment": "Missing resource attribute under ==: present, absent, and null.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S1",
+    "resourceType": "PARITY_SUITE_SEM_S1",
+    "operation": "READ",
+    "condition": "resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0001"
+  },
+  {
+    "_comment": "Missing resource attribute under !=: null semantics allows, failing the policy denies.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S2",
+    "resourceType": "PARITY_SUITE_SEM_S2",
+    "operation": "READ",
+    "condition": "resource.x != 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0002"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S3",
+    "resourceType": "PARITY_SUITE_SEM_S3",
+    "operation": "READ",
+    "condition": "resource.x NOT IN 'v', 'w'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0003"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S4",
+    "resourceType": "PARITY_SUITE_SEM_S4",
+    "operation": "READ",
+    "condition": "resource.tags NOT CONTAINS 'red'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0004"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S5",
+    "resourceType": "PARITY_SUITE_SEM_S5",
+    "operation": "READ",
+    "condition": "resource.n > 5",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0005"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S6",
+    "resourceType": "PARITY_SUITE_SEM_S6",
+    "operation": "READ",
+    "condition": "resource.x IS NULL",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0006"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S7",
+    "resourceType": "PARITY_SUITE_SEM_S7",
+    "operation": "READ",
+    "condition": "resource.tags IS EMPTY",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0007"
+  },
+  {
+    "_comment": "Short circuit: a true left operand of OR before the missing attribute.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S9",
+    "resourceType": "PARITY_SUITE_SEM_S9",
+    "operation": "READ",
+    "condition": "resource.a == 'y' OR resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0008"
+  },
+  {
+    "_comment": "Order: the missing attribute is the left operand of OR.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S10",
+    "resourceType": "PARITY_SUITE_SEM_S10",
+    "operation": "READ",
+    "condition": "resource.x == 'v' OR resource.a == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0009"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S11",
+    "resourceType": "PARITY_SUITE_SEM_S11",
+    "operation": "READ",
+    "condition": "resource.a == 'n' OR resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d000a"
+  },
+  {
+    "_comment": "Guarded chain inside OR: IS NOT NULL protects the comparison that follows it.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_S12",
+    "resourceType": "PARITY_SUITE_SEM_S12",
+    "operation": "READ",
+    "condition": "resource.x IS NOT NULL AND resource.x == 'v' OR resource.a == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d000b"
+  }
+]

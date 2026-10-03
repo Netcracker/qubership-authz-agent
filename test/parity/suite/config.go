@@ -81,6 +81,65 @@ type Config struct {
 	// Profile is the active PARITY_PROFILE. The only supported value is
 	// "authz-agent" (golden collection cannot run from this repository).
 	Profile string
+
+	// Tenants describes the two-tenant stand the tenant-scoped cases need. The
+	// kind parity harness has one realm, so these cases skip unless it is set.
+	Tenants TenantStand
+
+	// TenantClaim holds the clients of the parity realm whose tokens carry a
+	// tenant-id claim, for the cases that record what the claim does to a
+	// decision.
+	TenantClaim TenantClaimClients
+}
+
+// ClientCredentials identify one confidential client of the parity realm.
+type ClientCredentials struct {
+	ID     string
+	Secret string
+}
+
+// TenantClaimClients are the clients of the parity realm that add a hardcoded
+// tenant-id claim to the tokens they issue. The realm import under
+// test/k8s/parity/idp-seed declares them; on a stand with another realm they
+// have to exist with the same claim values.
+type TenantClaimClients struct {
+	// M2MTenantA issues service-account tokens whose tenant-id is tenant A's
+	// identifier: Tenants.A.ID where the stand has two tenants, TenantID
+	// otherwise. On the kind harness both are "default".
+	M2MTenantA ClientCredentials
+	// M2MTenantB issues service-account tokens whose tenant-id is tenant B's
+	// identifier, Tenants.B.ID. The realm import carries a placeholder, since
+	// the kind harness has no tenant B; the cases that use this client skip
+	// there.
+	M2MTenantB ClientCredentials
+	// M2MTenantUnknown issues service-account tokens whose tenant-id is a
+	// tenant no stand has.
+	M2MTenantUnknown ClientCredentials
+	// M2MTenantEmpty issues service-account tokens whose tenant-id is the empty
+	// string.
+	M2MTenantEmpty ClientCredentials
+	// EndUserTenantA issues password-grant tokens for the parity users with
+	// tenant A's identifier as the tenant-id.
+	EndUserTenantA ClientCredentials
+}
+
+// loadTenantClaimClients reads PARITY_CLAIM_{M2M_TENANT_A,M2M_TENANT_B,
+// M2M_TENANT_UNKNOWN,M2M_TENANT_EMPTY,END_USER_TENANT_A}_CLIENT_{ID,SECRET}. The defaults are the
+// clients of the realm import.
+func loadTenantClaimClients() TenantClaimClients {
+	client := func(key, id, secret string) ClientCredentials {
+		return ClientCredentials{
+			ID:     envOr("PARITY_CLAIM_"+key+"_CLIENT_ID", id),
+			Secret: envOr("PARITY_CLAIM_"+key+"_CLIENT_SECRET", secret),
+		}
+	}
+	return TenantClaimClients{
+		M2MTenantA:       client("M2M_TENANT_A", "parity-m2m-tenant-a", "ParityM2MTenantASecret1!@#"),
+		M2MTenantB:       client("M2M_TENANT_B", "parity-m2m-tenant-b", "ParityM2MTenantBSecret1!@#"),
+		M2MTenantUnknown: client("M2M_TENANT_UNKNOWN", "parity-m2m-tenant-unknown", "ParityM2MTenantUnknownSecret1!@#"),
+		M2MTenantEmpty:   client("M2M_TENANT_EMPTY", "parity-m2m-tenant-empty", "ParityM2MTenantEmptySecret1!@#"),
+		EndUserTenantA:   client("END_USER_TENANT_A", "parity-end-user-tenant-a", "ParityEndUserTenantASecret1!@#"),
+	}
 }
 
 // LoadConfig builds a Config from the PARITY_* environment variables. Missing
@@ -104,6 +163,8 @@ func LoadConfig() Config {
 		TenantID:            envOr("PARITY_TENANT_ID", "default"),
 		DomainName:          envOr("PARITY_DOMAIN_NAME", "PARITY"),
 		Profile:             profile,
+		Tenants:             loadTenantStand(),
+		TenantClaim:         loadTenantClaimClients(),
 	}
 }
 

@@ -1,0 +1,43 @@
+[
+  {
+    "_comment": "TOKEN PIP on a claim no parity user carries, with no defaultValue.",
+    "name": "subject.parityNoClaim",
+    "type": "UUID",
+    "pipType": "TOKEN",
+    "claim": "parityNoSuchClaim",
+    "cacheable": false
+  },
+  {
+    "_comment": "Same claim with a defaultValue.",
+    "name": "subject.parityNoClaimDefault",
+    "type": "UUID",
+    "pipType": "TOKEN",
+    "claim": "parityNoSuchClaim",
+    "defaultValue": "none",
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL PIP the semantics cases pin to HTTP 500.",
+    "name": "subject.parityBroken",
+    "url": "http://pip-mock:8090/api/v1/pip/sem-broken",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_SEM_BROKEN"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL PIP the semantics cases pin to an empty JSON object.",
+    "name": "subject.parityEmptyJson",
+    "url": "http://pip-mock:8090/api/v1/pip/sem-empty-json",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "type": "JSON",
+    "jsonPath": "$.value",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_SEM_EMPTY_JSON"
+    },
+    "cacheable": false
+  }
+]

@@ -1,0 +1,103 @@
+{
+ "about": "The keys of a simplified policy's predicates object, beside predicates.mongodbPredicate, which access-control 6.1.6 needs to accept predicates (round 42: r42open-predicates-nested-*). The policy has no condition, so check/resource allows; the filter says which keys became predicates of which dialect.",
+ "resourceTypePrefix": "PARITY_SUITE_R43PC_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r43openpredicatescarriers-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r43open-predicates-mongodb-beside-nested-rsql-sql",
+   "policy": {
+    "rsqlPredicate": "a==top",
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"nested\"}",
+     "rsqlPredicate": "a==nested",
+     "sqlPredicate": "a='nested'"
+    }
+   },
+   "about": "A top-level rsqlPredicate a==top, and inside predicates a mongodbPredicate, an rsqlPredicate a==nested and a sqlPredicate. r42open-predicates-nested-every-format showed the nested rsql and sql keys ignored beside mongodbPredicate when no top-level key is set; this case is a second carrier for that. Round 42 asked a top-level and a nested rsqlPredicate together only without mongodbPredicate, and the upload was refused. Expected: the rsql text a==top and the mongodb text only. An rsql a==nested means the nested rsqlPredicate counts over the top-level one; a sql text, that the nested sqlPredicate counts.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r43"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r43openpredicatescarriers-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r43",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

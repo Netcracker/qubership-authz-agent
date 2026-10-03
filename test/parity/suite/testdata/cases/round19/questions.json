@@ -1,0 +1,1013 @@
+{
+ "about": "Rules no golden pins yet. A GENERAL body 5 or true on the left of IS NOT SUBSET and on the right of CONTAINS; a failing GENERAL PIP beside a false, an ended, or another failing comparison, in both orders; a failing PIP and a null element in a DENY rule; a list or an object on the left against the text it prints as; the same predicate in two rules and in two policies; ${resourceType} in each predicate dialect. Each isolated probe is <comparison> OR resource.a == 'y', asked with a = 'n' and a = 'y'; each DENY-rule case is true when the rule does not deny, false when it denies or the decision fails.",
+ "resourceTypePrefix": "PARITY_SUITE_R19Q_",
+ "pins": {
+  "/api/v1/pip/r19-five": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r19-true": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r19-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 19 case"
+   }
+  },
+  "/api/v1/pip/r19-failing2": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 19 case"
+   }
+  }
+ },
+ "pips": {
+  "five": {
+   "name": "subject.parityR19Five",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r19-five",
+   "requestAttributes": {
+    "case": "r19-five"
+   }
+  },
+  "true": {
+   "name": "subject.parityR19True",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r19-true",
+   "requestAttributes": {
+    "case": "r19-true"
+   }
+  },
+  "failing": {
+   "name": "subject.parityR19Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r19-failing",
+   "requestAttributes": {
+    "case": "r19-failing"
+   }
+  },
+  "failing2": {
+   "name": "subject.parityR19Failing2",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r19-failing2",
+   "requestAttributes": {
+    "case": "r19-failing2"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "q19-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-five-body-is-not-subset",
+   "condition": "subject.parityR19Five IS NOT SUBSET resource.y OR resource.a == 'y'",
+   "pips": [
+    "five"
+   ],
+   "requests": [
+    {
+     "name": "text-a-n",
+     "resource": {
+      "y": [
+       "5"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "y": [
+       "5"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "number-a-n",
+     "resource": {
+      "y": [
+       5
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "number-a-y",
+     "resource": {
+      "y": [
+       5
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-a-n",
+     "resource": {
+      "y": [
+       "6"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "other-a-y",
+     "resource": {
+      "y": [
+       "6"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-true-body-is-not-subset",
+   "condition": "subject.parityR19True IS NOT SUBSET resource.y OR resource.a == 'y'",
+   "pips": [
+    "true",
+    "five"
+   ],
+   "requests": [
+    {
+     "name": "text-a-n",
+     "resource": {
+      "y": [
+       "true"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "y": [
+       "true"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "boolean-a-n",
+     "resource": {
+      "y": [
+       true
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "boolean-a-y",
+     "resource": {
+      "y": [
+       true
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-true-body-on-the-right-of-contains",
+   "condition": "resource.l CONTAINS subject.parityR19True OR resource.a == 'y'",
+   "pips": [
+    "true",
+    "five"
+   ],
+   "requests": [
+    {
+     "name": "boolean-a-n",
+     "resource": {
+      "l": [
+       true
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "boolean-a-y",
+     "resource": {
+      "l": [
+       true
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "text-a-n",
+     "resource": {
+      "l": [
+       "true"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "l": [
+       "true"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-a-n",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "other-a-y",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-five-body-on-the-right-of-contains",
+   "condition": "resource.l CONTAINS subject.parityR19Five OR resource.a == 'y'",
+   "pips": [
+    "five",
+    "true"
+   ],
+   "requests": [
+    {
+     "name": "number-a-n",
+     "resource": {
+      "l": [
+       5
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "number-a-y",
+     "resource": {
+      "l": [
+       5
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    },
+    {
+     "name": "text-a-n",
+     "resource": {
+      "l": [
+       "5"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "text-a-y",
+     "resource": {
+      "l": [
+       "5"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-false-and-failing-in-a-deny-rule",
+   "about": "resource.x == 'zz' AND subject.parityR19Failing == 'v' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x == 'zz' AND subject.parityR19Failing == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-failing-and-false-in-a-deny-rule",
+   "about": "subject.parityR19Failing == 'v' AND resource.x == 'zz' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR19Failing == 'v' AND resource.x == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-ended-or-failing-in-a-deny-rule",
+   "about": "resource.m == 'v' OR subject.parityR19Failing == 'v' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.m == 'v' OR subject.parityR19Failing == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-failing-or-ended-in-a-deny-rule",
+   "about": "subject.parityR19Failing == 'v' OR resource.m == 'v' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR19Failing == 'v' OR resource.m == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-ended-and-failing-in-a-deny-rule",
+   "about": "resource.m == 'v' AND subject.parityR19Failing == 'v' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.m == 'v' AND subject.parityR19Failing == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-failing-and-ended-in-a-deny-rule",
+   "about": "subject.parityR19Failing == 'v' AND resource.m == 'v' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR19Failing == 'v' AND resource.m == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-failing-or-failing-in-a-deny-rule",
+   "about": "subject.parityR19Failing == 'v' OR subject.parityR19Failing2 == 'v' in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "failing2",
+    "five",
+    "true"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR19Failing == 'v' OR subject.parityR19Failing2 == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-failing-equals-bare-null-in-a-deny-rule",
+   "about": "subject.parityR19Failing == null in a DENY rule; resource.m is absent, resource.l is [null].",
+   "pips": [
+    "failing",
+    "five",
+    "true",
+    "failing2"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR19Failing == null",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-null-element-in-an-attribute-list-in-a-deny-rule",
+   "about": "resource.l CONTAINS 5 in a DENY rule; resource.m is absent, resource.l is [null].",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l CONTAINS 5",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": "n",
+      "l": [
+       null
+      ],
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-control-after-the-deny-rules",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-list-equals-its-printed-text",
+   "condition": "resource.list == '[v, w]' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "list-a-n",
+     "resource": {
+      "list": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "list-a-y",
+     "resource": {
+      "list": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-list-in-its-printed-text",
+   "condition": "resource.list IN '[v, w]' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "list-a-n",
+     "resource": {
+      "list": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "list-a-y",
+     "resource": {
+      "list": [
+       "v",
+       "w"
+      ],
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-object-contains-its-printed-text",
+   "condition": "resource.obj CONTAINS '{k=v}' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "object-a-n",
+     "resource": {
+      "obj": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "object-a-y",
+     "resource": {
+      "obj": {
+       "k": "v"
+      },
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q19-same-predicate-in-two-rules",
+   "about": "Two ALLOW rules with the same rsqlPredicate q==3.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        },
+        {
+         "key": "r2",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "q19-same-predicate-in-two-policies",
+   "about": "Two policies, each with an ALLOW rule with rsqlPredicate q==3.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "q19-resource-type-placeholder-in-every-dialect",
+   "about": "${resourceType} in the rsql, sql, mongodb and querydsl predicates.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType}",
+          "sqlPredicate": "t=${resourceType}",
+          "mongodbPredicate": "{ \"t\": \"${resourceType}\" }",
+          "predicate": "${resourceType}.t.eq(\"x\")"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "q19-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     }
+    }
+   ]
+  }
+ ]
+}

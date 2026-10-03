@@ -1,0 +1,598 @@
+{
+ "about": "How a list inside a list compares. Round 26 found [[\"v\"]] CONTAINS ANY [[\"v\"]] true. Here one inner list holds the string \"v, w\" and the other the two strings \"v\" and \"w\": they differ element by element and read the same as text; and the same two strings in another order, which match only if order does not count. Each comparison is `<comparison> OR resource.a == 'y'` in an ALLOW rule and in a DENY rule under PERMIT_UNLESS_DENY, asked with resource.a 'n' and 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R27L_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "l27-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-one-string-against-two-in-an-allow-rule",
+   "about": "resource.x is [[\"v, w\"]] and resource.y is [[\"v\", \"w\"]]. The condition is `resource.x CONTAINS ANY resource.y OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-one-string-against-two-in-a-deny-rule",
+   "about": "resource.x is [[\"v, w\"]] and resource.y is [[\"v\", \"w\"]]. The condition is `resource.x CONTAINS ANY resource.y OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-one-string-against-two-negated-in-an-allow-rule",
+   "about": "resource.x is [[\"v, w\"]] and resource.y is [[\"v\", \"w\"]]. The condition is `resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-one-string-against-two-negated-in-a-deny-rule",
+   "about": "resource.x is [[\"v, w\"]] and resource.y is [[\"v\", \"w\"]]. The condition is `resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v, w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-strings-in-another-order-in-an-allow-rule",
+   "about": "resource.x is [[\"v\", \"w\"]] and resource.y is [[\"w\", \"v\"]]. The condition is `resource.x CONTAINS ANY resource.y OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "w",
+        "v"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "w",
+        "v"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-strings-in-another-order-in-a-deny-rule",
+   "about": "resource.x is [[\"v\", \"w\"]] and resource.y is [[\"w\", \"v\"]]. The condition is `resource.x CONTAINS ANY resource.y OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "w",
+        "v"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "w",
+        "v"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-strings-in-the-same-order-in-an-allow-rule",
+   "about": "resource.x and resource.y are both [[\"v\", \"w\"]]. The condition is `resource.x CONTAINS ANY resource.y OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-strings-in-the-same-order-in-a-deny-rule",
+   "about": "resource.x and resource.y are both [[\"v\", \"w\"]]. The condition is `resource.x CONTAINS ANY resource.y OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "x": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "y": [
+       [
+        "v",
+        "w"
+       ]
+      ],
+      "id": "r27"
+     }
+    }
+   ]
+  },
+  {
+   "id": "l27-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r27"
+     }
+    }
+   ]
+  }
+ ]
+}

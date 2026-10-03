@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_NEGATION_CONTROL_FIRST.blocked.eq(1)).not()",
+    "mongodbFilterCondition": "{ { \"blocked\": 1 } }",
+    "rsqlFilterCondition": "blocked!=1",
+    "sqlFilterCondition": "NOT (blocked=1)",
+    "customFilterCondition": null
+  }
+}

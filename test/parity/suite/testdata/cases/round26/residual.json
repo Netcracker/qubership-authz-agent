@@ -1,0 +1,797 @@
+{
+ "about": "Comparisons no golden has shown yet: an object beside a string under CONTAINS and NOT CONTAINS; a number beside a list holding a list under NOT IN; a number beside a list of numbers or of strings under CONTAINS ANY and NOT CONTAINS ANY; a header value beside a list under CONTAINS ANY and NOT CONTAINS ANY; a selection holding null under NOT CONTAINS ANY; a number on the left of IS SUBSET and NOT CONTAINS ANY beside a GENERAL PIP that answers 404; and conditions of three OR groups, one with AND, that come out false or fail the decision. Each comparison is `<comparison> OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. Where both answers are false, the same condition in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n', tells an ended rule (true) from a failed decision (false).",
+ "resourceTypePrefix": "PARITY_SUITE_R26Z_",
+ "pins": {
+  "/api/v1/pip/r26-z-006-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 26 case"
+   }
+  },
+  "/api/v1/pip/r26-z-008-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 26 case"
+   }
+  },
+  "/api/v1/pip/r26-z-011-left": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 26 case"
+   }
+  },
+  "/api/v1/pip/r26-z-011-right": {
+   "statusCode": 200,
+   "body": "v"
+  }
+ },
+ "pips": {
+  "z26-z-006-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-z-006-right",
+   "requestAttributes": {
+    "case": "r26-z-006-right"
+   }
+  },
+  "z26-z-007-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-z-008-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-z-008-right",
+   "requestAttributes": {
+    "case": "r26-z-008-right"
+   }
+  },
+  "z26-z-009-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-z-009-subject-parityr26fzother": {
+   "name": "subject.parityR26FzOther",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-other",
+   "cacheable": false
+  },
+  "z26-z-010-subject-parityr26fzdepartment": {
+   "name": "subject.parityR26FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "z26-z-010-subject-parityr26fzlist": {
+   "name": "subject.parityR26FzList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-list",
+   "cacheable": false
+  },
+  "z26-z-011-subject-parityr26fzdepartment": {
+   "name": "subject.parityR26FzDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "z26-z-011-subject-parityr26fzgeneral": {
+   "name": "subject.parityR26FzGeneral",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-z-011-left",
+   "requestAttributes": {
+    "case": "r26-z-011-left"
+   }
+  },
+  "z26-z-011-subject-parityr26fzother": {
+   "name": "subject.parityR26FzOther",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r26-fz-other",
+   "cacheable": false
+  },
+  "z26-z-011-subject-parityr26fzright": {
+   "name": "subject.parityR26FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r26-z-011-right",
+   "requestAttributes": {
+    "case": "r26-z-011-right"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "z26-z-000",
+   "about": "`5.5 NOT IN resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries y = [[\"v\"]].",
+   "condition": "5.5 NOT IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       [
+        "v"
+       ]
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       [
+        "v"
+       ]
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-001",
+   "about": "`resource.o.x CONTAINS resource.o.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": {\"k\": \"v\"}, \"y\": \"v\"}.",
+   "condition": "resource.o.x CONTAINS resource.o.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": {
+        "k": "v"
+       },
+       "y": "v"
+      },
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": {
+        "k": "v"
+       },
+       "y": "v"
+      },
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-002",
+   "about": "`resource.items[*].x NOT CONTAINS ANY 'v' OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = [{\"x\": null}].",
+   "condition": "resource.items[*].x NOT CONTAINS ANY 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-003",
+   "about": "`resource.o.x NOT CONTAINS ANY resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": 5}, y = [5, 6].",
+   "condition": "resource.o.x NOT CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": 5
+      },
+      "y": [
+       5,
+       6
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": 5
+      },
+      "y": [
+       5,
+       6
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-004",
+   "about": "`resource.items[0].x CONTAINS ANY resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = [{\"x\": 5}], y = [\"5\"].",
+   "condition": "resource.items[0].x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": 5
+       }
+      ],
+      "y": [
+       "5"
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": 5
+       }
+      ],
+      "y": [
+       "5"
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-005",
+   "about": "`resource.items[0].x NOT CONTAINS resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries items = [{\"x\": {\"k\": \"v\"}}], y = 'v'.",
+   "condition": "resource.items[0].x NOT CONTAINS resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": {
+         "k": "v"
+        }
+       }
+      ],
+      "y": "v",
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": {
+         "k": "v"
+        }
+       }
+      ],
+      "y": "v",
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-006",
+   "about": "`resource.o.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": 0}. subject.parityR26FzRight answers 404.",
+   "condition": "resource.o.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": 0
+      },
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": 0
+      },
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-z-006-subject-parityr26fzright"
+   ]
+  },
+  {
+   "id": "z26-z-007",
+   "about": "`subject.parityR26FzList NOT CONTAINS ANY resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries y = [\"v\", \"w\"]. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent as 'v'.",
+   "condition": "subject.parityR26FzList NOT CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": "v"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": "v"
+     }
+    }
+   ],
+   "pips": [
+    "z26-z-007-subject-parityr26fzlist",
+    "z26-z-006-subject-parityr26fzright"
+   ]
+  },
+  {
+   "id": "z26-z-008",
+   "about": "`resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"x\": -5}. subject.parityR26FzRight answers 404.",
+   "condition": "resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": -5
+      },
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": -5
+      },
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "z26-z-008-subject-parityr26fzright",
+    "z26-z-007-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-z-009",
+   "about": "`subject.parityR26FzList CONTAINS ANY subject.parityR26FzOther OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent as 'v'. subject.parityR26FzOther reads the header x-parity-r26-fz-other, sent as 'v,w'.",
+   "condition": "subject.parityR26FzList CONTAINS ANY subject.parityR26FzOther OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": "v",
+      "x-parity-r26-fz-other": "v,w"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": "v",
+      "x-parity-r26-fz-other": "v,w"
+     }
+    }
+   ],
+   "pips": [
+    "z26-z-009-subject-parityr26fzlist",
+    "z26-z-009-subject-parityr26fzother",
+    "z26-z-006-subject-parityr26fzright"
+   ]
+  },
+  {
+   "id": "z26-z-010",
+   "about": "`subject.parityR26FzDepartment CONTAINS ANY resource.o.y OR 'v' <= resource.y AND subject.parityR26FzList CONTAINS null OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries o = {\"y\": \"v\"}, y = 'v'. subject.parityR26FzDepartment reads the token claim department, 'finance' in the reader's token. subject.parityR26FzList reads the header x-parity-r26-fz-list, sent as 'v'.",
+   "condition": "subject.parityR26FzDepartment CONTAINS ANY resource.o.y OR 'v' <= resource.y AND subject.parityR26FzList CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "y": "v"
+      },
+      "y": "v",
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": "v"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "y": "v"
+      },
+      "y": "v",
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-list": "v"
+     }
+    }
+   ],
+   "pips": [
+    "z26-z-010-subject-parityr26fzdepartment",
+    "z26-z-010-subject-parityr26fzlist",
+    "z26-z-006-subject-parityr26fzright",
+    "z26-z-009-subject-parityr26fzother"
+   ]
+  },
+  {
+   "id": "z26-z-011",
+   "about": "`subject.parityR26FzDepartment NOT IN resource.y AND subject.parityR26FzGeneral NOT CONTAINS ANY subject.parityR26FzOther OR resource.items[0].x >= subject.parityR26FzRight OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. The resource carries y = 'v', items = [{\"x\": \"v\"}]. subject.parityR26FzDepartment reads the token claim department, 'finance' in the reader's token. subject.parityR26FzGeneral answers 500. subject.parityR26FzOther reads the header x-parity-r26-fz-other, sent as 'v'. subject.parityR26FzRight answers the text body \"v\".",
+   "condition": "subject.parityR26FzDepartment NOT IN resource.y AND subject.parityR26FzGeneral NOT CONTAINS ANY subject.parityR26FzOther OR resource.items[0].x >= subject.parityR26FzRight OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "y": "v",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r26",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r26-fz-other": "v"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "y": "v",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r26",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r26-fz-other": "v"
+     }
+    }
+   ],
+   "pips": [
+    "z26-z-011-subject-parityr26fzdepartment",
+    "z26-z-011-subject-parityr26fzgeneral",
+    "z26-z-011-subject-parityr26fzother",
+    "z26-z-011-subject-parityr26fzright",
+    "z26-z-007-subject-parityr26fzlist"
+   ]
+  },
+  {
+   "id": "z26-z-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-002-in-a-deny-rule",
+   "about": "The condition `resource.items[*].x NOT CONTAINS ANY 'v' OR resource.a == 'y'` of z26-z-002 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x NOT CONTAINS ANY 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "x": null
+       }
+      ],
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-006-in-a-deny-rule",
+   "about": "The condition `resource.o.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'` of z26-z-006 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-z-006-subject-parityr26fzright",
+    "z26-z-007-subject-parityr26fzlist",
+    "z26-z-009-subject-parityr26fzother",
+    "z26-z-010-subject-parityr26fzdepartment",
+    "z26-z-011-subject-parityr26fzgeneral"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x IS SUBSET subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "x": 0
+      },
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-008-in-a-deny-rule",
+   "about": "The condition `resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'` of z26-z-008 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-z-008-subject-parityr26fzright",
+    "z26-z-007-subject-parityr26fzlist",
+    "z26-z-009-subject-parityr26fzother",
+    "z26-z-010-subject-parityr26fzdepartment",
+    "z26-z-011-subject-parityr26fzgeneral"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.x NOT CONTAINS ANY subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "x": -5
+      },
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-011-in-a-deny-rule",
+   "about": "The condition `subject.parityR26FzDepartment NOT IN resource.y AND subject.parityR26FzGeneral NOT CONTAINS ANY subject.parityR26FzOther OR resource.items[0].x >= subject.parityR26FzRight OR resource.a == 'y'` of z26-z-011 in the DENY rule of a PERMIT_UNLESS_DENY set and policy, asked with resource.a 'n': true when the comparison ends the rule, false when it fails the decision.",
+   "pips": [
+    "z26-z-011-subject-parityr26fzdepartment",
+    "z26-z-011-subject-parityr26fzgeneral",
+    "z26-z-011-subject-parityr26fzother",
+    "z26-z-011-subject-parityr26fzright",
+    "z26-z-007-subject-parityr26fzlist"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR26FzDepartment NOT IN resource.y AND subject.parityR26FzGeneral NOT CONTAINS ANY subject.parityR26FzOther OR resource.items[0].x >= subject.parityR26FzRight OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "deny-a-n",
+     "resource": {
+      "a": "n",
+      "y": "v",
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r26"
+     },
+     "headers": {
+      "x-parity-r26-fz-other": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "z26-z-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  }
+ ]
+}

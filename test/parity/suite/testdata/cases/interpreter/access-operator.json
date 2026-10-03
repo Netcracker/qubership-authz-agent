@@ -1,0 +1,202 @@
+{
+ "about": "What subject allowed 'OP' on resource and subject denied 'OP' on resource evaluate when a policy for OP exists. u7-has-access and u12-subject-denied record false for both, on a lone READ policy whose condition names READ: the nested decision is the policy's own, so the false there is a decision that refers to itself, cut off or refused, and says nothing about the operator over a policy for another operation. The two forms are either a decision for another operation on the same resource, read from inside a condition, or accepted and always false; the recorded cases cannot tell. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "access-operator-reads-another-operation",
+   "about": "A READ rule with a condition on resource.a, an UPDATE rule whose condition is subject allowed 'READ' on resource, and a DELETE rule whose condition is subject denied 'READ' on resource. UPDATE with a = y and a = n decides as READ would if the operator evaluates the READ decision, and false under both if the form is always false; DELETE is the negated twin; READ under both values is the control that the READ rule itself decides on a.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-when-a",
+         "target": "operation == 'READ'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-if-read-allowed",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'READ' on resource",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-if-read-denied",
+         "target": "operation == 'DELETE'",
+         "condition": "subject denied 'READ' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update-when-read-is-allowed",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-ao",
+      "a": "y"
+     }
+    },
+    {
+     "name": "update-when-read-is-denied",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "reg-ao",
+      "a": "n"
+     }
+    },
+    {
+     "name": "delete-when-read-is-allowed",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-ao",
+      "a": "y"
+     }
+    },
+    {
+     "name": "delete-when-read-is-denied",
+     "operation": "DELETE",
+     "resource": {
+      "id": "reg-ao",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-allowed",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-ao",
+      "a": "y"
+     }
+    },
+    {
+     "name": "read-denied",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-ao",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "access-operator-chain",
+   "about": "Six operations where each one's rule is subject allowed on the next, ending in a READ rule that allows without a condition. PARITY_OP1 needs six nested decisions and PARITY_OP6 one; the answers record where the nesting is cut off, if anywhere.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "op6",
+         "target": "operation == 'PARITY_OP6'",
+         "condition": "subject allowed 'READ' on resource",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "op5",
+         "target": "operation == 'PARITY_OP5'",
+         "condition": "subject allowed 'PARITY_OP6' on resource",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "op4",
+         "target": "operation == 'PARITY_OP4'",
+         "condition": "subject allowed 'PARITY_OP5' on resource",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "op3",
+         "target": "operation == 'PARITY_OP3'",
+         "condition": "subject allowed 'PARITY_OP4' on resource",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "op2",
+         "target": "operation == 'PARITY_OP2'",
+         "condition": "subject allowed 'PARITY_OP3' on resource",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "op1",
+         "target": "operation == 'PARITY_OP1'",
+         "condition": "subject allowed 'PARITY_OP2' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "six-nested-decisions",
+     "operation": "PARITY_OP1",
+     "resource": {
+      "id": "reg-ao-chain"
+     }
+    },
+    {
+     "name": "five-nested-decisions",
+     "operation": "PARITY_OP2",
+     "resource": {
+      "id": "reg-ao-chain"
+     }
+    },
+    {
+     "name": "four-nested-decisions",
+     "operation": "PARITY_OP3",
+     "resource": {
+      "id": "reg-ao-chain"
+     }
+    },
+    {
+     "name": "three-nested-decisions",
+     "operation": "PARITY_OP4",
+     "resource": {
+      "id": "reg-ao-chain"
+     }
+    },
+    {
+     "name": "two-nested-decisions",
+     "operation": "PARITY_OP5",
+     "resource": {
+      "id": "reg-ao-chain"
+     }
+    },
+    {
+     "name": "one-nested-decision",
+     "operation": "PARITY_OP6",
+     "resource": {
+      "id": "reg-ao-chain"
+     }
+    }
+   ]
+  }
+ ]
+}

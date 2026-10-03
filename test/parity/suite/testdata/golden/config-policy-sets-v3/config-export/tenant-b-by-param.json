@@ -1,0 +1,248 @@
+{
+  "status": 200,
+  "export": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY_ISOLATED",
+        "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_REG_CONFIG_EXPORT_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_REG_CONFIG_EXPORT_ALL_Policy",
+            "policyId": "3769043d-e3df-b566-a85c-c663bd0443c5",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "config-export all",
+                "ruleId": "a465f7a9-383b-2e6e-5a5b-74e3fe7fc4ee",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "true",
+            "tenantId": "default"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_REG_CONFIG_EXPORT_READ_Policy",
+            "policyId": "83b67a10-13db-153a-df57-8b79b599f4c6",
+            "rules": [
+              {
+                "condition": "resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "config-export read",
+                "rsqlPredicate": "a==y",
+                "ruleId": "fa01017e-b201-fad7-da8f-3cb75ec53ba1",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "5783b67a-1013-db15-3adf-578b79b599f4",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "default",
+        "type": "SIMPLIFIED"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-config-export-b",
+        "name": "config-export-b plain",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "config-export-b reader",
+            "policyId": "77bf521d-ede1-007e-bf05-31ac5e2ec5a1",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "config-export-b read-allow",
+                "ruleId": "52eca080-ff20-9535-0528-b4619cfdd967",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-mt-b"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-mt-b"
+          }
+        ],
+        "policySetId": "3752e811-aa67-f53d-c057-e6a67e0da8cd",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "parity-mt-b",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-config-export-iterating",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "config-export iterating",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "config-export scoped",
+            "policyId": "5d7f6022-91f4-e843-35d8-70429993ac9f",
+            "rules": [
+              {
+                "condition": "subject.permissionScope.region CONTAINS resource.region",
+                "effect": "ALLOW",
+                "name": "config-export region-granted",
+                "ruleId": "fd0e6283-1aa9-c2f7-4225-f270f4c618a7",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "18cc872e-fe1b-271e-c1c0-10ae26521369",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-config-export-plain",
+        "name": "config-export plain",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "config-export reader",
+            "policyId": "3ed8a456-2feb-be77-3a84-7cf4b9d0b0bb",
+            "rules": [
+              {
+                "condition": "resource.a == 'n'",
+                "effect": "DENY",
+                "name": "config-export read-deny-when-n",
+                "ruleId": "9f94d4a5-b4ed-dcf4-78db-fddfa7065f0c",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "default"
+              },
+              {
+                "condition": "true",
+                "customPredicate": {
+                  "params": {
+                    "owner": "subject.id"
+                  },
+                  "predicate": "[{\"value\":${owner},\"property\":\"a\",\"operator\":\"in\"}]"
+                },
+                "effect": "ALLOW",
+                "mongodbPredicate": "{ \"a\": \"${subject.id}\" }",
+                "name": "config-export list-with-every-predicate",
+                "predicate": "${resourceType}.a.eq(\"${subject.id}\")",
+                "rsqlPredicate": "a==${subject.id}",
+                "ruleId": "0ad3f6a0-dd3d-3593-de27-26b06d3270e9",
+                "ruleType": "DEFAULT",
+                "sqlPredicate": "a=${subject.id}",
+                "target": "operation == 'LIST'",
+                "tenantId": "default"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "config-export read-allow",
+                "ruleId": "c117ba8f-710c-f333-e37e-2be01bc20717",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "29d30093-46d9-6451-f124-47bc4403a4e9",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "externalId": "parity-config-export-empty-rules",
+        "name": "config-export empty-rules",
+        "policies": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "name": "config-export no-rules",
+            "policyId": "d5b578ed-0465-8b4f-eb28-ea32c805caf8",
+            "rules": [],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "ea4c2bef-b7dd-030b-d113-6b529c37b216",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "externalId": "parity-config-export-nested",
+        "name": "config-export nested-outer",
+        "policies": [],
+        "policySetId": "6712764e-aae1-df2f-ee70-87adf5cd02c7",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-config-export-nested",
+            "name": "config-export nested-inner",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "config-export inner-reader",
+                "policyId": "47a6b647-f17d-5ab9-2f97-8f34cd460f1d",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "config-export inner-read-allow",
+                    "ruleId": "de206a16-87fb-fb10-3950-5562fb1b95d2",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "default"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "policySetId": "11c9201d-77b4-701e-6c4d-a24258bd8744",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+            "tenantId": "default",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CONFIG_EXPORT'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

@@ -1,0 +1,399 @@
+{
+ "about": "Whether the 400s round 17 recorded for its residual DENY twins from r17-residual-016 on are a rule or the state of the stand. The twin that answered 400 first, then three of the twins that answered 200 before it ran, each followed by a control DENY rule over a resource attribute that does not hold. If the 400 is a rule, every control is true; if the twin breaks the stand, the controls after it answer 400.",
+ "resourceTypePrefix": "PARITY_SUITE_R18_",
+ "pins": {
+  "/api/v1/pip/s18-twin-016-right": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/s18-twin-011-right": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/s18-twin-012-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 18 case"
+   }
+  },
+  "/api/v1/pip/s18-twin-014-right": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 18 case"
+   }
+  }
+ },
+ "pips": {
+  "s18-twin-016-subject-parityr18fzright": {
+   "name": "subject.parityR18FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s18-twin-016-right",
+   "requestAttributes": {
+    "case": "s18-twin-016-right"
+   }
+  },
+  "s18-twin-011-subject-parityr18fzright": {
+   "name": "subject.parityR18FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s18-twin-011-right",
+   "requestAttributes": {
+    "case": "s18-twin-011-right"
+   }
+  },
+  "s18-twin-012-subject-parityr18fzright": {
+   "name": "subject.parityR18FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s18-twin-012-right",
+   "requestAttributes": {
+    "case": "s18-twin-012-right"
+   }
+  },
+  "s18-twin-014-subject-parityr18fzright": {
+   "name": "subject.parityR18FzRight",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s18-twin-014-right",
+   "requestAttributes": {
+    "case": "s18-twin-014-right"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "s18-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18-twin-016",
+   "pips": [
+    "s18-twin-016-subject-parityr18fzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IS SUBSET subject.parityR18FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r18"
+     }
+    }
+   ],
+   "about": "Round 17 r17-residual-016-in-a-deny-rule, the first twin that answered 400."
+  },
+  {
+   "id": "s18-control-after-016",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18-twin-011",
+   "pips": [
+    "s18-twin-011-subject-parityr18fzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IS SUBSET subject.parityR18FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": 5.0,
+      "id": "r18"
+     }
+    }
+   ],
+   "about": "Round 17 r17-residual-011-in-a-deny-rule, which answered 200 before 016 ran."
+  },
+  {
+   "id": "s18-control-after-011",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18-twin-012",
+   "pips": [
+    "s18-twin-012-subject-parityr18fzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IS SUBSET subject.parityR18FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": false,
+      "id": "r18"
+     }
+    }
+   ],
+   "about": "Round 17 r17-residual-012-in-a-deny-rule, which answered 200 before 016 ran."
+  },
+  {
+   "id": "s18-control-after-012",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s18-twin-014",
+   "pips": [
+    "s18-twin-014-subject-parityr18fzright"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x CONTAINS ANY subject.parityR18FzRight",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": 5.5,
+      "id": "r18"
+     }
+    }
+   ],
+   "about": "Round 17 r17-residual-014-in-a-deny-rule, which answered 200 before 016 ran."
+  },
+  {
+   "id": "s18-control-after-014",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every request that reads the resource with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r18"
+     }
+    }
+   ]
+  }
+ ]
+}

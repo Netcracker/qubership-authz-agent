@@ -1,0 +1,340 @@
+{
+ "about": "Inputs that reach a branch of the specification no golden has run: a url placeholder over a name no PIP declares, and requestAttributes over collections without elements. Each probe is `subject.X == 'v' OR resource.a == 'y'` with a = n and a = y; pipCalls records what the call carried.",
+ "resourceTypePrefix": "PARITY_SUITE_R36C_",
+ "pins": {
+  "/api/v1/pip/r36gaps-url-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-url-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r36gaps-ra-resource": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-ra-permissions": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-ra-roles": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-urlb-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r36gaps-urlb-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "url-builtin": {
+   "name": "subject.parityR36UrlBuiltin",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-urlb-${subject.serviceAccount}",
+   "requestAttributes": {
+    "case": "r36gaps-urlb"
+   }
+  },
+  "url": {
+   "name": "subject.parityR36Url",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-url-${subject.parityR36Nobody}",
+   "requestAttributes": {
+    "case": "r36gaps-url"
+   }
+  },
+  "ra-resource": {
+   "name": "subject.parityR36RaResource",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-ra-resource",
+   "requestAttributes": {
+    "case": "r36gaps-ra-resource",
+    "l": "${resource.l}",
+    "s": "${resource.m[*]}"
+   }
+  },
+  "ra-permissions": {
+   "name": "subject.parityR36RaPermissions",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-ra-permissions",
+   "requestAttributes": {
+    "case": "r36gaps-ra-permissions",
+    "p": "${subject.permissions}"
+   }
+  },
+  "mapping-other-role": {
+   "name": "subject.permissions.parityR36",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_R36_OTHER": [
+      "PARITY_R36_GRANTED"
+     ]
+    }
+   }
+  },
+  "ra-roles": {
+   "name": "subject.parityR36RaRoles",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r36gaps-ra-roles",
+   "requestAttributes": {
+    "case": "r36gaps-ra-roles",
+    "r": "${subject.roles}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r36gaps-candidates-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r36",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-url-undeclared",
+   "pips": [
+    "url"
+   ],
+   "about": "The url of a GENERAL PIP ends in r36gaps-url-${subject.parityR36Nobody}, a name that is no builtin and that no PIP declares. The domain upload is refused (400) if the url is checked as requestAttributes are. If it is accepted: the route r36gaps-url-null answers v, so a = n is true when the placeholder becomes the text null; the route r36gaps-url- answers w, so a = n is false and a = y true when it becomes empty; both are false when the placeholder stays as written and its braces fail the call. pipCalls counts the calls to the -null route.",
+   "condition": "subject.parityR36Url == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-url-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-url-builtin-without-a-value",
+   "pips": [
+    "url-builtin"
+   ],
+   "about": "The url of a GENERAL PIP ends in r36gaps-urlb-${subject.serviceAccount}, a builtin that has no value for parity-reader. The route r36gaps-urlb-null answers v, so a = n is true when the placeholder becomes the text null; the route r36gaps-urlb- answers w, so a = n is false and a = y true when it becomes empty; both are false when the placeholder stays as written and its braces fail the call. pipCalls counts the calls to the -null route.",
+   "condition": "subject.parityR36UrlBuiltin == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-urlb-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-ra-empty-resource",
+   "pips": [
+    "ra-resource"
+   ],
+   "about": "requestAttributes.l is ${resource.l} and requestAttributes.s is ${resource.m[*]}; the resource holds l and m as empty lists. The call carries [] for each if an empty collection is a value; null if it is no value, as a TOKEN PIP without a value is (r35gaps-request-attribute-empty-token).",
+   "condition": "subject.parityR36RaResource == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n",
+      "l": [],
+      "m": []
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-ra-resource"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y",
+      "l": [],
+      "m": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-ra-empty-permissions",
+   "pips": [
+    "mapping-other-role",
+    "ra-permissions"
+   ],
+   "about": "The MAPPING declaration grants a permission to a role parity-reader lacks, so the reader's subject.permissions holds nothing. requestAttributes.p is ${subject.permissions}. The call carries [] if the empty permissions are a value; null if they are no value.",
+   "condition": "subject.parityR36RaPermissions == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r36gaps-ra-permissions"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-ra-no-roles",
+   "pips": [
+    "ra-roles"
+   ],
+   "about": "parity-anon-baseline has no realm role of the suite (r29gaps-user-without-roles: its roles read as absent), and requestAttributes.r is ${subject.roles}. The policy's target is true, so the rule applies without a role. The call carries null if the roles are no value, as in a condition; [] if they are an empty list.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR36RaRoles == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r36",
+      "a": "n"
+     },
+     "subject": "user:parity-anon-baseline",
+     "pipCalls": "/api/v1/pip/r36gaps-ra-roles"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r36",
+      "a": "y"
+     },
+     "subject": "user:parity-anon-baseline"
+    }
+   ]
+  },
+  {
+   "id": "r36gaps-candidates-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r36",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

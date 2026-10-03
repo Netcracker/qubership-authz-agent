@@ -1,0 +1,57 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": {
+      "logic": {
+        "op": "OR",
+        "apply": [
+          {
+            "path": "9e4a1375-6cce-f0a5-0731-7ece2facabb1"
+          },
+          {
+            "op": "OR",
+            "apply": [
+              {
+                "path": "51a1380f-7973-37ee-a832-1e5469f7a996"
+              },
+              {
+                "path": "a965b191-9561-1682-4ca0-3ec37e8c848a"
+              }
+            ]
+          }
+        ]
+      },
+      "data": {
+        "9e4a1375-6cce-f0a5-0731-7ece2facabb1": {
+          "predicate": "[{\"value\":${p},\"property\":\"f7c\",\"operator\":\"in\"}]",
+          "params": {
+            "p": [
+              "ROLE_PARITY_READER"
+            ]
+          }
+        },
+        "51a1380f-7973-37ee-a832-1e5469f7a996": {
+          "predicate": "[{\"value\":${p},\"property\":\"f7b\",\"operator\":\"in\"}]",
+          "params": {
+            "p": [
+              "ROLE_PARITY_READER"
+            ]
+          }
+        },
+        "a965b191-9561-1682-4ca0-3ec37e8c848a": {
+          "predicate": "[{\"value\":${p},\"property\":\"f7a\",\"operator\":\"in\"}]",
+          "params": {
+            "p": [
+              "ROLE_PARITY_READER"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
