@@ -11,6 +11,8 @@ then still apply. Each file is one test function of the parity suite, in the for
   declared-name.json                  a PIP named subject.isM2M, and a MAPPING PIP named subject.permissions
   filter-node.json                    check/filter over a set nested in a DENY_OVERRIDES set, and two set algorithms
   scope-outside-iterate.json          subject.permissionScope.<key> in a set that does not iterate
+  filtered-declaration.json           which of resourceType and a .filtered name a FILTERED declaration needs
+  pip-calls-per-request.json          how many calls a GENERAL PIP receives when one condition reads it twice
 
 A case id ending in -control is the probe's control: the operand under question on the right of
 resource.a == 'y' OR, where it is true whatever the operand does, so a false control means the fixture is broken.
@@ -342,6 +344,57 @@ def scope_outside_iterate():
     return f
 
 
-for build in (absent_key_probe, null_probe, empty_collection, null_body_probe, null_literal_and_right_operand,
+
+def filtered_declaration():
+    f = File("filtered-declaration",
+             "Which of a top-level resourceType and a name ending in .filtered the PAP needs in a FILTERED declaration. "
+             "config-export/declare-the-filtered-pip records a declaration with both, accepted, and "
+             "h3-filtered-pip-plain-reference one with neither, refused together with a policy that reads it, so its "
+             "refusal may be the condition's. Each declaration is uploaded alone, with a policy that reads nothing, "
+             "over the case's own resource type, and its upload status is the whole answer, so the cases send no "
+             "request." + OWN_FUNCTION,
+             ISOLATED_PREFIX)
+    for key, name, with_resource_type, about in (
+        ("fd-both", "subject.parityR11FdBoth.filtered", True, "The control that the upload is accepted."),
+        ("fd-resource-type-only", "subject.parityR11FdTypeOnly", True, None),
+        ("fd-suffix-only", "subject.parityR11FdSuffixOnly.filtered", False, None),
+        ("fd-neither", "subject.parityR11FdNeither", False, "Neither field, like h3's declaration, without h3's condition."),
+    ):
+        rt = ISOLATED_PREFIX + upper(key)
+        pip = {"name": name, "url": PIP_MOCK + "/r11-filtered", "httpMethod": "POST", "pipType": "FILTERED",
+               "requestAttributes": {"resourceType": rt}, "cacheable": False}
+        if with_resource_type:
+            pip["resourceType"] = rt
+        f.pips[key] = pip
+        f.add(isolated(key, None, [], [key], about=about))
+    return f
+
+
+def pip_calls_per_request():
+    f = File("pip-calls-per-request",
+             "How many calls a GENERAL PIP receives when one condition reads it twice. "
+             "pip-call/pip-cache-cacheable-false records one call per request for a condition that reads the PIP once, "
+             "which a call per request and a call per read both produce. The PIP answers {\"value\": \"b\"}, so == 'a' "
+             "is false and OR goes on to == 'b'. Each form declares the PIP at a route of its own, and the decision "
+             "and the calls that route received over the case are recorded." + OWN_FUNCTION,
+             ISOLATED_PREFIX)
+    for key, condition, about in (
+        ("read-twice", "subject.parityR11Twice == 'a' OR subject.parityR11Twice == 'b'",
+         "Reads the PIP on both sides of the OR."),
+        ("read-once", "subject.parityR11Twice == 'b'", "The control: reads the PIP once."),
+    ):
+        cid = "calls-" + key
+        route = "/api/v1/pip/r11-" + cid
+        f.pins[route] = {"statusCode": 200, "body": {"value": "b"}}
+        f.pips[cid] = {"name": "subject.parityR11Twice", "url": "http://pip-mock:8090" + route, "httpMethod": "POST",
+                       "pipType": "GENERAL", "type": "JSON", "jsonPath": "$.value", "cacheable": False,
+                       "requestAttributes": {"case": cid}}
+        case = isolated(cid, condition, [req("read", {"id": "r11-calls"})], [cid], about=about)
+        case["policy"] = {"id": "00000000-0000-0000-0000-0000000f1101"}
+        case["pipCalls"] = route
+        f.add(case)
+    return f
+
+for build in (filtered_declaration, pip_calls_per_request, absent_key_probe, null_probe, empty_collection, null_body_probe, null_literal_and_right_operand,
               declared_name, filter_node, scope_outside_iterate):
     build().write()

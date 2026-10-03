@@ -19,8 +19,10 @@ package paritysuite
 // Round 11 asks, among other things, whether operators over an absent key, a
 // null, and an empty collection are false or end the rule, what the PAP does
 // with a PIP named subject.isM2M or subject.permissions, how check/filter
-// combines a nested set that does not apply, and what
-// subject.permissionScope.<key> resolves to outside iterate. Those cases are
+// combines a nested set that does not apply, what
+// subject.permissionScope.<key> resolves to outside iterate, which fields a
+// FILTERED declaration needs, and how often a GENERAL PIP read twice in one
+// condition is called. Those cases are
 // data under testdata/cases/round11, written by generate.py there, which says
 // what each file asks. They were first written in Go, and each file sends the
 // requests the Go cases sent, so the goldens recorded then still apply. Each
@@ -62,4 +64,14 @@ func (s *ParitySuite) TestRound11FilterNodeCases() { s.runCaseFile("round11/filt
 // TestRound11ScopeOutsideIterateCases runs round11/scope-outside-iterate.json.
 func (s *ParitySuite) TestRound11ScopeOutsideIterateCases() {
 	s.runCaseFile("round11/scope-outside-iterate.json")
+}
+
+// TestRound11FilteredDeclarationCases runs round11/filtered-declaration.json.
+func (s *ParitySuite) TestRound11FilteredDeclarationCases() {
+	s.runCaseFile("round11/filtered-declaration.json")
+}
+
+// TestRound11PIPCallsPerRequestCases runs round11/pip-calls-per-request.json.
+func (s *ParitySuite) TestRound11PIPCallsPerRequestCases() {
+	s.runCaseFile("round11/pip-calls-per-request.json")
 }

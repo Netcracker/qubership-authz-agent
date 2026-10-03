@@ -71,7 +71,7 @@ func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, error) {
 				id: c.ID, resourceType: rt, domain: c.Domain, operation: c.Operation, roles: c.Roles,
 				condition: resourceTypeReplacer(rt).Replace(c.Condition), pips: pips, requests: requests,
 				policyOmit: c.PolicyOmit, policy: c.Policy, policiesQuery: c.PoliciesQuery,
-				readsRoutes: c.ReadsRoutes,
+				readsRoutes: c.ReadsRoutes, pipCalls: c.PIPCalls,
 			})
 			continue
 		}
@@ -93,6 +93,7 @@ func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, error) {
 			steps:       steps,
 			cleanup:     customizationCleanup(c.ID, c.Customize, rt),
 			readsRoutes: c.ReadsRoutes,
+			pipCalls:    c.PIPCalls,
 		})
 	}
 	return isolated, regular, nil
@@ -108,7 +109,7 @@ func caseRequests(specs []requestSpec, rt string) []isolatedRequest {
 			headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m", classifyBy: r.ClassifyBy,
 			tenantID: r.TenantID, pipCalls: r.PIPCalls, user: r.user(),
 			userClaims: r.SubjectClaims,
-			userID:     r.UserID, emptyOperation: r.EmptyOperation, pipHeaders: r.PIPHeaders,
+			userID:     r.UserID, emptyOperation: r.EmptyOperation, omitOperation: r.OmitOperation, pipHeaders: r.PIPHeaders,
 			pause: time.Duration(r.PauseMs) * time.Millisecond,
 		}
 		if r.Bulk != nil {

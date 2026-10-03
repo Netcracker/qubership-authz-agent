@@ -14,6 +14,7 @@ then still apply. Each file is one test function of the parity suite, in the for
   set-algorithm-filter.json             what each set algorithm does to the predicates of its policies in a filter
   filter-resource-condition.json        a filter over a rule whose condition or target reads the resource
   deny-list-filter.json                 a filter over a deny list whose DENY rules read the resource
+  request-attributes.json               what a GENERAL PIP sends when a requestAttributes value is a placeholder
 
 A case id ending in -control is the probe's control: the operand under question on the right of
 resource.a == 'y' OR, where it is true whatever the operand does, so a false control means the fixture is broken.
@@ -432,7 +433,47 @@ def deny_list_filter():
     return f
 
 
+
+def request_attributes():
+    f = File("request-attributes",
+             "What a GENERAL PIP sends in the requestAttributes of its call when a value there is a placeholder. The "
+             "documentation writes ${subject.<TOKEN or HEADER PIP>} there; every recorded GENERAL PIP sends literal "
+             "values only, so what a placeholder over subject.roles, a resource attribute holding an object, and a "
+             "resource attribute the request does not carry become is recorded nowhere, and neither is whether an "
+             "unresolved one sends the call at all. The agent's PIP loader validates placeholders in "
+             "requestAttributes and expands them when it calls the PIP. Each form is its own case: one GENERAL PIP "
+             "whose requestAttributes hold {\"value\": <placeholder>}, answering {\"value\": \"v\"} at a route of its "
+             "own, and a READ policy whose condition reads the PIP. Every request carries the resource "
+             "{\"id\": \"r10-ra\", \"obj\": {\"k\": \"v\"}}. The decision and what pip-mock received over the case, its "
+             "call count and the requestAttributes of the first call, are recorded. The cases live in their own test "
+             "function so that a recording run can be filtered to them and leave every golden already committed alone.",
+             ISOLATED_PREFIX)
+    f.pips["department"] = {"name": "subject.parityR10RaDepartment", "type": "UUID", "pipType": "TOKEN",
+                            "claim": "department", "cacheable": False}
+    for key, placeholder, about in (
+        ("literal", "lit", "The control whose answer is known: true after one call carrying {\"value\": \"lit\"}."),
+        ("token", "${subject.parityR10RaDepartment}", "The form the documentation gives."),
+        ("subject-roles", "${subject.roles}", None),
+        ("resource-id", "${resource.id}", "A resource attribute holding a string, the one the resource forms differ "
+                                          "from."),
+        ("resource-object", "${resource.obj}", None),
+        ("resource-missing", "${resource.missing}", None),
+    ):
+        cid = "ra-" + key
+        route = "/api/v1/pip/r10-" + cid
+        f.pins[route] = {"statusCode": 200, "body": {"value": "v"}}
+        f.pips[cid] = {"name": "subject.parityR10RaGeneral", "url": "http://pip-mock:8090" + route,
+                       "httpMethod": "POST", "pipType": "GENERAL", "type": "JSON", "jsonPath": "$.value",
+                       "cacheable": False, "requestAttributes": {"value": placeholder}}
+        case = isolated(cid, "subject.parityR10RaGeneral == 'v'",
+                        [req("read", {"id": "r10-ra", "obj": {"k": "v"}})], ["department", cid], about=about)
+        case["policy"] = {"id": "00000000-0000-0000-0000-0000000f1044"}
+        case["pipCalls"] = route
+        f.add(case)
+    return f
+
 for build in (dead_form_not_null, empty_collection_not_null, undeclared_placeholder_check, null_operand,
               single_value_header, null_body_and_right_operand, path_pattern_and_word_operator,
-              non_string_pip_operator, set_algorithm_filter, filter_resource_condition, deny_list_filter):
+              non_string_pip_operator, set_algorithm_filter, filter_resource_condition, deny_list_filter,
+              request_attributes):
     build().write()

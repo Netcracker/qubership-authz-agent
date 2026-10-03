@@ -58,6 +58,9 @@ type isolatedCase struct {
 	// readsRoutes are the pip-mock routes that have to receive a call while
 	// the case runs; see caseSpec.ReadsRoutes.
 	readsRoutes []string
+	// pipCalls is the pip-mock route whose calls over the whole case are
+	// recorded as a pip-call golden; see caseSpec.PIPCalls.
+	pipCalls string
 }
 
 // isolatedRequest is a check/resource request against the case's policy, or a
@@ -359,7 +362,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 	})
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
-			s.resetCallsFor(tc.readsRoutes)
+			s.resetCallsFor(append(slices.Clone(tc.readsRoutes), tc.pipCalls))
 			policy := map[string]any{
 				"component":             "PARITY",
 				"reason":                tc.id,
@@ -402,6 +405,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 					s.runRequest("isolated/"+tc.id+"/"+req.name, tc.resourceType, req)
 				})
 			}
+			s.recordCasePIPCalls("isolated/"+tc.id, tc.pipCalls)
 			s.requireRoutesRead(tc.readsRoutes)
 		})
 	}

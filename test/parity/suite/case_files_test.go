@@ -72,6 +72,12 @@ type caseSpec struct {
 	// none: a false answer is then a declaration the stand ignored rather than a
 	// PIP it read.
 	ReadsRoutes []string `json:"readsRoutes"`
+	// PIPCalls names a pip-mock route the file pins. The runner clears the
+	// call log when the case starts and, after the case's requests, records
+	// what the route received over the whole case as a pip-call golden under
+	// the case's own name. No request of the case may clear the log again, so
+	// none of them sets pipCalls or classifyBy.
+	PIPCalls string `json:"pipCalls"`
 	// About says what the case asks where its id and condition do not; nothing
 	// reads it.
 	About     string        `json:"about"`
@@ -255,6 +261,9 @@ type requestSpec struct {
 	// EmptyOperation sends the operation with an empty value: operation= on a
 	// filter request, "operation": "" in a check body.
 	EmptyOperation bool `json:"emptyOperation"`
+	// OmitOperation sends a filter request with no operation parameter at all,
+	// where an empty operation would send LIST.
+	OmitOperation bool `json:"omitOperation"`
 	// PauseMs is how many milliseconds the runner waits before sending the
 	// request, after the call log of PIPCalls or ClassifyBy is cleared.
 	PauseMs int `json:"pauseMs"`
@@ -693,8 +702,15 @@ func caseFileProblems(f caseFile) []string {
 				report("case %s names the PIP %q, which the file does not declare", c.ID, key)
 			}
 		}
-		if len(c.Requests) == 0 && len(c.Customize) == 0 {
-			report("case %s sends no request", c.ID)
+		if c.PIPCalls != "" {
+			if _, ok := f.Pins[c.PIPCalls]; !ok {
+				report("case %s records the calls to %s, which the file does not pin", c.ID, c.PIPCalls)
+			}
+			for _, r := range c.Requests {
+				if r.PIPCalls != "" || r.ClassifyBy != "" {
+					report("case %s records the calls of the whole case, and its request %s clears the call log with pipCalls or classifyBy", c.ID, r.Name)
+				}
+			}
 		}
 		requests := map[string]bool{}
 		checkRequests := func(list []requestSpec) {
@@ -884,6 +900,9 @@ func requestProblems(f caseFile, c caseSpec, r requestSpec) []string {
 	}
 	if r.EmptyOperation && r.Operation != "" {
 		report("sets both operation and emptyOperation")
+	}
+	if r.OmitOperation && (!r.Filter || r.Operation != "" || r.EmptyOperation) {
+		report("sets omitOperation, which only a filter request with no operation and no emptyOperation reads")
 	}
 	if r.Bulk != nil || r.BulkOperations != nil {
 		if r.Bulk != nil && r.BulkOperations != nil {

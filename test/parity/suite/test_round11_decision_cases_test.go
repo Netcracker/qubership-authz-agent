@@ -187,66 +187,6 @@ func (s *ParitySuite) TestRound11IterateNodeUnderSetCases() {
 	}
 }
 
-// How many calls a GENERAL PIP receives when one condition reads it twice.
-// pip-call/pip-cache-cacheable-false records one call per request for a
-// condition that reads the PIP once, which a call per request and a call per
-// read both produce.
-//
-// The PIP answers {"value": "b"}, so == 'a' is false and OR goes on to == 'b'.
-// read-twice reads it on both sides of the OR; read-once, the control, reads it
-// once. Each form declares the PIP at a route of its own, and the decision and
-// the call count on that route are recorded.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone.
-func (s *ParitySuite) TestRound11PIPCallsPerRequestCases() {
-	ctx := context.Background()
-	s.T().Cleanup(func() {
-		if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
-			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
-		}
-	})
-	for _, form := range []struct{ key, condition string }{
-		{"read-twice", "subject.parityR11Twice == 'a' OR subject.parityR11Twice == 'b'"},
-		{"read-once", "subject.parityR11Twice == 'b'"},
-	} {
-		id := "calls-" + form.key
-		route := "/api/v1/pip/r11-" + id
-		s.Run(id, func() {
-			s.Require().NoError(s.pipMock.PinRoute(ctx, route, PipStubResponse{StatusCode: http.StatusOK, Body: map[string]string{"value": "b"}}))
-			s.Require().NoError(s.pipMock.ResetCalls(ctx))
-			rt := round11ResourceType(id)
-			status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain,
-				[]any{map[string]any{
-					"name": "subject.parityR11Twice", "url": "http://pip-mock:8090" + route,
-					"httpMethod": "POST", "pipType": "GENERAL", "type": "JSON", "jsonPath": "$.value", "cacheable": false,
-					"requestAttributes": map[string]string{"case": id},
-				}},
-				[]any{map[string]any{
-					"component": "PARITY", "reason": id, "resourceType": rt, "operation": "READ",
-					"roles": []string{"ROLE_PARITY_READER"}, "applicableForFrontend": false,
-					"condition": form.condition, "id": "00000000-0000-0000-0000-0000000f1101",
-				}})
-			s.Require().NoError(err)
-			if !isAuthzAgentProfile(s.cfg.Profile) {
-				s.Run("upload", func() {
-					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+id, &model.PolicyLoadOutcome{Status: status})
-				})
-				if status < http.StatusOK || status >= http.StatusMultipleChoices {
-					return
-				}
-			}
-			endpoint, outcome := s.sendRegularRequest(rt, isolatedRequest{resource: map[string]any{"id": "r11-calls"}})
-			s.Run("read", func() {
-				s.requirePendingGolden(endpoint, "isolated/"+id+"/read", outcome)
-			})
-			s.Run("the-pip-calls", func() {
-				s.requirePendingGolden(PSUITE_PIP_CALL, "isolated/"+id, s.pipCallOutcome(route))
-			})
-		})
-	}
-}
-
 // cachePerSubjectRoute is the pip-mock route of the PIP of
 // TestRound11PIPCachePerSubjectCases.
 const cachePerSubjectRoute = "/api/v1/pip/r11-cache-per-subject"

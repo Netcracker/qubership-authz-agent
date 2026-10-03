@@ -39,7 +39,6 @@ var regularCaseLists = map[string]func() []regularCase{
 	"barePathRegularCases":                  barePathRegularCases,
 	"denyPredicateCases":                    denyPredicateCases,
 	"terminalEffectCases":                   terminalEffectCases,
-	"round7FilterCases":                     round7FilterCases,
 	"failedPIPScopeCases":                   failedPIPScopeCases,
 	"failedPIPFilterCases":                  failedPIPFilterCases,
 	"customizationRegularCases":             customizationRegularCases,

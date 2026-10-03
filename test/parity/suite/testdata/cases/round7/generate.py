@@ -5,9 +5,10 @@ then still apply. Each file is one test function of the parity suite, in the for
 
   failed-pip-beside-allow.json  a rule reading a GENERAL PIP that failed, beside a rule of its policy that allows
   set-target-refusal.json       whether missing-attribute-in-set-target was refused for its target or its shared id
+  filter.json                   a rule without a predicate in check/filter, and a filter request with no operation
 
-TestRound7FilterCases, TestRound7IteratePermitOverridesCases and TestRound7PIPCacheCases stay in Go: they send a
-filter request with no operation parameter, or re-pin pip-mock and wait between requests.
+TestRound7IteratePermitOverridesCases and TestRound7PIPCacheCases stay in Go: they re-pin pip-mock and wait between
+requests.
 """
 import json
 import os
@@ -181,5 +182,42 @@ def set_target_refusal():
     return f
 
 
-for build in (failed_pip_beside_allow, set_target_refusal):
+def filter_cases():
+    f = File("filter",
+             "What check/filter does with a rule that has no predicate and a condition it can evaluate without a "
+             "resource, and which operation a filter request with no operation parameter is answered for. "
+             "filter-rule-with-a-condition-and-no-predicate records DENY for a rule whose condition reads resource.x, "
+             "and a filter request carries no resource, so that recording does not separate a rule without a "
+             "predicate being left out of the filter from a condition that could not be evaluated. Each condition "
+             "case also sends check/resource for the same operation.",
+             REGULAR_PREFIX)
+    for key, condition, resource, about in (
+        ("subject", READER_TARGET, {"id": "reg-filter-cond"},
+         "The rule's condition reads the subject's roles, which the filter request can evaluate: ALLOW means the "
+         "rule takes part in the filter and lifts it when its condition holds, DENY that a rule without a predicate "
+         "is left out whatever its condition."),
+        ("resource", "resource.x == 'v'", {"id": "reg-filter-cond", "x": "v"},
+         "The control: the recorded resource condition, run on the same stand."),
+    ):
+        f.add(regular("filter-rule-with-a-" + key + "-condition-and-no-predicate", [one_set(
+            "set", RT_TARGET, "DENY_UNLESS_PERMIT", policy(
+                "reader", "DENY_UNLESS_PERMIT", rule("list-under-a-condition", "operation == 'LIST'", condition,
+                                                     "ALLOW")))],
+            [req("filter", filter=True), req("check-list-condition-true", resource, operation="LIST")], about=about))
+    f.add(regular("filter-without-an-operation-and-no-rule-on-read", [one_set(
+        "set", RT_TARGET, "DENY_UNLESS_PERMIT", policy(
+            "reader", "DENY_UNLESS_PERMIT",
+            rule("update", "operation == 'UPDATE'", "true", "ALLOW", {"rsqlPredicate": "update==1"}),
+            rule("list", "operation == 'LIST'", "true", "ALLOW", {"rsqlPredicate": "list==1"})))],
+        [req("filter-with-no-operation", filter=True, omitOperation=True),
+         req("filter-with-update", filter=True, operation="UPDATE")],
+        about="filter-without-an-operation records read==1 against rules on READ and on UPDATE, which fits both a "
+              "default operation of READ and the first rule that applies. This set has rules on UPDATE and on LIST "
+              "and none on READ, uploaded in that order: DENY means the operation defaults to READ, list==1 that it "
+              "defaults to LIST, and update==1 that the first rule in upload order is taken. filter-with-update, "
+              "the operation spelled out, is the control that the set answers a filter at all."))
+    return f
+
+
+for build in (failed_pip_beside_allow, set_target_refusal, filter_cases):
     build().write()

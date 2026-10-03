@@ -19,7 +19,8 @@ package paritysuite
 // Round 10 asks, among other things, what IS NOT NULL and the collection
 // operators answer over dead forms, null, and a header holding one value, what
 // operators answer over a GENERAL PIP answering a number or a null body, and
-// what a set's algorithm and a rule reading the resource do to check/filter.
+// what a set's algorithm and a rule reading the resource do to check/filter,
+// and what a GENERAL PIP sends for a placeholder in its requestAttributes.
 // Its cases that the case format expresses are data under
 // testdata/cases/round10, written by generate.py there, which says what each
 // file asks. They were first written in Go, and each file sends the requests
@@ -84,4 +85,9 @@ func (s *ParitySuite) TestRound10FilterResourceConditionCases() {
 // TestRound10DenyListFilterCases runs round10/deny-list-filter.json.
 func (s *ParitySuite) TestRound10DenyListFilterCases() {
 	s.runCaseFile("round10/deny-list-filter.json")
+}
+
+// TestRound10RequestAttributesCases runs round10/request-attributes.json.
+func (s *ParitySuite) TestRound10RequestAttributesCases() {
+	s.runCaseFile("round10/request-attributes.json")
 }

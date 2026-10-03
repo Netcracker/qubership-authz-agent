@@ -53,6 +53,9 @@ type regularCase struct {
 	// readsRoutes are the pip-mock routes that have to receive a call while
 	// the case runs; see caseSpec.ReadsRoutes.
 	readsRoutes []string
+	// pipCalls is the pip-mock route whose calls over the whole case are
+	// recorded as a pip-call golden; see caseSpec.PIPCalls.
+	pipCalls string
 }
 
 // regularStep is one customization step of a case, as customizeStep
@@ -119,7 +122,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
-			s.resetCallsFor(tc.readsRoutes)
+			s.resetCallsFor(append(slices.Clone(tc.readsRoutes), tc.pipCalls))
 			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
 				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified)
 				s.Require().NoError(err)
@@ -164,17 +167,31 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 				})
 				runRequests(step.requests)
 			}
+			s.recordCasePIPCalls("regular/"+tc.id, tc.pipCalls)
 			s.requireRoutesRead(tc.readsRoutes)
 		})
 	}
 }
 
-// resetCallsFor clears the pip-mock call log when routes is not empty, so that
-// requireRoutesRead counts the calls of one case alone.
+// resetCallsFor clears the pip-mock call log when routes names a route, so
+// that requireRoutesRead and recordCasePIPCalls count the calls of one case
+// alone. An empty route names none.
 func (s *ParitySuite) resetCallsFor(routes []string) {
-	if len(routes) > 0 {
+	if slices.ContainsFunc(routes, func(route string) bool { return route != "" }) {
 		s.Require().NoError(s.pipMock.ResetCalls(context.Background()), "clear the pip-mock call log")
 	}
+}
+
+// recordCasePIPCalls compares what route received since resetCallsFor cleared
+// the log with the pip-call golden subCase. An empty route records nothing.
+func (s *ParitySuite) recordCasePIPCalls(subCase, route string) {
+	if route == "" {
+		return
+	}
+	outcome := s.pipCallOutcome(route)
+	s.Run("the-pip-calls", func() {
+		s.requirePendingGolden(PSUITE_PIP_CALL, subCase, outcome)
+	})
 }
 
 // requireRoutesRead fails the test when a route of routes received no call

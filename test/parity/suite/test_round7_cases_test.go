@@ -17,8 +17,9 @@
 package paritysuite
 
 // Round 7 asks, among other things, what a rule reading a failed GENERAL PIP
-// does beside a rule that allows, and whether a set target that reads an
-// absent resource attribute is refused. Two of its functions run data under
+// does beside a rule that allows, whether a set target that reads an absent
+// resource attribute is refused, and what check/filter does with a rule
+// without a predicate. Three of its functions run data under
 // testdata/cases/round7, written by generate.py there, which says what each
 // file asks. They were first written in Go, and each file sends the requests
 // the Go cases sent, so the goldens recorded then still apply. Each function
@@ -34,3 +35,6 @@ func (s *ParitySuite) TestRound7FailedPIPCases() {
 func (s *ParitySuite) TestRound7SetTargetRefusalCases() {
 	s.runCaseFile("round7/set-target-refusal.json")
 }
+
+// TestRound7FilterCases runs round7/filter.json.
+func (s *ParitySuite) TestRound7FilterCases() { s.runCaseFile("round7/filter.json") }

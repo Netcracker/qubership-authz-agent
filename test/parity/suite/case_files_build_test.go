@@ -326,6 +326,25 @@ func TestCaseFileProblems(t *testing.T) {
 		{"an iterate with no algorithm", func(f *caseFile) {
 			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer", "iterate": map[string]any{"foreach": "x"}}}
 		}, "has a set entry whose iterate is not an object with foreach and algorithm"},
+		{"a case with no request", func(f *caseFile) { f.Cases[0].Requests = nil }, ""},
+		{"omitOperation on a filter request", func(f *caseFile) {
+			f.Cases[0].Requests[0].Filter = true
+			f.Cases[0].Requests[0].OmitOperation = true
+		}, ""},
+		{"omitOperation on a check request", func(f *caseFile) { f.Cases[0].Requests[0].OmitOperation = true },
+			"case iso request read sets omitOperation, which only a filter request"},
+		{"omitOperation beside an operation", func(f *caseFile) {
+			f.Cases[0].Requests[0].Filter = true
+			f.Cases[0].Requests[0].Operation = "LIST"
+			f.Cases[0].Requests[0].OmitOperation = true
+		}, "case iso request read sets omitOperation, which only a filter request"},
+		{"pipCalls of a case on a pinned route", func(f *caseFile) { f.Cases[1].PIPCalls = "/pip" }, ""},
+		{"pipCalls of a case on a route the file does not pin", func(f *caseFile) { f.Cases[0].PIPCalls = "/other" },
+			"case iso records the calls to /other, which the file does not pin"},
+		{"pipCalls of a case beside a request that clears the log", func(f *caseFile) {
+			f.Cases[1].PIPCalls = "/pip"
+			f.Cases[1].Requests[0].PIPCalls = "/pip"
+		}, "case reg records the calls of the whole case, and its request read clears the call log"},
 		{"readsRoutes on a pinned route", func(f *caseFile) { f.Cases[0].ReadsRoutes = []string{"/pip"} }, ""},
 		{"readsRoutes on a route the file does not pin", func(f *caseFile) { f.Cases[1].ReadsRoutes = []string{"/other"} },
 			"case reg expects calls to /other, which the file does not pin"},
