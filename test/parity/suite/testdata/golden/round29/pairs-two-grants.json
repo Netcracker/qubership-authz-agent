@@ -149,6 +149,10 @@
     "import-customization-v1/regular/cust": {"status":200},
     "load-policy-sets-v1/regular/upload-1": {"status":200}
   },
+  "r29pairs-two-013-s": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
   "r29pairs-two-014": {
     "check-filter-v1-outcome/regular/qc": {
       "status": 200,
@@ -190,6 +194,20 @@
     },
     "import-customization-v1/regular/cust": {"status":200},
     "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r29pairs-two-015-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
   },
   "r29pairs-two-grants-control-first": {
     "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},

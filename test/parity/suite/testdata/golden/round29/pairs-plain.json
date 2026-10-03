@@ -77,6 +77,20 @@
     "import-customization-v1/regular/cust": {"status":200},
     "load-policy-sets-v1/regular/upload-1": {"status":200}
   },
+  "r29pairs-plain-007-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
   "r29pairs-plain-008": {
     "check-filter-v1-outcome/regular/qc": {
       "status": 200,
