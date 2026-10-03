@@ -340,14 +340,51 @@ func TestCaseFileProblems(t *testing.T) {
 		}, "case iso request read sets omitOperation, which only a filter request"},
 		{"pipCalls of a case on a pinned route", func(f *caseFile) { f.Cases[1].PIPCalls = "/pip" }, ""},
 		{"pipCalls of a case on a route the file does not pin", func(f *caseFile) { f.Cases[0].PIPCalls = "/other" },
-			"case iso records the calls to /other, which the file does not pin"},
+			"case iso records the calls to /other, which nothing pins before it"},
 		{"pipCalls of a case beside a request that clears the log", func(f *caseFile) {
 			f.Cases[1].PIPCalls = "/pip"
 			f.Cases[1].Requests[0].PIPCalls = "/pip"
 		}, "case reg records the calls of the whole case, and its request read clears the call log"},
+		{"classifyBy on a case without sets", func(f *caseFile) { f.Cases[0].Requests[0].ClassifyBy = "/pip" }, ""},
+		{"classifyBy on a route the case pins", func(f *caseFile) {
+			f.Cases[0].Pins = map[string]PipStubResponse{"/case": {StatusCode: http.StatusOK}}
+			f.Cases[0].Requests[0].ClassifyBy = "/case"
+		}, ""},
+		{"readsRoutes of a request on a route the request pins", func(f *caseFile) {
+			f.Cases[0].Requests[0].Pins = map[string]PipStubResponse{"/request": {StatusCode: http.StatusOK}}
+			f.Cases[0].Requests[0].ReadsRoutes = []string{"/request"}
+		}, ""},
+		{"readsRoutes of a request on a route nothing pins", func(f *caseFile) {
+			f.Cases[0].Requests[0].ReadsRoutes = []string{"/other"}
+		}, "case iso request read expects calls to /other, which nothing pins before it"},
+		{"pipCalls of a case beside a request with readsRoutes", func(f *caseFile) {
+			f.Cases[1].PIPCalls = "/pip"
+			f.Cases[1].Requests[0].ReadsRoutes = []string{"/pip"}
+		}, "case reg records the calls of the whole case, and its request read clears the call log"},
+		{"omitOperation beside emptyOperation", func(f *caseFile) {
+			f.Cases[0].Requests[0].Filter = true
+			f.Cases[0].Requests[0].EmptyOperation = true
+			f.Cases[0].Requests[0].OmitOperation = true
+		}, "case iso request read sets omitOperation, which only a filter request"},
+		{"readsRoutes of a case on a route the case pins", func(f *caseFile) {
+			f.Cases[0].Pins = map[string]PipStubResponse{"/case": {StatusCode: http.StatusOK}}
+			f.Cases[0].ReadsRoutes = []string{"/case"}
+		}, ""},
+		{"readsRoutes of a case beside a request that clears the log", func(f *caseFile) {
+			f.Cases[1].ReadsRoutes = []string{"/pip"}
+			f.Cases[1].Requests[0].ClassifyBy = "/pip"
+		}, "case reg expects calls over the whole case, and its request read clears the call log"},
+		{"pipCalls of a case beside a step request that classifies", func(f *caseFile) {
+			f.Cases[1].PIPCalls = "/pip"
+			f.Cases[1].Customize[0].Requests[0].ClassifyBy = "/pip"
+		}, "case reg records the calls of the whole case, and its request after clears the call log"},
+		{"classifyBy on a route only a later request pins", func(f *caseFile) {
+			f.Cases[1].Requests[0].ClassifyBy = "/later"
+			f.Cases[1].Customize[0].Requests[0].Pins = map[string]PipStubResponse{"/later": {StatusCode: http.StatusOK}}
+		}, "case reg request read is classified by /later, which nothing pins before it"},
 		{"readsRoutes on a pinned route", func(f *caseFile) { f.Cases[0].ReadsRoutes = []string{"/pip"} }, ""},
 		{"readsRoutes on a route the file does not pin", func(f *caseFile) { f.Cases[1].ReadsRoutes = []string{"/other"} },
-			"case reg expects calls to /other, which the file does not pin"},
+			"case reg expects calls to /other, which nothing pins before it"},
 		{"pipHeaders without pipCalls", func(f *caseFile) { f.Cases[0].Requests[0].PIPHeaders = []string{"tenant"} },
 			"case iso request read sets pipHeaders without pipCalls"},
 		{"emptyOperation beside operation", func(f *caseFile) {

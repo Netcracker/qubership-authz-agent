@@ -15,6 +15,8 @@ then still apply. Each file is one test function of the parity suite, in the for
   filter-resource-condition.json        a filter over a rule whose condition or target reads the resource
   deny-list-filter.json                 a filter over a deny list whose DENY rules read the resource
   request-attributes.json               what a GENERAL PIP sends when a requestAttributes value is a placeholder
+  either-source.json                    resource.customerId IN a TOKEN PIP OR IN a GENERAL PIP, and whether the
+                                        GENERAL PIP is called once the TOKEN operand holds
 
 A case id ending in -control is the probe's control: the operand under question on the right of
 resource.a == 'y' OR, where it is true whatever the operand does, so a false control means the fixture is broken.
@@ -472,8 +474,56 @@ def request_attributes():
         f.add(case)
     return f
 
+
+def either_source():
+    route = "/api/v1/pip/r10-either-customer-ids"
+    f = File("either-source",
+             "What resource.customerId IN <TOKEN> OR resource.customerId IN <GENERAL> answers, and whether the GENERAL "
+             "PIP is called once the TOKEN operand holds. The product policies in reach write this form with a string "
+             "claim on the left and a GENERAL PIP answering a list of ids on the right. ro-in-either-header records "
+             "it over two HEADER PIPs, where nothing is called; a string claim on the right of IN and a GENERAL PIP "
+             "on the right that answered 500 beside a true left operand are recorded nowhere. The agent's condition "
+             "parser accepts the condition. The reader's department claim is finance. Each request pins the GENERAL "
+             "PIP to its own answer and names the resource's customerId. A request whose TOKEN operand holds may "
+             "reach the GENERAL PIP or not, and the answer of general-fails-and-token-holds-the-id depends on which, "
+             "so both such requests are filed by the call log under -when-the-pip-was-read or "
+             "-when-the-pip-was-skipped. Where the GENERAL operand decides, the PIP has to be called. The case lives "
+             "in its own test function so that a recording run can be filtered to it and leave every golden already "
+             "committed alone.",
+             ISOLATED_PREFIX,
+             pips={"department": {"name": "subject.parityR10Department", "type": "UUID", "pipType": "TOKEN",
+                                  "claim": "department", "cacheable": False},
+                   "customers": {"name": "subject.parityR10CustomerIds", "url": "http://pip-mock:8090" + route,
+                                 "httpMethod": "POST", "pipType": "GENERAL",
+                                 "requestAttributes": {"case": "either-source"}, "cacheable": False}})
+
+    def ids(*values):
+        return {"statusCode": 200, "body": list(values)}
+
+    failed = {"statusCode": 500, "body": {"error": "parity either-source case"}}
+    requests = []
+    for name, customer, answer, must_read in (
+        ("token-holds-the-id", "finance", ids("c2"), False),
+        ("general-holds-the-id", "c1", ids("c1", "c2"), True),
+        ("neither-holds-the-id", "c9", ids("c1"), True),
+        ("general-fails-and-token-holds-the-id", "finance", failed, False),
+        ("general-fails-and-token-misses-the-id", "c9", failed, True),
+    ):
+        r = req(name, {"id": "r10-either", "customerId": customer}, pins={route: answer})
+        if must_read:
+            r["readsRoutes"] = [route]
+        else:
+            r["classifyBy"] = route
+        requests.append(r)
+    case = isolated("either-source",
+                    "resource.customerId IN subject.parityR10Department OR resource.customerId IN "
+                    "subject.parityR10CustomerIds", requests, ["department", "customers"])
+    case["policy"] = {"id": "00000000-0000-0000-0000-0000000f1040"}
+    f.add(case)
+    return f
+
 for build in (dead_form_not_null, empty_collection_not_null, undeclared_placeholder_check, null_operand,
               single_value_header, null_body_and_right_operand, path_pattern_and_word_operator,
               non_string_pip_operator, set_algorithm_filter, filter_resource_condition, deny_list_filter,
-              request_attributes):
+              request_attributes, either_source):
     build().write()

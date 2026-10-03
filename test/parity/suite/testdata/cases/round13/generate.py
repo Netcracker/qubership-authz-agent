@@ -9,8 +9,7 @@ then still apply. Each file is one test function of the parity suite, in the for
   pap-syntax.json                   a literal left over after a comparison, and an attribute as a list element
   cells.json                        every operator over every operand state no golden fixes
   failing-pip-in-a-deny-rule.json   a GENERAL PIP that answers 500 under every operator in a DENY rule
-
-TestRound13IterateCases stays in Go: it re-pins the scope service between three runs of its cases.
+  iterate.json                      what an iterate node over zero, one, and two grants gives the sets around it
 """
 import json
 import os
@@ -103,8 +102,8 @@ def general_pip(name, route):
 
 
 # subject.permissionScope read from the scope service. cacheable is written false and is not honoured: the PAP
-# answers with cacheable true and a cachePeriod, so the period is one second, and the first request of a file
-# that pins the service waits two seconds, so that no scope another function cached reaches it.
+# answers with cacheable true and a cachePeriod, so the period is one second, and the first request after the
+# service is pinned waits two seconds, so that no scope cached before the pin reaches it.
 SCOPE_PIP = {"name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "http://pip-mock:8090",
              "cacheable": False, "cachePeriod": 1}
 
@@ -376,5 +375,83 @@ def failing_pip_in_a_deny_rule():
     return f
 
 
-for build in (scope_outside_iterate, filter_cases, pap_syntax, cells, failing_pip_in_a_deny_rule):
+
+def iterate_cases():
+    f = File("iterate",
+             "What an iterate node over zero, one, and two grants gives the sets around it, in check/resource and in "
+             "the filter. Round 12 answered for a DENY_OVERRIDES node (r12 fn-nested-deny-overrides-iterate-node-*): "
+             "it does not apply over zero grants, and with scope-set-algorithm this fits one model, in which the "
+             "node's answer is its set's answer and the set's own algorithm combines the policies inside a pass only. "
+             "The cases run three times, once per answer of the scope service: no grants, one grant of r1, and two "
+             "grants of r1 and r2, named by the suffix of the case id. The first case of each run pins the scope "
+             "service to its answer, and the six after it read the same answer. Every case waits out the scope's "
+             "cachePeriod before its first request, as permission-scope-wire does, so that a case whose upload was "
+             "refused does not leave the next one reading a scope cached before the pin. Every case sends the filter "
+             "on LIST and check/resource on LIST in regions r1 and r2. The cases live in their own test function so "
+             "that a recording run can be filtered to them and leave every golden already committed alone. Legacy "
+             "profile only.",
+             REGULAR_PREFIX, pips={"scope": SCOPE_PIP})
+
+    def scoped_policy(key, algorithm):
+        return policy(key, algorithm, rule(
+            key + "-region-granted", "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+            "subject.permissionScope.region CONTAINS resource.region", "ALLOW",
+            {"rsqlPredicate": "region=in=(${subject.permissionScope.region})"}))
+
+    def iterating(key, target, set_algorithm, node_algorithm, policies, sets=None):
+        it = {"key": key, "target": target, "algorithm": set_algorithm,
+              "iterate": {"foreach": "subject.permissionScope", "algorithm": node_algorithm}, "policies": policies}
+        if sets:
+            it["sets"] = sets
+        return it
+
+    top = "resourceType == '{{resourceType}}'"
+    for shape, grants in (("no-grants", ()), ("one-grant-r1", ({"region": ["r1"]},)),
+                          ("two-grants-r1-and-r2", ({"region": ["r1"]}, {"region": ["r2"]}))):
+        cases = []
+        for node in ALGORITHMS:
+            outer = {"key": "outer", "target": top, "algorithm": "DENY_OVERRIDES", "policies": [predicate_policy()],
+                     "sets": [iterating("nested", "true", "DENY_OVERRIDES", node,
+                                        [scoped_policy("scoped", "DENY_UNLESS_PERMIT")])]}
+            cases.append(("r13-node-" + key_of(node) + "-" + shape, [outer],
+                          "The round 12 case with the node under " + node + ": the DENY_OVERRIDES set nested beside "
+                          "the allowed==1 policy under a DENY_OVERRIDES set. Over zero grants a node that denies gives "
+                          "DENY and false; a node that does not apply and a node that permits both give allowed==1 "
+                          "and true, since an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate (r12 "
+                          "deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate). The DENY_UNLESS_PERMIT "
+                          "and PERMIT_OVERRIDES rows ask whether the node denies, the DENY_OVERRIDES rows repeat "
+                          "round 12 on the same stand, and the PERMIT_UNLESS_DENY rows are controls."))
+        cases.append(("r13-pass-without-an-applicable-policy-" + shape,
+                      [iterating("set", top, "PERMIT_UNLESS_DENY", "DENY_OVERRIDES",
+                                 [scoped_policy("scoped", "PERMIT_OVERRIDES")])],
+                      "A top-level PERMIT_UNLESS_DENY set over a DENY_OVERRIDES node whose PERMIT_OVERRIDES policy has "
+                      "no rule that applies outside the granted region. In region r2 with the grant r1 the pass has no "
+                      "policy that applies: check/resource is true if the set's algorithm turns that into its permit, "
+                      "and false if the pass does not apply."))
+        cases.append(("r13-scope-key-no-grant-carries-" + shape,
+                      [iterating("set", top, "DENY_UNLESS_PERMIT", "DENY_UNLESS_PERMIT", [policy(
+                          "scoped", "DENY_UNLESS_PERMIT", rule(
+                              "list-under-category-is-empty", "operation == 'LIST'",
+                              "subject.permissionScope.category IS EMPTY", "ALLOW"))])],
+                      "Reads subject.permissionScope.category, a key no grant carries, under IS EMPTY inside the pass. "
+                      "With a grant, check/resource is true if the missing key reads as an empty list, and false if it "
+                      "reads as an absent attribute (IS EMPTY over an absent key answers false, s7)."))
+        cases.append(("r13-set-nested-in-a-pass-" + shape,
+                      [iterating("set", top, "DENY_UNLESS_PERMIT", "DENY_UNLESS_PERMIT", [], sets=[
+                          {"key": "nested", "target": "true", "algorithm": "DENY_UNLESS_PERMIT",
+                           "policies": [scoped_policy("scoped", "DENY_UNLESS_PERMIT")]}])],
+                      "Puts the scoped policy in a set nested in the iterating set rather than in the iterating set "
+                      "itself. With the grant r1, check/resource in r1 is true if the nested set sees the grant, and "
+                      "false if it reads the scope as from outside iterate."))
+        for n, (cid, sets, about) in enumerate(cases):
+            requests = [req("filter", filter=True, pauseMs=2000)] + [
+                req("check-list-in-region-" + r, {"id": "r13-iterate", "region": r}, operation="LIST")
+                for r in ("r1", "r2")]
+            case = regular(cid, sets, requests, pips=["scope"], about=about)
+            if n == 0:
+                case["pins"] = {SCOPE_ROUTE: scope_body(*grants)}
+            f.add(case)
+    return f
+
+for build in (scope_outside_iterate, filter_cases, pap_syntax, cells, failing_pip_in_a_deny_rule, iterate_cases):
     build().write()

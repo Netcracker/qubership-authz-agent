@@ -20,7 +20,9 @@ package paritysuite
 // operators answer over dead forms, null, and a header holding one value, what
 // operators answer over a GENERAL PIP answering a number or a null body, and
 // what a set's algorithm and a rule reading the resource do to check/filter,
-// and what a GENERAL PIP sends for a placeholder in its requestAttributes.
+// what a GENERAL PIP sends for a placeholder in its requestAttributes, and
+// whether a GENERAL PIP on the right of an OR is called once the left operand
+// holds.
 // Its cases that the case format expresses are data under
 // testdata/cases/round10, written by generate.py there, which says what each
 // file asks. They were first written in Go, and each file sends the requests
@@ -91,3 +93,6 @@ func (s *ParitySuite) TestRound10DenyListFilterCases() {
 func (s *ParitySuite) TestRound10RequestAttributesCases() {
 	s.runCaseFile("round10/request-attributes.json")
 }
+
+// TestRound10EitherSourceCases runs round10/either-source.json.
+func (s *ParitySuite) TestRound10EitherSourceCases() { s.runCaseFile("round10/either-source.json") }

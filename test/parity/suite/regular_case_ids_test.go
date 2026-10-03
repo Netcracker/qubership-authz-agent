@@ -47,15 +47,7 @@ var regularCaseLists = map[string]func() []regularCase{
 	"repeatedValuesRegularCases":            repeatedValuesRegularCases,
 	"policyWithoutAlgorithmCases":           policyWithoutAlgorithmCases,
 	"round11FailedPIPOnTheRightCases":       round11FailedPIPOnTheRightCases,
-	"round12IterateNodeInAFilterCases":      round12IterateNodeInAFilterCases,
-	"round13IterateCases": func() []regularCase {
-		var cases []regularCase
-		for _, shape := range round13ScopeShapes {
-			cases = append(cases, round13IterateCases(shape.name)...)
-		}
-		return cases
-	},
-	"caseFileRegularCases": caseFileRegularCases,
+	"caseFileRegularCases":                  caseFileRegularCases,
 }
 
 // caseFileRegularCases builds the cases with sets of every file under

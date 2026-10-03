@@ -61,6 +61,9 @@ type isolatedCase struct {
 	// pipCalls is the pip-mock route whose calls over the whole case are
 	// recorded as a pip-call golden; see caseSpec.PIPCalls.
 	pipCalls string
+	// pins are the pip-mock answers pinned when the case starts; see
+	// caseSpec.Pins.
+	pins map[string]PipStubResponse
 }
 
 // isolatedRequest is a check/resource request against the case's policy, or a
@@ -102,6 +105,12 @@ type isolatedRequest struct {
 	emptyOperation bool
 	// pause is how long runRequest waits before sending the request.
 	pause time.Duration
+	// pins are the pip-mock answers pinned before the request; see
+	// requestSpec.Pins.
+	pins map[string]PipStubResponse
+	// readsRoutes are the pip-mock routes that have to receive a call while
+	// the request runs; see requestSpec.ReadsRoutes.
+	readsRoutes []string
 	// pipHeaders names the headers the pip-call golden of pipCalls records;
 	// see forwardedHeaders.
 	pipHeaders []string
@@ -362,6 +371,7 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 	})
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
+			s.pinRoutes(tc.pins)
 			s.resetCallsFor(append(slices.Clone(tc.readsRoutes), tc.pipCalls))
 			policy := map[string]any{
 				"component":             "PARITY",

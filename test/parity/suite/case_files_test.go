@@ -65,19 +65,27 @@ type caseSpec struct {
 	// one derived from resourceTypePrefix and the id. It keeps the resource type
 	// of a case first written in Go, whose goldens were recorded with it.
 	ResourceType string `json:"resourceType"`
-	// ReadsRoutes names pip-mock routes the file pins, each of which has to
-	// receive at least one call while the case runs. The runner clears the call
-	// log when the case starts and, once the case's uploads were accepted and
-	// its requests sent, fails the case, with no golden, when a route received
-	// none: a false answer is then a declaration the stand ignored rather than a
-	// PIP it read.
+	// ReadsRoutes names pip-mock routes the file or the case pins, each of
+	// which has to receive at least one call while the case runs. The runner
+	// clears the call log when the case starts and, once the case's uploads
+	// were accepted and its requests sent, fails the case, with no golden of
+	// its own, when a route received none: a false answer is then a
+	// declaration the stand ignored rather than a PIP it read. No request of
+	// the case may clear the log again, so none of them sets pipCalls,
+	// classifyBy, or readsRoutes.
 	ReadsRoutes []string `json:"readsRoutes"`
-	// PIPCalls names a pip-mock route the file pins. The runner clears the
-	// call log when the case starts and, after the case's requests, records
-	// what the route received over the whole case as a pip-call golden under
-	// the case's own name. No request of the case may clear the log again, so
-	// none of them sets pipCalls or classifyBy.
+	// PIPCalls names a pip-mock route the file or the case pins. The runner
+	// clears the call log when the case starts and, after the case's requests
+	// and steps, records what the route received over the whole case as a
+	// pip-call golden under the case's own name. No request of the case may
+	// clear the log again, so none of them sets pipCalls, classifyBy, or
+	// readsRoutes.
 	PIPCalls string `json:"pipCalls"`
+	// Pins maps a pip-mock route to the answer it is pinned to when the case
+	// starts, before its uploads. The answer stays until something pins the
+	// route again: a later case or request, in the order the cases run, which
+	// puts the cases without sets first.
+	Pins map[string]PipStubResponse `json:"pins"`
 	// About says what the case asks where its id and condition do not; nothing
 	// reads it.
 	About     string        `json:"about"`
@@ -243,7 +251,8 @@ type requestSpec struct {
 	// under <name>-when-the-pip-was-read when the route received a call while
 	// the request ran, and under <name>-when-the-pip-was-skipped when it did
 	// not, so that an answer that depends on the order access-control evaluates
-	// the children of a node in is filed with that order. Regular cases only.
+	// the children of a node or the operands of a condition in is filed with
+	// that order.
 	ClassifyBy string `json:"classifyBy"`
 	// TenantID replaces the stand's tenant in the tenant_id query parameter
 	// when present; an empty string sends tenant_id with an empty value.
@@ -261,11 +270,22 @@ type requestSpec struct {
 	// EmptyOperation sends the operation with an empty value: operation= on a
 	// filter request, "operation": "" in a check body.
 	EmptyOperation bool `json:"emptyOperation"`
+	// Pins maps a pip-mock route to the answer it is pinned to before the
+	// request is sent, before its call log is cleared and its pause starts.
+	// The answer stays for the requests and cases after it until something
+	// pins the route again.
+	Pins map[string]PipStubResponse `json:"pins"`
+	// ReadsRoutes names pip-mock routes each of which has to receive at least
+	// one call while the request runs. The runner clears the call log before
+	// the request and fails a check of its own, which records no golden, when
+	// a route received none; the request's golden is compared all the same.
+	ReadsRoutes []string `json:"readsRoutes"`
 	// OmitOperation sends a filter request with no operation parameter at all,
-	// where an empty operation would send LIST.
+	// where a request without operation sends LIST.
 	OmitOperation bool `json:"omitOperation"`
 	// PauseMs is how many milliseconds the runner waits before sending the
-	// request, after the call log of PIPCalls or ClassifyBy is cleared.
+	// request, after the call log of PIPCalls, ClassifyBy, or ReadsRoutes is
+	// cleared.
 	PauseMs int `json:"pauseMs"`
 	// Bulk sends the request as check/resource/bulk with these items; see
 	// bulkItems. The golden records the status and the sorted allowed ids.
@@ -692,9 +712,29 @@ func caseFileProblems(f caseFile) []string {
 				report("case %s sets customize, which only a case with sets reads", c.ID)
 			}
 		}
+		// pinned holds the routes pinned when the case starts; each request adds
+		// its own pins before it is checked, in the order the requests run.
+		pinned := map[string]bool{}
+		for route := range f.Pins {
+			pinned[route] = true
+		}
+		for route := range c.Pins {
+			pinned[route] = true
+		}
+		allRequests := slices.Clone(c.Requests)
+		for _, st := range c.Customize {
+			allRequests = append(allRequests, st.Requests...)
+		}
 		for _, route := range c.ReadsRoutes {
-			if _, ok := f.Pins[route]; !ok {
-				report("case %s expects calls to %s, which the file does not pin", c.ID, route)
+			if !pinned[route] {
+				report("case %s expects calls to %s, which nothing pins before it", c.ID, route)
+			}
+		}
+		if c.ReadsRoutes != nil {
+			for _, r := range allRequests {
+				if r.PIPCalls != "" || r.ClassifyBy != "" || r.ReadsRoutes != nil {
+					report("case %s expects calls over the whole case, and its request %s clears the call log with pipCalls, classifyBy, or readsRoutes", c.ID, r.Name)
+				}
 			}
 		}
 		for _, key := range c.PIPs {
@@ -703,12 +743,12 @@ func caseFileProblems(f caseFile) []string {
 			}
 		}
 		if c.PIPCalls != "" {
-			if _, ok := f.Pins[c.PIPCalls]; !ok {
-				report("case %s records the calls to %s, which the file does not pin", c.ID, c.PIPCalls)
+			if !pinned[c.PIPCalls] {
+				report("case %s records the calls to %s, which nothing pins before it", c.ID, c.PIPCalls)
 			}
-			for _, r := range c.Requests {
-				if r.PIPCalls != "" || r.ClassifyBy != "" {
-					report("case %s records the calls of the whole case, and its request %s clears the call log with pipCalls or classifyBy", c.ID, r.Name)
+			for _, r := range allRequests {
+				if r.PIPCalls != "" || r.ClassifyBy != "" || r.ReadsRoutes != nil {
+					report("case %s records the calls of the whole case, and its request %s clears the call log with pipCalls, classifyBy, or readsRoutes", c.ID, r.Name)
 				}
 			}
 		}
@@ -719,7 +759,10 @@ func caseFileProblems(f caseFile) []string {
 					report("case %s has two requests named %s, which share a golden", c.ID, r.Name)
 				}
 				requests[r.Name] = true
-				problems = append(problems, requestProblems(f, c, r)...)
+				for route := range r.Pins {
+					pinned[route] = true
+				}
+				problems = append(problems, requestProblems(c, r, pinned)...)
 			}
 		}
 		checkRequests(c.Requests)
@@ -865,8 +908,10 @@ func customEntryProblems(kind string, e any) []string {
 	return problems
 }
 
-// requestProblems returns the problems of r, a request of the case c of f.
-func requestProblems(f caseFile, c caseSpec, r requestSpec) []string {
+// requestProblems returns the problems of r, a request of the case c. pinned
+// holds the routes pinned before r is sent: the file's, the case's, and those
+// r and the requests before it pin.
+func requestProblems(c caseSpec, r requestSpec, pinned map[string]bool) []string {
 	var problems []string
 	report := func(format string, args ...any) {
 		problems = append(problems, fmt.Sprintf("case %s request %s ", c.ID, r.Name)+fmt.Sprintf(format, args...))
@@ -878,8 +923,8 @@ func requestProblems(f caseFile, c caseSpec, r requestSpec) []string {
 		report("sets subjectClaims without a user: subject")
 	}
 	if r.PIPCalls != "" {
-		if _, ok := f.Pins[r.PIPCalls]; !ok {
-			report("records the calls to %s, which the file does not pin", r.PIPCalls)
+		if !pinned[r.PIPCalls] {
+			report("records the calls to %s, which nothing pins before it", r.PIPCalls)
 		}
 		if r.ClassifyBy != "" {
 			report("sets both pipCalls and classifyBy, which each clear the call log")
@@ -888,11 +933,13 @@ func requestProblems(f caseFile, c caseSpec, r requestSpec) []string {
 		report("sets pipHeaders without pipCalls, whose golden records them")
 	}
 	if r.ClassifyBy != "" {
-		if len(c.Sets) == 0 {
-			report("sets classifyBy, which only a regular case reads")
+		if !pinned[r.ClassifyBy] {
+			report("is classified by %s, which nothing pins before it", r.ClassifyBy)
 		}
-		if _, ok := f.Pins[r.ClassifyBy]; !ok {
-			report("is classified by %s, which the file does not pin", r.ClassifyBy)
+	}
+	for _, route := range r.ReadsRoutes {
+		if !pinned[route] {
+			report("expects calls to %s, which nothing pins before it", route)
 		}
 	}
 	if r.PauseMs < 0 {

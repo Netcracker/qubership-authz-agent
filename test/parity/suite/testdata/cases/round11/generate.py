@@ -13,6 +13,7 @@ then still apply. Each file is one test function of the parity suite, in the for
   scope-outside-iterate.json          subject.permissionScope.<key> in a set that does not iterate
   filtered-declaration.json           which of resourceType and a .filtered name a FILTERED declaration needs
   pip-calls-per-request.json          how many calls a GENERAL PIP receives when one condition reads it twice
+  pip-cache-per-subject.json          whether a cacheable GENERAL PIP serves one subject's value to another
 
 A case id ending in -control is the probe's control: the operand under question on the right of
 resource.a == 'y' OR, where it is true whatever the operand does, so a false control means the fixture is broken.
@@ -395,6 +396,38 @@ def pip_calls_per_request():
         f.add(case)
     return f
 
-for build in (filtered_declaration, pip_calls_per_request, absent_key_probe, null_probe, empty_collection, null_body_probe, null_literal_and_right_operand,
+
+def pip_cache_per_subject():
+    route = "/api/v1/pip/r11-cache-per-subject"
+
+    def answer(value):
+        return {route: {"statusCode": 200, "body": {"value": value}}}
+
+    f = File("pip-cache-per-subject",
+             "Whether the cache of a GENERAL PIP declared cacheable true is kept per subject. "
+             "pip-cache-cacheable-true records one subject reading the PIP after its answer changed, which a cache "
+             "per subject and a cache per PIP name serve the same way. parity-reader and parity-multi-role both hold "
+             "ROLE_PARITY_READER, and the policy allows == 'granted'. pip-mock answers \"granted\" and the reader "
+             "reads; pip-mock is re-pinned to \"refused\", and inside the cache period the multi-role user reads, "
+             "which is true when the reader's cached value is served to another subject and false when the PIP is "
+             "called again; then the reader reads once more, the control that the cache holds the first value. The "
+             "calls the route received over the case are recorded." + OWN_FUNCTION,
+             ISOLATED_PREFIX,
+             pips={"general": {"name": "subject.parityR11PerSubject", "url": "http://pip-mock:8090" + route,
+                               "httpMethod": "POST", "pipType": "GENERAL", "type": "JSON", "jsonPath": "$.value",
+                               "cacheable": True, "requestAttributes": {"case": "cache-per-subject"}}})
+    resource = {"id": "r11-cache"}
+    case = isolated("cache-per-subject", "subject.parityR11PerSubject == 'granted'", [
+        req("reader-first", resource),
+        req("multi-role-user-after-the-change", resource, subject="user:parity-multi-role", pins=answer("refused")),
+        req("reader-again", resource),
+    ], ["general"])
+    case["policy"] = {"id": "00000000-0000-0000-0000-0000000f1102"}
+    case["pins"] = answer("granted")
+    case["pipCalls"] = route
+    f.add(case)
+    return f
+
+for build in (filtered_declaration, pip_calls_per_request, pip_cache_per_subject, absent_key_probe, null_probe, empty_collection, null_body_probe, null_literal_and_right_operand,
               declared_name, filter_node, scope_outside_iterate):
     build().write()

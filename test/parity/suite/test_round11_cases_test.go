@@ -21,8 +21,9 @@ package paritysuite
 // with a PIP named subject.isM2M or subject.permissions, how check/filter
 // combines a nested set that does not apply, what
 // subject.permissionScope.<key> resolves to outside iterate, which fields a
-// FILTERED declaration needs, and how often a GENERAL PIP read twice in one
-// condition is called. Those cases are
+// FILTERED declaration needs, how often a GENERAL PIP read twice in one
+// condition is called, and whether a cacheable GENERAL PIP serves one
+// subject's value to another. Those cases are
 // data under testdata/cases/round11, written by generate.py there, which says
 // what each file asks. They were first written in Go, and each file sends the
 // requests the Go cases sent, so the goldens recorded then still apply. Each
@@ -74,4 +75,9 @@ func (s *ParitySuite) TestRound11FilteredDeclarationCases() {
 // TestRound11PIPCallsPerRequestCases runs round11/pip-calls-per-request.json.
 func (s *ParitySuite) TestRound11PIPCallsPerRequestCases() {
 	s.runCaseFile("round11/pip-calls-per-request.json")
+}
+
+// TestRound11PIPCachePerSubjectCases runs round11/pip-cache-per-subject.json.
+func (s *ParitySuite) TestRound11PIPCachePerSubjectCases() {
+	s.runCaseFile("round11/pip-cache-per-subject.json")
 }

@@ -7,8 +7,9 @@ then still apply. Each file is one test function of the parity suite, in the for
   set-target-refusal.json       whether missing-attribute-in-set-target was refused for its target or its shared id
   filter.json                   a rule without a predicate in check/filter, and a filter request with no operation
 
-TestRound7IteratePermitOverridesCases and TestRound7PIPCacheCases stay in Go: they re-pin pip-mock and wait between
-requests.
+TestRound7IteratePermitOverridesCases and TestRound7PIPCacheCases stay in Go: they file their goldens outside regular/
+and isolated/, and TestRound7PIPCacheCases waits a time measured from the moment it re-pinned pip-mock, which a fixed
+pauseMs does not reproduce.
 """
 import json
 import os
@@ -189,7 +190,9 @@ def filter_cases():
              "filter-rule-with-a-condition-and-no-predicate records DENY for a rule whose condition reads resource.x, "
              "and a filter request carries no resource, so that recording does not separate a rule without a "
              "predicate being left out of the filter from a condition that could not be evaluated. Each condition "
-             "case also sends check/resource for the same operation.",
+             "case also sends check/resource for the same operation. The cases live in their own test function so "
+             "that a recording run can be filtered to them and leave every golden already committed alone. Legacy "
+             "profile only, like every case with sets.",
              REGULAR_PREFIX)
     for key, condition, resource, about in (
         ("subject", READER_TARGET, {"id": "reg-filter-cond"},

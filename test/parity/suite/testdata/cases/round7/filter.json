@@ -1,5 +1,5 @@
 {
- "about": "What check/filter does with a rule that has no predicate and a condition it can evaluate without a resource, and which operation a filter request with no operation parameter is answered for. filter-rule-with-a-condition-and-no-predicate records DENY for a rule whose condition reads resource.x, and a filter request carries no resource, so that recording does not separate a rule without a predicate being left out of the filter from a condition that could not be evaluated. Each condition case also sends check/resource for the same operation.",
+ "about": "What check/filter does with a rule that has no predicate and a condition it can evaluate without a resource, and which operation a filter request with no operation parameter is answered for. filter-rule-with-a-condition-and-no-predicate records DENY for a rule whose condition reads resource.x, and a filter request carries no resource, so that recording does not separate a rule without a predicate being left out of the filter from a condition that could not be evaluated. Each condition case also sends check/resource for the same operation. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only, like every case with sets.",
  "resourceTypePrefix": "PARITY_SUITE_REG_",
  "pins": {},
  "pips": {},

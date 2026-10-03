@@ -16,18 +16,8 @@
 
 package paritysuite
 
-import (
-	"strings"
-)
-
-// The builders below were written for round 11, whose cases are partly data
-// under testdata/cases/round11 now, and the round 11 functions still in Go and
-// later rounds build their cases with them.
-
-// round11ResourceType is the resource type of the isolated case keyed key.
-func round11ResourceType(key string) string {
-	return "PARITY_SUITE_R11_" + strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
-}
+// The builder below was written for round 11, whose cases are partly data under
+// testdata/cases/round11 now, and round 14 still builds its Go cases with it.
 
 // round11NestedSetCase builds a DENY_OVERRIDES set of round9PredicatePolicy
 // and the set nested builds, and sends requests.

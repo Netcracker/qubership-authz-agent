@@ -385,17 +385,20 @@ func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, toke
 // class the call log of that route shows. With req.pipCalls what the route
 // received is recorded as the pip-call golden subCase beside the request's
 // own; the call log is read before either golden is compared, since a golden
-// not yet recorded skips the rest of the subtest. Either one clears the call
-// log before req.pause starts.
+// not yet recorded skips the rest of the subtest. Either one, and
+// req.readsRoutes, clear the call log before req.pause starts, and req.pins
+// are pinned before that.
 func (s *ParitySuite) runRequest(subCase, resourceType string, req isolatedRequest) {
 	s.T().Helper()
 	ctx := context.Background()
-	if req.classifyBy != "" || req.pipCalls != "" {
+	s.pinRoutes(req.pins)
+	if req.classifyBy != "" || req.pipCalls != "" || len(req.readsRoutes) > 0 {
 		s.Require().NoError(s.pipMock.ResetCalls(ctx))
 	}
 	time.Sleep(req.pause)
 	tokens := s.requestTokens(req)
 	id, outcome := s.sendRequest(resourceType, req, tokens)
+	s.requireRoutesRead(req.readsRoutes)
 	switch {
 	case req.classifyBy != "":
 		read := s.pipCalls(req.classifyBy)

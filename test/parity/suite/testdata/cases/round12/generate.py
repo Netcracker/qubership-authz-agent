@@ -6,8 +6,7 @@ then still apply. Each file is one test function of the parity suite, in the for
   scope-outside-iterate-control.json  whether a scope read outside iterate ends its rule or leaves the policy unreached
   not-applicable-filter.json          check/filter over a PERMIT_UNLESS_DENY set with no applicable policy, and an
                                       unrestricted ALLOW beside a predicate under DENY_OVERRIDES
-
-TestRound12IterateNodeInAFilterCases stays in Go: it pins the scope service to another answer before each case.
+  iterate-node-in-a-filter.json       check/filter over a nested set whose DENY_OVERRIDES iterate node has no grants
 """
 import json
 import os
@@ -174,5 +173,43 @@ def not_applicable_filter():
     return f
 
 
-for build in (scope_outside_iterate_control, not_applicable_filter):
+
+def iterate_node_in_a_filter():
+    f = File("iterate-node-in-a-filter",
+             "What a DENY_OVERRIDES iterate node over zero grants contributes to a filter. scope-set-algorithm records "
+             "such a node under a PERMIT_UNLESS_DENY set, where a node that denies and a node that does not apply give "
+             "one answer, unless a PERMIT_UNLESS_DENY set with no child that applies gives ALLOW in a filter "
+             "(not-applicable-filter.json). The node sits in a nested DENY_OVERRIDES set beside the allowed==1 policy "
+             "under a DENY_OVERRIDES set, where the two differ. Each case pins the scope service to its own answer "
+             "and waits out the scope's cachePeriod before its first request, as permission-scope-wire does, then "
+             "sends the filter on LIST and check/resource on LIST in regions r1 and r2. The cases live in their own "
+             "test function so that a recording run can be filtered to them and leave every golden already "
+             "committed alone. Legacy profile only.",
+             REGULAR_PREFIX, pips={"scope": SCOPE_PIP})
+    for shape, regions, about in (
+        ("no-grants", (), "DENY if the node denies, and allowed==1 if it does not apply, the answer of "
+                          "fn-nested-set-without-an-applicable-policy-under-deny-overrides."),
+        ("one-grant-r1", ("r1",), "The control that the scope is read and the pass is reached: check/resource on "
+                                  "LIST in region r2 is false, because the pass denies and DENY_OVERRIDES carries the "
+                                  "deny up. Region r1 is true whether the pass applies or not, since the predicate "
+                                  "policy allows LIST in check/resource."),
+    ):
+        nested = {"key": "nested", "target": "true", "algorithm": "DENY_OVERRIDES",
+                  "iterate": {"foreach": "subject.permissionScope", "algorithm": "DENY_OVERRIDES"},
+                  "policies": [policy("scoped", "DENY_UNLESS_PERMIT", rule(
+                      "region-granted", "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+                      "subject.permissionScope.region CONTAINS resource.region", "ALLOW",
+                      {"rsqlPredicate": "region=in=(${subject.permissionScope.region})"}))]}
+        outer = {"key": "outer", "target": "resourceType == '{{resourceType}}'", "algorithm": "DENY_OVERRIDES",
+                 "policies": [predicate_policy()], "sets": [nested]}
+        requests = [req("filter", filter=True, pauseMs=2000)] + [
+            req("check-list-in-region-" + r, {"id": "r12-iterate-node", "region": r}, operation="LIST")
+            for r in ("r1", "r2")]
+        case = regular("fn-nested-deny-overrides-iterate-node-" + shape, [outer], requests, about=about,
+                       pips=["scope"])
+        case["pins"] = {SCOPE_ROUTE: {"statusCode": 200, "body": scope_body(*regions)}}
+        f.add(case)
+    return f
+
+for build in (scope_outside_iterate_control, not_applicable_filter, iterate_node_in_a_filter):
     build().write()

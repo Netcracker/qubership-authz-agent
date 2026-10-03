@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -56,6 +57,9 @@ type regularCase struct {
 	// pipCalls is the pip-mock route whose calls over the whole case are
 	// recorded as a pip-call golden; see caseSpec.PIPCalls.
 	pipCalls string
+	// pins are the pip-mock answers pinned when the case starts; see
+	// caseSpec.Pins.
+	pins map[string]PipStubResponse
 }
 
 // regularStep is one customization step of a case, as customizeStep
@@ -122,6 +126,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
+			s.pinRoutes(tc.pins)
 			s.resetCallsFor(append(slices.Clone(tc.readsRoutes), tc.pipCalls))
 			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
 				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified)
@@ -170,6 +175,14 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			s.recordCasePIPCalls("regular/"+tc.id, tc.pipCalls)
 			s.requireRoutesRead(tc.readsRoutes)
 		})
+	}
+}
+
+// pinRoutes pins each route of pins to its answer, in the order of the route
+// names.
+func (s *ParitySuite) pinRoutes(pins map[string]PipStubResponse) {
+	for _, route := range slices.Sorted(maps.Keys(pins)) {
+		s.Require().NoErrorf(s.pipMock.PinRoute(context.Background(), route, pins[route]), "pin %s", route)
 	}
 }
 
