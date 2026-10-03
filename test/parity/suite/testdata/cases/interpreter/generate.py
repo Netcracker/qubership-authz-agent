@@ -10,7 +10,7 @@ reads:
   dead-form.json          whether the forms the PAP accepts and always answers false are false leaves or end the rule
   combining.json          what a policy or a nested set with no applicable rule contributes to its parent
   operation-all.json      a simplified policy on operation ALL with a condition and with a predicate
-  regular-load.json       four forms the simplified upload refuses, in a rule of a regular set
+  regular-load.json       four forms the simplified upload refused, in a rule of a regular set
   set-target.json         set targets that read the resource
   substitution.json       each source of a placeholder in each predicate dialect
   permission-list.json    what ${subject.permissions} renders with MAPPING PIPs of each shape
@@ -18,6 +18,13 @@ reads:
   bare-path.json          a path with no resource. prefix
   deny-predicate.json     the predicates of DENY rules in check/filter under each policy algorithm
   pip-declaration.json    HEADER, TOKEN and MAPPING PIPs under declaration shapes no other case declares
+
+TestInterpreterFilterCases stays in Go because one of its cases uploads two simplified policies beside two sets under
+two external ids; TestInterpreterTerminalEffectCases because it uploads its case again before each request;
+TestInterpreterIterateBindingCases because it declares the scope PIP and waits before its first case, outside any case.
+TestInterpreterConfigExportCases, TestInterpreterIterateAlgorithmCases, TestInterpreterIterateNodeAlgorithmCases and
+TestInterpreterTenantClaimCases read the configuration export, re-pin the scope service between groups of requests
+with golden paths of their own, or work with tenants.
 
 A case id ending in -control is the probe's control: the operand under question on the right of
 resource.a == 'y' OR, where it is true whatever the operand does, so a false control means the fixture is broken
@@ -131,12 +138,14 @@ def null_and_absence():
              "recorded answers are per operator: > does not end the rule (n3-greater-than-null-or-true is true) and "
              "its value alone is not recorded, NOT IN is true (n1), and IS EMPTY and NOT CONTAINS are false (n4, n2) "
              "alone, where a false leaf and an ended rule look the same. The nl cases record <, >=, >, <=, IS NOT NULL "
-             "and IS NOT EMPTY alone over null, so the operator-by-state table has a value in every relational cell; "
+             "and IS NOT EMPTY alone over null, so the operator-by-state table has a value in every relational cell "
+             "rather than in two (IS NOT NULL over an absent key is recorded only inside a guarded chain, s12a); "
              "the second request of each is the control that the operator answers true for a value. Over an absent "
              "key IS NULL is true (s6a) and == ends the rule (s10); !=, >, NOT IN and NOT CONTAINS (s2b, s5, s3, s4), "
              "IS EMPTY and IS NOT EMPTY (s7, l9) are recorded false only alone, and NOT MATCH, NOT CONTAINS ANY and IS "
              "NOT SUBSET only over null (m1, m2, m3). The nn cases put each through a probe and its control. The np "
-             "cases do the same for a JSON Path that selects nothing from a resource that has the parent: a filter "
+             "cases do the same for a JSON Path that selects nothing from a resource that has the parent, where a plain "
+             "path to an absent key ends the rule (s2b-neq-attribute-absent with s10): a filter "
              "expression with no match and a recursive descent that finds nothing are recorded only under CONTAINS "
              "(j9, j10), where an empty selection and an ended rule both answer false, and an index past the end and "
              "a wildcard to a key no element has are not recorded at all. A selection is a collection, and == over one "
@@ -145,7 +154,10 @@ def null_and_absence():
              "compare numerically once the attribute is a number (c3-greater-than-string-number), while == compares "
              "the string forms and is false for 5.0 against 5 (c1-number-literal/float); nb1 and nb2 send 5.0 as a "
              "number and as a string against >= 5 and <= 5, with the integer 5 as the control, which "
-             "x4-greater-or-equal-words records as true. The agent's condition parser accepts every condition here.",
+             "x4-greater-or-equal-words records as true. A true probe means the operand evaluated to a value and OR went on, "
+             "a false probe that it ended the rule, and a false control that the fixture is broken. Every case carries "
+             "a request a working operator answers true, because a condition access-control accepts and never "
+             "evaluates answers false to every request. The agent's condition parser accepts every condition here.",
              "PARITY_SUITE_NUL_")
 
     def probe(name, extra=None):
@@ -234,7 +246,7 @@ def dead_form():
              "refers to the policy's own decision; access-operator.json sends it beside a policy for the operation it "
              "names. The df cases put each form through a probe and its control: a true probe means the form is a "
              "false leaf and OR went on to resource.a == 'y'; a false probe means the form ended the rule the way an "
-             "absent key does (s10-absent-or-true). The two cases with sets ask the same of the levels above the "
+             "absent key does (s10-absent-or-true); a false control means the fixture is broken. The two cases with sets ask the same of the levels above the "
              "condition, run on the legacy profile only, and each sends a request where nothing depends on the form "
              "as its control.",
              REGULAR_PREFIX)
@@ -278,7 +290,8 @@ def combining():
              "evaluator of regular sets has to pick one. Each case gives the set an algorithm that reacts to the "
              "difference and sends the operation the policy has no rule for, and also sends an operation a live rule "
              "decides, so a set that was never consulted is told from a set that answered. The algorithms are the "
-             "four the PAP loads (load-policy-sets-v1/regular/algorithm-*). Legacy profile only.",
+             "four the PAP loads (load-policy-sets-v1/regular/algorithm-*); it refuses the other six names. Legacy profile "
+             "only.",
              REGULAR_PREFIX)
     two_policies = (rule("create-allow", "operation == 'CREATE'", "true", "ALLOW"),
                     rule("probe-allow-first", "operation == 'PROBE'", "true", "ALLOW"))
@@ -401,8 +414,9 @@ def operation_all():
 
 def regular_load():
     f = File("regular-load",
-             "Which of the forms the simplified-policy upload refuses are refused in a rule of a regular set as well. "
-             "The simplified upload refuses all four: subject.isM2M (g8a-subject-is-m2m), an undeclared subject "
+             "Which of the forms the simplified-policy upload refused are refused in a rule of a regular set as well. "
+             "On access-control 5.13 the simplified upload refused all four: subject.isM2M (g8a-subject-is-m2m, which "
+             "6.1.6 accepts as a whole condition), an undeclared subject "
              "attribute (x19-undeclared-subject-attribute), operation as an operand (o1-operation-operand), although "
              "operation stands in every rule target, and subject.permissions.PARITY "
              "(pm2-mapping-pip-suffixed-reference). Nothing records the same four forms through the policy-set "
@@ -496,6 +510,7 @@ def substitution_rule(placeholder):
 
 
 def substitution():
+    # A header the thin client does not strip (prohibitedHeaders).
     header = "x-parity-sub-header"
     pips, pins, sources = {}, {}, []
 
@@ -538,7 +553,7 @@ def substitution():
              "general-scalar-boolean-substitution, general-pip-dict), a PIP scalar in sql (token-scalar-into-sql), a "
              "PIP collection in sql (general-array-into-sql) and in rsql (general-pip-list), a HEADER scalar in "
              "mongodb (header-scalar-into-mongodb), and a scalar with characters rsql gives meaning to, in rsql alone "
-             "(general-scalar-special-chars). No cell records the custom dialect at all, the querydsl dialect with a "
+             "(general-scalar-special-chars). Before these cases no cell recorded the custom dialect at all, the querydsl dialect with a "
              "PIP, a collection in mongodb, or what a number, a boolean, an empty collection, a null body, or an "
              "object becomes outside rsql. Each case uploads one regular set whose LIST rule carries the same "
              "placeholder in all five predicate fields, so one filter request records the five renderings at once: "
@@ -681,14 +696,14 @@ def deny_predicate():
              "What check/filter carries for the predicates of DENY rules under each combining algorithm of the policy. "
              "filter-allow-and-deny-rules records, under DENY_UNLESS_PERMIT, a response that holds the ALLOW rule's "
              "predicate and not the DENY rule's. Whether the DENY predicates are left out under every algorithm, or "
-             "enter the response in some negated form under the algorithms where a DENY decides, is recorded nowhere, "
+             "enter the response in some negated form under the algorithms where a DENY decides, was recorded nowhere, "
              "and the answer is per dialect: an rsql, sql, mongodb, querydsl and custom predicate each have a negation "
              "of their own, or none. Each case is one regular set with one policy under one of the four accepted "
              "algorithms, holding two ALLOW rules and two DENY rules on LIST, every rule with all five predicate "
              "fields testing its own field against its own value, and one filter request. The set's own algorithm is "
              "DENY_UNLESS_PERMIT in every case, so a difference between the four responses is the policy algorithm's. "
              "deny-predicates-under-deny-overrides-without-custom-predicate repeats the DENY_OVERRIDES case with the "
-             "four string predicates alone, since no recorded upload carries a customPredicate and a refusal of that "
+             "four string predicates alone, since no upload recorded before it carried a customPredicate and a refusal of that "
              "shape would otherwise look like a refusal of the DENY rules. Legacy profile only.",
              REGULAR_PREFIX)
 

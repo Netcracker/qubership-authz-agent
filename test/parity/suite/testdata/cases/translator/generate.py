@@ -140,7 +140,7 @@ def match_dialect():
         ("uri-with-a-longer-path", "/v1/items/1"),
         ("uri-with-a-prefix", "/api/v1/items"),
     ], "A pattern with no metacharacter at all: the control for the file, and the case that decides whether such a "
-       "pattern is equality. The four requests after uri-equal ask what equality would have to ignore: a separator "
+       "pattern is equality. The four other requests ask what equality would have to ignore: a separator "
        "at the end of the URI, a query string, a longer path, and a prefix.")
     case("md8-doubled-separator", "MD8", "/v1//items", [
         ("uri-with-both-separators", "/v1//items"),

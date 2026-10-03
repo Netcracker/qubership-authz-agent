@@ -128,8 +128,9 @@ func (s *ParitySuite) TestIsolatedConditionFormCases() {
 			{name: "attribute-null", resource: map[string]any{"id": "iso-m3", "list": nil}},
 		}},
 
-		// Subject attributes. subject.isM2M and subject.permissionScope are
-		// recorded as refused (g8a, g8b). subject.scopes appears nowhere at all;
+		// Subject attributes. subject.permissionScope is recorded as refused
+		// (g8b), and subject.isM2M was refused on access-control 5.13 and is
+		// accepted as a whole condition on 6.1.6 (g8a). subject.scopes appears nowhere at all;
 		// subject.permissions only as the target of a regular policy set, which
 		// the PAP accepts and which is false for a reader with no permission
 		// assigned. IS EMPTY shows whether the attribute resolves in a condition

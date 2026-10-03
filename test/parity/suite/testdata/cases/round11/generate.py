@@ -193,7 +193,8 @@ def declared_name():
              "Whether the PAP refuses subject.isM2M in a condition by its name or because nothing declares it, and "
              "whether it refuses a MAPPING PIP named subject.permissions with no suffix. "
              "rule-condition-subject-is-m2m, in a regular set, and g8a-subject-is-m2m, a bare subject.isM2M in a "
-             "simplified policy, record the refusal of an undeclared subject.isM2M, which either reason produces; pm1 "
+             "simplified policy, recorded the refusal of an undeclared subject.isM2M on access-control 5.13, which "
+             "either reason produces (6.1.6 accepts the bare form); pm1 "
              "records a MAPPING PIP with a suffix, and a declaration without one is recorded nowhere. Each case reads "
              "what it declares, with the header x-parity-r11-is-m2m set to yes where it reads the header." + OWN_FUNCTION,
              ISOLATED_PREFIX,

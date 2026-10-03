@@ -195,7 +195,7 @@
   {
    "id": "md7-pattern-without-a-metacharacter",
    "resourceType": "PARITY_SUITE_MATCH_MD7",
-   "about": "A pattern with no metacharacter at all: the control for the file, and the case that decides whether such a pattern is equality. The four requests after uri-equal ask what equality would have to ignore: a separator at the end of the URI, a query string, a longer path, and a prefix.",
+   "about": "A pattern with no metacharacter at all: the control for the file, and the case that decides whether such a pattern is equality. The four other requests ask what equality would have to ignore: a separator at the end of the URI, a query string, a longer path, and a prefix.",
    "condition": "resource.uri MATCH /v1/items",
    "requests": [
     {

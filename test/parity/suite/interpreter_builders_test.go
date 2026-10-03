@@ -16,13 +16,10 @@
 
 package paritysuite
 
-// substitutionRule was written for the interpreter substitution cases, which
-// are now data under testdata/cases/interpreter, and round 10 still builds a Go
-// case with it.
-
 // substitutionRule builds an ALLOW rule on LIST, keyed list, that names
 // placeholder in all five predicate fields: rsql, sql, mongodb, querydsl, and
-// a custom predicate whose parameter p names it.
+// a custom predicate whose parameter p names it. Round 10's repeated-name case
+// builds its rule with it.
 func substitutionRule(b regularBuilder, placeholder string) map[string]any {
 	rule := b.rule("list", "operation == 'LIST'", "true", "ALLOW", map[string]string{
 		"rsqlPredicate":    "a==${" + placeholder + "}",
