@@ -1,5 +1,5 @@
 {
- "about": "Which wildcard dialect MATCH speaks on a path. The agent's own condition parser accepts every pattern here and hands it on as a string, and four answers are recorded for the operator: x5-match-unquoted-wildcard has ab* matching abc, not matching xabc and not matching ABC, so MATCH is anchored and case-sensitive; a2-match-attribute-pattern has a pattern taken from an attribute answering false; and x34-regex-literal has /ab.*/ answering false even for a value the regex describes. Nothing before these cases says what a metacharacter does to a path separator. Every case sends a URI the pattern should select and a URI it should not, so a pattern access-control accepts and never evaluates shows as a column of false answers rather than as a dialect. md7-pattern-without-a-metacharacter is the control for the whole file: its pattern carries no metacharacter, so a false answer on uri-equal means the attribute path or the operand order is wrong and no other answer in the file means anything.",
+ "about": "Which wildcard dialect MATCH speaks on a path. The agent's own condition parser accepts every pattern here and hands it on as a string, and four answers are recorded for the operator: x5-match-unquoted-wildcard has ab* matching abc, not matching xabc and not matching ABC, so MATCH is anchored and case-sensitive; a2-match-attribute-pattern has a pattern taken from an attribute answering false; and x34-regex-literal has /ab.*/ answering false even for a value the regex describes. Nothing before these cases says what a metacharacter does to a path separator. Every case sends a URI the pattern should select and a URI it should not, so a pattern access-control accepts and never evaluates shows as a column of false answers rather than as a dialect. md7-pattern-without-a-metacharacter is the control for the whole file: its pattern carries no metacharacter, so a false answer on uri-equal means the attribute path or the operand order is wrong and no other answer in the file means anything. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_MATCH_",
  "pins": {},
  "pips": {},
@@ -41,35 +41,6 @@
    ]
   },
   {
-   "id": "md2-star-inside-a-segment",
-   "resourceType": "PARITY_SUITE_MATCH_MD2",
-   "about": "One star inside a segment: whether it stops at the next separator.",
-   "condition": "resource.uri MATCH /v1/it*",
-   "requests": [
-    {
-     "name": "rest-of-the-same-segment",
-     "resource": {
-      "id": "match-md2",
-      "uri": "/v1/items"
-     }
-    },
-    {
-     "name": "a-further-segment",
-     "resource": {
-      "id": "match-md2",
-      "uri": "/v1/items/1"
-     }
-    },
-    {
-     "name": "another-prefix",
-     "resource": {
-      "id": "match-md2",
-      "uri": "/v1/xtems"
-     }
-    }
-   ]
-  },
-  {
    "id": "md3-double-star-between-segments",
    "resourceType": "PARITY_SUITE_MATCH_MD3",
    "about": "A double star that is not the last element of the pattern.",
@@ -106,42 +77,6 @@
    ]
   },
   {
-   "id": "md4-double-star-at-the-end",
-   "resourceType": "PARITY_SUITE_MATCH_MD4",
-   "about": "A trailing double star against zero segments, in both spellings of a URI that stops at the prefix.",
-   "condition": "resource.uri MATCH /v1/items/**",
-   "requests": [
-    {
-     "name": "one-segment-below",
-     "resource": {
-      "id": "match-md4",
-      "uri": "/v1/items/1"
-     }
-    },
-    {
-     "name": "two-segments-below",
-     "resource": {
-      "id": "match-md4",
-      "uri": "/v1/items/1/tags"
-     }
-    },
-    {
-     "name": "nothing-below",
-     "resource": {
-      "id": "match-md4",
-      "uri": "/v1/items"
-     }
-    },
-    {
-     "name": "separator-and-nothing-below",
-     "resource": {
-      "id": "match-md4",
-      "uri": "/v1/items/"
-     }
-    }
-   ]
-  },
-  {
    "id": "md5-question-mark",
    "resourceType": "PARITY_SUITE_MATCH_MD5",
    "about": "The single-character wildcard, on one character, two, and none.",
@@ -166,28 +101,6 @@
      "resource": {
       "id": "match-md5",
       "uri": "/v1/item"
-     }
-    }
-   ]
-  },
-  {
-   "id": "md6-trailing-separator-in-the-pattern",
-   "resourceType": "PARITY_SUITE_MATCH_MD6",
-   "about": "A separator at the end of the pattern. The pattern also has the shape x34-regex-literal records as accepted and always false, a value between two slashes, so two false answers here are equally explained by the trailing separator and by that reading. md7 does not separate the two, because its pattern has no trailing slash to drop.",
-   "condition": "resource.uri MATCH /v1/items/",
-   "requests": [
-    {
-     "name": "uri-with-the-separator",
-     "resource": {
-      "id": "match-md6",
-      "uri": "/v1/items/"
-     }
-    },
-    {
-     "name": "uri-without-the-separator",
-     "resource": {
-      "id": "match-md6",
-      "uri": "/v1/items"
      }
     }
    ]
@@ -231,86 +144,6 @@
      "resource": {
       "id": "match-md7",
       "uri": "/api/v1/items"
-     }
-    }
-   ]
-  },
-  {
-   "id": "md8-doubled-separator",
-   "resourceType": "PARITY_SUITE_MATCH_MD8",
-   "about": "An empty segment in the pattern, against a URI that has one and a URI that does not.",
-   "condition": "resource.uri MATCH /v1//items",
-   "requests": [
-    {
-     "name": "uri-with-both-separators",
-     "resource": {
-      "id": "match-md8",
-      "uri": "/v1//items"
-     }
-    },
-    {
-     "name": "uri-with-one-separator",
-     "resource": {
-      "id": "match-md8",
-      "uri": "/v1/items"
-     }
-    }
-   ]
-  },
-  {
-   "id": "md9-star-before-a-query-string",
-   "resourceType": "PARITY_SUITE_MATCH_MD9",
-   "about": "A trailing star against a query string: whether the query is part of the value the pattern sees.",
-   "condition": "resource.uri MATCH /v1/items*",
-   "requests": [
-    {
-     "name": "uri-with-a-query-string",
-     "resource": {
-      "id": "match-md9",
-      "uri": "/v1/items?x=1"
-     }
-    },
-    {
-     "name": "uri-without-a-query-string",
-     "resource": {
-      "id": "match-md9",
-      "uri": "/v1/items"
-     }
-    },
-    {
-     "name": "another-path-with-a-query-string",
-     "resource": {
-      "id": "match-md9",
-      "uri": "/v1/other?x=1"
-     }
-    }
-   ]
-  },
-  {
-   "id": "md10-percent-encoded-separator",
-   "resourceType": "PARITY_SUITE_MATCH_MD10",
-   "about": "A percent-encoded separator inside one segment, beside the decoded form of the same path. If the two answers differ, the pattern is matched against the decoded value.",
-   "condition": "resource.uri MATCH /v1/*",
-   "requests": [
-    {
-     "name": "one-segment",
-     "resource": {
-      "id": "match-md10",
-      "uri": "/v1/a"
-     }
-    },
-    {
-     "name": "percent-encoded-separator",
-     "resource": {
-      "id": "match-md10",
-      "uri": "/v1/a%2Fb"
-     }
-    },
-    {
-     "name": "literal-separator",
-     "resource": {
-      "id": "match-md10",
-      "uri": "/v1/a/b"
      }
     }
    ]

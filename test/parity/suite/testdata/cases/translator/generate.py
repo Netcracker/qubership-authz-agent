@@ -18,6 +18,17 @@ import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+def read_duplicates():
+    """The ids of duplicates.tsv: cases left out because a kept case holds exactly what each of them holds."""
+    with open(os.path.join(HERE, "duplicates.tsv")) as f:
+        return {line.split("\t")[0] for line in f if line.strip() and not line.startswith("#")}
+
+
+DUPLICATES = read_duplicates()
+DUPLICATES_NOTE = " The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does."
+LEFT_OUT = set()
+
+
 
 class Num:
     """A JSON number written exactly as text, such as 5.00 or 1e2, which a Python float would respell."""
@@ -53,8 +64,11 @@ class File:
                            **{k: v for k, v in case.items() if k != "id"}})
 
     def write(self):
-        doc = {"about": self.about, "resourceTypePrefix": self.prefix, "pins": {}, "pips": {},
-               "cases": _with_markers(self.cases)}
+        cases = [c for c in self.cases if c["id"] not in DUPLICATES]
+        LEFT_OUT.update(c["id"] for c in self.cases if c["id"] in DUPLICATES)
+        about = self.about + (DUPLICATES_NOTE if len(cases) < len(self.cases) else "")
+        doc = {"about": about, "resourceTypePrefix": self.prefix, "pins": {}, "pips": {},
+               "cases": _with_markers(cases)}
         text = json.dumps(doc, indent=1, ensure_ascii=False)
         while "\"@@number:" in text:
             start = text.index("\"@@number:")
@@ -341,3 +355,6 @@ def value_semantics():
 
 for build in (match_dialect, value_semantics):
     build().write()
+
+unmatched = DUPLICATES - LEFT_OUT
+assert not unmatched, f"duplicates.tsv names cases no file adds: {sorted(unmatched)}"

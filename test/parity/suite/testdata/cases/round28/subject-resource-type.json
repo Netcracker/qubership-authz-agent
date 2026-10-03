@@ -52,53 +52,6 @@
    ]
   },
   {
-   "id": "r28subj-rt-04",
-   "about": "The resource type is \"PARITY_SUITE_R28T_04_r28[$].x\".",
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == 'PARITY_SUITE_R28T_04_r28[$].x'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "r",
-         "target": "operation == 'LIST'",
-         "condition": "true",
-         "effect": "ALLOW",
-         "predicates": {
-          "rsqlPredicate": "t==${resourceType}",
-          "sqlPredicate": "t=${resourceType}",
-          "mongodbPredicate": "{ \"t\": ${resourceType} }",
-          "predicate": "x.t.eq(${resourceType})"
-         }
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "filter",
-     "filter": true,
-     "type": "PARITY_SUITE_R28T_04_r28[$].x"
-    },
-    {
-     "name": "check-list",
-     "operation": "LIST",
-     "type": "PARITY_SUITE_R28T_04_r28[$].x",
-     "resource": {
-      "id": "r28"
-     }
-    }
-   ]
-  },
-  {
    "id": "r28subj-rt-06",
    "about": "The resource type is \"PARITY_SUITE_R28T_06_x\\\\y\".",
    "sets": [

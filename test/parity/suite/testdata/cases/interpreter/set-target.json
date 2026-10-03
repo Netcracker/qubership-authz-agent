@@ -1,5 +1,5 @@
 {
- "about": "Whether the PAP accepts a set whose target reads an attribute of the resource, and what such a target does on a request that carries the attribute, one that carries another value, one that carries no such attribute, and on a filter request, which carries no resource at all. missing-attribute-in-set-target records that a set target of the form resourceType == 'T' AND resource.x == 'v' is refused at upload, while the regular policy sets of products put resourceType == 'T' AND resource.service == '...' on the set. So either the PAP accepts some resource attributes on a set target and refuses others, or the refusal recorded had another cause; the two policies of that fixture share one policyId, and TestRound7SetTargetRefusalCases records that shape on its own. Each set-target-reads-* case uploads one set with one attribute in its target and records the upload status: resource.service, the attribute product sets read; resource.uri under MATCH and resource.id, the attributes product rules read; resource.x, the control that repeats the recorded refusal; and resource.service with no resourceType beside it, the boundary of what a set target has to name. Every target compares with this file's own service, parity-st-svc, so a set whose target names no resource type applies to no request of another case. Under an accepted set, one policy allows READ and LIST without a condition, so a request the set target admits is true and a request it does not is false, and the filter carries the LIST rule's predicate when the set target lets a request with no resource through. A second set on the same resource type allows READ when resource.s is 'y', the sibling missing-attribute-in-set-target pairs with the reading set: attribute-absent-beside-the-sibling carries s and not the attribute the first set reads, so true means the first set was not applicable and false means it ended the decision the way a missing attribute ends a rule (s10-absent-or-true). attribute-absent, with no sibling to fall back on, and the filter request, where the resource is always absent, record the same target on its own. Legacy profile only; the set with no resourceType is emptied when the test ends.",
+ "about": "Whether the PAP accepts a set whose target reads an attribute of the resource, and what such a target does on a request that carries the attribute, one that carries another value, one that carries no such attribute, and on a filter request, which carries no resource at all. missing-attribute-in-set-target records that a set target of the form resourceType == 'T' AND resource.x == 'v' is refused at upload, while the regular policy sets of products put resourceType == 'T' AND resource.service == '...' on the set. So either the PAP accepts some resource attributes on a set target and refuses others, or the refusal recorded had another cause; the two policies of that fixture share one policyId, and TestRound7SetTargetRefusalCases records that shape on its own. Each set-target-reads-* case uploads one set with one attribute in its target and records the upload status: resource.service, the attribute product sets read; resource.uri under MATCH and resource.id, the attributes product rules read; resource.x, the control that repeats the recorded refusal; and resource.service with no resourceType beside it, the boundary of what a set target has to name. Every target compares with this file's own service, parity-st-svc, so a set whose target names no resource type applies to no request of another case. Under an accepted set, one policy allows READ and LIST without a condition, so a request the set target admits is true and a request it does not is false, and the filter carries the LIST rule's predicate when the set target lets a request with no resource through. A second set on the same resource type allows READ when resource.s is 'y', the sibling missing-attribute-in-set-target pairs with the reading set: attribute-absent-beside-the-sibling carries s and not the attribute the first set reads, so true means the first set was not applicable and false means it ended the decision the way a missing attribute ends a rule (s10-absent-or-true). attribute-absent, with no sibling to fall back on, and the filter request, where the resource is always absent, record the same target on its own. Legacy profile only; the set with no resourceType is emptied when the test ends. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_REG_",
  "pins": {},
  "pips": {},
@@ -170,91 +170,6 @@
      "resource": {
       "s": "y",
       "id": "reg-st"
-     }
-    },
-    {
-     "name": "filter",
-     "filter": true
-    }
-   ]
-  },
-  {
-   "id": "set-target-reads-id",
-   "sets": [
-    {
-     "key": "set",
-     "target": "resourceType == '{{resourceType}}' AND resource.id == 'reg-st-id'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "read",
-         "target": "operation == 'READ'",
-         "condition": "true",
-         "effect": "ALLOW"
-        },
-        {
-         "key": "list",
-         "target": "operation == 'LIST'",
-         "condition": "true",
-         "effect": "ALLOW",
-         "predicates": {
-          "rsqlPredicate": "st==1"
-         }
-        }
-       ]
-      }
-     ]
-    },
-    {
-     "key": "sibling",
-     "target": "resourceType == '{{resourceType}}'",
-     "algorithm": "DENY_UNLESS_PERMIT",
-     "policies": [
-      {
-       "key": "sibling-reader",
-       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
-       "algorithm": "DENY_UNLESS_PERMIT",
-       "rules": [
-        {
-         "key": "read-when-s",
-         "target": "operation == 'READ'",
-         "condition": "resource.s == 'y'",
-         "effect": "ALLOW"
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "requests": [
-    {
-     "name": "attribute-equal",
-     "resource": {
-      "id": "reg-st-id"
-     }
-    },
-    {
-     "name": "attribute-other",
-     "resource": {
-      "id": "reg-st-other"
-     }
-    },
-    {
-     "name": "attribute-absent",
-     "resource": {
-      "a": "y"
-     }
-    },
-    {
-     "name": "attribute-absent-beside-the-sibling",
-     "resource": {
-      "s": "y",
-      "a": "y"
      }
     },
     {

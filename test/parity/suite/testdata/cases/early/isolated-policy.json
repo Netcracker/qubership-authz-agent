@@ -1,5 +1,5 @@
 {
- "about": "Operator forms, attribute paths, subject attributes, literals, whitespace, declarations, and policy shapes whose acceptance by the PAP is not established. Each case is one simplified policy uploaded alone into PARITY_ISOLATED, so a form the PAP refuses records its upload status and sends no request.",
+ "about": "Operator forms, attribute paths, subject attributes, literals, whitespace, declarations, and policy shapes whose acceptance by the PAP is not established. Each case is one simplified policy uploaded alone into PARITY_ISOLATED, so a form the PAP refuses records its upload status and sends no request. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_ISO_",
  "pins": {},
  "pips": {
@@ -725,20 +725,6 @@
      "name": "attribute-matches",
      "resource": {
       "id": "iso-x14",
-      "x": "v"
-     }
-    }
-   ]
-  },
-  {
-   "id": "x15-trailing-space",
-   "resourceType": "PARITY_SUITE_ISO_X15",
-   "condition": "resource.x == 'v' ",
-   "requests": [
-    {
-     "name": "attribute-matches",
-     "resource": {
-      "id": "iso-x15",
       "x": "v"
      }
     }

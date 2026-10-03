@@ -1,5 +1,5 @@
 {
- "about": "What each operator answers over each operand state, in the cells of the operator-by-state table that no golden fixes: those where a recorded case cannot tell a false operand from a true one, or from an ended rule, and those no case reaches. Every condition is one simplified policy on READ, sent once. A case id ending in -alone is the operator by itself, so true tells a true operand from a false one or an ended rule; one ending in -or stands on the left of OR resource.a == 'y', so true tells a false operand from an ended rule. The id prefix names the operand state: ca- resource.x, which the resource does not carry; cx- resource.x is null; ce- resource.x is []; cs- resource.items[?(@.type=='zzz')].id over items none of which has that type; co- resource.list[5] over a list of one element; ch- subject.parityNoHeader, a HEADER PIP whose header the request does not carry; cn- a GENERAL PIP whose body is the JSON literal null; cf- a GENERAL PIP that answers 500. The two GENERAL PIPs are pinned at routes of their own, as nb-null-body-* does. A GENERAL PIP that answers 500 fails the whole answer rather than one operand (rf-*), and over a single policy an operand that is false, a rule that ends, and an answer that fails all read false. So every operator is also asked over that PIP on the left of the true OR, as cf-<operator>-or: true says the operand was evaluated, false that the rule ended or the answer failed; failing-pip-in-a-deny-rule.json tells those two apart.",
+ "about": "What each operator answers over each operand state, in the cells of the operator-by-state table that no golden fixes: those where a recorded case cannot tell a false operand from a true one, or from an ended rule, and those no case reaches. Every condition is one simplified policy on READ, sent once. A case id ending in -alone is the operator by itself, so true tells a true operand from a false one or an ended rule; one ending in -or stands on the left of OR resource.a == 'y', so true tells a false operand from an ended rule. The id prefix names the operand state: ca- resource.x, which the resource does not carry; cx- resource.x is null; ce- resource.x is []; cs- resource.items[?(@.type=='zzz')].id over items none of which has that type; co- resource.list[5] over a list of one element; ch- subject.parityNoHeader, a HEADER PIP whose header the request does not carry; cn- a GENERAL PIP whose body is the JSON literal null; cf- a GENERAL PIP that answers 500. The two GENERAL PIPs are pinned at routes of their own, as nb-null-body-* does. A GENERAL PIP that answers 500 fails the whole answer rather than one operand (rf-*), and over a single policy an operand that is false, a rule that ends, and an answer that fails all read false. So every operator is also asked over that PIP on the left of the true OR, as cf-<operator>-or: true says the operand was evaluated, false that the rule ended or the answer failed; failing-pip-in-a-deny-rule.json tells those two apart. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
  "resourceTypePrefix": "PARITY_SUITE_R13_",
  "pins": {
   "/api/v1/pip/r13-null-body": {
@@ -2684,22 +2684,6 @@
      "name": "probe",
      "resource": {
       "id": "r13-cf-is-empty-or",
-      "a": "y"
-     }
-    }
-   ]
-  },
-  {
-   "id": "cf-is-not-empty-or",
-   "condition": "subject.parityR13Failing IS NOT EMPTY OR resource.a == 'y'",
-   "pips": [
-    "failing"
-   ],
-   "requests": [
-    {
-     "name": "probe",
-     "resource": {
-      "id": "r13-cf-is-not-empty-or",
       "a": "y"
      }
     }

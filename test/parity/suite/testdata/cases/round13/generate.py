@@ -15,6 +15,17 @@ import json
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+
+def read_duplicates():
+    """The ids of duplicates.tsv: cases left out because a kept case holds exactly what each of them holds."""
+    with open(os.path.join(HERE, "duplicates.tsv")) as f:
+        return {line.split("\t")[0] for line in f if line.strip() and not line.startswith("#")}
+
+
+DUPLICATES = read_duplicates()
+DUPLICATES_NOTE = " The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does."
+LEFT_OUT = set()
+
 READER_TARGET = "subject.roles CONTAINS 'ROLE_PARITY_READER'"
 FALSE_SUBJECT = "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'"
 ISOLATED_PREFIX = "PARITY_SUITE_R13_"
@@ -39,8 +50,11 @@ class File:
         self.cases.append(case)
 
     def write(self):
-        doc = {"about": self.about, "resourceTypePrefix": self.prefix, "pins": self.pins, "pips": self.pips,
-               "cases": self.cases}
+        cases = [c for c in self.cases if c["id"] not in DUPLICATES]
+        LEFT_OUT.update(c["id"] for c in self.cases if c["id"] in DUPLICATES)
+        about = self.about + (DUPLICATES_NOTE if len(cases) < len(self.cases) else "")
+        doc = {"about": about, "resourceTypePrefix": self.prefix, "pins": self.pins, "pips": self.pips,
+               "cases": cases}
         with open(os.path.join(HERE, self.name + ".json"), "w") as f:
             json.dump(doc, f, indent=1, ensure_ascii=False)
             f.write("\n")
@@ -455,3 +469,6 @@ def iterate_cases():
 
 for build in (scope_outside_iterate, filter_cases, pap_syntax, cells, failing_pip_in_a_deny_rule, iterate_cases):
     build().write()
+
+unmatched = DUPLICATES - LEFT_OUT
+assert not unmatched, f"duplicates.tsv names cases no file adds: {sorted(unmatched)}"
