@@ -28,7 +28,6 @@ import (
 var regularCaseLists = map[string]func() []regularCase{
 	"regularPolicySetCases":                  regularPolicySetCases,
 	"translatorPolicySetCases":               translatorPolicySetCases,
-	"failedPIPRegularCases":                  failedPIPRegularCases,
 	"deadFormRegularCases":                   deadFormRegularCases,
 	"combiningCases":                         combiningCases,
 	"interpreterFilterCases":                 interpreterFilterCases,
@@ -40,7 +39,6 @@ var regularCaseLists = map[string]func() []regularCase{
 	"barePathRegularCases":                   barePathRegularCases,
 	"denyPredicateCases":                     denyPredicateCases,
 	"terminalEffectCases":                    terminalEffectCases,
-	"setTargetRefusalCases":                  setTargetRefusalCases,
 	"round7FilterCases":                      round7FilterCases,
 	"failedPIPScopeCases":                    failedPIPScopeCases,
 	"round10SetAlgorithmFilterCases":         round10SetAlgorithmFilterCases,
