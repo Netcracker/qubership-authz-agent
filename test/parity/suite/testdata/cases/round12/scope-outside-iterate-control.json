@@ -1,0 +1,153 @@
+{
+ "about": "Whether a read of subject.permissionScope outside iterate ends the rule that reads it, or leaves every rule of its policy unreached. scope-is-empty-outside-iterate answers false for all three of its rules, the IS NULL rule included, and both explanations produce that. The one case here is the set of scope-is-empty-outside-iterate with three more rules in the same policy, and the scope service answers the same two grants, regions r1 and r2. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "type": "USER",
+      "id": "00000000-0000-0000-0000-000000000101",
+      "name": "parity-reader",
+      "isInherited": false,
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "scope-outside-iterate-beside-a-control",
+   "about": "The first three requests repeat those of scope-is-empty-outside-iterate against this upload, the first after a wait that outlives the scope's cachePeriod. control-without-scope sends CONTROL, whose one rule has the condition true and reads no scope: true says the policy is reached on a request that reads no scope, false says the rules of the policy are not reached. scope-read-beside-a-true-rule sends MIXED, whose two rules are IS EMPTY over the scope key and the condition true: true says the scope read ends its own rule alone, false says it ends the policy or the whole answer, as a failed GENERAL PIP does.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "region-is-empty",
+         "target": "operation == 'READ'",
+         "condition": "subject.permissionScope.region IS EMPTY",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "region-is-empty-or-true",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.permissionScope.region IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "region-is-null",
+         "target": "operation == 'PROBE'",
+         "condition": "subject.permissionScope.region IS NULL",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "control-without-scope",
+         "target": "operation == 'CONTROL'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "mixed-region-is-empty",
+         "target": "operation == 'MIXED'",
+         "condition": "subject.permissionScope.region IS EMPTY",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "mixed-true",
+         "target": "operation == 'MIXED'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-under-is-empty",
+     "pauseMs": 2000,
+     "resource": {
+      "id": "r11-scope-outside"
+     }
+    },
+    {
+     "name": "update-under-is-empty-or-true",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r11-scope-outside",
+      "a": "y"
+     }
+    },
+    {
+     "name": "probe-under-is-null",
+     "operation": "PROBE",
+     "resource": {
+      "id": "r11-scope-outside"
+     }
+    },
+    {
+     "name": "control-without-scope",
+     "operation": "CONTROL",
+     "resource": {
+      "id": "r11-scope-outside"
+     }
+    },
+    {
+     "name": "scope-read-beside-a-true-rule",
+     "operation": "MIXED",
+     "resource": {
+      "id": "r11-scope-outside"
+     }
+    }
+   ]
+  }
+ ]
+}

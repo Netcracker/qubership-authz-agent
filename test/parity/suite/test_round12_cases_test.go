@@ -21,89 +21,24 @@ import (
 	"time"
 )
 
-// round12ScopeOutsideIterateControlCases builds the case of
-// TestRound12ScopeOutsideIterateControlCases.
-func round12ScopeOutsideIterateControlCases() []regularCase {
-	return []regularCase{scopeOutsideIterateCase("scope-outside-iterate-beside-a-control", true)}
-}
+// Round 12 asks whether a read of subject.permissionScope outside iterate ends
+// its rule or leaves its policy unreached, and what check/filter answers for a
+// node with no applicable child. Two of its functions run data under
+// testdata/cases/round12, written by generate.py there, which says what each
+// file asks. They were first written in Go, and each file sends the requests
+// the Go cases sent, so the goldens recorded then still apply.
+// TestRound12IterateNodeInAFilterCases stays in Go, because it pins the scope
+// service to another answer before each of its cases.
 
-// Whether a read of subject.permissionScope outside iterate ends the rule that
-// reads it, or leaves every rule of its policy unreached.
-// scope-is-empty-outside-iterate answers false for all three of its rules, the
-// IS NULL rule included, and both explanations produce that.
-//
-// The case is the set of scope-is-empty-outside-iterate with three more rules in
-// the same policy, and the scope service answers the same two grants.
-// control-without-scope sends CONTROL, whose one rule has the condition true and
-// reads no scope: true says the policy is reached on a request that reads no
-// scope, false says the rules of the policy are not reached.
-// scope-read-beside-a-true-rule sends MIXED, whose two rules are IS EMPTY over
-// the scope key and the condition true: true says the scope read ends its own
-// rule alone, false says it ends the policy or the whole answer, as a failed
-// GENERAL PIP does. The three requests of scope-is-empty-outside-iterate are
-// repeated against this upload.
-//
-// The case lives in its own test function so that a recording run can be
-// filtered to it and leave every golden already committed alone. Legacy profile
-// only.
+// TestRound12ScopeOutsideIterateControlCases runs
+// round12/scope-outside-iterate-control.json.
 func (s *ParitySuite) TestRound12ScopeOutsideIterateControlCases() {
-	if isAuthzAgentProfile(s.cfg.Profile) {
-		s.T().Skip("iterate is a regular policy set field; the agent loads simplified policies")
-	}
-	s.pinTwoScopeGrants()
-	s.runRegularCases(round12ScopeOutsideIterateControlCases())
+	s.runCaseFile("round12/scope-outside-iterate-control.json")
 }
 
-// round12NotApplicableFilterCases builds the cases of
-// TestRound12NotApplicableFilterCases.
-func round12NotApplicableFilterCases() []regularCase {
-	allowsList := func(b regularBuilder) map[string]any {
-		return b.policy("allows-list", readerTarget, "DENY_UNLESS_PERMIT",
-			b.rule("list-allow", "operation == 'LIST'", "true", "ALLOW", nil))
-	}
-	return []regularCase{
-		round9SetCase("permit-unless-deny-set-without-an-applicable-policy", "PERMIT_UNLESS_DENY", func(b regularBuilder) []any {
-			return []any{b.policy("for-nobody", round9FalseSubjectCondition, "DENY_UNLESS_PERMIT",
-				b.rule("for-nobody-list-allow", "operation == 'LIST'", "true", "ALLOW", nil))}
-		}),
-		round9SetCase("deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate", "DENY_OVERRIDES", func(b regularBuilder) []any {
-			return []any{round9PredicatePolicy(b), allowsList(b)}
-		}),
-		round9SetCase("deny-overrides-set-with-the-unrestricted-allow-alone", "DENY_OVERRIDES", func(b regularBuilder) []any {
-			return []any{allowsList(b)}
-		}),
-	}
-}
-
-// What check/filter answers for a PERMIT_UNLESS_DENY set none of whose
-// policies applies, and for an ALLOW without a predicate beside a predicate
-// under DENY_OVERRIDES.
-// fn-nested-set-without-an-applicable-policy-under-permit-unless-deny nests such
-// a set beside the allowed==1 policy under DENY_OVERRIDES and answers
-// allowed==1. Two readings produce that: A, the set does not apply in a filter,
-// although it permits in check/resource (algorithm-permit-unless-deny); B, the
-// set gives ALLOW, and an ALLOW beside a predicate under DENY_OVERRIDES keeps the
-// predicate.
-//
-// permit-unless-deny-set-without-an-applicable-policy is the set alone, its one
-// policy targeting a role nobody holds: the filter is DENY under A and ALLOW
-// under B, and check/resource is true under both.
-//
-// deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate puts the
-// allowed==1 policy beside a policy that allows LIST with no predicate: the
-// filter is ALLOW under A and allowed==1 under B.
-// deny-overrides-set-with-the-unrestricted-allow-alone is the control of the
-// policy without a predicate, ALLOW under both, which shows that it lifts the
-// filter on its own; deny-overrides-set-with-the-predicate-policy-alone is the
-// control of the predicate policy.
-//
-// Every case sends the filter on LIST and check/resource on LIST.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone. Legacy
-// profile only, like every regular case.
+// TestRound12NotApplicableFilterCases runs round12/not-applicable-filter.json.
 func (s *ParitySuite) TestRound12NotApplicableFilterCases() {
-	s.runRegularCases(round12NotApplicableFilterCases())
+	s.runCaseFile("round12/not-applicable-filter.json")
 }
 
 // round12IterateNodeShapes are the answers the scope service is pinned to in
