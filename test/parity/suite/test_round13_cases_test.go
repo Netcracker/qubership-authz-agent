@@ -167,226 +167,32 @@ func (s *ParitySuite) TestRound13IterateCases() {
 	}
 }
 
-// round13ScopeTargetCase is a set under setAlgorithm of one policy under the
-// same algorithm, whose target reads subject.permissionScope.region IS NULL
-// outside iterate and whose one rule, with the condition true, has effect.
-func round13ScopeTargetCase(id, setAlgorithm, effect string) regularCase {
-	b := regularBuilder{caseID: id}
-	rt := regularResourceType(id)
-	return regularCase{
-		id:           id,
-		resourceType: rt,
-		pips:         []any{permissionScopeWirePIP},
-		uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
-			b.set("set", "resourceType == '"+rt+"'", setAlgorithm, []any{
-				b.policy("scoped", readerTarget+" AND subject.permissionScope.region IS NULL", setAlgorithm,
-					b.rule("any", "true", "true", effect, nil)),
-			}, nil),
-		}}},
-		requests: []isolatedRequest{{name: "read", resource: map[string]any{"id": "r13-scope-target"}}},
-	}
-}
+// The other round 13 functions ask where the failure of a subject.permissionScope
+// read outside iterate ends, what an ALLOW without a predicate and a set none of
+// whose policies applies do in check/filter, what the PAP accepts, and what every
+// operator answers over every operand state no golden fixes. Their cases are data
+// under testdata/cases/round13, written by generate.py there, which says what each
+// file asks. They were first written in Go, and each file sends the requests the
+// Go cases sent, so the goldens recorded then still apply. Each function runs one
+// file, so that a recording run can be filtered to it and record it on a stand of
+// its own.
 
-// round13ScopeOutsideIterateCases builds the cases of
-// TestRound13ScopeOutsideIterateCases.
-func round13ScopeOutsideIterateCases() []regularCase {
-	denyID := "r13-scope-outside-iterate-in-a-deny-rule"
-	b := regularBuilder{caseID: denyID}
-	rt := regularResourceType(denyID)
-	cases := []regularCase{{
-		id:           denyID,
-		resourceType: rt,
-		pips:         []any{permissionScopeWirePIP},
-		uploads: []regularUpload{{externalID: "parity-" + denyID, sets: []any{
-			b.set("set", "resourceType == '"+rt+"'", "PERMIT_UNLESS_DENY", []any{
-				b.policy("scoped", readerTarget, "PERMIT_UNLESS_DENY",
-					b.rule("read-deny-under-is-empty", "operation == 'READ'", "subject.permissionScope.region IS EMPTY", "DENY", nil),
-					b.rule("control-deny-without-scope", "operation == 'CONTROL'", "resource.a == 'y'", "DENY", nil)),
-			}, nil),
-		}}},
-		requests: []isolatedRequest{
-			{name: "read-under-is-empty", resource: map[string]any{"id": "r13-scope-deny"}},
-			{name: "control-without-scope", operation: "CONTROL", resource: map[string]any{"id": "r13-scope-deny", "a": "z"}},
-		},
-	}}
-	cases = append(cases,
-		round13ScopeTargetCase("r13-scope-outside-iterate-in-a-policy-target-under-deny-unless-permit", "DENY_UNLESS_PERMIT", "ALLOW"),
-		round13ScopeTargetCase("r13-scope-outside-iterate-in-a-policy-target-under-permit-unless-deny", "PERMIT_UNLESS_DENY", "DENY"),
-	)
-
-	placeholder := round9SetCase("r13-scope-placeholder-outside-iterate", "DENY_UNLESS_PERMIT", func(b regularBuilder) []any {
-		return []any{b.policy("scoped", readerTarget, "DENY_UNLESS_PERMIT",
-			allowWithPredicate(b, "list-in-granted-regions", "region=in=(${subject.permissionScope.region})"))}
-	})
-	placeholder.pips = []any{permissionScopeWirePIP}
-	cases = append(cases, placeholder)
-
-	condition := round9SetCase("r13-scope-condition-outside-iterate-beside-a-predicate", "DENY_UNLESS_PERMIT", func(b regularBuilder) []any {
-		return []any{round9PredicatePolicy(b), b.policy("scoped", readerTarget, "DENY_UNLESS_PERMIT",
-			b.rule("list-under-is-empty", "operation == 'LIST'", "subject.permissionScope.region IS EMPTY", "ALLOW", nil))}
-	})
-	condition.pips = []any{permissionScopeWirePIP}
-	condition.requests = []isolatedRequest{{name: "filter", filter: true}}
-	cases = append(cases, condition)
-	return cases
-}
-
-// Where the failure of a subject.permissionScope read outside iterate ends:
-// round 12 showed it ends more than its own rule, and the one case that tells
-// how much, scope-read-beside-a-true-rule, answers per stand. In each case here
-// no second rule applies to the request, so no rule can decide before the read
-// and the answer does not depend on the order.
-//
-// r13-scope-outside-iterate-in-a-deny-rule is a PERMIT_UNLESS_DENY policy whose
-// DENY rule reads the scope: check/resource is true if the read ends the rule
-// alone, and false if it ends the answer. control-without-scope is its control,
-// a DENY rule on another operation that does not apply, so the policy permits.
-//
-// The two policy-target cases read the scope in the policy target, beside the
-// role: under DENY_UNLESS_PERMIT with an ALLOW rule and under PERMIT_UNLESS_DENY
-// with a DENY rule. A target that holds gives true and false, a target that does
-// not apply gives false and true, and a read that ends the answer gives false
-// twice.
-//
-// r13-scope-placeholder-outside-iterate renders the scope key into the predicate
-// of a set that does not iterate, with no other rule on LIST: DENY says the
-// placeholder denies the filter, a predicate says what it renders to.
-// r13-scope-condition-outside-iterate-beside-a-predicate reads the key in the
-// condition of a rule without a predicate beside the allowed==1 policy: DENY
-// says the read denies the whole filter, allowed==1 that the rule drops out.
-// The condition case sends the filter alone, since check/resource there has a
-// permitting rule beside the read and answers per stand.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone. Legacy
-// profile only.
+// TestRound13ScopeOutsideIterateCases runs round13/scope-outside-iterate.json.
 func (s *ParitySuite) TestRound13ScopeOutsideIterateCases() {
-	if isAuthzAgentProfile(s.cfg.Profile) {
-		s.T().Skip("iterate is a regular policy set field; the agent loads simplified policies")
-	}
-	s.pinTwoScopeGrants()
-	s.runRegularCases(round13ScopeOutsideIterateCases())
+	s.runCaseFile("round13/scope-outside-iterate.json")
 }
 
-// round13ForNobodySet is a set under algorithm whose one policy targets a role
-// nobody holds, so none of its policies applies.
-func round13ForNobodySet(b regularBuilder, key, algorithm string) map[string]any {
-	return b.set(key, "true", algorithm, []any{
-		b.policy(key+"-for-nobody", round9FalseSubjectCondition, "DENY_UNLESS_PERMIT",
-			b.rule(key+"-for-nobody-list-allow", "operation == 'LIST'", "true", "ALLOW", nil)),
-	}, nil)
-}
+// TestRound13FilterCases runs round13/filter.json.
+func (s *ParitySuite) TestRound13FilterCases() { s.runCaseFile("round13/filter.json") }
 
-// round13AllowsList is a policy that allows LIST with no predicate.
-func round13AllowsList(b regularBuilder) map[string]any {
-	return b.policy("allows-list", readerTarget, "DENY_UNLESS_PERMIT",
-		b.rule("list-allow", "operation == 'LIST'", "true", "ALLOW", nil))
-}
+// TestRound13PAPSyntaxCases runs round13/pap-syntax.json.
+func (s *ParitySuite) TestRound13PAPSyntaxCases() { s.runCaseFile("round13/pap-syntax.json") }
 
-// round13OuterSetCase is a case of one set under setAlgorithm holding policies and
-// nested sets, with round9FilterRequests.
-func round13OuterSetCase(id, setAlgorithm string, policies func(b regularBuilder) []any, nested func(b regularBuilder) []any) regularCase {
-	b := regularBuilder{caseID: id}
-	rt := regularResourceType(id)
-	return regularCase{
-		id:           id,
-		resourceType: rt,
-		uploads: []regularUpload{{externalID: "parity-" + id, sets: []any{
-			b.set("outer", "resourceType == '"+rt+"'", setAlgorithm, emptyIfNil(policies(b)), nested(b)),
-		}}},
-		requests: round9FilterRequests,
-	}
-}
+// TestRound13CellCases runs round13/cells.json.
+func (s *ParitySuite) TestRound13CellCases() { s.runCaseFile("round13/cells.json") }
 
-// round13FilterCases builds the cases of TestRound13FilterCases.
-func round13FilterCases() []regularCase {
-	var cases []regularCase
-	none := func(regularBuilder) []any { return nil }
-	for _, algorithm := range []string{"PERMIT_OVERRIDES", "PERMIT_UNLESS_DENY"} {
-		key := round13Key(algorithm)
-		cases = append(cases,
-			round9SetCase("r13-"+key+"-set-with-an-unrestricted-allow-beside-a-predicate", algorithm, func(b regularBuilder) []any {
-				return []any{round9PredicatePolicy(b), round13AllowsList(b)}
-			}),
-			round9SetCase("r13-"+key+"-set-with-the-unrestricted-allow-alone", algorithm, func(b regularBuilder) []any {
-				return []any{round13AllowsList(b)}
-			}),
-		)
-	}
-	for _, algorithm := range round13Algorithms {
-		cases = append(cases, round13OuterSetCase("r13-only-child-"+round13Key(algorithm)+"-set-without-an-applicable-policy",
-			"DENY_UNLESS_PERMIT", none, func(b regularBuilder) []any {
-				return []any{round13ForNobodySet(b, "nested", algorithm)}
-			}))
-	}
-	cases = append(cases,
-		round13OuterSetCase("r13-deny-unless-permit-set-with-a-nested-allow-beside-a-predicate", "DENY_UNLESS_PERMIT",
-			func(b regularBuilder) []any { return []any{round9PredicatePolicy(b)} },
-			func(b regularBuilder) []any { return []any{round13ForNobodySet(b, "nested", "PERMIT_UNLESS_DENY")} }),
-		round9SetCase("r13-deny-overrides-set-with-an-unrestricted-allow-beside-a-deny-predicate", "DENY_OVERRIDES", func(b regularBuilder) []any {
-			return []any{round13AllowsList(b), b.policy("with-a-deny-predicate", readerTarget, "DENY_OVERRIDES",
-				b.rule("list-deny-with-a-predicate", "operation == 'LIST'", "true", "DENY", map[string]string{"rsqlPredicate": "blocked==1"}))}
-		}),
-	)
-	return cases
-}
-
-// What an ALLOW without a predicate does to a predicate beside it in check/filter,
-// and what a set none of whose policies applies gives the set above it. Round 12
-// showed that under DENY_OVERRIDES the predicate stays beside such an ALLOW
-// (r12 deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate), while
-// under DENY_UNLESS_PERMIT the ALLOW lifts it (r10
-// deny-list-without-predicate-beside-a-predicate), and that a
-// PERMIT_UNLESS_DENY set with no policy that applies gives ALLOW.
-//
-// r13-<algorithm>-set-with-an-unrestricted-allow-beside-a-predicate asks the same
-// under PERMIT_OVERRIDES and PERMIT_UNLESS_DENY: ALLOW if the ALLOW lifts the
-// filter, allowed==1 if the predicate stays; the -alone cases are the controls.
-//
-// r13-only-child-<algorithm>-set-without-an-applicable-policy nests such a set as the only child of a DENY_UNLESS_PERMIT set: DENY says the
-// nested set does not apply, ALLOW that it permits. The round 11 cases
-// fn-nested-set-without-an-applicable-policy-under-* put the set beside
-// allowed==1 under DENY_OVERRIDES, where the two give one answer. The
-// DENY_UNLESS_PERMIT row is the control, DENY by round 11; the
-// PERMIT_UNLESS_DENY row says whether that set still gives ALLOW when nested,
-// which the next case needs.
-//
-// r13-deny-unless-permit-set-with-a-nested-allow-beside-a-predicate puts the
-// PERMIT_UNLESS_DENY set with no policy that applies beside the allowed==1 policy
-// under DENY_UNLESS_PERMIT: ALLOW if the ALLOW of a nested set lifts the
-// predicate as a policy's ALLOW does, allowed==1 if it does not or if the nested
-// set does not apply, which the PERMIT_UNLESS_DENY only-child row tells apart.
-//
-// r13-deny-overrides-set-with-an-unrestricted-allow-beside-a-deny-predicate puts
-// the ALLOW beside a DENY rule with the predicate blocked==1 under
-// DENY_OVERRIDES: ALLOW if the ALLOW lifts a negated predicate, the negation of
-// blocked==1 if it stays.
-//
-// Every case sends the filter on LIST and check/resource on LIST. The cases live
-// in their own test function so that a recording run can be filtered to them and
-// leave every golden already committed alone. Legacy profile only.
-func (s *ParitySuite) TestRound13FilterCases() {
-	s.runRegularCases(round13FilterCases())
-}
-
-// Whether the PAP accepts a condition with a literal left over after a complete
-// comparison, and a list whose second element is an attribute rather than a
-// literal. No golden records either form. Each upload is recorded with its
-// status, and an accepted one also with the answer to READ.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone.
-func (s *ParitySuite) TestRound13PAPSyntaxCases() {
-	resource := map[string]any{"id": "r13-syntax", "a": "y", "x": "a", "y": "b"}
-	s.runIsolatedCases([]isolatedCase{
-		{id: "ps-trailing-literal", resourceType: round13ResourceType("ps-trailing-literal"),
-			condition: "resource.a == 'y' 'z'", requests: []isolatedRequest{{name: "read", resource: resource}}},
-		{id: "ps-attribute-in-a-list", resourceType: round13ResourceType("ps-attribute-in-a-list"),
-			condition: "resource.x IN 'a', resource.y", requests: []isolatedRequest{{name: "read", resource: resource}}},
-	})
-}
-
-// round13ResourceType is the resource type of the isolated round 13 case keyed key.
-func round13ResourceType(key string) string {
-	return "PARITY_SUITE_R13_" + strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
+// TestRound13FailingPIPInADenyRuleCases runs
+// round13/failing-pip-in-a-deny-rule.json.
+func (s *ParitySuite) TestRound13FailingPIPInADenyRuleCases() {
+	s.runCaseFile("round13/failing-pip-in-a-deny-rule.json")
 }

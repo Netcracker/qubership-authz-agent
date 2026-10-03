@@ -16,7 +16,7 @@
 
 package paritysuite
 
-// The builders and PIP declarations below were written for round 9, whose cases
+// The builders below were written for round 9, whose cases
 // are now data under testdata/cases/round9, and later rounds still build their
 // Go cases with them.
 

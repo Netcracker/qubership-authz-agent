@@ -56,10 +56,7 @@ var regularCaseLists = map[string]func() []regularCase{
 		}
 		return cases
 	},
-	"round13ScopeOutsideIterateCases":   round13ScopeOutsideIterateCases,
-	"round13FilterCases":                round13FilterCases,
-	"round13FailingPIPInADenyRuleCases": round13FailingPIPInADenyRuleCases,
-	"caseFileRegularCases":              caseFileRegularCases,
+	"caseFileRegularCases": caseFileRegularCases,
 }
 
 // caseFileRegularCases builds the cases with sets of every file under

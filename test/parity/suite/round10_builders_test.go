@@ -20,8 +20,8 @@ import "strings"
 
 // round10ResourceType is the resource type of the round 10 case keyed key. The
 // round's cases that are data under testdata/cases/round10 derive the same
-// type from their resourceTypePrefix, and the cases still written in Go build
-// it here.
+// type from their resourceTypePrefix or carry it in resourceType, and the cases
+// still written in Go build it here.
 func round10ResourceType(key string) string {
 	return "PARITY_SUITE_R10_" + strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
 }

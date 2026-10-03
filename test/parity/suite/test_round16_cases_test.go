@@ -132,7 +132,7 @@ func (s *ParitySuite) TestRound16CustomizationUnderIterateCases() {
 		StatusCode: http.StatusOK,
 		Body:       permissionScopeWireBody(parityReaderSubjectID, []permissionScopeGrant{{"region": {"r1"}}}),
 	}))
-	// Wait out the cachePeriod of permissionScopeWirePIP, as pinTwoScopeGrants does.
+	// Wait out the cachePeriod of permissionScopeWirePIP, as permission-scope-wire does.
 	time.Sleep(2 * time.Second)
 	s.Require().NoError(s.pipMock.ResetCalls(ctx))
 	tc, customization, setID := customizationUnderIterateCase()
