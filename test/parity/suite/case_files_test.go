@@ -39,9 +39,10 @@ import (
 // external id parity-<id>. A case without sets is an isolated case: one
 // simplified policy with condition, on operation (READ when empty), for the
 // reader, unless operation names another. The text {{resourceType}} in a condition, a target, or a string of a
-// request's resource stands for the case's resource type,
-// resourceTypePrefix followed by the id in upper case with - turned into _;
-// {{resourceTypeLowerCase}} stands for the same in lower case.
+// request's resource stands for the case's resource type: resourceType when
+// the case sets it, and otherwise resourceTypePrefix followed by the id in
+// upper case with - turned into _. {{resourceTypeLowerCase}} stands for the
+// same in lower case.
 type caseFile struct {
 	// About says what the file asks, for the reader of the file; nothing reads it.
 	About              string `json:"about"`
@@ -60,6 +61,17 @@ type caseFile struct {
 
 type caseSpec struct {
 	ID string `json:"id"`
+	// ResourceType, when not empty, is the case's resource type in place of the
+	// one derived from resourceTypePrefix and the id. It keeps the resource type
+	// of a case first written in Go, whose goldens were recorded with it.
+	ResourceType string `json:"resourceType"`
+	// ReadsRoutes names pip-mock routes the file pins, each of which has to
+	// receive at least one call while the case runs. The runner clears the call
+	// log when the case starts and, once the case's uploads were accepted and
+	// its requests sent, fails the case, with no golden, when a route received
+	// none: a false answer is then a declaration the stand ignored rather than a
+	// PIP it read.
+	ReadsRoutes []string `json:"readsRoutes"`
 	// About says what the case asks where its id and condition do not; nothing
 	// reads it.
 	About     string        `json:"about"`
@@ -669,6 +681,11 @@ func caseFileProblems(f caseFile) []string {
 			}
 			if c.Customize != nil {
 				report("case %s sets customize, which only a case with sets reads", c.ID)
+			}
+		}
+		for _, route := range c.ReadsRoutes {
+			if _, ok := f.Pins[route]; !ok {
+				report("case %s expects calls to %s, which the file does not pin", c.ID, route)
 			}
 		}
 		for _, key := range c.PIPs {

@@ -18,50 +18,46 @@ package paritysuite
 
 import (
 	"fmt"
+	"io/fs"
+	"path/filepath"
 	"testing"
 )
 
 // regularCaseLists are the functions that build regular cases. A new list is
 // added here, or its ids are checked by nothing.
 var regularCaseLists = map[string]func() []regularCase{
-	"regularPolicySetCases":                     regularPolicySetCases,
-	"translatorPolicySetCases":                  translatorPolicySetCases,
-	"failedPIPRegularCases":                     failedPIPRegularCases,
-	"deadFormRegularCases":                      deadFormRegularCases,
-	"combiningCases":                            combiningCases,
-	"interpreterFilterCases":                    interpreterFilterCases,
-	"iterateBindingCases":                       iterateBindingCases,
-	"setTargetCases":                            setTargetCases,
-	"substitutionRegularCases":                  substitutionRegularCases,
-	"permissionListCases":                       permissionListCases,
-	"accessOperatorCases":                       accessOperatorCases,
-	"barePathRegularCases":                      barePathRegularCases,
-	"denyPredicateCases":                        denyPredicateCases,
-	"terminalEffectCases":                       terminalEffectCases,
-	"setTargetRefusalCases":                     setTargetRefusalCases,
-	"round7FilterCases":                         round7FilterCases,
-	"failedPIPScopeCases":                       failedPIPScopeCases,
-	"round9DenyRuleWithoutPredicateCases":       round9DenyRuleWithoutPredicateCases,
-	"round9FalseConditionWithoutPredicateCases": round9FalseConditionWithoutPredicateCases,
-	"round9FilterAlgebraCases":                  round9FilterAlgebraCases,
-	"round9UnresolvedPlaceholderCases":          round9UnresolvedPlaceholderCases,
-	"round9SubjectScalarSubstitutionCases":      round9SubjectScalarSubstitutionCases,
-	"nonStringPIPValueRegularCases":             nonStringPIPValueRegularCases,
-	"round10SetAlgorithmFilterCases":            round10SetAlgorithmFilterCases,
-	"round10FilterResourceConditionCases":       round10FilterResourceConditionCases,
-	"round10DenyListFilterCases":                round10DenyListFilterCases,
-	"failedPIPFilterCases":                      failedPIPFilterCases,
-	"customizationRegularCases":                 customizationRegularCases,
-	"customizationUnderIterateRegularCases":     customizationUnderIterateRegularCases,
-	"pipScopeRegularCases":                      pipScopeRegularCases,
-	"repeatedValuesRegularCases":                repeatedValuesRegularCases,
-	"policyWithoutAlgorithmCases":               policyWithoutAlgorithmCases,
-	"round11FailedPIPOnTheRightCases":           round11FailedPIPOnTheRightCases,
-	"round11ScopeOutsideIterateCases":           round11ScopeOutsideIterateCases,
-	"round11FilterCases":                        round11FilterCases,
-	"round12ScopeOutsideIterateControlCases":    round12ScopeOutsideIterateControlCases,
-	"round12NotApplicableFilterCases":           round12NotApplicableFilterCases,
-	"round12IterateNodeInAFilterCases":          round12IterateNodeInAFilterCases,
+	"regularPolicySetCases":                  regularPolicySetCases,
+	"translatorPolicySetCases":               translatorPolicySetCases,
+	"failedPIPRegularCases":                  failedPIPRegularCases,
+	"deadFormRegularCases":                   deadFormRegularCases,
+	"combiningCases":                         combiningCases,
+	"interpreterFilterCases":                 interpreterFilterCases,
+	"iterateBindingCases":                    iterateBindingCases,
+	"setTargetCases":                         setTargetCases,
+	"substitutionRegularCases":               substitutionRegularCases,
+	"permissionListCases":                    permissionListCases,
+	"accessOperatorCases":                    accessOperatorCases,
+	"barePathRegularCases":                   barePathRegularCases,
+	"denyPredicateCases":                     denyPredicateCases,
+	"terminalEffectCases":                    terminalEffectCases,
+	"setTargetRefusalCases":                  setTargetRefusalCases,
+	"round7FilterCases":                      round7FilterCases,
+	"failedPIPScopeCases":                    failedPIPScopeCases,
+	"round10SetAlgorithmFilterCases":         round10SetAlgorithmFilterCases,
+	"round10FilterResourceConditionCases":    round10FilterResourceConditionCases,
+	"round10DenyListFilterCases":             round10DenyListFilterCases,
+	"failedPIPFilterCases":                   failedPIPFilterCases,
+	"customizationRegularCases":              customizationRegularCases,
+	"customizationUnderIterateRegularCases":  customizationUnderIterateRegularCases,
+	"pipScopeRegularCases":                   pipScopeRegularCases,
+	"repeatedValuesRegularCases":             repeatedValuesRegularCases,
+	"policyWithoutAlgorithmCases":            policyWithoutAlgorithmCases,
+	"round11FailedPIPOnTheRightCases":        round11FailedPIPOnTheRightCases,
+	"round11ScopeOutsideIterateCases":        round11ScopeOutsideIterateCases,
+	"round11FilterCases":                     round11FilterCases,
+	"round12ScopeOutsideIterateControlCases": round12ScopeOutsideIterateControlCases,
+	"round12NotApplicableFilterCases":        round12NotApplicableFilterCases,
+	"round12IterateNodeInAFilterCases":       round12IterateNodeInAFilterCases,
 	"round13IterateCases": func() []regularCase {
 		var cases []regularCase
 		for _, shape := range round13ScopeShapes {
@@ -72,15 +68,50 @@ var regularCaseLists = map[string]func() []regularCase{
 	"round13ScopeOutsideIterateCases":   round13ScopeOutsideIterateCases,
 	"round13FilterCases":                round13FilterCases,
 	"round13FailingPIPInADenyRuleCases": round13FailingPIPInADenyRuleCases,
+	"caseFileRegularCases":              caseFileRegularCases,
 }
 
-// casesSharingElementIDs are the regular cases whose one upload carries one
-// policyId twice: two-sets-whose-policies-share-one-id, which asks the PAP about
-// the shared id, and missing-attribute-in-set-target, whose fixture is kept as
-// it was recorded.
+// caseFileRegularCases builds the cases with sets of every file under
+// testdata/cases, so that their ids are checked against the Go cases as well.
+// It panics on a file runCaseFile could not run, which
+// TestCaseFilesAreWellFormed reports by name.
+func caseFileRegularCases() []regularCase {
+	var cases []regularCase
+	root := filepath.Join("testdata", "cases")
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || filepath.Ext(path) != ".json" {
+			return err
+		}
+		name, _ := filepath.Rel(root, path)
+		f, err := readCaseFile(name)
+		if err != nil {
+			return err
+		}
+		_, regular, err := caseFileCases(f)
+		if err != nil {
+			return fmt.Errorf("%s: %w", name, err)
+		}
+		cases = append(cases, regular...)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	return cases
+}
+
+// casesSharingElementIDs are the regular cases whose one upload carries one id
+// twice: two-sets-whose-policies-share-one-id and
+// s23-048-pap-same-rule-key-other-predicates, which ask the PAP about the shared
+// id, and missing-attribute-in-set-target and
+// q19-same-predicate-in-two-policies, whose fixtures are kept as they were
+// recorded. The PAP refused q19-same-predicate-in-two-policies for its shared
+// ruleId, so its goldens say nothing about the predicates it was written for.
 var casesSharingElementIDs = map[string]struct{}{
-	"missing-attribute-in-set-target":      {},
-	"two-sets-whose-policies-share-one-id": {},
+	"missing-attribute-in-set-target":            {},
+	"two-sets-whose-policies-share-one-id":       {},
+	"s23-048-pap-same-rule-key-other-predicates": {},
+	"q19-same-predicate-in-two-policies":         {},
 }
 
 // Every set, policy, and rule of one upload carries an id of its own, unless the

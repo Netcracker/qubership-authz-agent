@@ -18,7 +18,9 @@ package paritysuite
 
 import (
 	"context"
+	"fmt"
 	"strings"
+	"testing"
 	"time"
 )
 
@@ -36,14 +38,31 @@ func (s *ParitySuite) runCaseFile(name string) {
 		s.Require().NoErrorf(s.pinEntitlementsAPIVersionV3(ctx), "pin the entitlements API version of %s", name)
 		s.Require().NoErrorf(s.eaMock.PinEntitlementsV3ForUser(ctx, parityReaderSubjectID, *f.Entitlements), "pin the entitlements of %s", name)
 	}
+	isolated, regular, err := caseFileCases(f)
+	s.Require().NoErrorf(err, "build the cases of %s", name)
+	if len(isolated) > 0 {
+		s.runIsolatedCases(isolated)
+	}
+	if len(regular) > 0 {
+		// runRegularCases skips the rest of the function on the authz-agent profile,
+		// which loads simplified policies only.
+		s.runRegularCases(regular)
+	}
+}
+
+// caseFileCases builds the cases of f in the form the runners take: its cases
+// without sets, then its cases with sets, each in file order.
+func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, error) {
 	var isolated []isolatedCase
 	var regular []regularCase
 	for _, c := range f.Cases {
-		rt := f.ResourceTypePrefix + strings.ToUpper(strings.ReplaceAll(c.ID, "-", "_"))
+		rt := valueOr(c.ResourceType, f.ResourceTypePrefix+strings.ToUpper(strings.ReplaceAll(c.ID, "-", "_")))
 		var pips []any
 		for _, key := range c.PIPs {
 			pip, ok := f.PIPs[key]
-			s.Require().Truef(ok, "case %s names the PIP %q, which %s does not declare", c.ID, key, name)
+			if !ok {
+				return nil, nil, fmt.Errorf("case %s names the PIP %q, which the file does not declare", c.ID, key)
+			}
 			pips = append(pips, pip)
 		}
 		requests := caseRequests(c.Requests, rt)
@@ -52,6 +71,7 @@ func (s *ParitySuite) runCaseFile(name string) {
 				id: c.ID, resourceType: rt, domain: c.Domain, operation: c.Operation, roles: c.Roles,
 				condition: resourceTypeReplacer(rt).Replace(c.Condition), pips: pips, requests: requests,
 				policyOmit: c.PolicyOmit, policy: c.Policy, policiesQuery: c.PoliciesQuery,
+				readsRoutes: c.ReadsRoutes,
 			})
 			continue
 		}
@@ -68,20 +88,14 @@ func (s *ParitySuite) runCaseFile(name string) {
 		}
 		regular = append(regular, regularCase{
 			id: c.ID, resourceType: rt, pips: pips,
-			uploads:  []regularUpload{{externalID: "parity-" + c.ID, sets: sets}},
-			requests: requests,
-			steps:    steps,
-			cleanup:  customizationCleanup(c.ID, c.Customize, rt),
+			uploads:     []regularUpload{{externalID: "parity-" + c.ID, sets: sets}},
+			requests:    requests,
+			steps:       steps,
+			cleanup:     customizationCleanup(c.ID, c.Customize, rt),
+			readsRoutes: c.ReadsRoutes,
 		})
 	}
-	if len(isolated) > 0 {
-		s.runIsolatedCases(isolated)
-	}
-	if len(regular) > 0 {
-		// runRegularCases skips the rest of the function on the authz-agent profile,
-		// which loads simplified policies only.
-		s.runRegularCases(regular)
-	}
+	return isolated, regular, nil
 }
 
 // caseRequests turns the requests of a case whose resource type is rt into the
@@ -114,4 +128,36 @@ func (r requestSpec) user() string {
 		return name
 	}
 	return ""
+}
+
+// A case's resourceType replaces the resource type derived from the file's
+// prefix and the case id, in the request type and in every {{resourceType}} of
+// the condition or the set target; a case without it keeps the derived one.
+func TestCaseFileCases_ResourceTypeReplacesTheDerivedOne(t *testing.T) {
+	sets := []setSpec{{Key: "set", Target: "resourceType == '{{resourceType}}'"}}
+	cases := []struct {
+		name, resourceType, want string
+	}{
+		{"named", "PARITY_KEPT", "PARITY_KEPT"},
+		{"derived", "", "PARITY_P_C_1"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := caseFile{ResourceTypePrefix: "PARITY_P_", Cases: []caseSpec{
+				{ID: "c-1", ResourceType: tc.resourceType, Condition: "resource.t == '{{resourceType}}'"},
+				{ID: "c-1", ResourceType: tc.resourceType, Sets: sets},
+			}}
+			isolated, regular, err := caseFileCases(f)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if isolated[0].resourceType != tc.want || isolated[0].condition != "resource.t == '"+tc.want+"'" {
+				t.Errorf("isolated case: resource type %q, condition %q, want %q in both", isolated[0].resourceType, isolated[0].condition, tc.want)
+			}
+			target := regular[0].uploads[0].sets[0].(map[string]any)["target"]
+			if regular[0].resourceType != tc.want || target != "resourceType == '"+tc.want+"'" {
+				t.Errorf("regular case: resource type %q, set target %q, want %q in both", regular[0].resourceType, target, tc.want)
+			}
+		})
+	}
 }

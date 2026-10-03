@@ -326,6 +326,9 @@ func TestCaseFileProblems(t *testing.T) {
 		{"an iterate with no algorithm", func(f *caseFile) {
 			f.Cases[1].Customize[0].Sets = []any{map[string]any{"key": "outer", "iterate": map[string]any{"foreach": "x"}}}
 		}, "has a set entry whose iterate is not an object with foreach and algorithm"},
+		{"readsRoutes on a pinned route", func(f *caseFile) { f.Cases[0].ReadsRoutes = []string{"/pip"} }, ""},
+		{"readsRoutes on a route the file does not pin", func(f *caseFile) { f.Cases[1].ReadsRoutes = []string{"/other"} },
+			"case reg expects calls to /other, which the file does not pin"},
 		{"pipHeaders without pipCalls", func(f *caseFile) { f.Cases[0].Requests[0].PIPHeaders = []string{"tenant"} },
 			"case iso request read sets pipHeaders without pipCalls"},
 		{"emptyOperation beside operation", func(f *caseFile) {

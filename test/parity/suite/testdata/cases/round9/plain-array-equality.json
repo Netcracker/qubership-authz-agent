@@ -1,0 +1,92 @@
+{
+ "about": "What == and != answer over a resource attribute that is a plain JSON array. No earlier golden records either operator over an array: j5-array-index compares one element, resource.list[0] == 'a', and is true. The agent's condition parser accepts both conditions. Each case is sent an array holding only the literal, an array holding it beside another value, an array without it, and a string, the control that the operator answers true where the attribute is a scalar.",
+ "resourceTypePrefix": "PARITY_SUITE_R9_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "pa-equals-over-an-array",
+   "resourceType": "PARITY_SUITE_R9_PA_EQUALS",
+   "condition": "resource.list == 'v'",
+   "requests": [
+    {
+     "name": "array-of-only-v",
+     "resource": {
+      "id": "r9-array",
+      "list": [
+       "v"
+      ]
+     }
+    },
+    {
+     "name": "array-of-v-and-w",
+     "resource": {
+      "id": "r9-array",
+      "list": [
+       "v",
+       "w"
+      ]
+     }
+    },
+    {
+     "name": "array-without-v",
+     "resource": {
+      "id": "r9-array",
+      "list": [
+       "w"
+      ]
+     }
+    },
+    {
+     "name": "string-v",
+     "resource": {
+      "id": "r9-array",
+      "list": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pa-not-equals-over-an-array",
+   "resourceType": "PARITY_SUITE_R9_PA_NOT_EQUALS",
+   "condition": "resource.list != 'v'",
+   "requests": [
+    {
+     "name": "array-of-only-v",
+     "resource": {
+      "id": "r9-array",
+      "list": [
+       "v"
+      ]
+     }
+    },
+    {
+     "name": "array-of-v-and-w",
+     "resource": {
+      "id": "r9-array",
+      "list": [
+       "v",
+       "w"
+      ]
+     }
+    },
+    {
+     "name": "array-without-v",
+     "resource": {
+      "id": "r9-array",
+      "list": [
+       "w"
+      ]
+     }
+    },
+    {
+     "name": "string-w",
+     "resource": {
+      "id": "r9-array",
+      "list": "w"
+     }
+    }
+   ]
+  }
+ ]
+}

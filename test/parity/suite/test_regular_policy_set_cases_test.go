@@ -50,6 +50,9 @@ type regularCase struct {
 	// cleanup is sent before the uploads and, in reverse order, when the case
 	// ends, whatever its outcome; see customizationCleanup.
 	cleanup []papCall
+	// readsRoutes are the pip-mock routes that have to receive a call while
+	// the case runs; see caseSpec.ReadsRoutes.
+	readsRoutes []string
 }
 
 // regularStep is one customization step of a case, as customizeStep
@@ -116,6 +119,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
+			s.resetCallsFor(tc.readsRoutes)
 			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
 				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified)
 				s.Require().NoError(err)
@@ -160,8 +164,37 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 				})
 				runRequests(step.requests)
 			}
+			s.requireRoutesRead(tc.readsRoutes)
 		})
 	}
+}
+
+// resetCallsFor clears the pip-mock call log when routes is not empty, so that
+// requireRoutesRead counts the calls of one case alone.
+func (s *ParitySuite) resetCallsFor(routes []string) {
+	if len(routes) > 0 {
+		s.Require().NoError(s.pipMock.ResetCalls(context.Background()), "clear the pip-mock call log")
+	}
+}
+
+// requireRoutesRead fails the test when a route of routes received no call
+// since resetCallsFor cleared the log. It records no golden. The runners call it
+// after a case's requests, so a case whose upload was refused skips it.
+func (s *ParitySuite) requireRoutesRead(routes []string) {
+	if len(routes) == 0 {
+		return
+	}
+	s.Run("the-pips-were-read", func() {
+		calls, err := s.pipMock.GetCalls(context.Background())
+		s.Require().NoError(err, "read the pip-mock call log")
+		read := map[string]int{}
+		for _, call := range calls {
+			read[call.Path]++
+		}
+		for _, route := range routes {
+			s.Assert().Positive(read[route], "pip-mock calls to %s", route)
+		}
+	})
 }
 
 // sendCustomizationCleanup sends each of calls and never fails the test. It

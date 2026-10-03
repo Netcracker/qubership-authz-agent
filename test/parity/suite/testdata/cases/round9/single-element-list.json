@@ -1,0 +1,191 @@
+{
+ "about": "What ==, !=, IN and CONTAINS answer over a HEADER PIP whose header holds one value, and over a TOKEN PIP whose claim is a list of one element. hl1-hl3 record that a header is split on commas into a list, and == 'a,b' over the header a,b is false; no earlier case asks == over a header holding a single value, the form every header of the product policies in reach is sent in. Each header case is sent the header a, the value the operator is asked about, and the header b; sl-header-contains is the control, true over a whichever way the header is read. The claim cases select the reader's role through a filter expression, so the claim is a list of one; sl-claim-contains is their control. tk2 records only a plain path into the token, so a refused upload of a claim case is a refused filter expression. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R9_",
+ "pins": {},
+ "pips": {
+  "oneheader": {
+   "name": "subject.parityR9OneHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-one",
+   "cacheable": false
+  },
+  "onerole": {
+   "name": "subject.parityR9OneRole",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "$.realm_access.roles[?(@ == 'ROLE_PARITY_READER')]",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "sl-header-equals",
+   "condition": "subject.parityR9OneHeader == 'a'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-header-not-equals",
+   "condition": "subject.parityR9OneHeader != 'a'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-header-in",
+   "condition": "subject.parityR9OneHeader IN 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-header-contains",
+   "condition": "subject.parityR9OneHeader CONTAINS 'a'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-claim-equals",
+   "condition": "subject.parityR9OneRole == 'ROLE_PARITY_READER'",
+   "pips": [
+    "onerole"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-claim-not-equals",
+   "condition": "subject.parityR9OneRole != 'ROLE_PARITY_READER'",
+   "pips": [
+    "onerole"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-claim-in",
+   "condition": "subject.parityR9OneRole IN 'ROLE_PARITY_READER', 'ROLE_PARITY_NOBODY'",
+   "pips": [
+    "onerole"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sl-claim-contains",
+   "condition": "subject.parityR9OneRole CONTAINS 'ROLE_PARITY_READER'",
+   "pips": [
+    "onerole"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-one"
+     }
+    }
+   ]
+  }
+ ]
+}
