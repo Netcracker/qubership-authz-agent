@@ -157,6 +157,21 @@
    "domain": "PARITY_R29_PAIRS_R29PAIRS_PLAIN_006"
   },
   {
+   "id": "r29pairs-plain-007-s",
+   "condition": "resource.g == 'w'",
+   "requests": [
+    {
+     "name": "q",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "domain": "PARITY_R29_PAIRS_R29PAIRS_PLAIN_007"
+  },
+  {
    "id": "r29pairs-plain-008-s",
    "requests": [
     {
