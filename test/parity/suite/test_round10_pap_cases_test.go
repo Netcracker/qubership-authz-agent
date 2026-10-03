@@ -131,57 +131,6 @@ func (s *ParitySuite) TestRound10TwoDomainMappingCases() {
 	}
 }
 
-// What a GENERAL PIP whose body is the JSON literal null resolves to under IS
-// EMPTY and IS NULL, and what an absent header and an absent claim answer on the
-// right of an operator when nothing follows them. p7 records != over the null
-// body, which is true for a null and for an empty list alike; the right-operand
-// forms are recorded only on the left of an OR (ro-in-an-absent-header,
-// ro-equals-an-absent-claim). The agent's condition parser accepts every
-// condition here.
-//
-// Each condition is asked alone. The null body under IS EMPTY and IS NULL tells
-// a null (false, true) from an empty list (true, true); null-body-equals-a-value
-// is the control, a PIP at another route answering {"value": "v"} under == 'v'.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone.
-func (s *ParitySuite) TestRound10NullBodyAndRightOperandCases() {
-	ctx := context.Background()
-	const nullRoute, liveRoute = "/api/v1/pip/r10-null-body", "/api/v1/pip/r10-null-body-control"
-	s.Require().NoError(s.pipMock.PinRoute(ctx, nullRoute, PipStubResponse{StatusCode: http.StatusOK, BodyRaw: "null"}))
-	s.Require().NoError(s.pipMock.PinRoute(ctx, liveRoute, PipStubResponse{StatusCode: http.StatusOK, Body: map[string]string{"value": "v"}}))
-	general := func(name, route string, jsonPath bool) map[string]any {
-		pip := map[string]any{
-			"name": name, "url": "http://pip-mock:8090" + route, "httpMethod": "POST", "pipType": "GENERAL",
-			"requestAttributes": map[string]string{"case": "r10-null-body"}, "cacheable": false,
-		}
-		if jsonPath {
-			pip["type"] = "JSON"
-			pip["jsonPath"] = "$.value"
-		}
-		return pip
-	}
-	nullPIP := general("subject.parityR10NullBody", nullRoute, false)
-	requests := []isolatedRequest{{name: "reader", resource: map[string]any{"id": "r10-null-body", "x": "v"}}}
-	var cases []isolatedCase
-	for _, form := range []struct {
-		key, condition string
-		pip            map[string]any
-	}{
-		{"nb-null-body-is-empty", "subject.parityR10NullBody IS EMPTY", nullPIP},
-		{"nb-null-body-is-null", "subject.parityR10NullBody IS NULL", nullPIP},
-		{"nb-null-body-equals-a-value", "subject.parityR10NullBodyControl == 'v'", general("subject.parityR10NullBodyControl", liveRoute, true)},
-		{"nb-in-an-absent-header", "resource.x IN subject.parityR9NoHeader", round9NoHeaderPIP},
-		{"nb-equals-an-absent-claim", "resource.x == subject.parityR9NoClaim", round9NoClaimPIP},
-	} {
-		cases = append(cases, isolatedCase{
-			id: form.key, resourceType: round10ResourceType(form.key), condition: form.condition,
-			pips: []any{form.pip}, requests: requests,
-		})
-	}
-	s.runIsolatedCases(cases)
-}
-
 // Where the PAP accepts resourceType ALL in a simplified policy. t9b records the
 // one form in the fixtures, component ALL with resourceType and operation ALL
 // and no condition, which the upload accepts; no case records the other
@@ -226,35 +175,6 @@ func (s *ParitySuite) TestRound10ResourceTypeAllUploadCases() {
 			s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "resource-type-all/"+form.key, &model.PolicyLoadOutcome{Status: status})
 		})
 	}
-}
-
-// What MATCH /ab.*/ selects on values of the path form, and whether the word
-// form LESS THAN OR EQUAL is accepted without TO. df4 records MATCH /ab.*/
-// against abc, which no path pattern selects, so what the form selects is
-// recorded nowhere; LESS THAN OR EQUAL is recorded with TO only. The agent's
-// condition parser accepts every condition here.
-//
-// The MATCH case is sent four values, alone and through orProbePair, whose
-// control is true for a live policy. LESS THAN OR EQUAL is sent 5 and 6, and its
-// upload status is an answer too; the form with TO is the control.
-//
-// The cases live in their own test function so that a recording run can be
-// filtered to them and leave every golden already committed alone.
-func (s *ParitySuite) TestRound10PathPatternAndWordOperatorCases() {
-	value := func(name string, x any) isolatedRequest {
-		return isolatedRequest{name: name, resource: map[string]any{"id": "r10-pattern", "x": x, "a": "y"}}
-	}
-	cases := round10AloneAndProbe("pp-match-slash-pattern", "resource.x MATCH /ab.*/", []isolatedRequest{
-		value("x-slash-ab-dot-c-slash", "/ab.c/"), value("x-slash-ab-dot-slash", "/ab./"), value("x-slash-abc-slash", "/abc/"), value("x-abc", "abc"),
-	})
-	s.runIsolatedCases(append(cases, []isolatedCase{
-		{id: "pp-less-than-or-equal-without-to", resourceType: round10ResourceType("pp-less-than-or-equal-without-to"), condition: "resource.x LESS THAN OR EQUAL 5", requests: []isolatedRequest{
-			value("x-5", 5), value("x-6", 6),
-		}},
-		{id: "pp-less-than-or-equal-to", resourceType: round10ResourceType("pp-less-than-or-equal-to"), condition: "resource.x LESS THAN OR EQUAL TO 5", requests: []isolatedRequest{
-			value("x-5", 5), value("x-6", 6),
-		}},
-	}...))
 }
 
 // repeatedValuesRoute is the pip-mock path of the PIP of

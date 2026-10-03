@@ -1,0 +1,118 @@
+{
+ "about": "What check/filter does with a deny list whose rules carry no predicate and read the resource: a PERMIT_UNLESS_DENY policy of DENY rules on resource.uri MATCH, the form every deny list of the product policies in reach takes. The recorded deny list carries predicates (filter-under-a-deny-list), and the recorded DENY rules without a predicate read the subject (deny-without-predicate-*). deny-list-without-predicate is the deny list alone, under a DENY_UNLESS_PERMIT set; the filter may answer ALLOW, as the PERMIT_UNLESS_DENY policy permits wherever its DENY does not apply, or DENY. -beside-a-predicate adds a policy with an ALLOW carrying allowed==1, where the answer may be that predicate or ALLOW. check/resource on LIST with a uri the rule matches and with one it does not is the control that the deny list applies to a resource. The agent's converter accepts every set here.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "deny-list-without-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "deny-list",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "list-deny-a-secret-uri",
+         "target": "operation == 'LIST'",
+         "condition": "resource.uri MATCH /v1/secret/**",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list-uri-in-the-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r10-deny-list",
+      "uri": "/v1/secret/a"
+     }
+    },
+    {
+     "name": "check-list-uri-outside-the-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r10-deny-list",
+      "uri": "/v1/open/a"
+     }
+    }
+   ]
+  },
+  {
+   "id": "deny-list-without-predicate-beside-a-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "deny-list",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "list-deny-a-secret-uri",
+         "target": "operation == 'LIST'",
+         "condition": "resource.uri MATCH /v1/secret/**",
+         "effect": "DENY"
+        }
+       ]
+      },
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list-uri-in-the-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r10-deny-list",
+      "uri": "/v1/secret/a"
+     }
+    },
+    {
+     "name": "check-list-uri-outside-the-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r10-deny-list",
+      "uri": "/v1/open/a"
+     }
+    }
+   ]
+  }
+ ]
+}

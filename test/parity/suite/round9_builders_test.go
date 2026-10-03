@@ -20,26 +20,6 @@ package paritysuite
 // are now data under testdata/cases/round9, and later rounds still build their
 // Go cases with them.
 
-// round9NoHeaderPIP is a HEADER PIP whose header no case sends and that has no
-// defaultValue.
-var round9NoHeaderPIP = map[string]any{
-	"name":      "subject.parityR9NoHeader",
-	"type":      "UUID",
-	"pipType":   "HEADER",
-	"header":    "x-parity-r9-no-such-header",
-	"cacheable": false,
-}
-
-// round9NoClaimPIP is a TOKEN PIP over a claim the reader's token does not carry,
-// with no defaultValue.
-var round9NoClaimPIP = map[string]any{
-	"name":      "subject.parityR9NoClaim",
-	"type":      "UUID",
-	"pipType":   "TOKEN",
-	"claim":     "parity_r9_no_such_claim",
-	"cacheable": false,
-}
-
 // round9FalseSubjectCondition is a condition over the subject alone that is false
 // for parity-reader, so a filter request, which carries no resource, evaluates it.
 const round9FalseSubjectCondition = "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'"
@@ -83,13 +63,4 @@ func round9PredicatePolicy(b regularBuilder) map[string]any {
 // allowWithPredicate is an ALLOW rule on LIST whose predicate is rsql.
 func allowWithPredicate(b regularBuilder, key, rsql string) map[string]any {
 	return b.rule(key, "operation == 'LIST'", "true", "ALLOW", map[string]string{"rsqlPredicate": rsql})
-}
-
-// round9OneHeader is the header round9OneHeaderPIP reads.
-const round9OneHeader = "x-parity-r9-one"
-
-// round9OneHeaderPIP is a HEADER PIP over round9OneHeader, with no
-// defaultValue.
-var round9OneHeaderPIP = map[string]any{
-	"name": "subject.parityR9OneHeader", "type": "UUID", "pipType": "HEADER", "header": round9OneHeader, "cacheable": false,
 }

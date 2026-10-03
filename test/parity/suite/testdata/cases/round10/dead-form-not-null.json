@@ -1,0 +1,136 @@
+{
+ "about": "What IS NOT NULL answers over resource['x'] and over the literal null. The PAP accepts both forms, and IS NULL over either is true whether x is there or not (dn-is-null-over-a-bracket-path, dn-is-null-over-the-null-literal), while == over resource['x'] ends the rule (df1). IS NOT NULL over them is recorded nowhere, so neither is whether it is a value or ends the rule. Each form is asked alone and through the probe and its control, with x present and absent; resource.a is y in every request, so the probe's right operand holds. The agent's condition parser accepts both conditions.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "dn-is-not-null-over-a-bracket-path-alone",
+   "condition": "resource['x'] IS NOT NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r10-dead",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r10-dead",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-not-null-over-a-bracket-path",
+   "condition": "resource['x'] IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r10-dead",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r10-dead",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-not-null-over-a-bracket-path-control",
+   "resourceType": "PARITY_SUITE_R10_DN_IS_NOT_NULL_OVER_A_BRACKET_PATH_CTL",
+   "condition": "resource.a == 'y' OR resource['x'] IS NOT NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r10-dead",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r10-dead",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-not-null-over-the-null-literal-alone",
+   "condition": "null IS NOT NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r10-dead",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r10-dead",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-not-null-over-the-null-literal",
+   "condition": "null IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r10-dead",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r10-dead",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dn-is-not-null-over-the-null-literal-control",
+   "resourceType": "PARITY_SUITE_R10_DN_IS_NOT_NULL_OVER_THE_NULL_LITERAL_CTL",
+   "condition": "resource.a == 'y' OR null IS NOT NULL",
+   "requests": [
+    {
+     "name": "x-present",
+     "resource": {
+      "id": "r10-dead",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-absent",
+     "resource": {
+      "id": "r10-dead",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

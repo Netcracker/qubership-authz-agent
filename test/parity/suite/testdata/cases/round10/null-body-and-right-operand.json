@@ -1,0 +1,136 @@
+{
+ "about": "What a GENERAL PIP whose body is the JSON literal null resolves to under IS EMPTY and IS NULL, and what an absent header and an absent claim answer on the right of an operator when nothing follows them. p7 records != over the null body, which is true for a null and for an empty list alike; the right-operand forms are recorded only on the left of an OR (ro-in-an-absent-header, ro-equals-an-absent-claim). Each condition is asked alone. The null body under IS EMPTY and IS NULL tells a null (false, true) from an empty list (true, true); nb-null-body-equals-a-value is the control, a PIP at another route answering {\"value\": \"v\"} under == 'v'. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {
+  "/api/v1/pip/r10-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r10-null-body-control": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  }
+ },
+ "pips": {
+  "nullbody": {
+   "name": "subject.parityR10NullBody",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-null-body",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r10-null-body"
+   },
+   "cacheable": false
+  },
+  "control": {
+   "name": "subject.parityR10NullBodyControl",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-null-body-control",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r10-null-body"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "noheader": {
+   "name": "subject.parityR9NoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-no-such-header",
+   "cacheable": false
+  },
+  "noclaim": {
+   "name": "subject.parityR9NoClaim",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parity_r9_no_such_claim",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "nb-null-body-is-empty",
+   "condition": "subject.parityR10NullBody IS EMPTY",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r10-null-body",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nb-null-body-is-null",
+   "condition": "subject.parityR10NullBody IS NULL",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r10-null-body",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nb-null-body-equals-a-value",
+   "condition": "subject.parityR10NullBodyControl == 'v'",
+   "pips": [
+    "control"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r10-null-body",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nb-in-an-absent-header",
+   "condition": "resource.x IN subject.parityR9NoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r10-null-body",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "nb-equals-an-absent-claim",
+   "condition": "resource.x == subject.parityR9NoClaim",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r10-null-body",
+      "x": "v"
+     }
+    }
+   ]
+  }
+ ]
+}
