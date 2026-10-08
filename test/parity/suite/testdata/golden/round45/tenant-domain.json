@@ -1,0 +1,37 @@
+{
+  "p45-own-domain": {
+    "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/here": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/empty-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/empty-the-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/declare-the-domain": {"status":201,"body":null},
+    "pap-error-v1/sequence/write-the-policy": {"status":200,"body":null},
+    "pap-read/sequence/declare-the-domain": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "parityP45OwnDomain",
+          "domain": "PARITY_P45_OWN_DOMAIN",
+          "name": "subject.parityP45OwnDomain",
+          "pipType": "TOKEN",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read/sequence/empty-the-domain": {"status":404},
+    "pap-read/sequence/export-after": {"status":200,"body":{"pips":[]},"tenants":["default"]}
+  },
+  "p45-own-domain-before": {
+    "pap-read/sequence/domain-pips": {"status":404},
+    "pap-read/sequence/export-of-the-pips": {"status":200,"body":{"pips":[]},"tenants":["default"]}
+  },
+  "p45-own-domain-refused-write": {
+    "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/first-policy": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/empty-the-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/write-two-policies": {"status":400}
+  }
+}
