@@ -1,0 +1,434 @@
+{
+ "about": "Round 45: does the stand take PAP writes in the tenant parity-pap-r45-fresh, which nobody provisioned, do its decisions see them, and is it isolated from the default tenant both ways. The answer decides how every later PAP round isolates its state: a tenant of its own per sequence case, or a domain of its own (tenant-domain.json).",
+ "resourceTypePrefix": "PARITY_SUITE_R45_",
+ "standVersion": true,
+ "tenant": "parity-pap-r45-fresh",
+ "cases": [
+  {
+   "id": "p45-control-first",
+   "about": "A domain of its own in the tenant default: declared, one simplified policy that lets the reader READ the case's resource type, a decision there and one in the other tenant, the policies and the domain emptied. A control: the default tenant answers it like every isolated case.",
+   "resourceType": "PARITY_SUITE_R45_P45_CONTROL_FIRST",
+   "steps": [
+    {
+     "name": "declare-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_FIRST"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "error-class"
+     ]
+    },
+    {
+     "name": "write-the-policy",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_FIRST"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p45-control-first",
+       "resourceType": "PARITY_SUITE_R45_P45_CONTROL_FIRST",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "b167ef52-4988-2c93-c75f-9fb4ced257de"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-config-sets",
+      "decide:here",
+      "decide:in-the-other-tenant"
+     ],
+     "requests": [
+      {
+       "name": "here"
+      },
+      {
+       "name": "in-the-other-tenant",
+       "tenantId": "parity-pap-r45-fresh"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_FIRST"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_FIRST"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "read:read-domain-pips"
+     ]
+    }
+   ],
+   "tenant": "default"
+  },
+  {
+   "id": "p45-fresh-before",
+   "about": "Reads the tenant parity-pap-r45-fresh, which nobody provisioned, before the round writes to it: the v3 export of sets and PIPs with the tenants its elements belong to (an export for an unknown tenant_id answered every tenant's sets in round 10).",
+   "resourceType": "PARITY_SUITE_R45_P45_FRESH_BEFORE",
+   "steps": [
+    {
+     "name": "export-of-the-sets",
+     "op": "read-config-sets"
+    },
+    {
+     "name": "export-of-the-pips",
+     "op": "read-config-pips"
+    }
+   ]
+  },
+  {
+   "id": "p45-fresh-domain",
+   "about": "A domain of its own in the tenant parity-pap-r45-fresh: declared, one simplified policy that lets the reader READ the case's resource type, a decision there and one in the other tenant, the policies and the domain emptied.",
+   "resourceType": "PARITY_SUITE_R45_P45_FRESH_DOMAIN",
+   "steps": [
+    {
+     "name": "declare-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_FRESH_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "error-class"
+     ]
+    },
+    {
+     "name": "write-the-policy",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_FRESH_DOMAIN"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p45-fresh-domain",
+       "resourceType": "PARITY_SUITE_R45_P45_FRESH_DOMAIN",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "f84c8014-273e-60c5-7cb1-6dfd4351f4c5"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-config-sets",
+      "decide:here",
+      "decide:in-the-other-tenant"
+     ],
+     "requests": [
+      {
+       "name": "here"
+      },
+      {
+       "name": "in-the-other-tenant",
+       "tenantId": "default"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_FRESH_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_FRESH_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "read:read-domain-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p45-default-domain",
+   "about": "A domain of its own in the tenant default: declared, one simplified policy that lets the reader READ the case's resource type, a decision there and one in the other tenant, the policies and the domain emptied.",
+   "resourceType": "PARITY_SUITE_R45_P45_DEFAULT_DOMAIN",
+   "steps": [
+    {
+     "name": "declare-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_DEFAULT_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "error-class"
+     ]
+    },
+    {
+     "name": "write-the-policy",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_DEFAULT_DOMAIN"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p45-default-domain",
+       "resourceType": "PARITY_SUITE_R45_P45_DEFAULT_DOMAIN",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "60116a7d-44d8-83e8-a389-3a80bdb40949"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-config-sets",
+      "decide:here",
+      "decide:in-the-other-tenant"
+     ],
+     "requests": [
+      {
+       "name": "here"
+      },
+      {
+       "name": "in-the-other-tenant",
+       "tenantId": "parity-pap-r45-fresh"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_DEFAULT_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_DEFAULT_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "read:read-domain-pips"
+     ]
+    }
+   ],
+   "tenant": "default"
+  },
+  {
+   "id": "p45-fresh-sets",
+   "about": "Writes the sets of an externalId in parity-pap-r45-fresh, decides there and in the default tenant, empties them and decides again.",
+   "resourceType": "PARITY_SUITE_R45_P45_FRESH_SETS",
+   "steps": [
+    {
+     "name": "write-the-sets",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p45-fresh-sets"
+     },
+     "body": [
+      {
+       "policySetId": "4c46e8dc-bae5-5196-34aa-9441aa0b6fff",
+       "name": "p45-fresh-sets s",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_R45_P45_FRESH_SETS'",
+       "policies": [
+        {
+         "policyId": "0dfb0c96-5ddf-62f0-9fb0-795f702df107",
+         "name": "p45-fresh-sets p",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "db59e416-de97-7f71-61d2-0d533eebf50a",
+           "name": "p45-fresh-sets r",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "policySets": []
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-config-sets",
+      "decide:here",
+      "decide:in-the-default-tenant"
+     ],
+     "requests": [
+      {
+       "name": "here"
+      },
+      {
+       "name": "in-the-default-tenant",
+       "tenantId": "default"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-sets",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p45-fresh-sets"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p45-control-last",
+   "about": "A domain of its own in the tenant default: declared, one simplified policy that lets the reader READ the case's resource type, a decision there and one in the other tenant, the policies and the domain emptied. A control: the default tenant answers it like every isolated case.",
+   "resourceType": "PARITY_SUITE_R45_P45_CONTROL_LAST",
+   "steps": [
+    {
+     "name": "declare-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_LAST"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "error-class"
+     ]
+    },
+    {
+     "name": "write-the-policy",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_LAST"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p45-control-last",
+       "resourceType": "PARITY_SUITE_R45_P45_CONTROL_LAST",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "359bb8aa-8210-61e0-2f5e-d076b61af7a6"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-config-sets",
+      "decide:here",
+      "decide:in-the-other-tenant"
+     ],
+     "requests": [
+      {
+       "name": "here"
+      },
+      {
+       "name": "in-the-other-tenant",
+       "tenantId": "parity-pap-r45-fresh"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_LAST"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_CONTROL_LAST"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "read:read-domain-pips"
+     ]
+    }
+   ],
+   "tenant": "default"
+  }
+ ]
+}
