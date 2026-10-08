@@ -77,8 +77,9 @@ type regularStep struct {
 }
 
 // stepObservation is one observation of a step: status, error-class, read
-// (the GET read), decide (the request), or pip-call (the calls route received
-// since the step started). markers narrow the body of a read.
+// (the GET read), read-raw (the same GET, recorded whole), decide (the
+// request), or pip-call (the calls route received since the step started).
+// markers narrow the body of a read.
 type stepObservation struct {
 	kind    string
 	read    papCall
@@ -227,6 +228,12 @@ func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep) 
 				s.Require().NoError(err)
 				s.Run(step.name+"-read", func() {
 					s.requirePendingGolden(PSUITE_PAP_READ, subCase, narrowStepRead(readStatus, readBody, o.markers))
+				})
+			case "read-raw":
+				readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
+				s.Require().NoError(err)
+				s.Run(step.name+"-read-raw", func() {
+					s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, readBody))
 				})
 			case "decide":
 				s.Run(o.request.name, func() {

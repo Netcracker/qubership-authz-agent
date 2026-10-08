@@ -161,7 +161,7 @@ func caseSteps(c caseSpec, rt string) ([]regularStep, error) {
 			o := parseObservation(text)
 			obs := stepObservation{kind: o.kind}
 			switch o.kind {
-			case "read":
+			case "read", "read-raw":
 				read, err := readCall(o.arg, st.Args, rt)
 				if err != nil {
 					return nil, fmt.Errorf("case %s step %s %w", c.ID, st.Name, err)

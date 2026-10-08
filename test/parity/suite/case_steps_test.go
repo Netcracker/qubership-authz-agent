@@ -103,6 +103,8 @@ func bindingOf(op papOperation, name string) (papBinding, string, bool) {
 //   - error-class: the status and the error body of the call, under pap-error-v1;
 //   - read:<op>: a GET through the read operation op with the step's Args,
 //     under pap-read;
+//   - read-raw:<op>: the same GET recorded whole, not narrowed, under
+//     pap-read-raw-v1;
 //   - decide:<name>: the request called name of Requests, recorded as a
 //     case's requests are;
 //   - pip-call:<route>: what route received from the call to the observation,
@@ -303,6 +305,55 @@ func collectTenants(v any, into map[string]bool) {
 			collectTenants(e, into)
 		}
 	}
+}
+
+// rawReadEnvelopeFields are the top-level members of a read that change on
+// every write or every call: the export's hash and modification time, and an
+// error body's timestamp.
+var rawReadEnvelopeFields = append([]string{"timestamp"}, configExportEnvelopeFields...)
+
+// rawStepRead returns the golden shape of a read-raw observation: the status
+// and the whole body, decoded when it is JSON, and kept as text otherwise.
+// Nothing is narrowed: every element of the outermost lists, the body itself
+// when it is an array and every array member of a body that is an object, is
+// kept, in the order the PAP sent. What changes from one read or one upload to
+// the next is removed, as narrowConfigExport removes it: rawReadEnvelopeFields
+// from a top-level object, and inside each element canonicalExportValue drops
+// the write stamps and sorts the nested lists, whose order the PAP does not
+// keep.
+func rawStepRead(status int, body []byte) *model.PapReadRawOutcome {
+	out := &model.PapReadRawOutcome{Status: status}
+	var decoded any
+	if err := json.Unmarshal(body, &decoded); err != nil {
+		out.Body = string(body)
+		return out
+	}
+	switch typed := decoded.(type) {
+	case []any:
+		decoded = rawElements(typed)
+	case map[string]any:
+		for _, field := range rawReadEnvelopeFields {
+			delete(typed, field)
+		}
+		for key, value := range typed {
+			if elements, ok := value.([]any); ok {
+				typed[key] = rawElements(elements)
+			} else {
+				typed[key] = canonicalExportValue(value)
+			}
+		}
+	}
+	out.Body = decoded
+	return out
+}
+
+// rawElements canonicalizes each element of an outermost list and keeps their
+// order.
+func rawElements(elements []any) []any {
+	for i, element := range elements {
+		elements[i] = canonicalExportValue(element)
+	}
+	return elements
 }
 
 // errorOutcome returns the golden shape of an error-class observation: the
@@ -508,8 +559,7 @@ func caseStepProblems(c caseSpec, st stepSpec) []string {
 			if read {
 				report("observes %s on the read %s, which sends no call of its own", o.kind, st.Op)
 			}
-		case "read":
-			golden = "read"
+		case "read", "read-raw":
 			if _, err := readCall(o.arg, st.Args, "RT"); err != nil {
 				report("%v", err)
 			}
@@ -525,7 +575,8 @@ func caseStepProblems(c caseSpec, st stepSpec) []string {
 				report("observes pip-call with no route")
 			}
 		default:
-			report("observes %q, which is none of status, error-class, read:<op>, decide:<request>, pip-call:<route>", text)
+			report("observes %q, which is none of status, error-class, read:<op>, read-raw:<op>, decide:<request>, "+
+				"pip-call:<route>", text)
 		}
 		if seen[golden] {
 			report("observes %s twice, and both would record the same golden", golden)

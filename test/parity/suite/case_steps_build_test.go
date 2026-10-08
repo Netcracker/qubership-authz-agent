@@ -152,6 +152,15 @@ func TestCaseStepProblems(t *testing.T) {
 		{"a read through a write", write(func(st *stepSpec) {
 			st.Observe = []string{"status", "read:write-domain-pips", "decide:here"}
 		}), "no read operation"},
+		{"a raw read through a write", write(func(st *stepSpec) {
+			st.Observe = []string{"status", "read-raw:write-domain-pips", "decide:here"}
+		}), "no read operation"},
+		{"a narrowed read and a raw read", write(func(st *stepSpec) {
+			st.Observe = []string{"status", "read:read-domain-pips", "read-raw:read-config-sets", "decide:here"}
+		}), ""},
+		{"two raw reads, one golden", write(func(st *stepSpec) {
+			st.Observe = []string{"status", "read-raw:read-domain-pips", "read-raw:read-config-sets", "decide:here"}
+		}), "read-raw twice"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -257,6 +266,39 @@ func TestNarrowStepRead_DropsTheEnvelopeStampsAndListsEveryTenant(t *testing.T) 
 		Tenants: []string{"default", "t1"}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("narrowStepRead mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestRawStepRead(t *testing.T) {
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   *model.PapReadRawOutcome
+	}{
+		{"an object without its envelope stamps, nested members kept", http.StatusOK,
+			`{"hash": "h", "lastModificationTimestamp": 1, "timestamp": "now", "policySets": [{"hash": "x", "tenantId": "t1"}]}`,
+			&model.PapReadRawOutcome{Status: http.StatusOK,
+				Body: map[string]any{"policySets": []any{map[string]any{"hash": "x", "tenantId": "t1"}}}}},
+		{"the sets in the PAP's order, each without its write stamps and with its rules sorted", http.StatusOK,
+			`{"policySets": [
+				{"name": "b", "createdWhen": 5, "lastModifiedWhen": 6, "createdBy": "u", "lastModifiedBy": "u",
+				 "rules": [{"name": "r2", "createdWhen": 7}, {"name": "r1"}]},
+				{"name": "a", "other": "kept"}]}`,
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: map[string]any{"policySets": []any{
+				map[string]any{"name": "b", "rules": []any{map[string]any{"name": "r1"}, map[string]any{"name": "r2"}}},
+				map[string]any{"name": "a", "other": "kept"}}}}},
+		{"an array whole, in the PAP's order", http.StatusOK, `[{"name": "b"}, {"name": "a", "lastModifiedWhen": 1}]`,
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"name": "b"}, map[string]any{"name": "a"}}}},
+		{"a text body as text", http.StatusNotFound, `no such domain`,
+			&model.PapReadRawOutcome{Status: http.StatusNotFound, Body: "no such domain"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if diff := cmp.Diff(tc.want, rawStepRead(tc.status, []byte(tc.body))); diff != "" {
+				t.Errorf("rawStepRead(%d, %s) mismatch (-want +got):\n%s", tc.status, tc.body, diff)
+			}
+		})
 	}
 }
 

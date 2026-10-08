@@ -81,8 +81,12 @@ const (
 	// PAP endpoint with no golden kind of its own; see testdata/pap-operations.json.
 	PSUITE_PAP_STATUS
 	// PSUITE_PAP_ERROR is the status and the error body of a case step's PAP
-	// call, recorded when the step observes error-class.
+	// call, recorded when the step observes error-class; it is compared by
+	// status, see compareOptionsFor.
 	PSUITE_PAP_ERROR
+	// PSUITE_PAP_READ_RAW is a case step's read recorded whole, when the step
+	// observes read-raw:<op>.
+	PSUITE_PAP_READ_RAW
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -217,6 +221,10 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_PAP_ERROR, Name: "pap-error-v1", HTTPMethod: "POST",
 		PathTmpl: "/access/v1", GoldenDir: "pap-error-v1",
 	},
+	PSUITE_PAP_READ_RAW: {
+		ID: PSUITE_PAP_READ_RAW, Name: "pap-read-raw-v1", HTTPMethod: "GET",
+		PathTmpl: "/access/v1", GoldenDir: "pap-read-raw-v1",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -271,6 +279,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.PapReadOutcome{}
 	case PSUITE_PAP_ERROR:
 		return &model.PapErrorOutcome{}
+	case PSUITE_PAP_READ_RAW:
+		return &model.PapReadRawOutcome{}
 	case PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME:
 		return &model.CheckResourceBulkOutcome{}
 	case PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME:

@@ -129,6 +129,40 @@ func TestCompare_RefusalMessageIsIgnored(t *testing.T) {
 	}
 }
 
+// An error golden carries its body for the spec repository, which compares the
+// class of the message; the suite compares the status alone, so a body with
+// other text matches and another status does not.
+func TestCompare_AnErrorGoldenComparesItsStatusAndNotItsBody(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	dir := filepath.Join(root, "pap-error-v1", "sequence", "c")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	golden := `{"status": 400, "body": {"message": "Policy 'p-1' is invalid"}}`
+	if err := os.WriteFile(filepath.Join(dir, "s.json"), []byte(golden), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	gc := &GoldenComparator{goldenRoot: root}
+	cases := []struct {
+		name     string
+		actual   *model.PapErrorOutcome
+		mismatch bool
+	}{
+		{"another message, the same status", &model.PapErrorOutcome{Status: 400, Body: map[string]any{"message": "Policy 'p-2' is invalid"}}, false},
+		{"the same message, another status", &model.PapErrorOutcome{Status: 409, Body: map[string]any{"message": "Policy 'p-1' is invalid"}}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := gc.Compare(PSUITE_PAP_ERROR, "sequence/c/s", tc.actual)
+			var mismatch *GoldenMismatchError
+			if got := errors.As(err, &mismatch); got != tc.mismatch {
+				t.Errorf("Compare(%+v) against %s: mismatch = %v, want %v (err %v)", *tc.actual, golden, got, tc.mismatch, err)
+			}
+		})
+	}
+}
+
 // TestNormalizeRsqlInElements_SortsInClauseBothDirections pins the
 // D-AF-AA (2026-04-19) comparator-allowlist contract: for RSQL `in`
 // clauses, element order is set-semantic, so `("a","b")` and `("b","a")`

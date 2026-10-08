@@ -152,14 +152,21 @@ func (gc *GoldenComparator) writeObservedSidecar(goldenPath string, actual any) 
 }
 
 // compareOptionsFor returns the cmp.Option set for a given row per D-M. The
-// ignore-list is deliberately minimal — Obligations is the only pre-locked
-// entry (D-E); anything else requires a one-line justification and an
-// escalation OQ before being added.
+// ignore-list is deliberately minimal — Obligations is the pre-locked entry
+// (D-E), and the body of a pap-error-v1 golden, which the spec repository
+// compares by class, is the other; anything else requires a one-line
+// justification and an escalation OQ before being added.
 func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 	meta := Meta(id)
 	opts := []cmp.Option{}
 	if meta.SortSlices {
 		opts = append(opts, cmpopts.SortSlices(func(a, b string) bool { return a < b }))
+	}
+	if id == PSUITE_PAP_ERROR {
+		// The error body is recorded for the spec repository, which compares the
+		// class of its message rather than its text: the text changes between
+		// builds of access-control and differs in a replacement PAP.
+		opts = append(opts, cmpopts.IgnoreFields(model.PapErrorOutcome{}, "Body"))
 	}
 	if meta.IgnoreObligations {
 		// Obligations is the only pre-committed ignore per D-E / D3.

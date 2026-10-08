@@ -26,11 +26,23 @@ type PapReadOutcome struct {
 	Tenants []string `json:"tenants,omitempty"`
 }
 
+// PapReadRawOutcome is the golden shape of a case step's read-raw
+// observation: the read whole, not narrowed. Status is the HTTP status. Body
+// is the response body, decoded when it is JSON and kept as text otherwise,
+// with the members that change on every write or read removed: hash,
+// lastModificationTimestamp, and timestamp from a top-level object, the write
+// stamps from every element, and the order of the lists nested in an element.
+type PapReadRawOutcome struct {
+	Status int `json:"status"`
+	Body   any `json:"body"`
+}
+
 // PapErrorOutcome is the golden shape of a case step's error-class
 // observation. Status is the HTTP status of the step's call. Body is the
 // response body of a non-2xx answer, decoded when it is JSON and kept as text
 // otherwise, with every top-level timestamp member removed; it is null for a
-// 2xx answer.
+// 2xx answer. The suite compares Status alone: Body is recorded for the spec
+// repository, which compares the class of the message, not its text.
 type PapErrorOutcome struct {
 	Status int `json:"status"`
 	Body   any `json:"body"`
