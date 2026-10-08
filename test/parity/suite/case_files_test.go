@@ -57,6 +57,10 @@ type caseFile struct {
 	// the end of the function. The runner also pins /api-version of
 	// entitlements-mock to major 3, so that access-control reads that lookup.
 	Entitlements *PipStubResponse `json:"entitlements"`
+	// Tenant is the tenant_id every call of a case with steps and no sets
+	// sends, unless the case names its own; the stand's tenant when empty. A
+	// file with a tenant holds only such cases; an empty string is not a tenant.
+	Tenant *string `json:"tenant"`
 }
 
 type caseSpec struct {
@@ -121,6 +125,15 @@ type caseSpec struct {
 	// Customize holds the customization steps of a case with sets, which run in
 	// order after the upload and the case's own requests; see customizeStep.
 	Customize []customizeStep `json:"customize"`
+	// Steps holds the PAP operations the case performs, each with the
+	// observations recorded after it; see stepSpec. A case with sets runs them
+	// after its upload and its requests, in place of customize. A case with
+	// steps and no sets is a sequence case: it uploads nothing of its own and
+	// runs after the file's cases with sets, in the tenant Tenant names.
+	Steps []stepSpec `json:"steps"`
+	// Tenant is the tenant_id every call of a sequence case sends, in place of
+	// the file's tenant and the stand's; an empty string is not a tenant.
+	Tenant *string `json:"tenant"`
 }
 
 // customizeStep is one call to the customization API of the PAP, recorded as a
@@ -693,7 +706,19 @@ func caseFileProblems(f caseFile) []string {
 	report := func(format string, args ...any) { problems = append(problems, fmt.Sprintf(format, args...)) }
 	earlierRegular := map[string]bool{}
 	for _, c := range f.Cases {
-		if len(c.Sets) > 0 {
+		sequence := len(c.Sets) == 0 && c.Steps != nil
+		if (c.Tenant != nil || f.Tenant != nil) && !sequence {
+			report("case %s runs in a tenant the case or its file names, which only a case with steps and no sets does", c.ID)
+		}
+		if (c.Tenant != nil && *c.Tenant == "") || (f.Tenant != nil && *f.Tenant == "") {
+			report("case %s runs in the tenant \"\", which is no tenant: leave tenant out for the stand's", c.ID)
+		}
+		if c.Steps != nil && c.Customize != nil {
+			report("case %s sets both steps and customize, and the runner sends only one of them", c.ID)
+		}
+		if sequence {
+			problems = append(problems, sequenceProblems(c)...)
+		} else if len(c.Sets) > 0 {
 			if c.Roles != nil || c.Domain != "" || c.PolicyOmit != nil || c.Policy != nil || c.PoliciesQuery != "" {
 				report("case %s sets roles, domain, policyOmit, policy, or policiesQuery, which only a case without sets reads", c.ID)
 			}
@@ -723,6 +748,9 @@ func caseFileProblems(f caseFile) []string {
 		}
 		allRequests := slices.Clone(c.Requests)
 		for _, st := range c.Customize {
+			allRequests = append(allRequests, st.Requests...)
+		}
+		for _, st := range c.Steps {
 			allRequests = append(allRequests, st.Requests...)
 		}
 		for _, route := range c.ReadsRoutes {
@@ -774,6 +802,42 @@ func caseFileProblems(f caseFile) []string {
 			steps[st.Name] = true
 			problems = append(problems, stepProblems(c.ID, st)...)
 			checkRequests(st.Requests)
+		}
+		for _, st := range c.Steps {
+			if steps[st.Name] || st.Name == "" {
+				report("case %s has a step named %q, which is empty or names another step", c.ID, st.Name)
+			}
+			steps[st.Name] = true
+			problems = append(problems, caseStepProblems(c, st)...)
+			// the step's goldens share <group>/<case>/<name> with the case's upload, when it has sets, and its requests
+			if (len(c.Sets) > 0 && (st.Name == "upload-1" || st.Name == "declare-the-domain")) || requests[st.Name] ||
+				slices.ContainsFunc(allRequests, func(r requestSpec) bool { return r.Name == st.Name }) {
+				report("case %s has a step named %s, which a request or the case's upload records a golden under too", c.ID, st.Name)
+			}
+			routes := stepRoutes(st)
+			if len(routes) > 0 && (c.PIPCalls != "" || c.ReadsRoutes != nil) {
+				report("case %s counts the calls of the whole case, and its step %s clears the call log with pip-call", c.ID, st.Name)
+			}
+			for _, r := range st.Requests {
+				if len(routes) > 0 && (r.PIPCalls != "" || r.ClassifyBy != "" || r.ReadsRoutes != nil) {
+					report("case %s step %s records its calls with pip-call, and its request %s clears the call log with pipCalls, classifyBy, or readsRoutes", c.ID, st.Name, r.Name)
+				}
+			}
+			// the observations in the order the runner makes them, so that a request's pins count from where it is sent
+			for _, text := range st.Observe {
+				switch o := parseObservation(text); o.kind {
+				case "decide":
+					for _, r := range st.Requests {
+						if r.Name == o.arg {
+							checkRequests([]requestSpec{r})
+						}
+					}
+				case "pip-call":
+					if !pinned[o.arg] {
+						report("case %s step %s records the calls to %s, which nothing pins before it", c.ID, st.Name, o.arg)
+					}
+				}
+			}
 		}
 	}
 	return problems

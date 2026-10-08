@@ -106,7 +106,7 @@ func TestRunRegularCases_ARefusedPIPUploadEndsTheCaseAfterItsGolden(t *testing.T
 	c := caseWithSets("c")
 	c.pips = []any{map[string]any{"name": "subject.x"}}
 	c.cleanup = []papCall{{method: http.MethodDelete, path: "/access/v1/config/customization/policySet/s", query: url.Values{"level": {"PROJECT"}}}}
-	c.steps = []regularStep{{name: "step", call: papCall{method: http.MethodPost, path: "/access/v1/config/customization/import"}, golden: PSUITE_IMPORT_CUSTOMIZATION}}
+	c.steps = []regularStep{{name: "step", call: &papCall{method: http.MethodPost, path: "/access/v1/config/customization/import"}, golden: PSUITE_IMPORT_CUSTOMIZATION, observe: customizeObservations(nil)}}
 	want := []string{
 		"PUT " + domainPoliciesPath,
 		"PUT " + domainPIPsPath,
@@ -153,8 +153,8 @@ func TestRunRegularCases_AnAcceptedDomainUploadGoesOnToTheSetsRequestsAndSteps(t
 	c.pips = []any{map[string]any{"name": "subject.x"}}
 	c.cleanup = []papCall{{method: http.MethodDelete, path: "/access/v1/config/customization/policySet/s", query: url.Values{"level": {"PROJECT"}}}}
 	c.steps = []regularStep{{
-		name: "step", call: papCall{method: http.MethodPost, path: "/access/v1/config/customization/import"},
-		golden: PSUITE_IMPORT_CUSTOMIZATION, requests: []isolatedRequest{{name: "read-after", m2mOnly: true}},
+		name: "step", call: &papCall{method: http.MethodPost, path: "/access/v1/config/customization/import"},
+		golden: PSUITE_IMPORT_CUSTOMIZATION, observe: customizeObservations([]isolatedRequest{{name: "read-after", m2mOnly: true}}),
 	}}
 	want := []string{
 		"PUT " + domainPoliciesPath,

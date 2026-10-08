@@ -58,7 +58,7 @@ func caseFileRegularCases() []regularCase {
 		if err != nil {
 			return err
 		}
-		_, regular, err := caseFileCases(f)
+		_, regular, _, err := caseFileCases(f)
 		if err != nil {
 			return fmt.Errorf("%s: %w", name, err)
 		}

@@ -77,6 +77,12 @@ const (
 	// PSUITE_DELETE_PIP_CUSTOMIZATION is the PAP delete of the customization
 	// of one PIP at the level the call names.
 	PSUITE_DELETE_PIP_CUSTOMIZATION
+	// PSUITE_PAP_STATUS is the status of a case step that writes through a
+	// PAP endpoint with no golden kind of its own; see testdata/pap-operations.json.
+	PSUITE_PAP_STATUS
+	// PSUITE_PAP_ERROR is the status and the error body of a case step's PAP
+	// call, recorded when the step observes error-class.
+	PSUITE_PAP_ERROR
 )
 
 // RowMeta holds the canonical per-row metadata the GoldenComparator and
@@ -203,6 +209,14 @@ var rowMetas = map[ParityEndpointID]RowMeta{
 		ID: PSUITE_DELETE_PIP_CUSTOMIZATION, Name: "delete-pip-customization-v1", HTTPMethod: "DELETE",
 		PathTmpl: "/access/v1/pip/customization/pip/{name}", GoldenDir: "delete-pip-customization-v1",
 	},
+	PSUITE_PAP_STATUS: {
+		ID: PSUITE_PAP_STATUS, Name: "pap-status-v1", HTTPMethod: "POST",
+		PathTmpl: "/access/v1", GoldenDir: "pap-status-v1",
+	},
+	PSUITE_PAP_ERROR: {
+		ID: PSUITE_PAP_ERROR, Name: "pap-error-v1", HTTPMethod: "POST",
+		PathTmpl: "/access/v1", GoldenDir: "pap-error-v1",
+	},
 }
 
 // Meta returns a copy of the row metadata for the given id; panics on
@@ -243,7 +257,7 @@ func NewGoldenTarget(id ParityEndpointID) any {
 	case PSUITE_ROW_10_CHECK_FILTER_V2:
 		return &model.FilterResponse{}
 	case PSUITE_LOAD_SIMPLIFIED_POLICIES, PSUITE_LOAD_POLICY_SETS, PSUITE_IMPORT_CUSTOMIZATION,
-		PSUITE_IMPORT_PIP_CUSTOMIZATION, PSUITE_DELETE_CUSTOMIZATION, PSUITE_DELETE_PIP_CUSTOMIZATION:
+		PSUITE_IMPORT_PIP_CUSTOMIZATION, PSUITE_DELETE_CUSTOMIZATION, PSUITE_DELETE_PIP_CUSTOMIZATION, PSUITE_PAP_STATUS:
 		return &model.PolicyLoadOutcome{}
 	case PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME:
 		return &model.CheckResourceOutcome{}
@@ -255,6 +269,8 @@ func NewGoldenTarget(id ParityEndpointID) any {
 		return &model.PipCallOutcome{}
 	case PSUITE_PAP_READ:
 		return &model.PapReadOutcome{}
+	case PSUITE_PAP_ERROR:
+		return &model.PapErrorOutcome{}
 	case PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME:
 		return &model.CheckResourceBulkOutcome{}
 	case PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME:

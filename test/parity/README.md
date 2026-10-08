@@ -373,6 +373,9 @@ Optional fields change one part of the upload or the request; without them a cas
 | `readsRoutes` | A case | Routes the file or the case pins, each of which has to receive a pip-mock call while the case runs. The call log is cleared when the case starts, and once its uploads were accepted and its requests sent, a check of its own, which records no golden, fails when a route received none: a false answer is then a declaration the stand ignored rather than a PIP it read. No request of the case may set `pipCalls`, `classifyBy`, or `readsRoutes`, which clear the log again |
 | `pipCalls` | A case | A route the file or the case pins. The pip-mock call log is cleared when the case starts, and after the case's requests and steps what the route received over the whole case is recorded under `pip-call/<kind>/<case>`. No request of the case may set `pipCalls`, `classifyBy`, or `readsRoutes`, which clear the log again |
 | `pins` | A case | Pip-mock answers by route, `{statusCode, body}`, pinned when the case starts, before its uploads. An answer stays until a later case or request pins the route again, in the order the cases run: the cases without `sets` first |
+| `steps` | A case | PAP operations the case performs, each followed by the observations it records; see [Steps](#steps). A case with `sets` runs them after its upload and its requests, in place of `customize`. A case with `steps` and no `sets` is a sequence case: it uploads nothing of its own and runs after the file's cases with `sets` |
+| `tenant` | A sequence case | The `tenant_id` every call of the case sends, its requests' own `tenantId` aside, in place of the file's tenant and the stand's |
+| `tenant` | The file | The `tenant_id` of every sequence case that names none. A file with a `tenant` holds only sequence cases |
 
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
 replaces the whole PIP declaration of its domain, the suite's unless it names another, with its own PIPs, none included, and a case with `sets`
@@ -409,13 +412,52 @@ last step the suite deletes, with no golden, the customization of every set a st
 of every PIP an object of its `pips` or `pipBody` names, at the step's level, or at both `PROJECT` and `CUSTOMER` when
 the step names another level or sets `omitLevel`.
 
+#### Steps
+
+A step performs one PAP operation and records the observations its `observe` lists, in order. The operations and the
+endpoints that perform them are in `suite/testdata/pap-operations.json`, which the spec repository generates from its
+operation vocabulary: an operation has a `kind` (`write`, `delete`, or `read`) and bindings, each an endpoint with a
+tier (`contract`, `primary`, or `variant`). A step names the operation in `op` and, where it is not the primary
+binding, the binding in `binding`. `args` holds the path and query parameters of the binding, strings or booleans, and
+`body` the body of the call; both take the resource type placeholders. Goldens are filed under
+`<kind>/<group>/<case>/<step>`, where the group is `regular` for a case with `sets` and `sequence` for a sequence case.
+
+| Observation | Records | Golden kind |
+| --- | --- | --- |
+| `status` | The status of the step's call | The binding's, such as `load-simplified-policies-v1`; `pap-status-v1` for an endpoint no golden has answered |
+| `error-class` | The status and, for a non-2xx answer, the response body without its top-level `timestamp` | `pap-error-v1` |
+| `read:<op>` | A GET through the read operation `op` with the step's `args`: the status, the body with every array narrowed to the elements that name the case id, the resource type, a string argument, or a value of the step's `markers`, and the distinct `tenantId` values of the whole body | `pap-read` |
+| `decide:<name>` | The request called `<name>` of the step's `requests`, which takes the fields of a case's request and is recorded as one | That of the request |
+| `pip-call:<route>` | What the route received from the start of the step to this observation | `pip-call` |
+
+A write or delete step observes `status` when `observe` is empty, and its `observe` starts with `status`, followed by
+`error-class` when it has one. A step whose operation is a read sends no call of its own and takes no `binding`: its
+observations are the point the case reads the PAP at, and it observes `read:<its op>` when `observe` is empty. A step's
+name differs from every request name of its case and, in a case with `sets`, from `upload-1` and
+`declare-the-domain`, which share its golden paths. When the PAP refuses a step's call, `onRefusal: stop`, the default,
+records `status` and `error-class` and ends the case; `continue` goes on with the step's other observations and the
+steps after it, so a case can ask what a refused write left behind. A step has no cleanup of its own: a case that
+writes ends with steps that undo the write. A `customize` step is a step that observes its status and then its
+requests, and goes on after a refusal.
+
+A sequence case runs in its own tenant when it or its file names one, and otherwise in the stand's tenant; a case that
+needs a clean state starts with a read that shows it. The requests of a step run in the order of its `decide:`
+observations, and the pins of an earlier one apply to the later ones.
+
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
 file does not declare, a case id two cases share, a `classifyBy`, a `pipCalls`, or a `readsRoutes` entry of a case or a request on a route nothing pins before it (the file, the case, or the request itself or one before it), a request's `pipCalls` beside `classifyBy`, a case's `pipCalls` or `readsRoutes` beside a request, a step's included, that sets `pipCalls`, `classifyBy`, or `readsRoutes`, an `omitOperation` on a request that is not a filter or that sets `operation` or `emptyOperation`, a `subject` other than `m2m` or
 `user:<username>`, `subjectClaims` without a `user:` subject, a field of a case without `sets` on a case with `sets` or
 the other way round, a `ruleIdsOf` that names no earlier case with `sets` of the file, two requests or two steps of a
 case with one name, a step with neither `level` nor `omitLevel`, a step that sets more than one of `delete`, `pips` or
 `pipBody`, and `sets` or `body`, `pips` beside `pipBody`, a `delete` that names both a set and a PIP or neither, a
-`recursive` on the delete of a PIP, a customization entry with no key or with `omitFields`, two members of one entry
+`recursive` on the delete of a PIP, a step that names an operation or a binding the table does not hold, a decision as a
+step, an argument the binding does not take or a value outside its listed values, a write whose `observe` does not
+start with `status` or has `error-class` anywhere but second, two observations of a step that would record one golden,
+a `decide:` that names no request of the step or a request no `decide:` sends, a step named as a request of its case,
+or in a case with `sets` as `upload-1` or `declare-the-domain`, a `pip-call:` on a route nothing pins or beside a case's `pipCalls` or
+`readsRoutes` or a request of the step that clears the call log, `status`, `error-class`, `body`, `onRefusal`, or
+`binding` on a read step, a `tenant` that is empty, on a case that is not a sequence case, or in a file that holds one,
+a sequence case with a field it does not read, `steps` beside `customize`, a customization entry with no key or with `omitFields`, two members of one entry
 that the suite would send as the same member, such as `algorithm` beside `combiningAlgorithm`, a PIP customization
 object of `pips` or `pipBody` with no name, `status` beside `omitStatus`, `pipHeaders` without `pipCalls`, `emptyOperation` beside `operation`, a negative
 `pauseMs`, a bulk request with a `filter`, `resource`, `operation`, `type`, or `classifyBy` of its own or an item that
@@ -425,8 +467,8 @@ TestCaseFilesAreWellFormed ./test/parity/suite/` before handing a file over for 
 A file is usually written by a generator beside it, such as `suite/testdata/cases/round14/generate.py`: edit the
 generator and rerun it rather than the JSON. The round 14 and 15 generators leave out the cases listed in the
 `duplicates.tsv` beside them, each next to the kept case that exercises exactly what it does. The round 16 to 41 files
-have no generator in the repository. Cases that change the stand in ways the fields above do not cover, such as a second
-tenant or a v3 export, stay in Go.
+have no generator in the repository. Cases that change the stand in ways the fields above do not cover, such as the
+tenants of the two-tenant stand, stay in Go.
 
 To record goldens, run one function per fresh stand:
 
@@ -494,6 +536,7 @@ test/parity/
     ├── accepted_divergences.go
     ├── testdata/
     │   ├── golden/                      (129 committed golden JSON files)
+    │   ├── pap-operations.json          (the PAP operations a case step names; generated)
     │   └── fixtures/                    (seed policies and PIPs)
     └── test_row*.go                     (one file per parity endpoint row)
 ```

@@ -38,7 +38,7 @@ func (s *ParitySuite) runCaseFile(name string) {
 		s.Require().NoErrorf(s.pinEntitlementsAPIVersionV3(ctx), "pin the entitlements API version of %s", name)
 		s.Require().NoErrorf(s.eaMock.PinEntitlementsV3ForUser(ctx, parityReaderSubjectID, *f.Entitlements), "pin the entitlements of %s", name)
 	}
-	isolated, regular, err := caseFileCases(f)
+	isolated, regular, sequence, err := caseFileCases(f)
 	s.Require().NoErrorf(err, "build the cases of %s", name)
 	if len(isolated) > 0 {
 		s.runIsolatedCases(isolated)
@@ -48,20 +48,35 @@ func (s *ParitySuite) runCaseFile(name string) {
 		// which loads simplified policies only.
 		s.runRegularCases(regular)
 	}
+	if len(sequence) > 0 {
+		s.runSequenceCases(sequence)
+	}
 }
 
 // caseFileCases builds the cases of f in the form the runners take: its cases
-// without sets, then its cases with sets, each in file order.
-func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, error) {
+// without sets and steps, its cases with sets, and its cases with steps and no
+// sets, each in file order.
+func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, []sequenceCase, error) {
 	var isolated []isolatedCase
 	var regular []regularCase
+	var sequence []sequenceCase
 	for _, c := range f.Cases {
 		rt := valueOr(c.ResourceType, f.ResourceTypePrefix+strings.ToUpper(strings.ReplaceAll(c.ID, "-", "_")))
+		steps, err := caseSteps(c, rt)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		if len(c.Sets) == 0 && c.Steps != nil {
+			sequence = append(sequence, sequenceCase{
+				id: c.ID, resourceType: rt, tenant: caseTenant(c, f), pins: c.Pins, steps: steps,
+			})
+			continue
+		}
 		var pips []any
 		for _, key := range c.PIPs {
 			pip, ok := f.PIPs[key]
 			if !ok {
-				return nil, nil, fmt.Errorf("case %s names the PIP %q, which the file does not declare", c.ID, key)
+				return nil, nil, nil, fmt.Errorf("case %s names the PIP %q, which the file does not declare", c.ID, key)
 			}
 			pips = append(pips, pip)
 		}
@@ -81,11 +96,6 @@ func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, error) {
 		for _, set := range c.Sets {
 			sets = append(sets, buildSet(b, ruleIDs, set, rt))
 		}
-		steps := make([]regularStep, 0, len(c.Customize))
-		for _, st := range c.Customize {
-			call, golden := customizeStepCall(c.ID, c.RuleIDsOf, st, rt)
-			steps = append(steps, regularStep{name: st.Name, call: call, golden: golden, requests: caseRequests(st.Requests, rt)})
-		}
 		regular = append(regular, regularCase{
 			id: c.ID, resourceType: rt, pips: pips,
 			uploads:     []regularUpload{{externalID: "parity-" + c.ID, sets: sets}},
@@ -97,7 +107,61 @@ func caseFileCases(f caseFile) ([]isolatedCase, []regularCase, error) {
 			pins:        c.Pins,
 		})
 	}
-	return isolated, regular, nil
+	return isolated, regular, sequence, nil
+}
+
+// caseTenant returns the tenant of the sequence case c of f: its own, else
+// the file's, else "" for the stand's.
+func caseTenant(c caseSpec, f caseFile) string {
+	switch {
+	case c.Tenant != nil:
+		return *c.Tenant
+	case f.Tenant != nil:
+		return *f.Tenant
+	}
+	return ""
+}
+
+// caseSteps builds the steps of c, whose resource type is rt: its customize
+// steps, or its steps. A customize step goes on after a refusal, as the runner
+// has always sent it; a step stops unless it says continue.
+func caseSteps(c caseSpec, rt string) ([]regularStep, error) {
+	var steps []regularStep
+	for _, st := range c.Customize {
+		call, golden := customizeStepCall(c.ID, c.RuleIDsOf, st, rt)
+		steps = append(steps, regularStep{name: st.Name, call: &call, golden: golden,
+			observe: customizeObservations(caseRequests(st.Requests, rt))})
+	}
+	for _, st := range c.Steps {
+		call, golden, err := stepCall(st, rt)
+		if err != nil {
+			return nil, fmt.Errorf("case %s step %s %w", c.ID, st.Name, err)
+		}
+		requests := map[string]isolatedRequest{}
+		for _, r := range caseRequests(st.Requests, rt) {
+			requests[r.name] = r
+		}
+		step := regularStep{name: st.Name, call: call, golden: golden, stopOnRefusal: st.OnRefusal != "continue"}
+		for _, text := range stepObserve(st, papOperations()[st.Op]) {
+			o := parseObservation(text)
+			obs := stepObservation{kind: o.kind}
+			switch o.kind {
+			case "read":
+				read, err := readCall(o.arg, st.Args, rt)
+				if err != nil {
+					return nil, fmt.Errorf("case %s step %s %w", c.ID, st.Name, err)
+				}
+				obs.read, obs.markers = read, stepMarkers(c.ID, rt, st)
+			case "decide":
+				obs.request = requests[o.arg]
+			case "pip-call":
+				obs.route = o.arg
+			}
+			step.observe = append(step.observe, obs)
+		}
+		steps = append(steps, step)
+	}
+	return steps, nil
 }
 
 // caseRequests turns the requests of a case whose resource type is rt into the
@@ -150,7 +214,7 @@ func TestCaseFileCases_ResourceTypeReplacesTheDerivedOne(t *testing.T) {
 				{ID: "c-1", ResourceType: tc.resourceType, Condition: "resource.t == '{{resourceType}}'"},
 				{ID: "c-1", ResourceType: tc.resourceType, Sets: sets},
 			}}
-			isolated, regular, err := caseFileCases(f)
+			isolated, regular, _, err := caseFileCases(f)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -15,10 +15,23 @@
 package model
 
 // PapReadOutcome is the golden shape of a GET the suite sends to the PAP
-// outside the v3 export. Status is the HTTP status. Body is the JSON body of a
-// 2xx answer, narrowed and ordered by the case; an error body carries
-// timestamps and is not recorded.
+// outside the v3 export, and of every read a case step observes. Status is the
+// HTTP status. Body is the JSON body of a 2xx answer, narrowed and ordered by
+// the case; an error body carries timestamps and is not recorded. Tenants, on
+// a step's read, lists the distinct tenantId values anywhere in the whole 2xx
+// body before it was narrowed, sorted.
 type PapReadOutcome struct {
+	Status  int      `json:"status"`
+	Body    any      `json:"body,omitempty"`
+	Tenants []string `json:"tenants,omitempty"`
+}
+
+// PapErrorOutcome is the golden shape of a case step's error-class
+// observation. Status is the HTTP status of the step's call. Body is the
+// response body of a non-2xx answer, decoded when it is JSON and kept as text
+// otherwise, with every top-level timestamp member removed; it is null for a
+// 2xx answer.
+type PapErrorOutcome struct {
 	Status int `json:"status"`
-	Body   any `json:"body,omitempty"`
+	Body   any `json:"body"`
 }
