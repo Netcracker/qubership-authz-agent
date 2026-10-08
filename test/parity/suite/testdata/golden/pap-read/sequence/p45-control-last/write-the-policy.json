@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY_P45_CONTROL_LAST",
+        "name": "PARITY_P45_CONTROL_LAST_PARITY_PARITY_SUITE_R45_P45_CONTROL_LAST_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_P45_CONTROL_LAST_PARITY_PARITY_SUITE_R45_P45_CONTROL_LAST_READ_Policy",
+            "policyId": "c8b5886b-b353-c752-dd37-0d7d4e3858aa",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p45-control-last",
+                "ruleId": "359bb8aa-8210-61e0-2f5e-d076b61af7a6",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "28c8b588-6bb3-53c7-52dd-370d7d4e3858",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_R45_P45_CONTROL_LAST'",
+        "tenantId": "default",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  },
+  "tenants": [
+    "default",
+    "parity-pap-r45-fresh"
+  ]
+}
