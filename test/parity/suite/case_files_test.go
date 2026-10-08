@@ -57,6 +57,11 @@ type caseFile struct {
 	// the end of the function. The runner also pins /api-version of
 	// entitlements-mock to major 3, so that access-control reads that lookup.
 	Entitlements *PipStubResponse `json:"entitlements"`
+	// StandVersion, when true, makes the function first record what the stand
+	// says about itself: GET /api-version, filed under
+	// api-version/<test function>, so the answers of the file carry the version
+	// that gave them.
+	StandVersion bool `json:"standVersion"`
 	// Tenant is the tenant_id every call of a case with steps and no sets
 	// sends, unless the case names its own; the stand's tenant when empty. A
 	// file with a tenant holds only such cases; an empty string is not a tenant.

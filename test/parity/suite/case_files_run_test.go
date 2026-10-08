@@ -19,18 +19,30 @@ package paritysuite
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"path"
 	"strings"
 	"testing"
 	"time"
 )
 
-// runCaseFile pins the file's routes and its entitlements answer, with the API
-// version that answer needs, and runs its isolated cases, then its regular
+// runCaseFile records the stand's version when the file asks for it, pins the
+// file's routes and its entitlements answer, with the API version that answer
+// needs, and runs its isolated cases, then its regular cases, then its sequence
 // cases, each in the file's order.
 func (s *ParitySuite) runCaseFile(name string) {
 	f, err := readCaseFile(name)
 	s.Require().NoError(err)
 	ctx := context.Background()
+	if f.StandVersion {
+		function := path.Base(s.T().Name())
+		s.Run("api-version", func() {
+			status, version, err := HelperApiVersion(ctx, s.cfg)
+			s.Require().NoError(err)
+			s.Require().Equal(http.StatusOK, status)
+			s.requirePendingGolden(PSUITE_ROW_1_API_VERSION, function, &version)
+		})
+	}
 	for route, response := range f.Pins {
 		s.Require().NoErrorf(s.pipMock.PinRoute(ctx, route, response), "pin %s for %s", route, name)
 	}

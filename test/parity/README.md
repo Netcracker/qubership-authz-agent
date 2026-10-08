@@ -375,6 +375,7 @@ Optional fields change one part of the upload or the request; without them a cas
 | `pins` | A case | Pip-mock answers by route, `{statusCode, body}`, pinned when the case starts, before its uploads. An answer stays until a later case or request pins the route again, in the order the cases run: the cases without `sets` first |
 | `steps` | A case | PAP operations the case performs, each followed by the observations it records; see [Steps](#steps). A case with `sets` runs them after its upload and its requests, in place of `customize`. A case with `steps` and no `sets` is a sequence case: it uploads nothing of its own and runs after the file's cases with `sets` |
 | `tenant` | A sequence case | The `tenant_id` every call of the case sends, its requests' own `tenantId` aside, in place of the file's tenant and the stand's |
+| `standVersion` | The file | `true` makes the function first send `GET /api-version` and record the answer under `api-version/<test function>`, so the round's answers carry the version of the stand that gave them |
 | `tenant` | The file | The `tenant_id` of every sequence case that names none. A file with a `tenant` holds only sequence cases |
 
 A file runs its cases without `sets` first, then its cases with `sets`, each in file order. Each case without `sets`
