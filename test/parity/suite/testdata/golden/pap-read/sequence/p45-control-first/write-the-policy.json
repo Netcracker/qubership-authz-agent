@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY_P45_CONTROL_FIRST",
+        "name": "PARITY_P45_CONTROL_FIRST_PARITY_PARITY_SUITE_R45_P45_CONTROL_FIRST_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_P45_CONTROL_FIRST_PARITY_PARITY_SUITE_R45_P45_CONTROL_FIRST_READ_Policy",
+            "policyId": "5300ebac-c054-5d42-4f29-8e3ae674c245",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p45-control-first",
+                "ruleId": "b167ef52-4988-2c93-c75f-9fb4ced257de",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "165300eb-acc0-545d-424f-298e3ae674c2",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_R45_P45_CONTROL_FIRST'",
+        "tenantId": "default",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  },
+  "tenants": [
+    "default"
+  ]
+}
