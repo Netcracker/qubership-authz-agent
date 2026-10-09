@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.0
-	github.com/netcracker/qubership-core-lib-go/v3 v3.14.1
+	github.com/netcracker/qubership-core-lib-go/v3 v3.15.0
 	github.com/open-policy-agent/opa v1.21.1
 )
 
@@ -28,9 +28,9 @@ require (
 	github.com/klauspost/compress v1.20.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
 	github.com/knadh/koanf/parsers/yaml v1.1.1 // indirect
-	github.com/knadh/koanf/providers/env/v2 v2.0.1 // indirect
+	github.com/knadh/koanf/providers/env/v2 v2.0.2 // indirect
 	github.com/knadh/koanf/providers/file v1.2.1 // indirect
-	github.com/knadh/koanf/v2 v2.3.6 // indirect
+	github.com/knadh/koanf/v2 v2.3.8 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/dsig v1.4.0 // indirect
 	github.com/lestrrat-go/dsig-secp256k1 v1.0.0 // indirect
