@@ -278,13 +278,13 @@ func TestErrorOutcome(t *testing.T) {
 			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: map[string]any{"message": "bad", "status": float64(400)}}},
 		{"a text error body without the server's class names", http.StatusBadRequest,
 			"value of type `com.example.web.ParityWidgetDto` refused",
-			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: "value of type `<class>` refused"}},
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: "value of type `<redacted>` refused"}},
 		{"a JSON array body without class names", http.StatusBadRequest, `["see ParityWidgetEntity", 5]`,
-			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: []any{"see <class>", float64(5)}}},
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: []any{"see <redacted>", float64(5)}}},
 		{"a JSON error body without class names at any depth", http.StatusConflict,
 			`{"errors": [{"detail": "net.example.Store refused"}], "message": "see ParityWidgetEntity"}`,
 			&model.PapErrorOutcome{Status: http.StatusConflict,
-				Body: map[string]any{"errors": []any{map[string]any{"detail": "<class> refused"}}, "message": "see <class>"}}},
+				Body: map[string]any{"errors": []any{map[string]any{"detail": "<redacted> refused"}}, "message": "see <redacted>"}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -360,49 +360,49 @@ func TestWithoutServerNames(t *testing.T) {
 				"com.example.pap.web.ParityWidgetController.upload(java.util.List<com.example.pap.dto.ParityWidgetDto>): " +
 				"[Field error in object 'parityWidgetDto' on field 'name': rejected value [null]; " +
 				"codes [NotNull.parityWidgetDto.name,NotNull.name]; default message [must not be null]]",
-			"Validation failed for argument [0] in public <class><java.lang.Void> " +
-				"<class>(java.util.List<<class>>): " +
+			"Validation failed for argument [0] in public <redacted><java.lang.Void> " +
+				"<redacted>(java.util.List<<redacted>>): " +
 				"[Field error in object 'parityWidgetDto' on field 'name': rejected value [null]; " +
 				"codes [NotNull.parityWidgetDto.name,NotNull.name]; default message [must not be null]]"},
 		{"a Jackson MismatchedInputException",
 			"Cannot deserialize value of type `java.util.ArrayList<com.example.pap.dto.ParityWidgetDto>` " +
 				"from Object value (token `JsonToken.START_OBJECT`)",
-			"Cannot deserialize value of type `java.util.ArrayList<<class>>` " +
+			"Cannot deserialize value of type `java.util.ArrayList<<redacted>>` " +
 				"from Object value (token `JsonToken.START_OBJECT`)"},
 		{"a Jackson InvalidFormatException with its path",
 			"JSON parse error: Cannot deserialize value of type `com.example.pap.model.EffectKind` from String \"PERMITX\": " +
 				"not one of the values accepted for Enum class: [ALLOW, DENY] (through reference chain: " +
 				"java.util.ArrayList[0]->com.example.pap.dto.ParityRuleDto[\"effect\"])",
-			"JSON parse error: Cannot deserialize value of type `<class>` from String \"PERMITX\": " +
+			"JSON parse error: Cannot deserialize value of type `<redacted>` from String \"PERMITX\": " +
 				"not one of the values accepted for Enum class: [ALLOW, DENY]"},
 		{"a bare class name in backticks and quotes",
 			"Cannot construct instance of `ParityWidgetEntity` (no Creators, like default constructor, exist); " +
 				"'ParityWidgetMapper' failed",
-			"Cannot construct instance of `<class>` (no Creators, like default constructor, exist); '<class>' failed"},
+			"Cannot construct instance of `<redacted>` (no Creators, like default constructor, exist); '<redacted>' failed"},
 		{"a wrapped cause with stack frames",
 			"Request processing failed: com.example.pap.ParityWidgetException: Expression [resource.a ==]: " +
 				"Invalid expression; nested exception is java.lang.IllegalStateException: parser stopped\n" +
 				"\tat com.example.pap.Parser.parse(Parser.java:42)\n\tat com.example.pap.Parser$Visitor.visit(Unknown Source)",
-			"Request processing failed: <class>: Expression [resource.a ==]: " +
+			"Request processing failed: <redacted>: Expression [resource.a ==]: " +
 				"Invalid expression; nested exception is java.lang.IllegalStateException: parser stopped\n" +
-				"\tat <class>\n\tat <class>"},
+				"\tat <redacted>\n\tat <redacted>"},
 		{"a source position and a nested class alone", "thrown at Parser.java:42 by Parser$Visitor",
-			"thrown at <class> by <class>"},
+			"thrown at <redacted> by <redacted>"},
 		{"a bare exception name", "ParityWidgetException after NullPointerException",
-			"<class> after <class>"},
-		{"a package without a class", "no bean in com.example.pap", "no bean in <class>"},
-		{"a package under io", "scanned io.example.pap.web", "scanned <class>"},
-		{"a class under another root", "dto.ParityThing and acme.pap.ParityWidget failed", "<class> and <class> failed"},
+			"<redacted> after <redacted>"},
+		{"a package without a class", "no bean in com.example.pap", "no bean in <redacted>"},
+		{"a package under io", "scanned io.example.pap.web", "scanned <redacted>"},
+		{"a class under another root", "dto.ParityThing and acme.pap.ParityWidget failed", "<redacted> and <redacted> failed"},
 		{"a java segment inside a server name", "com.example.java.ParityWidgetDto and org.acme.javax.dto.ParityThing refused",
-			"<class> and <class> refused"},
+			"<redacted> and <redacted> refused"},
 		{"a JDK name under javax", "javax.validation.ConstraintViolationException: name", "javax.validation.ConstraintViolationException: name"},
 		{"a cause line and frames of every form",
 			"Caused by: com.example.pap.ParityWidgetException: bad\n\tat com.example.Bar.<init>(Bar.java:10)\n" +
 				"\tat com.example.Baz.run(Baz.kt:7)\n\tat com.example.Qux.call(Native Method)\n\tat com.example.Gen.go(<generated>)",
-			"Caused by: <class>: bad\n\tat <class>\n\tat <class>\n\tat <class>\n\tat <class>"},
+			"Caused by: <redacted>: bad\n\tat <redacted>\n\tat <redacted>\n\tat <redacted>\n\tat <redacted>"},
 		{"a proxy class and a Kotlin position", "ParityWidget$$EnhancerByProxy$$1a2b failed at Bar.kt:12",
-			"<class> failed at <class>"},
-		{"an attribute without the resource prefix", "owner.Id == subject.id", "<class> == subject.id"},
+			"<redacted> failed at <redacted>"},
+		{"an attribute without the resource prefix", "owner.Id == subject.id", "<redacted> == subject.id"},
 		{"plain words", "Bad Request: Error in the policy, the Service is busy",
 			"Bad Request: Error in the policy, the Service is busy"},
 		{"a JSON path", "no value at $.items[0].a, $['k'].OwnerService, $.store.Book, or $.items[*].owner.Id",

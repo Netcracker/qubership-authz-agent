@@ -351,9 +351,9 @@ func mapStrings(v any, f func(string) string) any {
 // it cannot read: " (through reference chain: <its classes and fields>)".
 const referenceChain = " (through reference chain: "
 
-// classMarker stands in a recorded body for a name of a class, a package, or
+// redactedMarker stands in a recorded body for a name of a class, a package, or
 // a stack frame.
-const classMarker = "<class>"
+const redactedMarker = "<redacted>"
 
 // stackFrame matches a frame of a stack trace, at a.b.C.m(C.java:12), with any
 // method name, <init> included, and any source, such as Unknown Source.
@@ -369,13 +369,13 @@ var classSuffix = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(?:Entity|Dto|DTO|Except
 
 // withoutServerNames returns message cut where its reference chain tail
 // starts, with every stack frame and every name isServerName reports replaced
-// by classMarker, so that a recorded body names no class of the server. The
+// by redactedMarker, so that a recorded body names no class of the server. The
 // rest of the text stays: it is the PAP's reason for the refusal.
 func withoutServerNames(message string) string {
 	if i := strings.Index(message, referenceChain); i >= 0 {
 		message = message[:i]
 	}
-	message = stackFrame.ReplaceAllString(message, "at "+classMarker)
+	message = stackFrame.ReplaceAllString(message, "at "+redactedMarker)
 	var out strings.Builder
 	last := 0
 	for _, m := range nameToken.FindAllStringIndex(message, -1) {
@@ -385,7 +385,7 @@ func withoutServerNames(message string) string {
 		}
 		out.WriteString(message[last:m[0]])
 		if isServerName(message[m[0]:m[1]], before) {
-			out.WriteString(classMarker)
+			out.WriteString(redactedMarker)
 		} else {
 			out.WriteString(message[m[0]:m[1]])
 		}
