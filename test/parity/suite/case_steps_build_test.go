@@ -276,6 +276,15 @@ func TestErrorOutcome(t *testing.T) {
 		{"a JSON error body without the reference chain of its message", http.StatusBadRequest,
 			`{"message": "bad (through reference chain: x.Y[\"condition\"])", "status": 400}`,
 			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: map[string]any{"message": "bad", "status": float64(400)}}},
+		{"a text error body without the server's class names", http.StatusBadRequest,
+			"value of type `com.example.web.ParityWidgetDto` refused",
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: "value of type `<class>` refused"}},
+		{"a JSON array body without class names", http.StatusBadRequest, `["see ParityWidgetEntity", 5]`,
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: []any{"see <class>", float64(5)}}},
+		{"a JSON error body without class names at any depth", http.StatusConflict,
+			`{"errors": [{"detail": "net.example.Store refused"}], "message": "see ParityWidgetEntity"}`,
+			&model.PapErrorOutcome{Status: http.StatusConflict,
+				Body: map[string]any{"errors": []any{map[string]any{"detail": "<class> refused"}}, "message": "see <class>"}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -332,6 +341,86 @@ func TestRefusalMessage(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if diff := cmp.Diff(tc.want, refusalMessage(tc.record, tc.status, []byte(tc.body))); diff != "" {
 				t.Errorf("refusalMessage(%t, %d, %s) mismatch (-want +got):\n%s", tc.record, tc.status, tc.body, diff)
+			}
+		})
+	}
+}
+
+// A recorded error body keeps the PAP's reason for a refusal and loses the
+// names of the server's classes, packages, stack frames, and exceptions, which
+// must not reach the published goldens. A qualified JDK name stays; a bare
+// exception name is replaced, JDK or not. The inputs follow the shape of
+// Spring and Jackson errors; the names in them are made up.
+func TestWithoutServerNames(t *testing.T) {
+	cases := []struct {
+		name, message, want string
+	}{
+		{"a Spring validation message",
+			"Validation failed for argument [0] in public org.example.http.Response<java.lang.Void> " +
+				"com.example.pap.web.ParityWidgetController.upload(java.util.List<com.example.pap.dto.ParityWidgetDto>): " +
+				"[Field error in object 'parityWidgetDto' on field 'name': rejected value [null]; " +
+				"codes [NotNull.parityWidgetDto.name,NotNull.name]; default message [must not be null]]",
+			"Validation failed for argument [0] in public <class><java.lang.Void> " +
+				"<class>(java.util.List<<class>>): " +
+				"[Field error in object 'parityWidgetDto' on field 'name': rejected value [null]; " +
+				"codes [NotNull.parityWidgetDto.name,NotNull.name]; default message [must not be null]]"},
+		{"a Jackson MismatchedInputException",
+			"Cannot deserialize value of type `java.util.ArrayList<com.example.pap.dto.ParityWidgetDto>` " +
+				"from Object value (token `JsonToken.START_OBJECT`)",
+			"Cannot deserialize value of type `java.util.ArrayList<<class>>` " +
+				"from Object value (token `JsonToken.START_OBJECT`)"},
+		{"a Jackson InvalidFormatException with its path",
+			"JSON parse error: Cannot deserialize value of type `com.example.pap.model.EffectKind` from String \"PERMITX\": " +
+				"not one of the values accepted for Enum class: [ALLOW, DENY] (through reference chain: " +
+				"java.util.ArrayList[0]->com.example.pap.dto.ParityRuleDto[\"effect\"])",
+			"JSON parse error: Cannot deserialize value of type `<class>` from String \"PERMITX\": " +
+				"not one of the values accepted for Enum class: [ALLOW, DENY]"},
+		{"a bare class name in backticks and quotes",
+			"Cannot construct instance of `ParityWidgetEntity` (no Creators, like default constructor, exist); " +
+				"'ParityWidgetMapper' failed",
+			"Cannot construct instance of `<class>` (no Creators, like default constructor, exist); '<class>' failed"},
+		{"a wrapped cause with stack frames",
+			"Request processing failed: com.example.pap.ParityWidgetException: Expression [resource.a ==]: " +
+				"Invalid expression; nested exception is java.lang.IllegalStateException: parser stopped\n" +
+				"\tat com.example.pap.Parser.parse(Parser.java:42)\n\tat com.example.pap.Parser$Visitor.visit(Unknown Source)",
+			"Request processing failed: <class>: Expression [resource.a ==]: " +
+				"Invalid expression; nested exception is java.lang.IllegalStateException: parser stopped\n" +
+				"\tat <class>\n\tat <class>"},
+		{"a source position and a nested class alone", "thrown at Parser.java:42 by Parser$Visitor",
+			"thrown at <class> by <class>"},
+		{"a bare exception name", "ParityWidgetException after NullPointerException",
+			"<class> after <class>"},
+		{"a package without a class", "no bean in com.example.pap", "no bean in <class>"},
+		{"a package under io", "scanned io.example.pap.web", "scanned <class>"},
+		{"a class under another root", "dto.ParityThing and acme.pap.ParityWidget failed", "<class> and <class> failed"},
+		{"a java segment inside a server name", "com.example.java.ParityWidgetDto and org.acme.javax.dto.ParityThing refused",
+			"<class> and <class> refused"},
+		{"a JDK name under javax", "javax.validation.ConstraintViolationException: name", "javax.validation.ConstraintViolationException: name"},
+		{"a cause line and frames of every form",
+			"Caused by: com.example.pap.ParityWidgetException: bad\n\tat com.example.Bar.<init>(Bar.java:10)\n" +
+				"\tat com.example.Baz.run(Baz.kt:7)\n\tat com.example.Qux.call(Native Method)\n\tat com.example.Gen.go(<generated>)",
+			"Caused by: <class>: bad\n\tat <class>\n\tat <class>\n\tat <class>\n\tat <class>"},
+		{"a proxy class and a Kotlin position", "ParityWidget$$EnhancerByProxy$$1a2b failed at Bar.kt:12",
+			"<class> failed at <class>"},
+		{"an attribute without the resource prefix", "owner.Id == subject.id", "<class> == subject.id"},
+		{"plain words", "Bad Request: Error in the policy, the Service is busy",
+			"Bad Request: Error in the policy, the Service is busy"},
+		{"a JSON path", "no value at $.items[0].a, $['k'].OwnerService, $.store.Book, or $.items[*].owner.Id",
+			"no value at $.items[0].a, $['k'].OwnerService, $.store.Book, or $.items[*].owner.Id"},
+		{"attribute names and operator words",
+			"resource.a == 'y' OR subject.parityAllowed IS NULL AND resource.o.Id NOT IN ('v') OR resource.o.OwnerService IS NULL",
+			"resource.a == 'y' OR subject.parityAllowed IS NULL AND resource.o.Id NOT IN ('v') OR resource.o.OwnerService IS NULL"},
+		{"a placeholder, a version, and a header name", "${subject.id} on 6.1.6 in X-Parity-Request",
+			"${subject.id} on 6.1.6 in X-Parity-Request"},
+		{"PARITY names", "the domain PARITY_ISOLATED_B has no PIP for PARITY_PAYMENT",
+			"the domain PARITY_ISOLATED_B has no PIP for PARITY_PAYMENT"},
+		{"a URL of the stub", "call to http://pip-mock:8090/api/v1/pip/s44-sent failed",
+			"call to http://pip-mock:8090/api/v1/pip/s44-sent failed"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := withoutServerNames(tc.message); got != tc.want {
+				t.Errorf("withoutServerNames(%q)\n got %q\nwant %q", tc.message, got, tc.want)
 			}
 		})
 	}

@@ -308,8 +308,9 @@ func collectTenants(v any, into map[string]bool) {
 // errorOutcome returns the golden shape of an error-class observation: the
 // status, and for a non-2xx answer its body, decoded when it is JSON, with
 // every top-level timestamp member removed, since it changes on every call.
-// A text body, and every top-level string member of a JSON one, lose the
-// reference chain tail, since it names the server's own classes.
+// A text body, and every string inside a JSON one, go through
+// withoutServerNames, which cuts the reference chain tail and replaces the
+// names of Java classes.
 func errorOutcome(status int, body []byte) *model.PapErrorOutcome {
 	out := &model.PapErrorOutcome{Status: status}
 	if status >= 200 && status <= 299 {
@@ -317,32 +318,123 @@ func errorOutcome(status int, body []byte) *model.PapErrorOutcome {
 	}
 	var decoded any
 	if err := json.Unmarshal(body, &decoded); err != nil {
-		out.Body = withoutReferenceChain(string(body))
+		out.Body = withoutServerNames(string(body))
 		return out
 	}
 	if object, ok := decoded.(map[string]any); ok {
 		delete(object, "timestamp")
-		for key, value := range object {
-			if text, ok := value.(string); ok {
-				object[key] = withoutReferenceChain(text)
-			}
+	}
+	out.Body = mapStrings(decoded, withoutServerNames)
+	return out
+}
+
+// mapStrings applies f to every string v holds, at any depth, and returns the
+// result. It changes the objects and arrays of v in place; object keys stay as
+// they are.
+func mapStrings(v any, f func(string) string) any {
+	switch x := v.(type) {
+	case string:
+		return f(x)
+	case map[string]any:
+		for key, value := range x {
+			x[key] = mapStrings(value, f)
+		}
+	case []any:
+		for i, value := range x {
+			x[i] = mapStrings(value, f)
 		}
 	}
-	out.Body = decoded
-	return out
+	return v
 }
 
 // referenceChain opens the tail the server adds to the message about a body
 // it cannot read: " (through reference chain: <its classes and fields>)".
 const referenceChain = " (through reference chain: "
 
-// withoutReferenceChain returns message cut where its reference chain tail
-// starts, or message as it is when it has none.
-func withoutReferenceChain(message string) string {
+// classMarker stands in a recorded body for a name of a class, a package, or
+// a stack frame.
+const classMarker = "<class>"
+
+// stackFrame matches a frame of a stack trace, at a.b.C.m(C.java:12), with any
+// method name, <init> included, and any source, such as Unknown Source.
+var stackFrame = regexp.MustCompile(`\bat [\w$.<>]+\([^)\n]*\)`)
+
+// nameToken matches a dotted run of identifiers, such as com.example.Thing,
+// resource.o.Id, or Parser$State, with a :line suffix where one follows.
+var nameToken = regexp.MustCompile(`[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?::\d+)?`)
+
+// classSuffix matches a bare name that ends in a suffix classes are named by,
+// such as ParityWidgetEntity or ParityWidgetException.
+var classSuffix = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(?:Entity|Dto|DTO|Exception|Error|Impl|Service|Controller|Repository|Mapper|Handler|Validator|Converter|Request|Response)$`)
+
+// withoutServerNames returns message cut where its reference chain tail
+// starts, with every stack frame and every name isServerName reports replaced
+// by classMarker, so that a recorded body names no class of the server. The
+// rest of the text stays: it is the PAP's reason for the refusal.
+func withoutServerNames(message string) string {
 	if i := strings.Index(message, referenceChain); i >= 0 {
-		return message[:i]
+		message = message[:i]
 	}
-	return message
+	message = stackFrame.ReplaceAllString(message, "at "+classMarker)
+	var out strings.Builder
+	last := 0
+	for _, m := range nameToken.FindAllStringIndex(message, -1) {
+		var before byte
+		if m[0] > 0 {
+			before = message[m[0]-1]
+		}
+		out.WriteString(message[last:m[0]])
+		if isServerName(message[m[0]:m[1]], before) {
+			out.WriteString(classMarker)
+		} else {
+			out.WriteString(message[m[0]:m[1]])
+		}
+		last = m[1]
+	}
+	out.WriteString(message[last:])
+	return out.String()
+}
+
+// isServerName reports whether token, a match of nameToken that follows the
+// byte before (0 at the start of the text), names a class or a package of the
+// server: a .java or .kt source position; a dotted name whose first part
+// starts with a lower-case letter and a later part with an upper-case one
+// (a.b.C, a.b.C.m, dto.Thing, and also an unprefixed attribute such as
+// owner.Id); a package under com, org, net, or io; a name holding a $ (C$Inner);
+// or a bare name classSuffix matches. A JDK name under java or javax stays,
+// and a bare JDK exception name is replaced like any other, since nothing
+// tells it apart. An attribute of the condition language (resource.o.Id,
+// subject.parityX), a JSON path ($.store.Book), and a member after a dot or a
+// bracket stay.
+func isServerName(token string, before byte) bool {
+	if before == '.' || before == ']' {
+		return false
+	}
+	name, _, _ := strings.Cut(token, ":")
+	for _, kept := range []string{"java.", "javax.", "resource.", "subject.", "$"} {
+		if strings.HasPrefix(name, kept) {
+			return false
+		}
+	}
+	parts := strings.Split(name, ".")
+	if len(parts) > 1 {
+		if tail := parts[len(parts)-1]; tail == "java" || tail == "kt" {
+			return true
+		}
+		first := parts[0]
+		if first[0] >= 'a' && first[0] <= 'z' {
+			for _, part := range parts[1:] {
+				if part[0] >= 'A' && part[0] <= 'Z' {
+					return true
+				}
+			}
+		}
+		switch first {
+		case "com", "org", "net", "io":
+			return true
+		}
+	}
+	return strings.Contains(name, "$") || classSuffix.MatchString(name)
 }
 
 // caseStepProblems returns the problems of st, a step of the case c, by

@@ -396,14 +396,14 @@ function with 400, until a later case declares that name again. So from round 19
 also names one PIP of every name an earlier case with `sets` of the file named; `TestCaseFilesAreWellFormed` checks it,
 except in `round19/stand-rule.json`, which asks about that state.
 
-From round 44 on, a golden whose answer is 400 or 409 also records the response body under `message`, beside the
-status: the upload of a case, a `customize` or write step's `status`, and a check, filter, or bulk request. The body is
-kept as `error-class` keeps it: decoded when it is JSON, without its top-level `timestamp`, and with the reference chain
-cut from its text. The comparison reads the status and ignores `message`, which is the stand's wording and not something
-the agent has to match. The goldens of earlier rounds hold the status alone, also when they are recorded again. Round
-45 was recorded before the runner kept bodies, so its goldens hold the status alone until it is recorded again. Only the
-reference chain is cut from a body, so read the bodies of a round before publishing its goldens: a refusal can still name
-a server class.
+From round 44 on, a golden whose answer is 400 or 409 also records the response body under `message`, beside the status:
+the upload of a case, a `customize` or write step's `status`, and a check, filter, or bulk request. The body is kept as
+`error-class` keeps it. The comparison clears `message` on both sides and reads the status alone, as before: the message
+is the stand's wording, not something the agent has to match. The goldens of earlier rounds hold the status alone, also
+when they are recorded again. Round 45 was recorded before the runner kept bodies, so its goldens hold the status alone
+until it is recorded again. The runner replaces the names of the server's classes in the body, as the `error-class` row
+says; a glance at the bodies of a round before publishing its goldens is a second line of defence against a name no
+pattern recognizes.
 
 A request may set `classifyBy` to a route the file, its case, or the request itself or one before it pins. Its golden is then filed under
 `<request>-when-the-pip-was-read` when pip-mock received a call on that route while the request ran, and under
@@ -443,7 +443,7 @@ binding, the binding in `binding`. `args` holds the path and query parameters of
 | Observation | Records | Golden kind |
 | --- | --- | --- |
 | `status` | The status of the step's call | The binding's, such as `load-simplified-policies-v1`; `pap-status-v1` for an endpoint no golden has answered |
-| `error-class` | The status and, for a non-2xx answer, the response body without its top-level `timestamp` | `pap-error-v1` |
+| `error-class` | The status and, for a non-2xx answer, the response body: decoded when it is JSON, without its top-level `timestamp`, cut before a ` (through reference chain: ...)` tail, and with the names of the server's classes replaced by `<class>` in every string: stack frames, `.java` and `.kt` positions, dotted names that start in lower case and continue in upper case, packages under `com`, `org`, `net`, or `io`, names that hold a `$`, and bare names that end in a suffix such as `Entity`, `Dto`, `Exception`, or `Service`. Qualified JDK names under `java` and `javax`, attribute paths that start with `resource.` or `subject.`, JSON paths, and `PARITY_*` names stay, as does the rest of the text. An attribute path without its prefix, such as `owner.Id`, and a bare JDK exception name are replaced too. The comparison sees the body after the replacement on both sides | `pap-error-v1` |
 | `read:<op>` | A GET through the read operation `op` with the step's `args`: the status, the body with every array narrowed to the elements that name the case id, the resource type, a string argument, or a value of the step's `markers`, and the distinct `tenantId` values of the whole body | `pap-read` |
 | `decide:<name>` | The request called `<name>` of the step's `requests`, which takes the fields of a case's request and is recorded as one | That of the request |
 | `pip-call:<route>` | What the route received from the start of the step to this observation | `pip-call` |
