@@ -672,3 +672,37 @@ func TestEmptyOperation_WireForms(t *testing.T) {
 		t.Errorf("requests mismatch (-want +got):\n%s", diff)
 	}
 }
+
+// The algorithm of an iterate member is sent as the file writes it: a string
+// as that string, and JSON null, or no algorithm at all, as null rather than
+// as an empty string, which the PAP may read as another value.
+func TestBuildSet_IterateAlgorithmIsSentAsWritten(t *testing.T) {
+	cases := []struct {
+		name, iterate, want string
+	}{
+		{"null", `{"foreach": "subject.permissionScope", "algorithm": null}`,
+			`{"combiningAlgorithm":null,"foreach":"subject.permissionScope"}`},
+		{"a name", `{"foreach": "subject.permissionScope", "algorithm": "DENY_OVERRIDES"}`,
+			`{"combiningAlgorithm":"DENY_OVERRIDES","foreach":"subject.permissionScope"}`},
+		{"an empty string", `{"foreach": "subject.permissionScope", "algorithm": ""}`,
+			`{"combiningAlgorithm":"","foreach":"subject.permissionScope"}`},
+		{"absent", `{"foreach": "subject.permissionScope"}`,
+			`{"combiningAlgorithm":null,"foreach":"subject.permissionScope"}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var set setSpec
+			if err := json.Unmarshal([]byte(`{"key": "outer", "iterate": `+tc.iterate+`}`), &set); err != nil {
+				t.Fatal(err)
+			}
+			b := regularBuilder{caseID: "c1"}
+			got, err := json.Marshal(buildSet(b, b, set, "RT")["iterate"])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != tc.want {
+				t.Errorf("iterate %s is sent as %s, want %s", tc.iterate, got, tc.want)
+			}
+		})
+	}
+}

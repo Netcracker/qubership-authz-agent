@@ -216,9 +216,12 @@ type setSpec struct {
 	OmitFields []string `json:"omitFields"`
 }
 
+// iterateSpec is the iterate member of a set, sent as foreach and
+// combiningAlgorithm. An algorithm that is JSON null or absent is sent as
+// null.
 type iterateSpec struct {
-	Foreach   string `json:"foreach"`
-	Algorithm string `json:"algorithm"`
+	Foreach   string  `json:"foreach"`
+	Algorithm *string `json:"algorithm"`
 }
 
 type policySpec struct {
