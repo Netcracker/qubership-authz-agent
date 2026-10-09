@@ -274,29 +274,39 @@ func TestRawStepRead(t *testing.T) {
 		name   string
 		status int
 		body   string
+		tenant string
 		want   *model.PapReadRawOutcome
 	}{
+		{"the elements of the case's tenant and those without a tenant, in order", http.StatusOK,
+			`{"pips": [{"name": "a", "tenantId": "t1"}, {"name": "b", "tenantId": "t2"}, {"name": "c"}, {"name": "d", "tenantId": "t1"}]}`, "t1",
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: map[string]any{"pips": []any{
+				map[string]any{"name": "a", "tenantId": "t1"}, map[string]any{"name": "c"}, map[string]any{"name": "d", "tenantId": "t1"}}}}},
+		{"an array body without the elements of another tenant, null and non-object elements kept", http.StatusOK,
+			`[{"tenantId": "t2"}, {"tenantId": "t1"}, {"tenantId": null}, 5]`, "t1",
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"tenantId": "t1"}, map[string]any{"tenantId": nil}, float64(5)}}},
+		{"an empty tenant keeps every tenant", http.StatusOK, `[{"tenantId": "t2"}, {"tenantId": "t1"}]`, "",
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"tenantId": "t2"}, map[string]any{"tenantId": "t1"}}}},
 		{"an object without its envelope stamps, nested members kept", http.StatusOK,
-			`{"hash": "h", "lastModificationTimestamp": 1, "timestamp": "now", "policySets": [{"hash": "x", "tenantId": "t1"}]}`,
+			`{"hash": "h", "lastModificationTimestamp": 1, "timestamp": "now", "policySets": [{"hash": "x", "tenantId": "t1"}]}`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusOK,
 				Body: map[string]any{"policySets": []any{map[string]any{"hash": "x", "tenantId": "t1"}}}}},
 		{"the sets in the PAP's order, each without its write stamps and with its rules sorted", http.StatusOK,
 			`{"policySets": [
 				{"name": "b", "createdWhen": 5, "lastModifiedWhen": 6, "createdBy": "u", "lastModifiedBy": "u",
 				 "rules": [{"name": "r2", "createdWhen": 7}, {"name": "r1"}]},
-				{"name": "a", "other": "kept"}]}`,
+				{"name": "a", "other": "kept"}]}`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusOK, Body: map[string]any{"policySets": []any{
 				map[string]any{"name": "b", "rules": []any{map[string]any{"name": "r1"}, map[string]any{"name": "r2"}}},
 				map[string]any{"name": "a", "other": "kept"}}}}},
-		{"an array whole, in the PAP's order", http.StatusOK, `[{"name": "b"}, {"name": "a", "lastModifiedWhen": 1}]`,
+		{"an array whole, in the PAP's order", http.StatusOK, `[{"name": "b"}, {"name": "a", "lastModifiedWhen": 1}]`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"name": "b"}, map[string]any{"name": "a"}}}},
-		{"a text body as text", http.StatusNotFound, `no such domain`,
+		{"a text body as text", http.StatusNotFound, `no such domain`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusNotFound, Body: "no such domain"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if diff := cmp.Diff(tc.want, rawStepRead(tc.status, []byte(tc.body))); diff != "" {
-				t.Errorf("rawStepRead(%d, %s) mismatch (-want +got):\n%s", tc.status, tc.body, diff)
+			if diff := cmp.Diff(tc.want, rawStepRead(tc.status, []byte(tc.body), tc.tenant)); diff != "" {
+				t.Errorf("rawStepRead(%d, %s, %q) mismatch (-want +got):\n%s", tc.status, tc.body, tc.tenant, diff)
 			}
 		})
 	}

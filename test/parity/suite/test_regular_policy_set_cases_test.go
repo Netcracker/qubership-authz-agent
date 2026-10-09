@@ -233,7 +233,7 @@ func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep) 
 				readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
 				s.Require().NoError(err)
 				s.Run(step.name+"-read-raw", func() {
-					s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, readBody))
+					s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, readBody, s.cfg.TenantID))
 				})
 			case "decide":
 				s.Run(o.request.name, func() {

@@ -314,14 +314,18 @@ var rawReadEnvelopeFields = append([]string{"timestamp"}, configExportEnvelopeFi
 
 // rawStepRead returns the golden shape of a read-raw observation: the status
 // and the whole body, decoded when it is JSON, and kept as text otherwise.
-// Nothing is narrowed: every element of the outermost lists, the body itself
-// when it is an array and every array member of a body that is an object, is
-// kept, in the order the PAP sent. What changes from one read or one upload to
-// the next is removed, as narrowConfigExport removes it: rawReadEnvelopeFields
-// from a top-level object, and inside each element canonicalExportValue drops
-// the write stamps and sorts the nested lists, whose order the PAP does not
-// keep.
-func rawStepRead(status int, body []byte) *model.PapReadRawOutcome {
+// Nothing is narrowed by the case's markers: every element of the outermost
+// lists, the body itself when it is an array and every array member of a body
+// that is an object, is kept, in the order the PAP sent, except an element
+// whose tenantId names a tenant other than tenant, the case's. A v3 export
+// lists the elements of every tenant of the stand, and a golden that held
+// them would depend on what other cases left there; an empty tenant keeps
+// them all. A raw read therefore cannot show an element that leaked in from
+// another tenant: a read observation records the tenants of the whole body. What changes from one read or one upload to the next is removed,
+// as narrowConfigExport removes it: rawReadEnvelopeFields from a top-level
+// object, and inside each element canonicalExportValue drops the write stamps
+// and sorts the nested lists, whose order the PAP does not keep.
+func rawStepRead(status int, body []byte, tenant string) *model.PapReadRawOutcome {
 	out := &model.PapReadRawOutcome{Status: status}
 	var decoded any
 	if err := json.Unmarshal(body, &decoded); err != nil {
@@ -330,14 +334,14 @@ func rawStepRead(status int, body []byte) *model.PapReadRawOutcome {
 	}
 	switch typed := decoded.(type) {
 	case []any:
-		decoded = rawElements(typed)
+		decoded = rawElements(typed, tenant)
 	case map[string]any:
 		for _, field := range rawReadEnvelopeFields {
 			delete(typed, field)
 		}
 		for key, value := range typed {
 			if elements, ok := value.([]any); ok {
-				typed[key] = rawElements(elements)
+				typed[key] = rawElements(elements, tenant)
 			} else {
 				typed[key] = canonicalExportValue(value)
 			}
@@ -349,11 +353,17 @@ func rawStepRead(status int, body []byte) *model.PapReadRawOutcome {
 
 // rawElements canonicalizes each element of an outermost list and keeps their
 // order.
-func rawElements(elements []any) []any {
-	for i, element := range elements {
-		elements[i] = canonicalExportValue(element)
+func rawElements(elements []any, tenant string) []any {
+	kept := []any{}
+	for _, element := range elements {
+		if object, ok := element.(map[string]any); ok && tenant != "" {
+			if other, ok := object["tenantId"].(string); ok && other != tenant {
+				continue
+			}
+		}
+		kept = append(kept, canonicalExportValue(element))
 	}
-	return elements
+	return kept
 }
 
 // errorOutcome returns the golden shape of an error-class observation: the
