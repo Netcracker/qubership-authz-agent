@@ -1,0 +1,4454 @@
+{
+ "about": "Sentinel and poison probes inside a condition. The GENERAL PIP subject.parityS44Sent answers [\"m\"] and is read at one position: an atom of AND or OR after, before or beside an atom that is true, false, ends the rule (an absent attribute) or fails the decision (subject.parityS44Failed, 404), or an operand of an operator beside an operand that has a value, is absent, null or failed. Every request records the calls of /api/v1/pip/s44-sent (pipCalls): whether the position is evaluated, and whether a value is read and dropped. Each condition is asked in the observation forms that tell its outcome apart.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_SENT_CONDITIONS_",
+ "pins": {
+  "/api/v1/pip/s44-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity sentinel poison"
+   }
+  },
+  "/api/v1/pip/s44-sent": {
+   "statusCode": 200,
+   "body": [
+    "m"
+   ]
+  }
+ },
+ "pips": {
+  "s44-failed": {
+   "name": "subject.parityS44Failed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s44-failed",
+   "requestAttributes": {
+    "case": "s44-failed"
+   }
+  },
+  "s44-sent": {
+   "name": "subject.parityS44Sent",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s44-sent",
+   "requestAttributes": {
+    "case": "s44-sent"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "sn44-conditions-control-first",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-in-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent IN subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-next-err-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-any-null-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.vn CONTAINS ANY subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-first-f-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm' AND resource.t == 'n' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-contains-any-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS ANY subject.parityS44Failed OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-contains-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-later-group-t-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'y' OR resource.t == 'y' AND subject.parityS44Sent CONTAINS 'm'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-third-abort-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'y' AND resource.s44absent == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-eq-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent == resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-gt-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent > resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-in-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IN resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-is-empty--or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-is-null--or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-is-subset-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IS SUBSET resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-match-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent MATCH resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent CONTAINS subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-eq-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent == subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-gt-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent > subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-is-subset-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent IS SUBSET subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-first-abort-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR resource.s44absent == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-next-abort-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.s44absent == 'y' OR subject.parityS44Sent CONTAINS 'z'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-third-abort-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'n' OR resource.s44absent == 'y' OR subject.parityS44Sent CONTAINS 'z'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-first-abort-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm' AND resource.s44absent == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-first-err-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm' AND subject.parityS44Failed == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-next-abort-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-next-f-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'n' AND subject.parityS44Sent CONTAINS 'm'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-third-err-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'y' AND subject.parityS44Failed == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-third-f-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'y' AND resource.t == 'n' AND subject.parityS44Sent CONTAINS 'm'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-contains-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-contains-any-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS ANY resource.s44absent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-contains-any-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS ANY 'm', 'z' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-contains-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS subject.parityS44Failed OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-eq-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent == subject.parityS44Failed OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-eq-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent == 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-gt-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent > subject.parityS44Failed OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-gt-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent > 5 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-in-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IN subject.parityS44Failed OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-in-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IN 'm', 'z' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-is-subset-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IS SUBSET subject.parityS44Failed OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-left-is-subset-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent IS SUBSET 'm', 'z' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-any-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed CONTAINS ANY subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-any-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed CONTAINS subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l CONTAINS subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-eq-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed == subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-eq-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.v == subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-gt-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed > subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-gt-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.n > subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-in-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed IN subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-in-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.v IN subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-is-subset-error-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Failed IS SUBSET subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-is-subset-value-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l IS SUBSET subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-first-err-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR subject.parityS44Failed == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-first-f-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR resource.t == 'n' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-later-group-abort-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.s44absent == 'y' OR resource.t == 'y' AND subject.parityS44Sent CONTAINS 'm'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-later-group-err-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityS44Failed == 'y' OR resource.t == 'y' AND subject.parityS44Sent CONTAINS 'm'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-next-err-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityS44Failed == 'y' OR subject.parityS44Sent CONTAINS 'z'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-next-f-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'n' OR subject.parityS44Sent CONTAINS 'z' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-third-err-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'n' OR subject.parityS44Failed == 'y' OR subject.parityS44Sent CONTAINS 'z'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-third-f-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'n' OR resource.t == 'n' OR subject.parityS44Sent CONTAINS 'z' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-first-t-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm' AND resource.t == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-first-t-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm' AND resource.t == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-next-t-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-and-third-t-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'y' AND resource.t == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-any-absent-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.s44absent CONTAINS ANY subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-contains-null-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.vn CONTAINS subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-eq-null-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.vn == subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-gt-null-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.vn > subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-in-null-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.vn IN subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-operand-right-is-subset-null-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.vn IS SUBSET subject.parityS44Sent OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-first-t-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR resource.t == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-later-group-f-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.t == 'n' OR resource.t == 'y' AND subject.parityS44Sent CONTAINS 'm' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-next-t-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'y' OR subject.parityS44Sent CONTAINS 'z'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-or-third-t-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.t == 'n' OR resource.t == 'y' OR subject.parityS44Sent CONTAINS 'z'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "obs",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  },
+  {
+   "id": "sn44-conditions-control-last",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent"
+   ]
+  }
+ ],
+ "standVersion": true
+}
