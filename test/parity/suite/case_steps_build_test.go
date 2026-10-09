@@ -271,6 +271,11 @@ func TestErrorOutcome(t *testing.T) {
 		{"a JSON error body without its timestamp", http.StatusBadRequest, `{"timestamp": "now", "message": "bad"}`,
 			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: map[string]any{"message": "bad"}}},
 		{"a text error body as text", http.StatusConflict, `exists`, &model.PapErrorOutcome{Status: http.StatusConflict, Body: "exists"}},
+		{"a text error body without its reference chain", http.StatusBadRequest, `bad: a == (through reference chain: x.Y["condition"])`,
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: "bad: a =="}},
+		{"a JSON error body without the reference chain of its message", http.StatusBadRequest,
+			`{"message": "bad (through reference chain: x.Y[\"condition\"])", "status": 400}`,
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: map[string]any{"message": "bad", "status": float64(400)}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

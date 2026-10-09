@@ -308,6 +308,8 @@ func collectTenants(v any, into map[string]bool) {
 // errorOutcome returns the golden shape of an error-class observation: the
 // status, and for a non-2xx answer its body, decoded when it is JSON, with
 // every top-level timestamp member removed, since it changes on every call.
+// A text body, and every top-level string member of a JSON one, lose the
+// reference chain tail, since it names the server's own classes.
 func errorOutcome(status int, body []byte) *model.PapErrorOutcome {
 	out := &model.PapErrorOutcome{Status: status}
 	if status >= 200 && status <= 299 {
@@ -315,14 +317,32 @@ func errorOutcome(status int, body []byte) *model.PapErrorOutcome {
 	}
 	var decoded any
 	if err := json.Unmarshal(body, &decoded); err != nil {
-		out.Body = string(body)
+		out.Body = withoutReferenceChain(string(body))
 		return out
 	}
 	if object, ok := decoded.(map[string]any); ok {
 		delete(object, "timestamp")
+		for key, value := range object {
+			if text, ok := value.(string); ok {
+				object[key] = withoutReferenceChain(text)
+			}
+		}
 	}
 	out.Body = decoded
 	return out
+}
+
+// referenceChain opens the tail the server adds to the message about a body
+// it cannot read: " (through reference chain: <its classes and fields>)".
+const referenceChain = " (through reference chain: "
+
+// withoutReferenceChain returns message cut where its reference chain tail
+// starts, or message as it is when it has none.
+func withoutReferenceChain(message string) string {
+	if i := strings.Index(message, referenceChain); i >= 0 {
+		return message[:i]
+	}
+	return message
 }
 
 // caseStepProblems returns the problems of st, a step of the case c, by
