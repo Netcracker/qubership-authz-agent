@@ -1,0 +1,340 @@
+{
+  "sn44-bulk-item": {
+    "check-resource-bulk-v1-outcome/regular/bulk": {"status":200,"allowed":["i1","i2"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/bulk": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-dup-condition": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-dup-rules": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "sn44-filter-predicate-f": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-filter-predicate-t": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "f==\"m\"",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-filter-rule-gate-f": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-filter-rule-gate-t": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "f==1",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-deny-overrides-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-deny-overrides-err": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-deny-unless-permit-err": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-deny-unless-permit-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-permit-overrides-err": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-permit-overrides-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-iterate-permit-overrides-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-permit-unless-deny-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-permit-unless-deny-err": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-iterate-permit-unless-deny-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-nested-after-own-deny-overrides-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-nested-after-own-deny-unless-permit-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-nested-after-own-permit-overrides-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-nested-after-own-permit-unless-deny-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-nodes-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-nodes-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":2,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-own-before-nested-deny-overrides-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-own-before-nested-deny-unless-permit-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-own-before-nested-permit-overrides-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-own-before-nested-permit-unless-deny-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-policy-after-deny-overrides-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "sn44-policy-after-deny-unless-permit-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-policy-after-permit-overrides-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-policy-after-permit-unless-deny-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-policy-gate-abort": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-policy-gate-f": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-policy-gate-t": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-after-deny-overrides-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-after-deny-unless-permit-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-after-permit-overrides-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-after-permit-unless-deny-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-before-deny-overrides-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-before-deny-unless-permit-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-before-permit-overrides-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-before-permit-unless-deny-permit": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-rule-gate-abort": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-rule-gate-f": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-rule-gate-t": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-set-gate-abort": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-set-gate-f": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":0,"requestAttributes":null}
+  },
+  "sn44-set-gate-t": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-top-set-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "sn44-top-set-na": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/read": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  }
+}

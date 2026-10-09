@@ -1,0 +1,90 @@
+{
+  "sp44-fields-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-combiningalgorithm-edge-lf-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-combiningalgorithm-edge-space-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-combiningalgorithm-edge-tab-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-combiningalgorithm-null-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-target-edge-lf-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-target-edge-nbsp-or": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [\\u00A0subject.roles CONTAINS 'ROLE_PARITY_READER'\\u00A0]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    }
+  },
+  "sp44-fields-policy-target-edge-space-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-policy-target-edge-tab-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-ref-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-condition-edge-lf-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-condition-edge-nbsp-or": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [\\u00A0resource.m == 'y' OR resource.a == 'y'\\u00A0]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    }
+  },
+  "sp44-fields-rule-condition-edge-space-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-condition-edge-tab-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-effect-edge-lf-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-effect-edge-space-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-effect-edge-tab-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-ruletype-edge-lf-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-ruletype-edge-space-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "sp44-fields-rule-ruletype-edge-tab-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
