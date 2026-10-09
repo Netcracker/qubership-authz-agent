@@ -197,7 +197,11 @@ func compareOptionsFor(id ParityEndpointID) []cmp.Option {
 // runs at every level of the expression, in every dialect, and in the apply
 // arrays of customFilterCondition, and the two sub-case rewrites of this function
 // cover only the leaves where that was first seen.
+//
+// Every outcome that records the body of a refusal goes through withoutMessage
+// first, so a golden with the body and one without compare alike.
 func normalizeComparable(id ParityEndpointID, subCase string, v any) any {
+	v = withoutMessage(v)
 	if id == PSUITE_ROW_6_CHECK_FILTER_V1 && subCase == "agg-two-predicates" {
 		v = normalizeFilterTopLevelCommaTerms(v)
 	}
@@ -207,6 +211,36 @@ func normalizeComparable(id ParityEndpointID, subCase string, v any) any {
 	switch id {
 	case PSUITE_ROW_6_CHECK_FILTER_V1, PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, PSUITE_ROW_10_CHECK_FILTER_V2:
 		return normalizeFilterOrder(v)
+	}
+	return v
+}
+
+// withoutMessage returns a copy of v with its Message cleared when v is an
+// outcome that records the body of a refusal, and v itself otherwise. The body
+// is the stand's wording, which a replacement need not match; the status beside
+// it is what the golden asserts.
+func withoutMessage(v any) any {
+	switch typed := v.(type) {
+	case *model.PolicyLoadOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.FilterOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceBulkOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
+	case *model.CheckResourceBulkOperationsOutcome:
+		clone := *typed
+		clone.Message = nil
+		return &clone
 	}
 	return v
 }

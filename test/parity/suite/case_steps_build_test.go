@@ -285,3 +285,54 @@ func TestErrorOutcome(t *testing.T) {
 		})
 	}
 }
+
+// A case file of round 44 or later records the body of a 400 or 409 answer;
+// an earlier one, and a file outside a round directory, record the status
+// alone, so that its goldens stay as they were.
+func TestRecordsErrorBodies(t *testing.T) {
+	cases := []struct {
+		name string
+		want bool
+	}{
+		{"round44/spell-data.json", true},
+		{"round45/tenant-fresh.json", true},
+		{"round100/x.json", true},
+		{"round43/open-m2m-level.json", false},
+		{"round9/x.json", false},
+		{"early/x.json", false},
+		{"round44.json", false},
+	}
+	for _, tc := range cases {
+		if got := recordsErrorBodies(tc.name); got != tc.want {
+			t.Errorf("recordsErrorBodies(%q) = %t, want %t", tc.name, got, tc.want)
+		}
+	}
+}
+
+// Only a 400 or 409 answer of a file that records bodies gets a message, shaped
+// as errorOutcome shapes the body of an error-class observation.
+func TestRefusalMessage(t *testing.T) {
+	cases := []struct {
+		name   string
+		record bool
+		status int
+		body   string
+		want   any
+	}{
+		{"a 400 text body", true, http.StatusBadRequest, `bad: a ==`, "bad: a =="},
+		{"a 409 JSON body without its timestamp", true, http.StatusConflict, `{"timestamp": "now", "message": "exists"}`,
+			map[string]any{"message": "exists"}},
+		{"a 400 empty body", true, http.StatusBadRequest, ``, ""},
+		{"a 404 body", true, http.StatusNotFound, `missing`, nil},
+		{"a 500 body", true, http.StatusInternalServerError, `boom`, nil},
+		{"an accepted call", true, http.StatusOK, `true`, nil},
+		{"a 400 body of a file that records none", false, http.StatusBadRequest, `bad`, nil},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if diff := cmp.Diff(tc.want, refusalMessage(tc.record, tc.status, []byte(tc.body))); diff != "" {
+				t.Errorf("refusalMessage(%t, %d, %s) mismatch (-want +got):\n%s", tc.record, tc.status, tc.body, diff)
+			}
+		})
+	}
+}

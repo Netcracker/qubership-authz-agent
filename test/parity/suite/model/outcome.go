@@ -16,33 +16,43 @@ package model
 
 // CheckResourceOutcome is the golden shape of a check/resource case whose request
 // may be refused. Status is the HTTP status; Decision is the decoded body, false
-// for a refused request.
+// for a refused request. Message is the body of a 400 or 409 answer where the
+// case file records it (see [PolicyLoadOutcome]).
 type CheckResourceOutcome struct {
 	Status   int  `json:"status"`
 	Decision bool `json:"decision"`
+	Message  any  `json:"message,omitempty"`
 }
 
 // FilterOutcome is the golden shape of a check/filter case whose request may be
 // refused. Status is the HTTP status; Result is the decoded body, empty for a
-// refused request.
+// refused request. Message is the body of a 400 or 409 answer where the case
+// file records it (see [PolicyLoadOutcome]).
 type FilterOutcome struct {
-	Status int                       `json:"status"`
-	Result OldFilterEvaluationResult `json:"result"`
+	Status  int                       `json:"status"`
+	Result  OldFilterEvaluationResult `json:"result"`
+	Message any                       `json:"message,omitempty"`
 }
 
 // CheckResourceBulkOutcome is the golden shape of a check/resource/bulk
 // request that may be refused. Status is the HTTP status. Allowed holds the
 // ids of the allowed items, sorted, and is present only when Status is 200.
+// Message is the body of a 400 or 409 answer where the case file records it
+// (see [PolicyLoadOutcome]).
 type CheckResourceBulkOutcome struct {
 	Status  int       `json:"status"`
 	Allowed *[]string `json:"allowed,omitempty"`
+	Message any       `json:"message,omitempty"`
 }
 
 // CheckResourceBulkOperationsOutcome is the golden shape of a
 // check/resource/bulk/operations request that may be refused. Status is the
 // HTTP status. Decision maps each operation to the ids of the items it is
 // allowed on, each list sorted, and is present only when Status is 200.
+// Message is the body of a 400 or 409 answer where the case file records it
+// (see [PolicyLoadOutcome]).
 type CheckResourceBulkOperationsOutcome struct {
 	Status   int                  `json:"status"`
 	Decision *map[string][]string `json:"decision,omitempty"`
+	Message  any                  `json:"message,omitempty"`
 }

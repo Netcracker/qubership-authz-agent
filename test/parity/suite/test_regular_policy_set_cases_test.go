@@ -141,10 +141,10 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			s.pinRoutes(tc.pins)
 			s.resetCallsFor(append(slices.Clone(tc.readsRoutes), tc.pipCalls))
 			if len(tc.pips) > 0 || len(tc.simplified) > 0 {
-				status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified)
+				status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, isolatedCaseDomain, tc.pips, tc.simplified, "")
 				s.Require().NoError(err)
 				s.Run("declare-the-domain", func() {
-					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "regular/"+tc.id+"/declare-the-domain", &model.PolicyLoadOutcome{Status: status})
+					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "regular/"+tc.id+"/declare-the-domain", &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
 				})
 				if status < http.StatusOK || status >= http.StatusMultipleChoices {
 					return
@@ -156,10 +156,10 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			}
 			accepted := true
 			for i, upload := range tc.uploads {
-				status, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
+				status, body, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
 				s.Require().NoError(err)
 				s.Run(fmt.Sprintf("upload-%d", i+1), func() {
-					s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, fmt.Sprintf("regular/%s/upload-%d", tc.id, i+1), &model.PolicyLoadOutcome{Status: status})
+					s.requirePendingGolden(PSUITE_LOAD_POLICY_SETS, fmt.Sprintf("regular/%s/upload-%d", tc.id, i+1), &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
 				})
 				if status < http.StatusOK || status >= http.StatusMultipleChoices {
 					accepted = false
@@ -216,7 +216,7 @@ func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep) 
 			switch o.kind {
 			case "status":
 				s.Run(step.name, func() {
-					s.requirePendingGolden(step.golden, subCase, &model.PolicyLoadOutcome{Status: status})
+					s.requirePendingGolden(step.golden, subCase, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
 				})
 			case "error-class":
 				s.Run(step.name+"-error-class", func() {

@@ -16,9 +16,12 @@ package paritysuite
 
 import (
 	"errors"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"authz-agent/test/parity/suite/model"
 )
 
 // A case written before its golden was captured has to be told apart from a
@@ -56,6 +59,73 @@ func TestCompare_MismatchingGoldenIsNotReportedAsNotRecorded(t *testing.T) {
 	}
 	if errors.Is(err, ErrGoldenNotRecorded) {
 		t.Fatalf("Compare(true) against golden false must not report ErrGoldenNotRecorded: %v", err)
+	}
+}
+
+// The body of a refusal that a golden records beside the status takes no part
+// in the comparison, for every outcome that can carry one: the status alone
+// decides, whether the message is on the golden's side, on the answer's, or on
+// both with other wording.
+func TestCompare_RefusalMessageIsIgnored(t *testing.T) {
+	t.Parallel()
+	outcomes := []struct {
+		id     ParityEndpointID
+		dir    string
+		answer func(status int, message any) any
+	}{
+		{PSUITE_LOAD_POLICY_SETS, "load-policy-sets-v1", func(status int, message any) any {
+			return &model.PolicyLoadOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, "check-resource-v1-outcome", func(status int, message any) any {
+			return &model.CheckResourceOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, "check-filter-v1-outcome", func(status int, message any) any {
+			return &model.FilterOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1_OUTCOME, "check-resource-bulk-v1-outcome", func(status int, message any) any {
+			return &model.CheckResourceBulkOutcome{Status: status, Message: message}
+		}},
+		{PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, "check-resource-bulk-operations-v1-outcome", func(status int, message any) any {
+			return &model.CheckResourceBulkOperationsOutcome{Status: status, Message: message}
+		}},
+	}
+	goldens := map[string]string{
+		"with-a-message":    `{"status": 400, "message": {"message": "the stand's wording"}}`,
+		"without-a-message": `{"status": 400}`,
+	}
+	cases := []struct {
+		name    string
+		golden  string
+		status  int
+		message any
+		matches bool
+	}{
+		{"no message against a golden with one", "with-a-message", http.StatusBadRequest, nil, true},
+		{"another message against a golden with one", "with-a-message", http.StatusBadRequest, "other wording", true},
+		{"a message against a golden without one", "without-a-message", http.StatusBadRequest, "other wording", true},
+		{"another status", "with-a-message", http.StatusConflict, nil, false},
+	}
+	for _, o := range outcomes {
+		root := t.TempDir()
+		dir := filepath.Join(root, o.dir, "regular")
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		for name, golden := range goldens {
+			if err := os.WriteFile(filepath.Join(dir, name+".json"), []byte(golden), 0o644); err != nil {
+				t.Fatal(err)
+			}
+		}
+		gc := &GoldenComparator{goldenRoot: root}
+		for _, tc := range cases {
+			t.Run(o.dir+"/"+tc.name, func(t *testing.T) {
+				err := gc.Compare(o.id, "regular/"+tc.golden, o.answer(tc.status, tc.message))
+				if (err == nil) != tc.matches {
+					t.Errorf("Compare(status %d, message %v) against %s = %v, want a match: %t",
+						tc.status, tc.message, goldens[tc.golden], err, tc.matches)
+				}
+			})
+		}
 	}
 }
 

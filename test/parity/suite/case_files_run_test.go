@@ -29,10 +29,13 @@ import (
 // runCaseFile records the stand's version when the file asks for it, pins the
 // file's routes and its entitlements answer, with the API version that answer
 // needs, and runs its isolated cases, then its regular cases, then its sequence
-// cases, each in the file's order.
+// cases, each in the file's order. The goldens of a file of round 44 or later
+// carry the body of each 400 or 409 answer beside its status.
 func (s *ParitySuite) runCaseFile(name string) {
 	f, err := readCaseFile(name)
 	s.Require().NoError(err)
+	s.errorBodies = recordsErrorBodies(name)
+	defer func() { s.errorBodies = false }()
 	ctx := context.Background()
 	if f.StandVersion {
 		function := path.Base(s.T().Name())

@@ -201,12 +201,12 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 				delete(policy, name)
 			}
 			mergeFields(policy, tc.policy, tc.resourceType)
-			status, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy}, tc.policiesQuery)
+			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy}, tc.policiesQuery)
 			s.Require().NoError(err)
 
 			if !isAuthzAgentProfile(s.cfg.Profile) {
 				s.Run("upload", func() {
-					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+tc.id, &model.PolicyLoadOutcome{Status: status})
+					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+tc.id, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
 				})
 				if status < http.StatusOK || status >= http.StatusMultipleChoices {
 					return

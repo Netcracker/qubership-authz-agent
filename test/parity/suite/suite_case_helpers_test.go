@@ -328,6 +328,13 @@ func buildDirectEntitlementsResponse(refs map[string]map[string][]string) model.
 	}
 }
 
+// refusal is the Message of an outcome whose answer had status and body; see
+// refusalMessage. It is nil unless the case file being run records error
+// bodies.
+func (s *ParitySuite) refusal(status int, body []byte) any {
+	return refusalMessage(s.errorBodies, status, body)
+}
+
 // sendRegularRequest sends req against its own type, or resourceType when it
 // names none, with the tokens requestTokens gives it, and returns the outcome
 // with the endpoint its golden is filed under.
@@ -346,7 +353,7 @@ func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, toke
 	case req.bulk != nil:
 		status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResourceBulk, req.bulk, tokens, opts)
 		s.Require().NoError(err)
-		outcome := &model.CheckResourceBulkOutcome{Status: status}
+		outcome := &model.CheckResourceBulkOutcome{Status: status, Message: s.refusal(status, raw)}
 		if status == http.StatusOK {
 			allowed := []string{}
 			s.Require().NoError(decodeJSON(raw, &allowed), "decode the allowed ids of %s", raw)
@@ -357,7 +364,7 @@ func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, toke
 	case req.bulkOperations != nil:
 		status, raw, err := HelperPostV1(ctx, s.cfg, v1PathCheckResourceBulkOperations, req.bulkOperations, tokens, opts)
 		s.Require().NoError(err)
-		outcome := &model.CheckResourceBulkOperationsOutcome{Status: status}
+		outcome := &model.CheckResourceBulkOperationsOutcome{Status: status, Message: s.refusal(status, raw)}
 		if status == http.StatusOK {
 			decision := map[string][]string{}
 			s.Require().NoError(decodeJSON(raw, &decision), "decode the allowed ids by operation of %s", raw)
@@ -369,15 +376,15 @@ func (s *ParitySuite) sendRequest(resourceType string, req isolatedRequest, toke
 		return PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1_OUTCOME, outcome
 	case req.filter:
 		query := filterV1Query(valueOr(req.typ, resourceType), req.filterOperation(), req.emptyOperation)
-		status, decoded, _, err := HelperFilterV1Query(ctx, s.cfg, query, tokens, opts)
+		status, decoded, raw, err := HelperFilterV1Query(ctx, s.cfg, query, tokens, opts)
 		s.Require().NoError(err)
-		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded}
+		return PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, &model.FilterOutcome{Status: status, Result: decoded, Message: s.refusal(status, raw)}
 	}
-	status, decision, _, err := HelperCheckResourceV1(ctx, s.cfg,
+	status, decision, raw, err := HelperCheckResourceV1(ctx, s.cfg,
 		model.CheckAccessRequest{Operation: checkOperation(req.operation, req.emptyOperation), Type: valueOr(req.typ, resourceType), Resource: req.resource},
 		tokens, opts)
 	s.Require().NoError(err)
-	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision}
+	return PSUITE_ROW_2_CHECK_RESOURCE_V1_OUTCOME, &model.CheckResourceOutcome{Status: status, Decision: decision, Message: s.refusal(status, raw)}
 }
 
 // runRequest sends req against resourceType and compares its outcome with the

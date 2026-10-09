@@ -14,9 +14,16 @@
 
 package model
 
-// PolicyLoadOutcome is the golden shape of a simplified-policy upload. Only the
-// HTTP status is recorded: the error body is server-curated text that differs
-// between access-control and any replacement PAP.
+// PolicyLoadOutcome is the golden shape of a simplified-policy upload, and of
+// the other PAP writes a case runs. Status is the HTTP status.
+//
+// Message is the response body of a 400 or 409 answer, decoded when it is JSON
+// and cut as an error-class observation cuts it, in the goldens of the case
+// files that record it: those of round 44 and later. It is nil otherwise. The
+// comparison ignores it, since the body is server-curated text that differs
+// between access-control and any replacement PAP; the golden keeps it as the
+// stand's reason for the refusal.
 type PolicyLoadOutcome struct {
-	Status int `json:"status"`
+	Status  int `json:"status"`
+	Message any `json:"message,omitempty"`
 }

@@ -206,15 +206,17 @@ func HelperPutPolicySets(ctx context.Context, cfg Config, m2mToken, externalID s
 // waits for the agent's next pull; the status is then 200 and says nothing about
 // the agent.
 func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
-	return UploadIsolatedPoliciesWithQuery(ctx, cfg, tokens, domain, pips, policies, "")
+	status, _, err := UploadIsolatedPoliciesWithQuery(ctx, cfg, tokens, domain, pips, policies, "")
+	return status, err
 }
 
 // UploadIsolatedPoliciesWithQuery is [UploadIsolatedPolicies] with policiesQuery,
 // when not empty, appended as written, after &, to the query of the last
 // upload, the one that carries policies. An example is
 // applicableForFrontend=true. The authz-agent profile ignores it, since
-// authz-policy-admin reads no query.
-func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any, policiesQuery string) (int, error) {
+// authz-policy-admin reads no query. It also returns the response body of the
+// upload whose status it returns; that body is nil on the authz-agent profile.
+func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any, policiesQuery string) (int, []byte, error) {
 	steps := []struct {
 		kind    string
 		payload []any
@@ -228,17 +230,17 @@ func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *To
 		seeder := &authzAgentInternalSeeder{cfg: cfg}
 		for _, step := range steps {
 			if err := seeder.putACStub(ctx, simplifiedPath(step.kind, domain), step.payload); err != nil {
-				return 0, err
+				return 0, nil, err
 			}
 		}
 		awaitPull(ctx)
-		return http.StatusOK, nil
+		return http.StatusOK, nil, nil
 	}
 	m2m, err := tokens.M2MToken()
 	if err != nil {
-		return 0, fmt.Errorf("mint M2M token for upload: %w", err)
+		return 0, nil, fmt.Errorf("mint M2M token for upload: %w", err)
 	}
-	status := 0
+	status, body := 0, []byte(nil)
 	for _, step := range steps {
 		query := url.Values{"tenant_id": []string{cfg.TenantID}}.Encode()
 		if step.query != "" {
@@ -247,17 +249,17 @@ func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *To
 		endpoint := buildURL(cfg.ACBaseURL, simplifiedPath(step.kind, domain), query)
 		req, err := buildRequest(ctx, http.MethodPut, endpoint, step.payload, TokenBundle{M2M: m2m}, PerCallOptions{})
 		if err != nil {
-			return 0, err
+			return 0, nil, err
 		}
-		status, _, err = doRequest(req)
+		status, body, err = doRequest(req)
 		if err != nil {
-			return status, err
+			return status, body, err
 		}
 		if status < http.StatusOK || status >= http.StatusMultipleChoices {
-			return status, nil
+			return status, body, nil
 		}
 	}
-	return status, nil
+	return status, body, nil
 }
 
 func emptyIfNil(items []any) []any {

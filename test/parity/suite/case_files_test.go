@@ -314,6 +314,35 @@ type requestSpec struct {
 	BulkOperations []any `json:"bulkOperations"`
 }
 
+// errorBodiesFromRound is the first round whose case files record, beside the
+// status of a 400 or 409 answer, its response body. The goldens of the earlier
+// rounds hold the status alone, and stay so when they are recorded again.
+const errorBodiesFromRound = 44
+
+// recordsErrorBodies reports whether the case file name, a path under
+// testdata/cases such as round44/spell-data.json, belongs to round
+// errorBodiesFromRound or a later one. A file outside a roundNN directory does
+// not.
+func recordsErrorBodies(name string) bool {
+	dir, _, found := strings.Cut(filepath.ToSlash(name), "/")
+	digits, isRound := strings.CutPrefix(dir, "round")
+	if !found || !isRound {
+		return false
+	}
+	round, err := strconv.Atoi(digits)
+	return err == nil && round >= errorBodiesFromRound
+}
+
+// refusalMessage returns the Message of an outcome whose answer had status and
+// body: when record is set and the status is 400 or 409, the body as an
+// error-class observation records it (see errorOutcome), and nil otherwise.
+func refusalMessage(record bool, status int, body []byte) any {
+	if !record || (status != http.StatusBadRequest && status != http.StatusConflict) {
+		return nil
+	}
+	return errorOutcome(status, body).Body
+}
+
 // readCaseFile reads testdata/cases/<name>. Numbers in a resource keep their
 // JSON spelling, so 5.0 is sent as 5.0 and not as 5.
 func readCaseFile(name string) (caseFile, error) {

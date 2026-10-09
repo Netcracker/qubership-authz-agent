@@ -17,6 +17,7 @@ package paritysuite
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -587,7 +588,7 @@ func TestUploadIsolatedPoliciesWithQuery_ExtendsOnlyTheUploadOfThePolicies(t *te
 	srv, got := testServer(t)
 	cfg := Config{ACBaseURL: srv.URL, TenantID: "t", Profile: "legacy"}
 	tokens := &TokenFactory{cache: map[string]tokenEntry{"m2m": {accessToken: "m2m-token", expiresAt: time.Now().Add(time.Hour)}}}
-	if _, err := UploadIsolatedPoliciesWithQuery(context.Background(), cfg, tokens, "D", nil, []any{}, "applicableForFrontend=true"); err != nil {
+	if _, _, err := UploadIsolatedPoliciesWithQuery(context.Background(), cfg, tokens, "D", nil, []any{}, "applicableForFrontend=true"); err != nil {
 		t.Fatal(err)
 	}
 	var queries []string
@@ -601,6 +602,47 @@ func TestUploadIsolatedPoliciesWithQuery_ExtendsOnlyTheUploadOfThePolicies(t *te
 	}
 	if diff := cmp.Diff(want, queries); diff != "" {
 		t.Errorf("UploadIsolatedPoliciesWithQuery requests mismatch (-want +got):\n%s", diff)
+	}
+}
+
+// UploadIsolatedPoliciesWithQuery returns the body of the PUT whose status it
+// returns: the first one refused, which ends the upload, or else the last one.
+func TestUploadIsolatedPoliciesWithQuery_ReturnsTheBodyOfTheReturnedStatus(t *testing.T) {
+	cases := []struct {
+		name       string
+		refuse     string
+		wantStatus int
+		wantBody   string
+		wantPuts   int
+	}{
+		{"the PIP declaration refused", "domainPIPs", http.StatusBadRequest, "refused domainPIPs", 2},
+		{"the policies refused", "applicableForFrontend", http.StatusBadRequest, "refused applicableForFrontend", 3},
+		{"nothing refused", "", http.StatusOK, "accepted 3", 3},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			puts := 0
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				puts++
+				if tc.refuse != "" && strings.Contains(r.URL.Path+"?"+r.URL.RawQuery, tc.refuse) {
+					w.WriteHeader(http.StatusBadRequest)
+					_, _ = w.Write([]byte("refused " + tc.refuse))
+					return
+				}
+				_, _ = fmt.Fprintf(w, "accepted %d", puts)
+			}))
+			t.Cleanup(srv.Close)
+			cfg := Config{ACBaseURL: srv.URL, TenantID: "t", Profile: "legacy"}
+			tokens := &TokenFactory{cache: map[string]tokenEntry{"m2m": {accessToken: "m2m-token", expiresAt: time.Now().Add(time.Hour)}}}
+			status, body, err := UploadIsolatedPoliciesWithQuery(context.Background(), cfg, tokens, "D", nil, []any{}, "applicableForFrontend=true")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if status != tc.wantStatus || string(body) != tc.wantBody || puts != tc.wantPuts {
+				t.Errorf("UploadIsolatedPoliciesWithQuery = %d, %q after %d PUTs, want %d, %q after %d",
+					status, body, puts, tc.wantStatus, tc.wantBody, tc.wantPuts)
+			}
+		})
 	}
 }
 

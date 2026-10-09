@@ -390,6 +390,15 @@ function with 400, until a later case declares that name again. So from round 19
 also names one PIP of every name an earlier case with `sets` of the file named; `TestCaseFilesAreWellFormed` checks it,
 except in `round19/stand-rule.json`, which asks about that state.
 
+From round 44 on, a golden whose answer is 400 or 409 also records the response body under `message`, beside the
+status: the upload of a case, a `customize` or write step's `status`, and a check, filter, or bulk request. The body is
+kept as `error-class` keeps it: decoded when it is JSON, without its top-level `timestamp`, and with the reference chain
+cut from its text. The comparison reads the status and ignores `message`, which is the stand's wording and not something
+the agent has to match. The goldens of earlier rounds hold the status alone, also when they are recorded again. Round
+45 was recorded before the runner kept bodies, so its goldens hold the status alone until it is recorded again. Only the
+reference chain is cut from a body, so read the bodies of a round before publishing its goldens: a refusal can still name
+a server class.
+
 A request may set `classifyBy` to a route the file, its case, or the request itself or one before it pins. Its golden is then filed under
 `<request>-when-the-pip-was-read` when pip-mock received a call on that route while the request ran, and under
 `<request>-when-the-pip-was-skipped` when it did not. Access-control evaluates the children of a node in an order that
