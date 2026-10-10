@@ -1,0 +1,201 @@
+{
+ "about": "Operand kinds and states in places, effects, algorithms, positions, and iterate passes that no golden combined. Each case's about lists the pairs it reaches as dimension=value: op the operator; lk and rk the kind of the left and the right operand; ls and rs the state or value shape of each; place where the comparison stands; eff the effect of its rule; alg the combining algorithm that combines its outcome; pos its position in OR and AND; iter whether it is in an iterate pass with one grant or several; ep the endpoint; out the comparison's outcome (T, F, ABORT for an ended rule, ERR for a failed decision, 400).",
+ "resourceTypePrefix": "PARITY_SUITE_R22C_",
+ "pins": {
+  "/api/v1/pip/c22-016061-l": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         },
+         {
+          "key": "tag",
+          "values": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/c22-044970-l": {
+   "statusCode": 200,
+   "body": [
+    null
+   ]
+  }
+ },
+ "pips": {
+  "c22-016061-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c22-016061-l",
+   "requestAttributes": {
+    "case": "c22-016061-l"
+   }
+  },
+  "c22-016061-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c22-044970-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c22-044970-l",
+   "requestAttributes": {
+    "case": "c22-044970-l"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "c22-016061",
+   "pips": [
+    "c22-016061-generalL",
+    "c22-016061-headerR",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxGL >= subject.parityCxHR",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-cx-r": "v,w"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=pip:GENERAL, rs=hlist"
+  },
+  {
+   "id": "c22-044970",
+   "pips": [
+    "c22-044970-generalL",
+    "scope",
+    "c22-016061-headerR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL CONTAINS ANY resource.p.y",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": []
+      },
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "p": {
+       "y": []
+      },
+      "a": "y"
+     }
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=single_odd, alg=PERMIT_OVERRIDES"
+  }
+ ]
+}

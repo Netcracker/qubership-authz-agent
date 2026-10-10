@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_GENERAL_MIXED_LT.a.lt(\"x\", \"y==z,w\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$gte\": [ { \"$uuid\": \"x\" }, { \"$uuid\": \"y==z,w\" } ] } } }",
+    "rsqlFilterCondition": "a=ge=\"x\", \"y==z,w\"",
+    "sqlFilterCondition": "NOT (a\u003c'x', 'y==z,w')",
+    "customFilterCondition": null
+  }
+}

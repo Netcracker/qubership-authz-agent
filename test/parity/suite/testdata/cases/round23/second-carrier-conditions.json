@@ -1,0 +1,2453 @@
+{
+ "about": "Comparison rules that exactly one earlier golden pins, asked again in another place: a GENERAL PIP that fails, on the left or on the right, an absent key, an index past the end, null or a null body on the right, bare null on the right, a dot in a MATCH pattern, a boolean or object GENERAL body. Most cases put the condition of the golden in a DENY rule of a nested set under PERMIT_UNLESS_DENY: true when the rule does not apply or ends, false when it denies or the decision fails. Each case's about names the golden it seconds.",
+ "resourceTypePrefix": "PARITY_SUITE_R23C_",
+ "pins": {
+  "/api/v1/pip/r23-s13-cxgl": {
+   "statusCode": 200,
+   "body": true
+  },
+  "/api/v1/pip/r23-s12-object": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/r23-s15-nullbody": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r23-s16-nullbody": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r23-s19-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s20-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s21-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s22-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s23-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s24-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s25-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s26-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s27-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s28-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s29-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s39-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s40-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  },
+  "/api/v1/pip/r23-s41-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  }
+ },
+ "pips": {
+  "parityr23s13cxgl": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S13CxGL",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s13-cxgl"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s13-cxgl"
+  },
+  "parityr23s12object": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S12Object",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s12-object"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s12-object"
+  },
+  "parityr23s15nullbody": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S15NullBody",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s15-nullbody"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s15-nullbody"
+  },
+  "parityr23s16nullbody": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S16NullBody",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s16-nullbody"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s16-nullbody"
+  },
+  "parityr23s19failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S19Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s19-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s19-failing"
+  },
+  "parityr23s20failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S20Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s20-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s20-failing"
+  },
+  "parityr23s21failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S21Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s21-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s21-failing"
+  },
+  "parityr23s22failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S22Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s22-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s22-failing"
+  },
+  "parityr23s23failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S23Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s23-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s23-failing"
+  },
+  "parityr23s24failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S24Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s24-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s24-failing"
+  },
+  "parityr23s25failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S25Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s25-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s25-failing"
+  },
+  "parityr23s26failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S26Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s26-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s26-failing"
+  },
+  "parityr23s27failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S27Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s27-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s27-failing"
+  },
+  "parityr23s28failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S28Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s28-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s28-failing"
+  },
+  "parityr23s29failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S29Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s29-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s29-failing"
+  },
+  "parityr23s39failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S39Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s39-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s39-failing"
+  },
+  "parityr23s40failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S40Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s40-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s40-failing"
+  },
+  "parityr23s41failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S41Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s41-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s41-failing"
+  }
+ },
+ "cases": [
+  {
+   "id": "s23-second-carrier-conditions-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-000-allow-rule-or-left",
+   "about": "Seconds the golden regular/c20-007785/a-y. Pins what a boolean GENERAL body gives under <, <=, >, >=, here in the OR probe of an ALLOW rule of a regular set.",
+   "pips": [
+    "parityr23s13cxgl"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR23S13CxGL <= resourceType OR resource.p23 == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "p23-y",
+     "resource": {
+      "a": "y",
+      "p23": "y",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-001-allow-rule-or-left",
+   "about": "Seconds the golden isolated/lr-null-literal-equals/x-absent. Pins what bare null on the right gives, here in the OR probe of an ALLOW rule of a regular set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "null == 'v' OR resource.p23 == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "p23-y",
+     "resource": {
+      "a": "y",
+      "v": "v",
+      "p23": "y",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-002-deny-rule",
+   "about": "Seconds the golden isolated/pp-match-slash-pattern-alone/x-slash-abc-slash. Pins what a dot in a MATCH pattern matches, here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x MATCH /ab.*/",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y",
+      "x": "/abc/",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-003-deny-rule",
+   "about": "Seconds the golden isolated/q15-an-object-body-is-null/true-value. Pins what an object GENERAL body gives, here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s12object",
+    "parityr23s13cxgl"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR23S12Object IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-004-deny-rule-nested",
+   "about": "Seconds the golden regular/q15-null-body-on-the-right-of-contains-any-in-a-deny-rule/read. Pins what CONTAINS ANY gives with a null GENERAL body on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s15nullbody",
+    "parityr23s13cxgl",
+    "parityr23s12object"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l CONTAINS ANY subject.parityR23S15NullBody",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-005-deny-rule-nested",
+   "about": "Seconds the golden regular/q15-null-body-on-the-right-of-not-contains-any-in-a-deny-rule/read. Pins what NOT CONTAINS ANY gives with a null GENERAL body on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s16nullbody",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l NOT CONTAINS ANY subject.parityR23S16NullBody",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-006-deny-rule-nested",
+   "about": "Seconds the golden regular/q15-null-on-the-right-of-in-in-a-deny-rule/read. Pins what IN gives with null on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.v IN resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "x": null,
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-007-deny-rule-nested",
+   "about": "Seconds the golden regular/q15-null-on-the-right-of-not-in-in-a-deny-rule/read. Pins what NOT IN gives with null on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.v NOT IN resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "x": null,
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-008-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-contains/read. Pins what CONTAINS gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s19failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S19Failing CONTAINS 'v'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-009-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-greater-than/read. Pins what > gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s20failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S20Failing > 5",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-010-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-in/read. Pins what IN gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s21failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S21Failing IN 'v', 'w'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-011-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-is-not-null/read. Pins what IS NOT NULL gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s22failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S22Failing IS NOT NULL",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-012-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-is-not-subset/read. Pins what IS NOT SUBSET gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s23failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S23Failing IS NOT SUBSET 'v', 'w'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-013-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-is-subset/read. Pins what IS SUBSET gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s24failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S24Failing IS SUBSET 'v', 'w'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-014-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-less-or-equal/read. Pins what <= gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s25failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S25Failing <= 5",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-015-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-less-than/read. Pins what < gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s26failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S26Failing < 5",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-016-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-not-contains/read. Pins what NOT CONTAINS gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s27failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing",
+    "parityr23s26failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S27Failing NOT CONTAINS 'v'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-017-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-not-in/read. Pins what NOT IN gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s28failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing",
+    "parityr23s26failing",
+    "parityr23s27failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S28Failing NOT IN 'v', 'w'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-018-deny-rule-nested",
+   "about": "Seconds the golden regular/r13-failing-pip-in-a-deny-rule-not-match/read. Pins what NOT MATCH gives with a GENERAL PIP that fails on the left, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s29failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing",
+    "parityr23s26failing",
+    "parityr23s27failing",
+    "parityr23s28failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "subject.parityR23S29Failing NOT MATCH v*",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-019-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-contains/read. Pins what CONTAINS gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l CONTAINS resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-020-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-equals/read. Pins what == gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.v == resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-021-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-greater-or-equal/read. Pins what >= gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n >= resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-022-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-greater-than/read. Pins what > gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n > resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-023-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-is-not-subset/read. Pins what IS NOT SUBSET gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l IS NOT SUBSET resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-024-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-is-subset/read. Pins what IS SUBSET gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l IS SUBSET resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-025-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-less-or-equal/read. Pins what <= gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n <= resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-026-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-less-than/read. Pins what < gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n < resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-027-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-absent-key-on-the-right-in-a-deny-rule-not-contains/read. Pins what NOT CONTAINS gives with an absent key on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l NOT CONTAINS resource.x",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-028-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-failing-pip-on-the-right-in-a-deny-rule-greater-than/read. Pins what > gives with a GENERAL PIP that fails on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s39failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing",
+    "parityr23s26failing",
+    "parityr23s27failing",
+    "parityr23s28failing",
+    "parityr23s29failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n > subject.parityR23S39Failing",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-029-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-failing-pip-on-the-right-in-a-deny-rule-less-than/read. Pins what < gives with a GENERAL PIP that fails on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s40failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing",
+    "parityr23s26failing",
+    "parityr23s27failing",
+    "parityr23s28failing",
+    "parityr23s29failing",
+    "parityr23s39failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n < subject.parityR23S40Failing",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-030-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-failing-pip-on-the-right-in-a-deny-rule-not-in/read. Pins what NOT IN gives with a GENERAL PIP that fails on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "parityr23s41failing",
+    "parityr23s13cxgl",
+    "parityr23s12object",
+    "parityr23s15nullbody",
+    "parityr23s16nullbody",
+    "parityr23s19failing",
+    "parityr23s20failing",
+    "parityr23s21failing",
+    "parityr23s22failing",
+    "parityr23s23failing",
+    "parityr23s24failing",
+    "parityr23s25failing",
+    "parityr23s26failing",
+    "parityr23s27failing",
+    "parityr23s28failing",
+    "parityr23s29failing",
+    "parityr23s39failing",
+    "parityr23s40failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.v NOT IN subject.parityR23S41Failing",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-031-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-contains/read. Pins what CONTAINS gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l CONTAINS resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-032-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-greater-or-equal/read. Pins what >= gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n >= resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-033-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-greater-than/read. Pins what > gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n > resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-034-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-in/read. Pins what IN gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.v IN resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-035-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-is-not-subset/read. Pins what IS NOT SUBSET gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l IS NOT SUBSET resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-036-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-less-or-equal/read. Pins what <= gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n <= resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-037-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-less-than/read. Pins what < gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.n < resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-038-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-not-contains-any/read. Pins what NOT CONTAINS ANY gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l NOT CONTAINS ANY resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-039-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-not-contains/read. Pins what NOT CONTAINS gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.l NOT CONTAINS resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-040-deny-rule-nested",
+   "about": "Seconds the golden regular/r14-index-past-the-end-on-the-right-in-a-deny-rule-not-equals/read. Pins what != gives with an index past the end on the right, here in a DENY rule of a nested set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "resource.v != resource.list[5]",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "list": [
+       "a"
+      ],
+      "n": 5,
+      "v": "v",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-second-carrier-conditions-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

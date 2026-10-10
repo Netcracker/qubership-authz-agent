@@ -1,0 +1,238 @@
+{
+ "about": "A GENERAL PIP whose url holds ${subject.X}, X a HEADER, a MAPPING and the PERMISSION_SCOPE PIP. Round 31 saw the upload refused with 400 when X was a GENERAL, a FILTERED, or a TOKEN PIP; the stand's log named no type. Each upload here is 400 if a url may not name any declared PIP, 200 if the rule covers only the three types round 31 asked. After an accepted upload the probe `<outer PIP> == 'v' OR resource.a == 'y'` reads the url's PIP, and pipCalls counts the calls to the route the source's value would name: …-header-v for the header v, …-mapping-p1 for the permission p1; both answer v. The permission scope service answers 404, so the scope case asks the upload only.",
+ "resourceTypePrefix": "PARITY_SUITE_R32O_",
+ "pins": {
+  "/api/v1/pip/r32open-url-header-v": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r32open-url-mapping-p1": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 32 case"
+   }
+  }
+ },
+ "pips": {
+  "source-header": {
+   "name": "subject.parityR32SrcHdr",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "x-parity-r32-src",
+   "cacheable": false
+  },
+  "source-mapping": {
+   "name": "subject.permissions.PARITY_R32",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1"
+     ]
+    }
+   }
+  },
+  "source-scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "outer-header": {
+   "name": "subject.parityR32UrlH",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32open-url-header-${subject.parityR32SrcHdr}",
+   "requestAttributes": {
+    "case": "r32open-url-header-"
+   }
+  },
+  "outer-mapping": {
+   "name": "subject.parityR32UrlM",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32open-url-mapping-${subject.permissions.PARITY_R32}",
+   "requestAttributes": {
+    "case": "r32open-url-mapping-"
+   }
+  },
+  "outer-scope": {
+   "name": "subject.parityR32UrlS",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32open-url-scope-${subject.permissionScope}",
+   "requestAttributes": {
+    "case": "r32open-url-scope-"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r32open-url-kinds-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32open-url-header-source",
+   "about": "The url is …/r32open-url-header-${subject.parityR32SrcHdr}, a HEADER PIP; the request sends x-parity-r32-src: v.",
+   "pips": [
+    "source-header",
+    "outer-header"
+   ],
+   "condition": "subject.parityR32UrlH == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r32-src": "v"
+     },
+     "pipCalls": "/api/v1/pip/r32open-url-header-v"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r32-src": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32open-url-mapping-source",
+   "about": "The url is …/r32open-url-mapping-${subject.permissions.PARITY_R32}, a MAPPING PIP that gives the reader p1.",
+   "pips": [
+    "source-mapping",
+    "outer-mapping"
+   ],
+   "condition": "subject.parityR32UrlM == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32open-url-mapping-p1"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32open-url-scope-source",
+   "about": "The url is …/r32open-url-scope-${subject.permissionScope}, the PERMISSION_SCOPE PIP. The reader has no grant, so only the upload's status is asked.",
+   "pips": [
+    "source-scope",
+    "outer-scope"
+   ],
+   "condition": "subject.parityR32UrlS == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32open-url-kinds-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

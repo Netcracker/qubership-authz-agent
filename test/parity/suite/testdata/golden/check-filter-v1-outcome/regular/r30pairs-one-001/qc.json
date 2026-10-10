@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R29P_R30PAIRS_ONE_001.f4a.in(\"h1\", \"h2\", \"ROLE_PARITY_READER\")).or((((PARITY_SUITE_R29P_R30PAIRS_ONE_001.f1a.in(\"p1\", \"p2\")).or(PARITY_SUITE_R29P_R30PAIRS_ONE_001.f1b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R30PAIRS_ONE_001.f1c.eq(\"v2\"))).not())",
+    "mongodbFilterCondition": "{ \"$or\": [ { { \"f4a\": { \"$in\": [ [ { \"$uuid\": \"h1\" }, { \"$uuid\": \"h2\" } ], [ \"ROLE_PARITY_READER\" ] ] } } },{ { \"$or\": [ { \"$and\": [ { \"f1a\": { \"$nin\": [ { \"$uuid\": \"p1\" }, { \"$uuid\": \"p2\" } ] } }, { \"f1b\": \"v1\" } ] }, { \"f1c\": \"v2\" } ] } } ] }",
+    "rsqlFilterCondition": "(f4a=in=(\"h1\", \"h2\",\"ROLE_PARITY_READER\")),((f1a=out=(\"p1\", \"p2\");f1b!=v1),f1c!=v2)",
+    "sqlFilterCondition": "(f4a IN ('h1', 'h2', 'ROLE_PARITY_READER')) or (NOT ((f1a IN ('p1', 'p2') OR f1b='v1') AND f1c='v2'))",
+    "customFilterCondition": null
+  }
+}

@@ -1,0 +1,133 @@
+{
+ "about": "Whether the recorded refusal of missing-attribute-in-set-target came from the set target that reads resource.x, or from the fixture beside it. missing-attribute-in-set-target uploads two sets whose policies share one policyId, since both are built from the key reader, and records 400; set-target-reads-unknown-attribute uploads the same target with two policy ids and records 200. The two cases here separate the two differences.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "set-target-reads-missing-attribute-with-distinct-policy-ids",
+   "about": "missing-attribute-in-set-target with the sibling policy under a key of its own, so the policy ids differ and the target is the only thing left to refuse. The requests are the recorded case's, read against the sibling set.",
+   "sets": [
+    {
+     "key": "reads-missing",
+     "target": "resourceType == '{{resourceType}}' AND resource.x == 'v'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "sibling",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "sibling-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow-when-s",
+         "target": "operation == 'READ'",
+         "condition": "resource.s == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "sibling-allows",
+     "resource": {
+      "id": "reg-set-target",
+      "s": "y"
+     }
+    },
+    {
+     "name": "both-attributes-present",
+     "resource": {
+      "id": "reg-set-target",
+      "x": "v",
+      "s": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "two-sets-whose-policies-share-one-id",
+   "about": "Two sets whose targets name the resource type alone and whose policies share one policyId, so the shared id is the only thing left to refuse. The two requests, one per set, are probes that a set the PAP accepted answers true.",
+   "sets": [
+    {
+     "key": "first",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "first-read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "second",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "second-probe-allow",
+         "target": "operation == 'PROBE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-under-the-first-set",
+     "operation": "READ",
+     "resource": {
+      "id": "reg-shared-policy-id"
+     }
+    },
+    {
+     "name": "probe-under-the-second-set",
+     "operation": "PROBE",
+     "resource": {
+      "id": "reg-shared-policy-id"
+     }
+    }
+   ]
+  }
+ ]
+}

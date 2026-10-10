@@ -1,0 +1,57 @@
+{
+ "about": "Whether IS EMPTY over a GENERAL PIP whose body is the JSON literal null is false or ends the rule. nb-null-body-is-empty records it alone, false. The PIP answers null at a route of its own, as in nb-null-body-*, and the condition goes through a probe and its control with resource.a y. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {
+  "/api/v1/pip/r11-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  }
+ },
+ "pips": {
+  "nullbody": {
+   "name": "subject.parityR11NullBody",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-null-body",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r11-null-body"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "pn-null-body-is-empty",
+   "condition": "subject.parityR11NullBody IS EMPTY OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r11-null-body",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pn-null-body-is-empty-control",
+   "resourceType": "PARITY_SUITE_R11_PN_NULL_BODY_IS_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR11NullBody IS EMPTY",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r11-null-body",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

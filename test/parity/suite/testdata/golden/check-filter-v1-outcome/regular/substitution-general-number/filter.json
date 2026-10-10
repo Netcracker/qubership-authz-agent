@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_NUMBER.a.eq(\"1000\")",
+    "mongodbFilterCondition": "{ { \"a\": [ \"1000\" ] } }",
+    "rsqlFilterCondition": "a==\"1000\"",
+    "sqlFilterCondition": "a='1000'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "442d1c30-19ea-6449-d525-73faa0a81c59"
+      },
+      "data": {
+        "442d1c30-19ea-6449-d525-73faa0a81c59": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              1000
+            ]
+          }
+        }
+      }
+    }
+  }
+}

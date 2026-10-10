@@ -1,0 +1,164 @@
+{
+ "about": "A GENERAL PIP with httpMethod GET and ${subject.id} in its url, beside one with httpMethod POST. Both PIPs answer [\"v\"]; the GET one's url ends with the reader's id. pipCalls records the requestAttributes pip-mock received: the declaration's with POST, null with GET if the call has no body. The condition reads the PIP OR resource.a == 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {
+  "/api/v1/pip/r29fields-get/00000000-0000-0000-0000-000000000101": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29fields-post": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "get": {
+   "name": "subject.parityR29FdGet",
+   "pipType": "GENERAL",
+   "httpMethod": "GET",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29fields-get/${subject.id}",
+   "requestAttributes": {
+    "case": "r29fields-get"
+   }
+  },
+  "post": {
+   "name": "subject.parityR29FdPost",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29fields-post",
+   "requestAttributes": {
+    "case": "r29fields-post"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29fields-pip-method-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-pip-method-get",
+   "about": "The GET PIP read in the condition. read-a-n is true when the PIP answers v; pipCalls says whether the call carried the requestAttributes.",
+   "condition": "subject.parityR29FdGet CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "get"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29fields-get/00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-pip-method-post",
+   "about": "The POST PIP read in the condition. read-a-n is true when the PIP answers v; pipCalls says whether the call carried the requestAttributes.",
+   "condition": "subject.parityR29FdPost CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "post"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29fields-post"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-pip-method-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

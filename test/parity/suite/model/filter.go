@@ -17,16 +17,10 @@ package model
 import "encoding/json"
 
 // OldFilterEvaluationResult is the v1 POST /access/v1/check/filter response
-// body, mirroring
-// com.netcracker.security.authorization.abac.impl.OldFilterEvaluationResult
-// (OldFilterEvaluationResult.java:13-25). CalculationResult carries the
-// @JsonProperty("calculationResult") annotation the legacy Effect enum uses;
-// the Go field is a string because the parity assertion is on the wire form
-// (ALLOW / DENY / NOT_APPLICABLE / USE_FILTER_CONDITION), not on a typed enum.
-// CustomFilterCondition is json.RawMessage because the legacy type is a
-// polymorphic CustomFilterConditionImpl that the parity suite does not need
-// to inspect field-by-field — byte parity on the raw JSON is sufficient for
-// every row that reaches this struct in Step 3.
+// body. CalculationResult is a string because the parity assertion is on the
+// wire form (ALLOW / DENY / NOT_APPLICABLE / USE_FILTER_CONDITION), not on a
+// typed enum. CustomFilterCondition is json.RawMessage because its shape
+// varies and the parity suite compares it as JSON rather than field by field.
 type OldFilterEvaluationResult struct {
 	CalculationResult      string          `json:"calculationResult"`
 	FilterCondition        string          `json:"filterCondition"`
@@ -36,12 +30,9 @@ type OldFilterEvaluationResult struct {
 	CustomFilterCondition  json.RawMessage `json:"customFilterCondition,omitempty"`
 }
 
-// FilterResponse is the v2 POST /access/v2/check/filter response body,
-// mirroring
-// com.netcracker.security.authorization.abac.api.client.v2.model.response.FilterResponse
-// (FilterResponse.java:18-66). Field set is identical to
-// OldFilterEvaluationResult with an added Obligations block that the parity
-// suite always filters out via cmpopts.IgnoreFields per D-E.
+// FilterResponse is the v2 POST /access/v2/check/filter response body: the
+// fields of OldFilterEvaluationResult and an Obligations block, which the
+// parity suite always filters out via cmpopts.IgnoreFields per D-E.
 type FilterResponse struct {
 	CalculationResult      string          `json:"calculationResult"`
 	FilterCondition        string          `json:"filterCondition"`

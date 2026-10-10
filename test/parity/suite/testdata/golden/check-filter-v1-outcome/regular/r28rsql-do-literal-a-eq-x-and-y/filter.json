@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_LITERAL_A_EQ_X_AND_Y.a.eq(\"x;y\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": \"x;y\" } }",
+    "rsqlFilterCondition": "a!='x,y'",
+    "sqlFilterCondition": "NOT (a='x;y')",
+    "customFilterCondition": null
+  }
+}

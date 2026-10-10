@@ -1,0 +1,155 @@
+{
+ "about": "How legacy reads the url of a GENERAL PIP. Each PIP answers a marker from the route its url reaches, and the condition compares the PIP with the marker a reading predicts: `subject.<pip> == resource.want OR resource.a == 'y'`. When no route answers, or the url fails the call, the PIP fails and a-y is false too. A backslash in the url: routes for the path without it and with it. ${resource.u} with a plain value: round 28 saw every url with ${resource.…} fail without a call, but each of its values held a character a URL reserves. A single quote without a space: round 28 asked one only beside spaces.",
+ "resourceTypePrefix": "PARITY_SUITE_R29U_",
+ "pins": {
+  "/api/v1/pip/r29b/xy": {
+   "statusCode": 200,
+   "body": [
+    "m-dropped"
+   ]
+  },
+  "/api/v1/pip/r29b/x\\y": {
+   "statusCode": 200,
+   "body": [
+    "m-kept"
+   ]
+  },
+  "/api/v1/pip/r29r/plain": {
+   "statusCode": 200,
+   "body": [
+    "m-plain"
+   ]
+  },
+  "/api/v1/pip/r29q/it's": {
+   "statusCode": 200,
+   "body": [
+    "m-quote"
+   ]
+  }
+ },
+ "pips": {
+  "bs": {
+   "name": "subject.parityR29Bs",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29b/x\\y",
+   "requestAttributes": {
+    "case": "subject.parityR29Bs"
+   }
+  },
+  "res": {
+   "name": "subject.parityR29Res",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29r/${resource.u}",
+   "requestAttributes": {
+    "case": "subject.parityR29Res"
+   }
+  },
+  "quote": {
+   "name": "subject.parityR29Quote",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29q/it's",
+   "requestAttributes": {
+    "case": "subject.parityR29Quote"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-url-backslash",
+   "pips": [
+    "bs"
+   ],
+   "about": "The url ends with x\\y. m-dropped: the backslash is dropped (the path a round 28 probe showed); m-kept: the path keeps it; neither, and a-y false: the call fails.",
+   "condition": "subject.parityR29Bs == resource.want OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "want-m-dropped",
+     "resource": {
+      "want": "m-dropped",
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "want-m-kept",
+     "resource": {
+      "want": "m-kept",
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-url-resource-plain",
+   "pips": [
+    "bs",
+    "res"
+   ],
+   "about": "The url ends with ${resource.u}, u = plain. m-plain: the value goes into the url as ${subject.id} does; all false: ${resource.…} fails the PIP whatever the value.",
+   "condition": "subject.parityR29Res == resource.want OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "want-m-plain",
+     "resource": {
+      "want": "m-plain",
+      "a": "n",
+      "u": "plain",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "u": "plain",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-url-quote",
+   "pips": [
+    "bs",
+    "res",
+    "quote"
+   ],
+   "about": "The url ends with it's. m-quote: the quote reaches pip-mock as it is; all false: the call fails over the quote.",
+   "condition": "subject.parityR29Quote == resource.want OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "want-m-quote",
+     "resource": {
+      "want": "m-quote",
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "want": "none",
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

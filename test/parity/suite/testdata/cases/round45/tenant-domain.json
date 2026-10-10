@@ -1,0 +1,189 @@
+{
+ "about": "Round 45: the fallback isolation, a domain of its own in the default tenant: empty before the case, empty after its cleanup steps, and whether a refused write leaves partial state.",
+ "resourceTypePrefix": "PARITY_SUITE_R45_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p45-own-domain-before",
+   "about": "Reads the domain PARITY_P45_OWN_DOMAIN before anything writes to it.",
+   "resourceType": "PARITY_SUITE_R45_P45_OWN_DOMAIN_BEFORE",
+   "steps": [
+    {
+     "name": "domain-pips",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     }
+    },
+    {
+     "name": "export-of-the-pips",
+     "op": "read-config-pips",
+     "markers": [
+      "PARITY_P45_OWN_DOMAIN"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p45-own-domain",
+   "about": "Declares a PIP in PARITY_P45_OWN_DOMAIN, writes a policy, decides, then empties the domain and reads it back: what a domain of its own leaves behind.",
+   "resourceType": "PARITY_SUITE_R45_P45_OWN_DOMAIN",
+   "steps": [
+    {
+     "name": "declare-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     },
+     "body": [
+      {
+       "name": "subject.parityP45OwnDomain",
+       "pipType": "TOKEN",
+       "type": "UUID",
+       "claim": "parityP45OwnDomain",
+       "cacheable": false
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-domain-pips"
+     ]
+    },
+    {
+     "name": "write-the-policy",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p45-own-domain",
+       "resourceType": "PARITY_SUITE_R45_P45_OWN_DOMAIN",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "6a18aa53-fd84-2af8-f97f-d26d42233983"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "decide:here"
+     ],
+     "requests": [
+      {
+       "name": "here"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "read:read-domain-pips"
+     ]
+    },
+    {
+     "name": "export-after",
+     "op": "read-config-pips",
+     "markers": [
+      "PARITY_P45_OWN_DOMAIN"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p45-own-domain-refused-write",
+   "about": "A write of two policies into PARITY_P45_OWN_DOMAIN whose second the PAP refuses (its condition, resource.a ==, does not parse), then a decision on the first: does a refused write leave part of its body behind (onRefusal continue).",
+   "resourceType": "PARITY_SUITE_R45_P45_OWN_DOMAIN_REFUSED_WRITE",
+   "steps": [
+    {
+     "name": "write-two-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p45-own-domain-refused-write",
+       "resourceType": "PARITY_SUITE_R45_P45_OWN_DOMAIN_REFUSED_WRITE",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "6134bec9-b0df-f521-0de5-42791233bb4c"
+      },
+      {
+       "component": "PARITY",
+       "reason": "p45-own-domain-refused-write-second",
+       "resourceType": "PARITY_SUITE_R45_P45_OWN_DOMAIN_REFUSED_WRITE",
+       "operation": "UPDATE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "c43b4221-c040-51ff-391f-1c38776fe837",
+       "condition": "resource.a =="
+      }
+     ],
+     "onRefusal": "continue",
+     "observe": [
+      "status",
+      "error-class",
+      "decide:first-policy"
+     ],
+     "requests": [
+      {
+       "name": "first-policy"
+      }
+     ]
+    },
+    {
+     "name": "empty-the-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P45_OWN_DOMAIN"
+     },
+     "body": [],
+     "observe": [
+      "status",
+      "decide:after-emptying"
+     ],
+     "requests": [
+      {
+       "name": "after-emptying"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

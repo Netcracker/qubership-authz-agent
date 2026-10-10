@@ -1,0 +1,360 @@
+{
+ "about": "cacheable and cachePeriod of a GENERAL PIP. Each case declares its own PIP and route, reads it once (the control that the PIP is read), again at once, and again 4 s after the second request; pipCalls records whether the later requests reached pip-mock. cachePeriod 2 cached for 2 s answers 0, 1; read as milliseconds, 1, 1; ignored beside cacheable true, 0, 0.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-cache-cacheable-period-2": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-cache-period-2-without-cacheable": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-cache-cacheable-false-period-2": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-cache-cacheable-without-period": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-cache-neither": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-cache-cacheable-period-0": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "cache-cacheable-period-2": {
+   "name": "subject.parityR29CacheCacheablePeriod2",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": true,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-cache-cacheable-period-2",
+   "requestAttributes": {
+    "case": "r29pipfield-cache-cacheable-period-2"
+   },
+   "cachePeriod": 2
+  },
+  "cache-period-2-without-cacheable": {
+   "name": "subject.parityR29CachePeriod2WithoutCacheable",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-cache-period-2-without-cacheable",
+   "requestAttributes": {
+    "case": "r29pipfield-cache-period-2-without-cacheable"
+   },
+   "cachePeriod": 2
+  },
+  "cache-cacheable-false-period-2": {
+   "name": "subject.parityR29CacheCacheableFalsePeriod2",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-cache-cacheable-false-period-2",
+   "requestAttributes": {
+    "case": "r29pipfield-cache-cacheable-false-period-2"
+   },
+   "cachePeriod": 2
+  },
+  "cache-cacheable-without-period": {
+   "name": "subject.parityR29CacheCacheableWithoutPeriod",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": true,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-cache-cacheable-without-period",
+   "requestAttributes": {
+    "case": "r29pipfield-cache-cacheable-without-period"
+   }
+  },
+  "cache-neither": {
+   "name": "subject.parityR29CacheNeither",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-cache-neither",
+   "requestAttributes": {
+    "case": "r29pipfield-cache-neither"
+   }
+  },
+  "cache-cacheable-period-0": {
+   "name": "subject.parityR29CacheCacheablePeriod0",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": true,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-cache-cacheable-period-0",
+   "requestAttributes": {
+    "case": "r29pipfield-cache-cacheable-period-0"
+   },
+   "cachePeriod": 0
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-cache-cacheable-period-2",
+   "about": "GENERAL PIP declared with {'cacheable': True, 'cachePeriod': 2}",
+   "condition": "subject.parityR29CacheCacheablePeriod2 == 'v' OR resource.a == 'y'",
+   "pips": [
+    "cache-cacheable-period-2"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-period-2"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-period-2"
+    },
+    {
+     "name": "after-4s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-period-2",
+     "pauseMs": 4000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-cache-period-2-without-cacheable",
+   "about": "GENERAL PIP declared with {'cacheable': None, 'cachePeriod': 2}",
+   "condition": "subject.parityR29CachePeriod2WithoutCacheable == 'v' OR resource.a == 'y'",
+   "pips": [
+    "cache-period-2-without-cacheable"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-period-2-without-cacheable"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-period-2-without-cacheable"
+    },
+    {
+     "name": "after-4s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-period-2-without-cacheable",
+     "pauseMs": 4000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-cache-cacheable-false-period-2",
+   "about": "GENERAL PIP declared with {'cacheable': False, 'cachePeriod': 2}",
+   "condition": "subject.parityR29CacheCacheableFalsePeriod2 == 'v' OR resource.a == 'y'",
+   "pips": [
+    "cache-cacheable-false-period-2"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-false-period-2"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-false-period-2"
+    },
+    {
+     "name": "after-4s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-false-period-2",
+     "pauseMs": 4000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-cache-cacheable-without-period",
+   "about": "GENERAL PIP declared with {'cacheable': True}",
+   "condition": "subject.parityR29CacheCacheableWithoutPeriod == 'v' OR resource.a == 'y'",
+   "pips": [
+    "cache-cacheable-without-period"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-without-period"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-without-period"
+    },
+    {
+     "name": "after-4s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-without-period",
+     "pauseMs": 4000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-cache-neither",
+   "about": "GENERAL PIP declared with {'cacheable': None}",
+   "condition": "subject.parityR29CacheNeither == 'v' OR resource.a == 'y'",
+   "pips": [
+    "cache-neither"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-neither"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-neither"
+    },
+    {
+     "name": "after-4s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-neither",
+     "pauseMs": 4000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-cache-cacheable-period-0",
+   "about": "GENERAL PIP declared with {'cacheable': True, 'cachePeriod': 0}",
+   "condition": "subject.parityR29CacheCacheablePeriod0 == 'v' OR resource.a == 'y'",
+   "pips": [
+    "cache-cacheable-period-0"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-period-0"
+    },
+    {
+     "name": "again",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-period-0"
+    },
+    {
+     "name": "after-4s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-cache-cacheable-period-0",
+     "pauseMs": 4000
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

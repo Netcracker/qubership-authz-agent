@@ -1,0 +1,137 @@
+{
+ "about": "What check/filter does with a rule that has no predicate and a condition it can evaluate without a resource, and which operation a filter request with no operation parameter is answered for. filter-rule-with-a-condition-and-no-predicate records DENY for a rule whose condition reads resource.x, and a filter request carries no resource, so that recording does not separate a rule without a predicate being left out of the filter from a condition that could not be evaluated. Each condition case also sends check/resource for the same operation. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only, like every case with sets.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "filter-rule-with-a-subject-condition-and-no-predicate",
+   "about": "The rule's condition reads the subject's roles, which the filter request can evaluate: ALLOW means the rule takes part in the filter and lifts it when its condition holds, DENY that a rule without a predicate is left out whatever its condition.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-a-condition",
+         "target": "operation == 'LIST'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list-condition-true",
+     "operation": "LIST",
+     "resource": {
+      "id": "reg-filter-cond"
+     }
+    }
+   ]
+  },
+  {
+   "id": "filter-rule-with-a-resource-condition-and-no-predicate",
+   "about": "The control: the recorded resource condition, run on the same stand.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-under-a-condition",
+         "target": "operation == 'LIST'",
+         "condition": "resource.x == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list-condition-true",
+     "operation": "LIST",
+     "resource": {
+      "id": "reg-filter-cond",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "filter-without-an-operation-and-no-rule-on-read",
+   "about": "filter-without-an-operation records read==1 against rules on READ and on UPDATE, which fits both a default operation of READ and the first rule that applies. This set has rules on UPDATE and on LIST and none on READ, uploaded in that order: DENY means the operation defaults to READ, list==1 that it defaults to LIST, and update==1 that the first rule in upload order is taken. filter-with-update, the operation spelled out, is the control that the set answers a filter at all.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "update",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "update==1"
+         }
+        },
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "list==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-with-no-operation",
+     "filter": true,
+     "omitOperation": true
+    },
+    {
+     "name": "filter-with-update",
+     "filter": true,
+     "operation": "UPDATE"
+    }
+   ]
+  }
+ ]
+}

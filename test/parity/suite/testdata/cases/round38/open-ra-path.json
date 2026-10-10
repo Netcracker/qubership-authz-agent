@@ -1,0 +1,381 @@
+{
+ "about": "Whether a path after a builtin of the subject changes what a whole requestAttributes value takes, and what the call carries. The goldens so far take a whole value of id, name, roles, type, scopes, serviceAccount and isM2M, and refuse permissions, entitledResources and permissionScope as undeclared names (rounds 10, 36 and 37); no golden puts a path after the name. Each case gives requestAttributes.x the value ${subject.X.x}, X one builtin. pipCalls records what the call carried.",
+ "resourceTypePrefix": "PARITY_SUITE_R38W_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 38 case"
+   }
+  },
+  "/api/v1/pip/r38open-ra-id-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-name-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-roles-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-type-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-scopes-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-service-account-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-permissions-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-entitled-resources-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-permission-scope-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-is-m2m-path": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-ra-scope-key-declared": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "r38open-ra-id-path": {
+   "name": "subject.parityR38RaIdPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-id-path",
+   "requestAttributes": {
+    "case": "r38open-ra-id-path",
+    "x": "${subject.id.x}"
+   }
+  },
+  "r38open-ra-name-path": {
+   "name": "subject.parityR38RaNamePath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-name-path",
+   "requestAttributes": {
+    "case": "r38open-ra-name-path",
+    "x": "${subject.name.x}"
+   }
+  },
+  "r38open-ra-roles-path": {
+   "name": "subject.parityR38RaRolesPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-roles-path",
+   "requestAttributes": {
+    "case": "r38open-ra-roles-path",
+    "x": "${subject.roles.x}"
+   }
+  },
+  "r38open-ra-type-path": {
+   "name": "subject.parityR38RaTypePath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-type-path",
+   "requestAttributes": {
+    "case": "r38open-ra-type-path",
+    "x": "${subject.type.x}"
+   }
+  },
+  "r38open-ra-scopes-path": {
+   "name": "subject.parityR38RaScopesPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-scopes-path",
+   "requestAttributes": {
+    "case": "r38open-ra-scopes-path",
+    "x": "${subject.scopes.x}"
+   }
+  },
+  "r38open-ra-service-account-path": {
+   "name": "subject.parityR38RaServiceAccountPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-service-account-path",
+   "requestAttributes": {
+    "case": "r38open-ra-service-account-path",
+    "x": "${subject.serviceAccount.x}"
+   }
+  },
+  "r38open-ra-permissions-path": {
+   "name": "subject.parityR38RaPermissionsPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-permissions-path",
+   "requestAttributes": {
+    "case": "r38open-ra-permissions-path",
+    "x": "${subject.permissions.x}"
+   }
+  },
+  "r38open-ra-entitled-resources-path": {
+   "name": "subject.parityR38RaEntitledResourcesPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-entitled-resources-path",
+   "requestAttributes": {
+    "case": "r38open-ra-entitled-resources-path",
+    "x": "${subject.entitledResources.x}"
+   }
+  },
+  "r38open-ra-permission-scope-path": {
+   "name": "subject.parityR38RaPermissionScopePath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-permission-scope-path",
+   "requestAttributes": {
+    "case": "r38open-ra-permission-scope-path",
+    "x": "${subject.permissionScope.x}"
+   }
+  },
+  "r38open-ra-is-m2m-path": {
+   "name": "subject.parityR38RaIsM2MPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-is-m2m-path",
+   "requestAttributes": {
+    "case": "r38open-ra-is-m2m-path",
+    "x": "${subject.isM2M.x}"
+   }
+  },
+  "r38open-ra-scope-key-declared": {
+   "name": "subject.parityR38RaScopeKey",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-ra-scope-key-declared",
+   "requestAttributes": {
+    "case": "r38open-ra-scope-key-declared",
+    "x": "${subject.permissionScope.region}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r38openrapath-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r38",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38open-ra-id-path",
+   "pips": [
+    "r38open-ra-id-path"
+   ],
+   "about": "requestAttributes.x is ${subject.id.x}, a path after id, which a whole value takes (round 37). The upload is taken if the check matches the part before the first dot, and refused (400) if it matches the whole placeholder, which is no declared name. Taken, the call carries null if the path selects nothing in the builtin's value; the value of subject.id if the path is dropped; the text as written if a placeholder with a path is not substituted.",
+   "condition": "subject.parityR38RaIdPath == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r38",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r38open-ra-id-path"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r38",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38open-ra-permissions-path",
+   "pips": [
+    "r38open-ra-permissions-path"
+   ],
+   "about": "requestAttributes.x is ${subject.permissions.x}, a path after permissions, which a whole value refuses as an undeclared name (round 36). The upload is refused (400) whether the check matches the whole placeholder or the part before the first dot.",
+   "condition": "subject.parityR38RaPermissionsPath == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r38",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r38open-ra-permissions-path"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r38",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38open-ra-is-m2m-path",
+   "pips": [
+    "r38open-ra-is-m2m-path"
+   ],
+   "about": "requestAttributes.x is ${subject.isM2M.x}, a path after isM2M, which a whole value takes (round 37). The upload is taken if the check matches the part before the first dot, and refused (400) if it matches the whole placeholder, which is no declared name. Taken, the call carries null if the path selects nothing in the builtin's value; the text as written if a placeholder with a path is not substituted; and every request that reads the PIP answers 400 if the path fails the request as a whole ${subject.isM2M} does.",
+   "condition": "subject.parityR38RaIsM2MPath == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r38",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r38open-ra-is-m2m-path"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r38",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38open-ra-scope-key-declared",
+   "pips": [
+    "scope",
+    "r38open-ra-scope-key-declared"
+   ],
+   "about": "The upload declares the PERMISSION_SCOPE PIP subject.permissionScope, and requestAttributes.x is ${subject.permissionScope.region}, a key of a grant. A whole ${subject.permissionScope} over the declared PIP is refused by the kind check (r37open-ra-scope-declared). The upload is refused (400) whether the key is looked up with its path, as no declared name, or without it, as the PERMISSION_SCOPE kind; the stand's log tells the two apart.",
+   "condition": "subject.parityR38RaScopeKey == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r38",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r38open-ra-scope-key-declared"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r38",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38openrapath-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r38",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

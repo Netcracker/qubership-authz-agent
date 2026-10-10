@@ -1,0 +1,259 @@
+[
+  {
+    "_comment": "F1: filter where one policy's condition is false over a present TOKEN PIP value.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_F1",
+    "resourceType": "PARITY_SUITE_SEM2_F1",
+    "operation": "LIST",
+    "condition": "subject.parityDepartment == 'sales'",
+    "rsqlPredicate": "p1==1",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0101"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_F1",
+    "resourceType": "PARITY_SUITE_SEM2_F1",
+    "operation": "LIST",
+    "rsqlPredicate": "p2==2",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0102"
+  },
+  {
+    "_comment": "F2: filter where the only policy's condition is true.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_F2",
+    "resourceType": "PARITY_SUITE_SEM2_F2",
+    "operation": "LIST",
+    "condition": "subject.parityDepartment == 'finance'",
+    "rsqlPredicate": "p1==1",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0103"
+  },
+  {
+    "_comment": "F3: filter where a condition reads a resource attribute, which a filter request has none of.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_F3",
+    "resourceType": "PARITY_SUITE_SEM2_F3",
+    "operation": "LIST",
+    "condition": "resource.x == 'v'",
+    "rsqlPredicate": "p1==1",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0104"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_F3",
+    "resourceType": "PARITY_SUITE_SEM2_F3",
+    "operation": "LIST",
+    "rsqlPredicate": "p2==2",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0105"
+  },
+  {
+    "_comment": "GENERAL PIP the case pins to HTTP 404.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_P6",
+    "resourceType": "PARITY_SUITE_SEM2_P6",
+    "operation": "READ",
+    "condition": "subject.parityBroken404 != 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0106"
+  },
+  {
+    "_comment": "GENERAL PIP the case pins to HTTP 200 with a JSON null body.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_P7",
+    "resourceType": "PARITY_SUITE_SEM2_P7",
+    "operation": "READ",
+    "condition": "subject.parityNullBody != 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0107"
+  },
+  {
+    "_comment": "P8: placeholder of a GENERAL PIP that answers HTTP 500.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_P8",
+    "resourceType": "PARITY_SUITE_SEM2_P8",
+    "operation": "LIST",
+    "rsqlPredicate": "owner==${subject.parityBroken}",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0108"
+  },
+  {
+    "_comment": "N1-N4: operators over an attribute that is present with a null value.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_N1",
+    "resourceType": "PARITY_SUITE_SEM2_N1",
+    "operation": "READ",
+    "condition": "resource.x NOT IN 'v', 'w'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0109"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_N2",
+    "resourceType": "PARITY_SUITE_SEM2_N2",
+    "operation": "READ",
+    "condition": "resource.tags NOT CONTAINS 'red'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d010a"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_N3",
+    "resourceType": "PARITY_SUITE_SEM2_N3",
+    "operation": "READ",
+    "condition": "resource.n > 5 OR resource.a == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d010b"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_N4",
+    "resourceType": "PARITY_SUITE_SEM2_N4",
+    "operation": "READ",
+    "condition": "resource.tags IS EMPTY",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d010c"
+  },
+  {
+    "_comment": "C3: numeric comparison against a string number, with a number as the control.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_C3",
+    "resourceType": "PARITY_SUITE_SEM2_C3",
+    "operation": "READ",
+    "condition": "resource.n > 5",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d010d"
+  },
+  {
+    "_comment": "C4: boolean literal against a string.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_C4",
+    "resourceType": "PARITY_SUITE_SEM2_C4",
+    "operation": "READ",
+    "condition": "resource.b == true",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d010e"
+  },
+  {
+    "_comment": "C5-C6: string equality against another case and against a leading space.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_C5",
+    "resourceType": "PARITY_SUITE_SEM2_C5",
+    "operation": "READ",
+    "condition": "resource.x == 'v'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d010f"
+  },
+  {
+    "_comment": "C8-C9: an empty string under IS EMPTY and IS NULL.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_C8",
+    "resourceType": "PARITY_SUITE_SEM2_C8",
+    "operation": "READ",
+    "condition": "resource.x IS EMPTY",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0110"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_C9",
+    "resourceType": "PARITY_SUITE_SEM2_C9",
+    "operation": "READ",
+    "condition": "resource.x IS NULL",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0111"
+  },
+  {
+    "_comment": "L6: IS EMPTY on an empty JSON object.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_L6",
+    "resourceType": "PARITY_SUITE_SEM2_L6",
+    "operation": "READ",
+    "condition": "resource.obj IS EMPTY",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0112"
+  },
+  {
+    "_comment": "L7: IN with a collection on the left.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_L7",
+    "resourceType": "PARITY_SUITE_SEM2_L7",
+    "operation": "READ",
+    "condition": "resource.tags IN 'red', 'blue'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0113"
+  },
+  {
+    "_comment": "R1-R3: the request resource is absent, a string, or an array.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM2_R1",
+    "resourceType": "PARITY_SUITE_SEM2_R1",
+    "operation": "READ",
+    "condition": "resource.x IS NULL",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0114"
+  }
+]

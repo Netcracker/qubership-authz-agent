@@ -1,0 +1,294 @@
+{
+ "about": "Whether a string compares equal (==, !=, IN) to a list or an object whose text it holds, in either of two spellings: the Java text of a map or a list ({k=v}, [v, w]) and compact JSON ({\"k\":\"v\"}, [\"v\",\"w\"]). Round 16 showed that two lists and two objects compare by value; no golden compares a structure with a string.",
+ "resourceTypePrefix": "PARITY_SUITE_R17_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "x17-eq-structure-as-text-1",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "[v, w]",
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "[v, w]",
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-text-2",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "{k=v}",
+      "y": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "{k=v}",
+      "y": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-text-3",
+   "condition": "resource.x == '{k=v}' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-text-4",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "y": "{k=v}",
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "y": "{k=v}",
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-text-5",
+   "condition": "resource.x != resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "[v, w]",
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "[v, w]",
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-json-1",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "{\"k\":\"v\"}",
+      "y": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "{\"k\":\"v\"}",
+      "y": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-json-2",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "[\"v\",\"w\"]",
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "[\"v\",\"w\"]",
+      "y": [
+       "v",
+       "w"
+      ],
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-json-3",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "y": "{\"k\":\"v\"}",
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "y": "{\"k\":\"v\"}",
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-json-4",
+   "condition": "resource.x IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": "{\"k\":\"v\"}",
+      "y": [
+       {
+        "k": "v"
+       }
+      ],
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": "{\"k\":\"v\"}",
+      "y": [
+       {
+        "k": "v"
+       }
+      ],
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "x17-eq-structure-as-json-5",
+   "condition": "resource.x == '{\"k\":\"v\"}' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}
