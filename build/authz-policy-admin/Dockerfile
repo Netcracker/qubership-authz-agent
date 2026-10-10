@@ -5,7 +5,7 @@
 # helm-templates/authz-policy-admin (authz-agent-ADR-0073). The build context is
 # the repository root, like the other images.
 
-FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:738d1cf061836894ff6bb8c33881080ac66de8cf0586615012a0c8f592649cfa AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
