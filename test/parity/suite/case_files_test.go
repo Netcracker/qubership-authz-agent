@@ -846,6 +846,15 @@ func caseFileProblems(f caseFile) []string {
 			}
 			steps[st.Name] = true
 			problems = append(problems, caseStepProblems(c, st)...)
+			switch {
+			case st.Tenant == nil:
+			case !sequence:
+				report("case %s step %s runs in a tenant of its own, which only a step of a case with steps and no sets does", c.ID, st.Name)
+			case *st.Tenant == "":
+				report("case %s step %s runs in the tenant \"\", which is no tenant: leave tenant out for the case's", c.ID, st.Name)
+			case (c.Tenant != nil && *st.Tenant == *c.Tenant) || (c.Tenant == nil && f.Tenant != nil && *st.Tenant == *f.Tenant):
+				report("case %s step %s names the tenant %s, which the case runs in already: leave tenant out", c.ID, st.Name, *st.Tenant)
+			}
 			// the step's goldens share <group>/<case>/<name> with the case's upload, when it has sets, and its requests
 			if (len(c.Sets) > 0 && (st.Name == "upload-1" || st.Name == "declare-the-domain")) || requests[st.Name] ||
 				slices.ContainsFunc(allRequests, func(r requestSpec) bool { return r.Name == st.Name }) {

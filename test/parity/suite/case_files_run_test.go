@@ -157,6 +157,9 @@ func caseSteps(c caseSpec, rt string) ([]regularStep, error) {
 			requests[r.name] = r
 		}
 		step := regularStep{name: st.Name, call: call, golden: golden, stopOnRefusal: st.OnRefusal != "continue"}
+		if st.Tenant != nil {
+			step.tenant = *st.Tenant
+		}
 		for _, text := range stepObserve(st, papOperations()[st.Op]) {
 			o := parseObservation(text)
 			obs := stepObservation{kind: o.kind}

@@ -136,6 +136,13 @@ type stepSpec struct {
 	// elements whose JSON text contains one of them. The step's case id, its
 	// resource type, and its string Args are markers too.
 	Markers []string `json:"markers"`
+	// Tenant, when present, is the tenant_id of every call the step sends in
+	// place of the case's tenant: the call, its reads, and the requests of its
+	// decide observations that set no tenantId of their own. A read-raw
+	// observation keeps the elements of this tenant. The steps after it run in
+	// the case's tenant again. Only a step of a sequence case takes a tenant,
+	// and an empty string is not a tenant.
+	Tenant *string `json:"tenant"`
 }
 
 // observation is one entry of stepSpec.Observe: its kind and its argument.
@@ -317,11 +324,12 @@ var rawReadEnvelopeFields = append([]string{"timestamp"}, configExportEnvelopeFi
 // Nothing is narrowed by the case's markers: every element of the outermost
 // lists, the body itself when it is an array and every array member of a body
 // that is an object, is kept, in the order the PAP sent, except an element
-// whose tenantId names a tenant other than tenant, the case's. A v3 export
-// lists the elements of every tenant of the stand, and a golden that held
-// them would depend on what other cases left there; an empty tenant keeps
-// them all. A raw read therefore cannot show an element that leaked in from
-// another tenant: a read observation records the tenants of the whole body. What changes from one read or one upload to the next is removed,
+// whose tenantId names a tenant other than tenant, the one the step runs in.
+// A v3 export lists the elements of every tenant of the stand, and a golden
+// that held them would depend on what other cases left there; an empty tenant
+// keeps them all. A raw read therefore cannot show an element that leaked in
+// from another tenant: a read observation records the tenants of the whole
+// body. What changes from one read or one upload to the next is removed,
 // as narrowConfigExport removes it: rawReadEnvelopeFields from a top-level
 // object, and inside each element canonicalExportValue drops the write stamps
 // and sorts the nested lists, whose order the PAP does not keep.

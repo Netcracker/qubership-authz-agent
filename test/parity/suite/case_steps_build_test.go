@@ -175,10 +175,15 @@ func TestCaseStepProblems(t *testing.T) {
 	}
 }
 
-// A tenant is read only on a case with steps and no sets, and such a case
-// reads nothing but its steps, pins, and tenant.
+// A tenant is read only on a case with steps and no sets and on a step of
+// such a case, and such a case reads nothing but its steps, pins, and tenant.
+// A step's tenant differs from the tenant its case or its file names; the
+// stand's tenant is not known offline.
 func TestCaseFileProblems_SequenceCasesAndTenants(t *testing.T) {
 	step := []stepSpec{{Name: "read", Op: "read-config-sets"}}
+	stepIn := func(tenant string) []stepSpec {
+		return []stepSpec{{Name: "read", Op: "read-config-sets", Tenant: stringOf(tenant)}}
+	}
 	sets := []setSpec{{Key: "s"}}
 	cases := []struct {
 		name string
@@ -204,6 +209,18 @@ func TestCaseFileProblems_SequenceCasesAndTenants(t *testing.T) {
 			caseFile{Cases: []caseSpec{{ID: "c", Steps: append(step, step...)}}}, "names another step"},
 		{"an empty tenant",
 			caseFile{Cases: []caseSpec{{ID: "c", Tenant: stringOf(""), Steps: step}}}, "is no tenant"},
+		{"a step in another tenant than its case's",
+			caseFile{Cases: []caseSpec{{ID: "c", Tenant: stringOf("t"), Steps: stepIn("t2")}}}, ""},
+		{"a step in another tenant than the stand's",
+			caseFile{Cases: []caseSpec{{ID: "c", Steps: stepIn("t2")}}}, ""},
+		{"a step tenant in a case with sets",
+			caseFile{Cases: []caseSpec{{ID: "c", Sets: sets, Steps: stepIn("t2")}}}, "only a step of a case with steps and no sets"},
+		{"an empty step tenant",
+			caseFile{Cases: []caseSpec{{ID: "c", Steps: stepIn("")}}}, "is no tenant"},
+		{"a step tenant that is the case's",
+			caseFile{Cases: []caseSpec{{ID: "c", Tenant: stringOf("t"), Steps: stepIn("t")}}}, "runs in already"},
+		{"a step tenant that is the file's",
+			caseFile{Tenant: stringOf("t"), Cases: []caseSpec{{ID: "c", Steps: stepIn("t")}}}, "runs in already"},
 		{"a step named as the case's upload",
 			caseFile{Cases: []caseSpec{{ID: "c", Sets: sets, Steps: []stepSpec{{Name: "upload-1", Op: "read-config-sets"}}}}},
 			"records a golden under too"},

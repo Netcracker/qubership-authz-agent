@@ -74,6 +74,9 @@ type regularStep struct {
 	golden        ParityEndpointID
 	observe       []stepObservation
 	stopOnRefusal bool
+	// tenant, when not empty, replaces the case's tenant for every call of the
+	// step; see stepSpec.Tenant.
+	tenant string
 }
 
 // stepObservation is one observation of a step: status, error-class, read
@@ -192,65 +195,77 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 // false when a step with stopOnRefusal was refused: the step's status and
 // error-class, which come first, are recorded, and nothing after them runs.
 func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep) bool {
-	ctx := context.Background()
-	m2m := s.mustM2MToken()
 	for _, step := range steps {
-		routes := []string{}
-		for _, o := range step.observe {
-			if o.kind == "pip-call" {
-				routes = append(routes, o.route)
-			}
-		}
-		s.resetCallsFor(routes)
-		status, body := 0, []byte(nil)
-		if step.call != nil {
-			var err error
-			status, body, err = HelperPAPCall(ctx, s.cfg, m2m, *step.call)
-			s.Require().NoError(err)
-		}
-		refused := step.call != nil && (status < http.StatusOK || status >= http.StatusMultipleChoices)
-		subCase := group + "/" + step.name
-		for _, o := range step.observe {
-			if refused && step.stopOnRefusal && o.kind != "status" && o.kind != "error-class" {
-				break
-			}
-			switch o.kind {
-			case "status":
-				s.Run(step.name, func() {
-					s.requirePendingGolden(step.golden, subCase, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
-				})
-			case "error-class":
-				s.Run(step.name+"-error-class", func() {
-					s.requirePendingGolden(PSUITE_PAP_ERROR, subCase, errorOutcome(status, body))
-				})
-			case "read":
-				readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
-				s.Require().NoError(err)
-				s.Run(step.name+"-read", func() {
-					s.requirePendingGolden(PSUITE_PAP_READ, subCase, narrowStepRead(readStatus, readBody, o.markers))
-				})
-			case "read-raw":
-				readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
-				s.Require().NoError(err)
-				s.Run(step.name+"-read-raw", func() {
-					s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, readBody, s.cfg.TenantID))
-				})
-			case "decide":
-				s.Run(o.request.name, func() {
-					s.runRequest(group+"/"+o.request.name, resourceType, o.request)
-				})
-			case "pip-call":
-				outcome := s.pipCallOutcome(o.route)
-				s.Run(step.name+"-pip-calls", func() {
-					s.requirePendingGolden(PSUITE_PIP_CALL, subCase, outcome)
-				})
-			}
-		}
-		if refused && step.stopOnRefusal {
+		if !s.runStep(group, resourceType, step) {
 			return false
 		}
 	}
 	return true
+}
+
+// runStep runs one step for runSteps, in the step's tenant when it names one,
+// and reports false when the step was refused and stops its case. The tenant
+// of the suite is the case's again when runStep returns, refused or not.
+func (s *ParitySuite) runStep(group, resourceType string, step regularStep) bool {
+	ctx := context.Background()
+	m2m := s.mustM2MToken()
+	if step.tenant != "" {
+		caseTenant := s.cfg.TenantID
+		s.cfg.TenantID = step.tenant
+		defer func() { s.cfg.TenantID = caseTenant }()
+	}
+	routes := []string{}
+	for _, o := range step.observe {
+		if o.kind == "pip-call" {
+			routes = append(routes, o.route)
+		}
+	}
+	s.resetCallsFor(routes)
+	status, body := 0, []byte(nil)
+	if step.call != nil {
+		var err error
+		status, body, err = HelperPAPCall(ctx, s.cfg, m2m, *step.call)
+		s.Require().NoError(err)
+	}
+	refused := step.call != nil && (status < http.StatusOK || status >= http.StatusMultipleChoices)
+	subCase := group + "/" + step.name
+	for _, o := range step.observe {
+		if refused && step.stopOnRefusal && o.kind != "status" && o.kind != "error-class" {
+			break
+		}
+		switch o.kind {
+		case "status":
+			s.Run(step.name, func() {
+				s.requirePendingGolden(step.golden, subCase, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
+			})
+		case "error-class":
+			s.Run(step.name+"-error-class", func() {
+				s.requirePendingGolden(PSUITE_PAP_ERROR, subCase, errorOutcome(status, body))
+			})
+		case "read":
+			readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
+			s.Require().NoError(err)
+			s.Run(step.name+"-read", func() {
+				s.requirePendingGolden(PSUITE_PAP_READ, subCase, narrowStepRead(readStatus, readBody, o.markers))
+			})
+		case "read-raw":
+			readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
+			s.Require().NoError(err)
+			s.Run(step.name+"-read-raw", func() {
+				s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, readBody, s.cfg.TenantID))
+			})
+		case "decide":
+			s.Run(o.request.name, func() {
+				s.runRequest(group+"/"+o.request.name, resourceType, o.request)
+			})
+		case "pip-call":
+			outcome := s.pipCallOutcome(o.route)
+			s.Run(step.name+"-pip-calls", func() {
+				s.requirePendingGolden(PSUITE_PIP_CALL, subCase, outcome)
+			})
+		}
+	}
+	return !(refused && step.stopOnRefusal)
 }
 
 // sequenceCase is a case with steps and no sets: it runs its steps alone, in
@@ -264,7 +279,8 @@ type sequenceCase struct {
 }
 
 // runSequenceCases runs each case's steps in the case's tenant, which every
-// call of the case sends as tenant_id, the requests' own tenantId aside. A
+// call of the case sends as tenant_id, a step's own tenant and the requests'
+// own tenantId aside. A
 // sequence case leaves behind what its steps leave behind: the suite empties
 // nothing for it, so a case that writes ends with steps that undo the write.
 func (s *ParitySuite) runSequenceCases(cases []sequenceCase) {

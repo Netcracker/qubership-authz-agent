@@ -117,6 +117,54 @@ func TestRunSequenceCases(t *testing.T) {
 	}
 }
 
+// stepTenantFile holds one case in tenant t whose middle step runs in tenant u:
+// its write, its read, a decision with no tenantId, and a decision that names
+// t. The steps before and after it run in t, and the next case in the stand's
+// tenant. onRefusal is the middle step's.
+func stepTenantFile(onRefusal string) caseFile {
+	return caseFile{Cases: []caseSpec{{ID: "c", Tenant: stringOf("t"), Steps: []stepSpec{
+		{Name: "before", Op: "write-domain-pips", Args: map[string]any{"domain": "D"}, Body: json.RawMessage(`[]`)},
+		{Name: "elsewhere", Op: "write-domain-policies", Args: map[string]any{"domain": "D"}, Body: json.RawMessage(`[]`),
+			Tenant: stringOf("u"), OnRefusal: onRefusal,
+			Observe:  []string{"status", "read-raw:read-domain-pips", "decide:there", "decide:home"},
+			Requests: []requestSpec{{Name: "there", Subject: "m2m"}, {Name: "home", Subject: "m2m", TenantID: stringOf("t")}}},
+		{Name: "after", Op: "write-domain-pips", Args: map[string]any{"domain": "D"}, Body: json.RawMessage(`[]`)},
+	}}, {ID: "next", Steps: []stepSpec{{Name: "read", Op: "read-config-sets"}}}}}
+}
+
+func TestRunSequenceCases_AStepRunsInItsOwnTenant(t *testing.T) {
+	const (
+		pips     = "/access/v1/simplifiedPolicies/domainPIPs/D"
+		policies = "/access/v1/simplifiedPolicies/domainPolicies/D"
+	)
+	cases := []struct {
+		name      string
+		onRefusal string
+		refuse    map[string]int
+		want      []string
+	}{
+		{"the step's calls go to its tenant and the case's tenant comes back after it",
+			"", nil,
+			[]string{"PUT " + pips + " t", "PUT " + policies + " u", "GET " + pips + " u", "POST /access/v1/check/resource u",
+				"POST /access/v1/check/resource t", "PUT " + pips + " t", "GET /access/v3/config/policySets stand"}},
+		{"a refusal in the step's tenant ends the case and the next case runs in the stand's tenant",
+			"", map[string]int{policies: http.StatusBadRequest},
+			[]string{"PUT " + pips + " t", "PUT " + policies + " u", "GET /access/v3/config/policySets stand"}},
+		{"a refusal in the step's tenant with onRefusal continue goes on there and the next step runs in the case's tenant",
+			"continue", map[string]int{policies: http.StatusBadRequest},
+			[]string{"PUT " + pips + " t", "PUT " + policies + " u", "GET " + pips + " u", "POST /access/v1/check/resource u",
+				"POST /access/v1/check/resource t", "PUT " + pips + " t", "GET /access/v3/config/policySets stand"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := runSequenceCasesAgainst(t, tc.refuse, stepTenantFile(tc.onRefusal))
+			if diff := cmp.Diff(tc.want, got); diff != "" {
+				t.Errorf("requests mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 // A customize step is the step customizeStepCall builds, observing its status
 // and then each of its requests in order, and going on after a refusal, as the
 // runner sent it before steps existed. Every customize step of every case file

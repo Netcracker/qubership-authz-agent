@@ -387,7 +387,7 @@ Optional fields change one part of the upload or the request; without them a cas
 | `pipCalls` | A case | A route the file or the case pins. The pip-mock call log is cleared when the case starts, and after the case's requests and steps what the route received over the whole case is recorded under `pip-call/<kind>/<case>`. No request of the case may set `pipCalls`, `classifyBy`, or `readsRoutes`, which clear the log again |
 | `pins` | A case | Pip-mock answers by route, `{statusCode, body}`, pinned when the case starts, before its uploads. An answer stays until a later case or request pins the route again, in the order the cases run: the cases without `sets` first |
 | `steps` | A case | PAP operations the case performs, each followed by the observations it records; see [Steps](#steps). A case with `sets` runs them after its upload and its requests, in place of `customize`. A case with `steps` and no `sets` is a sequence case: it uploads nothing of its own and runs after the file's cases with `sets` |
-| `tenant` | A sequence case | The `tenant_id` every call of the case sends, its requests' own `tenantId` aside, in place of the file's tenant and the stand's |
+| `tenant` | A sequence case | The `tenant_id` every call of the case sends, a step's own `tenant` and its requests' own `tenantId` aside, in place of the file's tenant and the stand's |
 | `standVersion` | The file | `true` makes the function first send `GET /api-version` and record the answer under `api-version/<test function>`, so the round's answers carry the version of the stand that gave them |
 | `tenant` | The file | The `tenant_id` of every sequence case that names none. A file with a `tenant` holds only sequence cases |
 
@@ -442,7 +442,8 @@ endpoints that perform them are in `suite/testdata/pap-operations.json`, which t
 operation vocabulary: an operation has a `kind` (`write`, `delete`, or `read`) and bindings, each an endpoint with a
 tier (`contract`, `primary`, or `variant`). A step names the operation in `op` and, where it is not the primary
 binding, the binding in `binding`. `args` holds the path and query parameters of the binding, strings or booleans, and
-`body` the body of the call; both take the resource type placeholders. Goldens are filed under
+`body` the body of the call; both take the resource type placeholders. A step of a sequence case may name a `tenant`
+of its own: see the paragraph on tenants after the table. Goldens are filed under
 `<kind>/<group>/<case>/<step>`, where the group is `regular` for a case with `sets` and `sequence` for a sequence case.
 
 | Observation | Records | Golden kind |
@@ -450,7 +451,7 @@ binding, the binding in `binding`. `args` holds the path and query parameters of
 | `status` | The status of the step's call | The binding's, such as `load-simplified-policies-v1`; `pap-status-v1` for an endpoint no golden has answered |
 | `error-class` | The status and, for a non-2xx answer, the response body: decoded when it is JSON, without its top-level `timestamp`, cut before a ` (through reference chain: ...)` tail, and with the names of the server's classes replaced by `<redacted>` in every string: stack frames, `.java` and `.kt` positions, dotted names that start in lower case and continue in upper case, packages under `com`, `org`, `net`, or `io`, names that hold a `$`, and bare names that end in a suffix such as `Entity`, `Dto`, `Exception`, or `Service`. Qualified JDK names under `java` and `javax`, attribute paths that start with `resource.` or `subject.`, JSON paths, and `PARITY_*` names stay, as does the rest of the text. An attribute path without its prefix, such as `owner.Id`, and a bare JDK exception name are replaced too. The suite compares the status alone: the spec repository compares the class of the message, since its text changes between builds and between PAPs | `pap-error-v1` |
 | `read:<op>` | A GET through the read operation `op` with the step's `args`: the status, the body with every array narrowed to the elements that name the case id, the resource type, a string argument, or a value of the step's `markers`, and the distinct `tenantId` values of the whole body | `pap-read` |
-| `read-raw:<op>` | The same GET recorded whole: the status and the body, not narrowed by the markers, every element of the outermost lists in the order the PAP sent, except an element whose `tenantId` names a tenant other than the case's, since a v3 export lists every tenant of the stand (an element that leaked in from another tenant shows only in the `tenants` of a `read:`); `hash`, `lastModificationTimestamp`, and `timestamp` are removed from a top-level object, and inside each element the write stamps are removed and the nested lists sorted, as in the v3 export golden; a body that is not JSON is text. A step may observe one `read:` and one `read-raw:` | `pap-read-raw-v1` |
+| `read-raw:<op>` | The same GET recorded whole: the status and the body, not narrowed by the markers, every element of the outermost lists in the order the PAP sent, except an element whose `tenantId` names a tenant other than the one the step runs in, since a v3 export lists every tenant of the stand (an element that leaked in from another tenant shows only in the `tenants` of a `read:`); `hash`, `lastModificationTimestamp`, and `timestamp` are removed from a top-level object, and inside each element the write stamps are removed and the nested lists sorted, as in the v3 export golden; a body that is not JSON is text. A step may observe one `read:` and one `read-raw:` | `pap-read-raw-v1` |
 | `decide:<name>` | The request called `<name>` of the step's `requests`, which takes the fields of a case's request and is recorded as one | That of the request |
 | `pip-call:<route>` | What the route received from the start of the step to this observation | `pip-call` |
 
@@ -465,7 +466,10 @@ writes ends with steps that undo the write. A `customize` step is a step that ob
 requests, and goes on after a refusal.
 
 A sequence case runs in its own tenant when it or its file names one, and otherwise in the stand's tenant; a case that
-needs a clean state starts with a read that shows it. The requests of a step run in the order of its `decide:`
+needs a clean state starts with a read that shows it. A step that names a `tenant` sends every call of its own in that
+tenant: the operation, its reads, and the requests of its `decide:` observations that name no `tenantId`. The next step
+runs in the case's tenant again, so one case can write the same names in two tenants and decide in both. The suite
+empties nothing in the step's tenant either: the case ends with steps that undo what each tenant received. The requests of a step run in the order of its `decide:`
 observations, and the pins of an earlier one apply to the later ones.
 
 `TestCaseFilesAreWellFormed` reads every file without a stand and fails on an unknown field, a PIP a case names and its
@@ -481,6 +485,7 @@ a `decide:` that names no request of the step or a request no `decide:` sends, a
 or in a case with `sets` as `upload-1` or `declare-the-domain`, a `pip-call:` on a route nothing pins or beside a case's `pipCalls` or
 `readsRoutes` or a request of the step that clears the call log, `status`, `error-class`, `body`, `onRefusal`, or
 `binding` on a read step, a `tenant` that is empty, on a case that is not a sequence case, or in a file that holds one,
+a step's `tenant` that is empty, names the tenant of its case or its file, or is on a step of a case that is not a sequence case,
 a sequence case with a field it does not read, `steps` beside `customize`, a customization entry with no key or with `omitFields`, two members of one entry
 that the suite would send as the same member, such as `algorithm` beside `combiningAlgorithm`, a PIP customization
 object of `pips` or `pipBody` with no name, `status` beside `omitStatus`, `pipHeaders` without `pipCalls`, `emptyOperation` beside `operation`, a negative
