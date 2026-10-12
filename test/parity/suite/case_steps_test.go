@@ -22,7 +22,6 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -275,27 +274,27 @@ func stepMarkers(caseID, rt string, st stepSpec) []string {
 
 // narrowStepRead turns the answer to a step's read into its golden shape:
 // narrowPAPRead of the body, with hash and lastModificationTimestamp removed
-// from an object body first, and the distinct tenantId values of the whole
-// 2xx body, sorted.
+// from an object body first, and the distinct tenantId values of the narrowed
+// 2xx body, sorted. The tenants come from the elements the markers keep, not
+// from the whole body: a v3 export lists the elements of every tenant of the
+// stand, so a list over the whole body would depend on what the cases before
+// this one left there.
 func narrowStepRead(status int, body []byte, markers []string) *model.PapReadOutcome {
 	var decoded any
-	if status >= 200 && status <= 299 && json.Unmarshal(body, &decoded) == nil {
-		tenants := map[string]bool{}
-		collectTenants(decoded, tenants)
-		if envelope, ok := decoded.(map[string]any); ok {
-			for _, field := range configExportEnvelopeFields {
-				delete(envelope, field)
-			}
-			body, _ = json.Marshal(envelope)
-		}
-		outcome := narrowPAPRead(status, body, markers)
-		for tenant := range tenants {
-			outcome.Tenants = append(outcome.Tenants, tenant)
-		}
-		sort.Strings(outcome.Tenants)
-		return outcome
+	if status < 200 || status > 299 || json.Unmarshal(body, &decoded) != nil {
+		return narrowPAPRead(status, body, markers)
 	}
-	return narrowPAPRead(status, body, markers)
+	if envelope, ok := decoded.(map[string]any); ok {
+		for _, field := range configExportEnvelopeFields {
+			delete(envelope, field)
+		}
+		body, _ = json.Marshal(envelope)
+	}
+	outcome := narrowPAPRead(status, body, markers)
+	tenants := map[string]bool{}
+	collectTenants(outcome.Body, tenants)
+	outcome.KeptTenants = slices.Sorted(maps.Keys(tenants))
+	return outcome
 }
 
 func collectTenants(v any, into map[string]bool) {
@@ -328,11 +327,11 @@ var rawReadEnvelopeFields = append([]string{"timestamp"}, configExportEnvelopeFi
 // A v3 export lists the elements of every tenant of the stand, and a golden
 // that held them would depend on what other cases left there; an empty tenant
 // keeps them all. A raw read therefore cannot show an element that leaked in
-// from another tenant: a read observation records the tenants of the whole
-// body. What changes from one read or one upload to the next is removed,
-// as narrowConfigExport removes it: rawReadEnvelopeFields from a top-level
-// object, and inside each element canonicalExportValue drops the write stamps
-// and sorts the nested lists, whose order the PAP does not keep.
+// from another tenant; a read observation shows one only when it holds one of
+// the step's markers. What changes from one read or one upload to the next is
+// removed, as narrowConfigExport removes it: rawReadEnvelopeFields from a
+// top-level object, and inside each element canonicalExportValue drops the
+// write stamps and sorts the nested lists, whose order the PAP does not keep.
 func rawStepRead(status int, body []byte, tenant string) *model.PapReadRawOutcome {
 	out := &model.PapReadRawOutcome{Status: status}
 	var decoded any

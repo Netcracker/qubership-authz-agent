@@ -273,16 +273,75 @@ func TestCaseFileProblems_SequenceCasesAndTenants(t *testing.T) {
 	}
 }
 
-func TestNarrowStepRead_DropsTheEnvelopeStampsAndListsEveryTenant(t *testing.T) {
+func TestNarrowStepRead_DropsTheEnvelopeStampsAndListsTheTenantsOfTheKeptElements(t *testing.T) {
 	body := `{"hash": "h", "lastModificationTimestamp": 1, "policySets": [
 		{"name": "c1 s", "tenantId": "t1", "createdWhen": 5},
 		{"name": "other", "tenantId": "default"}]}`
 	got := narrowStepRead(http.StatusOK, []byte(body), []string{"c1"})
 	want := &model.PapReadOutcome{Status: http.StatusOK,
-		Body:    map[string]any{"policySets": []any{map[string]any{"name": "c1 s", "tenantId": "t1"}}},
-		Tenants: []string{"default", "t1"}}
+		Body:        map[string]any{"policySets": []any{map[string]any{"name": "c1 s", "tenantId": "t1"}}},
+		KeptTenants: []string{"t1"}}
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("narrowStepRead mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestNarrowStepRead_ListsNoTenantWhenTheMarkersKeepNone(t *testing.T) {
+	body := `{"pips": [{"name": "other", "tenantId": "default"}]}`
+	got := narrowStepRead(http.StatusOK, []byte(body), []string{"c1"})
+	text, err := json.Marshal(got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"status":200,"body":{"pips":[]}}`; string(text) != want {
+		t.Errorf("narrowStepRead = %s, want %s", text, want)
+	}
+}
+
+func TestNarrowStepRead_TakesTheTenantsFromWhatTheGoldenKeeps(t *testing.T) {
+	cases := []struct {
+		name   string
+		status int
+		body   string
+		want   string
+	}{
+		{"a list body", http.StatusOK,
+			`[{"name": "c1 a", "tenantId": "t1"}, {"name": "b", "tenantId": "t2"}]`,
+			`{"status":200,"body":[{"name":"c1 a","tenantId":"t1"}],"keptTenants":["t1"]}`},
+		{"a tenantId nested in a kept element", http.StatusOK,
+			`{"policySets": [{"name": "c1 s", "policies": [{"tenantId": "t3"}]}, {"name": "b", "tenantId": "t2"}]}`,
+			`{"status":200,"body":{"policySets":[{"name":"c1 s","policies":[{"tenantId":"t3"}]}]},"keptTenants":["t3"]}`},
+		{"a member of an object body that is no list", http.StatusOK,
+			`{"tenantId": "t4", "pips": [{"name": "b", "tenantId": "t2"}]}`,
+			`{"status":200,"body":{"pips":[],"tenantId":"t4"},"keptTenants":["t4"]}`},
+		{"an error answer", http.StatusNotFound,
+			`{"tenantId": "t1"}`,
+			`{"status":404}`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			text, err := json.Marshal(narrowStepRead(tc.status, []byte(tc.body), []string{"c1"}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(text) != tc.want {
+				t.Errorf("narrowStepRead = %s, want %s", text, tc.want)
+			}
+		})
+	}
+}
+
+// A golden recorded before keptTenants lists the tenants of the whole body
+// under tenants; it has to differ from what the suite records now, so that
+// it is recorded again rather than passing with the member dropped.
+func TestPapReadOutcome_AGoldenWithTheFormerTenantsDiffersFromANewRead(t *testing.T) {
+	golden := &model.PapReadOutcome{}
+	if err := json.Unmarshal([]byte(`{"status":200,"body":{"pips":[]},"tenants":["default"]}`), golden); err != nil {
+		t.Fatal(err)
+	}
+	read := narrowStepRead(http.StatusOK, []byte(`{"pips": [{"name": "b", "tenantId": "default"}]}`), []string{"c1"})
+	if cmp.Equal(golden, read) {
+		t.Errorf("a golden with tenants %v equals the read %+v", golden.Tenants, read)
 	}
 }
 
