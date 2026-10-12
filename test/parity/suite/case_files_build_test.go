@@ -16,6 +16,7 @@ package paritysuite
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -233,6 +234,51 @@ func TestForwardedHeaders_LabelsAnotherTokenAndAnotherTenant(t *testing.T) {
 	}
 }
 
+// jwt returns a token whose payload holds claims, with a signature nothing
+// checks, as the Authorization of a PIP call carries it.
+func jwt(claims map[string]any) string {
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		panic(err)
+	}
+	return "Bearer e30." + base64.RawURLEncoding.EncodeToString(payload) + ".sig"
+}
+
+// The pseudo-header authorization:subject records whose token the call
+// carried by its claims: a service account by its preferred_username, the
+// request's user by the sub of the Incoming-Token, any other subject as
+// another user. The token itself never reaches the golden.
+func TestForwardedHeaders_ClassesTheSubjectOfTheToken(t *testing.T) {
+	incoming := jwt(map[string]any{"sub": "u-1", "preferred_username": "parity-reader"})
+	sent := map[string]string{"authorization": jwt(map[string]any{"sub": "s-1", "preferred_username": "service-account-parity-m2m"}),
+		"incoming-token": incoming}
+	for _, tc := range []struct {
+		name, authorization string
+		want                any
+	}{
+		{"the service's own token", jwt(map[string]any{"sub": "s-2", "preferred_username": "service-account-access-control"}),
+			"<service account>"},
+		{"the request's M2M token", sent["authorization"], "<service account>"},
+		{"the request's user token", incoming, "<the request's user>"},
+		{"another token of the request's user", jwt(map[string]any{"sub": "u-1", "azp": "exchanged"}), "<the request's user>"},
+		{"a token of another user", jwt(map[string]any{"sub": "u-2", "preferred_username": "parity-other"}), "<another user>"},
+		{"no JWT", "Bearer opaque", "<not a token>"},
+		{"a JWT without sub", jwt(map[string]any{"preferred_username": "parity-reader"}), "<not a token>"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := []PipStubCall{{Path: "/pip", Headers: map[string]string{"authorization": tc.authorization}}}
+			got := forwardedHeaders(calls, "/pip", []string{"Authorization:Subject"}, sent, "default")
+			if diff := cmp.Diff(map[string]any{"authorization:subject": tc.want}, got); diff != "" {
+				t.Errorf("forwardedHeaders mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+	got := forwardedHeaders([]PipStubCall{{Path: "/pip", Headers: map[string]string{}}}, "/pip", []string{authorizationSubject}, sent, "default")
+	if diff := cmp.Diff(map[string]any{"authorization:subject": nil}, got); diff != "" {
+		t.Errorf("forwardedHeaders of a call without Authorization mismatch (-want +got):\n%s", diff)
+	}
+}
+
 // wellFormedCaseFile returns a file caseFileProblems accepts: a case without
 // sets and a case with sets and one customize step, each with one request.
 func wellFormedCaseFile() caseFile {
@@ -388,6 +434,14 @@ func TestCaseFileProblems(t *testing.T) {
 			"case reg expects calls to /other, which nothing pins before it"},
 		{"pipHeaders without pipCalls", func(f *caseFile) { f.Cases[0].Requests[0].PIPHeaders = []string{"tenant"} },
 			"case iso request read sets pipHeaders without pipCalls"},
+		{"pipHeaders with authorization:subject", func(f *caseFile) {
+			f.Cases[0].Requests[0].PIPCalls = "/pip"
+			f.Cases[0].Requests[0].PIPHeaders = []string{"Authorization:Subject", "tenant"}
+		}, ""},
+		{"pipHeaders with another name holding a colon", func(f *caseFile) {
+			f.Cases[0].Requests[0].PIPCalls = "/pip"
+			f.Cases[0].Requests[0].PIPHeaders = []string{"authorization:claims"}
+		}, `case iso request read names "authorization:claims" in pipHeaders, which no header has, and which is not authorization:subject`},
 		{"emptyOperation beside operation", func(f *caseFile) {
 			f.Cases[0].Requests[0].EmptyOperation = true
 			f.Cases[0].Requests[0].Operation = "READ"

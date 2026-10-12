@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/fs"
@@ -283,7 +284,9 @@ type requestSpec struct {
 	// as a pip-call golden under the request's own name.
 	PIPCalls string `json:"pipCalls"`
 	// PIPHeaders names headers, beside PIPCalls, whose values in the first call
-	// on the route the pip-call golden records; see forwardedHeaders.
+	// on the route the pip-call golden records; see forwardedHeaders. The name
+	// authorization:subject, which no header can have, records whose token the
+	// call's Authorization is; see tokenSubject.
 	PIPHeaders []string `json:"pipHeaders"`
 	// UserID is sent as the userId query parameter of the check, the filter,
 	// or the bulk request; "" sends it with an empty value.
@@ -641,6 +644,11 @@ func sentHeaders(tokens TokenBundle, opts PerCallOptions) map[string]string {
 	return out
 }
 
+// authorizationSubject is the name in pipHeaders that records whose token the
+// Authorization of a PIP call is rather than the header itself. A header name
+// is a token of RFC 9110, which admits no colon, so no header has this name.
+const authorizationSubject = "authorization:subject"
+
 // forwardedHeaders returns the headers named in names that the first call to
 // route in calls carried, keyed by lower-case name, as a pip-call golden
 // records them. sent holds the headers of the request that caused the call,
@@ -648,8 +656,9 @@ func sentHeaders(tokens TokenBundle, opts PerCallOptions) map[string]string {
 // not carry is null. A value equal to the request's Authorization or
 // Incoming-Token, either one with or without Bearer, is the label <m2m token>
 // or <user token>; any other authorization value is <other token>; a tenant
-// value is <tenant_id> when it equals tenant and <other> otherwise. Any other
-// value is recorded as it is.
+// value is <tenant_id> when it equals tenant and <other> otherwise. The name
+// authorizationSubject records the call's Authorization as tokenSubject classes
+// it. Any other value is recorded as it is.
 func forwardedHeaders(calls []PipStubCall, route string, names []string, sent map[string]string, tenant string) map[string]any {
 	var first *PipStubCall
 	for i := range calls {
@@ -661,13 +670,19 @@ func forwardedHeaders(calls []PipStubCall, route string, names []string, sent ma
 	out := make(map[string]any, len(names))
 	for _, n := range names {
 		name := strings.ToLower(n)
+		header := name
+		if name == authorizationSubject {
+			header = "authorization"
+		}
 		value, carried := "", false
 		if first != nil {
-			value, carried = first.Headers[name]
+			value, carried = first.Headers[header]
 		}
 		switch {
 		case !carried:
 			out[name] = nil
+		case name == authorizationSubject:
+			out[name] = tokenSubject(value, sent["incoming-token"])
 		case sent["authorization"] != "" && withoutBearer(value) == withoutBearer(sent["authorization"]):
 			out[name] = "<m2m token>"
 		case sent["incoming-token"] != "" && withoutBearer(value) == withoutBearer(sent["incoming-token"]):
@@ -683,6 +698,45 @@ func forwardedHeaders(calls []PipStubCall, route string, names []string, sent ma
 		}
 	}
 	return out
+}
+
+// tokenSubject returns whose token value is, by its claims and never by the
+// token itself: <service account> when its preferred_username starts with
+// service-account-, as a client's token in Keycloak does; <the request's user>
+// when its sub equals the sub of incoming, the Incoming-Token of the request;
+// <another user> for any other token with a sub; and <not a token> when value,
+// with or without Bearer, is no JWT whose payload holds one of those claims.
+func tokenSubject(value, incoming string) string {
+	claims := jwtClaims(withoutBearer(value))
+	if name, _ := claims["preferred_username"].(string); strings.HasPrefix(name, "service-account-") {
+		return "<service account>"
+	}
+	sub, _ := claims["sub"].(string)
+	if sub == "" {
+		return "<not a token>"
+	}
+	if mine, _ := jwtClaims(withoutBearer(incoming))["sub"].(string); mine == sub {
+		return "<the request's user>"
+	}
+	return "<another user>"
+}
+
+// jwtClaims returns the claims of the payload of token, a JWT, without checking
+// its signature, or nil when token is no JWT with a JSON object as payload.
+func jwtClaims(token string) map[string]any {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return nil
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(parts[1], "="))
+	if err != nil {
+		return nil
+	}
+	var claims map[string]any
+	if json.Unmarshal(payload, &claims) != nil {
+		return nil
+	}
+	return claims
 }
 
 // withoutBearer returns value without a leading Bearer and space, in any case.
@@ -1041,6 +1095,11 @@ func requestProblems(c caseSpec, r requestSpec, pinned map[string]bool) []string
 		}
 	} else if r.PIPHeaders != nil {
 		report("sets pipHeaders without pipCalls, whose golden records them")
+	}
+	for _, name := range r.PIPHeaders {
+		if strings.Contains(name, ":") && strings.ToLower(name) != authorizationSubject {
+			report("names %q in pipHeaders, which no header has, and which is not %s", name, authorizationSubject)
+		}
 	}
 	if r.ClassifyBy != "" {
 		if !pinned[r.ClassifyBy] {
