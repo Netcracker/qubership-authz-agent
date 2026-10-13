@@ -1,0 +1,128 @@
+{
+ "about": "Inputs on which the specification and two second models, written apart from it, answer differently: each case is the smallest input found that keeps one such difference, with its single rule in the observation forms where it has one. Controls first and last must answer alike.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_D2_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "d2r46-f32-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "d2r46-47b162e91c",
+   "pips": [],
+   "requests": [
+    {
+     "filter": true,
+     "name": "filter"
+    }
+   ],
+   "sets": [
+    {
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "key": "s0",
+     "policies": [
+      {
+       "algorithm": "PERMIT_OVERRIDES",
+       "key": "s0-p1",
+       "rules": [
+        {
+         "condition": "true",
+         "effect": "ALLOW",
+         "key": "s0-p1-r0",
+         "predicates": {
+          "mongodbPredicate": "{ \"n\": { \"$lt\": 5 } }",
+          "predicate": "${resourceType}.n.lt(5)",
+          "rsqlPredicate": "n=lt=5",
+          "sqlPredicate": "n < 5"
+         },
+         "target": "true"
+        },
+        {
+         "condition": "true",
+         "effect": "ALLOW",
+         "key": "s0-p1-r1",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         },
+         "target": "true"
+        }
+       ],
+       "target": "true"
+      }
+     ],
+     "sets": [],
+     "target": "true"
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R16_D2SF2_138"
+  },
+  {
+   "id": "d2r46-f32-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}
