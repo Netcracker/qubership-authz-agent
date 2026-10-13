@@ -88,8 +88,14 @@ field() {
 }
 # The kinds of the objects in a render, sorted and comma-separated, and their
 # number.
-kinds_of() { grep -E '^kind: ' <<<"$1" | sort | paste -sd, - | tr -d ' ' || true; }
-object_count() { grep -c '^kind: ' <<<"$1" || true; }
+kinds_of() {
+  local render="$1"
+  grep -E '^kind: ' <<<"${render}" | sort | paste -sd, - | tr -d ' ' || true
+}
+object_count() {
+  local render="$1"
+  grep -c '^kind: ' <<<"${render}" || true
+}
 # Compares one block of the agent's Deployment, cut out by the named function,
 # with a literal, and reports the diff.
 expect_block() {
@@ -846,8 +852,14 @@ label_block() {
   local render="$1" start="$2" end="$3"
   sed -n "/^${start}labels:\$/,/${end}/p" <<<"${render}" | sed '1d;$d' | grep -vE '^ *#' || true
 }
-metadata_labels() { label_block "$1" '  ' '^spec:'; }
-pod_template_labels() { label_block "$1" '      ' '^    spec:'; }
+metadata_labels() {
+  local render="$1"
+  label_block "${render}" '  ' '^spec:'
+}
+pod_template_labels() {
+  local render="$1"
+  label_block "${render}" '      ' '^    spec:'
+}
 expect_labels() {
   local label="$1" expected="$2" got="$3"
   if [[ "${got}" == "${expected}" ]]; then
