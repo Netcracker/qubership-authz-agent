@@ -86,6 +86,10 @@ field() {
   local key="$2"
   awk -v key="${key}" '$1 == key {print $2; exit}' <<<"${document}"
 }
+# The kinds of the objects in a render, sorted and comma-separated, and their
+# number.
+kinds_of() { grep -E '^kind: ' <<<"$1" | sort | paste -sd, - | tr -d ' ' || true; }
+object_count() { grep -c '^kind: ' <<<"$1" || true; }
 # Compares one block of the agent's Deployment, cut out by the named function,
 # with a literal, and reports the diff.
 expect_block() {
@@ -700,7 +704,7 @@ fi
 
 stub_manifests="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" 2>&1 || true)"
 stub_deployment="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --show-only templates/deployment.yaml 2>&1 || true)"
-stub_summary="kinds=$(grep -E '^kind: ' <<<"${stub_manifests}" | sort | paste -sd, - | tr -d ' ') replicas=$(field "${stub_deployment}" replicas:) strategy=$(field "${stub_deployment}" type:) route=$(grep -c 'prefix: /access/v1/simplifiedPolicies' <<<"${stub_manifests}" || true)"
+stub_summary="kinds=$(kinds_of "${stub_manifests}") replicas=$(field "${stub_deployment}" replicas:) strategy=$(field "${stub_deployment}" type:) route=$(grep -c 'prefix: /access/v1/simplifiedPolicies' <<<"${stub_manifests}" || true)"
 if [[ "${stub_summary}" == "kinds=kind:Deployment,kind:Mesh,kind:PersistentVolumeClaim,kind:Service replicas=1 strategy=Recreate route=1" ]]; then
   pass "the stub chart renders its claim, Deployment, Service and mesh route, one Pod under Recreate (${stub_summary})"
 else
@@ -716,7 +720,7 @@ for named in "name: 'authz-policy-admin'" "name: 'authz-policy-admin-data'" "cla
 done
 
 
-stub_no_mesh_kinds="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=false 2>&1 | grep -E '^kind: ' | sort | paste -sd, - | tr -d ' ' || true)"
+stub_no_mesh_kinds="$(kinds_of "$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=false 2>&1 || true)")"
 if [[ "${stub_no_mesh_kinds}" == "kind:Deployment,kind:PersistentVolumeClaim,kind:Service" ]]; then
   pass "the stub chart drops the mesh route, and only it, with MESH_ROUTES_ENABLED false"
 else
@@ -767,7 +771,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   name="$(basename "${chart}")"
   with_session="$(helm template t "${chart}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set DEPLOYMENT_SESSION_ID=s-42 2>&1 || true)"
   on_objects=$(grep -c "deployment.netcracker.com/sessionId: 's-42'" <<<"${with_session}" || true)
-  objects=$(grep -c '^kind: ' <<<"${with_session}" || true)
+  objects=$(object_count "${with_session}")
   in_pod_template=$(sed -n '/^  template:/,/^    spec:/p' <<<"$(helm template t "${chart}" -f "${SIZING}" --set DEPLOYMENT_SESSION_ID=s-42 --show-only templates/deployment.yaml 2>&1 || true)" | grep -c sessionId || true)
   if [[ "${on_objects}" -eq "${objects}" && "${in_pod_template}" -eq 0 ]]; then
     pass "${name}: the session id labels every object (${objects}) and not the Pod template"
@@ -782,7 +786,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
 
   managed="$(helm template t "${chart}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set MANAGED_BY=mb-x 2>&1 || true)"
   managed_objects=$(grep -c "app.kubernetes.io/managed-by: 'mb-x'" <<<"${managed}" || true)
-  objects=$(grep -c '^kind: ' <<<"${managed}" || true)
+  objects=$(object_count "${managed}")
   managed_in_pod_template=$(sed -n '/^  template:/,/^    spec:/p' <<<"$(helm template t "${chart}" -f "${SIZING}" --set MANAGED_BY=mb-x --show-only templates/deployment.yaml 2>&1 || true)" | grep -c 'app.kubernetes.io/managed-by:' || true)
   if [[ "${managed_objects}" -eq "${objects}" && "${managed_in_pod_template}" -eq 0 ]]; then
     pass "${name}: managed-by follows MANAGED_BY on every object (${objects}) and is absent from the Pod template"
@@ -842,6 +846,8 @@ label_block() {
   local render="$1" start="$2" end="$3"
   sed -n "/^${start}labels:\$/,/${end}/p" <<<"${render}" | sed '1d;$d' | grep -vE '^ *#' || true
 }
+metadata_labels() { label_block "$1" '  ' '^spec:'; }
+pod_template_labels() { label_block "$1" '      ' '^    spec:'; }
 expect_labels() {
   local label="$1" expected="$2" got="$3"
   if [[ "${got}" == "${expected}" ]]; then
@@ -864,18 +870,18 @@ expect_labels "the agent's Deployment carries the full label set and the session
     app.kubernetes.io/part-of: 'Platform-Core-Security'
     app.kubernetes.io/managed-by: 'saasDeployer'
     app.kubernetes.io/technology: 'go'
-    deployment.netcracker.com/sessionId: 's-42'" "$(label_block "${agent_deployment}" '  ' '^spec:')"
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${agent_deployment}")"
 expect_labels "the agent's Pod template carries the full label set without managed-by and the session id" "        name: 'authz-agent'
         app.kubernetes.io/name: 'authz-agent'
         app.kubernetes.io/instance: 'authz-agent-ns1'
         app.kubernetes.io/version: '0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
         app.kubernetes.io/component: 'backend'
         app.kubernetes.io/part-of: 'Platform-Core-Security'
-        app.kubernetes.io/technology: 'go'" "$(label_block "${agent_deployment}" '      ' '^    spec:')"
+        app.kubernetes.io/technology: 'go'" "$(pod_template_labels "${agent_deployment}")"
 expect_labels "the agent's Service carries only name, part-of, managed-by and the session id" "    app.kubernetes.io/name: 'authz-agent'
     app.kubernetes.io/part-of: 'Platform-Core-Security'
     app.kubernetes.io/managed-by: 'saasDeployer'
-    deployment.netcracker.com/sessionId: 's-42'" "$(label_block "${agent_service}" '  ' '^spec:')"
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${agent_service}")"
 expect_labels "the stub's Deployment carries the full label set and the session id" "    name: 'authz-policy-admin'
     app.kubernetes.io/name: 'authz-policy-admin'
     app.kubernetes.io/instance: 'authz-policy-admin-ns1'
@@ -884,18 +890,18 @@ expect_labels "the stub's Deployment carries the full label set and the session 
     app.kubernetes.io/part-of: 'Platform-Core-Security'
     app.kubernetes.io/managed-by: 'saasDeployer'
     app.kubernetes.io/technology: 'go'
-    deployment.netcracker.com/sessionId: 's-42'" "$(label_block "${stub_labelled}" '  ' '^spec:')"
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${stub_labelled}")"
 expect_labels "the stub's Pod template carries the full label set without managed-by and the session id" "        name: 'authz-policy-admin'
         app.kubernetes.io/name: 'authz-policy-admin'
         app.kubernetes.io/instance: 'authz-policy-admin-ns1'
         app.kubernetes.io/version: '0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
         app.kubernetes.io/component: 'test-double'
         app.kubernetes.io/part-of: 'Platform-Core-Security'
-        app.kubernetes.io/technology: 'go'" "$(label_block "${stub_labelled}" '      ' '^    spec:')"
+        app.kubernetes.io/technology: 'go'" "$(pod_template_labels "${stub_labelled}")"
 expect_labels "the stub's Service carries only name, part-of, managed-by and the session id" "    app.kubernetes.io/name: 'authz-policy-admin'
     app.kubernetes.io/part-of: 'Platform-Core-Security'
     app.kubernetes.io/managed-by: 'saasDeployer'
-    deployment.netcracker.com/sessionId: 's-42'" "$(label_block "${stub_service}" '  ' '^spec:')"
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${stub_service}")"
 
 service_ports="$(helm template t "${CHART_DIR}" -f "${SIZING}" --show-only templates/service.yaml 2>&1 | grep -E '^    - name: |^      port: ' | tr -d ' ' | paste -sd, - || true)"
 if [[ "${service_ports}" == "-name:web,port:8080,-name:data-api,port:8181" ]]; then
