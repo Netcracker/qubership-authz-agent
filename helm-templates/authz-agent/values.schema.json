@@ -92,16 +92,6 @@
       ],
       "internal": true
     },
-    "DEPLOYMENT_RESOURCE_NAME": {
-      "$id": "#/properties/DEPLOYMENT_RESOURCE_NAME",
-      "description": "Service name with version postfix (matching DEPLOYMENT_VERSION parameter value). Provided if facade/bluegreen mode is true",
-      "examples": [
-        "identity-provider-v2"
-      ],
-      "internal": true,
-      "title": "The DEPLOYMENT_RESOURCE_NAME schema",
-      "type": "string"
-    },
     "DEPLOYMENT_VERSION": {
       "$id": "#/properties/DEPLOYMENT_VERSION",
       "description": "Deployment version. Provided if facade/bluegreen mode is true",
@@ -811,5 +801,11 @@
       "envSpecific": true
     }
   },
+  "required": [
+    "CPU_REQUEST",
+    "CPU_LIMIT",
+    "MEMORY_REQUEST",
+    "MEMORY_LIMIT"
+  ],
   "additionalProperties": true
 }

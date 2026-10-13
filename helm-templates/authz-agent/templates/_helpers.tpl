@@ -1,53 +1,14 @@
 {{/*
 authz-agent chart helpers.
 
-The chart does not depend on cloudbss-lib (BSS-only). Labels and instance
-naming are inlined here so every rendered manifest carries the
-sector-mandatory app.kubernetes.io/* labels per the Pdkg-alignment
-contract (UNM-157915).
+The chart does not depend on cloudbss-lib (BSS-only). Each template writes its
+labels out in full, as the platform's charts do. Every object carries
+app.kubernetes.io/name, part-of and managed-by, and the deployer's session id
+when DEPLOYMENT_SESSION_ID is set. The Deployment adds the bare `name` label,
+instance, version, component and technology. Its Pod template carries the
+Deployment's set without managed-by and the session id. The bare `name` label
+alone is the selector.
 */}}
-
-{{- define "authz-agent.serviceName" -}}
-{{- coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME -}}
-{{- end -}}
-
-{{- define "authz-agent.instance" -}}
-{{- cat (coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME) "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{- define "authz-agent.commonLabels" -}}
-name: '{{ include "authz-agent.serviceName" . }}'
-app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/instance: '{{ include "authz-agent.instance" . }}'
-{{/*
-Truncated to the 63-byte Kubernetes label limit. The value is usually a
-pipeline-generated version, and a branch build produces strings longer than
-that: `0.0.0-feature-some-long-branch-name-20260728.204756-14889036` is
-already over 63 bytes, and the API server rejects every object carrying it —
-`metadata.labels: Invalid value: ...: must be no more than 63 bytes`, i.e. the
-whole release fails to install.
-`trimSuffix "-"` keeps the truncated value a legal label (it may not end in a
-separator).
-*/}}
-app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION | trunc 63 | trimSuffix "-" | trimSuffix "." | trimSuffix "_" }}'
-app.kubernetes.io/component: 'backend'
-app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
-app.kubernetes.io/managed-by: 'saasDeployer'
-app.kubernetes.io/technology: 'go'
-{{- end -}}
-
-{{/*
-The labels of an object's metadata: the common set plus the deployer's session
-id, which the platform's charts put on every object and never on the Pod
-template. The id changes with every install session, and a Pod template label
-that changes rolls the Pods over on a deploy that changed nothing else.
-*/}}
-{{- define "authz-agent.objectLabels" -}}
-{{ include "authz-agent.commonLabels" . }}
-{{- if .Values.DEPLOYMENT_SESSION_ID }}
-deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
-{{- end }}
-{{- end -}}
 
 {{/*
 Policy pull source for the agent's pull loop: AUTHZ_PAP_CLIENT_SOURCE_URL with a
@@ -117,25 +78,6 @@ false
 {{- end -}}
 
 {{/*
-Service-mesh route registration (authz-agent-ADR-0074).
-
-Labels required by the platform: `processed-by-operator` is what makes
-core-operator pick the CR up at all, and `deployer.cleanup/allow` is what lets
-the deployer remove the routes when the release goes away. Copied from the
-access-control chart, which is the reference implementation for these CRs.
-*/}}
-{{- define "authz-agent.meshLabels" -}}
-app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
-app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
-app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
-app.kubernetes.io/processed-by-operator: 'core-operator'
-deployer.cleanup/allow: 'true'
-{{- if .Values.DEPLOYMENT_SESSION_ID }}
-deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
-{{- end }}
-{{- end -}}
-
-{{/*
 The access-control-compatible check API, as far as this agent implements it.
 
 Prefixes (not exact paths) on purpose — `/access/v1/check/resource` also covers
@@ -180,7 +122,7 @@ off by a `helm upgrade`. When the Secret already exists, its current value is
 reused; on a fresh install a new random value is generated.
 */}}
 {{- define "authz-agent.opaAuthToken" -}}
-{{- $secretName := printf "%s-opa-auth" (include "authz-agent.serviceName" .) -}}
+{{- $secretName := printf "%s-opa-auth" .Values.SERVICE_NAME -}}
 {{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
 {{- if and $existing $existing.data (index $existing.data "token") -}}
 {{- index $existing.data "token" | b64dec -}}
@@ -190,21 +132,6 @@ reused; on a fresh install a new random value is generated.
 {{- end -}}
 
 {{- define "authz-agent.validateValues" -}}
-{{/*
-The access-control stub, authz-policy-admin, is a chart of its own,
-helm-templates/authz-policy-admin. A values file written for the time it was
-part of this chart would render without a word here: no stub would be deployed,
-and the agent would pull from nowhere.
-*/}}
-{{- $stubKeys := list -}}
-{{- range keys .Values -}}
-{{- if hasPrefix "AUTHZ_POLICY_ADMIN_" . -}}
-{{- $stubKeys = append $stubKeys . -}}
-{{- end -}}
-{{- end -}}
-{{- if $stubKeys -}}
-{{- fail (printf "this chart no longer deploys authz-policy-admin and does not read %s. Install helm-templates/authz-policy-admin beside this chart and point AUTHZ_PAP_CLIENT_SOURCE_URL at its Service, http://authz-policy-admin:18090 with that chart's defaults." (join ", " (sortAlpha $stubKeys))) -}}
-{{- end -}}
 {{/*
 The platform's HorizontalPodAutoscaler template renders maxReplicas from
 HPA_MAX_REPLICAS with no default, and the API server rejects an autoscaler
@@ -225,35 +152,6 @@ not, since the policies render either way.
 {{- if and (index $.Values (printf "%s_VALUE" .)) (not (hasKey $.Values (printf "%s_PERIOD_SECONDS" .))) -}}
 {{- fail (printf "%s_VALUE is set without %s_PERIOD_SECONDS: the platform's HorizontalPodAutoscaler template then renders the policy with an empty periodSeconds, which the API server rejects." . .) -}}
 {{- end -}}
-{{- end -}}
-{{/*
-Values this chart no longer reads: the per-container parameters of the
-five-container Pod (authz-agent-ADR-0080), the AUTHZ_AGENT_-prefixed sizing
-that the platform names CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT,
-and the AUTHZ_AGENT_IMAGE override, since the image is IMAGE_REPOSITORY:TAG as
-on the platform's charts.
-`additionalProperties` is true, so a values file that still carries them renders
-without a word and the agent silently takes the defaults of this chart: an
-install passing its own copy of an old prod profile would drop from a 13Gi
-memory limit to 700Mi in one upgrade. Name them instead.
-*/}}
-{{- $removed := list
-  "ENVOY_IMAGE" "OPA_IMAGE" "PAP_CLIENT_IMAGE" "COLLECTOR_IMAGE" "TOKEN_FETCHER_IMAGE"
-  "AUTHZ_SINGLE_SERVICE_ENABLED"
-  "ENVOY_CPU_REQUEST" "ENVOY_CPU_LIMIT" "ENVOY_MEM_REQUEST" "ENVOY_MEM_LIMIT"
-  "OPA_CPU_REQUEST" "OPA_CPU_LIMIT" "OPA_MEM_REQUEST" "OPA_MEM_LIMIT"
-  "PAP_CLIENT_CPU_REQUEST" "PAP_CLIENT_CPU_LIMIT" "PAP_CLIENT_MEM_REQUEST" "PAP_CLIENT_MEM_LIMIT"
-  "COLLECTOR_CPU_REQUEST" "COLLECTOR_CPU_LIMIT" "COLLECTOR_MEM_REQUEST" "COLLECTOR_MEM_LIMIT"
-  "AUTHZ_AGENT_CPU_REQUEST" "AUTHZ_AGENT_CPU_LIMIT" "AUTHZ_AGENT_MEM_REQUEST" "AUTHZ_AGENT_MEM_LIMIT"
-  "AUTHZ_AGENT_IMAGE" -}}
-{{- $carried := list -}}
-{{- range $removed -}}
-{{- if hasKey $.Values . -}}
-{{- $carried = append $carried . -}}
-{{- end -}}
-{{- end -}}
-{{- if $carried -}}
-{{- fail (printf "this chart no longer reads these values: %s. The agent Pod is one container since authz-agent-ADR-0080, sized by CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST, MEMORY_LIMIT, AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST and AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT, and its image is IMAGE_REPOSITORY:TAG. Set those and drop these; without this check the Pod would take this chart's defaults." (join ", " $carried)) -}}
 {{- end -}}
 {{- end -}}
 

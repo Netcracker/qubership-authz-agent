@@ -16,14 +16,27 @@
 # conflict: if access-control and authz-agent run in one namespace, only one of
 # them can own these routes. Set MESH_ROUTES_ENABLED to false on whichever is
 # not meant to serve them.
+#
+# Two labels on each CR are required by the platform: core-operator picks up
+# only a CR labeled app.kubernetes.io/processed-by-operator: core-operator, and
+# the deployer removes the routes with the release only where
+# deployer.cleanup/allow is true. The labels are copied from the access-control
+# chart, the reference implementation for these CRs.
 apiVersion: core.netcracker.com/v1
 kind: Mesh
 subKind: RouteConfiguration
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}-internal-routes'
+  name: '{{ .Values.SERVICE_NAME }}-internal-routes'
   namespace: '{{ .Values.NAMESPACE }}'
   labels:
-    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/processed-by-operator: 'core-operator'
+    deployer.cleanup/allow: 'true'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   gateways:
     - internal-gateway-service
@@ -40,7 +53,7 @@ spec:
         routes:
           - destination:
               cluster: '{{ .Values.SERVICE_NAME }}'
-              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8080'
+              endpoint: 'http://{{ .Values.SERVICE_NAME }}:8080'
             rules:
               {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
               # Record-level filtering is internal-only in access-control too:
@@ -69,7 +82,7 @@ spec:
           # with an empty document, so it is noise rather than exposure.
           - destination:
               cluster: '{{ .Values.SERVICE_NAME }}-opa'
-              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8181'
+              endpoint: 'http://{{ .Values.SERVICE_NAME }}:8181'
             rules:
               - match:
                   prefix: /access/v1/authorize
@@ -80,10 +93,17 @@ apiVersion: core.netcracker.com/v1
 kind: Mesh
 subKind: RouteConfiguration
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}-private-routes'
+  name: '{{ .Values.SERVICE_NAME }}-private-routes'
   namespace: '{{ .Values.NAMESPACE }}'
   labels:
-    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/processed-by-operator: 'core-operator'
+    deployer.cleanup/allow: 'true'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   gateways:
     - private-gateway-service
@@ -98,7 +118,7 @@ spec:
         routes:
           - destination:
               cluster: '{{ .Values.SERVICE_NAME }}'
-              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8080'
+              endpoint: 'http://{{ .Values.SERVICE_NAME }}:8080'
             rules:
               {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
 ---
@@ -106,10 +126,17 @@ apiVersion: core.netcracker.com/v1
 kind: Mesh
 subKind: RouteConfiguration
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}-public-routes'
+  name: '{{ .Values.SERVICE_NAME }}-public-routes'
   namespace: '{{ .Values.NAMESPACE }}'
   labels:
-    {{- include "authz-agent.meshLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/processed-by-operator: 'core-operator'
+    deployer.cleanup/allow: 'true'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   gateways:
     - public-gateway-service
@@ -124,7 +151,7 @@ spec:
         routes:
           - destination:
               cluster: '{{ .Values.SERVICE_NAME }}'
-              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8080'
+              endpoint: 'http://{{ .Values.SERVICE_NAME }}:8080'
             rules:
               {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
           # The canonical authorize API, same destination and rewrite as on the
@@ -144,7 +171,7 @@ spec:
           # `/v1/data` to the public internet. Treat it as security-relevant.
           - destination:
               cluster: '{{ .Values.SERVICE_NAME }}-opa'
-              endpoint: 'http://{{ include "authz-agent.serviceName" . }}:8181'
+              endpoint: 'http://{{ .Values.SERVICE_NAME }}:8181'
             rules:
               - match:
                   prefix: /access/v1/authorize

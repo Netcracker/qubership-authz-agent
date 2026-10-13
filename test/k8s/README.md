@@ -44,7 +44,7 @@ Step by step, in the order `make e2e` runs them:
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
 | `e2e-images` | Builds the two product images, pip-stub, and the suite images, then loads them into the cluster |
 | `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
-| `e2e-install` | `helm upgrade --install` of the stub chart with `policy-admin-values.yaml`, then of the agent chart with `values.yaml`, each with `--wait` |
+| `e2e-install` | `helm upgrade --install` of the stub chart with its dev resource profile and `policy-admin-values.yaml`, then of the agent chart with its dev resource profile and `values.yaml`, each with `--wait` |
 | `e2e-suite` | Runs the Job, streams its log, and fails if the Job did not complete |
 | `e2e-restart` | Restarts the Deployments that run local images and waits for them; needed after `e2e-images` on a running stand, because the tags do not change |
 

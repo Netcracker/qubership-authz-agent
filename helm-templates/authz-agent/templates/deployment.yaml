@@ -7,9 +7,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   labels:
-    {{- include "authz-agent.objectLabels" . | nindent 4 }}
+    name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+    # The version is not truncated, as on the platform's charts, so a version
+    # over 63 bytes fails the install.
+    app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/technology: 'go'
+    # The deployer's session id goes on the metadata of every object and never
+    # on the Pod template, as on the platform's charts. The id changes with every
+    # install session, and a changed Pod template label rolls the Pods over on a
+    # deploy that changed nothing else.
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   replicas: {{ .Values.REPLICAS | default 1 }}
   # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
@@ -40,13 +56,21 @@ spec:
       {{- end }}
   selector:
     matchLabels:
-      name: '{{ include "authz-agent.serviceName" . }}'
+      name: '{{ .Values.SERVICE_NAME }}'
   template:
     metadata:
+      # The Pod template carries the Deployment's labels without managed-by and
+      # the session id, so that a change to either does not roll the Pods over.
       labels:
-        {{- include "authz-agent.commonLabels" . | nindent 8 }}
+        name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+        app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+        app.kubernetes.io/technology: 'go'
     spec:
-      serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
+      serviceAccountName: '{{ .Values.SERVICE_NAME }}'
       # Long enough for the whole shutdown: the two HTTP surfaces are given
       # five seconds each to finish the requests in their handlers, and the
       # decision-log loop then drains what those requests queued. This Pod
@@ -83,7 +107,7 @@ spec:
           whenUnsatisfiable: {{ $v.whenUnsatisfiable | default "ScheduleAnyway" }}
           labelSelector:
             matchLabels:
-              name: "{{ coalesce $.Values.DEPLOYMENT_RESOURCE_NAME $.Values.SERVICE_NAME }}"
+              name: "{{ $.Values.SERVICE_NAME }}"
       {{- end }}
       {{- else }}
         - maxSkew: 1
@@ -91,7 +115,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              name: "{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}"
+              name: "{{ .Values.SERVICE_NAME }}"
       {{- end }}
       volumes:
         # Mounted as a directory, deliberately not with subPath: the kubelet
@@ -101,7 +125,7 @@ spec:
         # (authz-agent-ADR-0070).
         - name: trusted-providers
           configMap:
-            name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+            name: '{{ .Values.SERVICE_NAME }}-trusted-providers'
         # sizeLimit, so a log nothing rotates cannot fill the node's disk: the
         # kubelet evicts this Pod instead. The agent's store reports how many
         # events it wrote when a write fails, so the decisions already on disk
@@ -111,7 +135,7 @@ spec:
             sizeLimit: '{{ .Values.AUTHZ_DECISION_LOG_SIZE_LIMIT }}'
         - name: opa-auth-token
           secret:
-            secretName: '{{ include "authz-agent.serviceName" . }}-opa-auth'
+            secretName: '{{ .Values.SERVICE_NAME }}-opa-auth'
             defaultMode: 292
         {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
         # Mount-mode volume: an ALREADY-EXISTING ConfigMap named by
@@ -138,7 +162,7 @@ spec:
         {{- else }}
         - name: client-credentials
           secret:
-            secretName: '{{ include "authz-agent.serviceName" . }}-client-credentials'
+            secretName: '{{ .Values.SERVICE_NAME }}-client-credentials'
             defaultMode: 292
         {{- end }}
       containers:

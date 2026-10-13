@@ -7,11 +7,11 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: '{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   labels:
-    app.kubernetes.io/name: '{{  $.Values.SERVICE_NAME }}'
-    app.kubernetes.io/part-of: '{{ $.Values.APPLICATION_NAME }}'
-    app.kubernetes.io/managed-by: '{{ $.Values.MANAGED_BY }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
     {{- if .Values.DEPLOYMENT_SESSION_ID }}
     deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
     {{- end }}
@@ -19,7 +19,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: '{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}'
+    name: '{{ .Values.SERVICE_NAME }}'
 {{- if .Values.HPA_ENABLED }}
   minReplicas: {{ coalesce .Values.HPA_MIN_REPLICAS .Values.REPLICAS }}
   maxReplicas: {{ .Values.HPA_MAX_REPLICAS }}

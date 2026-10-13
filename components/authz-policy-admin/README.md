@@ -8,7 +8,9 @@ agent through the same pull path that production uses.
 It has a Helm chart of its own, `helm-templates/authz-policy-admin`: a
 Deployment with its Service and PersistentVolumeClaim.  Install it beside the
 agent's chart and point the agent's `AUTHZ_PAP_CLIENT_SOURCE_URL` at its
-Service, `http://authz-policy-admin:18090` with the chart's defaults.
+Service, `http://authz-policy-admin:18090` with the chart's defaults. The chart
+takes its sizing from one of its resource profiles, `resource-profiles/dev.yaml`
+for a dev install, passed with `-f`.
 
 ## HTTP API
 

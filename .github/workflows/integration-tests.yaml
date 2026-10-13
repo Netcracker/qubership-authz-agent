@@ -73,8 +73,8 @@ jobs:
 
       - name: Lint the charts
         run: |
-          helm lint helm-templates/authz-agent -f test/k8s/values.yaml
-          helm lint helm-templates/authz-policy-admin -f test/k8s/policy-admin-values.yaml
+          helm lint helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml
+          helm lint helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml
 
       - name: Render assertions
         run: bash test/scripts/test-chart-render.sh

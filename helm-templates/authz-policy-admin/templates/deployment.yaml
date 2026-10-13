@@ -1,4 +1,3 @@
-{{- include "authz-policy-admin.validateValues" . }}
 # The access-control stub (authz-agent-ADR-0073).
 #
 # Serves the access-control v3 config API from policies uploaded over its own
@@ -18,9 +17,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: '{{ include "authz-policy-admin.serviceName" . }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   labels:
-    {{- include "authz-policy-admin.objectLabels" . | nindent 4 }}
+    name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+    # The version is not truncated, as on the platform's charts, so a version
+    # over 63 bytes fails the install.
+    app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+    app.kubernetes.io/component: 'test-double'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/technology: 'go'
+    # The deployer's session id goes on the metadata of every object and never
+    # on the Pod template, as on the platform's charts. The id changes with every
+    # install session, and a changed Pod template label rolls the Pod over on a
+    # deploy that changed nothing else.
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   # Exactly one Pod, by design. The uploaded policies live on the Pod's volume
   # with no replication, so a second Pod would serve different content and a
@@ -33,11 +48,22 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      name: '{{ include "authz-policy-admin.serviceName" . }}'
+      name: '{{ .Values.SERVICE_NAME }}'
   template:
     metadata:
+      # The Pod template carries the Deployment's labels without managed-by and
+      # the session id, so that a change to either does not roll the Pod over.
+      # The Service and the Deployment select on the name label, which carries
+      # this chart's own service name, so the agent's Service, which selects on
+      # the agent's name, never admits a stub Pod.
       labels:
-        {{- include "authz-policy-admin.commonLabels" . | nindent 8 }}
+        name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+        app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+        app.kubernetes.io/component: 'test-double'
+        app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+        app.kubernetes.io/technology: 'go'
     spec:
       # No serviceAccountName and no token mounted: the stub calls no
       # Kubernetes API.
@@ -58,7 +84,7 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: '{{ include "authz-policy-admin.serviceName" . }}-data'
+            claimName: '{{ .Values.SERVICE_NAME }}-data'
       containers:
         - name: '{{ .Values.SERVICE_NAME }}'
           image: '{{ .Values.IMAGE_REPOSITORY }}:{{ .Values.TAG }}'
