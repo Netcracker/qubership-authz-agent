@@ -1,0 +1,213 @@
+{
+ "about": "Round 56: whether check/filter groups the predicates of simplified policies per component, per policy (one per operation), or joins them flat. The case runs in a tenant of its own.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p56c-filter-groups-control-first",
+   "about": "Control: an ACTIVE set whose only rule allows; the check is true unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_CONTROL_FIRST",
+   "tenant": "parity-p56c-filter-groups-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-filter-groups-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "15253bbb-b74d-0bf5-50ac-5c73868c476c",
+       "name": "p56c-filter-groups-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_FILTER_GROUPS_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "2beea1f4-f7ff-e3a0-4a64-9936d5c8db88",
+         "name": "p56c-filter-groups-control-first set-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "02e9fb2a-167a-d8cd-93ae-1077bb61ada4",
+           "name": "p56c-filter-groups-control-first allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-filter-groups-per-policy-or-per-component",
+   "about": "Four simplified policies of one domain and resource type: component PARITY with a LIST policy (a==1) and an ALL policy (b==2), component PARITY_B the same with c==3 and d==4. A LIST filter reads all four. Grouped per component the text is (a==1,b==2),(c==3,d==4); grouped per policy, one per component and operation, it is four groups; joined flat it is one group of four.",
+   "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_PER_POLICY_OR_PER_COMPONENT",
+   "tenant": "parity-p56c-filter-groups-per-policy-or-per-component",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P56C_GROUPS"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "upload",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P56C_GROUPS"
+     },
+     "observe": [
+      "status",
+      "decide:filter-list",
+      "decide:check-list"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "id": "a591a915-455f-9241-d4e7-787dbefaf4dd",
+       "operation": "LIST",
+       "reason": "p56c-filter-groups-per-policy-or-per-component a",
+       "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_PER_POLICY_OR_PER_COMPONENT",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "a==1"
+      },
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "id": "ec3261ff-947a-4acd-2720-77de2f3df8dc",
+       "operation": "ALL",
+       "reason": "p56c-filter-groups-per-policy-or-per-component b",
+       "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_PER_POLICY_OR_PER_COMPONENT",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "b==2"
+      },
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY_B",
+       "id": "296f3880-3fad-4c9f-60b4-aad61cadb0da",
+       "operation": "LIST",
+       "reason": "p56c-filter-groups-per-policy-or-per-component c",
+       "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_PER_POLICY_OR_PER_COMPONENT",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "c==3"
+      },
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY_B",
+       "id": "e4713f46-5023-e894-4d08-05d4ed69f42f",
+       "operation": "ALL",
+       "reason": "p56c-filter-groups-per-policy-or-per-component d",
+       "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_PER_POLICY_OR_PER_COMPONENT",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "d==4"
+      }
+     ],
+     "requests": [
+      {
+       "name": "filter-list",
+       "filter": true,
+       "operation": "LIST"
+      },
+      {
+       "name": "check-list",
+       "operation": "LIST",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-filter-groups-control-last",
+   "about": "Control: an ACTIVE set whose only rule allows; the check is true unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_P56C_FILTER_GROUPS_CONTROL_LAST",
+   "tenant": "parity-p56c-filter-groups-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-filter-groups-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "37d4bfb9-3f11-2afe-269f-dd656b4d3c8d",
+       "name": "p56c-filter-groups-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_FILTER_GROUPS_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "95598871-76a2-e104-89aa-ae61811d825b",
+         "name": "p56c-filter-groups-control-last set-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "22e46be4-199b-78fe-dd8e-42c78b428132",
+           "name": "p56c-filter-groups-control-last allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
