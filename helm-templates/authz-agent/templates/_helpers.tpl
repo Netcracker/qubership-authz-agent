@@ -1,16 +1,4 @@
 {{/*
-authz-agent chart helpers.
-
-The chart does not depend on cloudbss-lib (BSS-only). Each template writes its
-labels out in full, as the platform's charts do. Every object carries
-app.kubernetes.io/name, part-of and managed-by, and the deployer's session id
-when DEPLOYMENT_SESSION_ID is set. The Deployment adds the bare `name` label,
-instance, version, component and technology. Its Pod template carries the
-Deployment's set without managed-by and the session id. The bare `name` label
-alone is the selector.
-*/}}
-
-{{/*
 Policy pull source for the agent's pull loop: AUTHZ_PAP_CLIENT_SOURCE_URL with a
 trailing slash removed. The puller composes the request URL by plain string
 concatenation (components/authz-agent/internal/pull/pull.go), so an operator's

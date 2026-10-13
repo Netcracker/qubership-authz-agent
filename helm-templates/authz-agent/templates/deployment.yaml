@@ -12,24 +12,16 @@ metadata:
     name: '{{ .Values.SERVICE_NAME }}'
     app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
     app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
-    # The version is not truncated, as on the platform's charts, so a version
-    # over 63 bytes fails the install.
     app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
     app.kubernetes.io/component: 'backend'
     app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
     app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
     app.kubernetes.io/technology: 'go'
-    # The deployer's session id goes on the metadata of every object and never
-    # on the Pod template, as on the platform's charts. The id changes with every
-    # install session, and a changed Pod template label rolls the Pods over on a
-    # deploy that changed nothing else.
     {{- if .Values.DEPLOYMENT_SESSION_ID }}
     deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
     {{- end }}
 spec:
   replicas: {{ .Values.REPLICAS | default 1 }}
-  # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
-  # unset renders the Kubernetes default of 25% surge and 25% unavailable.
   strategy:
       {{- if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "recreate" }}
     type: Recreate
@@ -59,8 +51,6 @@ spec:
       name: '{{ .Values.SERVICE_NAME }}'
   template:
     metadata:
-      # The Pod template carries the Deployment's labels without managed-by and
-      # the session id, so that a change to either does not roll the Pods over.
       labels:
         name: '{{ .Values.SERVICE_NAME }}'
         app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
@@ -96,9 +86,6 @@ spec:
       # written into the volume the two of them shared.
       securityContext:
         runAsNonRoot: true
-      # The Pods spread over the platform's topologies: one constraint per
-      # CLOUD_TOPOLOGIES entry, or one over CLOUD_TOPOLOGY_KEY when the list is
-      # empty, each selecting this Deployment's Pods by their name label.
       topologySpreadConstraints:
       {{- if .Values.CLOUD_TOPOLOGIES }}
       {{- range $v := .Values.CLOUD_TOPOLOGIES }}

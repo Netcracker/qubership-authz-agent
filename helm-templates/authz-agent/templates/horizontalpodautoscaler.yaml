@@ -1,9 +1,3 @@
-# The platform's HorizontalPodAutoscaler. Everything below `spec:` is the
-# platform's template, one space before a `}}` for the linter aside, so a
-# change to the autoscaler follows that template rather than being made here. This chart's own parts are the fixed
-# apiVersion, the name, which is the Deployment's, and the labels. The object
-# is rendered on every install; with HPA_ENABLED unset or false it carries
-# selectPolicy Disabled in both directions and never scales.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
