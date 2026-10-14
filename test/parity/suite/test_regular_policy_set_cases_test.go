@@ -265,7 +265,7 @@ func (s *ParitySuite) runStep(group, resourceType string, step regularStep) bool
 			})
 		}
 	}
-	return !(refused && step.stopOnRefusal)
+	return !refused || !step.stopOnRefusal
 }
 
 // sequenceCase is a case with steps and no sets: it runs its steps alone, in
