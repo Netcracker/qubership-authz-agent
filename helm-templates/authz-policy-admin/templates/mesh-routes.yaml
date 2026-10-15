@@ -25,14 +25,26 @@
 # reach `internal-gateway-service` can therefore replace the policy set — which is
 # acceptable only because the stub itself is a development and test component
 # (ADR-0073).
+#
+# Two labels on the CR are required by the platform: core-operator picks up
+# only a CR labeled app.kubernetes.io/processed-by-operator: core-operator, and
+# the deployer removes the route with the release only where
+# deployer.cleanup/allow is true.
 apiVersion: core.netcracker.com/v1
 kind: Mesh
 subKind: RouteConfiguration
 metadata:
-  name: '{{ include "authz-policy-admin.serviceName" . }}-internal-routes'
+  name: '{{ .Values.SERVICE_NAME }}-internal-routes'
   namespace: '{{ .Values.NAMESPACE }}'
   labels:
-    {{- include "authz-policy-admin.meshLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/processed-by-operator: 'core-operator'
+    deployer.cleanup/allow: 'true'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   gateways:
     - internal-gateway-service
@@ -47,7 +59,7 @@ spec:
         routes:
           - destination:
               cluster: '{{ .Values.SERVICE_NAME }}'
-              endpoint: 'http://{{ include "authz-policy-admin.serviceName" . }}:{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
+              endpoint: 'http://{{ .Values.SERVICE_NAME }}:{{ .Values.AUTHZ_POLICY_ADMIN_PORT }}'
             rules:
               # GET/PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}
               # and .../domainPIPs/{domain}. The stub answers 405 on the verbs

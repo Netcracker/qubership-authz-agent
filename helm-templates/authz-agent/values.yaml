@@ -11,7 +11,6 @@ TAG: ''
 # its images; for the agent that is also the repository's name.
 IMAGE_REPOSITORY: ghcr.io/netcracker/qubership-authz-agent
 SERVICE_NAME: "authz-agent"
-DEPLOYMENT_RESOURCE_NAME: "authz-agent"
 DEPLOYMENT_VERSION: ''
 
 # DEPLOYMENT_STRATEGY_TYPE, DEPLOYMENT_STRATEGY_MAXSURGE, and
@@ -49,9 +48,8 @@ MONITORING_ENABLED: true
 # template leaves it writable, as the platform's charts do. The decision log is
 # the one thing the agent writes, and it goes to an emptyDir.
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
-# Written into the labels of the mesh route CRs. Cloud-Deployer overrides it
-# (argocd installs set `argocd`); the default matches the value the other
-# manifests already carry.
+# The app.kubernetes.io/managed-by label of every object but the Pod template.
+# Cloud-Deployer overrides it (argocd installs set `argocd`).
 MANAGED_BY: "saasDeployer"
 # Injected by Cloud-Deployer to tie every object of one install session
 # together. Empty (default) → the label is not rendered.
@@ -321,28 +319,16 @@ AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 
 # Autoscaling is set per environment by the resource profiles: REPLICAS and the
 # HPA_* keys have no default here. The HorizontalPodAutoscaler is the platform's
-# template and is rendered on every install; without a profile, or with
-# HPA_ENABLED false, it carries selectPolicy Disabled in both directions and
-# never scales. HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT is a percentage of
+# template and is rendered on every install; with HPA_ENABLED unset or false,
+# it carries selectPolicy Disabled in both directions and never scales. HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT is a percentage of
 # CPU_LIMIT, which the template converts into the percentage of CPU_REQUEST the
 # autoscaler compares against: 75 with the dev sizing renders as 85.
 
-# Resource baselines.
-# Defaults below mirror `resource-profiles/dev.yaml` so that a plain
-# `helm install` on a dev / sandbox cluster (no profile selection, no
-# operator overrides) schedules cleanly on a small node. The deployer's
-# PROFILE parameter selects one of `resource-profiles/` (dev, dev-ha, prod,
-# prod-nonha); by hand, pass the file with `-f`.
-#
-# The numbers are what the five containers this one replaced asked for and
-# were capped at between them (authz-agent-ADR-0080), so upgrading onto this
-# chart moves neither the Pod's floor nor its ceiling. That is the only claim
-# they make: no load has been measured against the service. Deployments with
-# one worth measuring set these from the resource profiles.
-CPU_REQUEST: 350m
-CPU_LIMIT: 400m
-MEMORY_REQUEST: 364Mi
-MEMORY_LIMIT: 700Mi
+# CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and MEMORY_LIMIT are set per
+# environment by the resource profiles and have no default here. The schema
+# requires all four, so an install without a profile stops at validation. The
+# deployer's PROFILE parameter selects one of `resource-profiles/` (dev, dev-ha,
+# prod, prod-nonha); by hand, pass the file with `-f`.
 
 # The decision log is the only thing the container writes, to an emptyDir that
 # nothing rotates, so the storage limit and the volume's own sizeLimit are what

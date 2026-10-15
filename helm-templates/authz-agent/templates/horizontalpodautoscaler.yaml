@@ -1,17 +1,11 @@
-# The platform's HorizontalPodAutoscaler. Everything below `spec:` is the
-# platform's template, one space before a `}}` for the linter aside, so a
-# change to the autoscaler follows that template rather than being made here. This chart's own parts are the fixed
-# apiVersion, the name, which is the Deployment's, and the labels. The object
-# is rendered on every install; with HPA_ENABLED unset or false it carries
-# selectPolicy Disabled in both directions and never scales.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: '{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   labels:
-    app.kubernetes.io/name: '{{  $.Values.SERVICE_NAME }}'
-    app.kubernetes.io/part-of: '{{ $.Values.APPLICATION_NAME }}'
-    app.kubernetes.io/managed-by: '{{ $.Values.MANAGED_BY }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
     {{- if .Values.DEPLOYMENT_SESSION_ID }}
     deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
     {{- end }}
@@ -19,7 +13,7 @@ spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: '{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}'
+    name: '{{ .Values.SERVICE_NAME }}'
 {{- if .Values.HPA_ENABLED }}
   minReplicas: {{ coalesce .Values.HPA_MIN_REPLICAS .Values.REPLICAS }}
   maxReplicas: {{ .Values.HPA_MAX_REPLICAS }}
