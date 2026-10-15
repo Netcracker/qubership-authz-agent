@@ -48,7 +48,7 @@
           }
         ]
       },
-      "tenants": [
+      "keptTenants": [
         "default"
       ]
     }
@@ -102,9 +102,8 @@
           }
         ]
       },
-      "tenants": [
-        "default",
-        "parity-pap-r45-fresh"
+      "keptTenants": [
+        "default"
       ]
     }
   },
@@ -157,14 +156,14 @@
           }
         ]
       },
-      "tenants": [
+      "keptTenants": [
         "default"
       ]
     }
   },
   "p45-fresh-before": {
-    "pap-read/sequence/export-of-the-pips": {"status":200,"body":{"pips":[]},"tenants":["default"]},
-    "pap-read/sequence/export-of-the-sets": {"status":200,"body":{"policySets":[]},"tenants":["default"]}
+    "pap-read/sequence/export-of-the-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read/sequence/export-of-the-sets": {"status":200,"body":{"policySets":[]}}
   },
   "p45-fresh-domain": {
     "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
@@ -215,8 +214,7 @@
           }
         ]
       },
-      "tenants": [
-        "default",
+      "keptTenants": [
         "parity-pap-r45-fresh"
       ]
     }
@@ -265,8 +263,7 @@
           }
         ]
       },
-      "tenants": [
-        "default",
+      "keptTenants": [
         "parity-pap-r45-fresh"
       ]
     }

@@ -22,11 +22,11 @@
       ]
     },
     "pap-read/sequence/empty-the-domain": {"status":404},
-    "pap-read/sequence/export-after": {"status":200,"body":{"pips":[]},"tenants":["default"]}
+    "pap-read/sequence/export-after": {"status":200,"body":{"pips":[]}}
   },
   "p45-own-domain-before": {
     "pap-read/sequence/domain-pips": {"status":404},
-    "pap-read/sequence/export-of-the-pips": {"status":200,"body":{"pips":[]},"tenants":["default"]}
+    "pap-read/sequence/export-of-the-pips": {"status":200,"body":{"pips":[]}}
   },
   "p45-own-domain-refused-write": {
     "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
