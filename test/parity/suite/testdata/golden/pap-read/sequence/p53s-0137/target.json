@@ -1,0 +1,75 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY",
+        "name": "PARITY_PARITY_PARITY_SUITE_CLANG_NOT_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_PARITY_PARITY_SUITE_CLANG_NOT_READ_Policy",
+            "policyId": "258cece9-274f-4947-4666-840023b39411",
+            "rules": [
+              {
+                "condition": "resource.archived != true",
+                "effect": "ALLOW",
+                "name": "CLANG not / not-equals rewrite",
+                "ruleId": "00000000-0000-0000-0000-000000000c05",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "84258cec-e927-4f49-4746-66840023b394",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_CLANG_NOT'",
+        "tenantId": "default",
+        "type": "SIMPLIFIED"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY",
+        "name": "PARITY_PARITY_PARITY_SUITE_SCALAR_BOOLEAN_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_PARITY_PARITY_SUITE_SCALAR_BOOLEAN_LIST_Policy",
+            "policyId": "3ad1bdfc-e1a7-bf87-6271-68b34ae6a6e2",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "SUB scalar-boolean substitution",
+                "rsqlPredicate": "archived==${subject.parityArchivedScalar}",
+                "ruleId": "00000000-0000-0000-0000-000000000b42",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'LIST'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "843ad1bd-fce1-a7bf-8762-7168b34ae6a6",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_SCALAR_BOOLEAN'",
+        "tenantId": "default",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  },
+  "keptTenants": [
+    "default"
+  ]
+}
