@@ -322,6 +322,26 @@ func TestLoad_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	}
 }
 
+func TestAcceptsAlgorithm(t *testing.T) {
+	tests := []struct {
+		alg  string
+		want bool
+	}{
+		{"RS256", true},
+		{"PS512", true},
+		{"ES384", true},
+		{"EdDSA", true},
+		{"HS256", false},
+		{"none", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		if got := AcceptsAlgorithm(tt.alg); got != tt.want {
+			t.Errorf("AcceptsAlgorithm(%q) = %t, want %t", tt.alg, got, tt.want)
+		}
+	}
+}
+
 func TestKey_Allows(t *testing.T) {
 	idp := newIdP(t, rsaJWK(t, 2048, "declared", nil), rsaJWK(t, 2048, "undeclared", map[string]any{"alg": nil}))
 	set := mustLoad(t, testOptions(newClock()), issuer("realm", idp))

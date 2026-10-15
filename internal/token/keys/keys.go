@@ -135,6 +135,15 @@ func (k Key) Allows(alg string) bool {
 	return algorithmKeyType[alg] == k.JWK.KeyType().String()
 }
 
+// AcceptsAlgorithm reports whether some key may verify a token whose header
+// names alg: alg is one of the asymmetric algorithms [Key.Allows] can
+// accept. A token signed with any other algorithm, "none" and HMAC among
+// them, cannot be verified by any key of a [Set].
+func AcceptsAlgorithm(alg string) bool {
+	_, ok := algorithmKeyType[alg]
+	return ok
+}
+
 // Set is the signing keys of a fixed list of providers, indexed by kid. It
 // is safe for concurrent use, and [Set.Lookup] never waits for a reload.
 type Set struct {
