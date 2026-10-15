@@ -39,11 +39,13 @@ import (
 var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 
 // fakeKeys is a KeySource that holds its keys in memory and counts the calls
-// to Resolve.
+// to Resolve. onResolve, when set, runs inside every Resolve, standing in
+// for the wait for a reload.
 type fakeKeys struct {
-	mu       sync.Mutex
-	byKID    map[string]keys.Key
-	resolves int
+	mu        sync.Mutex
+	byKID     map[string]keys.Key
+	resolves  int
+	onResolve func()
 }
 
 func newFakeKeys(signers ...*signer) *fakeKeys {
@@ -58,6 +60,9 @@ func (f *fakeKeys) Resolve(_ context.Context, kid string) (keys.Key, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.resolves++
+	if f.onResolve != nil {
+		f.onResolve()
+	}
 	k, ok := f.byKID[kid]
 	return k, ok
 }

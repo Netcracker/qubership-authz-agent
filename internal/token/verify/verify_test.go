@@ -254,6 +254,19 @@ func TestVerify_RefusesATokenOutsideItsLifetime(t *testing.T) {
 	}
 }
 
+// Finding the key can wait for a reload; the token expires during that
+// wait, beyond the leeway, and the claims are checked after it.
+func TestVerify_ChecksTheLifetimeAtTheTimeTheKeyIsFound(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	source := newFakeKeys(s)
+	v, c := newVerifier(source)
+	source.onResolve = func() { c.advance(time.Minute + DefaultLeeway + time.Second) }
+	_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(time.Minute).Unix()})))
+	if got := codeOf(err); got != CodeExpired {
+		t.Errorf("Verify() error = %v, want code %s", err, CodeExpired)
+	}
+}
+
 func TestVerify_ToleratesTheLeewayAroundItsLifetime(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	within := DefaultLeeway - time.Second

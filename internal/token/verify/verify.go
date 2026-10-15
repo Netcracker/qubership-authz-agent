@@ -182,7 +182,7 @@ func New(source KeySource, opts Options) *Verifier {
 // A token verified earlier that has not expired is returned from the cache
 // while the [KeySource] returns the same key for its kid. Verify may wait
 // for the source to reload the keys when the kid is unknown; ctx bounds that
-// wait.
+// wait, and exp, nbf, and iat are checked against the time after that wait.
 func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
@@ -209,6 +209,9 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Resolve may have waited for a reload, long enough for the token to
+	// expire, so the clock is read again.
+	now = v.opts.now()
 	expiry, err := checkTimes(claims, now, v.opts.Leeway)
 	if err != nil {
 		return nil, err
