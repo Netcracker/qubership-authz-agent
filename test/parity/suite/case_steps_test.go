@@ -25,6 +25,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 
 	"authz-agent/test/parity/suite/model"
 )
@@ -322,8 +323,10 @@ var rawReadEnvelopeFields = append([]string{"timestamp"}, configExportEnvelopeFi
 // and the whole body, decoded when it is JSON, and kept as text otherwise.
 // Nothing is narrowed by the case's markers: every element of the outermost
 // lists, the body itself when it is an array and every array member of a body
-// that is an object, is kept, in the order the PAP sent, except an element
-// whose tenantId names a tenant other than tenant, the one the step runs in.
+// that is an object, is kept, sorted by its JSON text as the nested lists are,
+// since the order the PAP sends them in changes from one stand to the next,
+// except an element whose tenantId names a tenant other than tenant, the one
+// the step runs in.
 // A v3 export lists the elements of every tenant of the stand, and a golden
 // that held them would depend on what other cases left there; an empty tenant
 // keeps them all. A raw read therefore cannot show an element that leaked in
@@ -332,12 +335,21 @@ var rawReadEnvelopeFields = append([]string{"timestamp"}, configExportEnvelopeFi
 // removed, as narrowConfigExport removes it: rawReadEnvelopeFields from a
 // top-level object, and inside each element canonicalExportValue drops the
 // write stamps and sorts the nested lists, whose order the PAP does not keep.
+// The body of a non-2xx answer goes through withoutServerNames, as the body of
+// an error-class observation does.
 func rawStepRead(status int, body []byte, tenant string) *model.PapReadRawOutcome {
 	out := &model.PapReadRawOutcome{Status: status}
+	failed := status < 200 || status > 299
 	var decoded any
 	if err := json.Unmarshal(body, &decoded); err != nil {
 		out.Body = string(body)
+		if failed {
+			out.Body = withoutServerNames(string(body))
+		}
 		return out
+	}
+	if failed {
+		decoded = mapStrings(decoded, withoutServerNames)
 	}
 	switch typed := decoded.(type) {
 	case []any:
@@ -358,8 +370,8 @@ func rawStepRead(status int, body []byte, tenant string) *model.PapReadRawOutcom
 	return out
 }
 
-// rawElements canonicalizes each element of an outermost list and keeps their
-// order.
+// rawElements returns the elements of an outermost list that tenant keeps,
+// each canonicalized, sorted by their JSON text.
 func rawElements(elements []any, tenant string) []any {
 	kept := []any{}
 	for _, element := range elements {
@@ -368,17 +380,142 @@ func rawElements(elements []any, tenant string) []any {
 				continue
 			}
 		}
-		kept = append(kept, canonicalExportValue(element))
+		kept = append(kept, element)
 	}
-	return kept
+	return sortByJSONText(kept, canonicalExportValue)
+}
+
+// generatedUUID stands in a recorded read for an id the PAP generated.
+const generatedUUID = "<generated UUID>"
+
+// idMembers are the members that identify a set, a policy, and a rule.
+var idMembers = []string{"policySetId", "policyId", "ruleId"}
+
+// uuidPattern matches a UUID in either case.
+const uuidPattern = `[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}`
+
+var (
+	anyUUID   = regexp.MustCompile(uuidPattern)
+	wholeUUID = regexp.MustCompile(`^` + uuidPattern + `$`)
+	// writtenID matches an id a write names: a UUID, or a customization path
+	// of UUIDs, each followed by "/".
+	writtenID = regexp.MustCompile(`^` + uuidPattern + `(?:/(?:` + uuidPattern + `)?)*$`)
+)
+
+// generatedIDs tells, for one case, which ids in a read of the PAP the PAP
+// generated: the PAP stores a set, a policy, or a rule written without a UUID
+// in its id member (the member absent, null, blank, or another value) under a
+// random UUID of its own, which differs from one stand to the next.
+type generatedIDs struct {
+	// unnamed maps an id member to the names of the elements the case wrote
+	// without a UUID in it.
+	unnamed map[string]map[string]bool
+	// written holds, in lower case, every UUID the bodies of the case hold.
+	written map[string]bool
+}
+
+// caseGeneratedIDs returns the generatedIDs of a case that sends bodies. An
+// element written without a name is never masked: nothing in a read ties an
+// element to it, so a read of such an element differs between stands.
+func caseGeneratedIDs(bodies []any) generatedIDs {
+	ids := generatedIDs{unnamed: map[string]map[string]bool{}, written: map[string]bool{}}
+	for _, body := range bodies {
+		text, err := json.Marshal(body)
+		if err != nil {
+			continue
+		}
+		for _, id := range anyUUID.FindAllString(string(text), -1) {
+			ids.written[strings.ToLower(id)] = true
+		}
+		ids.collect(decodeRaw(text), false)
+	}
+	return ids
+}
+
+// collect records in ids.unnamed the elements of v that name no UUID in their
+// id member. An element of a list under rules is a rule; an element with
+// policies or policySets is a set; an element with rules is a policy.
+func (ids generatedIDs) collect(v any, inRules bool) {
+	switch x := v.(type) {
+	case map[string]any:
+		if name, ok := x["name"].(string); ok {
+			implied := map[string]bool{
+				"policySetId": x["policies"] != nil || x["policySets"] != nil,
+				"policyId":    x["rules"] != nil,
+				"ruleId":      inRules,
+			}
+			for _, member := range idMembers {
+				value, present := x[member]
+				text, _ := value.(string)
+				if present && !writtenID.MatchString(text) || !present && implied[member] {
+					if ids.unnamed[member] == nil {
+						ids.unnamed[member] = map[string]bool{}
+					}
+					ids.unnamed[member][name] = true
+				}
+			}
+		}
+		for key, value := range x {
+			ids.collect(value, key == "rules")
+		}
+	case []any:
+		for _, e := range x {
+			ids.collect(e, inRules)
+		}
+	}
+}
+
+// mask returns body with generatedUUID in place of every id the PAP
+// generated: the value of an id member of an element whose name the case
+// wrote without a UUID in that member, when the value is a UUID none of the
+// case's bodies holds. An id the case wrote stays as the PAP returns it. A body
+// with nothing to mask is returned as it is.
+func (ids generatedIDs) mask(body []byte) []byte {
+	if len(ids.unnamed) == 0 {
+		return body
+	}
+	decoded := decodeRaw(body)
+	if _, isRaw := decoded.(json.RawMessage); isRaw || !ids.replace(decoded) {
+		return body
+	}
+	masked, err := json.Marshal(decoded)
+	if err != nil {
+		return body
+	}
+	return masked
+}
+
+// replace masks the generated ids of v in place and reports whether it masked
+// any.
+func (ids generatedIDs) replace(v any) bool {
+	masked := false
+	switch x := v.(type) {
+	case map[string]any:
+		if name, ok := x["name"].(string); ok {
+			for _, member := range idMembers {
+				value, _ := x[member].(string)
+				if ids.unnamed[member][name] && wholeUUID.MatchString(value) && !ids.written[strings.ToLower(value)] {
+					x[member] = generatedUUID
+					masked = true
+				}
+			}
+		}
+		for _, value := range x {
+			masked = ids.replace(value) || masked
+		}
+	case []any:
+		for _, e := range x {
+			masked = ids.replace(e) || masked
+		}
+	}
+	return masked
 }
 
 // errorOutcome returns the golden shape of an error-class observation: the
 // status, and for a non-2xx answer its body, decoded when it is JSON, with
 // every top-level timestamp member removed, since it changes on every call.
 // A text body, and every string inside a JSON one, go through
-// withoutServerNames, which cuts the reference chain tail and replaces the
-// names of Java classes.
+// withoutServerNames, which removes what names the server's internals.
 func errorOutcome(status int, body []byte) *model.PapErrorOutcome {
 	out := &model.PapErrorOutcome{Status: status}
 	if status >= 200 && status <= 299 {
@@ -419,6 +556,19 @@ func mapStrings(v any, f func(string) string) any {
 // it cannot read: " (through reference chain: <its classes and fields>)".
 const referenceChain = " (through reference chain: "
 
+// sourcePosition matches the tail the server's JSON reader adds to the message
+// about a body it cannot read, " at [Source: <what was read>; line: 1, column:
+// 27]", with the spaces or the line break before it. The part in brackets
+// names one of the reader's settings, and may quote a bracket of the body.
+var sourcePosition = regexp.MustCompile(`\s*\bat \[Source: (?:(?s:.*?); line: \d+, column: \d+|[^\]]*)\]`)
+
+// frameworkCode matches the error code the server's HTTP framework puts at the
+// start of a message, such as "ABCDEF001234: ".
+var frameworkCode = regexp.MustCompile(`^[A-Z]{3,}\d{3,}:\s*`)
+
+// urlOrigin matches the scheme, host, and port of an absolute URL.
+var urlOrigin = regexp.MustCompile("\\bhttps?://[^/\\s\"'`]+")
+
 // redactedMarker stands in a recorded body for a name of a class, a package, or
 // a stack frame.
 const redactedMarker = "<redacted>"
@@ -431,18 +581,45 @@ var stackFrame = regexp.MustCompile(`\bat [\w$.<>]+\([^)\n]*\)`)
 // resource.o.Id, or Parser$State, with a :line suffix where one follows.
 var nameToken = regexp.MustCompile(`[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?::\d+)?`)
 
+// quotedName matches a name that fills a pair of backticks, double quotes, or
+// single quotes: identifiers joined by dots, followed by type parameters, an
+// argument list, and array brackets where they occur, as in `a.b.C<a.b.D>`,
+// "C.m()", or `C.CONSTANT`.
+var quotedName = func() *regexp.Regexp {
+	const ident = `[A-Za-z_$][\w$]*`
+	const typeParams = `<[^<>]*(?:<[^<>]*(?:<[^<>]*>[^<>]*)*>[^<>]*)*>`
+	name := ident + `(?:\.` + ident + `)*(?:` + typeParams + `)?(?:\([^()]*\))?(?:\[\])*`
+	return regexp.MustCompile("`" + name + "`|\"" + name + "\"|'" + name + "'")
+}()
+
 // classSuffix matches a bare name that ends in a suffix classes are named by,
 // such as ParityWidgetEntity or ParityWidgetException.
 var classSuffix = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(?:Entity|Dto|DTO|Exception|Error|Impl|Service|Controller|Repository|Mapper|Handler|Validator|Converter|Request|Response)$`)
 
-// withoutServerNames returns message cut where its reference chain tail
-// starts, with every stack frame and every name isServerName reports replaced
-// by redactedMarker, so that a recorded body names no class of the server. The
-// rest of the text stays: it is the PAP's reason for the refusal.
+// withoutServerNames returns message without what names the server's
+// internals, so that a recorded body names none of them. It cuts the reference
+// chain tail and the source position tail. When the message starts with a
+// framework code, it drops the code and the scheme, host, and port of every URL
+// in the message: such a message comes from the framework, and its URL is the
+// one the server itself was called at. Every quoted name isQuotedServerName
+// reports, every stack frame, and every name isServerName reports becomes
+// redactedMarker. The rest of the text stays: it is the PAP's reason for the
+// refusal.
 func withoutServerNames(message string) string {
 	if i := strings.Index(message, referenceChain); i >= 0 {
 		message = message[:i]
 	}
+	message = sourcePosition.ReplaceAllString(message, "")
+	if code := frameworkCode.FindString(message); code != "" {
+		message = urlOrigin.ReplaceAllString(message[len(code):], "")
+	}
+	message = quotedName.ReplaceAllStringFunc(message, func(quoted string) string {
+		quote := quoted[:1]
+		if !isQuotedServerName(quoted[1:len(quoted)-1], quote == "`") {
+			return quoted
+		}
+		return quote + redactedMarker + quote
+	})
 	message = stackFrame.ReplaceAllString(message, "at "+redactedMarker)
 	var out strings.Builder
 	last := 0
@@ -461,6 +638,34 @@ func withoutServerNames(message string) string {
 	}
 	out.WriteString(message[last:])
 	return out.String()
+}
+
+// isQuotedServerName reports whether name, the text of a quotedName match
+// inside its quotes, names a type, a constant, or a method, of the server or
+// of its runtime alike: a dotted name with an argument list (C.m(), a.b.C.m(x));
+// a dotted name with a part that starts with an upper-case letter, with or
+// without type parameters (C.CONSTANT, a.b.C<a.b.D>); and, in backticks, a
+// single name that starts with an upper-case letter and holds a lower-case one
+// (Thing). An attribute of the condition language (subject.x, resource.o.Id), a
+// JSON path, a dotted name of lower-case parts (parity.a.b), and, in any quotes,
+// an upper-case word (PERMITX) stay.
+func isQuotedServerName(name string, backticks bool) bool {
+	for _, kept := range []string{"resource.", "subject.", "$"} {
+		if strings.HasPrefix(name, kept) {
+			return false
+		}
+	}
+	base, _, _ := strings.Cut(name, "<")
+	base, _, hasArgs := strings.Cut(base, "(")
+	base = strings.TrimRight(base, "[]")
+	parts := strings.Split(base, ".")
+	if len(parts) == 1 {
+		return backticks && base[0] >= 'A' && base[0] <= 'Z' && strings.ContainsFunc(base, unicode.IsLower)
+	}
+	if hasArgs {
+		return true
+	}
+	return slices.ContainsFunc(parts, func(part string) bool { return part[0] >= 'A' && part[0] <= 'Z' })
 }
 
 // isServerName reports whether token, a match of nameToken that follows the

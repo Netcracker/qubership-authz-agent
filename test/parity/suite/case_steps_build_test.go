@@ -356,31 +356,42 @@ func TestRawStepRead(t *testing.T) {
 		tenant string
 		want   *model.PapReadRawOutcome
 	}{
-		{"the elements of the case's tenant and those without a tenant, in order", http.StatusOK,
+		{"the elements of the case's tenant and those without a tenant", http.StatusOK,
 			`{"pips": [{"name": "a", "tenantId": "t1"}, {"name": "b", "tenantId": "t2"}, {"name": "c"}, {"name": "d", "tenantId": "t1"}]}`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusOK, Body: map[string]any{"pips": []any{
 				map[string]any{"name": "a", "tenantId": "t1"}, map[string]any{"name": "c"}, map[string]any{"name": "d", "tenantId": "t1"}}}}},
 		{"an array body without the elements of another tenant, null and non-object elements kept", http.StatusOK,
 			`[{"tenantId": "t2"}, {"tenantId": "t1"}, {"tenantId": null}, 5]`, "t1",
-			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"tenantId": "t1"}, map[string]any{"tenantId": nil}, float64(5)}}},
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{float64(5), map[string]any{"tenantId": "t1"}, map[string]any{"tenantId": nil}}}},
 		{"an empty tenant keeps every tenant", http.StatusOK, `[{"tenantId": "t2"}, {"tenantId": "t1"}]`, "",
-			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"tenantId": "t2"}, map[string]any{"tenantId": "t1"}}}},
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"tenantId": "t1"}, map[string]any{"tenantId": "t2"}}}},
 		{"an object without its envelope stamps, nested members kept", http.StatusOK,
 			`{"hash": "h", "lastModificationTimestamp": 1, "timestamp": "now", "policySets": [{"hash": "x", "tenantId": "t1"}]}`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusOK,
 				Body: map[string]any{"policySets": []any{map[string]any{"hash": "x", "tenantId": "t1"}}}}},
-		{"the sets in the PAP's order, each without its write stamps and with its rules sorted", http.StatusOK,
+		{"the sets sorted, each without its write stamps and with its rules sorted", http.StatusOK,
 			`{"policySets": [
 				{"name": "b", "createdWhen": 5, "lastModifiedWhen": 6, "createdBy": "u", "lastModifiedBy": "u",
 				 "rules": [{"name": "r2", "createdWhen": 7}, {"name": "r1"}]},
 				{"name": "a", "other": "kept"}]}`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusOK, Body: map[string]any{"policySets": []any{
-				map[string]any{"name": "b", "rules": []any{map[string]any{"name": "r1"}, map[string]any{"name": "r2"}}},
-				map[string]any{"name": "a", "other": "kept"}}}}},
-		{"an array whole, in the PAP's order", http.StatusOK, `[{"name": "b"}, {"name": "a", "lastModifiedWhen": 1}]`, "t1",
-			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"name": "b"}, map[string]any{"name": "a"}}}},
+				map[string]any{"name": "a", "other": "kept"},
+				map[string]any{"name": "b", "rules": []any{map[string]any{"name": "r1"}, map[string]any{"name": "r2"}}}}}}},
+		{"an array whole, sorted by the text of its elements without their stamps", http.StatusOK,
+			`[{"name": "b"}, {"name": "a", "lastModifiedWhen": 1}]`, "t1",
+			&model.PapReadRawOutcome{Status: http.StatusOK, Body: []any{map[string]any{"name": "a"}, map[string]any{"name": "b"}}}},
 		{"a text body as text", http.StatusNotFound, `no such domain`, "t1",
 			&model.PapReadRawOutcome{Status: http.StatusNotFound, Body: "no such domain"}},
+		{"a text error body without the framework code and the server's address", http.StatusNotFound,
+			`PARITY000404: no resource at https://pap.internal:8443/api/v9/x`, "t1",
+			&model.PapReadRawOutcome{Status: http.StatusNotFound, Body: "no resource at /api/v9/x"}},
+		{"a JSON error body without the framework code and the server's address", http.StatusNotFound,
+			`{"timestamp": "now", "message": "PARITY000404: no resource at http://10.0.0.7:8080/api/v9/x"}`, "t1",
+			&model.PapReadRawOutcome{Status: http.StatusNotFound, Body: map[string]any{"message": "no resource at /api/v9/x"}}},
+		{"an accepted body keeps a URL and a code-shaped text", http.StatusOK,
+			`[{"url": "http://pip-mock:8090/a", "name": "PARITY000404: x"}]`, "t1",
+			&model.PapReadRawOutcome{Status: http.StatusOK,
+				Body: []any{map[string]any{"url": "http://pip-mock:8090/a", "name": "PARITY000404: x"}}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -416,11 +427,80 @@ func TestErrorOutcome(t *testing.T) {
 			`{"errors": [{"detail": "net.example.Store refused"}], "message": "see ParityWidgetEntity"}`,
 			&model.PapErrorOutcome{Status: http.StatusConflict,
 				Body: map[string]any{"errors": []any{map[string]any{"detail": "<redacted> refused"}}, "message": "see <redacted>"}}},
+		{"a JSON error body without its source position tail and quoted type names", http.StatusBadRequest,
+			"{\"message\": \"Cannot coerce `acme.ParityText` (`ParityCoercionConfig`)\\n at [Source: REDACTED (`acme.ParityFeature.X` disabled); line: 1, column: 9]\"}",
+			&model.PapErrorOutcome{Status: http.StatusBadRequest, Body: map[string]any{"message": "Cannot coerce `<redacted>` (`<redacted>`)"}}},
+		{"a text error body without its framework code and the server's address", http.StatusNotFound,
+			`PARITY001234: no resource for https://pap.internal:8443/api/v9/x`,
+			&model.PapErrorOutcome{Status: http.StatusNotFound, Body: "no resource for /api/v9/x"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			if diff := cmp.Diff(tc.want, errorOutcome(tc.status, []byte(tc.body))); diff != "" {
 				t.Errorf("errorOutcome(%d, %s) mismatch (-want +got):\n%s", tc.status, tc.body, diff)
+			}
+		})
+	}
+}
+
+// The PAP stores an element written without a UUID in its id member under a
+// UUID of its own; a read records that id as generatedUUID, so that it does
+// not differ from one stand to the next, and keeps every id the case wrote.
+func TestGeneratedIDsMask(t *testing.T) {
+	const written = "00000000-0000-0000-0000-00000000000a"
+	const generated = "3f1c2b4a-0000-4000-8000-0000000000b1"
+	cases := []struct {
+		name, sent, read, want string
+	}{
+		{"a set written with a null policySetId",
+			`[{"policySetId": null, "name": "s", "policies": []}]`,
+			`{"policySets": [{"name": "s", "policySetId": "` + generated + `"}]}`,
+			`{"policySets":[{"name":"s","policySetId":"<generated UUID>"}]}`},
+		{"a set written without a policySetId",
+			`[{"name": "s", "policies": []}]`,
+			`{"policySets": [{"name": "s", "policySetId": "` + generated + `"}]}`,
+			`{"policySets":[{"name":"s","policySetId":"<generated UUID>"}]}`},
+		{"a policy written with a blank policyId",
+			`[{"policySetId": "` + written + `", "name": "s", "policies": [{"policyId": " ", "name": "p", "rules": []}]}]`,
+			`[{"name": "s", "policySetId": "` + written + `", "policies": [{"name": "p", "policyId": "` + generated + `"}]}]`,
+			`[{"name":"s","policies":[{"name":"p","policyId":"<generated UUID>"}],"policySetId":"` + written + `"}]`},
+		{"a rule written without a ruleId",
+			`[{"name": "p", "policyId": "` + written + `", "rules": [{"name": "r"}]}]`,
+			`[{"name": "r", "ruleId": "` + generated + `"}]`,
+			`[{"name":"r","ruleId":"<generated UUID>"}]`},
+		{"a rule written with a ruleId that is no UUID",
+			`[{"name": "p", "policyId": "` + written + `", "rules": [{"ruleId": "parity-r", "name": "r"}]}]`,
+			`[{"name": "r", "ruleId": "` + generated + `"}]`,
+			`[{"name":"r","ruleId":"<generated UUID>"}]`},
+		{"an id the case wrote with spaces around it",
+			`[{"policySetId": " ` + written + ` ", "name": "s", "policies": []}]`,
+			`[{"name": "s", "policySetId": "` + written + `"}]`,
+			`[{"name": "s", "policySetId": "` + written + `"}]`},
+		{"an element of another name",
+			`[{"policySetId": null, "name": "s", "policies": []}]`,
+			`[{"name": "simplified", "policySetId": "` + generated + `"}]`,
+			`[{"name": "simplified", "policySetId": "` + generated + `"}]`},
+		{"a customization path of UUIDs",
+			`[{"policySetId": "` + written + `/", "name": "s", "policies": []}]`,
+			`[{"name": "s", "policySetId": "` + generated + `"}]`,
+			`[{"name": "s", "policySetId": "` + generated + `"}]`},
+		{"a case whose ids are all UUIDs",
+			`[{"policySetId": "` + written + `", "name": "s", "policies": [{"policyId": "` + written + `", "name": "p", "rules": []}]}]`,
+			`[{"name": "s", "policySetId": "` + generated + `"}]`,
+			`[{"name": "s", "policySetId": "` + generated + `"}]`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ids := caseGeneratedIDs([]any{json.RawMessage(tc.sent)})
+			var got, want any
+			if err := json.Unmarshal(ids.mask([]byte(tc.read)), &got); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal([]byte(tc.want), &want); err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(want, got); diff != "" {
+				t.Errorf("mask(%s) after sending %s mismatch (-want +got):\n%s", tc.read, tc.sent, diff)
 			}
 		})
 	}
@@ -498,8 +578,7 @@ func TestWithoutServerNames(t *testing.T) {
 		{"a Jackson MismatchedInputException",
 			"Cannot deserialize value of type `java.util.ArrayList<com.example.pap.dto.ParityWidgetDto>` " +
 				"from Object value (token `JsonToken.START_OBJECT`)",
-			"Cannot deserialize value of type `java.util.ArrayList<<redacted>>` " +
-				"from Object value (token `JsonToken.START_OBJECT`)"},
+			"Cannot deserialize value of type `<redacted>` from Object value (token `<redacted>`)"},
 		{"a Jackson InvalidFormatException with its path",
 			"JSON parse error: Cannot deserialize value of type `com.example.pap.model.EffectKind` from String \"PERMITX\": " +
 				"not one of the values accepted for Enum class: [ALLOW, DENY] (through reference chain: " +
@@ -547,6 +626,29 @@ func TestWithoutServerNames(t *testing.T) {
 			"the domain PARITY_ISOLATED_B has no PIP for PARITY_PAYMENT"},
 		{"a URL of the stub", "call to http://pip-mock:8090/api/v1/pip/s44-sent failed",
 			"call to http://pip-mock:8090/api/v1/pip/s44-sent failed"},
+		{"a source position tail", "Unexpected end of input\n at [Source: REDACTED (`acme.ParityFeature.PARITY_SOURCE` disabled); line: 1, column: 27]",
+			"Unexpected end of input"},
+		{"a source position tail before a reference chain",
+			"bad value at [Source: (String)\"[1]\"; line: 3, column: 1] (through reference chain: x.Y[0])",
+			"bad value"},
+		{"a qualified type in backticks", "Cannot coerce `acme.util.ParityText` to `acme.lang.ParityNumber[]`",
+			"Cannot coerce `<redacted>` to `<redacted>`"},
+		{"a qualified type with nested type parameters in double quotes",
+			`expected "acme.util.ParityMap<acme.lang.ParityText, acme.util.ParityList<acme.ParityUuid>>" here`,
+			`expected "<redacted>" here`},
+		{"a constant of a type in backticks", "unexpected token (`ParityToken.VALUE_STRING`)",
+			"unexpected token (`<redacted>`)"},
+		{"a method in a null-pointer message", `Cannot invoke "acme.ParityText.size()" because "parity" is null; "ParityList.get(int)" failed`,
+			`Cannot invoke "<redacted>" because "parity" is null; "<redacted>" failed`},
+		{"a bare class name in backticks", "coercion of `ParityCoercionConfig` refused; use `parityHint` or `PARITY_MODE`",
+			"coercion of `<redacted>` refused; use `parityHint` or `PARITY_MODE`"},
+		{"quoted attributes, paths, and lower-case dotted values", "'resource.o.Id', \"subject.parityX\", `$.a.B`, and 'parity.a.b' are kept",
+			"'resource.o.Id', \"subject.parityX\", `$.a.B`, and 'parity.a.b' are kept"},
+		{"a framework code and the server's own URL",
+			"PARITY001234: no handler for http://pap.internal:8080/api/v9/parity?tenant_id=x",
+			"no handler for /api/v9/parity?tenant_id=x"},
+		{"a code-shaped text inside a message", "the name PARITY001234: x at http://pip-mock:8090/a is taken",
+			"the name PARITY001234: x at http://pip-mock:8090/a is taken"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

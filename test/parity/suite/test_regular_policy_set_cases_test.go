@@ -180,7 +180,11 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 				}
 			}
 			runRequests(tc.requests)
-			if !s.runSteps("regular/"+tc.id, tc.resourceType, tc.steps) {
+			var uploaded []any
+			for _, upload := range tc.uploads {
+				uploaded = append(uploaded, upload.sets)
+			}
+			if !s.runSteps("regular/"+tc.id, tc.resourceType, tc.steps, uploaded) {
 				return
 			}
 			s.recordCasePIPCalls("regular/"+tc.id, tc.pipCalls)
@@ -194,9 +198,19 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 // the requests of decide observations under the request's name. It reports
 // false when a step with stopOnRefusal was refused: the step's status and
 // error-class, which come first, are recorded, and nothing after them runs.
-func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep) bool {
+// A read and a raw read record their body with the ids the PAP generated for
+// the elements the steps write without one masked (generatedIDs); uploaded
+// holds the bodies the case sent before its steps, whose ids it wrote too.
+func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep, uploaded []any) bool {
+	bodies := slices.Clone(uploaded)
 	for _, step := range steps {
-		if !s.runStep(group, resourceType, step) {
+		if step.call != nil && step.call.body != nil {
+			bodies = append(bodies, step.call.body)
+		}
+	}
+	ids := caseGeneratedIDs(bodies)
+	for _, step := range steps {
+		if !s.runStep(group, resourceType, step, ids) {
 			return false
 		}
 	}
@@ -206,7 +220,7 @@ func (s *ParitySuite) runSteps(group, resourceType string, steps []regularStep) 
 // runStep runs one step for runSteps, in the step's tenant when it names one,
 // and reports false when the step was refused and stops its case. The tenant
 // of the suite is the case's again when runStep returns, refused or not.
-func (s *ParitySuite) runStep(group, resourceType string, step regularStep) bool {
+func (s *ParitySuite) runStep(group, resourceType string, step regularStep, ids generatedIDs) bool {
 	ctx := context.Background()
 	m2m := s.mustM2MToken()
 	if step.tenant != "" {
@@ -246,13 +260,13 @@ func (s *ParitySuite) runStep(group, resourceType string, step regularStep) bool
 			readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
 			s.Require().NoError(err)
 			s.Run(step.name+"-read", func() {
-				s.requirePendingGolden(PSUITE_PAP_READ, subCase, narrowStepRead(readStatus, readBody, o.markers))
+				s.requirePendingGolden(PSUITE_PAP_READ, subCase, narrowStepRead(readStatus, ids.mask(readBody), o.markers))
 			})
 		case "read-raw":
 			readStatus, readBody, err := HelperPAPCall(ctx, s.cfg, m2m, o.read)
 			s.Require().NoError(err)
 			s.Run(step.name+"-read-raw", func() {
-				s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, readBody, s.cfg.TenantID))
+				s.requirePendingGolden(PSUITE_PAP_READ_RAW, subCase, rawStepRead(readStatus, ids.mask(readBody), s.cfg.TenantID))
 			})
 		case "decide":
 			s.Run(o.request.name, func() {
@@ -296,7 +310,7 @@ func (s *ParitySuite) runSequenceCases(cases []sequenceCase) {
 				s.T().Cleanup(func() { s.cfg.TenantID = stand })
 			}
 			s.pinRoutes(tc.pins)
-			s.runSteps("sequence/"+tc.id, tc.resourceType, tc.steps)
+			s.runSteps("sequence/"+tc.id, tc.resourceType, tc.steps, nil)
 		})
 	}
 }
