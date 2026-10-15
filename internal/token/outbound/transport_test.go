@@ -88,7 +88,7 @@ func hostOf(t *testing.T, r *recorder) string {
 func TestTransport_AddsTheTokenForAnAuthorizedHostOnly(t *testing.T) {
 	pip := newRecorder(t, nil)
 	other := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
 	tests := []struct {
 		name   string
 		target *recorder
@@ -106,7 +106,7 @@ func TestTransport_AddsTheTokenForAnAuthorizedHostOnly(t *testing.T) {
 
 func TestTransport_KeepsAnAuthorizationTheRequestCarries(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
 	got := send(t, rt, pip, http.Header{"Authorization": {"Bearer from-the-policy"}})
 	if values := got.Values("Authorization"); len(values) != 1 || values[0] != "Bearer from-the-policy" {
 		t.Errorf("Authorization = %q, want only %q", values, "Bearer from-the-policy")
@@ -115,7 +115,7 @@ func TestTransport_KeepsAnAuthorizationTheRequestCarries(t *testing.T) {
 
 func TestTransport_AddsTheContextHeadersTheRequestLacks(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource("tok-1"), TransportOptions{
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{
 		Headers: func(context.Context) http.Header {
 			return http.Header{"x-request-id": {"from-context"}, "traceparent": {"00-trace-span-01"}}
 		},
@@ -133,7 +133,7 @@ type requestKey struct{}
 
 func TestTransport_TakesTheHeadersFromTheRequestsContext(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource("tok-1"), TransportOptions{
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{
 		Headers: func(ctx context.Context) http.Header {
 			id, _ := ctx.Value(requestKey{}).(string)
 			return http.Header{"X-Request-Id": {id}}
@@ -155,7 +155,7 @@ func TestTransport_TakesTheHeadersFromTheRequestsContext(t *testing.T) {
 
 func TestTransport_LeavesTheCallersRequestUnchanged(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource("tok-1"), TransportOptions{
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{
 		Authorize: AllowHosts(hostOf(t, pip)),
 		Headers:   func(context.Context) http.Header { return http.Header{"Traceparent": {"00-trace-span-01"}} },
 	})
@@ -185,11 +185,11 @@ func (c *closeRecorder) Close() error {
 }
 
 // The two controls of TestTransport_FailsWithoutAToken: a request that
-// needs no token is sent while the source holds none.
+// needs no token is sent while the token function returns "".
 func TestTransport_SendsWithoutATokenARequestThatNeedsNone(t *testing.T) {
 	pip := newRecorder(t, nil)
 	other := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource(""), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken(""), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
 	tests := []struct {
 		name   string
 		target *recorder
@@ -206,9 +206,34 @@ func TestTransport_SendsWithoutATokenARequestThatNeedsNone(t *testing.T) {
 	}
 }
 
+// The token function returns "" on its first call and a token on the next,
+// as a FileSource does once its file appears.
+func TestTransport_AsksForTheTokenOnEveryRequest(t *testing.T) {
+	pip := newRecorder(t, nil)
+	calls := 0
+	token := func() string {
+		calls++
+		if calls == 1 {
+			return ""
+		}
+		return "tok-2"
+	}
+	rt := NewTransport(http.DefaultTransport, token, TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	req, err := http.NewRequest(http.MethodGet, pip.srv.URL+"/pip", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := rt.RoundTrip(req); !errors.Is(err, ErrNoToken) {
+		t.Fatalf("first RoundTrip() error = %v, want %v", err, ErrNoToken)
+	}
+	if got := send(t, rt, pip, nil).Get("Authorization"); got != "Bearer tok-2" {
+		t.Errorf("Authorization on the second request = %q, want %q", got, "Bearer tok-2")
+	}
+}
+
 func TestTransport_FailsWithoutAToken(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticSource(""), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken(""), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
 	body := &closeRecorder{Reader: strings.NewReader("{}")}
 	req, err := http.NewRequest(http.MethodPost, pip.srv.URL+"/pip", body)
 	if err != nil {
@@ -232,7 +257,7 @@ func TestTransport_DoesNotCarryTheTokenThroughARedirectToAnotherHost(t *testing.
 	pip := newRecorder(t, func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, elsewhere.srv.URL+"/landing", http.StatusFound)
 	})
-	client := &http.Client{Transport: NewTransport(http.DefaultTransport, staticSource("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})}
+	client := &http.Client{Transport: NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})}
 	resp, err := client.Get(pip.srv.URL + "/pip")
 	if err != nil {
 		t.Fatalf("Get() error = %v", err)

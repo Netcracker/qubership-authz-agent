@@ -115,7 +115,8 @@ func (l *recordingLogger) all() []string {
 	return slices.Clone(l.messages)
 }
 
-// staticSource is a Source with a fixed token.
-type staticSource string
-
-func (s staticSource) Token() string { return string(s) }
+// staticToken returns a token function for NewTransport that always
+// returns token.
+func staticToken(token string) func() string {
+	return func() string { return token }
+}

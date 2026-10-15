@@ -38,22 +38,23 @@ type TransportOptions struct {
 // NewTransport returns a transport that sends a request through base after
 // two additions. It adds each header that opts.Headers returns for the
 // request's context and the request does not carry yet. It adds
-// Authorization: Bearer with the token of source to a request whose URL
+// Authorization: Bearer with the result of token to a request whose URL
 // opts.Authorize accepts and that carries no Authorization of its own;
-// while source holds no token, such a request is not sent and fails with
-// [ErrNoToken].
+// while token returns "", such a request is not sent and fails with
+// [ErrNoToken]. token is called for every such request, possibly from
+// several goroutines at once; [FileSource.Token] is such a function.
 //
 // The additions go on a copy of the request, so the caller's request, and
 // any request an HTTP client derives from it to follow a redirect, never
 // holds the token: each redirect is judged by opts.Authorize on its own.
-func NewTransport(base http.RoundTripper, source Source, opts TransportOptions) http.RoundTripper {
-	return &transport{base: base, source: source, opts: opts}
+func NewTransport(base http.RoundTripper, token func() string, opts TransportOptions) http.RoundTripper {
+	return &transport{base: base, token: token, opts: opts}
 }
 
 type transport struct {
-	base   http.RoundTripper
-	source Source
-	opts   TransportOptions
+	base  http.RoundTripper
+	token func() string
+	opts  TransportOptions
 }
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -66,7 +67,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 	if t.opts.Authorize != nil && out.Header.Get("Authorization") == "" && t.opts.Authorize(out.URL) {
-		token := t.source.Token()
+		token := t.token()
 		if token == "" {
 			// A RoundTripper closes the request body even when it fails.
 			if req.Body != nil {

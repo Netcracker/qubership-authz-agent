@@ -107,7 +107,7 @@ func TestVerify_RefusesAMalformedToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
 			_, err := v.Verify(context.Background(), tt.raw)
-			if got := codeOf(err); got != CodeFormatInvalid {
+			if codeOf(err) != CodeFormatInvalid {
 				t.Errorf("Verify() error = %v, want code %s", err, CodeFormatInvalid)
 			}
 		})
@@ -132,7 +132,7 @@ func TestVerify_RefusesAHeaderThatNamesNoUsableKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
 			_, err := v.Verify(context.Background(), tt.raw)
-			if got := codeOf(err); got != tt.want {
+			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
 		})
@@ -158,7 +158,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
 			_, err := v.Verify(context.Background(), tt.raw)
-			if got := codeOf(err); got != tt.want {
+			if codeOf(err) != tt.want {
 				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
 			}
 			if size := len(err.Error()); size > 400 {
@@ -188,7 +188,7 @@ func TestVerify_RefusesWithoutAskingForAKey(t *testing.T) {
 			source := newFakeKeys()
 			v, _ := newVerifier(source)
 			_, err := v.Verify(context.Background(), tt.raw)
-			if got := codeOf(err); got != tt.want {
+			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
 			if got := source.resolveCount(); got != 0 {
@@ -219,7 +219,7 @@ func TestVerify_RefusesATokenWhoseSignatureDoesNotVerify(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(trusted))
 			_, err := v.Verify(context.Background(), tt.raw)
-			if got := codeOf(err); got != CodeSignatureInvalid {
+			if codeOf(err) != CodeSignatureInvalid {
 				t.Errorf("Verify() error = %v, want code %s", err, CodeSignatureInvalid)
 			}
 			if err != nil && strings.Contains(err.Error(), tt.raw) {
@@ -247,7 +247,7 @@ func TestVerify_RefusesATokenOutsideItsLifetime(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
 			_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, tt.fields)))
-			if got := codeOf(err); got != tt.want {
+			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
 		})
@@ -262,7 +262,7 @@ func TestVerify_ChecksTheLifetimeAtTheTimeTheKeyIsFound(t *testing.T) {
 	v, c := newVerifier(source)
 	source.onResolve = func() { c.advance(time.Minute + DefaultLeeway + time.Second) }
 	_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(time.Minute).Unix()})))
-	if got := codeOf(err); got != CodeExpired {
+	if codeOf(err) != CodeExpired {
 		t.Errorf("Verify() error = %v, want code %s", err, CodeExpired)
 	}
 }
@@ -316,7 +316,7 @@ func TestVerify_RefusesAnAudienceTheProviderDoesNotList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
 			_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
-			if got := codeOf(err); got != tt.want {
+			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
 		})
@@ -387,7 +387,7 @@ func TestVerify_RefusesACachedTokenWhoseKeyIsGone(t *testing.T) {
 	}
 	source.remove("k1")
 	_, err := v.Verify(context.Background(), raw)
-	if got := codeOf(err); got != CodeKIDUnknown {
+	if codeOf(err) != CodeKIDUnknown {
 		t.Errorf("Verify() after the key is gone error = %v, want code %s", err, CodeKIDUnknown)
 	}
 }
@@ -454,7 +454,7 @@ func TestVerify_RefusesACachedTokenOnceItExpires(t *testing.T) {
 	}
 	c.advance(time.Hour + DefaultLeeway)
 	_, err := v.Verify(context.Background(), raw)
-	if got := codeOf(err); got != CodeExpired {
+	if codeOf(err) != CodeExpired {
 		t.Errorf("Verify() after exp error = %v, want code %s", err, CodeExpired)
 	}
 }

@@ -57,7 +57,7 @@ func NewFileSource(path string, interval time.Duration, log Logger) *FileSource 
 	return &FileSource{path: path, interval: interval, log: log, ready: make(chan struct{})}
 }
 
-// Token implements [Source].
+// Token returns the current token, or "" before the first one is read.
 func (s *FileSource) Token() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

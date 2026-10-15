@@ -25,14 +25,8 @@ package outbound
 import "errors"
 
 // ErrNoToken is returned for a request that has to carry the token while
-// the [Source] holds none.
+// the token function of [NewTransport] returns "".
 var ErrNoToken = errors.New("outbound token is not available")
-
-// Source supplies the current token; [*FileSource] implements it.
-type Source interface {
-	// Token returns the current token, or "" while there is none.
-	Token() string
-}
 
 // Logger receives the diagnostics. No message carries the token.
 type Logger interface {
@@ -42,5 +36,10 @@ type Logger interface {
 
 type discard struct{}
 
-func (discard) Infof(string, ...any) {}
-func (discard) Warnf(string, ...any) {}
+func (discard) Infof(string, ...any) {
+	// The message is dropped: the caller passed no logger.
+}
+
+func (discard) Warnf(string, ...any) {
+	// The message is dropped: the caller passed no logger.
+}

@@ -108,8 +108,13 @@ func (o Options) withDefaults() Options {
 
 type discard struct{}
 
-func (discard) Infof(string, ...any) {}
-func (discard) Warnf(string, ...any) {}
+func (discard) Infof(string, ...any) {
+	// The message is dropped: Options.Log is nil.
+}
+
+func (discard) Warnf(string, ...any) {
+	// The message is dropped: Options.Log is nil.
+}
 
 // Key is a public signing key and the provider that published it.
 type Key struct {

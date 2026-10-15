@@ -499,7 +499,7 @@ func TestResolve_ACancelledCallerLeavesTheReloadRunning(t *testing.T) {
 	}()
 	waitFor(t, "the reload to reach the provider", func() bool { return idp.jwksFetches() == 2 })
 	cancel()
-	if ok := <-result; ok {
+	if <-result {
 		t.Errorf("Resolve(%q) with a cancelled context found a key, want none", "k2")
 	}
 	close(gate)
