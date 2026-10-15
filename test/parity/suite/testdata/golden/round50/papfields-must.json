@@ -1,0 +1,50 @@
+{
+  "p50i-control-fields-must-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P50I_971": [
+                "parity_p50i_971_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P50_ID_971",
+          "name": "subject.permissions.PARITY_P50I971_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-control-fields-must-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P50I_981": [
+                "parity_p50i_981_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P50_ID_981",
+          "name": "subject.permissions.PARITY_P50I981_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  }
+}

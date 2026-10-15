@@ -1,0 +1,1459 @@
+{
+  "p47-control-first-should": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_ISOLATED",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY_READ_Policy",
+                "policyId": "c34b8aa5-bbe7-cc39-d28e-a95646c1a907",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}",
+                    "name": "r29fields-predicates-every-key",
+                    "rsqlPredicate": "a==rsql",
+                    "ruleId": "00000000-0000-0000-0000-0000000f0001",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-control-first-should"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p47-control-first-should"
+              }
+            ],
+            "policySetId": "5ac34b8a-a5bb-e7cc-39d2-8ea95646c1a9",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY'",
+            "tenantId": "parity-p47-control-first-should",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    }
+  },
+  "p47-control-last-should": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o007": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [resource.l CONTAINS \\tANY 'v', 'w' OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.l CONTAINS \tANY 'v', 'w' OR resource.a == 'y'"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [resource.l CONTAINS \\tANY 'v', 'w' OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.l CONTAINS \tANY 'v', 'w' OR resource.a == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+  },
+  "p47-o067": {
+    "delete-customization-v1/sequence/prior-4": {"status":404},
+    "import-customization-v1/sequence/prior-6": {"status":200},
+    "load-policy-sets-v1/sequence/prior-3": {"status":200},
+    "load-policy-sets-v1/sequence/prior-5": {"status":200},
+    "load-policy-sets-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/prior-1": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-2": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p47-o068": {
+    "delete-customization-v1/sequence/prior-4": {"status":404},
+    "import-customization-v1/sequence/write-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-3": {"status":200},
+    "load-policy-sets-v1/sequence/prior-5": {"status":200},
+    "load-simplified-policies-v1/sequence/prior-1": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-2": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o069": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR37UrlType == 'v' OR resource.a == 'y']: Invalid expression: subject.parityR37UrlType PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {"status":200,"body":{"pips":[]}},
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o070": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-2": {"status":201,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/write-2": {
+      "status": 200,
+      "body": [
+        {
+          "cachePeriod": 1,
+          "cacheable": true,
+          "domain": "PARITY_ISOLATED",
+          "name": "subject.permissionScope",
+          "pipType": "PERMISSION_SCOPE",
+          "type": "UUID",
+          "url": "http://pip-mock:8090"
+        },
+        {
+          "cacheable": false,
+          "claim": "department",
+          "domain": "PARITY_ISOLATED",
+          "name": "subject.parityR28T",
+          "pipType": "TOKEN",
+          "type": "UUID"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "header": " x-parity-r28-h ",
+          "name": "subject.parityR28H",
+          "pipType": "HEADER",
+          "type": "UUID"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "name": "subject.parityR28G",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "case": "r28pip-g-ok-one"
+          },
+          "type": "UUID",
+          "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-one"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "name": "subject.parityR28F.filtered",
+          "pipType": "FILTERED",
+          "requestAttributes": {
+            "case": "r28pip-filtered"
+          },
+          "resourceType": "PARITY_R28_FILTERED",
+          "type": "UUID",
+          "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-list"
+        },
+        {
+          "cacheable": true,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "PARITY_R28_O"
+              ]
+            }
+          },
+          "domain": "PARITY_ISOLATED",
+          "name": "subject.permissions.parityR28Other",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        },
+        {
+          "cacheable": true,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "PARITY_R28_P",
+                "PARITY_R28_Q"
+              ]
+            }
+          },
+          "domain": "PARITY_ISOLATED",
+          "name": "subject.permissions.parityR28M",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    }
+  },
+  "p47-o071": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o072": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o073": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/prior-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-2": {"status":200},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [subject.roles CONTAINS 'ROLE_PARITY_READER' AND subject.parityR14Failing == 'v']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/sequence/prior-3": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-4": {"status":200},
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [subject.roles CONTAINS 'ROLE_PARITY_READER' AND subject.parityR14Failing == 'v']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o074": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o075": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": {
+        "message": "PIP with name = subject.id.x cannot be found in DB or imported PIPs."
+      }
+    },
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR38RaIdPath == 'v' OR resource.a == 'y']: Invalid expression: subject.parityR38RaIdPath PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": {
+        "message": "PIP with name = subject.id.x cannot be found in DB or imported PIPs."
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {"status":200,"body":{"pips":[]}},
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o076": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o077": {
+    "import-pip-customization-v1/sequence/write-1": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o077",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
+  },
+  "p47-o080": {
+    "check-resource-v1-outcome/sequence/probe": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "delete-pip-customization-v1/sequence/prior-4": {"status":404},
+    "delete-pip-customization-v1/sequence/write-1": {"status":204},
+    "import-pip-customization-v1/sequence/prior-6": {"status":200},
+    "load-policy-sets-v1/sequence/prior-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-5": {"status":200},
+    "load-simplified-policies-v1/sequence/prior-2": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-3": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":204,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o081": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "delete-customization-v1/sequence/prior-4": {"status":404},
+    "delete-customization-v1/sequence/write-1": {"status":204},
+    "import-customization-v1/sequence/prior-6": {"status":200},
+    "load-policy-sets-v1/sequence/prior-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-5": {"status":200},
+    "load-simplified-policies-v1/sequence/prior-2": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-3": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":204,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o082": {
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o083": {
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o084": {
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o084",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
+  },
+  "p47-o085": {
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o086": {
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o087": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": {
+        "message": "simplified policy 'rsqlPredicate' field must be null for global access policy"
+      }
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": {
+        "message": "simplified policy 'rsqlPredicate' field must be null for global access policy"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o088": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": {
+        "message": "Something went wrong for mapping attributes in PIP 'subject.permissions.parityR28M'. PIP with name = subject.permissionScope.region cannot be found in DB or imported PIPs."
+      }
+    },
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": {
+        "message": "Something went wrong for mapping attributes in PIP 'subject.permissions.parityR28M'. PIP with name = subject.permissionScope.region cannot be found in DB or imported PIPs."
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o088",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o089": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [resource.x MATCH 'ab*']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x MATCH 'ab*'"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [resource.x MATCH 'ab*']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x MATCH 'ab*'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o090": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [resource.n == -05]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.n == -05"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [resource.n == -05]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.n == -05"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o091": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": {
+        "message": "simplified policy 'roles' or 'serviceAccounts' fields can't be empty simultaneously if allowM2MAccess flag is false"
+      }
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": {
+        "message": "simplified policy 'roles' or 'serviceAccounts' fields can't be empty simultaneously if allowM2MAccess flag is false"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o092": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o092",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o093": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o093",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o094": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [resource.x=='v' OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x=='v' OR resource.a == 'y'"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [resource.x=='v' OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x=='v' OR resource.a == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o095": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [resource.x == 'v'OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x == 'v'OR resource.a == 'y'"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [resource.x == 'v'OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x == 'v'OR resource.a == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o096": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": {
+        "message": "simplified policy 'predicates' must contain at least one predicate format"
+      }
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": {
+        "message": "simplified policy 'predicates' must contain at least one predicate format"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o097": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR35NoClaim IS NULL OR resource.a == 'y']: Invalid expression: subject.parityR35NoClaim PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o097",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o098": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o099": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o099",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o100": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR35NoHeader IS NULL OR resource.a == 'y']: Invalid expression: subject.parityR35NoHeader PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o100",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o101": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR32Typed0 == 'v' OR resource.a == 'y']: Invalid expression: subject.parityR32Typed0 PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o101",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o102": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": {
+        "message": "PIP with name = subject.parityR30RaSource.filtered should have HEADER or TOKEN type"
+      }
+    },
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR30Ra == 'v' OR resource.a == 'y']: Invalid expression: subject.parityR30Ra PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": {
+        "message": "PIP with name = subject.parityR30RaSource.filtered should have HEADER or TOKEN type"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o102",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o103": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o103",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o104": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":400,"message":{"message":"simplified policy 'operation' field can't be null"}},
+    "pap-error-v1/sequence/write-3": {"status":400,"body":{"message":"simplified policy 'operation' field can't be null"}},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o105": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o105",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o106": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o106",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o107": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o107",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o108": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o108",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o109": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o109",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o110": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o110",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o111": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR28H IS NOT NULL OR resource.a == 'y']: Invalid expression: subject.parityR28H PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o111",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o112": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [5 = subject.permissions.PARITY FILTERED '']: Invalid expression: subject.permissions.PARITY.filtered PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [5 = subject.permissions.PARITY FILTERED '']: Invalid expression: subject.permissions.PARITY.filtered PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o113": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o113",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o114": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [tRuE]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: tRuE"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [tRuE]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: tRuE"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o115": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [resource.x ==\\r'v' OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x ==\r'v' OR resource.a == 'y'"
+    },
+    "pap-error-v1/sequence/write-3": {
+      "status": 400,
+      "body": "Expression [resource.x ==\\r'v' OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x ==\r'v' OR resource.a == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o116": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": "Expression [subject.permissionScope.region IS NULL]: Invalid expression: subject.permissionScope PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": "Expression [subject.permissionScope.region IS NULL]: Invalid expression: subject.permissionScope PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o117": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": "Expression [resource.a == 'y' and resource.c == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.a == 'y' and resource.c == 'y'"
+    },
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": "Expression [resource.a == 'y' and resource.c == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.a == 'y' and resource.c == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o118": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": "Expression [resource.a == 'y'  AND resource.c == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.a == 'y'  AND resource.c == 'y'"
+    },
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": "Expression [resource.a == 'y'  AND resource.c == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.a == 'y'  AND resource.c == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o119": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [resource.x == \\\"v\\\"]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [resource.x == \\\"v\\\"]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o120": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [resource.x IN 'a', 5, TRUE]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [resource.x IN 'a', 5, TRUE]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o121": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [resource.x IN 'a', resource.y]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [resource.x IN 'a', resource.y]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o122": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [resource.uri MATCH /v1/{id}/items]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [resource.uri MATCH /v1/{id}/items]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o123": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [NOT resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: NOT resource.a == 'y'"
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [NOT resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: NOT resource.a == 'y'"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o124": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [subject.parityUnknown == 'x']: Invalid expression: subject.parityUnknown PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [subject.parityUnknown == 'x']: Invalid expression: subject.parityUnknown PIP doesn't exist"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o125": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [operation == 'READ']: Invalid expression: Operation is not supported for condition"
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [operation == 'READ']: Invalid expression: Operation is not supported for condition"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o126": {
+    "load-policy-sets-v1/sequence/prior-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-2": {"status":200},
+    "load-policy-sets-v1/sequence/prior-3": {"status":200},
+    "load-policy-sets-v1/sequence/prior-4": {"status":200},
+    "load-policy-sets-v1/sequence/prior-5": {"status":200},
+    "load-policy-sets-v1/sequence/prior-6": {"status":200},
+    "load-policy-sets-v1/sequence/prior-7": {"status":200},
+    "load-policy-sets-v1/sequence/write-1": {"status":500},
+    "pap-error-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o127": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o128": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {"status":500},
+    "pap-error-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o129": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in rules: [\n\t{RuleId=9b16a1cc-360e-b2ee-9512-1ba3ef88a60c, policyId=5d080a6e-fd8f-6282-f560-900752e00b88, policySetId=42a447d3-4df0-584d-6920-5e14718265c2}]\n"
+      }
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": {
+        "message": "Next duplicates were found:\nduplicates in rules: [\n\t{RuleId=9b16a1cc-360e-b2ee-9512-1ba3ef88a60c, policyId=5d080a6e-fd8f-6282-f560-900752e00b88, policySetId=42a447d3-4df0-584d-6920-5e14718265c2}]\n"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o130": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/prior-1": {
+      "status": 400,
+      "message": "Expression [subject allowed 'LIST' on resource]: Invalid expression: Has access conditions aren't supported in target"
+    },
+    "load-policy-sets-v1/sequence/prior-2": {"status":200},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": "Expression [subject allowed 'LIST' on resource]: Invalid expression: Has access conditions aren't supported in target"
+    },
+    "load-simplified-policies-v1/sequence/prior-3": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-4": {"status":200},
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": "Expression [subject allowed 'LIST' on resource]: Invalid expression: Has access conditions aren't supported in target"
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o131": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in policies: [\n\t{PolicyId=f764d27b-0e63-f29e-affb-e20e537020cd, policySetId=5246499d-0f8e-fd5a-7ccb-e4a4816bb30c}]\n"
+      }
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": {
+        "message": "Next duplicates were found:\nduplicates in policies: [\n\t{PolicyId=f764d27b-0e63-f29e-affb-e20e537020cd, policySetId=5246499d-0f8e-fd5a-7ccb-e4a4816bb30c}]\n"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o132": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o133": {
+    "import-pip-customization-v1/sequence/write-1": {
+      "status": 400,
+      "message": {
+        "message": "The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+      }
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": {
+        "message": "The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o133",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
+  },
+  "p47-o134": {
+    "import-pip-customization-v1/sequence/write-1": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Information Point with 'subject.parityR29CpMissing' name is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy Information Point with 'subject.parityR29CpMissing' name is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o134",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
+  },
+  "p47-o135": {
+    "import-customization-v1/sequence/write-1": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with '469cc319-a444-4bdf-5332-4b4755deb790' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot find referenced item. Policy Set with '469cc319-a444-4bdf-5332-4b4755deb790' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o136": {
+    "delete-customization-v1/sequence/prior-1": {"status":404},
+    "delete-customization-v1/sequence/prior-4": {"status":204},
+    "delete-customization-v1/sequence/prior-5": {"status":404},
+    "import-customization-v1/sequence/prior-3": {"status":200},
+    "import-customization-v1/sequence/write-1": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot create item. Rule with '8e5e821d-f1d2-f17a-9ff8-d60594dcb0e5' id should have 'effect' attribute.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/sequence/prior-2": {"status":200},
+    "load-policy-sets-v1/sequence/prior-6": {"status":200},
+    "pap-error-v1/sequence/write-1": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot create item. Rule with '8e5e821d-f1d2-f17a-9ff8-d60594dcb0e5' id should have 'effect' attribute.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o137": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {
+      "status": 400,
+      "message": {
+        "message": "PIP with name = subject.permissionScope cannot be found in DB or imported PIPs."
+      }
+    },
+    "load-simplified-policies-v1/sequence/write-3": {
+      "status": 400,
+      "message": "Expression [subject.parityR37RaPermissionScope == 'v' OR resource.a == 'y']: Invalid expression: subject.parityR37RaPermissionScope PIP doesn't exist"
+    },
+    "pap-error-v1/sequence/write-2": {
+      "status": 400,
+      "body": {
+        "message": "PIP with name = subject.permissionScope cannot be found in DB or imported PIPs."
+      }
+    },
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o137",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {"status":404}
+  },
+  "p47-o138": {
+    "load-simplified-policies-v1/sequence/prior-1": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-2": {"status":200},
+    "load-simplified-policies-v1/sequence/prior-3": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-4": {"status":200},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":409,"message":""},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-2": {"status":409,"body":""},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/write-2": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "header": "X-Parity-R29-H",
+          "name": "subject.parityR29Twin2",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    }
+  }
+}

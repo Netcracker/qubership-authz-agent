@@ -1,0 +1,112 @@
+{
+  "p48-state-control-should-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "parity_p902_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P48_STATE_902",
+          "name": "subject.permissions.PARITY_P902_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p48-state-control-should-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "parity_p952_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P48_STATE_952",
+          "name": "subject.permissions.PARITY_P952_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p48-state-custom-documented-delete": {
+    "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-probe": {"status":200,"decision":true},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w3": {"status":404}
+  },
+  "p48-state-patch": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-status-v1/sequence/w2": {"status":200}
+  },
+  "p48-state-patch-invalid": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "pap-read-raw-v1/sequence/after": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p48-state-post": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48_STATE_028",
+          "name": "subject.parityP028A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48_STATE_028",
+          "name": "subject.parityP028A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-status-v1/sequence/w1": {"status":201},
+    "pap-status-v1/sequence/w2": {"status":409,"message":""},
+    "pap-status-v1/sequence/w3": {"status":409,"message":""}
+  },
+  "p48-state-post-invalid": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "pap-read-raw-v1/sequence/after": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  }
+}

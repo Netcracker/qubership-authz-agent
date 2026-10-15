@@ -1,0 +1,32 @@
+{
+  "p56c-is-empty-absent-attribute": {
+    "check-resource-v1-outcome/sequence/alone-in-a-deny-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/beside-a-true-rule": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200}
+  },
+  "p56c-is-empty-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200}
+  },
+  "p56c-is-empty-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200}
+  },
+  "p56c-is-empty-null-attribute": {
+    "check-resource-v1-outcome/sequence/alone-in-a-deny-rule": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/beside-a-true-rule": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200}
+  },
+  "p56c-is-empty-null-body": {
+    "check-resource-v1-outcome/sequence/alone-in-a-deny-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/beside-a-true-rule": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201}
+  },
+  "p56c-is-empty-without-url": {
+    "check-resource-v1-outcome/sequence/alone-in-a-deny-rule": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/beside-a-true-rule": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201}
+  }
+}

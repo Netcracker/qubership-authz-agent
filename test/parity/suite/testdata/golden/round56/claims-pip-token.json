@@ -1,0 +1,27 @@
+{
+  "p56c-pip-call-token": {
+    "check-resource-v1-outcome/sequence/as-the-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pip-call/sequence/as-the-reader": {
+      "calls": 1,
+      "requestAttributes": {
+        "case": "p56c-pip-call-token"
+      },
+      "headers": {
+        "authorization": "\u003cother token\u003e",
+        "authorization:subject": "\u003cservice account\u003e",
+        "incoming-token": null,
+        "tenant": "\u003ctenant_id\u003e"
+      }
+    }
+  },
+  "p56c-pip-token-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200}
+  },
+  "p56c-pip-token-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200}
+  }
+}

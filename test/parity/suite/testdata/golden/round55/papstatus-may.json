@@ -1,0 +1,429 @@
+{
+  "p55s-100-absent-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy with 'e92a90b9-d608-e761-a68b-06ef551cb78d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy with '1e22b7db-bb9d-7923-9f80-9105cd7c08bf' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy Set with '52ca4623-7d2c-3560-f4f8-a2e6c9c6602d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "import-customization-v1/sequence/inner-rule": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Rule with 'eb5444ac-be1a-2e43-fd58-ae93e4b2877c' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy with 'e92a90b9-d608-e761-a68b-06ef551cb78d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Rule with '50ec15ed-44ae-8b72-6f9f-26a89951f6be' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy with '1e22b7db-bb9d-7923-9f80-9105cd7c08bf' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy Set with '52ca4623-7d2c-3560-f4f8-a2e6c9c6602d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "import-customization-v1/sequence/inner-set": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Set with '52ca4623-7d2c-3560-f4f8-a2e6c9c6602d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "import-customization-v1/sequence/top": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Set with '44bfb6f0-91fb-37d5-0ca3-980061fdc289' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy with 'e92a90b9-d608-e761-a68b-06ef551cb78d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy with '1e22b7db-bb9d-7923-9f80-9105cd7c08bf' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy Set with '52ca4623-7d2c-3560-f4f8-a2e6c9c6602d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-error-v1/sequence/inner-rule": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Rule with 'eb5444ac-be1a-2e43-fd58-ae93e4b2877c' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy with 'e92a90b9-d608-e761-a68b-06ef551cb78d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Rule with '50ec15ed-44ae-8b72-6f9f-26a89951f6be' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy with '1e22b7db-bb9d-7923-9f80-9105cd7c08bf' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        },
+        {
+          "message": "Cannot disable item. Policy Set with '52ca4623-7d2c-3560-f4f8-a2e6c9c6602d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-error-v1/sequence/inner-set": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy Set with '52ca4623-7d2c-3560-f4f8-a2e6c9c6602d' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-error-v1/sequence/top": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy Set with '44bfb6f0-91fb-37d5-0ca3-980061fdc289' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  },
+  "p55s-105-draft-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {"status":200},
+    "import-customization-v1/sequence/inner-rule": {"status":200},
+    "import-customization-v1/sequence/inner-set": {"status":200},
+    "import-customization-v1/sequence/top": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Set with '377db3b6-3fd1-39db-6bd4-d50d8d521a02' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "load-policy-sets-v1/sequence/setup-top": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-rule": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-set": {"status":200,"body":null},
+    "pap-error-v1/sequence/top": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy Set with '377db3b6-3fd1-39db-6bd4-d50d8d521a02' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p55s-105-draft-to-inactive-by-customization s2",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p55s-105-draft-to-inactive-by-customization base",
+                "policyId": "33ee3e1d-c3d0-dd0c-6e84-d29726fc0c8c",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p55s-105-draft-to-inactive-by-customization base rule",
+                    "ruleId": "37b77fe2-3001-f8ec-e9b5-cae2b81a6854",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'LIST'",
+                    "tenantId": "parity-p55s-105"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p55s-105"
+              },
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p55s-105-draft-to-inactive-by-customization q",
+                "policyId": "e5abd944-b6c2-dc00-5ffa-409736d43957",
+                "rules": [],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p55s-105"
+              }
+            ],
+            "policySetId": "145f54c8-31f2-a30a-3125-8cadcb504734",
+            "policySets": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p55s-105-draft-to-inactive-by-customization m",
+                "policies": [
+                  {
+                    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                    "name": "p55s-105-draft-to-inactive-by-customization qn",
+                    "policyId": "42767d52-c79b-c730-1a5d-b0d530f70af0",
+                    "rules": [],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p55s-105"
+                  }
+                ],
+                "policySetId": "693d3369-2dc9-e1ad-2c33-07b04127ae8f",
+                "policySets": [],
+                "status": "ACTIVE",
+                "target": "resourceType == 'PARITY_SUITE_P55S_105'",
+                "tenantId": "parity-p55s-105",
+                "type": "DEFAULT"
+              }
+            ],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P55S_105'",
+            "tenantId": "parity-p55s-105",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p55s-105"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p55s-110-inactive-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {"status":200},
+    "import-customization-v1/sequence/inner-rule": {"status":200},
+    "import-customization-v1/sequence/inner-set": {"status":200},
+    "import-customization-v1/sequence/top": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Set with '9ec30056-1bce-f085-3c3f-f3bf87e760a7' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "load-policy-sets-v1/sequence/setup-top": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-rule": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-set": {"status":200,"body":null},
+    "pap-error-v1/sequence/top": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy Set with '9ec30056-1bce-f085-3c3f-f3bf87e760a7' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  },
+  "p55s-115-active-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {"status":200},
+    "import-customization-v1/sequence/inner-rule": {"status":200},
+    "import-customization-v1/sequence/inner-set": {"status":200},
+    "import-customization-v1/sequence/top": {"status":200},
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "load-policy-sets-v1/sequence/setup-top": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-rule": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-set": {"status":200,"body":null},
+    "pap-error-v1/sequence/top": {"status":200,"body":null},
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  },
+  "p55s-120-archived-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {"status":200},
+    "import-customization-v1/sequence/inner-rule": {"status":200},
+    "import-customization-v1/sequence/inner-set": {"status":200},
+    "import-customization-v1/sequence/top": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot disable item. Policy Set with 'e2c794ac-81d2-3b8c-c588-b87eb0045c29' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "load-policy-sets-v1/sequence/setup-top": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-rule": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-set": {"status":200,"body":null},
+    "pap-error-v1/sequence/top": {
+      "status": 400,
+      "body": [
+        {
+          "message": "Cannot disable item. Policy Set with 'e2c794ac-81d2-3b8c-c588-b87eb0045c29' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  },
+  "p55s-125-unset-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {"status":200},
+    "import-customization-v1/sequence/inner-rule": {"status":200},
+    "import-customization-v1/sequence/inner-set": {"status":200},
+    "import-customization-v1/sequence/top": {"status":200},
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "load-policy-sets-v1/sequence/setup-top": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-rule": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-set": {"status":200,"body":null},
+    "pap-error-v1/sequence/top": {"status":200,"body":null},
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  },
+  "p55s-130-customized-to-inactive-by-customization": {
+    "check-resource-v1-outcome/sequence/inner-policy-approve": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-policy-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-delete": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-rule-list": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/inner-rule-reject": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/inner-set-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/top-read": {"status":200,"decision":false},
+    "import-customization-v1/sequence/inner-policy": {"status":200},
+    "import-customization-v1/sequence/inner-rule": {"status":200},
+    "import-customization-v1/sequence/inner-set": {"status":200},
+    "import-customization-v1/sequence/setup-customization": {"status":200},
+    "import-customization-v1/sequence/top": {"status":200},
+    "load-policy-sets-v1/sequence/setup-inner": {"status":200},
+    "load-policy-sets-v1/sequence/setup-top": {"status":200},
+    "pap-error-v1/sequence/inner-policy": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-rule": {"status":200,"body":null},
+    "pap-error-v1/sequence/inner-set": {"status":200,"body":null},
+    "pap-error-v1/sequence/top": {"status":200,"body":null},
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  },
+  "p55s-903-control-may-first": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p55s-903-top",
+            "name": "p55s-903-control-may-first s1",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p55s-903-control-may-first s1",
+                "policyId": "f41673e2-d2fb-f10a-ba14-116ea17abf8f",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p55s-903-control-may-first s1 rule",
+                    "ruleId": "29ad4fe4-0cc6-645f-89e2-841a246ec1d4",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p55s-903"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p55s-903"
+              }
+            ],
+            "policySetId": "ef5d15f7-f34a-7ac5-ef6a-4bc972191700",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P55S_903'",
+            "tenantId": "parity-p55s-903",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p55s-903"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p55s-953-control-may-last": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/after": {"status":500},
+    "pap-read/sequence/before": {"status":500}
+  }
+}

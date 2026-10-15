@@ -1,0 +1,1054 @@
+{
+  "p50i-control-must-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P50I_901": [
+                "parity_p50i_901_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P50_ID_901",
+          "name": "subject.permissions.PARITY_P50I901_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-control-must-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P50I_951": [
+                "parity_p50i_951_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P50_ID_951",
+          "name": "subject.permissions.PARITY_P50I951_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-custom-delete-spelled-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "delete-customization-v1/sequence/cleanup": {"status":404},
+    "delete-customization-v1/sequence/w3": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-delete-spelled-uuid-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "delete-customization-v1/sequence/cleanup": {"status":404},
+    "delete-customization-v1/sequence/w3": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-lookup-s": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "delete-customization-v1/sequence/cleanup": {"status":404},
+    "import-customization-v1/sequence/w3": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy with 'ad968f66-4cc9-c0ab-1ca2-9cf6fd139002' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-3": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-lookup-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "import-customization-v1/sequence/w3": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-3": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-spelled-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-spelled-uuid-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-twin-d": {
+    "check-resource-v1-outcome/sequence/w1-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "delete-customization-v1/sequence/cleanup-t": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-twin-s": {
+    "check-resource-v1-outcome/sequence/w1-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-custom-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "delete-customization-v1/sequence/cleanup": {"status":204},
+    "import-customization-v1/sequence/w2": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-delete-spelled-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":200}
+  },
+  "p50i-delete-spelled-uuid-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":200}
+  },
+  "p50i-delete-twin-s": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":500},
+    "load-policy-sets-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w3": {"status":200}
+  },
+  "p50i-delete-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w3": {"status":200}
+  },
+  "p50i-domain-policies-spelled-lead-space": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-domain-policies-spelled-lower": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-domain-policies-spelled-trail-space": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-domain-policies-spelled-trail-tab": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-spelled": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-external-id-spelled-lead-space": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-spelled": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-external-id-spelled-trail-space": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-spelled": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-external-id-spelled-trail-tab": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-spelled": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-external-id-spelled-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-spelled": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-import-spelled-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p50-id-024",
+            "name": "p50i-import-spelled-d a",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-import-spelled-d a reader",
+                "policyId": "d0ebbb49-115b-a212-0ac4-6b313850ba62",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-import-spelled-d a rule",
+                    "ruleId": "d5abe805-72db-a71b-3990-05fd7f6fa644",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p50i-024"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-024"
+              }
+            ],
+            "policySetId": "f8be3679-d00d-6e68-1843-7eb82e1f3499",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_024'",
+            "tenantId": "parity-p50i-024",
+            "type": "DEFAULT"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p50i-import-spelled-d b",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-import-spelled-d b reader",
+                "policyId": "50f0a87b-ec3d-8c17-9c4c-c77185cd8bda",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-import-spelled-d b rule",
+                    "ruleId": "4a1ea3b6-38bb-f1af-7b54-4be0b3038a67",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'UPDATE'",
+                    "tenantId": "parity-p50i-024"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-024"
+              }
+            ],
+            "policySetId": "c9542d71-e2c3-fca8-bcca-79ee97050a89",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_024'",
+            "tenantId": "parity-p50i-024",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p50i-024"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/w2": {"status":200}
+  },
+  "p50i-import-spelled-uuid-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p50i-import-spelled-uuid-upper b",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-import-spelled-uuid-upper b reader",
+                "policyId": "1bf56b2b-df26-ea03-6005-4e6ef9cb7877",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-import-spelled-uuid-upper b rule",
+                    "ruleId": "b4e61abe-740c-61b7-6503-95b62f5e7dbb",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'UPDATE'",
+                    "tenantId": "parity-p50i-023"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-023"
+              }
+            ],
+            "policySetId": "125a86e4-32a4-bedb-3584-b301d1cdd2ba",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_023'",
+            "tenantId": "parity-p50i-023",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p50i-023"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/w2": {"status":200}
+  },
+  "p50i-import-twin-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p50i-import-twin-d a",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-import-twin-d a reader",
+                "policyId": "1f4072ec-362b-bf92-5822-61496ab0852a",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-import-twin-d a rule",
+                    "ruleId": "a2a7408b-3752-ff1d-1c57-945605100017",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p50i-021"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-021"
+              }
+            ],
+            "policySetId": "5ac0125b-5cf7-15eb-7655-3e04ce89fa09",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_021'",
+            "tenantId": "parity-p50i-021",
+            "type": "DEFAULT"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p50i-import-twin-d b",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-import-twin-d b reader",
+                "policyId": "59f9b27a-505a-df8b-2ba9-f352f40108f2",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-import-twin-d b rule",
+                    "ruleId": "30d67a9a-dfaf-f1b3-0464-a9154ae52c69",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'UPDATE'",
+                    "tenantId": "parity-p50i-021"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-021"
+              }
+            ],
+            "policySetId": "9da3515d-a9a7-4cd3-1680-fca4f9af17ab",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_021'",
+            "tenantId": "parity-p50i-021",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p50i-021"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w1": {"status":200}
+  },
+  "p50i-import-twin-s": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "pap-read/sequence/after": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in policySets: [\n\t{policySetId=065f1e8b-d8a5-c2ea-5cac-c95bda64aaac}]"
+      }
+    }
+  },
+  "p50i-import-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "pap-read/sequence/after": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in policySets: [\n\t{policySetId=675573bf-b8c9-62f6-5380-06218e7122f1}]"
+      }
+    }
+  },
+  "p50i-lifecycle-spelled-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":500}
+  },
+  "p50i-lifecycle-spelled-uuid-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":500}
+  },
+  "p50i-lifecycle-twin-s": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":500},
+    "load-policy-sets-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w3": {"status":500}
+  },
+  "p50i-lifecycle-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w3": {"status":500}
+  },
+  "p50i-pip-custom-delete-spelled-d": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w4-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w4-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w4-update": {"status":200,"decision":false},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":404},
+    "delete-pip-customization-v1/sequence/w4": {"status":204},
+    "import-pip-customization-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-pip-custom-delete-spelled-first-upper": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w4-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w4-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w4-update": {"status":200,"decision":true},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":204},
+    "delete-pip-customization-v1/sequence/w4": {"status":404},
+    "import-pip-customization-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-pip-custom-spelled-d": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":204},
+    "import-pip-customization-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-pip-custom-spelled-first-upper": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":204},
+    "import-pip-customization-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-pip-custom-twin-s": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":404},
+    "import-pip-customization-v1/sequence/w3": {"status":500},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-pip-custom-twin-x": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":false},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":404},
+    "import-pip-customization-v1/sequence/w3": {"status":500},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p50i-policies-body-twin-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_P50_ID_002",
+            "name": "PARITY_P50_ID_002_PARITY_PARITY_SUITE_P50_ID_002_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P50_ID_002_PARITY_PARITY_SUITE_P50_ID_002_READ_Policy",
+                "policyId": "f6ea4bb4-2ff6-1a87-ba2e-06d8e18cff2d",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-policies-body-twin-d a",
+                    "ruleId": "88880855-300a-e31e-bfe8-790dce97a55c",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p50i-002"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p50i-002"
+              },
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_P50_ID_002_PARITY_PARITY_SUITE_P50_ID_002_UPDATE_Policy",
+                "policyId": "6c25bcd1-4d61-726d-6d1a-ee6d09586df7",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-policies-body-twin-d b",
+                    "ruleId": "3deb4331-0920-e1bc-be94-f5f389cb213f",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p50i-002"
+                  }
+                ],
+                "target": "operation == 'UPDATE'",
+                "tenantId": "parity-p50i-002"
+              }
+            ],
+            "policySetId": "50f6ea4b-b42f-f61a-87ba-2e06d8e18cff",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_002'",
+            "tenantId": "parity-p50i-002",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p50i-002"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-policies-body-twin-s": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Simplified policy id=8f2fa688-f86d-0d41-3bb2-52376225ca91 field must be unique"
+      }
+    },
+    "pap-read/sequence/after": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-policies-body-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Simplified policy id=0e1bbe2d-57da-a5ae-5d7f-8bfd56084de4 field must be unique"
+      }
+    },
+    "pap-read/sequence/after": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-policies-rule-id-d": {
+    "check-resource-v1-outcome/sequence/w-policies-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w-policies-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w-sets-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w-sets-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w-sets": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w-policies": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-policies-rule-id-s": {
+    "check-resource-v1-outcome/sequence/w-policies-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w-policies-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w-sets-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w-sets-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w-sets": {"status":500},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w-policies": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-policies-rule-id-x": {
+    "check-resource-v1-outcome/sequence/w-policies-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w-policies-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w-sets-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w-sets-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w-sets": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w-policies": {
+      "status": 400,
+      "message": {
+        "message": "Simplified policy with id=a797e793-5977-80c8-a742-cc108346452e already exist"
+      }
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-body-twin-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/after": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p50-id-011",
+            "name": "p50i-sets-body-twin-d a",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-sets-body-twin-d a reader",
+                "policyId": "aa84297d-7815-d52a-bc1a-cf062ac845d6",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-sets-body-twin-d a rule",
+                    "ruleId": "9d2b969f-a4c4-24b0-9b63-efacee1b912d",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-p50i-011"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-011"
+              }
+            ],
+            "policySetId": "48a72caa-e066-78d2-42c8-447509a26ad6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_011'",
+            "tenantId": "parity-p50i-011",
+            "type": "DEFAULT"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p50-id-011",
+            "name": "p50i-sets-body-twin-d b",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p50i-sets-body-twin-d b reader",
+                "policyId": "de10c40d-10e4-75fe-30cd-8de0b3ce7c11",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p50i-sets-body-twin-d b rule",
+                    "ruleId": "2022a0c6-2a16-c16b-8e9a-6864133f5ea2",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'UPDATE'",
+                    "tenantId": "parity-p50i-011"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p50i-011"
+              }
+            ],
+            "policySetId": "6109415f-4580-737e-0edc-27df8a603627",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P50_ID_011'",
+            "tenantId": "parity-p50i-011",
+            "type": "DEFAULT"
+          }
+        ]
+      },
+      "keptTenants": [
+        "parity-p50i-011"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-body-twin-s": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in policySets: [\n\t{policySetId=cec8d981-3cb8-1630-f3b5-b6945b00f8c1}]"
+      }
+    },
+    "pap-read/sequence/after": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-body-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in policySets: [\n\t{policySetId=a09981fa-a4d1-62b9-f4b3-397c7a4feebb}]"
+      }
+    },
+    "pap-read/sequence/after": {"status":200,"body":{"policySets":[]}},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-cross-kind-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-cross-kind-r": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-cross-kind-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-nested-twin-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-nested-twin-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": {
+        "message": "Next duplicates were found:\nduplicates in policySets: [\n\t{policySetId=72490144-7073-3e58-7702-b8cf4c4a00b0}]"
+      }
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-policy-elsewhere-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-sets-policy-elsewhere-x": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/cleanup-2": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {"status":500},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p50i-tenant-spelled-lead-space": {
+    "check-resource-v1-outcome/sequence/home-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/home-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/spelled-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/spelled-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200}
+  },
+  "p50i-tenant-spelled-trail-space": {
+    "check-resource-v1-outcome/sequence/home-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/home-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/spelled-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/spelled-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200}
+  },
+  "p50i-tenant-spelled-upper": {
+    "check-resource-v1-outcome/sequence/home-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/home-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/spelled-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/spelled-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/cleanup": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":200}
+  },
+  "p50i-transition-spelled-d": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":500}
+  },
+  "p50i-transition-spelled-first-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":404}
+  },
+  "p50i-transition-spelled-upper": {
+    "check-resource-v1-outcome/sequence/w1-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w1-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {"status":200},
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w2": {"status":404}
+  }
+}

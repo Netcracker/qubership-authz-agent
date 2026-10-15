@@ -1,0 +1,19 @@
+{
+  "sequence/p50f-cust-pip-status/w-absent": {
+    "status": 400,
+    "message": {
+      "message": "PIP 'subject.parityP50F039A' must have either a URL or bean name"
+    }
+  },
+  "sequence/p50f-cust-pip-status/w-edge-space": {"status":200},
+  "sequence/p50f-cust-pip-status/w-edge-tab": {"status":200},
+  "sequence/p50f-cust-pip-status/w-null": {
+    "status": 400,
+    "message": {
+      "message": "PIP 'subject.parityP50F039A' must have either a URL or bean name"
+    }
+  },
+  "sequence/p54f-cust-pip-status/w-edge-cr": {"status":200},
+  "sequence/p54f-cust-pip-status/w-edge-ff": {"status":200},
+  "sequence/p54f-cust-pip-status/w-edge-lf": {"status":200}
+}

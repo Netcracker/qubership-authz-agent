@@ -1,0 +1,273 @@
+{
+  "p47-control-first-may": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_ISOLATED",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY_READ_Policy",
+                "policyId": "c34b8aa5-bbe7-cc39-d28e-a95646c1a907",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}",
+                    "name": "r29fields-predicates-every-key",
+                    "rsqlPredicate": "a==rsql",
+                    "ruleId": "00000000-0000-0000-0000-0000000f0001",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-control-first-may"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p47-control-first-may"
+              }
+            ],
+            "policySetId": "5ac34b8a-a5bb-e7cc-39d2-8ea95646c1a9",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY'",
+            "tenantId": "parity-p47-control-first-may",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    }
+  },
+  "p47-control-last-may": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o079": {
+    "check-resource-v1-outcome/sequence/probe": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: subject.isM2M"
+      }
+    },
+    "delete-customization-v1/sequence/prior-4": {"status":404},
+    "import-customization-v1/sequence/write-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-1": {"status":200},
+    "load-policy-sets-v1/sequence/prior-5": {"status":200},
+    "load-simplified-policies-v1/sequence/prior-2": {"status":201},
+    "load-simplified-policies-v1/sequence/prior-3": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}}
+  },
+  "p47-o139": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o140": {
+    "load-policy-sets-v1/sequence/write-1": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o141": {
+    "import-pip-customization-v1/sequence/write-1": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": true,
+            "customMapping": {
+              "subject.roles": {
+                "ROLE_PARITY_READER": [
+                  "PARITY_R29_CP"
+                ]
+              }
+            },
+            "name": "subject.permissions",
+            "pipType": "MAPPING",
+            "productMapping": {},
+            "tenantId": "parity-p47-o141",
+            "type": "UUID"
+          }
+        ]
+      }
+    }
+  },
+  "p47-o142": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-2": {"status":201,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-2": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": true,
+            "customMapping": {},
+            "domain": "PARITY_ISOLATED",
+            "name": "subject.permissions",
+            "pipType": "MAPPING",
+            "productMapping": {
+              "subject.roles": {
+                "ROLE_PARITY_READER": [
+                  "PARITY_R29_DOC_P"
+                ]
+              }
+            },
+            "tenantId": "parity-p47-o142",
+            "type": "UUID"
+          }
+        ]
+      }
+    },
+    "pap-read/sequence/write-2": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": true,
+          "customMapping": {},
+          "domain": "PARITY_ISOLATED",
+          "name": "subject.permissions",
+          "pipType": "MAPPING",
+          "productMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_READER": [
+                "PARITY_R29_DOC_P"
+              ]
+            }
+          },
+          "type": "UUID"
+        }
+      ]
+    }
+  },
+  "p47-o143": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-3": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+  },
+  "p47-o153": {
+    "load-simplified-policies-v1/sequence/write-1": {"status":200},
+    "load-simplified-policies-v1/sequence/write-2": {"status":201},
+    "load-simplified-policies-v1/sequence/write-3": {"status":200},
+    "pap-error-v1/sequence/write-2": {"status":201,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/write-2": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "jsonPath": "$.value",
+          "name": "subject.parityR10ScopeNumberPolicy",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "resourceType": "PARITY_SUITE_REG_NUMBER_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+          },
+          "type": "JSON",
+          "url": "http://pip-mock:8090/api/v1/pip/r10-scope-number-policy"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "jsonPath": "$.value",
+          "name": "subject.parityR10ScopeNumberSet",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "resourceType": "PARITY_SUITE_REG_NUMBER_PIP_SET_BESIDE_AN_ALLOWING_SET"
+          },
+          "type": "JSON",
+          "url": "http://pip-mock:8090/api/v1/pip/r10-scope-number-set"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "jsonPath": "$.value",
+          "name": "subject.parityR10ScopeStringPolicy",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "resourceType": "PARITY_SUITE_REG_STRING_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+          },
+          "type": "JSON",
+          "url": "http://pip-mock:8090/api/v1/pip/r10-scope-string-policy"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "jsonPath": "$.value",
+          "name": "subject.parityR10ScopeStringSet",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "resourceType": "PARITY_SUITE_REG_STRING_PIP_SET_BESIDE_AN_ALLOWING_SET"
+          },
+          "type": "JSON",
+          "url": "http://pip-mock:8090/api/v1/pip/r10-scope-string-set"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "name": "subject.parityR10ScopeNotFoundPolicy",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "resourceType": "PARITY_SUITE_REG_NOT_FOUND_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+          },
+          "type": "UUID",
+          "url": "http://pip-mock:8090/api/v1/pip/r10-scope-not-found-policy"
+        },
+        {
+          "cacheable": false,
+          "domain": "PARITY_ISOLATED",
+          "httpMethod": "POST",
+          "name": "subject.parityR10ScopeNotFoundSet",
+          "pipType": "GENERAL",
+          "requestAttributes": {
+            "resourceType": "PARITY_SUITE_REG_NOT_FOUND_PIP_SET_BESIDE_AN_ALLOWING_SET"
+          },
+          "type": "UUID",
+          "url": "http://pip-mock:8090/api/v1/pip/r10-scope-not-found-set"
+        }
+      ]
+    }
+  },
+  "p47-o154": {
+    "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
+    "import-customization-v1/sequence/write-1": {"status":200},
+    "pap-error-v1/sequence/write-1": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+  }
+}

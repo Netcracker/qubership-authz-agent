@@ -1,0 +1,88 @@
+{
+  "p52i-control-must-first": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P52I_901": [
+                "parity_p52i_901_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P52_ID_901",
+          "name": "subject.permissions.PARITY_P52I901_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p52i-control-must-last": {
+    "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "customMapping": {
+            "subject.roles": {
+              "ROLE_PARITY_P52I_951": [
+                "parity_p52i_951_a"
+              ]
+            }
+          },
+          "domain": "PARITY_P52_ID_951",
+          "name": "subject.permissions.PARITY_P52I951_A",
+          "pipType": "MAPPING",
+          "type": "UUID"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p52i-pip-custom-delete-escaped-d": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w4-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w4-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w4-update": {"status":200,"decision":false},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":404},
+    "delete-pip-customization-v1/sequence/w4": {"status":204},
+    "import-pip-customization-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  },
+  "p52i-pip-custom-delete-escaped-percent": {
+    "check-resource-v1-outcome/sequence/w2-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w2-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w2-update": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w3-update": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/w4-create": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w4-read": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/w4-update": {"status":200,"decision":true},
+    "delete-pip-customization-v1/sequence/cleanup": {"status":204},
+    "delete-pip-customization-v1/sequence/w4": {"status":404},
+    "import-pip-customization-v1/sequence/w3": {"status":200},
+    "load-simplified-policies-v1/sequence/cleanup-pips": {"status":201},
+    "load-simplified-policies-v1/sequence/cleanup-policies": {"status":200},
+    "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {"status":200},
+    "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
+  }
+}
