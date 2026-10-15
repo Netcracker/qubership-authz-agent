@@ -66,8 +66,11 @@ type fetcher struct {
 }
 
 // newFetcher builds the HTTP client for p: the proxy settings of the
-// environment, timeout per request, and p.CAFile as the only trusted roots
-// when it is set.
+// environment, timeout per request, p.CAFile as the only trusted roots when
+// it is set, and no redirect followed. [http.Client] forwards the bearer
+// token of p.TokenFile to a redirect target on the same host or a subdomain
+// of it, whatever its port or scheme, so a redirect ends the request as a
+// failure instead.
 func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if p.CAFile != "" {
@@ -81,7 +84,14 @@ func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
 	}
-	return &fetcher{provider: p, client: &http.Client{Transport: transport, Timeout: timeout}, log: log}, nil
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   timeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	return &fetcher{provider: p, client: client, log: log}, nil
 }
 
 // fetch downloads the provider's JWKS, through discovery when the provider
@@ -118,7 +128,8 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 }
 
 // get returns the body of a 2xx response to a GET of url, with the bearer
-// token of the provider's TokenFile when it has one.
+// token of the provider's TokenFile when it has one. Any other status,
+// a redirect included, is an error.
 func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {

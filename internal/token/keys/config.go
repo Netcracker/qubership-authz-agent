@@ -33,7 +33,9 @@ type Config struct {
 
 // Provider is one trusted identity provider. It names the address of its
 // keys in one of two forms and never both: Issuer, resolved through OIDC
-// discovery to a jwks_uri, or JWKSURI, fetched as it is.
+// discovery to a jwks_uri, or JWKSURI, fetched as it is. Neither the
+// discovery request nor the JWKS request follows a redirect: a 3xx answer
+// fails the fetch.
 type Provider struct {
 	// ID names the provider in logs and in the keys it publishes. It is
 	// unique within a Config and uses only letters, digits, '.', '_', and '-'.
@@ -56,7 +58,9 @@ type Provider struct {
 	CAFile string `json:"caFile,omitempty"`
 	// TokenFile holds a bearer token sent with every discovery and JWKS
 	// request to this provider. It is read on every request, so a rotated
-	// token takes effect without a restart.
+	// token takes effect without a restart. Because no request follows a
+	// redirect, the token goes only where the configuration and the
+	// discovery document point.
 	TokenFile string `json:"tokenFile,omitempty"`
 }
 

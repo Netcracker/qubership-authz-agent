@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -319,6 +320,38 @@ func TestLoad_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	}
 	if got := idp.authorization(); got != "Bearer second" {
 		t.Errorf("Authorization at Refresh = %q, want %q", got, "Bearer second")
+	}
+}
+
+// Each redirect target listens on the same host at another port, where an
+// HTTP client still forwards an Authorization header.
+func TestLoad_DoesNotFollowARedirectWithTheToken(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider func(redirecting string) Provider
+	}{
+		{"discovery request", func(redirecting string) Provider { return Provider{ID: "k8s", Issuer: redirecting} }},
+		{"JWKS request", func(redirecting string) Provider { return Provider{ID: "k8s", JWKSURI: redirecting + "/jwks"} }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			target := newIdP(t, ecJWK(t, "k1", nil))
+			redirecting := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, target.srv.URL+r.URL.Path, http.StatusFound)
+			}))
+			t.Cleanup(redirecting.Close)
+			provider := tt.provider(redirecting.URL)
+			provider.TokenFile = writeFile(t, "token", "sa-token")
+			opts := testOptions(newClock())
+			opts.StartupTimeout = 200 * time.Millisecond
+			_, err := Load(context.Background(), Config{Providers: []Provider{provider}}, opts)
+			if err == nil || !strings.Contains(err.Error(), "HTTP 302") {
+				t.Errorf("Load() error = %v, want the HTTP 302 of the redirect", err)
+			}
+			if got := target.authorization(); got != "" {
+				t.Errorf("Authorization at the redirect target = %q, want none", got)
+			}
+		})
 	}
 }
 
