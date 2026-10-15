@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY_P48C_STATE_014",
+        "name": "PARITY_P48C_STATE_014_PARITY_PARITY_SUITE_P48C_STATE_014_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_P48C_STATE_014_PARITY_PARITY_SUITE_P48C_STATE_014_READ_Policy",
+            "policyId": "d33756d0-fb51-d3b4-d16d-0ada2fc9868d",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p48c-state-frontend-rule-type p",
+                "ruleId": "02828664-0553-0838-53f3-9dc1d88ece5b",
+                "ruleType": "APPLICABLE_FOR_FRONTEND",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p48-claim-frontend-rule-type"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "parity-p48-claim-frontend-rule-type"
+          }
+        ],
+        "policySetId": "43d33756-d0fb-51d3-b4d1-6d0ada2fc986",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P48C_STATE_014'",
+        "tenantId": "parity-p48-claim-frontend-rule-type",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p48-claim-frontend-rule-type"
+  ]
+}

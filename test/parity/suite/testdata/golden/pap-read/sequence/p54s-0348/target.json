@@ -1,0 +1,60 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY",
+        "name": "PARITY_PARITY_PARITY_CUSTOMER_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_PARITY_PARITY_CUSTOMER_DELETE_Policy",
+            "policyId": "460a0d15-29e6-8b86-d370-8de450e92dda",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "PARITY_DENY setup: only DELETE granted, so WRITE denies",
+                "ruleId": "00000000-0000-0000-0000-0000000000a2",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'DELETE'",
+            "tenantId": "default"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_PARITY_PARITY_CUSTOMER_READ_Policy",
+            "policyId": "612c2730-4bda-9db6-b8c0-af4301ac418c",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "PARITY_ALLOW policy: CUSTOMER READ for ROLE_PARITY_READER",
+                "ruleId": "00000000-0000-0000-0000-0000000000a1",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "12612c27-304b-da9d-b6b8-c0af4301ac41",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_CUSTOMER'",
+        "tenantId": "default",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  },
+  "keptTenants": [
+    "default"
+  ]
+}
