@@ -1,0 +1,13 @@
+{
+  "d2r46-b0de1bac24": {
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f40-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f40-control-last-or": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "d2r46-88a321f61d": {
+    "check-resource-v1-outcome/regular/selected": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-88a321f61d-ctx0": {
+    "check-resource-bulk-v1-outcome/isolated/q": {"status":200,"allowed":[]},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "d2r46-f21-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f21-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

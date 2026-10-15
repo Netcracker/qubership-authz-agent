@@ -1,0 +1,74 @@
+{
+  "d2r46-f45-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f45-control-last-or": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f78051e156": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "f==\"m\"",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/filter": {"calls":1,"requestAttributes":{"case":"s44-sent"}}
+  },
+  "d2r46-f996afd0dd": {
+    "check-filter-v1-outcome/regular/after-q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/q2": {
+      "status": 404,
+      "result": {
+        "calculationResult": "",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": ""
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"":["rp30","rp31"]}},
+    "check-resource-v1-outcome/regular/after-q1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/q0": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q1": {"status":404,"decision":false},
+    "import-customization-v1/regular/custom": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with 'ebf1ed18-5b2b-1557-d5e1-ef5103b5dc8b' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-fad2fd51b7": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [\\u00A0true\\u00A0]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    }
+  },
+  "d2r46-ffb3d04d18": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [\\u00A0true\\u00A0]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    }
+  }
+}

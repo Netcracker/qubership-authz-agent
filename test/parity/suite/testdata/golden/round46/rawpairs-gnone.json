@@ -1,0 +1,136 @@
+{
+  "rp46-021": {
+    "check-filter-v1-outcome/isolated/q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-v1-outcome/isolated/q3": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/isolated/q1": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/isolated/q2": {"status":200,"decision":false},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "rp46-022": {
+    "check-resource-bulk-operations-v1-outcome/isolated/q2": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/isolated/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/isolated/q4": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/isolated/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/isolated/q1": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "rp46-023": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-024": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-025": {
+    "check-filter-v1-outcome/regular/q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-026": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "check-resource-v1-outcome/regular/q3": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-027": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-028": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-029": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-030": {
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"":[]}},
+    "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q1": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-031": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-gnone-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-gnone-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

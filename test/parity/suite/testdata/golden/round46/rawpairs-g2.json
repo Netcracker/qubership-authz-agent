@@ -1,0 +1,28 @@
+{
+  "rp46-013": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-014": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [subject.parityR44RawUntyped CONTAINS 'y']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
+    },
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-g2-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp46-g2-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

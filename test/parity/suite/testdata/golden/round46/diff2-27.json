@@ -1,0 +1,88 @@
+{
+  "d2r46-0d967b298e": {
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "d2r46-0d967b298e-ctx1": {
+    "check-filter-v1-outcome/regular/filter-as-self": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/authorization-check": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-as-self": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "d2r46-6d4b5e497b": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-86e1d6e6bd": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "d2r46-8dd7861ea8": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-93121b490f": {
+    "check-filter-v1-outcome/regular/filter-both": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/rn-both": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/ry-both": {"status":200,"decision":true},
+    "import-customization-v1/regular/first": {"status":200},
+    "import-customization-v1/regular/second": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-c532aeac64": {
+    "check-resource-v1-outcome/isolated/read": {"status":200,"decision":true},
+    "load-simplified-policies-v1/isolated": {"status":200}
+  },
+  "d2r46-f26-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f26-control-last-or": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

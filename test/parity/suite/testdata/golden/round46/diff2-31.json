@@ -1,0 +1,14 @@
+{
+  "d2r46-246b0a94dd": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "pip-call/regular/a-n": {"calls":0,"requestAttributes":null,"headers":{"x-parity-fwd":null}}
+  },
+  "d2r46-f30-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r46-f30-control-last-or": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}
