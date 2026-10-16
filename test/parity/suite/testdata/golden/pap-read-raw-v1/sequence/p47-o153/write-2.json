@@ -1,0 +1,89 @@
+{
+  "status": 200,
+  "body": {
+    "pips": [
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "jsonPath": "$.value",
+        "name": "subject.parityR10ScopeNumberPolicy",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_NUMBER_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+        },
+        "tenantId": "parity-p47-o153",
+        "type": "JSON",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-scope-number-policy"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "jsonPath": "$.value",
+        "name": "subject.parityR10ScopeNumberSet",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_NUMBER_PIP_SET_BESIDE_AN_ALLOWING_SET"
+        },
+        "tenantId": "parity-p47-o153",
+        "type": "JSON",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-scope-number-set"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "jsonPath": "$.value",
+        "name": "subject.parityR10ScopeStringPolicy",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_STRING_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+        },
+        "tenantId": "parity-p47-o153",
+        "type": "JSON",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-scope-string-policy"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "jsonPath": "$.value",
+        "name": "subject.parityR10ScopeStringSet",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_STRING_PIP_SET_BESIDE_AN_ALLOWING_SET"
+        },
+        "tenantId": "parity-p47-o153",
+        "type": "JSON",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-scope-string-set"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "name": "subject.parityR10ScopeNotFoundPolicy",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_NOT_FOUND_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+        },
+        "tenantId": "parity-p47-o153",
+        "type": "UUID",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-scope-not-found-policy"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "name": "subject.parityR10ScopeNotFoundSet",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_NOT_FOUND_PIP_SET_BESIDE_AN_ALLOWING_SET"
+        },
+        "tenantId": "parity-p47-o153",
+        "type": "UUID",
+        "url": "http://pip-mock:8090/api/v1/pip/r10-scope-not-found-set"
+      }
+    ]
+  }
+}
