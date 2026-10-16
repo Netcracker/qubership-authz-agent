@@ -412,6 +412,10 @@
     "check-resource-v1-outcome/sequence/p0-d0": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/cleanup-0": {"status":201},
     "load-simplified-policies-v1/sequence/cleanup-p0": {"status":200},
+    "load-simplified-policies-v1/sequence/w": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-read-raw-v1/sequence/p-r1": {"status":404,"body":""},
     "pap-read-raw-v1/sequence/p0-r1": {"status":404,"body":""},
     "pap-read/sequence/p-r0": {"status":200,"body":{"pips":[]}},
@@ -425,7 +429,11 @@
     "pap-read-raw-v1/sequence/p-r1": {"status":404,"body":""},
     "pap-read-raw-v1/sequence/p0-r1": {"status":404,"body":""},
     "pap-read/sequence/p-r0": {"status":200,"body":{"pips":[]}},
-    "pap-read/sequence/p0-r0": {"status":200,"body":{"pips":[]}}
+    "pap-read/sequence/p0-r0": {"status":200,"body":{"pips":[]}},
+    "pap-status-v1/sequence/w": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    }
   },
   "p49-meta-var-write-domain-pips-post-a": {
     "check-resource-v1-outcome/sequence/p-d0": {"status":200,"decision":false},
@@ -518,6 +526,10 @@
     "check-resource-v1-outcome/sequence/p0-d0": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/cleanup-0": {"status":201},
     "load-simplified-policies-v1/sequence/cleanup-p0": {"status":200},
+    "load-simplified-policies-v1/sequence/w": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-read-raw-v1/sequence/p-r1": {"status":404,"body":""},
     "pap-read-raw-v1/sequence/p0-r1": {"status":404,"body":""},
     "pap-read/sequence/p-r0": {"status":200,"body":{"pips":[]}},
@@ -531,6 +543,10 @@
     "pap-read-raw-v1/sequence/p-r1": {"status":404,"body":""},
     "pap-read-raw-v1/sequence/p0-r1": {"status":404,"body":""},
     "pap-read/sequence/p-r0": {"status":200,"body":{"pips":[]}},
-    "pap-read/sequence/p0-r0": {"status":200,"body":{"pips":[]}}
+    "pap-read/sequence/p0-r0": {"status":200,"body":{"pips":[]}},
+    "pap-status-v1/sequence/w": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    }
   }
 }

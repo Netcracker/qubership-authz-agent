@@ -351,18 +351,103 @@
     "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":false},
     "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":false},
     "load-policy-sets-v1/sequence/cleanup": {"status":200},
-    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_ALGORITHM\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
+    "pap-status-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_ALGORITHM\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    }
   },
   "p48-state-import-malformed": {
     "load-policy-sets-v1/sequence/cleanup": {"status":200},
-    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no boolean/Boolean-argument constructor/factory method to deserialize from boolean value (true)"
+    }
   },
   "p48-state-import-pips": {
     "load-simplified-policies-v1/sequence/cleanup": {"status":201},
     "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48_STATE_015",
+          "name": "subject.parityP015B",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        },
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "other",
+          "domain": "PARITY_P48_STATE_015",
+          "name": "subject.parityP015A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
     "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/mid": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48_STATE_015",
+          "name": "subject.parityP015B",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        },
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "other",
+          "domain": "PARITY_P48_STATE_015",
+          "name": "subject.parityP015A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
+    "pap-read-raw-v1/sequence/mid-2": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48_STATE_015",
+          "name": "subject.parityP015B",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        },
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "other",
+          "domain": "PARITY_P48_STATE_015",
+          "name": "subject.parityP015A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
     "pap-status-v1/sequence/w2": {"status":200},
-    "pap-status-v1/sequence/w3": {"status":200}
+    "pap-status-v1/sequence/w3": {"status":200},
+    "pap-status-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    }
   },
   "p48-state-import-slot": {
     "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":true},
@@ -413,6 +498,10 @@
   },
   "p48-state-pips-refusal": {
     "load-simplified-policies-v1/sequence/cleanup": {"status":201},
+    "load-simplified-policies-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-read-raw-v1/sequence/after": {"status":404,"body":""},
     "pap-read-raw-v1/sequence/before": {"status":404,"body":""}
   },
@@ -738,6 +827,10 @@
   "p48-state-sets-refusal": {
     "check-resource-v1-outcome/sequence/w1-probe": {"status":200,"decision":false},
     "load-policy-sets-v1/sequence/cleanup": {"status":200},
+    "load-policy-sets-v1/sequence/w1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_ALGORITHM\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
   },
   "p48-state-sets-upsert": {
@@ -957,6 +1050,29 @@
   "p48c-state-patch-pips-keep": {
     "load-simplified-policies-v1/sequence/cleanup": {"status":201},
     "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "pap-read-raw-v1/sequence/after": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48C_STATE_003",
+          "name": "subject.parityP003A",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        },
+        {
+          "cacheable": false,
+          "claim": "department",
+          "defaultValue": "none",
+          "domain": "PARITY_P48C_STATE_003",
+          "name": "subject.parityP003B",
+          "pipType": "TOKEN",
+          "type": "REGULAR"
+        }
+      ]
+    },
     "pap-read-raw-v1/sequence/before": {"status":404,"body":""},
     "pap-status-v1/sequence/w2": {"status":200}
   },

@@ -1,7 +1,19 @@
 {
   "p54s-0012": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
-    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/assign-permissions": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    }
   },
   "p54s-0020": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
@@ -21,6 +33,10 @@
   },
   "p54s-0069": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "import-pip-customization-v1/sequence/customize-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "import-pip-customization-v1/sequence/target": {"status":200},
     "pap-error-v1/sequence/target": {"status":200,"body":null},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
@@ -115,6 +131,10 @@
   },
   "p54s-0079": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "import-customization-v1/sequence/target": {
       "status": 400,
       "message": [
@@ -146,6 +166,10 @@
   },
   "p54s-0136": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {"status":200,"body":null},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
@@ -239,6 +263,10 @@
   },
   "p54s-0172": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {"status":200,"body":null},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
@@ -284,6 +312,10 @@
     "pap-status-v1/sequence/target": {"status":200}
   },
   "p54s-0177": {
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,
@@ -312,6 +344,10 @@
     "pap-read/sequence/target": {"status":200,"body":{"pips":[]}}
   },
   "p54s-0212": {
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {"status":200,"body":{"policySets":[]}}
   },
@@ -367,6 +403,10 @@
     }
   },
   "p54s-0247": {
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {"status":404}
   },
@@ -400,9 +440,17 @@
   },
   "p54s-0267": {
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read/sequence/target": {"status":200,"body":{"level":"custom","permissions":[]}}
+    "pap-read/sequence/target": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign-permissions": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    }
   },
   "p54s-0280": {
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {"status":404}
   },
@@ -421,6 +469,29 @@
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "pap-error-v1/sequence/target": {"status":201,"body":null},
     "pap-read-raw-v1/sequence/read-domain-pips": {"status":404,"body":""},
+    "pap-read-raw-v1/sequence/target": {
+      "status": 200,
+      "body": [
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P54S_0319_D1",
+          "header": "x-subject-parityp54s0319n2",
+          "name": "subject.parityP54S0319N2",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        },
+        {
+          "cacheable": false,
+          "defaultValue": "none",
+          "domain": "PARITY_P54S_0319_D1",
+          "header": "x-subject-parityp54s0319n3",
+          "name": "subject.parityP54S0319N3",
+          "pipType": "HEADER",
+          "type": "REGULAR"
+        }
+      ]
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,
@@ -650,8 +721,16 @@
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/write-domain-pips": {"status":201},
     "load-simplified-policies-v1/sequence/write-domain-pips-2": {"status":201},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read/sequence/target": {"status":200,"body":{"policySets":[]}}
+    "pap-read/sequence/target": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    }
   },
   "p54s-0418": {
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},

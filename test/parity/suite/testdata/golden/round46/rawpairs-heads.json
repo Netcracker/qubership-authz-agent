@@ -37,6 +37,10 @@
     "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "rp46-head-iterate-algorithm-other": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"FIRST_APPLICABLE\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "rp46-head-simplified-predicate-member-other": {

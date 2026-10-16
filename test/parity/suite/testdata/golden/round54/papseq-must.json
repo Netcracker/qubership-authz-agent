@@ -23,6 +23,10 @@
   },
   "p54s-0028": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
@@ -224,6 +228,10 @@
   "p54s-0097": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "delete-pip-customization-v1/sequence/target": {"status":404},
+    "import-pip-customization-v1/sequence/customize-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 404,
       "body": {
@@ -323,12 +331,28 @@
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "delete-customization-v1/sequence/delete-set-customization": {"status":204},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Could not find resource for full path: /access/v1/customization/policySet/590dde5b-313c-5f10-5274-cd33779c0117?level=CUSTOMER\u0026recursive=true\u0026tenant_id=parity-p54s-0127"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
   },
   "p54s-0130": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Could not find resource for full path: /access/v1/customization/policySet/71ea19f7-66bb-e3e6-0201-bd90aada6684?level=CUSTOMER\u0026recursive=true\u0026tenant_id=parity-p54s-0130"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
@@ -409,7 +433,15 @@
   },
   "p54s-0387": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "import-pip-customization-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":200,"body":{"pips":[]}},
     "pap-status-v1/sequence/change-set-status": {"status":500}

@@ -5,6 +5,10 @@
     "pap-status-v1/sequence/target": {"status":201}
   },
   "p53s-0013": {
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {"status":200,"body":null},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-status-v1/sequence/target": {"status":200}
@@ -58,6 +62,18 @@
     "pap-status-v1/sequence/target": {"status":200}
   },
   "p53s-0046": {
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
+    "import-customization-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
   },
   "p53s-0094": {
@@ -120,7 +136,15 @@
     "pap-status-v1/sequence/change-set-status": {"status":500}
   },
   "p53s-0100": {
+    "load-policy-sets-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"030093d2c1c61f8c7784b20c9e6e838d\": UUID has to be represented by standard 36-char representation"
+    },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"030093d2c1c61f8c7784b20c9e6e838d\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
   },
   "p53s-0101": {
@@ -227,6 +251,10 @@
   "p53s-0889": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/write-domain-pips": {"status":201},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'ｓubject.parityP53S0889N1' is invalid."
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,
@@ -247,15 +275,31 @@
       "keptTenants": [
         "parity-p53s-0889"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'ｓubject.parityP53S0889N1' is invalid."
     }
   },
   "p53s-1097": {
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read/sequence/target": {"status":200,"body":{"level":"custom","permissions":[]}}
+    "pap-read/sequence/target": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign-permissions": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    }
   },
   "p53s-1317": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"F6D69D8B-B0C9-AF8C -3D1A-024A7F5D3BA0\": UUID has to be represented by standard 36-char representation"
+    },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"F6D69D8B-B0C9-AF8C -3D1A-024A7F5D3BA0\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {"status":200,"body":{"policySets":[]}},
     "pap-status-v1/sequence/delete-set": {"status":200}
@@ -263,6 +307,10 @@
   "p53s-1589": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/target": {"status":500},
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {"status":200,"body":{"policySets":[]}}
@@ -721,7 +769,15 @@
   },
   "p53s-1769": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
+    "import-customization-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"a4b2f76a-e091-b41a-7397-7ad9376d6957/\": UUID has to be represented by standard 36-char representation"
+    },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"a4b2f76a-e091-b41a-7397-7ad9376d6957/\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,

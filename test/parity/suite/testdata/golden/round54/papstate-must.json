@@ -52,6 +52,22 @@
     "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/cleanup": {"status":201},
     "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w3": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w5": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Integer value (token `\u003credacted\u003e`)"
+    },
     "pap-read-raw-v1/sequence/after": {
       "status": 200,
       "body": [
@@ -87,6 +103,10 @@
     "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/cleanup": {"status":201},
     "load-simplified-policies-v1/sequence/w1": {"status":201},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('parity')"
+    },
     "load-simplified-policies-v1/sequence/w3": {"status":500},
     "pap-read-raw-v1/sequence/after": {
       "status": 200,
@@ -123,6 +143,22 @@
     "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
     "load-simplified-policies-v1/sequence/cleanup": {"status":200},
     "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w3": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-simplified-policies-v1/sequence/w5": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Integer value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/after": {
       "status": 200,
       "body": {
@@ -214,6 +250,10 @@
     "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
     "load-simplified-policies-v1/sequence/cleanup": {"status":200},
     "load-simplified-policies-v1/sequence/w1": {"status":200},
+    "load-simplified-policies-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('parity')"
+    },
     "load-simplified-policies-v1/sequence/w3": {"status":500},
     "pap-read/sequence/after": {
       "status": 200,
@@ -306,6 +346,22 @@
     "check-resource-v1-outcome/sequence/w2-probe": {"status":200,"decision":true},
     "load-policy-sets-v1/sequence/cleanup": {"status":200},
     "load-policy-sets-v1/sequence/w1": {"status":200},
+    "load-policy-sets-v1/sequence/w2": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/w3": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/w4": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
+    "load-policy-sets-v1/sequence/w5": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Integer value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/after": {
       "status": 200,
       "body": {

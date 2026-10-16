@@ -15,6 +15,10 @@
       ]
     },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 400,
       "body": [
@@ -210,11 +214,21 @@
   "p53s-0129": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Could not find resource for full path: /access/v1/customization/policySet/ea637036-4972-a904-45e6-51049be42ac3?level=PROJECT\u0026recursive=true\u0026tenant_id=parity-p53s-0129"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
   },
   "p53s-0137": {
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,
@@ -301,10 +315,18 @@
     "pap-status-v1/sequence/delete-set": {"status":200}
   },
   "p53s-0147": {
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
   },
   "p53s-0174": {
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 404,
       "body": {
@@ -318,6 +340,10 @@
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "delete-customization-v1/sequence/delete-set-customization": {"status":204},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 404,
       "body": {
@@ -399,6 +425,12 @@
   },
   "p53s-0241": {
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Could not find resource for full path: /access/v1/customization/policySet/2fa501d9-cce5-fb53-6884-94c8eaf3a1ad?level=PROJECT\u0026recursive=true\u0026tenant_id=parity-p53s-0241"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
   },
@@ -421,6 +453,10 @@
   },
   "p53s-0307": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
@@ -435,6 +471,10 @@
     "pap-status-v1/sequence/target": {"status":500}
   },
   "p53s-0311": {
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-status-v1/sequence/target": {"status":500}
@@ -473,6 +513,10 @@
   },
   "p53s-0376": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
@@ -625,6 +669,10 @@
   },
   "p53s-0582": {
     "delete-pip-customization-v1/sequence/target": {"status":404},
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {
       "status": 200,
@@ -823,6 +871,10 @@
   "p53s-0612": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "delete-pip-customization-v1/sequence/target": {"status":404},
+    "import-pip-customization-v1/sequence/customize-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 404,
       "body": {
@@ -899,6 +951,12 @@
   "p53s-0653": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Unable to extract parameter from http request: \u003credacted\u003e(\"id\") value is '182cf1b1-3363-56ed-b87c-e1c45d0d92e%2536'"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
@@ -906,6 +964,12 @@
   "p53s-0670": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Unable to extract parameter from http request: \u003credacted\u003e(\"id\") value is '%0D1e8a1b33-f471-a2e0-19c3-363e61f080d9%0D'"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/change-set-status": {"status":500},
@@ -913,6 +977,16 @@
   },
   "p53s-0694": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Unable to extract parameter from http request: \u003credacted\u003e(\"id\") value is '6609C7F8-16F9-6343+-8F37-4958411F7F08'"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
@@ -933,6 +1007,10 @@
   "p53s-0744": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "delete-customization-v1/sequence/target": {"status":404},
+    "load-policy-sets-v1/sequence/write-external-id-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 404,
       "body": {
@@ -961,6 +1039,12 @@
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "delete-customization-v1/sequence/target": {"status":404},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Unable to extract parameter from http request: \u003credacted\u003e(\"id\") value is '3ACFDC0A-40CA-189C+-5DA0-49DA71828422'"
+      }
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500}
   },
@@ -1116,16 +1200,32 @@
   "p53s-0996": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"10384c5a-7eeb-80a0-928a-f52e5a59a5b\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
-    "pap-status-v1/sequence/change-set-status": {"status":500}
+    "pap-status-v1/sequence/change-set-status": {"status":500},
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"10384c5a-7eeb-80a0-928a-f52e5a59a5b\": UUID has to be represented by standard 36-char representation"
+    }
   },
   "p53s-1027": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"950b512c-a4f3-3920-9cc7-c52772268e19/\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
-    "pap-status-v1/sequence/change-set-status": {"status":500}
+    "pap-status-v1/sequence/change-set-status": {"status":500},
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"950b512c-a4f3-3920-9cc7-c52772268e19/\": UUID has to be represented by standard 36-char representation"
+    }
   },
   "p53s-1046": {
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
@@ -1199,6 +1299,10 @@
   "p53s-1350": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "import-pip-customization-v1/sequence/customize-pips": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {
       "status": 200,
@@ -1245,16 +1349,32 @@
       "keptTenants": [
         "parity-p53s-1350"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
     }
   },
   "p53s-1421": {
     "delete-pip-customization-v1/sequence/delete-pip-customization": {"status":204},
     "import-pip-customization-v1/sequence/customize-pips": {"status":200},
-    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}}
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'sUbJeCt.pArItYp53S1421n1' is invalid."
+    },
+    "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'sUbJeCt.pArItYp53S1421n1' is invalid."
+    }
   },
   "p53s-1511": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {
       "status": 200,
@@ -1283,6 +1403,10 @@
       "keptTenants": [
         "parity-p53s-1511"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Object value (token `\u003credacted\u003e`)"
     }
   },
   "p53s-1530": {
@@ -1323,6 +1447,10 @@
   },
   "p53s-1613": {
     "delete-customization-v1/sequence/target": {"status":404},
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-error-v1/sequence/target": {
       "status": 404,
       "body": {
@@ -1342,6 +1470,10 @@
   "p53s-1692": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "import-pip-customization-v1/sequence/customize-pips": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subjеct.parityP53S1692N1' is invalid."
+    },
     "pap-read-raw-v1/sequence/target": {"status":404,"body":""},
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {
@@ -1371,13 +1503,25 @@
       "keptTenants": [
         "parity-p53s-1692"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subjеct.parityP53S1692N1' is invalid."
     }
   },
   "p53s-1705": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"334ｆ600b-d11e-9220-1acd-ba65199aa32e\": Non-hex character 'ｆ' (value 0xff46), not valid for UUID String"
+    },
     "pap-read/sequence/before": {"status":500},
-    "pap-read/sequence/target": {"status":500}
+    "pap-read/sequence/target": {"status":500},
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"334ｆ600b-d11e-9220-1acd-ba65199aa32e\": Non-hex character 'ｆ' (value 0xff46), not valid for UUID String"
+    }
   },
   "p53s-1716": {
     "delete-customization-v1/sequence/delete-set-customization": {"status":204},
@@ -1389,6 +1533,14 @@
   "p53s-1745": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "load-policy-sets-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"cd6e4036-797d-6519-dee8-63b632504318/\": UUID has to be represented by standard 36-char representation"
+    },
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"cd6e4036-797d-6519-dee8-63b632504318/\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500}
   },
@@ -1396,6 +1548,10 @@
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "delete-pip-customization-v1/sequence/delete-pip-customization": {"status":204},
     "import-pip-customization-v1/sequence/customize-pips": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityP53S1765N1/' is invalid."
+    },
     "pap-read-raw-v1/sequence/target": {"status":404,"body":""},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
@@ -1416,11 +1572,19 @@
       "keptTenants": [
         "parity-p53s-1765"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityP53S1765N1/' is invalid."
     }
   },
   "p53s-1822": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
     "import-pip-customization-v1/sequence/customize-pips": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityP53S1822N1/' is invalid."
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,
@@ -1440,11 +1604,23 @@
       "keptTenants": [
         "parity-p53s-1822"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityP53S1822N1/' is invalid."
     }
   },
   "p53s-1875": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
+    "import-customization-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"5018DB95-E328-B0FA -A84E-FDCECD2A3E33\": UUID has to be represented by standard 36-char representation"
+    },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"5018DB95-E328-B0FA -A84E-FDCECD2A3E33\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/change-set-status": {"status":500}
@@ -1452,6 +1628,10 @@
   "p53s-1878": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"2178227D-93FC-807A -BE47-483AE343E263\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,
@@ -1492,6 +1672,10 @@
       "keptTenants": [
         "parity-p53s-1878"
       ]
+    },
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"2178227D-93FC-807A -BE47-483AE343E263\": UUID has to be represented by standard 36-char representation"
     }
   },
   "p53s-1893": {
@@ -1512,25 +1696,55 @@
     "import-customization-v1/sequence/customize-sets": {"status":200},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
     "pap-read/sequence/before": {"status":500},
-    "pap-read/sequence/target": {"status":500}
+    "pap-read/sequence/target": {"status":500},
+    "pap-status-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"DD3996C0-D4E2-939C -C8B0-4C14EA482A86\": UUID has to be represented by standard 36-char representation"
+    }
   },
   "p53s-1959": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"{13e0cf2f-e321-3a80-4f10-2fe5231ad940}\": UUID has to be represented by standard 36-char representation"
+    },
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"{13e0cf2f-e321-3a80-4f10-2fe5231ad940}\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/delete-set": {"status":200}
   },
   "p53s-1974": {
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Unable to extract parameter from http request: \u003credacted\u003e(\"id\") value is '%7B28bd4cb3-ef26-b47a-0d62-352c10ac989d%7D'"
+      }
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-status-v1/sequence/target": {"status":404}
   },
   "p53s-1975": {
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "import-customization-v1/sequence/target": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"9c98ed7aa8bdede073dd678b26742d1d\": UUID has to be represented by standard 36-char representation"
+    },
+    "pap-error-v1/sequence/target": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"9c98ed7aa8bdede073dd678b26742d1d\": UUID has to be represented by standard 36-char representation"
+    },
     "pap-read/sequence/before": {"status":500}
   },
   "p53s-1978": {
+    "import-customization-v1/sequence/customize-sets": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
+    },
     "pap-read/sequence/before": {"status":500},
     "pap-read/sequence/target": {"status":500},
     "pap-status-v1/sequence/target": {"status":404}
@@ -1538,6 +1752,10 @@
   "p53s-2006": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "import-customization-v1/sequence/customize-sets": {"status":200},
+    "load-simplified-policies-v1/sequence/write-domain-pips": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_UNKNOWN_TYPE\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    },
     "pap-error-v1/sequence/target": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
@@ -1651,6 +1869,12 @@
   "p53s-2054": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
     "load-policy-sets-v1/sequence/write-external-id-sets": {"status":200},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Could not find resource for full path: /access/v1/customization/policySet/c11c4764-11ea-a528-5b12-426a3a777dfe%0A?recursive=true\u0026tenant_id=parity-p53s-2054"
+      }
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,

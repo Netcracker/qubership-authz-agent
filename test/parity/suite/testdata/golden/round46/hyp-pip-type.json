@@ -1,4 +1,10 @@
 {
+  "hy46-enum-pip-type-general": {
+    "load-simplified-policies-v1/regular/declare-the-domain": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"general\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+    }
+  },
   "hy46-pip-type-control-first": {
     "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},

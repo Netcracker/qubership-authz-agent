@@ -1,6 +1,12 @@
 {
   "d2p59-b1e8ed3314": {
     "check-resource-v1-outcome/sequence/target-probe": {"status":200,"decision":true},
+    "pap-error-v1/sequence/target": {
+      "status": 404,
+      "body": {
+        "message": "Could not find resource for full path: /access/v1/customization/policySet/73282%EF%BD%848e-ac4b-c344-0897-548490874048?recursive=true\u0026tenant_id=parity-d2p59-b1e8ed3314"
+      }
+    },
     "pap-read/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read/sequence/target": {
       "status": 200,

@@ -52,6 +52,10 @@
   "sequence/p50f-pip-beanname/w-edge-tab": {"status":201},
   "sequence/p50f-pip-beanname/w-empty-string": {"status":201},
   "sequence/p50f-pip-beanname/w-null": {"status":201},
+  "sequence/p50f-pip-beanname/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-beanname/w-other-type": {"status":201},
   "sequence/p50f-pip-cacheable/cleanup-slot": {"status":201},
   "sequence/p50f-pip-cacheable/w-absent": {"status":201},
@@ -60,6 +64,10 @@
   "sequence/p50f-pip-cacheable/w-default-explicit": {"status":201},
   "sequence/p50f-pip-cacheable/w-empty-string": {"status":201},
   "sequence/p50f-pip-cacheable/w-null": {"status":201},
+  "sequence/p50f-pip-cacheable/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-cacheable/w-other-type": {"status":201},
   "sequence/p50f-pip-cacheperiod/cleanup-slot": {"status":201},
   "sequence/p50f-pip-cacheperiod/w-absent": {"status":201},
@@ -68,12 +76,28 @@
   "sequence/p50f-pip-cacheperiod/w-default-explicit": {"status":201},
   "sequence/p50f-pip-cacheperiod/w-empty-string": {"status":201},
   "sequence/p50f-pip-cacheperiod/w-null": {"status":201},
+  "sequence/p50f-pip-cacheperiod/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-cacheperiod/w-other-type": {"status":201},
   "sequence/p50f-pip-claim/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-claim/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: TOKEN PIP must have a token claim"
+  },
   "sequence/p50f-pip-claim/w-blank-space": {"status":201},
   "sequence/p50f-pip-claim/w-edge-nbsp": {"status":201},
   "sequence/p50f-pip-claim/w-edge-space": {"status":201},
   "sequence/p50f-pip-claim/w-edge-tab": {"status":201},
+  "sequence/p50f-pip-claim/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: TOKEN PIP must have a token claim"
+  },
+  "sequence/p50f-pip-claim/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-claim/w-other-type": {"status":201},
   "sequence/p50f-pip-defaultvalue/cleanup-slot": {"status":201},
   "sequence/p50f-pip-defaultvalue/w-blank-space": {"status":201},
@@ -82,6 +106,10 @@
   "sequence/p50f-pip-defaultvalue/w-edge-tab": {"status":201},
   "sequence/p50f-pip-defaultvalue/w-empty-string": {"status":201},
   "sequence/p50f-pip-defaultvalue/w-null": {"status":201},
+  "sequence/p50f-pip-defaultvalue/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-defaultvalue/w-other-type": {"status":201},
   "sequence/p50f-pip-deprecated/cleanup-slot": {"status":201},
   "sequence/p50f-pip-deprecated/w-blank-cr": {"status":201},
@@ -90,6 +118,10 @@
   "sequence/p50f-pip-deprecated/w-blank-space": {"status":201},
   "sequence/p50f-pip-deprecated/w-empty-string": {"status":201},
   "sequence/p50f-pip-deprecated/w-null": {"status":201},
+  "sequence/p50f-pip-deprecated/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-deprecated/w-other-type": {"status":201},
   "sequence/p50f-pip-description/cleanup-slot": {"status":201},
   "sequence/p50f-pip-description/w-blank-space": {"status":201},
@@ -98,45 +130,217 @@
   "sequence/p50f-pip-description/w-edge-tab": {"status":201},
   "sequence/p50f-pip-description/w-empty-string": {"status":201},
   "sequence/p50f-pip-description/w-null": {"status":201},
+  "sequence/p50f-pip-description/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-description/w-other-type": {"status":201},
   "sequence/p50f-pip-header/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-header/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p50f-pip-header/w-blank-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
   "sequence/p50f-pip-header/w-edge-nbsp": {"status":201},
   "sequence/p50f-pip-header/w-edge-space": {"status":201},
   "sequence/p50f-pip-header/w-edge-tab": {"status":201},
+  "sequence/p50f-pip-header/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p50f-pip-header/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-header/w-other-type": {"status":201},
   "sequence/p50f-pip-headers/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-headers/w-blank-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
   "sequence/p50f-pip-headers/w-edge-nbsp": {"status":201},
   "sequence/p50f-pip-headers/w-edge-space": {"status":201},
   "sequence/p50f-pip-headers/w-edge-tab": {"status":201},
   "sequence/p50f-pip-headers/w-empty-string": {"status":201},
   "sequence/p50f-pip-headers/w-null": {"status":201},
+  "sequence/p50f-pip-headers/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-headers/w-other-type": {"status":201},
   "sequence/p50f-pip-httpmethod/cleanup-slot": {"status":201},
   "sequence/p50f-pip-httpmethod/w-absent": {"status":201},
+  "sequence/p50f-pip-httpmethod/w-blank-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP50F028A'"
+  },
+  "sequence/p50f-pip-httpmethod/w-edge-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP50F028A'"
+  },
+  "sequence/p50f-pip-httpmethod/w-edge-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP50F028A'"
+  },
+  "sequence/p50f-pip-httpmethod/w-edge-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP50F028A'"
+  },
+  "sequence/p50f-pip-httpmethod/w-empty-string": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP50F028A'"
+  },
   "sequence/p50f-pip-httpmethod/w-null": {"status":201},
+  "sequence/p50f-pip-httpmethod/w-other-type": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP50F028A'"
+  },
   "sequence/p50f-pip-jsonpath/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-jsonpath/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP50F027A'"
+  },
+  "sequence/p50f-pip-jsonpath/w-blank-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP50F027A'"
+  },
   "sequence/p50f-pip-jsonpath/w-edge-nbsp": {"status":201},
   "sequence/p50f-pip-jsonpath/w-edge-space": {"status":201},
   "sequence/p50f-pip-jsonpath/w-edge-tab": {"status":201},
+  "sequence/p50f-pip-jsonpath/w-empty-string": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP50F027A'"
+  },
+  "sequence/p50f-pip-jsonpath/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP50F027A'"
+  },
   "sequence/p50f-pip-jsonpath/w-other-type": {"status":201},
   "sequence/p50f-pip-name/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-name/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'null' is invalid."
+  },
+  "sequence/p50f-pip-name/w-blank-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name ' ' is invalid."
+  },
+  "sequence/p50f-pip-name/w-edge-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name ' subject.parityDocA ' is invalid."
+  },
+  "sequence/p50f-pip-name/w-edge-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name ' subject.parityDocA ' is invalid."
+  },
+  "sequence/p50f-pip-name/w-edge-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\tsubject.parityDocA\t' is invalid."
+  },
+  "sequence/p50f-pip-name/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'null' is invalid."
+  },
+  "sequence/p50f-pip-name/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
+  "sequence/p50f-pip-name/w-other-type": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '5' is invalid."
+  },
   "sequence/p50f-pip-piptype/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-piptype/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F024A' must have either a URL or bean name"
+  },
+  "sequence/p50f-pip-piptype/w-blank-space": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p50f-pip-piptype/w-default-explicit": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F024A' must have either a URL or bean name"
+  },
+  "sequence/p50f-pip-piptype/w-edge-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \" GENERAL \": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+  },
+  "sequence/p50f-pip-piptype/w-edge-space": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F024A' must have either a URL or bean name"
+  },
+  "sequence/p50f-pip-piptype/w-empty-string": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p50f-pip-piptype/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F024A' must have either a URL or bean name"
+  },
+  "sequence/p50f-pip-piptype/w-other-type": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name 'subject.parityP50F024A' is invalid for PERMISSION_SCOPE PIP type"
+  },
   "sequence/p50f-pip-resourcetype/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-resourcetype/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: FILTERED PIP must have a resource type"
+  },
   "sequence/p50f-pip-resourcetype/w-blank-space": {"status":201},
   "sequence/p50f-pip-resourcetype/w-edge-nbsp": {"status":201},
   "sequence/p50f-pip-resourcetype/w-edge-space": {"status":201},
   "sequence/p50f-pip-resourcetype/w-edge-tab": {"status":201},
+  "sequence/p50f-pip-resourcetype/w-empty-string": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: FILTERED PIP must have a resource type"
+  },
+  "sequence/p50f-pip-resourcetype/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: FILTERED PIP must have a resource type"
+  },
   "sequence/p50f-pip-resourcetype/w-other-type": {"status":201},
   "sequence/p50f-pip-type/cleanup-slot": {"status":201},
   "sequence/p50f-pip-type/w-absent": {"status":201},
+  "sequence/p50f-pip-type/w-blank-space": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p50f-pip-type/w-edge-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \" UUID \": not one of the values accepted for Enum class: [JSON, UUID, REGULAR]"
+  },
   "sequence/p50f-pip-type/w-edge-space": {"status":201},
   "sequence/p50f-pip-type/w-edge-tab": {"status":201},
+  "sequence/p50f-pip-type/w-empty-string": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
   "sequence/p50f-pip-type/w-null": {"status":201},
+  "sequence/p50f-pip-type/w-other-type": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from number 5: index value outside legal index range [0..2]"
+  },
   "sequence/p50f-pip-url/cleanup-slot": {"status":201},
+  "sequence/p50f-pip-url/w-absent": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F026A' must have either a URL or bean name"
+  },
   "sequence/p50f-pip-url/w-blank-space": {"status":201},
   "sequence/p50f-pip-url/w-edge-nbsp": {"status":201},
   "sequence/p50f-pip-url/w-edge-space": {"status":201},
   "sequence/p50f-pip-url/w-edge-tab": {"status":201},
+  "sequence/p50f-pip-url/w-empty-string": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F026A' must have either a URL or bean name"
+  },
+  "sequence/p50f-pip-url/w-null": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP50F026A' must have either a URL or bean name"
+  },
   "sequence/p50f-pip-url/w-other-type": {"status":201},
   "sequence/p50f-simplifiedpolicy-applicableforfrontend/cleanup-slot": {"status":200},
   "sequence/p50f-simplifiedpolicy-applicableforfrontend/w-absent": {"status":200},
@@ -145,6 +349,10 @@
   "sequence/p50f-simplifiedpolicy-applicableforfrontend/w-default-explicit": {"status":200},
   "sequence/p50f-simplifiedpolicy-applicableforfrontend/w-empty-string": {"status":200},
   "sequence/p50f-simplifiedpolicy-applicableforfrontend/w-null": {"status":200},
+  "sequence/p50f-simplifiedpolicy-applicableforfrontend/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `boolean` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p50f-simplifiedpolicy-applicableforfrontend/w-other-type": {"status":200},
   "sequence/p50f-simplifiedpolicy-condition/cleanup-slot": {"status":200},
   "sequence/p50f-simplifiedpolicy-condition/w-default-explicit": {"status":200},
@@ -202,11 +410,27 @@
   "sequence/p54f-pip-cacheable/cleanup-slot": {"status":201},
   "sequence/p54f-pip-cacheable/w-blank-ff": {"status":201},
   "sequence/p54f-pip-cacheable/w-blank-lf": {"status":201},
+  "sequence/p54f-pip-cacheable/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"\u2028\": only \"true\" or \"false\" recognized"
+  },
+  "sequence/p54f-pip-cacheable/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \" \": only \"true\" or \"false\" recognized"
+  },
   "sequence/p54f-pip-cacheable/w-blank-tab": {"status":201},
   "sequence/p54f-pip-cacheable/w-blank-vt": {"status":201},
   "sequence/p54f-pip-cacheperiod/cleanup-slot": {"status":201},
   "sequence/p54f-pip-cacheperiod/w-blank-ff": {"status":201},
   "sequence/p54f-pip-cacheperiod/w-blank-lf": {"status":201},
+  "sequence/p54f-pip-cacheperiod/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"\u2028\": not a valid `\u003credacted\u003e` value"
+  },
+  "sequence/p54f-pip-cacheperiod/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \" \": not a valid `\u003credacted\u003e` value"
+  },
   "sequence/p54f-pip-cacheperiod/w-blank-tab": {"status":201},
   "sequence/p54f-pip-cacheperiod/w-blank-vt": {"status":201},
   "sequence/p54f-pip-claim/cleanup-slot": {"status":201},
@@ -224,6 +448,42 @@
   "sequence/p54f-pip-claim/w-edge-vt": {"status":201},
   "sequence/p54f-pip-custommapping/cleanup-slot": {"status":201},
   "sequence/p54f-pip-custommapping/w-absent": {"status":201},
+  "sequence/p54f-pip-custommapping/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('\u2028')"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value (' ')"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-space": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-custommapping/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-custommapping/w-empty-string": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-custommapping/w-null": {"status":201},
   "sequence/p54f-pip-defaultvalue/cleanup-slot": {"status":201},
   "sequence/p54f-pip-defaultvalue/w-blank-cr": {"status":201},
@@ -239,31 +499,323 @@
   "sequence/p54f-pip-defaultvalue/w-edge-lsep": {"status":201},
   "sequence/p54f-pip-defaultvalue/w-edge-vt": {"status":201},
   "sequence/p54f-pip-header/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-header/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-header/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-header/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-header/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
   "sequence/p54f-pip-header/w-blank-nbsp": {"status":201},
+  "sequence/p54f-pip-header/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-header/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
   "sequence/p54f-pip-header/w-edge-cr": {"status":201},
   "sequence/p54f-pip-header/w-edge-ff": {"status":201},
   "sequence/p54f-pip-header/w-edge-lf": {"status":201},
   "sequence/p54f-pip-header/w-edge-lsep": {"status":201},
   "sequence/p54f-pip-header/w-edge-vt": {"status":201},
   "sequence/p54f-pip-headers/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-headers/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-headers/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-headers/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-headers/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
   "sequence/p54f-pip-headers/w-blank-nbsp": {"status":201},
+  "sequence/p54f-pip-headers/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
+  "sequence/p54f-pip-headers/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: The header name cannot be empty or equal to one of the following: [authorization, tenant]"
+  },
   "sequence/p54f-pip-headers/w-edge-cr": {"status":201},
   "sequence/p54f-pip-headers/w-edge-ff": {"status":201},
   "sequence/p54f-pip-headers/w-edge-lf": {"status":201},
   "sequence/p54f-pip-headers/w-edge-lsep": {"status":201},
   "sequence/p54f-pip-headers/w-edge-vt": {"status":201},
   "sequence/p54f-pip-httpmethod/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-httpmethod/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-edge-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-edge-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-edge-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-edge-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'httpMethod' parameter can be equal to 'GET' or 'POST' values only for PIP 'subject.parityP54F037A'"
+  },
+  "sequence/p54f-pip-httpmethod/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-jsonpath/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-jsonpath/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP54F036A'"
+  },
+  "sequence/p54f-pip-jsonpath/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP54F036A'"
+  },
+  "sequence/p54f-pip-jsonpath/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP54F036A'"
+  },
+  "sequence/p54f-pip-jsonpath/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP54F036A'"
+  },
   "sequence/p54f-pip-jsonpath/w-blank-nbsp": {"status":201},
+  "sequence/p54f-pip-jsonpath/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP54F036A'"
+  },
+  "sequence/p54f-pip-jsonpath/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: 'jsonPath' parameter cannot be empty for JSON return type for PIP 'subject.parityP54F036A'"
+  },
   "sequence/p54f-pip-jsonpath/w-edge-cr": {"status":201},
   "sequence/p54f-pip-jsonpath/w-edge-ff": {"status":201},
   "sequence/p54f-pip-jsonpath/w-edge-lf": {"status":201},
   "sequence/p54f-pip-jsonpath/w-edge-lsep": {"status":201},
+  "sequence/p54f-pip-jsonpath/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-name/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-name/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\r' is invalid."
+  },
+  "sequence/p54f-pip-name/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\f' is invalid."
+  },
+  "sequence/p54f-pip-name/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\n' is invalid."
+  },
+  "sequence/p54f-pip-name/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\u2028' is invalid."
+  },
+  "sequence/p54f-pip-name/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name ' ' is invalid."
+  },
+  "sequence/p54f-pip-name/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\t' is invalid."
+  },
+  "sequence/p54f-pip-name/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\u000b' is invalid."
+  },
+  "sequence/p54f-pip-name/w-edge-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\rsubject.parityDocA\r' is invalid."
+  },
+  "sequence/p54f-pip-name/w-edge-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\fsubject.parityDocA\f' is invalid."
+  },
+  "sequence/p54f-pip-name/w-edge-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\nsubject.parityDocA\n' is invalid."
+  },
+  "sequence/p54f-pip-name/w-edge-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\u2028subject.parityDocA\u2028' is invalid."
+  },
+  "sequence/p54f-pip-name/w-edge-vt": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP name '\u000bsubject.parityDocA\u000b' is invalid."
+  },
   "sequence/p54f-pip-piptype/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-piptype/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-piptype/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-piptype/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-piptype/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"\u2028\": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+  },
+  "sequence/p54f-pip-piptype/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \" \": not one of the values accepted for Enum class: [PERMISSION_SCOPE, FILTERED, GENERAL, TOKEN, HEADER, MAPPING]"
+  },
+  "sequence/p54f-pip-piptype/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-piptype/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-piptype/w-edge-cr": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP54F001A' must have either a URL or bean name"
+  },
+  "sequence/p54f-pip-piptype/w-edge-ff": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP54F001A' must have either a URL or bean name"
+  },
+  "sequence/p54f-pip-piptype/w-edge-lf": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP54F001A' must have either a URL or bean name"
+  },
+  "sequence/p54f-pip-piptype/w-edge-tab": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e`, problem: PIP 'subject.parityP54F001A' must have either a URL or bean name"
+  },
+  "sequence/p54f-pip-piptype/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-productmapping/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-productmapping/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('\u2028')"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value (' ')"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-space": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-productmapping/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-productmapping/w-empty-string": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-productmapping/w-null": {"status":201},
   "sequence/p54f-pip-requestattributes/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-requestattributes/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('\u2028')"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value (' ')"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-space": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-requestattributes/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-requestattributes/w-empty-string": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-requestattributes/w-null": {"status":201},
   "sequence/p54f-pip-resourcetype/cleanup-slot": {"status":201},
   "sequence/p54f-pip-resourcetype/w-blank-cr": {"status":201},
@@ -277,10 +829,50 @@
   "sequence/p54f-pip-resourcetype/w-edge-ff": {"status":201},
   "sequence/p54f-pip-resourcetype/w-edge-lf": {"status":201},
   "sequence/p54f-pip-resourcetype/w-edge-lsep": {"status":201},
+  "sequence/p54f-pip-resourcetype/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-type/cleanup-slot": {"status":201},
+  "sequence/p54f-pip-type/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-type/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-type/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-type/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"\u2028\": not one of the values accepted for Enum class: [JSON, UUID, REGULAR]"
+  },
+  "sequence/p54f-pip-type/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \" \": not one of the values accepted for Enum class: [JSON, UUID, REGULAR]"
+  },
+  "sequence/p54f-pip-type/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-pip-type/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to `\u003credacted\u003e` value (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-type/w-edge-cr": {"status":201},
   "sequence/p54f-pip-type/w-edge-ff": {"status":201},
   "sequence/p54f-pip-type/w-edge-lf": {"status":201},
+  "sequence/p54f-pip-type/w-edge-lsep": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from String \"\u2028UUID\u2028\": not one of the values accepted for Enum class: [JSON, UUID, REGULAR]"
+  },
+  "sequence/p54f-pip-type/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-pip-url/cleanup-slot": {"status":201},
   "sequence/p54f-pip-url/w-blank-cr": {"status":201},
   "sequence/p54f-pip-url/w-blank-ff": {"status":201},
@@ -293,9 +885,21 @@
   "sequence/p54f-pip-url/w-edge-ff": {"status":201},
   "sequence/p54f-pip-url/w-edge-lf": {"status":201},
   "sequence/p54f-pip-url/w-edge-lsep": {"status":201},
+  "sequence/p54f-pip-url/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-simplifiedpolicy-applicableforfrontend/cleanup-slot": {"status":200},
   "sequence/p54f-simplifiedpolicy-applicableforfrontend/w-blank-ff": {"status":200},
   "sequence/p54f-simplifiedpolicy-applicableforfrontend/w-blank-lf": {"status":200},
+  "sequence/p54f-simplifiedpolicy-applicableforfrontend/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `boolean` from String \"\u2028\": only \"true\"/\"True\"/\"TRUE\" or \"false\"/\"False\"/\"FALSE\" recognized"
+  },
+  "sequence/p54f-simplifiedpolicy-applicableforfrontend/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `boolean` from String \" \": only \"true\"/\"True\"/\"TRUE\" or \"false\"/\"False\"/\"FALSE\" recognized"
+  },
   "sequence/p54f-simplifiedpolicy-applicableforfrontend/w-blank-tab": {"status":200},
   "sequence/p54f-simplifiedpolicy-applicableforfrontend/w-blank-vt": {"status":200},
   "sequence/p54f-simplifiedpolicy-component/cleanup-slot": {"status":200},
@@ -346,6 +950,10 @@
     "message": "Expression [\\u2028resource.a == 'y'\\u2028]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
   },
   "sequence/p54f-simplifiedpolicy-condition/w-edge-vt": {"status":200},
+  "sequence/p54f-simplifiedpolicy-condition/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot invoke \"\u003credacted\u003e\" because the return value of \"\u003credacted\u003e\" is null"
+  },
   "sequence/p54f-simplifiedpolicy-id/cleanup-slot": {"status":200},
   "sequence/p54f-simplifiedpolicy-id/w-blank-cr": {"status":400,"message":{"message":"Invalid UUID string: \r"}},
   "sequence/p54f-simplifiedpolicy-id/w-blank-ff": {"status":400,"message":{"message":"Invalid UUID string: \f"}},
@@ -358,6 +966,10 @@
   "sequence/p54f-simplifiedpolicy-id/w-edge-ff": {"status":400,"message":{"message":"UUID string too large"}},
   "sequence/p54f-simplifiedpolicy-id/w-edge-lf": {"status":400,"message":{"message":"UUID string too large"}},
   "sequence/p54f-simplifiedpolicy-id/w-edge-lsep": {"status":400,"message":{"message":"UUID string too large"}},
+  "sequence/p54f-simplifiedpolicy-id/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-simplifiedpolicy-mongodbpredicate/cleanup-slot": {"status":200},
   "sequence/p54f-simplifiedpolicy-mongodbpredicate/w-blank-cr": {"status":200},
   "sequence/p54f-simplifiedpolicy-mongodbpredicate/w-blank-ff": {"status":200},
@@ -383,6 +995,10 @@
   "sequence/p54f-simplifiedpolicy-operation/w-edge-ff": {"status":200},
   "sequence/p54f-simplifiedpolicy-operation/w-edge-lf": {"status":200},
   "sequence/p54f-simplifiedpolicy-operation/w-edge-lsep": {"status":200},
+  "sequence/p54f-simplifiedpolicy-operation/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-simplifiedpolicy-predicates/cleanup-slot": {"status":200},
   "sequence/p54f-simplifiedpolicy-predicates/w-absent": {"status":200},
   "sequence/p54f-simplifiedpolicy-predicates/w-blank-cr": {
@@ -460,12 +1076,52 @@
   "sequence/p54f-simplifiedpolicy-resourcetype/w-edge-ff": {"status":200},
   "sequence/p54f-simplifiedpolicy-resourcetype/w-edge-lf": {"status":200},
   "sequence/p54f-simplifiedpolicy-resourcetype/w-edge-lsep": {"status":200},
+  "sequence/p54f-simplifiedpolicy-resourcetype/w-one-element-list": {
+    "status": 400,
+    "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+  },
   "sequence/p54f-simplifiedpolicy-roles/cleanup-slot": {"status":200},
   "sequence/p54f-simplifiedpolicy-roles/w-absent": {
     "status": 400,
     "message": {
       "message": "simplified policy 'roles' or 'serviceAccounts' fields can't be empty simultaneously if allowM2MAccess flag is false"
     }
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-cr": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-ff": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-lf": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-lsep": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('\u2028')"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-nbsp": {
+    "status": 400,
+    "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value (' ')"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-space": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-tab": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-blank-vt": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+  },
+  "sequence/p54f-simplifiedpolicy-roles/w-empty-string": {
+    "status": 400,
+    "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
   },
   "sequence/p54f-simplifiedpolicy-roles/w-null": {
     "status": 400,
