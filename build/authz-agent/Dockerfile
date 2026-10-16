@@ -18,7 +18,7 @@ RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
     go build -o /out/authz-agent ./components/authz-agent
 
 # The platform base image: CA bundle, uid 10001 in the root group.
-FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.7@sha256:f0836415633bc2a63c2a0431c4c0701d17bd7b31132176b26651b49927d9ad7e
+FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.8@sha256:0c2c9e4b49e73efffb30edf8d3de8b3eb43194a6c4f688da08ec3236b570b486
 COPY --chmod=555 --from=builder /out/authz-agent /usr/local/bin/authz-agent
 USER 10001:10001
 # The binary is the entrypoint rather than a CMD behind the base image's
