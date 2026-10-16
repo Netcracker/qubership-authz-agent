@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -291,16 +292,6 @@ func TestNewWriter_RefusesAnIncompleteConfig(t *testing.T) {
 	}
 }
 
-func TestNewWriter_DefaultsRenewBeforeToAMinute(t *testing.T) {
-	w, err := NewWriter(WriterConfig{TokenURL: "https://idp.example/token", ClientIDFile: "/etc/secret/username", ClientSecretFile: "/etc/secret/password", Path: "/run/token"}, nil)
-	if err != nil {
-		t.Fatalf("NewWriter() error = %v", err)
-	}
-	if w.cfg.RenewBefore != DefaultRenewBefore {
-		t.Errorf("RenewBefore = %s, want %s", w.cfg.RenewBefore, DefaultRenewBefore)
-	}
-}
-
 // A token that lives one second is renewed after a second, so Run asks
 // again within the test.
 func TestWriter_RunRefreshesAgainBeforeTheTokenExpires(t *testing.T) {
@@ -308,6 +299,58 @@ func TestWriter_RunRefreshesAgainBeforeTheTokenExpires(t *testing.T) {
 	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
 	runInBackground(t, w.Run)
 	waitFor(t, "a second token request", func() bool { return e.count() >= 2 })
+}
+
+func TestWriter_RunWaits70PercentOfTheLifetimeBeforeTheNextRequest(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	var pauses []time.Duration
+	w.wait = func(_ context.Context, d time.Duration) bool {
+		pauses = append(pauses, d)
+		return false
+	}
+	w.Run(context.Background())
+	if len(pauses) != 1 || pauses[0] != 210*time.Second {
+		t.Errorf("Run paused %v after a token that lives 5m0s, want [3m30s]", pauses)
+	}
+}
+
+func TestWriter_RunDoublesThePauseAfterEachFailedAttempt(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	e.failures = 2
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	var pauses []time.Duration
+	w.wait = func(_ context.Context, d time.Duration) bool {
+		pauses = append(pauses, d)
+		return len(pauses) < 2
+	}
+	w.Run(context.Background())
+	want := []time.Duration{10 * time.Millisecond, 20 * time.Millisecond}
+	if !slices.Equal(pauses, want) {
+		t.Errorf("Run paused %v after two failed attempts, want %v", pauses, want)
+	}
+}
+
+// The endpoint fails once, answers, and then fails once more.
+func TestWriter_RunStartsThePausesOverAfterASuccess(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	e.failures = 1
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	var pauses []time.Duration
+	w.wait = func(_ context.Context, d time.Duration) bool {
+		pauses = append(pauses, d)
+		if len(pauses) == 2 {
+			e.mu.Lock()
+			e.failures = 1
+			e.mu.Unlock()
+		}
+		return len(pauses) < 3
+	}
+	w.Run(context.Background())
+	want := []time.Duration{10 * time.Millisecond, 210 * time.Second, 10 * time.Millisecond}
+	if !slices.Equal(pauses, want) {
+		t.Errorf("Run paused %v, want %v", pauses, want)
+	}
 }
 
 // The secret is posted to TokenURL; a redirect would post it again to
@@ -364,16 +407,17 @@ func TestWriter_NeverLogsTheToken(t *testing.T) {
 
 func TestRenewal(t *testing.T) {
 	tests := []struct {
-		lifetime, renewBefore, want time.Duration
+		lifetime, want time.Duration
 	}{
-		{5 * time.Minute, time.Minute, 4 * time.Minute},
-		{100 * time.Second, time.Minute, 50 * time.Second},
-		{time.Second, time.Minute, time.Second},
-		{time.Second / 2, time.Minute, time.Second},
+		{5 * time.Minute, 210 * time.Second},
+		{2 * time.Second, 1400 * time.Millisecond},
+		{time.Second, time.Second},
+		// Fifty years: seven times this lifetime overflows a Duration.
+		{438000 * time.Hour, 306600 * time.Hour},
 	}
 	for _, tt := range tests {
-		if got := renewal(tt.lifetime, tt.renewBefore); got != tt.want {
-			t.Errorf("renewal(%s, %s) = %s, want %s", tt.lifetime, tt.renewBefore, got, tt.want)
+		if got := renewal(tt.lifetime); got != tt.want {
+			t.Errorf("renewal(%s) = %s, want %s", tt.lifetime, got, tt.want)
 		}
 	}
 }

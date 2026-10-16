@@ -29,11 +29,9 @@ import (
 	"time"
 )
 
-// Defaults of [WriterConfig].
-const (
-	DefaultRenewBefore = time.Minute
-	DefaultHTTPTimeout = 10 * time.Second
-)
+// DefaultHTTPTimeout is the timeout of the client a [Writer] sends its
+// requests with when [WriterConfig.Client] is nil.
+const DefaultHTTPTimeout = 10 * time.Second
 
 // The pauses between two failed attempts of [Writer.Run] start at
 // defaultFirstBackoff and double after every failure, up to maxBackoff.
@@ -60,9 +58,6 @@ type WriterConfig struct {
 	// Path is the file the token is written to. Its directory has to exist;
 	// the file is replaced whole, so a reader never sees half a token.
 	Path string
-	// RenewBefore is how long before the token expires a new one is
-	// requested; zero or less means DefaultRenewBefore.
-	RenewBefore time.Duration
 	// Client sends the token requests. Nil means a client with the proxy
 	// settings of the environment and DefaultHTTPTimeout that follows no
 	// redirect, so the client secret goes to TokenURL alone and a redirect
@@ -77,6 +72,9 @@ type Writer struct {
 	log Logger
 	// firstBackoff is the pause after the first failed attempt in Run.
 	firstBackoff time.Duration
+	// wait pauses Run for d between two attempts, and reports false when
+	// ctx ends first.
+	wait func(ctx context.Context, d time.Duration) bool
 }
 
 // NewWriter returns a writer for cfg, or an error when cfg names no token
@@ -95,9 +93,6 @@ func NewWriter(cfg WriterConfig, log Logger) (*Writer, error) {
 	case cfg.Path == "":
 		return nil, errors.New("no token file")
 	}
-	if cfg.RenewBefore <= 0 {
-		cfg.RenewBefore = DefaultRenewBefore
-	}
 	if cfg.Client == nil {
 		cfg.Client = &http.Client{
 			Timeout: DefaultHTTPTimeout,
@@ -109,36 +104,44 @@ func NewWriter(cfg WriterConfig, log Logger) (*Writer, error) {
 	if log == nil {
 		log = discard{}
 	}
-	return &Writer{cfg: cfg, log: log, firstBackoff: defaultFirstBackoff}, nil
+	return &Writer{cfg: cfg, log: log, firstBackoff: defaultFirstBackoff, wait: sleep}, nil
 }
 
 // Run keeps a valid token in the file until ctx ends. It requests a token at
-// once and the next one RenewBefore the current one expires, but no sooner
-// than half its lifetime has passed and no sooner than a second. A failed
-// attempt is retried with pauses that double from two seconds up to five
-// minutes, and leaves the previous token in the file meanwhile.
+// once, and the next one when 70% of the current token's lifetime has passed,
+// but no sooner than a second later. A failed attempt leaves the previous
+// token in the file and is retried with pauses that double from two seconds
+// up to five minutes.
 func (w *Writer) Run(ctx context.Context) {
 	backoff := w.firstBackoff
 	for {
-		var sleep time.Duration
+		var pause time.Duration
 		lifetime, err := w.Refresh(ctx)
 		if err != nil {
 			if ctx.Err() != nil {
 				return
 			}
 			w.log.Warnf("outbound token: %v; retrying in %s", err, backoff)
-			sleep, backoff = backoff, nextBackoff(backoff)
+			pause, backoff = backoff, nextBackoff(backoff)
 		} else {
-			sleep = renewal(lifetime, w.cfg.RenewBefore)
+			pause = renewal(lifetime)
 			backoff = w.firstBackoff
 		}
-		timer := time.NewTimer(sleep)
-		select {
-		case <-ctx.Done():
-			timer.Stop()
+		if !w.wait(ctx, pause) {
 			return
-		case <-timer.C:
 		}
+	}
+}
+
+// sleep waits for d and reports true, or reports false as soon as ctx ends.
+func sleep(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
 	}
 }
 
@@ -149,10 +152,9 @@ func nextBackoff(backoff time.Duration) time.Duration {
 }
 
 // renewal is the wait before the next request for a token that lives
-// lifetime: lifetime less renewBefore, at least half the lifetime, and at
-// least a second.
-func renewal(lifetime, renewBefore time.Duration) time.Duration {
-	return max(lifetime-renewBefore, lifetime/2, time.Second)
+// lifetime: 70% of the lifetime, and at least a second.
+func renewal(lifetime time.Duration) time.Duration {
+	return max(lifetime/10*7, time.Second)
 }
 
 // Refresh requests one token and writes it to the file, and returns how long
