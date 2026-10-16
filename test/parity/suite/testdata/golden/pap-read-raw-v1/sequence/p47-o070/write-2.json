@@ -1,0 +1,78 @@
+{
+  "status": 200,
+  "body": {
+    "pips": [
+      {
+        "cachePeriod": 1,
+        "cacheable": true,
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.permissionScope",
+        "pipType": "PERMISSION_SCOPE",
+        "tenantId": "parity-p47-o070",
+        "type": "UUID",
+        "url": "http://pip-mock:8090"
+      },
+      {
+        "cacheable": false,
+        "claim": "department",
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.parityR28T",
+        "pipType": "TOKEN",
+        "tenantId": "parity-p47-o070",
+        "type": "UUID"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "header": " x-parity-r28-h ",
+        "name": "subject.parityR28H",
+        "pipType": "HEADER",
+        "tenantId": "parity-p47-o070",
+        "type": "UUID"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "name": "subject.parityR28G",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "case": "r28pip-g-ok-one"
+        },
+        "tenantId": "parity-p47-o070",
+        "type": "UUID",
+        "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-one"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.parityR28F.filtered",
+        "pipType": "FILTERED",
+        "requestAttributes": {
+          "case": "r28pip-filtered"
+        },
+        "resourceType": "PARITY_R28_FILTERED",
+        "tenantId": "parity-p47-o070",
+        "type": "UUID",
+        "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-list"
+      },
+      {
+        "cacheable": true,
+        "customMapping": {
+          "subject.roles": {
+            "ROLE_PARITY_READER": [
+              "PARITY_R28_O",
+              "PARITY_R28_P",
+              "PARITY_R28_Q"
+            ]
+          }
+        },
+        "name": "subject.permissions",
+        "pipType": "MAPPING",
+        "productMapping": {},
+        "tenantId": "parity-p47-o070",
+        "type": "UUID"
+      }
+    ]
+  }
+}
