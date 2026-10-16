@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -159,8 +160,9 @@ func renewal(lifetime time.Duration) time.Duration {
 
 // Refresh requests one token and writes it to the file, and returns how long
 // the token lives. The lifetime is the response's expires_in, or the time
-// left until the token's exp claim when the response has none. On an error
-// the file keeps its previous content.
+// left until the token's exp claim when the response has none. A lifetime
+// longer than a Duration can hold, about 292 years, is returned as the
+// longest Duration. On an error the file keeps its previous content.
 func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 	clientID, err := readSecret(w.cfg.ClientIDFile)
 	if err != nil {
@@ -216,38 +218,50 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 		return "", 0, fmt.Errorf("POST %s: token response has no access_token", w.cfg.TokenURL)
 	}
 	if tr.ExpiresIn > 0 {
-		return tr.AccessToken, time.Duration(tr.ExpiresIn * float64(time.Second)), nil
+		return tr.AccessToken, fromSeconds(tr.ExpiresIn), nil
 	}
 	exp, err := expiry(tr.AccessToken)
 	if err != nil {
 		return "", 0, fmt.Errorf("POST %s: token response has no expires_in, and %w", w.cfg.TokenURL, err)
 	}
-	lifetime := time.Until(exp)
+	lifetime := fromSeconds(exp - float64(time.Now().UnixNano())/float64(time.Second))
 	if lifetime <= 0 {
-		return "", 0, fmt.Errorf("POST %s: the token expired at %s", w.cfg.TokenURL, exp.UTC().Format(time.RFC3339))
+		expired := time.Unix(int64(exp), 0).UTC().Format(time.RFC3339)
+		return "", 0, fmt.Errorf("POST %s: the token expired at %s", w.cfg.TokenURL, expired)
 	}
 	return tr.AccessToken, lifetime, nil
 }
 
-// expiry reads the exp claim of a JWT without verifying it. The token comes
-// straight from the provider, and the time only decides when to ask for the
-// next one.
-func expiry(token string) (time.Time, error) {
+// fromSeconds converts a count of seconds to a Duration. A count of more
+// seconds than a Duration can hold, about 292 years, gives the longest
+// Duration; s must not be below the range of a Duration.
+func fromSeconds(s float64) time.Duration {
+	ns := s * float64(time.Second)
+	if ns >= math.MaxInt64 {
+		return math.MaxInt64
+	}
+	return time.Duration(ns)
+}
+
+// expiry reads the exp claim of a JWT without verifying it and returns it in
+// seconds since the Unix epoch. The token comes straight from the provider,
+// and the time only decides when to ask for the next one.
+func expiry(token string) (float64, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
-		return time.Time{}, errors.New("the token is not a JWT")
+		return 0, errors.New("the token is not a JWT")
 	}
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return time.Time{}, errors.New("the token payload is not base64url")
+		return 0, errors.New("the token payload is not base64url")
 	}
 	var claims struct {
 		Exp float64 `json:"exp"`
 	}
 	if err := json.Unmarshal(payload, &claims); err != nil || claims.Exp <= 0 {
-		return time.Time{}, errors.New("the token has no exp claim")
+		return 0, errors.New("the token has no exp claim")
 	}
-	return time.Unix(int64(claims.Exp), 0), nil
+	return claims.Exp, nil
 }
 
 func readSecret(path string) (string, error) {

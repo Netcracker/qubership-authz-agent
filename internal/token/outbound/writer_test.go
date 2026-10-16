@@ -16,6 +16,7 @@ package outbound
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -141,6 +142,30 @@ func TestWriter_TakesTheLifetimeFromExpWithoutExpiresIn(t *testing.T) {
 	}
 	if lifetime <= 9*time.Minute || lifetime > 10*time.Minute {
 		t.Errorf("Refresh() lifetime = %s, want just under 10m0s", lifetime)
+	}
+}
+
+// A lifetime longer than a Duration can hold, about 292 years, is reported
+// as the longest Duration, whichever part of the response gives it.
+func TestWriter_ALifetimeBeyondADurationIsTheLongestDuration(t *testing.T) {
+	tests := []struct {
+		name, body string
+	}{
+		{"expires_in of 1e10 seconds", `{"access_token": "tok-1", "expires_in": 1e10}`},
+		{"exp claim of 1e300", `{"access_token": "` + unsignedJWT(t, map[string]any{"sub": "authz-agent", "exp": 1e300}) + `"}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newTokenEndpoint(t, tt.body)
+			w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+			lifetime, err := w.Refresh(context.Background())
+			if err != nil {
+				t.Fatalf("Refresh() error = %v", err)
+			}
+			if lifetime != math.MaxInt64 {
+				t.Errorf("Refresh() lifetime = %s, want %s", lifetime, time.Duration(math.MaxInt64))
+			}
+		})
 	}
 }
 
@@ -418,6 +443,26 @@ func TestRenewal(t *testing.T) {
 	for _, tt := range tests {
 		if got := renewal(tt.lifetime); got != tt.want {
 			t.Errorf("renewal(%s) = %s, want %s", tt.lifetime, got, tt.want)
+		}
+	}
+}
+
+func TestFromSeconds(t *testing.T) {
+	tests := []struct {
+		seconds float64
+		want    time.Duration
+	}{
+		{300, 300 * time.Second},
+		{0.25, 250 * time.Millisecond},
+		{-60, -time.Minute},
+		{9223372036, 9223372036 * time.Second},
+		// In float64 arithmetic this count is 2^63 nanoseconds, the first
+		// count that does not fit.
+		{9223372036.854776, math.MaxInt64},
+	}
+	for _, tt := range tests {
+		if got := fromSeconds(tt.seconds); got != tt.want {
+			t.Errorf("fromSeconds(%v) = %s, want %s", tt.seconds, got, tt.want)
 		}
 	}
 }
