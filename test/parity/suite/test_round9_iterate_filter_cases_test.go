@@ -165,7 +165,7 @@ func (s *ParitySuite) TestRound9IterateFilterCases() {
 		return
 	}
 	externalID := "parity-" + iterateFilterCaseID
-	s.emptyPolicySetsOnCleanup(s.cfg, externalID)
+	s.deletePolicySetsOnCleanup(s.cfg, externalID)
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, externalID, sets)
 	s.Require().NoError(err)
 	s.Run("upload-the-sets", func() {

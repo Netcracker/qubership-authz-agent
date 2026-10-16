@@ -123,7 +123,8 @@ func regularResourceType(caseID string) string {
 // customization cleanup, its sets, and its requests, since the sets would name PIPs
 // that were never declared.
 //
-// When the test ends, every externalID the cases uploaded under is emptied and
+// When the test ends, the sets of every externalID the cases uploaded under are
+// deleted and
 // then the isolated domain is, in that order, so that no set outlives the PIP
 // declarations it names. A set that does poisons the stand for every group that
 // runs after it: access-control refuses every check request with 400, not only
@@ -139,7 +140,7 @@ func (s *ParitySuite) runRegularCases(cases []regularCase) {
 			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
 		}
 	})
-	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
+	s.deletePolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
 			s.pinRoutes(tc.pins)

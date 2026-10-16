@@ -111,7 +111,7 @@ func (s *ParitySuite) TestRound7IteratePermitOverridesCases() {
 		return
 	}
 
-	s.emptyPolicySetsOnCleanup(s.cfg, iteratePermitOverridesExternalID)
+	s.deletePolicySetsOnCleanup(s.cfg, iteratePermitOverridesExternalID)
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, iteratePermitOverridesExternalID, sets)
 	s.Require().NoError(err)
 	s.Run("upload-the-sets", func() {

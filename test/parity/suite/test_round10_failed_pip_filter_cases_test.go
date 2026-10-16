@@ -147,7 +147,7 @@ func (s *ParitySuite) TestRound10FailedPIPFilterCases() {
 		StatusCode: http.StatusOK,
 		Body:       map[string]string{"value": "v"},
 	}))
-	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
+	s.deletePolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		s.Run(tc.id, func() {
 			upload := tc.uploads[0]

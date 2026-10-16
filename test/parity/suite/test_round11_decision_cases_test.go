@@ -94,7 +94,7 @@ func (s *ParitySuite) TestRound11FailedPIPOnTheRightScopeCases() {
 	if status < http.StatusOK || status >= http.StatusMultipleChoices {
 		return
 	}
-	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
+	s.deletePolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, tc := range cases {
 		route := strings.TrimPrefix(tc.pips[0].(map[string]any)["url"].(string), "http://pip-mock:8090")
 		s.runFailedPIPScopeCase(tc, route, PipStubResponse{
@@ -147,7 +147,7 @@ func (s *ParitySuite) TestRound11IterateNodeUnderSetCases() {
 	}
 	spec := iterateSetAlgorithmSet{"deny-unless-permit-set-permit-unless-deny-node", "DENY_UNLESS_PERMIT", "PERMIT_UNLESS_DENY"}
 	externalID := "parity-" + iterateNodeUnderSetCaseID + "-" + spec.key
-	s.emptyPolicySetsOnCleanup(s.cfg, externalID)
+	s.deletePolicySetsOnCleanup(s.cfg, externalID)
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, externalID, []any{iterateSetAlgorithmBuildSet(spec)})
 	s.Require().NoError(err)
 	s.Run("upload", func() {

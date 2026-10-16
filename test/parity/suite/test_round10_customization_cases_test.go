@@ -98,11 +98,10 @@ func customizationRegularCases() []regularCase {
 // true both times, the control that the set is still loaded. The import status
 // is recorded.
 //
-// When the test ends, the customization is deleted and the set is emptied by
-// its externalId. The import drops the set's externalId, so emptying misses the
-// set; the cleanup then deletes the set by its id, which the PAP refuses with
-// 400 while the customization exists. The test fails if the v3 export still
-// lists the set after that.
+// When the test ends, the customization is deleted and then the sets of the
+// case's externalId are. If the v3 export still lists the set after that, the
+// cleanup deletes it by its id, which the PAP refuses with 400 while the
+// customization exists, and the test fails if the export still lists it then.
 //
 // The case lives in its own test function so that a recording run can be
 // filtered to it. Legacy profile only: customizations are the PAP's.
@@ -118,7 +117,8 @@ func (s *ParitySuite) TestRound10CustomizationCases() {
 // imports customization at customizationLevel, and sends them again. Every
 // golden is filed under tc.id: the upload, the import, and the requests and the
 // v3 export of each stage. When the test ends, the customization is deleted,
-// the set is emptied by its externalId and deleted by its id, and the isolated
+// the sets of its externalId are deleted, the set is deleted by its id if the
+// export still lists it, and the isolated
 // domain that holds tc's PIPs is emptied, in that order.
 func (s *ParitySuite) runCustomizationCase(tc regularCase, customization []any, setID string) {
 	ctx := context.Background()
@@ -140,10 +140,11 @@ func (s *ParitySuite) runCustomizationCase(tc regularCase, customization []any, 
 			}
 		})
 	}
-	// Cleanups run last registered first: the customization is deleted, the set
-	// is emptied by its externalId, it is deleted by its id, and then the PIPs go.
+	// Cleanups run last registered first: the customization is deleted, the sets
+	// of the externalId are deleted, the set is deleted by its id if it is still
+	// listed, and then the PIPs go.
 	t.Cleanup(func() { s.requireSetDeleted(t, m2m, tc.resourceType, setID) })
-	s.emptyPolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
+	s.deletePolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
 	t.Cleanup(deleteCustomization)
 
 	if len(tc.pips) > 0 {
@@ -175,10 +176,10 @@ func (s *ParitySuite) runCustomizationCase(tc regularCase, customization []any, 
 }
 
 // requireSetDeleted deletes the set setID if the v3 export still lists it, and
-// fails t if the export lists it after that. The import drops the set's
-// externalId, so emptying the externalId leaves the set in place; the PAP deletes
-// it by its id once its customization is gone. The set is found by resourceType,
-// the marker its target carries, and then by its policySetId.
+// fails t if the export lists it after that. It backs the delete by externalId
+// up: the PAP deletes the set by its id once its customization is gone. The set
+// is found by resourceType, the marker its target carries, and then by its
+// policySetId.
 func (s *ParitySuite) requireSetDeleted(t *testing.T, m2m, resourceType, setID string) {
 	ctx := context.Background()
 	status, found := s.exportedSetStatus(t, m2m, resourceType, setID)
@@ -188,7 +189,7 @@ func (s *ParitySuite) requireSetDeleted(t *testing.T, m2m, resourceType, setID s
 	deleted, answer, err := HelperDeletePolicySet(ctx, s.cfg, m2m, setID)
 	t.Logf("delete policy set %s, whose status in the v3 export is %q: status %d, %v, %s", setID, status, deleted, err, answer)
 	if status, found = s.exportedSetStatus(t, m2m, resourceType, setID); found {
-		t.Errorf("policy set %s is in the v3 export with status %q after its customization was deleted, its externalId emptied, "+
+		t.Errorf("policy set %s is in the v3 export with status %q after its customization and the sets of its externalId were deleted, "+
 			"and delete answered %d", setID, status, deleted)
 	}
 }

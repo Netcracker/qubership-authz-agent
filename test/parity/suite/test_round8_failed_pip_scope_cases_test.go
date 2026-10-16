@@ -119,7 +119,7 @@ func (s *ParitySuite) TestRound8FailedPIPScopeCases() {
 	if status < http.StatusOK || status >= http.StatusMultipleChoices {
 		return
 	}
-	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
+	s.deletePolicySetsOnCleanup(s.cfg, regularExternalIDs(cases)...)
 	for _, shape := range failedPIPScopeShapes {
 		s.runFailedPIPScopeCase(failedPIPScopeCase(shape.key, shape.pip, shape.sets), shape.route, PipStubResponse{
 			StatusCode: http.StatusInternalServerError,
@@ -134,8 +134,8 @@ func (s *ParitySuite) TestRound8FailedPIPScopeCases() {
 // uploads whose request pip-mock saw a call on route from, and
 // read-when-the-pip-was-skipped for the others. The answers of a class have to
 // agree before the first is recorded, and a class no upload fell into is
-// skipped with both counts. The sets are emptied when the test ends by the
-// caller's emptyPolicySetsOnCleanup.
+// skipped with both counts. The sets are deleted when the test ends by the
+// caller's deletePolicySetsOnCleanup.
 func (s *ParitySuite) runFailedPIPScopeCase(tc regularCase, route string, response PipStubResponse) {
 	ctx := context.Background()
 	m2m := s.mustM2MToken()

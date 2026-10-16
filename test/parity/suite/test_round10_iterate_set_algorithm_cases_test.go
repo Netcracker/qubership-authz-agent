@@ -171,7 +171,7 @@ func (s *ParitySuite) TestRound10IterateSetAlgorithmCases() {
 	var loaded []iterateSetAlgorithmSet
 	for _, spec := range iterateSetAlgorithmSets {
 		externalID := "parity-" + iterateSetAlgorithmCaseID + "-" + spec.key
-		s.emptyPolicySetsOnCleanup(s.cfg, externalID)
+		s.deletePolicySetsOnCleanup(s.cfg, externalID)
 		setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, externalID, []any{iterateSetAlgorithmBuildSet(spec)})
 		s.Require().NoError(err)
 		s.Run("upload-"+spec.key, func() {

@@ -115,7 +115,7 @@ func (s *ParitySuite) runPIPCacheCase(caseID, route string, pip map[string]any) 
 		return
 	}
 	externalID := "parity-" + caseID
-	s.emptyPolicySetsOnCleanup(s.cfg, externalID)
+	s.deletePolicySetsOnCleanup(s.cfg, externalID)
 	setStatus, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, externalID, []any{set})
 	s.Require().NoError(err)
 	s.Run("upload-the-set", func() {

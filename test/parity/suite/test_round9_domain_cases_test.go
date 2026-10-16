@@ -210,7 +210,7 @@ func (s *ParitySuite) TestRound9TwinPIPDeclarationCases() {
 		[]any{round9TwinPIP(round9SecondDomain)}, []any{policy(round9SecondDomain, secondType)})
 
 	externalID := "parity-twin-pip"
-	s.emptyPolicySetsOnCleanup(s.cfg, externalID)
+	s.deletePolicySetsOnCleanup(s.cfg, externalID)
 	set := b.set("set", "resourceType == '"+regularType+"'", "DENY_UNLESS_PERMIT", []any{
 		b.policy("reader", readerTarget, "DENY_UNLESS_PERMIT",
 			b.rule("read-on-first", "operation == 'READ'", "subject.parityR9Twin == 'first'", "ALLOW", nil),

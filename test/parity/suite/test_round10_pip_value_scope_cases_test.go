@@ -119,7 +119,7 @@ func (s *ParitySuite) TestRound10PIPFailureScopeCases() {
 	if status < http.StatusOK || status >= http.StatusMultipleChoices {
 		return
 	}
-	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs(pipScopeRegularCases())...)
+	s.deletePolicySetsOnCleanup(s.cfg, regularExternalIDs(pipScopeRegularCases())...)
 	for _, tc := range cases {
 		s.runFailedPIPScopeCase(tc.regular, tc.route, tc.answer)
 	}

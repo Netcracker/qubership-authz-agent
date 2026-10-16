@@ -122,7 +122,7 @@ func (s *ParitySuite) TestInterpreterConfigExportCases() {
 		s.Require().NoError(err)
 		s.Require().Equal(domainStatus, status, "repeat the accepted upload of %s after the FILTERED PIP was refused", isolatedCaseDomain)
 	}
-	s.emptyPolicySetsOnCleanup(s.cfg, regularExternalIDs([]regularCase{{uploads: configExportUploads()}})...)
+	s.deletePolicySetsOnCleanup(s.cfg, regularExternalIDs([]regularCase{{uploads: configExportUploads()}})...)
 	for _, upload := range configExportUploads() {
 		status, _, err := HelperPutPolicySets(ctx, s.cfg, m2m, upload.externalID, upload.sets)
 		s.Require().NoError(err)
@@ -147,7 +147,7 @@ func (s *ParitySuite) TestInterpreterConfigExportCases() {
 			s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, configExportCaseID+"/declare-the-domain-in-tenant-b", &model.PolicyLoadOutcome{Status: status})
 		})
 		upload := configExportTenantBUpload()
-		s.emptyPolicySetsOnCleanup(cfgB, upload.externalID)
+		s.deletePolicySetsOnCleanup(cfgB, upload.externalID)
 		status, _, err = HelperPutPolicySets(ctx, cfgB, m2m, upload.externalID, upload.sets)
 		s.Require().NoError(err)
 		s.Run("upload-"+upload.externalID, func() {

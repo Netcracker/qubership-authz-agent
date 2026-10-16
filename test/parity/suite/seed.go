@@ -197,6 +197,25 @@ func HelperPutPolicySets(ctx context.Context, cfg Config, m2mToken, externalID s
 	return doRequest(req)
 }
 
+// HelperDeletePolicySetsByExternalID deletes the regular policy sets uploaded
+// under externalID on the legacy PAP and returns the status and body. The PAP
+// answers 200, also when nothing is uploaded under externalID. Uploading an
+// empty list under externalID is not a delete: the PAP takes the externalId to
+// replace from the first uploaded set, so with no set it replaces nothing and
+// the sets uploaded earlier stay.
+func HelperDeletePolicySetsByExternalID(ctx context.Context, cfg Config, m2mToken, externalID string) (int, []byte, error) {
+	endpoint := buildURL(
+		cfg.ACBaseURL,
+		"/access/v1/policySets/externalId/"+url.PathEscape(externalID),
+		url.Values{"tenant_id": []string{cfg.TenantID}}.Encode(),
+	)
+	req, err := buildRequest(ctx, http.MethodDelete, endpoint, nil, TokenBundle{M2M: m2mToken}, PerCallOptions{})
+	if err != nil {
+		return 0, nil, err
+	}
+	return doRequest(req)
+}
+
 // UploadIsolatedPolicies replaces the PIPs and the policies of domain with the given
 // ones and returns the status of the first upload that was not accepted, or of the
 // last one. It empties the policies before replacing the PIPs, so no policy still

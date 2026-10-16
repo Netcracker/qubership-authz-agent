@@ -59,26 +59,27 @@ func (s *ParitySuite) mustAnonymousTokenBundle() TokenBundle {
 	}
 }
 
-// emptyPolicySetsOnCleanup registers a cleanup that replaces the regular sets
-// uploaded under each of externalIDs in the tenant of cfg with an empty list. A
-// regular set that names a PIP declaration no longer in the isolated domain
-// makes access-control refuse every check request on the stand with 400, so a
-// test that uploads sets and empties the domain when it ends has to empty the
-// sets first; cleanups run last registered first, so this one is registered
-// after the domain's.
-func (s *ParitySuite) emptyPolicySetsOnCleanup(cfg Config, externalIDs ...string) {
+// deletePolicySetsOnCleanup registers a cleanup that deletes the regular sets
+// uploaded under each of externalIDs in the tenant of cfg, with
+// [HelperDeletePolicySetsByExternalID]; an upload of an empty list would leave
+// them on the stand. A regular set that names a PIP declaration no longer in
+// the isolated domain makes the PAP refuse every check request on the stand
+// with 400, so a test that uploads sets and empties the domain when it ends has
+// to delete the sets first; cleanups run last registered first, so this one is
+// registered after the domain's.
+func (s *ParitySuite) deletePolicySetsOnCleanup(cfg Config, externalIDs ...string) {
 	s.T().Helper()
 	ctx := context.Background()
 	m2m := s.mustM2MToken()
 	s.T().Cleanup(func() {
 		for _, externalID := range externalIDs {
-			status, _, err := HelperPutPolicySets(ctx, cfg, m2m, externalID, []any{})
+			status, _, err := HelperDeletePolicySetsByExternalID(ctx, cfg, m2m, externalID)
 			if err != nil {
-				s.T().Logf("empty the policy sets of %s: %v", externalID, err)
+				s.T().Logf("delete the policy sets of %s: %v", externalID, err)
 				continue
 			}
 			if status < http.StatusOK || status >= http.StatusMultipleChoices {
-				s.T().Logf("empty the policy sets of %s: status %d", externalID, status)
+				s.T().Logf("delete the policy sets of %s: status %d", externalID, status)
 			}
 		}
 	})
