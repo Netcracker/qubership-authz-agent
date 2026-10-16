@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "",
+    "mongodbFilterCondition": "",
+    "rsqlFilterCondition": "",
+    "sqlFilterCondition": "",
+    "customFilterCondition": {
+      "logic": {
+        "path": "8ac047c5-8072-0908-fbb0-7f13a0ca21a1"
+      },
+      "data": {
+        "8ac047c5-8072-0908-fbb0-7f13a0ca21a1": {
+          "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]",
+          "params": {
+            "p": "parity-reader"
+          }
+        }
+      }
+    }
+  }
+}

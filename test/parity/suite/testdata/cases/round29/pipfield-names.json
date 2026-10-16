@@ -1,0 +1,186 @@
+{
+ "about": "PIP names at runtime: a MAPPING PIP named outside subject.permissions*, read through subject.permissions and by its own name; a MAPPING PIP named subject.permissions; HEADER PIPs whose attribute name starts with _ and with a digit.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {},
+ "cases": [
+  {
+   "id": "r29pipfield-mapping-outside-pattern-merged",
+   "about": "mapping outside pattern merged",
+   "condition": "subject.permissions CONTAINS 'PARITY_R29_P' OR resource.a == 'y'",
+   "pips": [
+    "outside"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-mapping-outside-pattern-own-name",
+   "about": "mapping outside pattern own name",
+   "condition": "subject.parityR29Perms CONTAINS 'PARITY_R29_P' OR resource.a == 'y'",
+   "pips": [
+    "outside"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-mapping-named-permissions",
+   "about": "mapping named permissions",
+   "condition": "subject.permissions CONTAINS 'PARITY_R29_B' OR resource.a == 'y'",
+   "pips": [
+    "bare"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-name-starts-with-underscore",
+   "about": "name starts with underscore",
+   "condition": "subject._parityR29 == 'v' OR resource.a == 'y'",
+   "pips": [
+    "underscore"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-N": "v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-N": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-name-starts-with-digit",
+   "about": "name starts with digit",
+   "condition": "subject.1parityR29 == 'v' OR resource.a == 'y'",
+   "pips": [
+    "digit"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-N": "v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-N": "v"
+     }
+    }
+   ]
+  }
+ ],
+ "pips": {
+  "outside": {
+   "name": "subject.parityR29Perms",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_P"
+     ]
+    }
+   }
+  },
+  "other": {
+   "name": "subject.permissions.parityR29Other",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_Q"
+     ]
+    }
+   }
+  },
+  "bare": {
+   "name": "subject.permissions",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_B"
+     ]
+    }
+   }
+  },
+  "underscore": {
+   "name": "subject._parityR29",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-n",
+   "cacheable": false
+  },
+  "digit": {
+   "name": "subject.1parityR29",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-n",
+   "cacheable": false
+  }
+ }
+}

@@ -16,8 +16,8 @@ package paritysuite
 
 // Package note — pip_control.go wraps the real pipstub control surface at
 // test/integration/pipstub/main.go:50-183. Three caveats surfaced during
-// the initial analysis (OQ-SUITE-10 in the archived parity handover); this
-// file encodes them deliberately so test authors do not rediscover them:
+// the initial analysis; this file encodes them deliberately so test authors
+// do not rediscover them:
 //
 //  1. Control path is PUT|POST /pip-stub/configure (pipstub/main.go:52),
 //     NOT /__mock__/responses. Body is a JSON array of pipRoute objects.
@@ -131,7 +131,7 @@ func (pc *PipController) PinEntitlementsV3ForUser(ctx context.Context, userID st
 
 // PinEntitlementsV3PerDefinition pins the per-(resourceType,name) lookup path
 // legacy AC calls when the EA cache has a definition hit but no resource-id
-// entry. See EntitlementsPipServiceImpl.java:170-201.
+// entry.
 func (pc *PipController) PinEntitlementsV3PerDefinition(ctx context.Context, userID, resourceType, name string, resp PipStubResponse) error {
 	if userID == "" || resourceType == "" || name == "" {
 		return fmt.Errorf("paritysuite: PinEntitlementsV3PerDefinition requires all of userID/resourceType/name")

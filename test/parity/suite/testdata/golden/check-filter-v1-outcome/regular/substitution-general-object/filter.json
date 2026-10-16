@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_OBJECT.a.eq(${subject.paritySubObject})",
+    "mongodbFilterCondition": "{ { \"a\": ${subject.paritySubObject} } }",
+    "rsqlFilterCondition": "a==${subject.paritySubObject}",
+    "sqlFilterCondition": "a=${subject.paritySubObject}",
+    "customFilterCondition": {
+      "logic": {
+        "path": "beb02dff-ebba-7a31-2478-d767b1132525"
+      },
+      "data": {
+        "beb02dff-ebba-7a31-2478-d767b1132525": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": "subject.paritySubObject"
+          }
+        }
+      }
+    }
+  }
+}

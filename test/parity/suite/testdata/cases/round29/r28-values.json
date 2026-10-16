@@ -1,0 +1,137 @@
+{
+ "about": "Values round 28 left between two readings. keys() over a list, length() after [*] and length() over a number: round 28 showed they are not missing (!= 'v' is true); IS NULL tells null from another value. A number beyond the double range on the right of < and >: round 28 asked it on the left only.",
+ "resourceTypePrefix": "PARITY_SUITE_R29V_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29r28-keys-of-list-is-null",
+   "about": "resource.l is [\"a\"]. True if keys() over a list is null; false if it is another value.",
+   "condition": "resource.l.keys() IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "a"
+      ],
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "a"
+      ],
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-length-after-star-is-null",
+   "about": "resource.l is [\"ab\", \"c\"]. True if length() after [*] is null.",
+   "condition": "resource.l[*].length() IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "l": [
+       "ab",
+       "c"
+      ],
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "l": [
+       "ab",
+       "c"
+      ],
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-length-of-number-is-null",
+   "about": "resource.n is the number 5. True if length() over a number is null.",
+   "condition": "resource.n.length() IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "n": 5,
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "n": 5,
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-overflow-right-lt",
+   "about": "resource.n is 5 and resource.x the JSON number 1e400. False if legacy reads 1e400 as a double and cannot compare it, as on the left (r28reach-num-greater); true if it compares it as a decimal.",
+   "condition": "resource.n < resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "n": 5,
+      "x": 1e400,
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "n": 5,
+      "x": 1e400,
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-overflow-right-gt",
+   "about": "resource.n is 5 and resource.x the JSON number -1e400: the same question for >.",
+   "condition": "resource.n > resource.x OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "n": 5,
+      "x": -1e400,
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "n": 5,
+      "x": -1e400,
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

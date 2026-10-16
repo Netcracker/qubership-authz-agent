@@ -10,8 +10,7 @@ and `POST /v1/data/authorize` direct to OPA — send the same bytes.
 These snapshots are the single source of truth that:
 
 1. the canonical request DTOs in every SDK (shared Java, Spring,
-   Quarkus, Go, Fiber, Gin) MUST serialise byte-identical on the wire
-   (see the archived parity handover);
+   Quarkus, Go, Fiber, Gin) MUST serialise byte-identical on the wire;
 2. the integration parity test (Step 11) asserts the agent receives
    on both transports;
 3. the Rego two-package restructure (Step 4) verifies against —

@@ -1,0 +1,551 @@
+{
+ "about": "PIP customizations the case format could not send before round 31. A replace of a GENERAL PIP whose headers forward Authorization and Tenant, or hold a blank name: an upload of such a declaration is refused (round 29), and the import tells whether a customization is checked as an upload is; pipHeaders records what pip-mock received. A PIP import whose body is one object instead of a list (pipBody). A delete of a PIP customization without level (delete.pip with omitLevel): round 29 saw the delete of a set customization without level refused with 400. The HEADER PIP reads X-Parity-R31-Cp1 (v); the customization points it at X-Parity-R31-Cp2 (w), so a = n is true before and false while it applies.",
+ "resourceTypePrefix": "PARITY_SUITE_R31G_",
+ "pins": {
+  "/api/v1/pip/r31gaps-fwd": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "fwd": {
+   "name": "subject.parityR31Fwd",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31gaps-fwd",
+   "requestAttributes": {
+    "case": "r31gaps-fwd"
+   }
+  },
+  "header": {
+   "name": "subject.parityR31Cp",
+   "pipType": "HEADER",
+   "header": "x-parity-r31-cp1",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r31gaps-custom-pips-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-cpip-forwards-reserved",
+   "about": "The replace names headers Authorization,Tenant,X-Parity-R31-Fwd. Import 400 if a customization is checked as an upload is; 200 if not, and pipHeaders after it says which values the call carried.",
+   "pips": [
+    "fwd",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR31Fwd == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/r31gaps-fwd",
+     "pipHeaders": [
+      "authorization",
+      "tenant",
+      "x-parity-r31-fwd"
+     ]
+    },
+    {
+     "name": "before-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR31Fwd",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r31gaps-fwd",
+       "requestAttributes": {
+        "case": "r31gaps-fwd"
+       },
+       "headers": "Authorization,Tenant,X-Parity-R31-Fwd"
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-a-n",
+       "resource": {
+        "id": "r31",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       },
+       "pipCalls": "/api/v1/pip/r31gaps-fwd",
+       "pipHeaders": [
+        "authorization",
+        "tenant",
+        "x-parity-r31-fwd"
+       ]
+      },
+      {
+       "name": "after-a-y",
+       "resource": {
+        "id": "r31",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-cpip-forwards-blank",
+   "about": "The replace names headers ,X-Parity-R31-Fwd, whose first name is blank. Import 400 if a customization is checked as an upload is; 200 if not.",
+   "pips": [
+    "fwd",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR31Fwd == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/r31gaps-fwd",
+     "pipHeaders": [
+      "authorization",
+      "tenant",
+      "x-parity-r31-fwd"
+     ]
+    },
+    {
+     "name": "before-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR31Fwd",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r31gaps-fwd",
+       "requestAttributes": {
+        "case": "r31gaps-fwd"
+       },
+       "headers": ",X-Parity-R31-Fwd"
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-a-n",
+       "resource": {
+        "id": "r31",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       },
+       "pipCalls": "/api/v1/pip/r31gaps-fwd",
+       "pipHeaders": [
+        "authorization",
+        "tenant",
+        "x-parity-r31-fwd"
+       ]
+      },
+      {
+       "name": "after-a-y",
+       "resource": {
+        "id": "r31",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-cpip-body-an-object",
+   "pips": [
+    "fwd",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR31Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "The import body is the replace of the HEADER PIP as one object, not a list holding it. Import 400 and a = n after true if the body must be a list; 200 and false if an object is read as one entry.",
+   "requests": [
+    {
+     "name": "before-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     }
+    },
+    {
+     "name": "before-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pipBody": {
+      "name": "subject.parityR31Cp",
+      "pipType": "HEADER",
+      "header": "x-parity-r31-cp2",
+      "cacheable": false
+     },
+     "requests": [
+      {
+       "name": "after-a-n",
+       "resource": {
+        "id": "r31",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      },
+      {
+       "name": "after-a-y",
+       "resource": {
+        "id": "r31",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-cpip-delete-without-level",
+   "pips": [
+    "fwd",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR31Cp CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "about": "CUSTOMER imports the replace (a = n false after it), then the delete of the PIP's customization names no level. Delete 400 and a = n still false if the level is required, as for a set; 2xx and a = n true if the delete drops every level's entry.",
+   "requests": [
+    {
+     "name": "before-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     }
+    },
+    {
+     "name": "before-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R31-Cp1": "v",
+      "X-Parity-R31-Cp2": "w",
+      "X-Parity-R31-Fwd": "f"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR31Cp",
+       "pipType": "HEADER",
+       "header": "x-parity-r31-cp2",
+       "cacheable": false
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-import-a-n",
+       "resource": {
+        "id": "r31",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      },
+      {
+       "name": "after-import-a-y",
+       "resource": {
+        "id": "r31",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "omitLevel": true,
+     "delete": {
+      "pip": "subject.parityR31Cp"
+     },
+     "requests": [
+      {
+       "name": "after-delete-a-n",
+       "resource": {
+        "id": "r31",
+        "a": "n"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      },
+      {
+       "name": "after-delete-a-y",
+       "resource": {
+        "id": "r31",
+        "a": "y"
+       },
+       "headers": {
+        "X-Parity-R31-Cp1": "v",
+        "X-Parity-R31-Cp2": "w",
+        "X-Parity-R31-Fwd": "f"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-custom-pips-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

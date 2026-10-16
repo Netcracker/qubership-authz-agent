@@ -1,0 +1,160 @@
+{
+ "about": "An externalId in the body of a set that differs from the externalId of the upload's path. The first case uploads its set to its own path with the second case's externalId in the body; the second case then uploads its own set to that externalId and reads the first case's resource type. True if the body's externalId is ignored; false if the set was filed under it and the second upload replaced it; the first upload golden is 400 if the PAP refuses the mismatch.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29fields-external-id-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-external-id-moved",
+   "about": "The set's body names externalId parity-r29fields-external-id-replacer; its path is parity-r29fields-external-id-moved. Read: true unless the PAP refuses the upload.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE",
+     "fields": {
+      "externalId": "parity-r29fields-external-id-replacer"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-external-id-replacer",
+   "about": "Uploads its own set to parity-r29fields-external-id-replacer. read-of-the-first-set asks the resource type of r29fields-external-id-moved: true if that set stays under its path, false if this upload replaced it (or it was never stored).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-of-the-first-set",
+     "resource": {
+      "id": "r29"
+     },
+     "type": "PARITY_SUITE_R29FD_R29FIELDS_EXTERNAL_ID_MOVED"
+    }
+   ]
+  },
+  {
+   "id": "r29fields-external-id-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

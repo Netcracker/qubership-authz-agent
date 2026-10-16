@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R29E_R29R28_EMPTY_OUT_PERMIT_UNLESS_DENY.a.notIn(\"\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$in\": [  ] } } }",
+    "rsqlFilterCondition": "a=in=()",
+    "sqlFilterCondition": "NOT (a NOT IN (NULL))",
+    "customFilterCondition": null
+  }
+}

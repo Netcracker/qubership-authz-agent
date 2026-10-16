@@ -1,0 +1,2853 @@
+{
+ "about": "What each operator answers over each operand state, in the cells of the operator-by-state table that no golden fixes: those where a recorded case cannot tell a false operand from a true one, or from an ended rule, and those no case reaches. Every condition is one simplified policy on READ, sent once. A case id ending in -alone is the operator by itself, so true tells a true operand from a false one or an ended rule; one ending in -or stands on the left of OR resource.a == 'y', so true tells a false operand from an ended rule. The id prefix names the operand state: ca- resource.x, which the resource does not carry; cx- resource.x is null; ce- resource.x is []; cs- resource.items[?(@.type=='zzz')].id over items none of which has that type; co- resource.list[5] over a list of one element; ch- subject.parityNoHeader, a HEADER PIP whose header the request does not carry; cn- a GENERAL PIP whose body is the JSON literal null; cf- a GENERAL PIP that answers 500. The two GENERAL PIPs are pinned at routes of their own, as nb-null-body-* does. A GENERAL PIP that answers 500 fails the whole answer rather than one operand (rf-*), and over a single policy an operand that is false, a rule that ends, and an answer that fails all read false. So every operator is also asked over that PIP on the left of the true OR, as cf-<operator>-or: true says the operand was evaluated, false that the rule ended or the answer failed; failing-pip-in-a-deny-rule.json tells those two apart. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
+ "resourceTypePrefix": "PARITY_SUITE_R13_",
+ "pins": {
+  "/api/v1/pip/r13-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r13-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 13 cell case"
+   }
+  }
+ },
+ "pips": {
+  "noheader": {
+   "name": "subject.parityNoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-no-such-header",
+   "cacheable": false
+  },
+  "nullbody": {
+   "name": "subject.parityR13NullBody",
+   "url": "http://pip-mock:8090/api/v1/pip/r13-null-body",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR13NullBody"
+   },
+   "cacheable": false
+  },
+  "failing": {
+   "name": "subject.parityR13Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r13-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR13Failing"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ca-contains-any-alone",
+   "condition": "resource.x CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-contains-any-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-contains-any-or",
+   "condition": "resource.x CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-contains-any-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-contains-or",
+   "condition": "resource.x CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-contains-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-greater-or-equal-alone",
+   "condition": "resource.x >= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-greater-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-greater-or-equal-or",
+   "condition": "resource.x >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-greater-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-in-alone",
+   "condition": "resource.x IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-in-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-in-or",
+   "condition": "resource.x IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-in-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-is-subset-alone",
+   "condition": "resource.x IS SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-is-subset-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-is-subset-or",
+   "condition": "resource.x IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-is-subset-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-less-or-equal-alone",
+   "condition": "resource.x <= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-less-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-less-or-equal-or",
+   "condition": "resource.x <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-less-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-less-than-alone",
+   "condition": "resource.x < 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-less-than-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-less-than-or",
+   "condition": "resource.x < 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-less-than-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ca-match-or",
+   "condition": "resource.x MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ca-match-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cx-is-not-null-or",
+   "condition": "resource.x IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cx-is-not-null-or",
+      "a": "y",
+      "x": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-contains-any-alone",
+   "condition": "resource.x CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-contains-any-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-contains-any-or",
+   "condition": "resource.x CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-contains-any-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-contains-or",
+   "condition": "resource.x CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-contains-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-greater-or-equal-alone",
+   "condition": "resource.x >= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-greater-or-equal-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-greater-or-equal-or",
+   "condition": "resource.x >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-greater-or-equal-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-greater-than-alone",
+   "condition": "resource.x > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-greater-than-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-greater-than-or",
+   "condition": "resource.x > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-greater-than-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-in-alone",
+   "condition": "resource.x IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-in-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-in-or",
+   "condition": "resource.x IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-in-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-less-or-equal-alone",
+   "condition": "resource.x <= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-less-or-equal-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-less-or-equal-or",
+   "condition": "resource.x <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-less-or-equal-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-less-than-alone",
+   "condition": "resource.x < 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-less-than-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-less-than-or",
+   "condition": "resource.x < 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-less-than-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-match-alone",
+   "condition": "resource.x MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-match-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-match-or",
+   "condition": "resource.x MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-match-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-not-contains-alone",
+   "condition": "resource.x NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-not-contains-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-not-contains-any-alone",
+   "condition": "resource.x NOT CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-not-contains-any-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-not-in-alone",
+   "condition": "resource.x NOT IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-not-in-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-not-match-alone",
+   "condition": "resource.x NOT MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-not-match-alone",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "ce-not-match-or",
+   "condition": "resource.x NOT MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ce-not-match-or",
+      "a": "y",
+      "x": []
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-contains-any-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-contains-any-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-contains-any-or",
+   "condition": "resource.items[?(@.type=='zzz')].id CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-contains-any-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-contains-or",
+   "condition": "resource.items[?(@.type=='zzz')].id CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-contains-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-equals-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id == 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-equals-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-equals-or",
+   "condition": "resource.items[?(@.type=='zzz')].id == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-equals-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-greater-or-equal-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id >= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-greater-or-equal-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-greater-or-equal-or",
+   "condition": "resource.items[?(@.type=='zzz')].id >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-greater-or-equal-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-greater-than-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-greater-than-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-greater-than-or",
+   "condition": "resource.items[?(@.type=='zzz')].id > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-greater-than-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-in-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-in-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-in-or",
+   "condition": "resource.items[?(@.type=='zzz')].id IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-in-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-not-empty-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-not-empty-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-not-empty-or",
+   "condition": "resource.items[?(@.type=='zzz')].id IS NOT EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-not-empty-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-not-null-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-not-null-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-not-null-or",
+   "condition": "resource.items[?(@.type=='zzz')].id IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-not-null-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-not-subset-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id IS NOT SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-not-subset-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-null-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-null-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-subset-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id IS SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-subset-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-is-subset-or",
+   "condition": "resource.items[?(@.type=='zzz')].id IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-is-subset-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-less-or-equal-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id <= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-less-or-equal-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-less-or-equal-or",
+   "condition": "resource.items[?(@.type=='zzz')].id <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-less-or-equal-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-less-than-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id < 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-less-than-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-less-than-or",
+   "condition": "resource.items[?(@.type=='zzz')].id < 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-less-than-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-match-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-match-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-match-or",
+   "condition": "resource.items[?(@.type=='zzz')].id MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-match-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-not-contains-any-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id NOT CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-not-contains-any-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-not-equals-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id != 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-not-equals-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-not-in-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id NOT IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-not-in-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-not-match-alone",
+   "condition": "resource.items[?(@.type=='zzz')].id NOT MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-not-match-alone",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "cs-not-match-or",
+   "condition": "resource.items[?(@.type=='zzz')].id NOT MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cs-not-match-or",
+      "a": "y",
+      "items": [
+       {
+        "type": "a",
+        "id": "q"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-contains-alone",
+   "condition": "resource.list[5] CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-contains-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-contains-any-alone",
+   "condition": "resource.list[5] CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-contains-any-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-contains-any-or",
+   "condition": "resource.list[5] CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-contains-any-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-contains-or",
+   "condition": "resource.list[5] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-contains-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-equals-alone",
+   "condition": "resource.list[5] == 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-equals-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-equals-or",
+   "condition": "resource.list[5] == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-equals-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-greater-or-equal-alone",
+   "condition": "resource.list[5] >= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-greater-or-equal-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-greater-or-equal-or",
+   "condition": "resource.list[5] >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-greater-or-equal-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-greater-than-alone",
+   "condition": "resource.list[5] > 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-greater-than-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-greater-than-or",
+   "condition": "resource.list[5] > 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-greater-than-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-in-alone",
+   "condition": "resource.list[5] IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-in-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-in-or",
+   "condition": "resource.list[5] IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-in-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-not-empty-alone",
+   "condition": "resource.list[5] IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-not-empty-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-not-empty-or",
+   "condition": "resource.list[5] IS NOT EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-not-empty-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-not-null-alone",
+   "condition": "resource.list[5] IS NOT NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-not-null-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-not-null-or",
+   "condition": "resource.list[5] IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-not-null-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-not-subset-alone",
+   "condition": "resource.list[5] IS NOT SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-not-subset-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-not-subset-or",
+   "condition": "resource.list[5] IS NOT SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-not-subset-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-null-alone",
+   "condition": "resource.list[5] IS NULL",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-null-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-subset-alone",
+   "condition": "resource.list[5] IS SUBSET 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-subset-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-is-subset-or",
+   "condition": "resource.list[5] IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-is-subset-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-less-or-equal-alone",
+   "condition": "resource.list[5] <= 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-less-or-equal-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-less-or-equal-or",
+   "condition": "resource.list[5] <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-less-or-equal-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-less-than-alone",
+   "condition": "resource.list[5] < 5",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-less-than-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-less-than-or",
+   "condition": "resource.list[5] < 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-less-than-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-match-alone",
+   "condition": "resource.list[5] MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-match-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-match-or",
+   "condition": "resource.list[5] MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-match-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-contains-any-alone",
+   "condition": "resource.list[5] NOT CONTAINS ANY 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-contains-any-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-contains-any-or",
+   "condition": "resource.list[5] NOT CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-contains-any-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-equals-alone",
+   "condition": "resource.list[5] != 'v'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-equals-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-equals-or",
+   "condition": "resource.list[5] != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-equals-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-in-alone",
+   "condition": "resource.list[5] NOT IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-in-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-in-or",
+   "condition": "resource.list[5] NOT IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-in-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-match-alone",
+   "condition": "resource.list[5] NOT MATCH v*",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-match-alone",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "co-not-match-or",
+   "condition": "resource.list[5] NOT MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-co-not-match-or",
+      "a": "y",
+      "list": [
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ch-greater-or-equal-alone",
+   "condition": "subject.parityNoHeader >= 5",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ch-greater-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ch-greater-or-equal-or",
+   "condition": "subject.parityNoHeader >= 5 OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ch-greater-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ch-greater-than-alone",
+   "condition": "subject.parityNoHeader > 5",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ch-greater-than-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ch-greater-than-or",
+   "condition": "subject.parityNoHeader > 5 OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ch-greater-than-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ch-less-or-equal-alone",
+   "condition": "subject.parityNoHeader <= 5",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ch-less-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ch-less-or-equal-or",
+   "condition": "subject.parityNoHeader <= 5 OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-ch-less-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-contains-alone",
+   "condition": "subject.parityR13NullBody CONTAINS 'v'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-contains-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-contains-any-alone",
+   "condition": "subject.parityR13NullBody CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-contains-any-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-contains-any-or",
+   "condition": "subject.parityR13NullBody CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-contains-any-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-contains-or",
+   "condition": "subject.parityR13NullBody CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-contains-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-equals-alone",
+   "condition": "subject.parityR13NullBody == 'v'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-equals-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-equals-or",
+   "condition": "subject.parityR13NullBody == 'v' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-equals-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-greater-or-equal-alone",
+   "condition": "subject.parityR13NullBody >= 5",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-greater-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-greater-or-equal-or",
+   "condition": "subject.parityR13NullBody >= 5 OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-greater-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-greater-than-alone",
+   "condition": "subject.parityR13NullBody > 5",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-greater-than-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-greater-than-or",
+   "condition": "subject.parityR13NullBody > 5 OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-greater-than-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-in-alone",
+   "condition": "subject.parityR13NullBody IN 'v', 'w'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-in-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-in-or",
+   "condition": "subject.parityR13NullBody IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-in-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-not-empty-alone",
+   "condition": "subject.parityR13NullBody IS NOT EMPTY",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-is-not-empty-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-not-null-alone",
+   "condition": "subject.parityR13NullBody IS NOT NULL",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-is-not-null-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-not-null-or",
+   "condition": "subject.parityR13NullBody IS NOT NULL OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-is-not-null-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-not-subset-alone",
+   "condition": "subject.parityR13NullBody IS NOT SUBSET 'v', 'w'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-is-not-subset-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-subset-alone",
+   "condition": "subject.parityR13NullBody IS SUBSET 'v', 'w'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-is-subset-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-is-subset-or",
+   "condition": "subject.parityR13NullBody IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-is-subset-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-less-or-equal-alone",
+   "condition": "subject.parityR13NullBody <= 5",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-less-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-less-or-equal-or",
+   "condition": "subject.parityR13NullBody <= 5 OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-less-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-less-than-alone",
+   "condition": "subject.parityR13NullBody < 5",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-less-than-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-less-than-or",
+   "condition": "subject.parityR13NullBody < 5 OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-less-than-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-match-alone",
+   "condition": "subject.parityR13NullBody MATCH v*",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-match-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-match-or",
+   "condition": "subject.parityR13NullBody MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-match-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-contains-alone",
+   "condition": "subject.parityR13NullBody NOT CONTAINS 'v'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-contains-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-contains-any-alone",
+   "condition": "subject.parityR13NullBody NOT CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-contains-any-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-contains-any-or",
+   "condition": "subject.parityR13NullBody NOT CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-contains-any-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-contains-or",
+   "condition": "subject.parityR13NullBody NOT CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-contains-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-in-alone",
+   "condition": "subject.parityR13NullBody NOT IN 'v', 'w'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-in-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-match-alone",
+   "condition": "subject.parityR13NullBody NOT MATCH v*",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-match-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cn-not-match-or",
+   "condition": "subject.parityR13NullBody NOT MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "nullbody"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cn-not-match-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-contains-alone",
+   "condition": "subject.parityR13Failing CONTAINS 'v'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-contains-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-contains-any-alone",
+   "condition": "subject.parityR13Failing CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-contains-any-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-equals-alone",
+   "condition": "subject.parityR13Failing == 'v'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-equals-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-greater-or-equal-alone",
+   "condition": "subject.parityR13Failing >= 5",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-greater-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-greater-than-alone",
+   "condition": "subject.parityR13Failing > 5",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-greater-than-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-in-alone",
+   "condition": "subject.parityR13Failing IN 'v', 'w'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-in-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-empty-alone",
+   "condition": "subject.parityR13Failing IS EMPTY",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-empty-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-not-empty-alone",
+   "condition": "subject.parityR13Failing IS NOT EMPTY",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-not-empty-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-not-null-alone",
+   "condition": "subject.parityR13Failing IS NOT NULL",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-not-null-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-not-subset-alone",
+   "condition": "subject.parityR13Failing IS NOT SUBSET 'v', 'w'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-not-subset-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-null-alone",
+   "condition": "subject.parityR13Failing IS NULL",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-null-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-subset-alone",
+   "condition": "subject.parityR13Failing IS SUBSET 'v', 'w'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-subset-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-less-or-equal-alone",
+   "condition": "subject.parityR13Failing <= 5",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-less-or-equal-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-less-than-alone",
+   "condition": "subject.parityR13Failing < 5",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-less-than-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-match-alone",
+   "condition": "subject.parityR13Failing MATCH v*",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-match-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-contains-alone",
+   "condition": "subject.parityR13Failing NOT CONTAINS 'v'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-contains-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-contains-any-alone",
+   "condition": "subject.parityR13Failing NOT CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-contains-any-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-in-alone",
+   "condition": "subject.parityR13Failing NOT IN 'v', 'w'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-in-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-match-alone",
+   "condition": "subject.parityR13Failing NOT MATCH v*",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-match-alone",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-equals-or",
+   "condition": "subject.parityR13Failing == 'v' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-equals-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-equals-or",
+   "condition": "subject.parityR13Failing != 'v' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-equals-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-less-than-or",
+   "condition": "subject.parityR13Failing < 5 OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-less-than-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-less-or-equal-or",
+   "condition": "subject.parityR13Failing <= 5 OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-less-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-greater-than-or",
+   "condition": "subject.parityR13Failing > 5 OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-greater-than-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-greater-or-equal-or",
+   "condition": "subject.parityR13Failing >= 5 OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-greater-or-equal-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-null-or",
+   "condition": "subject.parityR13Failing IS NULL OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-null-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-not-null-or",
+   "condition": "subject.parityR13Failing IS NOT NULL OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-not-null-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-empty-or",
+   "condition": "subject.parityR13Failing IS EMPTY OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-empty-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-in-or",
+   "condition": "subject.parityR13Failing IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-in-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-in-or",
+   "condition": "subject.parityR13Failing NOT IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-in-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-contains-or",
+   "condition": "subject.parityR13Failing CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-contains-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-contains-or",
+   "condition": "subject.parityR13Failing NOT CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-contains-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-contains-any-or",
+   "condition": "subject.parityR13Failing CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-contains-any-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-contains-any-or",
+   "condition": "subject.parityR13Failing NOT CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-contains-any-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-subset-or",
+   "condition": "subject.parityR13Failing IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-subset-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-is-not-subset-or",
+   "condition": "subject.parityR13Failing IS NOT SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-is-not-subset-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-match-or",
+   "condition": "subject.parityR13Failing MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-match-or",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cf-not-match-or",
+   "condition": "subject.parityR13Failing NOT MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "probe",
+     "resource": {
+      "id": "r13-cf-not-match-or",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,171 @@
+{
+ "about": "A domain in the body of a regular set, and a simplified upload that overwrites the simplified policies of the same domain. The first case uploads a set with domain PARITY_ISOLATED (the domain of the suite's isolated cases) and component PARITY; the second case declares a PIP, which uploads the simplified policies of that domain (an empty list) around the declaration, and reads the first case's resource type. True if a simplified upload leaves regular sets alone, false if it removed the set of its domain.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {
+  "header": {
+   "name": "subject.parityR29FdHeader",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-fd",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r29fields-domain-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-domain-set",
+   "about": "The set's body names domain PARITY_ISOLATED and component PARITY. Read: true.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE",
+     "fields": {
+      "domain": "PARITY_ISOLATED",
+      "component": "PARITY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-domain-simplified-upload",
+   "about": "Declares a PIP of domain PARITY_ISOLATED, so the runner uploads that domain's simplified policies. read-of-the-domain-set asks the resource type of r29fields-domain-set: true if the set stays, false if the simplified upload removed it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-of-the-domain-set",
+     "resource": {
+      "id": "r29"
+     },
+     "type": "PARITY_SUITE_R29FD_R29FIELDS_DOMAIN_SET"
+    }
+   ],
+   "pips": [
+    "header"
+   ]
+  },
+  {
+   "id": "r29fields-domain-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

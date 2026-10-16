@@ -1,0 +1,956 @@
+{
+ "about": "Round 47 (may): PAP writes already answered, replayed as sequence cases that also record the error body, a read-back through the v3 export, a raw read-back of the case's own state, and a decision probe. Each case runs in a tenant of its own. A control replays an accepted write first and last.",
+ "resourceTypePrefix": "PARITY_SUITE_R47_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p47-control-first-may",
+   "about": "A control, the first case of the function: the accepted write of load-simplified-policies-v1/isolated/r29fields-predicates-every-key.json with its decision probe. The two controls answer alike unless the stand changed during the function.",
+   "resourceType": "PARITY_SUITE_R47_O071",
+   "tenant": "parity-p47-control-first-may",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "id": "00000000-0000-0000-0000-0000000f0001",
+       "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-top\"}",
+       "operation": "READ",
+       "predicates": {
+        "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}"
+       },
+       "querydslPredicate": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY.a.eq(\"querydsl\")",
+       "reason": "r29fields-predicates-every-key",
+       "resourceType": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "a==rsql",
+       "sqlPredicate": "a='sql'"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:probe"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "00000000-0000-0000-0000-0000000f0001"
+     ],
+     "requests": [
+      {
+       "type": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY",
+       "operation": "READ",
+       "name": "probe"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-o079",
+   "about": "Replays the accepted write of import-customization-v1/regular/r40open-m2m-held-custom-add-set/add.json in a state of its own and reads back what the PAP stored; a decision probe tells the write in effect from the state without it.",
+   "resourceType": "PARITY_SUITE_R47_O079",
+   "tenant": "parity-p47-o079",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "prior-1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-r40openm2mheldcustomaddset-control-first"
+     },
+     "body": [
+      {
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+       "name": "r40openm2mheldcustomaddset-control-first set",
+       "policies": [
+        {
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+         "name": "r40openm2mheldcustomaddset-control-first reader",
+         "policyId": "6e956930-a28b-9d91-6938-d2006c9e1fb2",
+         "rules": [
+          {
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY",
+           "name": "r40openm2mheldcustomaddset-control-first deny",
+           "ruleId": "f31cd04a-cfa0-7aa1-7977-baae19bef6e8",
+           "target": "true"
+          }
+         ],
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'"
+        }
+       ],
+       "policySetId": "98bfbd61-845c-af04-bfb0-db6d82cba8a1",
+       "policySets": [],
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_R40ASE_R40OPENM2MHELDCUSTOMADDSET_CONTROL_FIRST'"
+      }
+     ],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "prior-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "name": "subject.parityR40HeldAddSet",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "case": "r40open-m2m-held-custom-add-set",
+        "x": "${subject.isM2M}"
+       },
+       "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-custom-add-set"
+      }
+     ],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "prior-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "prior-4",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "a51b73eb-a2a4-2e20-0d31-60bef7f13372",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "prior-5",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-r40open-m2m-held-custom-add-set"
+     },
+     "body": [
+      {
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "name": "r40open-m2m-held-custom-add-set set",
+       "policies": [
+        {
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "name": "r40open-m2m-held-custom-add-set reader",
+         "policyId": "26bc0808-d28f-3f24-743e-247cb2600eaf",
+         "rules": [
+          {
+           "condition": "true",
+           "effect": "ALLOW",
+           "name": "r40open-m2m-held-custom-add-set update",
+           "ruleId": "a5942a69-5da9-260c-5ed7-3150bb9cc9f6",
+           "target": "true"
+          }
+         ],
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'"
+        }
+       ],
+       "policySetId": "8cc4acc4-5a70-c46b-27b7-d33896f9a18c",
+       "policySets": [],
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_R40ASE_R40OPEN_M2M_HELD_CUSTOM_ADD_SET' AND operation == 'UPDATE'"
+      }
+     ],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-1",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "body": [
+      {
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "name": "added set",
+       "policies": [
+        {
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "name": "added reader",
+         "policyId": "ba4017ab-55a4-7089-fb8e-3c0ead0ade60",
+         "rules": [
+          {
+           "condition": "resource.a == 'y' OR subject.parityR40HeldAddSet == 'v'",
+           "effect": "ALLOW",
+           "name": "added allow",
+           "ruleId": "634c1987-3201-1615-f258-fdf9e69a4527",
+           "target": "true"
+          }
+         ],
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'"
+        }
+       ],
+       "policySetId": "a51b73eb-a2a4-2e20-0d31-60bef7f13372",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_R40ASE_R40OPEN_M2M_HELD_CUSTOM_ADD_SET'"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:probe"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "ba4017ab-55a4-7089-fb8e-3c0ead0ade60",
+      "634c1987-3201-1615-f258-fdf9e69a4527",
+      "a51b73eb-a2a4-2e20-0d31-60bef7f13372",
+      "6e956930-a28b-9d91-6938-d2006c9e1fb2",
+      "f31cd04a-cfa0-7aa1-7977-baae19bef6e8",
+      "98bfbd61-845c-af04-bfb0-db6d82cba8a1",
+      "subject.parityR40HeldAddSet",
+      "26bc0808-d28f-3f24-743e-247cb2600eaf",
+      "a5942a69-5da9-260c-5ed7-3150bb9cc9f6",
+      "8cc4acc4-5a70-c46b-27b7-d33896f9a18c"
+     ],
+     "requests": [
+      {
+       "type": "PARITY_SUITE_R40ASE_R40OPEN_M2M_HELD_CUSTOM_ADD_SET",
+       "operation": "UPDATE",
+       "name": "probe"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-o139",
+   "about": "Replays the accepted write of load-simplified-policies-v1/isolated/r31pairs-plain-001-s.json in a state of its own and reads back what the PAP stored; a decision probe tells the write in effect from the state without it.",
+   "resourceType": "PARITY_SUITE_R47_O139",
+   "tenant": "parity-p47-o139",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001"
+     },
+     "body": [
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "name": "subject.parityR29PairsGen",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "case": "r29-pairs-gen"
+       },
+       "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen"
+      },
+      {
+       "cacheable": false,
+       "header": "x-parity-r29-pairs",
+       "name": "subject.parityR29PairsHdr",
+       "pipType": "HEADER",
+       "type": "UUID"
+      },
+      {
+       "cacheable": false,
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_READER": [
+          "p1",
+          "p2"
+         ]
+        }
+       },
+       "name": "subject.permissions.PARITY_R29_PAIRS",
+       "pipType": "MAPPING",
+       "type": "UUID"
+      },
+      {
+       "cacheable": false,
+       "claim": "department",
+       "name": "subject.parityR29PairsTok",
+       "pipType": "TOKEN",
+       "type": "UUID"
+      }
+     ],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001"
+     },
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "condition": "resource.fa == 'zz-undeclared'",
+       "customPredicate": {
+        "params": {
+         "p0": "subject.parityR29PairsNope"
+        },
+        "predicate": "[{\"value\":${p0},\"property\":\"fa\",\"operator\":\"in\"}]"
+       },
+       "id": "4d313de5-aa2a-02f6-daeb-49a9d7fd5e3e",
+       "operation": "READ",
+       "reason": "r31pairs-plain-001-s",
+       "resourceType": "PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ]
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:probe"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "4d313de5-aa2a-02f6-daeb-49a9d7fd5e3e",
+      "subject.parityR29PairsGen",
+      "subject.parityR29PairsHdr",
+      "subject.permissions.PARITY_R29_PAIRS",
+      "subject.parityR29PairsTok"
+     ],
+     "requests": [
+      {
+       "type": "PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S",
+       "operation": "READ",
+       "resource": {
+        "fa": "zz-undeclared"
+       },
+       "name": "probe"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-o140",
+   "about": "Replays the accepted write of load-policy-sets-v1/regular/r33gaps-rules-directly-in-a-set/upload-1.json in a state of its own and reads back what the PAP stored; no check request tells the write in effect from the state without it, so the case has no probe.",
+   "resourceType": "PARITY_SUITE_R47_O140",
+   "tenant": "parity-p47-o140",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-r33gaps-rules-directly-in-a-set"
+     },
+     "body": [
+      {
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "name": "r33gaps-rules-directly-in-a-set set",
+       "policies": [],
+       "policySetId": "b5277622-f3f5-ec6b-044c-8b9e0ff49d18",
+       "policySets": [],
+       "rules": [
+        {
+         "condition": "true",
+         "effect": "ALLOW",
+         "ruleId": "00000000-0000-0000-0000-0000003300a1",
+         "target": "true"
+        }
+       ],
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_R33G_R33GAPS_RULES_DIRECTLY_IN_A_SET'"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "b5277622-f3f5-ec6b-044c-8b9e0ff49d18",
+      "00000000-0000-0000-0000-0000003300a1"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-o141",
+   "about": "Replays the accepted write of import-pip-customization-v1/regular/r29structure-cpip-add/import.json in a state of its own and reads back what the PAP stored; no check request tells the write in effect from the state without it, so the case has no probe.",
+   "resourceType": "PARITY_SUITE_R47_O141",
+   "tenant": "parity-p47-o141",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "customize-pips",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "body": [
+      {
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_READER": [
+          "PARITY_R29_CP"
+         ]
+        }
+       },
+       "name": "subject.permissions.parityR29Cp",
+       "pipType": "MAPPING"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-pips"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "subject.permissions.parityR29Cp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-o142",
+   "about": "Replays the accepted write of load-simplified-policies-v1/regular/r29doc-empty-custom-mapping-in-a-deny-rule/declare-the-domain.json in a state of its own and reads back what the PAP stored; no check request tells the write in effect from the state without it, so the case has no probe.",
+   "resourceType": "PARITY_SUITE_R47_O142",
+   "tenant": "parity-p47-o142",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [
+      {
+       "customMapping": {},
+       "name": "subject.permissions",
+       "pipType": "MAPPING",
+       "productMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_READER": [
+          "PARITY_R29_DOC_P"
+         ]
+        }
+       }
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-domain-pips",
+      "read-raw:read-config-pips"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "subject.permissions"
+     ]
+    },
+    {
+     "name": "write-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p47-o143",
+   "about": "Replays the accepted write of load-simplified-policies-v1/isolated/r42open-predicates-nested-every-format.json in a state of its own and reads back what the PAP stored; a decision probe tells the write in effect from the state without it.",
+   "resourceType": "PARITY_SUITE_R47_O143",
+   "tenant": "parity-p47-o143",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "id": "00000000-0000-0000-0000-0000000f0001",
+       "operation": "READ",
+       "predicates": {
+        "mongodbPredicate": "\"a\":{\"$eq\":\"nested\"}",
+        "querydslPredicate": "PARITY_SUITE_R42PN_R42OPEN_PREDICATES_NESTED_EVERY_FORMAT.a.eq(\"nested\")",
+        "rsqlPredicate": "a==nested",
+        "sqlPredicate": "a='nested'"
+       },
+       "reason": "r42open-predicates-nested-every-format",
+       "resourceType": "PARITY_SUITE_R42PN_R42OPEN_PREDICATES_NESTED_EVERY_FORMAT",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ]
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:probe"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "00000000-0000-0000-0000-0000000f0001"
+     ],
+     "requests": [
+      {
+       "type": "PARITY_SUITE_R42PN_R42OPEN_PREDICATES_NESTED_EVERY_FORMAT",
+       "operation": "READ",
+       "name": "probe"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-o153",
+   "about": "Replays the accepted write of load-simplified-policies-v1/pip-scope/declare-the-pips.json in a state of its own and reads back what the PAP stored; no check request tells the write in effect from the state without it, so the case has no probe.",
+   "resourceType": "PARITY_SUITE_R47_O153",
+   "tenant": "parity-p47-o153",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "name": "subject.parityR10ScopeNotFoundPolicy",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_REG_NOT_FOUND_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+       },
+       "url": "http://pip-mock:8090/api/v1/pip/r10-scope-not-found-policy"
+      },
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "name": "subject.parityR10ScopeNotFoundSet",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_REG_NOT_FOUND_PIP_SET_BESIDE_AN_ALLOWING_SET"
+       },
+       "url": "http://pip-mock:8090/api/v1/pip/r10-scope-not-found-set"
+      },
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "jsonPath": "$.value",
+       "name": "subject.parityR10ScopeNumberPolicy",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_REG_NUMBER_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+       },
+       "type": "JSON",
+       "url": "http://pip-mock:8090/api/v1/pip/r10-scope-number-policy"
+      },
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "jsonPath": "$.value",
+       "name": "subject.parityR10ScopeNumberSet",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_REG_NUMBER_PIP_SET_BESIDE_AN_ALLOWING_SET"
+       },
+       "type": "JSON",
+       "url": "http://pip-mock:8090/api/v1/pip/r10-scope-number-set"
+      },
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "jsonPath": "$.value",
+       "name": "subject.parityR10ScopeStringPolicy",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_REG_STRING_PIP_POLICY_BESIDE_AN_ALLOWING_POLICY"
+       },
+       "type": "JSON",
+       "url": "http://pip-mock:8090/api/v1/pip/r10-scope-string-policy"
+      },
+      {
+       "cacheable": false,
+       "httpMethod": "POST",
+       "jsonPath": "$.value",
+       "name": "subject.parityR10ScopeStringSet",
+       "pipType": "GENERAL",
+       "requestAttributes": {
+        "resourceType": "PARITY_SUITE_REG_STRING_PIP_SET_BESIDE_AN_ALLOWING_SET"
+       },
+       "type": "JSON",
+       "url": "http://pip-mock:8090/api/v1/pip/r10-scope-string-set"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read:read-domain-pips",
+      "read-raw:read-config-pips"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "subject.parityR10ScopeNotFoundPolicy",
+      "subject.parityR10ScopeNotFoundSet",
+      "subject.parityR10ScopeNumberPolicy",
+      "subject.parityR10ScopeNumberSet",
+      "subject.parityR10ScopeStringPolicy",
+      "subject.parityR10ScopeStringSet"
+     ]
+    },
+    {
+     "name": "write-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p47-o154",
+   "about": "Replays the accepted write of import-customization-v1/regular/r30open-added-draft-nested/import.json in a state of its own and reads back what the PAP stored; a decision probe tells the write in effect from the state without it.",
+   "resourceType": "PARITY_SUITE_R47_O154",
+   "tenant": "parity-p47-o154",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "body": [
+      {
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "name": "added set",
+       "policySetId": "642360de-2cc0-0831-57d9-0cbea93b9f94",
+       "policySets": [
+        {
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "name": "added draft",
+         "policies": [
+          {
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "name": "added reader",
+           "policyId": "4d0f3149-804d-2d74-2573-1da2de3effa1",
+           "rules": [
+            {
+             "condition": "true",
+             "effect": "ALLOW",
+             "name": "added update",
+             "ruleId": "b7bba9cb-32b7-c5ba-752d-b622766ddf54",
+             "target": "operation == 'UPDATE'"
+            }
+           ],
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'"
+          }
+         ],
+         "policySetId": "a294874c-2d13-1f1c-7b9e-9f8aebabd2ac",
+         "status": "DRAFT",
+         "target": "true"
+        }
+       ],
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_R30O_R30OPEN_ADDED_DRAFT_NESTED'"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:probe"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "642360de-2cc0-0831-57d9-0cbea93b9f94",
+      "4d0f3149-804d-2d74-2573-1da2de3effa1",
+      "b7bba9cb-32b7-c5ba-752d-b622766ddf54",
+      "a294874c-2d13-1f1c-7b9e-9f8aebabd2ac"
+     ],
+     "requests": [
+      {
+       "type": "PARITY_SUITE_R30O_R30OPEN_ADDED_DRAFT_NESTED",
+       "operation": "UPDATE",
+       "name": "probe"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p47-control-last-may",
+   "about": "A control, the last case of the function: the accepted write of load-simplified-policies-v1/isolated/r29fields-predicates-every-key.json with its decision probe. The two controls answer alike unless the stand changed during the function.",
+   "resourceType": "PARITY_SUITE_R47_O071",
+   "tenant": "parity-p47-control-last-may",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-config-sets",
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "write-1",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-3",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "body": [
+      {
+       "applicableForFrontend": false,
+       "component": "PARITY",
+       "id": "00000000-0000-0000-0000-0000000f0001",
+       "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-top\"}",
+       "operation": "READ",
+       "predicates": {
+        "mongodbPredicate": "\"a\":{\"$eq\":\"mongo-nested\"}"
+       },
+       "querydslPredicate": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY.a.eq(\"querydsl\")",
+       "reason": "r29fields-predicates-every-key",
+       "resourceType": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "rsqlPredicate": "a==rsql",
+       "sqlPredicate": "a='sql'"
+      }
+     ],
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets",
+      "decide:probe"
+     ],
+     "onRefusal": "continue",
+     "markers": [
+      "00000000-0000-0000-0000-0000000f0001"
+     ],
+     "requests": [
+      {
+       "type": "PARITY_SUITE_R29FD_R29FIELDS_PREDICATES_EVERY_KEY",
+       "operation": "READ",
+       "name": "probe"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

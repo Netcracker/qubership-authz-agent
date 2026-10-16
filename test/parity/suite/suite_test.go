@@ -35,6 +35,9 @@ type ParitySuite struct {
 	comparator *GoldenComparator
 	pipMock    *PipController
 	eaMock     *PipController
+	// errorBodies is set while runCaseFile runs a file that records the body
+	// of a 400 or 409 answer beside its status; see recordsErrorBodies.
+	errorBodies bool
 }
 
 // TestParitySuite is the `go test` entry. Use

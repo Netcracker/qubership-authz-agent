@@ -1,0 +1,86 @@
+{
+ "about": "How many calls a GENERAL PIP receives when one condition reads it twice. pip-call/pip-cache-cacheable-false records one call per request for a condition that reads the PIP once, which a call per request and a call per read both produce. The PIP answers {\"value\": \"b\"}, so == 'a' is false and OR goes on to == 'b'. Each form declares the PIP at a route of its own, and the decision and the calls that route received over the case are recorded. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {
+  "/api/v1/pip/r11-calls-read-twice": {
+   "statusCode": 200,
+   "body": {
+    "value": "b"
+   }
+  },
+  "/api/v1/pip/r11-calls-read-once": {
+   "statusCode": 200,
+   "body": {
+    "value": "b"
+   }
+  }
+ },
+ "pips": {
+  "calls-read-twice": {
+   "name": "subject.parityR11Twice",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-calls-read-twice",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "case": "calls-read-twice"
+   }
+  },
+  "calls-read-once": {
+   "name": "subject.parityR11Twice",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-calls-read-once",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "case": "calls-read-once"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "calls-read-twice",
+   "about": "Reads the PIP on both sides of the OR.",
+   "condition": "subject.parityR11Twice == 'a' OR subject.parityR11Twice == 'b'",
+   "pips": [
+    "calls-read-twice"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r11-calls"
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1101"
+   },
+   "pipCalls": "/api/v1/pip/r11-calls-read-twice"
+  },
+  {
+   "id": "calls-read-once",
+   "about": "The control: reads the PIP once.",
+   "condition": "subject.parityR11Twice == 'b'",
+   "pips": [
+    "calls-read-once"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r11-calls"
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1101"
+   },
+   "pipCalls": "/api/v1/pip/r11-calls-read-once"
+  }
+ ]
+}

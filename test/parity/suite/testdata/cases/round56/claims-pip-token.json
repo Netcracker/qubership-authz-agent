@@ -1,0 +1,209 @@
+{
+ "about": "Round 56: which token and which Tenant a PIP call carries, and whose the token is. The case runs in a tenant of its own.",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/p56c-token": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "cases": [
+  {
+   "id": "p56c-pip-token-control-first",
+   "about": "Control: an ACTIVE set whose only rule allows; the check is true unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_P56C_PIP_TOKEN_CONTROL_FIRST",
+   "tenant": "parity-p56c-pip-token-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-pip-token-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "9c5345e9-4d2e-e508-baeb-1d2d398a8581",
+       "name": "p56c-pip-token-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_PIP_TOKEN_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "224d7bf5-32c2-804a-ec4b-4da54e380bd8",
+         "name": "p56c-pip-token-control-first set-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "718d1a75-6ff6-d6c0-5eec-2dd182d002e1",
+           "name": "p56c-pip-token-control-first allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-pip-call-token",
+   "about": "A rule that reads a GENERAL PIP, checked for parity-reader. The pip-call golden records the call's Authorization against the request's tokens, whose token it is by its claims (a service account, the request's user, another user), its Tenant against the request's tenant_id, and whether it carried Incoming-Token.",
+   "resourceType": "PARITY_SUITE_P56C_PIP_CALL_TOKEN",
+   "tenant": "parity-p56c-pip-call-token",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P56C_TOKEN"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP56cToken",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/p56c-token",
+       "requestAttributes": {
+        "case": "p56c-pip-call-token"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-pip-call-token"
+     },
+     "observe": [
+      "status",
+      "decide:as-the-reader"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "4fa57ac3-fd6e-5555-b24e-97c4bca3f66e",
+       "name": "p56c-pip-call-token set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_PIP_CALL_TOKEN'",
+       "policies": [
+        {
+         "policyId": "84bcd10b-243f-db5b-bbf7-795af8f7fd5e",
+         "name": "p56c-pip-call-token set-policy",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "a4c2e8a5-ede7-fdaa-8c94-98dbc8f741d3",
+           "name": "p56c-pip-call-token probe",
+           "target": "true",
+           "condition": "subject.parityP56cToken CONTAINS 'v'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "as-the-reader",
+       "resource": {
+        "id": "p56"
+       },
+       "pipCalls": "/api/v1/pip/p56c-token",
+       "pipHeaders": [
+        "authorization",
+        "authorization:subject",
+        "tenant",
+        "incoming-token"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p56c-pip-token-control-last",
+   "about": "Control: an ACTIVE set whose only rule allows; the check is true unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_P56C_PIP_TOKEN_CONTROL_LAST",
+   "tenant": "parity-p56c-pip-token-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p56c-pip-token-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "3dfeccca-5270-0369-93f1-a0f594d76ef7",
+       "name": "p56c-pip-token-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_P56C_PIP_TOKEN_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "74356a82-fee4-f3c3-352a-ffa9c9dedc64",
+         "name": "p56c-pip-token-control-last set-policy",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "090305fe-3048-8864-0cde-89d2bf05f03b",
+           "name": "p56c-pip-token-control-last allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "p56"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

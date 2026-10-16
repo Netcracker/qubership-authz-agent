@@ -1,0 +1,24 @@
+[
+  {
+    "_comment": "GENERAL PIP the round 2 cases pin to HTTP 404.",
+    "name": "subject.parityBroken404",
+    "url": "http://pip-mock:8090/api/v1/pip/sem-404",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_SEM2_404"
+    },
+    "cacheable": false
+  },
+  {
+    "_comment": "GENERAL PIP the round 2 cases pin to HTTP 200 with a null body.",
+    "name": "subject.parityNullBody",
+    "url": "http://pip-mock:8090/api/v1/pip/sem-null-body",
+    "httpMethod": "POST",
+    "pipType": "GENERAL",
+    "requestAttributes": {
+      "resourceType": "PARITY_SUITE_SEM2_NULL_BODY"
+    },
+    "cacheable": false
+  }
+]
