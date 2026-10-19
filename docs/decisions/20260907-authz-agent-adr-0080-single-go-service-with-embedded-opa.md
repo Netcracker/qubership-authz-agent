@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Accepted. The part of the Decision that keeps the slice of OPA's REST data API, and the Consequences that follow from
+it, are superseded by [authz-agent-ADR-0081](20261019-authz-agent-adr-0081-remove-the-data-api.md).
 
 <!-- markdownlint-disable-next-line MD001 -->
 #### Date
@@ -20,6 +21,8 @@ team is affected until the chart switches.
 
 #### Related ADRs
 
+- [authz-agent-ADR-0081: Remove the data API from the agent](20261019-authz-agent-adr-0081-remove-the-data-api.md):
+  removes the data API this record kept, together with its `system.authz` guard and write secret.
 - [authz-agent-ADR-0062: Canonical OPA-Direct And Envoy Parity](20260602-authz-agent-adr-0062-canonical-opa-direct-envoy-parity.md):
   defines the canonical `/access/v1/authorize` contract this record keeps unchanged. The OPA-direct transport it
   introduced disappears with the OPA container; see Consequences.

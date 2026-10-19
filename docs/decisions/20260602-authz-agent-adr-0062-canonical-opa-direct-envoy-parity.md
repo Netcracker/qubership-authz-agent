@@ -4,7 +4,12 @@
 
 ## Status
 
-Accepted
+Accepted. Decisions 1 and 10, and the port name of decision 7, are
+superseded by
+[authz-agent-ADR-0081](20261019-authz-agent-adr-0081-remove-the-data-api.md):
+`POST /access/v1/authorize` is the only decision endpoint, the parity
+test compares the agent's two ports at that path, and port 8181 is
+named `internal`.
 
 ## Context
 
