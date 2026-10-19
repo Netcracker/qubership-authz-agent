@@ -72,6 +72,8 @@ KC_ADMIN_PASSWORD = os.environ.get("KC_ADMIN_PASSWORD", "kcadmin")
 KC_ADMIN_REALM = os.environ.get("KC_ADMIN_REALM", "master")
 
 COMPONENT = "SVT_INDIVIDUAL_MATRIX"
+# The canonical decision route; the public-canonical and opa-direct modes post to it.
+CANONICAL_AUTHORIZE_PATH = "/access/v1/authorize"
 ALLOW_ROLE = "ROLE_SVT_ADMIN"
 DENY_ROLE = "ROLE_SVT_MATRIX_DENY"
 PROM_STEP_SECONDS = 5
@@ -337,7 +339,7 @@ def build_ols_single_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     username=user["username"],
                     scenario_label="ols-single",
                     request_class="OLS_SINGLE",
-                    request_path="/access/v1/authorize",
+                    request_path=CANONICAL_AUTHORIZE_PATH,
                     request_body_template=json.dumps(canonical_body(resources, False), separators=(",", ":")),
                     response_kind="single",
                     expected_decision=expected_decision,
@@ -368,7 +370,7 @@ def build_ols_single_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     username=user["username"],
                     scenario_label="ols-single",
                     request_class="OLS_SINGLE",
-                    request_path="/access/v1/authorize",
+                    request_path=CANONICAL_AUTHORIZE_PATH,
                     request_body_template=json.dumps(direct_body(resources, False), separators=(",", ":")),
                     response_kind="single",
                     expected_decision=expected_decision,
@@ -435,7 +437,7 @@ def build_ols_bulk_assets(transport_mode: str) -> tuple[list[dict[str, Any]], li
             {"resourceType": resource_type, "operation": operation, "resource": {}}
             for resource_type, operation in combos
         ]
-        request_path = "/access/v1/authorize"
+        request_path = CANONICAL_AUTHORIZE_PATH
         request_body = canonical_body(resources, False) if transport_mode == "public-canonical" else direct_body(resources, False)
         rows.append(
             make_row(
@@ -488,7 +490,7 @@ def build_rls_filter_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     username=user["username"],
                     scenario_label="rls-filter",
                     request_class="RLS_FILTER",
-                    request_path="/access/v1/authorize",
+                    request_path=CANONICAL_AUTHORIZE_PATH,
                     request_body_template=json.dumps(
                         canonical_body([{"resourceType": resource_type, "operation": operation, "resource": {}}], False),
                         separators=(",", ":"),
@@ -520,7 +522,7 @@ def build_rls_filter_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     username=user["username"],
                     scenario_label="rls-filter",
                     request_class="RLS_FILTER",
-                    request_path="/access/v1/authorize",
+                    request_path=CANONICAL_AUTHORIZE_PATH,
                     request_body_template=json.dumps(
                         direct_body(
                             [{"resourceType": resource_type, "operation": operation, "resource": {}}],
@@ -588,7 +590,7 @@ def build_rls_condition_assets(
                     username=user["username"],
                     scenario_label=scenario_name,
                     request_class=request_class,
-                    request_path="/access/v1/authorize",
+                    request_path=CANONICAL_AUTHORIZE_PATH,
                     request_body_template=json.dumps(
                         canonical_body([{"resourceType": resource_type, "operation": operation, "resource": resource}], False),
                         separators=(",", ":"),
@@ -622,7 +624,7 @@ def build_rls_condition_assets(
                     username=user["username"],
                     scenario_label=scenario_name,
                     request_class=request_class,
-                    request_path="/access/v1/authorize",
+                    request_path=CANONICAL_AUTHORIZE_PATH,
                     request_body_template=json.dumps(
                         direct_body([{"resourceType": resource_type, "operation": operation, "resource": resource}], False),
                         separators=(",", ":"),
