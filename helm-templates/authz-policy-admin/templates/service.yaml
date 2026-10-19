@@ -1,17 +1,22 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: '{{ include "authz-policy-admin.serviceName" . }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   labels:
-    {{- include "authz-policy-admin.objectLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   type: ClusterIP
   selector:
-    name: '{{ include "authz-policy-admin.serviceName" . }}'
+    name: '{{ .Values.SERVICE_NAME }}'
   ports:
     # Service port equals the container port on purpose: every curl example in
     # the READMEs and the SVT stack use 18090, so
-    # `kubectl port-forward svc/{{ include "authz-policy-admin.serviceName" . }} 18090:18090`
+    # `kubectl port-forward svc/{{ .Values.SERVICE_NAME }} 18090:18090`
     # makes them apply verbatim.
     - name: web
       port: {{ .Values.AUTHZ_POLICY_ADMIN_PORT }}

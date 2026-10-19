@@ -26,6 +26,17 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CHART_DIR="${ROOT_DIR}/helm-templates/authz-agent"
 STUB_CHART_DIR="${ROOT_DIR}/helm-templates/authz-policy-admin"
 
+# The sizing comes from the resource profiles: values.yaml has none, and the
+# schema of each chart requires CPU_REQUEST, CPU_LIMIT, MEMORY_REQUEST and
+# MEMORY_LIMIT. Every render below therefore takes the agent's dev sizing as
+# its first values file, which a profile or a --set given after it overrides.
+# The profile checks and the refusal of an install without the sizing keys are
+# the renders that go without it.
+SIZING="$(mktemp)"
+sentinel="$(mktemp)"
+trap 'rm -f "${SIZING}" "${sentinel}"' EXIT
+printf 'CPU_REQUEST: 350m\nCPU_LIMIT: 400m\nMEMORY_REQUEST: 364Mi\nMEMORY_LIMIT: 700Mi\n' >"${SIZING}"
+
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
     echo "error: required command not found: $1" >&2
@@ -49,7 +60,7 @@ pass() {
 
 # Renders the chart and extracts the trusted-providers document as JSON.
 providers_json() {
-  helm template t "${CHART_DIR}" "$@" \
+  helm template t "${CHART_DIR}" -f "${SIZING}" "$@" \
     | yq_providers
 }
 
@@ -68,12 +79,22 @@ yq_providers() {
 # --show-only, so that a check reads the agent's Deployment and no other. A
 # render that fails returns Helm's error as the document, so the check reports
 # it instead of ending the script.
-hpa_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
-deployment_of() { helm template t "${CHART_DIR}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
+hpa_of() { helm template t "${CHART_DIR}" -f "${SIZING}" "$@" --show-only templates/horizontalpodautoscaler.yaml 2>&1 || true; }
+deployment_of() { helm template t "${CHART_DIR}" -f "${SIZING}" "$@" --show-only templates/deployment.yaml 2>&1 || true; }
 field() {
   local document="$1"
   local key="$2"
   awk -v key="${key}" '$1 == key {print $2; exit}' <<<"${document}"
+}
+# The kinds of the objects in a render, sorted and comma-separated, and their
+# number.
+kinds_of() {
+  local render="$1"
+  grep -E '^kind: ' <<<"${render}" | sort | paste -sd, - | tr -d ' ' || true
+}
+object_count() {
+  local render="$1"
+  grep -c '^kind: ' <<<"${render}" || true
 }
 # Compares one block of the agent's Deployment, cut out by the named function,
 # with a literal, and reports the diff.
@@ -93,15 +114,15 @@ expect_block() {
   fi
 }
 
-# A plain install: one replica; the autoscaler disabled, with no policy and the
-# target 75% of the 400m limit over the 350m request; the chart's part-of label
-# and no session label.
+# An install that sets the sizing and nothing else: one replica; the
+# autoscaler disabled, with no policy and the target 75% of the 400m limit over
+# the 350m request; the chart's part-of label and no session label.
 plain_hpa="$(hpa_of)"
 plain_summary="replicas=$(field "$(deployment_of)" replicas:) min=$(field "${plain_hpa}" minReplicas:) max=$(field "${plain_hpa}" maxReplicas:) target=$(field "${plain_hpa}" averageUtilization:) disabled=$(grep -c 'selectPolicy: Disabled' <<<"${plain_hpa}" || true) policies=$(grep -c 'type: P' <<<"${plain_hpa}" || true)"
 if [[ "${plain_summary}" == "replicas=1 min=1 max=9999 target=85 disabled=2 policies=0" ]]; then
-  pass "a plain install renders one replica and a disabled autoscaler (${plain_summary})"
+  pass "an install with only the sizing renders one replica and a disabled autoscaler (${plain_summary})"
 else
-  fail "a plain install renders ${plain_summary}, expected replicas=1 min=1 max=9999 target=85 disabled=2 policies=0"
+  fail "an install with only the sizing renders ${plain_summary}, expected replicas=1 min=1 max=9999 target=85 disabled=2 policies=0"
 fi
 if [[ "${plain_hpa}" == *"app.kubernetes.io/part-of: 'Platform-Core-Security'"* && "${plain_hpa}" != *"sessionId"* ]]; then
   pass "the autoscaler carries the chart's part-of label and no session label by default"
@@ -127,8 +148,7 @@ fi
 # Every profile validates against the schema and renders. The profile is
 # applied over a memory limit no profile carries, so that a misspelled key,
 # which the schema would admit, leaves that limit in the render in place of
-# the profile's; the dev sizing mirrors values.yaml and could not be told from
-# the default otherwise. REPLICAS reaches the Deployment. The autoscaler is the
+# the profile's. REPLICAS reaches the Deployment. The autoscaler is the
 # profile's: the bounds; the target, HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT of
 # CPU_LIMIT over CPU_REQUEST, so 75 renders as 85 for 400m over 350m and as
 # 150 for 15 cores over 7500m, which also covers both spellings to_millicores
@@ -151,8 +171,6 @@ behavior_on='  behavior:
           value: 1
           periodSeconds: 60'
 behavior_off="${behavior_on//selectPolicy: Max/selectPolicy: Disabled}"
-sentinel="$(mktemp)"
-trap 'rm -f "${sentinel}"' EXIT
 printf 'MEMORY_LIMIT: 1Mi\n' >"${sentinel}"
 for row in "dev:700Mi:1:1:9999:85:off" "dev-ha:700Mi:2:2:5:85:on" "prod:13Gi:2:2:5:150:on" "prod-nonha:13Gi:1:1:5:150:on"; do
   IFS=: read -r profile mem_limit replicas floor ceiling target mode <<<"${row}"
@@ -186,6 +204,38 @@ for row in "dev:700Mi:1:1:9999:85:off" "dev-ha:700Mi:2:2:5:85:on" "prod:13Gi:2:2
   fi
 done
 
+# Without a profile, each chart stops at schema validation and names the four
+# sizing keys, rather than rendering a Pod with empty resources. Each key is
+# matched on its own, since Helm 3 and Helm 4 word the error differently.
+for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
+  if unsized="$(helm template t "${chart}" 2>&1)"; then
+    fail "$(basename "${chart}") must refuse an install without the sizing keys, and it rendered"
+    continue
+  fi
+  unnamed=""
+  for key in CPU_REQUEST CPU_LIMIT MEMORY_REQUEST MEMORY_LIMIT; do
+    [[ "${unsized}" == *"${key}"* ]] || unnamed="${unnamed} ${key}"
+  done
+  if [[ -z "${unnamed}" ]]; then
+    pass "$(basename "${chart}") refuses an install without the sizing keys and names them"
+  else
+    fail "$(basename "${chart}") refuses an install without the sizing keys but does not name${unnamed}; got: $(head -3 <<<"${unsized}")"
+  fi
+done
+
+# Each of the stub's profiles validates against the schema on its own and sizes
+# the container, applied over a memory limit no profile carries.
+for row in "dev:128Mi" "dev-ha:128Mi" "prod:512Mi" "prod-nonha:512Mi"; do
+  IFS=: read -r profile mem_limit <<<"${row}"
+  if ! rendered="$(helm template t "${STUB_CHART_DIR}" -f "${sentinel}" -f "${STUB_CHART_DIR}/resource-profiles/${profile}.yaml" 2>&1)"; then
+    fail "the stub's ${profile} profile does not render: $(head -3 <<<"${rendered}")"
+  elif [[ "${rendered}" == *"memory: '${mem_limit}'"* ]]; then
+    pass "the stub's ${profile} profile sizes its container (memory limit ${mem_limit})"
+  else
+    fail "the stub's ${profile} profile does not set the memory limit ${mem_limit}; the render has: $(grep -E '^ +memory: ' <<<"${rendered}" | tr -d ' ' | paste -sd, - || true)"
+  fi
+done
+
 # ── Deployment strategy ──────────────────────────────────────────────────
 #
 # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
@@ -200,7 +250,7 @@ strategy_of() { deployment_of "$@" | sed -n '/^  strategy:/,/^  selector:/p' | s
 env_value_of() {
   local chart="$1" name="$2"
   shift 2
-  helm template t "${chart}" "$@" 2>&1 \
+  helm template t "${chart}" -f "${SIZING}" "$@" 2>&1 \
     | grep -A1 "name: ${name}$" \
     | awk -F"'" '/value:/ && !seen {print $2; seen=1}' || true
 }
@@ -328,7 +378,7 @@ fi
 
 # ── The schema rejects a half-filled entry ───────────────────────────────
 
-if helm template t "${CHART_DIR}" \
+if helm template t "${CHART_DIR}" -f "${SIZING}" \
   --set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","issuer":"http://kc:8080/realms/x","jwksUri":"http://kc:8080/certs"}]' \
   >/dev/null 2>&1; then
   fail "an entry setting both issuer and jwksUri must be rejected by the schema"
@@ -336,7 +386,7 @@ else
   pass "an entry setting both issuer and jwksUri is rejected at render time"
 fi
 
-if helm template t "${CHART_DIR}" \
+if helm template t "${CHART_DIR}" -f "${SIZING}" \
   --set-json 'AUTHZ_TRUSTED_PROVIDERS=[{"id":"kc","issuer":"http://kc:8080/realms/x","algorithms":["RS256"]}]' \
   >/dev/null 2>&1; then
   fail "an entry carrying the removed 'algorithms' field must be rejected"
@@ -346,13 +396,13 @@ fi
 
 # A realm name becomes a provider id, so it inherits the id character set; and
 # two identical realms would collapse into one slot of the published byId map.
-if helm template t "${CHART_DIR}" --set-json 'AUTHZ_IDP_REALMS=["has space"]' >/dev/null 2>&1; then
+if helm template t "${CHART_DIR}" -f "${SIZING}" --set-json 'AUTHZ_IDP_REALMS=["has space"]' >/dev/null 2>&1; then
   fail "a realm name outside the provider-id character set must be rejected"
 else
   pass "a realm name outside the provider-id character set is rejected"
 fi
 
-if helm template t "${CHART_DIR}" --set-json 'AUTHZ_IDP_REALMS=["cpq","cpq"]' >/dev/null 2>&1; then
+if helm template t "${CHART_DIR}" -f "${SIZING}" --set-json 'AUTHZ_IDP_REALMS=["cpq","cpq"]' >/dev/null 2>&1; then
   fail "a duplicated realm must be rejected — it would collapse in the byId index"
 else
   pass "a duplicated realm is rejected"
@@ -364,7 +414,7 @@ fi
 # test: how many containers it holds, which settings reach the process, and
 # which objects it mounts to read them from.
 
-all_manifests="$(helm template t "${CHART_DIR}")"
+all_manifests="$(helm template t "${CHART_DIR}" -f "${SIZING}")"
 
 # The agent's own container, matched by name. The five names of the Pod it
 # replaced stay in the pattern, so a return of any of them is counted.
@@ -386,36 +436,29 @@ fi
 # found string into a failed pipeline.
 # The image is IMAGE_REPOSITORY:TAG on both charts, as on the platform's, each
 # defaulting to the repository the release publishes (TAG has no default, so
-# the default render ends in a bare colon), and the override keys the charts
-# had are refused.
+# the default render ends in a bare colon).
 for row in "${CHART_DIR}:ghcr.io/netcracker/qubership-authz-agent" "${STUB_CHART_DIR}:ghcr.io/netcracker/qubership-authz-policy-admin"; do
   chart="${row%%:*}"
   repository="${row#*:}"
   name="$(basename "${chart}")"
-  default_image="$(field "$(helm template t "${chart}" --show-only templates/deployment.yaml 2>&1 || true)" image:)"
+  default_image="$(field "$(helm template t "${chart}" -f "${SIZING}" --show-only templates/deployment.yaml 2>&1 || true)" image:)"
   if [[ "${default_image}" == "'${repository}:'" ]]; then
     pass "${name}: the image repository defaults to ${repository}"
   else
     fail "${name}: expected the default image '${repository}:', got ${default_image}"
   fi
-  got_image="$(field "$(helm template t "${chart}" --set IMAGE_REPOSITORY=reg/img --set TAG=1.2.3 --show-only templates/deployment.yaml 2>&1 || true)" image:)"
+  got_image="$(field "$(helm template t "${chart}" -f "${SIZING}" --set IMAGE_REPOSITORY=reg/img --set TAG=1.2.3 --show-only templates/deployment.yaml 2>&1 || true)" image:)"
   if [[ "${got_image}" == "'reg/img:1.2.3'" ]]; then
     pass "${name}: the image is IMAGE_REPOSITORY:TAG"
   else
     fail "${name}: expected image 'reg/img:1.2.3', got ${got_image}"
   fi
 done
-old_image="$(helm template t "${CHART_DIR}" --set AUTHZ_AGENT_IMAGE=x 2>&1 || true)"
-if [[ "${old_image}" == *"no longer reads these values: AUTHZ_AGENT_IMAGE"* ]]; then
-  pass "the agent chart refuses AUTHZ_AGENT_IMAGE by name"
-else
-  fail "the agent chart must refuse AUTHZ_AGENT_IMAGE by name, got: $(head -3 <<<"${old_image}")"
-fi
 
 # The M2M identity, which a platform install takes through a projected
 # service-account token, and the mount mode that replaces the pull loop.
 # Neither is rendered by the default above.
-k8s_m2m="$(helm template t "${CHART_DIR}" --set KUBERNETES_M2M_ENABLED=true)"
+k8s_m2m="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set KUBERNETES_M2M_ENABLED=true)"
 if [[ "${k8s_m2m}" == *"serviceAccountToken"* && "${k8s_m2m}" != *"client-credentials"* ]]; then
   pass "the agent Pod takes the projected token under KUBERNETES_M2M_ENABLED"
 else
@@ -440,7 +483,7 @@ else
   fail "the agent Pod does not take the client-credentials Secret without KUBERNETES_M2M_ENABLED"
 fi
 
-mount_mode="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_CONFIGMAP=my-policies)"
+mount_mode="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set AUTHZ_POLICY_CONFIGMAP=my-policies)"
 if [[ "${mount_mode}" == *"AUTHZ_POLICY_MOUNT_DIR"* && "${mount_mode}" == *"my-policies"* ]]; then
   pass "the agent Pod mounts AUTHZ_POLICY_CONFIGMAP and points the service at it"
 else
@@ -520,8 +563,8 @@ done
 # autoscaler comes from the profile alone.
 
 # Probed with values no profile carries: a render that ignored a key and kept
-# the default would not pass.
-sized="$(helm template t "${CHART_DIR}" \
+# another value would not pass.
+sized="$(helm template t "${CHART_DIR}" -f "${SIZING}" \
   --set CPU_REQUEST=123m --set CPU_LIMIT=456m \
   --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi)"
 for pair in "CPU_REQUEST:cpu: '123m'" "CPU_LIMIT:cpu: '456m'" "MEMORY_REQUEST:memory: '111Mi'" "MEMORY_LIMIT:memory: '999Mi'"; do
@@ -534,23 +577,12 @@ for pair in "CPU_REQUEST:cpu: '123m'" "CPU_LIMIT:cpu: '456m'" "MEMORY_REQUEST:me
   fi
 done
 
-# The old names are refused rather than ignored: the schema admits unknown
-# keys, so an install still carrying them would otherwise take the chart's
-# defaults without a word. The guard's own text is matched, so a render that
-# fails for another reason does not pass as the refusal.
-old_name="$(helm template t "${CHART_DIR}" --set AUTHZ_AGENT_MEM_LIMIT=8Gi 2>&1 || true)"
-if [[ "${old_name}" == *"no longer reads these values: AUTHZ_AGENT_MEM_LIMIT"* ]]; then
-  pass "a values file still carrying AUTHZ_AGENT_MEM_LIMIT is refused at render time"
-else
-  fail "a values file still carrying AUTHZ_AGENT_MEM_LIMIT must be refused by name, got: $(head -3 <<<"${old_name}")"
-fi
-
 # The autoscaler is the platform's template, rendered on every install. Turned
 # off, it carries selectPolicy Disabled in both directions and the bounds 1 and
 # 9999, so it never scales. Turned on, maxReplicas comes from HPA_MAX_REPLICAS,
 # which has no default, so a bare HPA_ENABLED=true is refused instead of
 # rendered with a field the API server rejects.
-hpa_alone="$(helm template t "${CHART_DIR}" --set HPA_ENABLED=true 2>&1 || true)"
+hpa_alone="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set HPA_ENABLED=true 2>&1 || true)"
 if [[ "${hpa_alone}" == *"HPA_ENABLED=true requires HPA_MAX_REPLICAS"* ]]; then
   pass "HPA_ENABLED without HPA_MAX_REPLICAS is refused at render time"
 else
@@ -560,7 +592,7 @@ fi
 # A scaling policy renders whenever its *_VALUE is set, with periodSeconds
 # empty when *_PERIOD_SECONDS is not, and the API server rejects that whether
 # or not the autoscaler is enabled.
-half_policy="$(helm template t "${CHART_DIR}" --set HPA_SCALING_UP_PODS_VALUE=1 2>&1 || true)"
+half_policy="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set HPA_SCALING_UP_PODS_VALUE=1 2>&1 || true)"
 if [[ "${half_policy}" == *"HPA_SCALING_UP_PODS_VALUE is set without HPA_SCALING_UP_PODS_PERIOD_SECONDS"* ]]; then
   pass "a scaling policy value without its period is refused at render time"
 else
@@ -601,7 +633,7 @@ expect_strategy "the sizes are read under custom_rollout only" "${rolling}
 # The schema admits the four names and nothing else, the empty string included,
 # which is why values.yaml carries no default for the type.
 for bad_type in blue_green ""; do
-  if helm template t "${CHART_DIR}" --set "DEPLOYMENT_STRATEGY_TYPE=${bad_type}" >/dev/null 2>&1; then
+  if helm template t "${CHART_DIR}" -f "${SIZING}" --set "DEPLOYMENT_STRATEGY_TYPE=${bad_type}" >/dev/null 2>&1; then
     fail "DEPLOYMENT_STRATEGY_TYPE '${bad_type}' must be rejected by the schema"
   else
     pass "DEPLOYMENT_STRATEGY_TYPE '${bad_type}' is rejected by the schema"
@@ -613,8 +645,8 @@ done
 # One constraint over CLOUD_TOPOLOGY_KEY by default; with CLOUD_TOPOLOGIES, one
 # per entry, with maxSkew and whenUnsatisfiable defaulted per entry. The whole
 # block is compared; the selector has to name the label the Pod template
-# carries, which the DEPLOYMENT_RESOURCE_NAME checks read back from one render
-# as values.
+# carries, which the SERVICE_NAME checks read back from one render as
+# values.
 spread_of() { deployment_of "$@" | sed -n '/^      topologySpreadConstraints:/,/^      [a-zA-Z]/p' | sed '$d'; }
 expect_spread() { expect_block spread_of "$@"; }
 expect_spread "no CLOUD_TOPOLOGIES spreads over CLOUD_TOPOLOGY_KEY with skew 1 and ScheduleAnyway" '      topologySpreadConstraints:
@@ -647,9 +679,10 @@ expect_spread "CLOUD_TOPOLOGIES gives one constraint per entry, defaulting maxSk
   --set-json 'CLOUD_TOPOLOGIES=[{"topologyKey":"topology.kubernetes.io/zone","maxSkew":2,"whenUnsatisfiable":"DoNotSchedule"},{"topologyKey":"kubernetes.io/hostname"}]'
 
 # The Pod template's name label and the spread selector's, read from one
-# render as values, once with DEPLOYMENT_RESOURCE_NAME set and once with it
-# empty, where both fall back to SERVICE_NAME.
-for row in "authz-agent-v2:--set DEPLOYMENT_RESOURCE_NAME=authz-agent-v2" "agent-x:--set DEPLOYMENT_RESOURCE_NAME= --set SERVICE_NAME=agent-x"; do
+# render as values: both follow SERVICE_NAME, and a DEPLOYMENT_RESOURCE_NAME
+# the deployer still passes renames neither. The whole-render check after the
+# stub's section covers every other object.
+for row in "agent-x:--set SERVICE_NAME=agent-x" "authz-agent:--set DEPLOYMENT_RESOURCE_NAME=authz-agent-v2"; do
   IFS=: read -r want flags <<<"${row}"
   # shellcheck disable=SC2086 # the flags are split on purpose
   doc="$(deployment_of ${flags})"
@@ -662,7 +695,7 @@ for row in "authz-agent-v2:--set DEPLOYMENT_RESOURCE_NAME=authz-agent-v2" "agent
   fi
 done
 
-if helm template t "${CHART_DIR}" --set CLOUD_TOPOLOGIES=kubernetes.io/hostname >/dev/null 2>&1; then
+if helm template t "${CHART_DIR}" -f "${SIZING}" --set CLOUD_TOPOLOGIES=kubernetes.io/hostname >/dev/null 2>&1; then
   fail "a CLOUD_TOPOLOGIES that is not a list must be rejected by the schema"
 else
   pass "a CLOUD_TOPOLOGIES that is not a list is rejected by the schema"
@@ -670,31 +703,14 @@ fi
 
 # ── The authz-policy-admin chart ─────────────────────────────────────────
 #
-# The access-control stub is a chart of its own. The agent's chart refuses the
-# keys the stub had while it was part of it, so an old values file does not
-# render an agent that pulls from nowhere; the stub's chart renders the claim,
-# the Deployment and the Service under the stub's own name, one Pod under
-# Recreate and no autoscaler, takes the platform sizing keys and refuses the
-# old ones, and registers its upload API on the mesh only where
-# MESH_ROUTES_ENABLED.
+# The access-control stub is a chart of its own. It renders the claim, the
+# Deployment and the Service under the stub's own name, one Pod under Recreate
+# and no autoscaler, takes the platform sizing keys, and registers its upload
+# API on the mesh only where MESH_ROUTES_ENABLED.
 
-old_stub_key="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_ADMIN_ENABLED=true 2>&1 || true)"
-if [[ "${old_stub_key}" == *"no longer deploys authz-policy-admin and does not read AUTHZ_POLICY_ADMIN_ENABLED"* ]]; then
-  pass "the agent chart refuses AUTHZ_POLICY_ADMIN_ENABLED by name"
-else
-  fail "the agent chart must refuse AUTHZ_POLICY_ADMIN_ENABLED by name, got: $(head -3 <<<"${old_stub_key}")"
-fi
-# Any key of the prefix, not the switch alone, and every carried key named.
-old_stub_keys="$(helm template t "${CHART_DIR}" --set AUTHZ_POLICY_ADMIN_PORT=1 --set AUTHZ_POLICY_ADMIN_IMAGE=x 2>&1 || true)"
-if [[ "${old_stub_keys}" == *"does not read AUTHZ_POLICY_ADMIN_IMAGE, AUTHZ_POLICY_ADMIN_PORT."* ]]; then
-  pass "the agent chart refuses every AUTHZ_POLICY_ADMIN_* key and names each one"
-else
-  fail "the agent chart must refuse AUTHZ_POLICY_ADMIN_PORT and AUTHZ_POLICY_ADMIN_IMAGE by name, got: $(head -3 <<<"${old_stub_keys}")"
-fi
-
-stub_manifests="$(helm template t "${STUB_CHART_DIR}" 2>&1 || true)"
-stub_deployment="$(helm template t "${STUB_CHART_DIR}" --show-only templates/deployment.yaml 2>&1 || true)"
-stub_summary="kinds=$(grep -E '^kind: ' <<<"${stub_manifests}" | sort | paste -sd, - | tr -d ' ') replicas=$(field "${stub_deployment}" replicas:) strategy=$(field "${stub_deployment}" type:) route=$(grep -c 'prefix: /access/v1/simplifiedPolicies' <<<"${stub_manifests}" || true)"
+stub_manifests="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" 2>&1 || true)"
+stub_deployment="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --show-only templates/deployment.yaml 2>&1 || true)"
+stub_summary="kinds=$(kinds_of "${stub_manifests}") replicas=$(field "${stub_deployment}" replicas:) strategy=$(field "${stub_deployment}" type:) route=$(grep -c 'prefix: /access/v1/simplifiedPolicies' <<<"${stub_manifests}" || true)"
 if [[ "${stub_summary}" == "kinds=kind:Deployment,kind:Mesh,kind:PersistentVolumeClaim,kind:Service replicas=1 strategy=Recreate route=1" ]]; then
   pass "the stub chart renders its claim, Deployment, Service and mesh route, one Pod under Recreate (${stub_summary})"
 else
@@ -709,7 +725,8 @@ for named in "name: 'authz-policy-admin'" "name: 'authz-policy-admin-data'" "cla
   fi
 done
 
-stub_no_mesh_kinds="$(helm template t "${STUB_CHART_DIR}" --set MESH_ROUTES_ENABLED=false 2>&1 | grep -E '^kind: ' | sort | paste -sd, - | tr -d ' ' || true)"
+
+stub_no_mesh_kinds="$(kinds_of "$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=false 2>&1 || true)")"
 if [[ "${stub_no_mesh_kinds}" == "kind:Deployment,kind:PersistentVolumeClaim,kind:Service" ]]; then
   pass "the stub chart drops the mesh route, and only it, with MESH_ROUTES_ENABLED false"
 else
@@ -717,7 +734,7 @@ else
 fi
 
 # Probed with values no profile carries, as for the agent.
-stub_sized="$(helm template t "${STUB_CHART_DIR}" --set CPU_REQUEST=123m --set CPU_LIMIT=456m --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi \
+stub_sized="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --set CPU_REQUEST=123m --set CPU_LIMIT=456m --set MEMORY_REQUEST=111Mi --set MEMORY_LIMIT=999Mi \
   --set AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_REQUEST=11Mi --set AUTHZ_POLICY_ADMIN_EPHEMERAL_STORAGE_LIMIT=22Mi 2>&1 || true)"
 for line in "cpu: '123m'" "cpu: '456m'" "memory: '111Mi'" "memory: '999Mi'" "ephemeral-storage: '11Mi'" "ephemeral-storage: '22Mi'"; do
   if [[ "${stub_sized}" == *"${line}"* ]]; then
@@ -735,21 +752,12 @@ else
   fail "the stub Pod must set automountServiceAccountToken: false"
 fi
 
-for old_key in AUTHZ_POLICY_ADMIN_MEM_LIMIT=1Gi AUTHZ_POLICY_ADMIN_ENABLED=true AUTHZ_POLICY_ADMIN_IMAGE=x; do
-  refused="$(helm template t "${STUB_CHART_DIR}" --set "${old_key}" 2>&1 || true)"
-  if [[ "${refused}" == *"does not read these values: ${old_key%%=*}"* ]]; then
-    pass "the stub chart refuses ${old_key%%=*} by name"
-  else
-    fail "the stub chart must refuse ${old_key%%=*} by name, got: $(head -3 <<<"${refused}")"
-  fi
-done
-
 if [[ "${stub_manifests}" != *"storageClassName"* ]]; then
   pass "the stub chart renders no storageClassName while AUTHZ_POLICY_ADMIN_STORAGE_CLASS is empty"
 else
   fail "the stub chart renders a storageClassName with AUTHZ_POLICY_ADMIN_STORAGE_CLASS empty: $(grep storageClassName <<<"${stub_manifests}" | tr -d ' ')"
 fi
-classed="$(helm template t "${STUB_CHART_DIR}" --set AUTHZ_POLICY_ADMIN_STORAGE_CLASS=fast 2>&1 || true)"
+classed="$(helm template t "${STUB_CHART_DIR}" -f "${SIZING}" --set AUTHZ_POLICY_ADMIN_STORAGE_CLASS=fast 2>&1 || true)"
 if [[ "$(field "${classed}" storageClassName:)" == "'fast'" ]]; then
   pass "the stub chart renders storageClassName from AUTHZ_POLICY_ADMIN_STORAGE_CLASS"
 else
@@ -762,32 +770,45 @@ fi
 # charts do the same way: the deployer's session id on every object and never
 # on the Pod template, part-of from APPLICATION_NAME, the container named after
 # the service, a seccomp profile, and a root file system read-only on
-# Kubernetes only.
+# Kubernetes only. As on dbaas-operator and ratelimit, managed-by comes from
+# MANAGED_BY on every object and stays off the Pod template. Without
+# DEPLOYMENT_SESSION_ID no object carries a session label.
 for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   name="$(basename "${chart}")"
-  with_session="$(helm template t "${chart}" --set MESH_ROUTES_ENABLED=false --set DEPLOYMENT_SESSION_ID=s-42 2>&1 || true)"
+  with_session="$(helm template t "${chart}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set DEPLOYMENT_SESSION_ID=s-42 2>&1 || true)"
   on_objects=$(grep -c "deployment.netcracker.com/sessionId: 's-42'" <<<"${with_session}" || true)
-  objects=$(grep -c '^kind: ' <<<"${with_session}" || true)
-  in_pod_template=$(sed -n '/^  template:/,/^    spec:/p' <<<"$(helm template t "${chart}" --set DEPLOYMENT_SESSION_ID=s-42 --show-only templates/deployment.yaml 2>&1 || true)" | grep -c sessionId || true)
+  objects=$(object_count "${with_session}")
+  in_pod_template=$(sed -n '/^  template:/,/^    spec:/p' <<<"$(helm template t "${chart}" -f "${SIZING}" --set DEPLOYMENT_SESSION_ID=s-42 --show-only templates/deployment.yaml 2>&1 || true)" | grep -c sessionId || true)
   if [[ "${on_objects}" -eq "${objects}" && "${in_pod_template}" -eq 0 ]]; then
     pass "${name}: the session id labels every object (${objects}) and not the Pod template"
   else
     fail "${name}: the session id labels ${on_objects} of ${objects} objects and appears ${in_pod_template} times in the Pod template"
   fi
-  if [[ "$(helm template t "${chart}" 2>&1 || true)" != *"sessionId"* ]]; then
+  if [[ "$(helm template t "${chart}" -f "${SIZING}" 2>&1 || true)" != *"sessionId"* ]]; then
     pass "${name}: no session label without DEPLOYMENT_SESSION_ID"
   else
     fail "${name}: a session label renders with DEPLOYMENT_SESSION_ID empty"
   fi
 
-  deployment="$(helm template t "${chart}" --set APPLICATION_NAME=billing --set SERVICE_NAME=svc-x --show-only templates/deployment.yaml 2>&1 || true)"
+  managed="$(helm template t "${chart}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set MANAGED_BY=mb-x 2>&1 || true)"
+  managed_objects=$(grep -c "app.kubernetes.io/managed-by: 'mb-x'" <<<"${managed}" || true)
+  objects=$(object_count "${managed}")
+  managed_in_pod_template=$(sed -n '/^  template:/,/^    spec:/p' <<<"$(helm template t "${chart}" -f "${SIZING}" --set MANAGED_BY=mb-x --show-only templates/deployment.yaml 2>&1 || true)" | grep -c 'app.kubernetes.io/managed-by:' || true)
+  if [[ "${managed_objects}" -eq "${objects}" && "${managed_in_pod_template}" -eq 0 ]]; then
+    pass "${name}: managed-by follows MANAGED_BY on every object (${objects}) and is absent from the Pod template"
+  else
+    unmanaged="$(awk '/^---/ {if (kind && !found) print kind; kind = ""; found = 0} /^kind: / {kind = $2} /app[.]kubernetes[.]io\/managed-by: .mb-x./ {found = 1} END {if (kind && !found) print kind}' <<<"${managed}" | paste -sd, -)"
+    fail "${name}: with MANAGED_BY=mb-x, managed-by is mb-x on ${managed_objects} of ${objects} objects (without it: ${unmanaged:-none}), and the Pod template carries managed-by on ${managed_in_pod_template} lines"
+  fi
+
+  deployment="$(helm template t "${chart}" -f "${SIZING}" --set APPLICATION_NAME=billing --set SERVICE_NAME=svc-x --show-only templates/deployment.yaml 2>&1 || true)"
   if [[ "${deployment}" == *"app.kubernetes.io/part-of: 'billing'"* && "${deployment}" == *"        - name: 'svc-x'"* ]]; then
     pass "${name}: part-of follows APPLICATION_NAME and the container is named after SERVICE_NAME"
   else
     fail "${name}: part-of or the container name does not follow the values: $(grep -E "part-of|^        - name:" <<<"${deployment}" | tr -d ' ' | sort -u | paste -sd, - || true)"
   fi
 
-  default_deployment="$(helm template t "${chart}" --show-only templates/deployment.yaml 2>&1 || true)"
+  default_deployment="$(helm template t "${chart}" -f "${SIZING}" --show-only templates/deployment.yaml 2>&1 || true)"
   # The container's securityContext is the block at ten spaces; the Pod's, at
   # six, is not read.
   container_security="$(sed -n '/^          securityContext:/,/^          [a-z]/p' <<<"${default_deployment}")"
@@ -799,7 +820,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
 
   # The template renders the root file system read-only on Kubernetes, and
   # writable on OpenShift or when the key is false.
-  ro_summary="k8s=$(field "${default_deployment}" readOnlyRootFilesystem:) openshift=$(field "$(helm template t "${chart}" --set PAAS_PLATFORM=OPENSHIFT --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:) off=$(field "$(helm template t "${chart}" --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:)"
+  ro_summary="k8s=$(field "${default_deployment}" readOnlyRootFilesystem:) openshift=$(field "$(helm template t "${chart}" -f "${SIZING}" --set PAAS_PLATFORM=OPENSHIFT --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:) off=$(field "$(helm template t "${chart}" -f "${SIZING}" --set READONLY_CONTAINER_FILE_SYSTEM_ENABLED=false --show-only templates/deployment.yaml 2>&1 || true)" readOnlyRootFilesystem:)"
   if [[ "${ro_summary}" == "k8s=true openshift=false off=false" ]]; then
     pass "${name}: the root file system is read-only on Kubernetes and writable on OpenShift or when turned off"
   else
@@ -807,14 +828,101 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   fi
 done
 
-service_ports="$(helm template t "${CHART_DIR}" --show-only templates/service.yaml 2>&1 | grep -E '^    - name: |^      port: ' | tr -d ' ' | paste -sd, - || true)"
+# A DEPLOYMENT_RESOURCE_NAME the deployer still passes renames no object of
+# either chart, the routes and the monitor included. The same search finds a
+# renamed SERVICE_NAME, so a silent render cannot pass for the first.
+for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
+  name="$(basename "${chart}")"
+  all_on=(-f "${SIZING}" --set MESH_ROUTES_ENABLED=true --set MONITORING_ENABLED=true)
+  by_resource_name="$(helm template t "${chart}" "${all_on[@]}" --set "DEPLOYMENT_RESOURCE_NAME=${name}-renamed" 2>&1 || true)"
+  by_service_name="$(helm template t "${chart}" "${all_on[@]}" --set "SERVICE_NAME=${name}-renamed" 2>&1 || true)"
+  if [[ "${by_resource_name}" == *"kind: Deployment"* && "${by_resource_name}" != *"${name}-renamed"* && "${by_service_name}" == *"name: '${name}-renamed'"* ]]; then
+    pass "${name}: DEPLOYMENT_RESOURCE_NAME renames no object, and SERVICE_NAME does"
+  else
+    fail "${name}: with DEPLOYMENT_RESOURCE_NAME=${name}-renamed the render carries: $(grep -n -- "${name}-renamed" <<<"${by_resource_name}" | head -3 | paste -sd'|' - || true); with SERVICE_NAME renamed the Deployment is $(field "${by_service_name}" name:)"
+  fi
+done
+
+# The labels of each kind of object, as the platform's charts carry them: the
+# Deployment the full set and the session id; its Pod template the same set
+# without managed-by and the session id; every other object, the Service here,
+# only name, part-of, managed-by and the session id. The version is longer than
+# the 63-byte label limit and renders whole.
+label_block() {
+  local render="$1" start="$2" end="$3"
+  sed -n "/^${start}labels:\$/,/${end}/p" <<<"${render}" | sed '1d;$d' | grep -vE '^ *#' || true
+}
+metadata_labels() {
+  local render="$1"
+  label_block "${render}" '  ' '^spec:'
+}
+pod_template_labels() {
+  local render="$1"
+  label_block "${render}" '      ' '^    spec:'
+}
+expect_labels() {
+  local label="$1" expected="$2" got="$3"
+  if [[ "${got}" == "${expected}" ]]; then
+    pass "${label}"
+  else
+    fail "${label}: $(diff <(echo "${expected}") <(echo "${got}") || true)"
+  fi
+}
+long_version='0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
+labelled_args=(-f "${SIZING}" --set NAMESPACE=ns1 --set DEPLOYMENT_SESSION_ID=s-42 --set "ARTIFACT_DESCRIPTOR_VERSION=${long_version}")
+agent_deployment="$(helm template t "${CHART_DIR}" "${labelled_args[@]}" --show-only templates/deployment.yaml 2>&1 || true)"
+agent_service="$(helm template t "${CHART_DIR}" "${labelled_args[@]}" --show-only templates/service.yaml 2>&1 || true)"
+stub_labelled="$(helm template t "${STUB_CHART_DIR}" "${labelled_args[@]}" --show-only templates/deployment.yaml 2>&1 || true)"
+stub_service="$(helm template t "${STUB_CHART_DIR}" "${labelled_args[@]}" --show-only templates/service.yaml 2>&1 || true)"
+expect_labels "the agent's Deployment carries the full label set and the session id" "    name: 'authz-agent'
+    app.kubernetes.io/name: 'authz-agent'
+    app.kubernetes.io/instance: 'authz-agent-ns1'
+    app.kubernetes.io/version: '0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/part-of: 'Platform-Core-Security'
+    app.kubernetes.io/managed-by: 'saasDeployer'
+    app.kubernetes.io/technology: 'go'
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${agent_deployment}")"
+expect_labels "the agent's Pod template carries the full label set without managed-by and the session id" "        name: 'authz-agent'
+        app.kubernetes.io/name: 'authz-agent'
+        app.kubernetes.io/instance: 'authz-agent-ns1'
+        app.kubernetes.io/version: '0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: 'Platform-Core-Security'
+        app.kubernetes.io/technology: 'go'" "$(pod_template_labels "${agent_deployment}")"
+expect_labels "the agent's Service carries only name, part-of, managed-by and the session id" "    app.kubernetes.io/name: 'authz-agent'
+    app.kubernetes.io/part-of: 'Platform-Core-Security'
+    app.kubernetes.io/managed-by: 'saasDeployer'
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${agent_service}")"
+expect_labels "the stub's Deployment carries the full label set and the session id" "    name: 'authz-policy-admin'
+    app.kubernetes.io/name: 'authz-policy-admin'
+    app.kubernetes.io/instance: 'authz-policy-admin-ns1'
+    app.kubernetes.io/version: '0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
+    app.kubernetes.io/component: 'test-double'
+    app.kubernetes.io/part-of: 'Platform-Core-Security'
+    app.kubernetes.io/managed-by: 'saasDeployer'
+    app.kubernetes.io/technology: 'go'
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${stub_labelled}")"
+expect_labels "the stub's Pod template carries the full label set without managed-by and the session id" "        name: 'authz-policy-admin'
+        app.kubernetes.io/name: 'authz-policy-admin'
+        app.kubernetes.io/instance: 'authz-policy-admin-ns1'
+        app.kubernetes.io/version: '0.0.0-feature-a-branch-name-long-enough-to-run-past-the-label-limit-20261013.120000-1'
+        app.kubernetes.io/component: 'test-double'
+        app.kubernetes.io/part-of: 'Platform-Core-Security'
+        app.kubernetes.io/technology: 'go'" "$(pod_template_labels "${stub_labelled}")"
+expect_labels "the stub's Service carries only name, part-of, managed-by and the session id" "    app.kubernetes.io/name: 'authz-policy-admin'
+    app.kubernetes.io/part-of: 'Platform-Core-Security'
+    app.kubernetes.io/managed-by: 'saasDeployer'
+    deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${stub_service}")"
+
+service_ports="$(helm template t "${CHART_DIR}" -f "${SIZING}" --show-only templates/service.yaml 2>&1 | grep -E '^    - name: |^      port: ' | tr -d ' ' | paste -sd, - || true)"
 if [[ "${service_ports}" == "-name:web,port:8080,-name:data-api,port:8181" ]]; then
   pass "the agent's Service names its ports web (8080) and data-api (8181), as the container does"
 else
   fail "the agent's Service ports render ${service_ports}, expected -name:web,port:8080,-name:data-api,port:8181"
 fi
 
-sa_namespace="$(field "$(helm template t "${CHART_DIR}" --set NAMESPACE=ns-x --show-only templates/configmap.yaml 2>&1 | sed -n '/^kind: ServiceAccount/,$p' || true)" namespace:)"
+sa_namespace="$(field "$(helm template t "${CHART_DIR}" -f "${SIZING}" --set NAMESPACE=ns-x --show-only templates/configmap.yaml 2>&1 | sed -n '/^kind: ServiceAccount/,$p' || true)" namespace:)"
 if [[ "${sa_namespace}" == "'ns-x'" ]]; then
   pass "the agent's ServiceAccount names its namespace from NAMESPACE"
 else
@@ -826,14 +934,14 @@ fi
 # Under MONITORING_ENABLED the agent's metrics are scraped where the service
 # serves them: /prometheus on the data-api port, from the Pods the Service
 # selects.
-monitor="$(helm template t "${CHART_DIR}" --show-only templates/podmonitor.yaml 2>&1 || true)"
-monitor_summary="kind=$(field "${monitor}" kind:) operator=$(field "${monitor}" app.kubernetes.io/processed-by-operator:) port=$(field "${monitor}" port:) path=$(field "${monitor}" path:) interval=$(awk '$1 == "-" && $2 == "interval:" {print $3; exit}' <<<"${monitor}") selector=$(field "$(sed -n '/^  selector:/,$p' <<<"${monitor}")" name:)"
-if [[ "${monitor_summary}" == "kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent'" ]]; then
+monitor="$(helm template t "${CHART_DIR}" -f "${SIZING}" --show-only templates/podmonitor.yaml 2>&1 || true)"
+monitor_summary="kind=$(field "${monitor}" kind:) operator=$(field "${monitor}" app.kubernetes.io/processed-by-operator:) port=$(field "${monitor}" port:) path=$(field "${monitor}" path:) interval=$(awk '$1 == "-" && $2 == "interval:" {print $3; exit}' <<<"${monitor}") selector=$(field "$(sed -n '/^  selector:/,$p' <<<"${monitor}")" name:) jobLabel=$(field "${monitor}" jobLabel:) k8s-app=$(field "${monitor}" k8s-app:)"
+if [[ "${monitor_summary}" == "kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent' jobLabel= k8s-app=" ]]; then
   pass "MONITORING_ENABLED renders a PodMonitor for the VictoriaMetrics operator on data-api /prometheus every 30s for the agent's Pods"
 else
-  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent'"
+  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent' jobLabel= k8s-app="
 fi
-if [[ "$(helm template t "${CHART_DIR}" --set MONITORING_ENABLED=false 2>&1 || true)" != *"kind: PodMonitor"* ]]; then
+if [[ "$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MONITORING_ENABLED=false 2>&1 || true)" != *"kind: PodMonitor"* ]]; then
   pass "MONITORING_ENABLED false renders no PodMonitor"
 else
   fail "a PodMonitor renders with MONITORING_ENABLED false"
@@ -866,7 +974,7 @@ for chart in "${CHART_DIR}" "${STUB_CHART_DIR}"; do
   # production as a level that was set and did nothing; the schema refuses it
   # at install time instead.
   for bad_level in verbose ""; do
-    if helm template t "${chart}" --set "LOG_LEVEL=${bad_level}" >/dev/null 2>&1; then
+    if helm template t "${chart}" -f "${SIZING}" --set "LOG_LEVEL=${bad_level}" >/dev/null 2>&1; then
       fail "${name} accepted LOG_LEVEL '${bad_level}', which the logger does not parse"
     else
       pass "${name} refuses LOG_LEVEL '${bad_level}'"

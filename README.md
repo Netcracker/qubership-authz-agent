@@ -37,11 +37,13 @@ that is set, `authz-policy-admin` is not needed.
 ## Charts
 
 The agent's chart is at `helm-templates/authz-agent/` and the policy source's
-at `helm-templates/authz-policy-admin/`.
+at `helm-templates/authz-policy-admin/`. Each chart takes its sizing from a
+resource profile in its `resource-profiles/` directory (dev, dev-ha, prod,
+prod-nonha); `values.yaml` carries none, so pass a profile with `-f`:
 
 ```sh
-helm template helm-templates/authz-agent
-helm template helm-templates/authz-policy-admin
+helm template helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml
+helm template helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml
 ```
 
 ## Building images

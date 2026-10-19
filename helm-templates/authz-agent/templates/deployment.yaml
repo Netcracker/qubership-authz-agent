@@ -7,13 +7,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   labels:
-    {{- include "authz-agent.objectLabels" . | nindent 4 }}
+    name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+    app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    app.kubernetes.io/technology: 'go'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 spec:
   replicas: {{ .Values.REPLICAS | default 1 }}
-  # DEPLOYMENT_STRATEGY_TYPE selects one of the platform's four strategies, and
-  # unset renders the Kubernetes default of 25% surge and 25% unavailable.
   strategy:
       {{- if eq (default "" .Values.DEPLOYMENT_STRATEGY_TYPE) "recreate" }}
     type: Recreate
@@ -40,13 +48,19 @@ spec:
       {{- end }}
   selector:
     matchLabels:
-      name: '{{ include "authz-agent.serviceName" . }}'
+      name: '{{ .Values.SERVICE_NAME }}'
   template:
     metadata:
       labels:
-        {{- include "authz-agent.commonLabels" . | nindent 8 }}
+        name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+        app.kubernetes.io/instance: '{{ cat .Values.SERVICE_NAME "-" .Values.NAMESPACE | nospace | trunc 63 | trimSuffix "-" }}'
+        app.kubernetes.io/version: '{{ .Values.ARTIFACT_DESCRIPTOR_VERSION }}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+        app.kubernetes.io/technology: 'go'
     spec:
-      serviceAccountName: '{{ include "authz-agent.serviceName" . }}'
+      serviceAccountName: '{{ .Values.SERVICE_NAME }}'
       # Long enough for the whole shutdown: the two HTTP surfaces are given
       # five seconds each to finish the requests in their handlers, and the
       # decision-log loop then drains what those requests queued. This Pod
@@ -72,9 +86,6 @@ spec:
       # written into the volume the two of them shared.
       securityContext:
         runAsNonRoot: true
-      # The Pods spread over the platform's topologies: one constraint per
-      # CLOUD_TOPOLOGIES entry, or one over CLOUD_TOPOLOGY_KEY when the list is
-      # empty, each selecting this Deployment's Pods by their name label.
       topologySpreadConstraints:
       {{- if .Values.CLOUD_TOPOLOGIES }}
       {{- range $v := .Values.CLOUD_TOPOLOGIES }}
@@ -83,7 +94,7 @@ spec:
           whenUnsatisfiable: {{ $v.whenUnsatisfiable | default "ScheduleAnyway" }}
           labelSelector:
             matchLabels:
-              name: "{{ coalesce $.Values.DEPLOYMENT_RESOURCE_NAME $.Values.SERVICE_NAME }}"
+              name: "{{ $.Values.SERVICE_NAME }}"
       {{- end }}
       {{- else }}
         - maxSkew: 1
@@ -91,7 +102,7 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              name: "{{ coalesce .Values.DEPLOYMENT_RESOURCE_NAME .Values.SERVICE_NAME }}"
+              name: "{{ .Values.SERVICE_NAME }}"
       {{- end }}
       volumes:
         # Mounted as a directory, deliberately not with subPath: the kubelet
@@ -101,7 +112,7 @@ spec:
         # (authz-agent-ADR-0070).
         - name: trusted-providers
           configMap:
-            name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+            name: '{{ .Values.SERVICE_NAME }}-trusted-providers'
         # sizeLimit, so a log nothing rotates cannot fill the node's disk: the
         # kubelet evicts this Pod instead. The agent's store reports how many
         # events it wrote when a write fails, so the decisions already on disk
@@ -111,7 +122,7 @@ spec:
             sizeLimit: '{{ .Values.AUTHZ_DECISION_LOG_SIZE_LIMIT }}'
         - name: opa-auth-token
           secret:
-            secretName: '{{ include "authz-agent.serviceName" . }}-opa-auth'
+            secretName: '{{ .Values.SERVICE_NAME }}-opa-auth'
             defaultMode: 292
         {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
         # Mount-mode volume: an ALREADY-EXISTING ConfigMap named by
@@ -138,7 +149,7 @@ spec:
         {{- else }}
         - name: client-credentials
           secret:
-            secretName: '{{ include "authz-agent.serviceName" . }}-client-credentials'
+            secretName: '{{ .Values.SERVICE_NAME }}-client-credentials'
             defaultMode: 292
         {{- end }}
       containers:

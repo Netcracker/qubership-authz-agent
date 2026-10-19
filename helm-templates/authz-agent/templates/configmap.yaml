@@ -8,9 +8,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}-trusted-providers'
+  name: '{{ .Values.SERVICE_NAME }}-trusted-providers'
   labels:
-    {{- include "authz-agent.objectLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}
 data:
   trusted-providers.json: |-
 {{ (dict "providers" (include "authz-agent.trustedProviders" . | fromJsonArray)) | toPrettyJson | indent 4 }}
@@ -23,7 +28,12 @@ data:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: '{{ include "authz-agent.serviceName" . }}'
+  name: '{{ .Values.SERVICE_NAME }}'
   namespace: '{{ .Values.NAMESPACE }}'
   labels:
-    {{- include "authz-agent.objectLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ .Values.SERVICE_NAME }}'
+    app.kubernetes.io/part-of: '{{ .Values.APPLICATION_NAME }}'
+    app.kubernetes.io/managed-by: '{{ .Values.MANAGED_BY }}'
+    {{- if .Values.DEPLOYMENT_SESSION_ID }}
+    deployment.netcracker.com/sessionId: '{{ .Values.DEPLOYMENT_SESSION_ID }}'
+    {{- end }}

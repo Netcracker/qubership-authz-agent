@@ -77,10 +77,11 @@ e2e-harness:
 	$(E2E_KUBECTL) rollout status deploy/keycloak --timeout=10m
 
 # The stub first: the agent reports Ready only once it has pulled its policies,
-# so its --wait would run out with no policy source to pull from.
+# so its --wait would run out with no policy source to pull from. Each chart
+# takes its dev resource profile, since values.yaml carries no sizing.
 e2e-install:
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -n $(E2E_NAMESPACE) -f test/k8s/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(E2E_NAMESPACE) -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -n $(E2E_NAMESPACE) -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(E2E_NAMESPACE) -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 # The Job manifest carries the chart's Service; sed swaps in E2E_BASE_URL.
@@ -137,8 +138,8 @@ parity-harness:
 
 # The stub first, as in e2e-install.
 parity-install:
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -n $(PARITY_NAMESPACE) -f test/k8s/parity/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
-	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(PARITY_NAMESPACE) -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-policy-admin helm-templates/authz-policy-admin -n $(PARITY_NAMESPACE) -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/parity/policy-admin-values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
+	helm --kube-context kind-$(KIND_CLUSTER) upgrade --install authz-agent helm-templates/authz-agent -n $(PARITY_NAMESPACE) -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/parity/values.yaml --wait --timeout 5m $(E2E_HELM_ARGS)
 
 # Streams the suite log; the final wait turns the Job outcome into the exit code.
 # As e2e-suite: sed swaps PARITY_AC_BASE_URL into the Job manifest.
