@@ -29,9 +29,9 @@ import (
 // time read could differ from the one the provider wrote.
 const maxNumericDate = 1<<53 - 1
 
-// checkTimes checks exp, which is required, then nbf and iat, which are
-// optional, against now with leeway either way, and returns the time exp
-// names.
+// checkTimes checks exp, nbf, and iat against now with leeway either way,
+// and returns the time exp names. exp and iat are required; nbf is
+// optional.
 func checkTimes(claims map[string]any, now time.Time, leeway time.Duration) (time.Time, error) {
 	exp, present, err := numericDate(claims, "exp")
 	if err != nil {
@@ -54,7 +54,10 @@ func checkTimes(claims map[string]any, now time.Time, leeway time.Duration) (tim
 	if err != nil {
 		return time.Time{}, err
 	}
-	if present && iat.After(now.Add(leeway)) {
+	if !present {
+		return time.Time{}, fail(CodeIATMissing, "token has no iat claim")
+	}
+	if iat.After(now.Add(leeway)) {
 		return time.Time{}, fail(CodeIATInvalid, "token was issued at %s, in the future", iat.UTC().Format(time.RFC3339))
 	}
 	return exp, nil

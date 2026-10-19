@@ -35,6 +35,7 @@ func TestVerify_ReturnsTheClaimsOfAValidToken(t *testing.T) {
 	exp := start.Add(time.Hour)
 	raw := s.sign(t, map[string]any{
 		"sub":          "user-1",
+		"iat":          start.Unix(),
 		"exp":          exp.Unix(),
 		"realm_access": map[string]any{"roles": []string{"admin"}},
 	})
@@ -48,6 +49,7 @@ func TestVerify_ReturnsTheClaimsOfAValidToken(t *testing.T) {
 	}
 	want := map[string]any{
 		"sub":          "user-1",
+		"iat":          json.Number("1792065600"),
 		"exp":          json.Number("1792069200"),
 		"realm_access": map[string]any{"roles": []any{"admin"}},
 	}
@@ -242,6 +244,7 @@ func TestVerify_RefusesATokenOutsideItsLifetime(t *testing.T) {
 		{"exp passed exactly the leeway ago", map[string]any{"exp": start.Add(-DefaultLeeway).Unix()}, CodeExpired},
 		{"exp passed more than the leeway ago", map[string]any{"exp": start.Add(-beyond).Unix()}, CodeExpired},
 		{"nbf more than the leeway ahead", map[string]any{"nbf": start.Add(beyond).Unix()}, CodeNotYetValid},
+		{"no iat", map[string]any{"iat": nil}, CodeIATMissing},
 		{"iat more than the leeway ahead", map[string]any{"iat": start.Add(beyond).Unix()}, CodeIATInvalid},
 	}
 	for _, tt := range tests {

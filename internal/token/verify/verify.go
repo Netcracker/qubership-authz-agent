@@ -68,6 +68,8 @@ const (
 	CodeExpired Code = "TOKEN_EXPIRED"
 	// CodeNotYetValid marks a token whose nbf has not come yet.
 	CodeNotYetValid Code = "TOKEN_NOT_YET_VALID"
+	// CodeIATMissing marks a token without an iat claim.
+	CodeIATMissing Code = "TOKEN_IAT_MISSING"
 	// CodeIATInvalid marks a token whose iat is in the future.
 	CodeIATInvalid Code = "TOKEN_IAT_INVALID"
 	// CodeAudienceMissing marks a token without an aud claim from a provider
