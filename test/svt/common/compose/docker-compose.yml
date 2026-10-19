@@ -139,9 +139,9 @@ services:
 
   # Host-networked JMeter for the public-surface tests where one Docker-bridge
   # hop matters at high RPS. Used by `svt_run_jmeter_mixed_flow` (per-scenario
-  # + mixed-flow harness). The data API tests still use the bridged `jmeter`
-  # service above, because port 8181 is not published to the host. See
-  # authz-agent-ADR-0056.
+  # + mixed-flow harness). The opa-direct tests use the bridged `jmeter`
+  # service above, because port 8181, the internal listener, is not published
+  # to the host. See authz-agent-ADR-0056.
   jmeter-host:
     image: justb4/jmeter:5.5
     profiles: ["run"]

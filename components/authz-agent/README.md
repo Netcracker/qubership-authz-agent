@@ -7,7 +7,7 @@ in ADR 0080 under `docs/decisions`.
 ## What the service contains
 
 - `internal/engine`: compiles the embedded policies (`policies/`), keeps the data documents in an in-memory store,
-  evaluates decisions, and writes documents through the same operations OPA's data API offers.
+  and evaluates decisions.
 - `internal/decisionlog`: emits decision events in the shape of OPA's decision log, and either uploads them to the
   collector in gzip batches or stores them in the service, with the signature of every JWT removed, for
   `GET /internal/v1/decision-logs`; the queue is drained on shutdown.
@@ -26,9 +26,9 @@ in ADR 0080 under `docs/decisions`.
   canonical authorize input, and the decision becomes the response shape of that route.
 - `internal/server`: the routes, on two listeners. The public surface carries the nine check routes, the canonical
   `POST /access/v1/authorize`, `GET /api-version`, `/health`, `GET /internal/v1/decision-logs`, and
-  `404 {"message":"not found"}` for every other path. The data API carries `/health`, `/ready`, `/api-version`,
-  `POST /access/v1/authorize`, and, under `/v1/data`, the slice of OPA's REST API a client writing documents uses:
-  `POST` for a decision, `PUT`, `PATCH`, and `GET` for documents, guarded by `data.system.authz.allow` when enabled.
+  `404 {"message":"not found"}` for every other path. The internal surface carries `/health`, `/ready`,
+  `/api-version`, `/prometheus`, and `POST /access/v1/authorize`. No route reads or writes a store document: the
+  store is written in the process, from `AUTHZ_DATA_DIRS` at start and by the loops after.
 - `main.go` and `config.go`: configuration from the environment through configloader.
 
 The chart assembles the agent Pod as this one container.
@@ -39,12 +39,10 @@ The chart assembles the agent Pod as this one container.
 | --- | --- | --- |
 | `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
-| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the data API |
+| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, `/api-version`, and the canonical authorize route |
 | `AUTHZ_ND_BUILTIN_CACHE` | `true` | Record the non-deterministic builtin calls of a decision, the PIP requests and their responses, into its decision-log event |
 | `AUTHZ_DATA_DIRS` | empty | Comma-separated directories whose JSON and YAML files seed the store at start |
 | `AUTHZ_DATA_IGNORE` | empty | Comma-separated file name patterns skipped in those directories, such as `..*` |
-| `AUTHZ_DATA_API_AUTHORIZATION` | `false` | Guard `/v1/data` with `data.system.authz.allow`; the canonical route is guarded as `/v1/data/authorize` under its own method, the check routes as `POST /v1/data/authorize` |
-| `AUTHZ_OPA_AUTH_TOKEN_FILE` | empty | File whose token the guard lets write, loaded as `data.opa_auth_secret` |
 | `AUTHZ_DECISION_LOG_FILE` | empty | NDJSON file the decisions are stored in and `GET /internal/v1/decision-logs` serves; empty uploads them instead |
 | `AUTHZ_DECISION_LOG_URL` | empty | Collector base URL, where the decisions go and where `GET /internal/v1/decision-logs` is relayed when they are not stored; empty disables both |
 | `AUTHZ_DECISION_LOG_HEADERS` | empty | Comma-separated request headers recorded per decision |
@@ -66,14 +64,14 @@ The chart assembles the agent Pod as this one container.
 A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
 default.
 
-At the default level the service reports what it could not do: a request the data API guard turned away, a policy
-that failed to evaluate, a document it could not store, a collector that did not answer. `debug` adds a line per
-decision, per rejected legacy request, per unmatched route and per policy load. A decision that denies its caller is
-not reported at either level: it is the answer the policy gave, and the decision log is where decisions are recorded.
+At the default level the service reports what it could not do: a policy that failed to evaluate, a document it
+could not store, a collector that did not answer. `debug` adds a line per decision, per rejected legacy request, per
+unmatched route and per policy load. A decision that denies its caller is not reported at either level: it is the
+answer the policy gave, and the decision log is where decisions are recorded.
 Every line carries the request id under `request_id`, the same id the decision log records.
 
 `GET /health` is 200 with the counts of the last policy conversion once the trusted providers meet the bootstrap
-rules, and 503 with the reason and its details until then. `GET /ready`, on the data API port, adds the policies:
+rules, and 503 with the reason and its details until then. `GET /ready`, on the internal port, adds the policies:
 503 with the reason `policies not loaded yet` and the same details until they have loaded once, 200
 `{"status":"ready"}` after. A pull that fails later keeps the loaded policies and both verdicts.
 

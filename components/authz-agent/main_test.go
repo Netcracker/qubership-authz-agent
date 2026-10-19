@@ -98,36 +98,6 @@ func TestGet(t *testing.T) {
 	}
 }
 
-// TestLoadAuthSecret: the trimmed token of the file becomes
-// data.opa_auth_secret, and an empty file stores nothing.
-func TestLoadAuthSecret(t *testing.T) {
-	eng := newEngine(t)
-	file := filepath.Join(t.TempDir(), "token")
-	if err := os.WriteFile(file, []byte(" s3cret \n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := loadAuthSecret(context.Background(), eng, file); err != nil {
-		t.Fatalf("loadAuthSecret() = %v", err)
-	}
-	if value, ok, _ := eng.Get(context.Background(), []string{"opa_auth_secret"}); !ok || value != "s3cret" {
-		t.Errorf("data.opa_auth_secret = %v, %v; want s3cret", value, ok)
-	}
-	empty := filepath.Join(t.TempDir(), "empty")
-	if err := os.WriteFile(empty, []byte("\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	other := newEngine(t)
-	if err := loadAuthSecret(context.Background(), other, empty); err != nil {
-		t.Fatalf("loadAuthSecret() on an empty file = %v", err)
-	}
-	if _, ok, _ := other.Get(context.Background(), []string{"opa_auth_secret"}); ok {
-		t.Error("an empty file must store no secret")
-	}
-	if err := loadAuthSecret(context.Background(), other, filepath.Join(t.TempDir(), "missing")); err == nil {
-		t.Error("a missing file must be an error")
-	}
-}
-
 // TestServeUntilShutdown_LogsADecisionMadeWhileTheSurfacesDrain: the
 // shutdown waits for the handlers still running, and every one of them
 // produces a decision, so the queue is read until the last has returned.

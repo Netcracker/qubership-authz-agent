@@ -349,8 +349,8 @@ func (p *Puller) ApplyMount(ctx context.Context) (bool, error) {
 }
 
 // load completes the PIP document with the pinned entitlements and the
-// activation index of the general PIPs, then stores both documents as the
-// data API received them.
+// activation index of the general PIPs, then stores both documents in the
+// form [roundTrip] gives them.
 func (p *Puller) load(ctx context.Context, policies map[string]any, pipDoc *pips.PIPDocument) error {
 	pips.ApplyEntitlementsOverride(pipDoc, p.cfg.Entitlements)
 	pipDoc.Normalized.Activation.GeneralByResourceTypeOperation = pips.BuildActivationIndexFromPolicies(pipDoc.Normalized.Remote.General, policies)
@@ -417,7 +417,7 @@ func (p *Puller) disabled(reason string) {
 }
 
 // roundTrip converts a Go value to the JSON values the store holds, with
-// numbers as json.Number, as the data API decoded its request bodies.
+// numbers as json.Number, as OPA's own JSON decoding produces them.
 func roundTrip(v any) (any, error) {
 	raw, err := json.Marshal(v)
 	if err != nil {

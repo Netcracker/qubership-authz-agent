@@ -40,10 +40,6 @@ from opa_direct_matrix import (
     USER_COUNT,
     USERS,
     base_input,
-    build_policy_ref_index,
-    decode_jwt_segment,
-    load_tokens,
-    normalize_subject,
     policy as simplified_policy,
 )
 
@@ -149,20 +145,6 @@ def compose_exec(service: str, shell_command: str, *, input_text: str | None = N
     return completed.stdout if capture_output else ""
 
 
-def opa_helper_exec(
-    shell_command: str,
-    *,
-    capture_output: bool = False,
-    mounts: list[tuple[Path, str]] | None = None,
-) -> str:
-    command = compose_command("run", "--rm", "--no-deps", "--entrypoint", "sh")
-    for host_path, container_path in mounts or []:
-        command.extend(["-v", f"{host_path.resolve()}:{container_path}:ro"])
-    command.extend(["jmeter", "-lc", shell_command])
-    completed = run_command(command, capture_output=capture_output)
-    return completed.stdout if capture_output else ""
-
-
 def http_request(
     method: str,
     url: str,
@@ -238,10 +220,6 @@ def restart_opa() -> None:
     run_command(compose_command("restart", "opa"))
     wait_for_backend_health()
     wait_for_public_health()
-
-
-def json_deepcopy(payload: Any) -> Any:
-    return json.loads(json.dumps(payload))
 
 
 # tools/ -> common/ -> svt/: everything this tool writes belongs under the
@@ -390,7 +368,7 @@ def build_ols_single_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     username=user["username"],
                     scenario_label="ols-single",
                     request_class="OLS_SINGLE",
-                    request_path="/v1/data/authorize",
+                    request_path="/access/v1/authorize",
                     request_body_template=json.dumps(direct_body(resources, False), separators=(",", ":")),
                     response_kind="single",
                     expected_decision=expected_decision,
@@ -457,7 +435,7 @@ def build_ols_bulk_assets(transport_mode: str) -> tuple[list[dict[str, Any]], li
             {"resourceType": resource_type, "operation": operation, "resource": {}}
             for resource_type, operation in combos
         ]
-        request_path = "/access/v1/authorize" if transport_mode == "public-canonical" else "/v1/data/authorize"
+        request_path = "/access/v1/authorize"
         request_body = canonical_body(resources, False) if transport_mode == "public-canonical" else direct_body(resources, False)
         rows.append(
             make_row(
@@ -542,7 +520,7 @@ def build_rls_filter_assets(transport_mode: str) -> tuple[list[dict[str, Any]], 
                     username=user["username"],
                     scenario_label="rls-filter",
                     request_class="RLS_FILTER",
-                    request_path="/v1/data/authorize",
+                    request_path="/access/v1/authorize",
                     request_body_template=json.dumps(
                         direct_body(
                             [{"resourceType": resource_type, "operation": operation, "resource": {}}],
@@ -644,7 +622,7 @@ def build_rls_condition_assets(
                     username=user["username"],
                     scenario_label=scenario_name,
                     request_class=request_class,
-                    request_path="/v1/data/authorize",
+                    request_path="/access/v1/authorize",
                     request_body_template=json.dumps(
                         direct_body([{"resourceType": resource_type, "operation": operation, "resource": resource}], False),
                         separators=(",", ":"),
@@ -687,7 +665,6 @@ def generate_run_assets(scenario: str, transport_mode: str, output_dir: Path) ->
         raise ValueError(f"unsupported scenario: {scenario}")
 
     write_json(output_dir / "policies.json", policies)
-    write_json(output_dir / "policies-ref-index.json", build_policy_ref_index(policies))
     write_json(output_dir / "pips.json", pips)
     write_requests(output_dir / "requests.csv", rows)
     write_json(output_dir / "scenario.json", meta)
@@ -808,44 +785,6 @@ def acquire_user_tokens() -> dict[str, str]:
             raise RuntimeError(f"failed to acquire token for {user['username']}")
         tokens[user["username"]] = str(payload["access_token"])
     return tokens
-
-
-def capture_authn_base() -> dict[str, Any]:
-    output = opa_helper_exec("curl -sf http://opa:8181/v1/data/authn", capture_output=True)
-    payload = json.loads(output)
-    return payload["result"]
-
-
-def build_authn_cache_payload(base_authn: dict[str, Any], tokens_file: Path) -> dict[str, Any]:
-    verified_tokens: dict[str, Any] = {}
-    for token in load_tokens(str(tokens_file)).values():
-        header_segment, payload_segment, _ = token.split(".", 2)
-        header = decode_jwt_segment(header_segment)
-        payload = decode_jwt_segment(payload_segment)
-        verified_tokens[token] = {
-            "header": header,
-            "payload": payload,
-            "providerId": "keycloak-svt",
-            "subject": normalize_subject(payload),
-        }
-
-    payload = json_deepcopy(base_authn)
-    payload["verifiedTokens"] = verified_tokens
-    return payload
-
-
-def upload_authn_document(path: Path) -> None:
-    opa_helper_exec(
-        'curl -sf -X PUT http://opa:8181/v1/data/authn -H "Content-Type: application/json" --data @/payload/authn.json >/dev/null',
-        mounts=[(path, "/payload/authn.json")],
-    )
-
-
-def upload_policy_ref_index(path: Path) -> None:
-    opa_helper_exec(
-        'curl -sf -X PUT http://opa:8181/v1/data/policies/refIndex -H "Content-Type: application/json" --data @/payload/policies-ref-index.json >/dev/null',
-        mounts=[(path, "/payload/policies-ref-index.json")],
-    )
 
 
 def seed_via_authz_policy_admin(kind: str, payload_file: Path) -> None:
@@ -1001,7 +940,6 @@ def run_transport(
     threads: int,
     ramp_seconds: int,
     duration_seconds: int,
-    base_authn: dict[str, Any],
 ) -> dict[str, Any]:
     run_dir = output_dir / "runs" / f"{transport_mode}__{scenario}__{target_rps}rps"
     generated_dir = run_dir / "generated"
@@ -1015,12 +953,7 @@ def run_transport(
     tokens_file = run_dir / "tokens.properties"
     write_tokens_properties(tokens_file, tokens)
 
-    authn_payload = build_authn_cache_payload(base_authn, tokens_file)
-    write_json(generated_dir / "authn.json", authn_payload)
-
     restart_opa()
-    upload_authn_document(generated_dir / "authn.json")
-    upload_policy_ref_index(generated_dir / "policies-ref-index.json")
     seed_via_authz_policy_admin("domainPolicies", generated_dir / "policies.json")
     seed_via_authz_policy_admin("domainPIPs", generated_dir / "pips.json")
     # Wait one full pull tick plus a margin for the seeded data to reach OPA.
@@ -1237,8 +1170,6 @@ def run_matrix(args: argparse.Namespace) -> None:
     restart_opa()
 
     ensure_matrix_users()
-    base_authn = capture_authn_base()
-    write_json(output_root / "authn-base.json", base_authn)
 
     rows: list[dict[str, Any]] = []
     for transport_mode in transport_modes:
@@ -1252,7 +1183,6 @@ def run_matrix(args: argparse.Namespace) -> None:
                     threads=args.threads,
                     ramp_seconds=args.ramp_seconds,
                     duration_seconds=args.duration_seconds,
-                    base_authn=base_authn,
                 )
                 rows.append(row)
 

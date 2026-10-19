@@ -49,7 +49,6 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 ARTIFACTS_DIR="${SVT_DIR}/artifacts/${TIMESTAMP}"
 TOKENS_FILE="${ARTIFACTS_DIR}/tokens.properties"
 SUMMARY_FILE="${ARTIFACTS_DIR}/matrix-summary.md"
-AUTHN_BASE_FILE="${ARTIFACTS_DIR}/authn-base.json"
 
 log() { echo "[svt-run-opa-direct-matrix] $*"; }
 
@@ -220,27 +219,6 @@ seed_via_authz_policy_admin() {
   fi
 }
 
-capture_authn_base() {
-  docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml" exec -T opa sh -lc \
-    "curl -sf http://localhost:8181/v1/data/authn" | jq -c '.result' > "${AUTHN_BASE_FILE}"
-}
-
-upload_authn_document() {
-  local payload_file=$1
-
-  docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml" exec -T opa sh -lc \
-    'cat > /tmp/authn.json && curl -sf -X PUT http://localhost:8181/v1/data/authn -H "Content-Type: application/json" --data @/tmp/authn.json >/dev/null' \
-    < "${payload_file}"
-}
-
-upload_policy_ref_index() {
-  local payload_file=$1
-
-  docker compose -p "${PROJECT_NAME}" -f "${SVT_DIR}/common/compose/docker-compose.yml" exec -T opa sh -lc \
-    'cat > /tmp/policies-ref-index.json && curl -sf -X PUT http://localhost:8181/v1/data/policies/refIndex -H "Content-Type: application/json" --data @/tmp/policies-ref-index.json >/dev/null' \
-    < "${payload_file}"
-}
-
 run_jmeter_scenario() {
   local scenario_dir=$1
   local result_dir=$2
@@ -285,9 +263,7 @@ if ! wait_for_backend_health 1 1; then
 fi
 
 mkdir -p "${ARTIFACTS_DIR}/generated" "${ARTIFACTS_DIR}/prometheus"
-log "resetting opa store before capturing base authn..."
 restart_opa
-capture_authn_base
 
 ensure_matrix_users
 
@@ -307,14 +283,6 @@ for idx in "${!SCENARIOS[@]}"; do
     --output-dir "${scenario_dir}"
 
   acquire_user_tokens
-  python3 "${SVT_DIR}/common/tools/opa_direct_matrix.py" build-authn-cache \
-    --tokens-file "${TOKENS_FILE}" \
-    --base-authn "${AUTHN_BASE_FILE}" \
-    --output-file "${scenario_dir}/authn.json"
-
-  log "uploading authn cache and policy ref-index for ${scenario}..."
-  upload_authn_document "${scenario_dir}/authn.json"
-  upload_policy_ref_index "${scenario_dir}/policies-ref-index.json"
 
   log "seeding policies + PIPs into authz-policy-admin for ${scenario}..."
   seed_via_authz_policy_admin "domainPolicies" "${scenario_dir}/policies.json"
@@ -350,7 +318,7 @@ cat > "${ARTIFACTS_DIR}/run-metadata.json" <<METAEOF
   "target_endpoint": {
     "host": "opa",
     "port": 8181,
-    "path": "/v1/data/authorize"
+    "path": "/access/v1/authorize"
   },
   "users": 100
 }

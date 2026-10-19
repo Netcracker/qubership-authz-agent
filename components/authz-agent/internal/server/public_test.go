@@ -59,25 +59,25 @@ results := [r |
 ]
 `
 
-// newPublicApp builds the public surface over publicPolicy and the guard of
-// testAuthz, with the routing options main uses. papClient and collector
-// are the base URLs the relays target, "" for none.
-func newPublicApp(t *testing.T, authorization bool, logs *decisionlog.Logger, collector string) *fiber.App {
+// newPublicApp builds the public surface over publicPolicy, with the routing
+// options main uses. collector is the base URL the download is relayed to,
+// "" for none.
+func newPublicApp(t *testing.T, logs *decisionlog.Logger, collector string) *fiber.App {
 	t.Helper()
-	return newPublicAppWithLog(t, authorization, logs, collector, nil)
+	return newPublicAppWithLog(t, logs, collector, nil)
 }
 
 // newPublicAppWithLog is newPublicApp with the diagnostics of the request
 // path sent to log, and the platform's context middleware ahead of the
 // routes, as the platform's Fiber builder installs it in main.
-func newPublicAppWithLog(t *testing.T, authorization bool, logs *decisionlog.Logger, collector string, log Logger) *fiber.App {
+func newPublicAppWithLog(t *testing.T, logs *decisionlog.Logger, collector string, log Logger) *fiber.App {
 	t.Helper()
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": publicPolicy, "authz.rego": testAuthz}})
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": publicPolicy}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
 	srv := Register(fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true}), eng, logs,
-		Options{Authorization: authorization, CollectorURL: collector, NDBuiltinCache: true, Log: log})
+		Options{CollectorURL: collector, NDBuiltinCache: true, Log: log})
 	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
 	app.Use(platformContext)
 	srv.RegisterPublic(app)
@@ -152,7 +152,7 @@ func TestPublic_TheRequestIdNamesTheRequestEverywhere(t *testing.T) {
 			logs, events, stop := collector(t)
 			defer stop()
 			lines := &contextIDs{}
-			app := newPublicAppWithLog(t, false, logs, "", lines)
+			app := newPublicAppWithLog(t, logs, "", lines)
 
 			resp := checkResourceWithID(t, app, tc.given)
 			defer func() { _ = resp.Body.Close() }()
@@ -220,7 +220,7 @@ func assertLinesCarry(t *testing.T, lines *contextIDs, want string) {
 // TestPublic_CheckResource: the v1 route answers a bare boolean and the v2
 // route {"decision": bool}, both as JSON, from the first result.
 func TestPublic_CheckResource(t *testing.T) {
-	app := newPublicApp(t, false, nil, "")
+	app := newPublicApp(t, nil, "")
 	cases := []struct {
 		name, path, body, want string
 	}{
@@ -244,7 +244,7 @@ func TestPublic_CheckResource(t *testing.T) {
 // refuses carries the authError's status and message; and a GET reaches
 // the handler like a POST, so its empty body is what is rejected.
 func TestPublic_CheckResource_Refusals(t *testing.T) {
-	app := newPublicApp(t, false, nil, "")
+	app := newPublicApp(t, nil, "")
 	cases := []struct {
 		name, method, body string
 		headers            map[string]string
@@ -271,7 +271,7 @@ func TestPublic_CheckResource_Refusals(t *testing.T) {
 // without a single operation is answered without the policy, so it needs no
 // token.
 func TestPublic_Bulk(t *testing.T) {
-	app := newPublicApp(t, false, nil, "")
+	app := newPublicApp(t, nil, "")
 	cases := []struct {
 		name, path, body string
 		headers          map[string]string
@@ -315,7 +315,7 @@ func TestPublic_Bulk(t *testing.T) {
 // TestPublic_Filter: the filter routes read the query, not the body, and
 // answer the legacy filter shape with the policy's predicates.
 func TestPublic_Filter(t *testing.T) {
-	app := newPublicApp(t, false, nil, "")
+	app := newPublicApp(t, nil, "")
 	const useFilter = `{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"type==ORDER","sqlFilterCondition":"","customFilterCondition":null}`
 	const denied = `{"calculationResult":"DENY","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"","sqlFilterCondition":"","customFilterCondition":null}`
 	cases := []struct {
@@ -341,22 +341,23 @@ func TestPublic_Filter(t *testing.T) {
 }
 
 // TestPublic_Surface: the routes Envoy exposed answer as they did, and
-// everything else, the data API included, is 404 {"message":"not found"}.
-// The canonical route runs the data API guard, so ?explain=full is refused.
+// everything else is 404 {"message":"not found"}.
+// The canonical route reads no query parameter, so ?explain=full gets the
+// plain decision and no evaluation trace.
 func TestPublic_Surface(t *testing.T) {
-	app := newPublicApp(t, true, nil, "")
+	app := newPublicApp(t, nil, "")
 	authorize := `{"input":{"subject":"Bearer admin","resources":[{"resourceType":"ORDER","operation":"READ"}]}}`
 	cases := []struct {
 		name, method, path, body string
 		status                   int
 		want                     string
 	}{
-		{"the canonical route is the data API decision", http.MethodPost, "/access/v1/authorize", authorize, 200,
+		{"the canonical route is the decision", http.MethodPost, "/access/v1/authorize", authorize, 200,
 			`{"result":{"results":[{"isAllowed":true,"predicates":[{"predicate":"type==ORDER","predicateType":"rsql"}]}],"rlsIgnored":false}}`},
-		{"explain is refused on the canonical route", http.MethodPost, "/access/v1/authorize?explain=full", authorize, 401,
-			`{"code":"unauthorized","message":"unauthorized resource access"}`},
-		{"the data API is hidden", http.MethodPost, "/v1/data/authorize", authorize, 404, `{"message":"not found"}`},
+		{"explain on the canonical route gets the plain decision", http.MethodPost, "/access/v1/authorize?explain=full", authorize, 200,
+			`{"result":{"results":[{"isAllowed":true,"predicates":[{"predicate":"type==ORDER","predicateType":"rsql"}]}],"rlsIgnored":false}}`},
 		{"an unknown path", http.MethodGet, "/unknown/endpoint", "", 404, `{"message":"not found"}`},
+		{"a path under the canonical route", http.MethodPost, "/access/v1/authorize/result", authorize, 404, `{"message":"not found"}`},
 		{"a check route with a trailing slash", http.MethodPost, "/access/v1/check/resource/", `{"type":"ORDER","operation":"READ"}`, 404, `{"message":"not found"}`},
 		{"a mistyped check route", http.MethodPost, "/access/v1/check/resourc", `{"type":"ORDER","operation":"READ"}`, 404, `{"message":"not found"}`},
 		{"api-version by GET", http.MethodGet, "/api-version", "", 200, LegacyAPIVersion},
@@ -376,38 +377,24 @@ func TestPublic_Surface(t *testing.T) {
 }
 
 // TestPublic_CanonicalRouteUnderOtherMethods: a method other than POST on
-// the canonical route is 405 once the guard has let it through, and the
-// guard sees the method itself, so a GET the policy does not open is 401.
+// the canonical route is 405.
 func TestPublic_CanonicalRouteUnderOtherMethods(t *testing.T) {
-	open := newPublicApp(t, false, nil, "")
-	if code, body, _ := call(t, open, http.MethodGet, "/access/v1/authorize", "", nil); code != 405 || !strings.Contains(body, "Method Not Allowed") {
-		t.Errorf("GET /access/v1/authorize without the guard = %d %s, want 405 Method Not Allowed", code, body)
-	}
-	guarded := newPublicApp(t, true, nil, "")
-	if code, body, _ := call(t, guarded, http.MethodGet, "/access/v1/authorize", "", nil); code != 401 || !strings.Contains(body, `"code":"unauthorized"`) {
-		t.Errorf("GET /access/v1/authorize with the guard = %d %s, want 401 unauthorized", code, body)
+	app := newPublicApp(t, nil, "")
+	if code, body, _ := call(t, app, http.MethodGet, "/access/v1/authorize", "", nil); code != 405 || !strings.Contains(body, "Method Not Allowed") {
+		t.Errorf("GET /access/v1/authorize = %d %s, want 405 Method Not Allowed", code, body)
 	}
 }
 
-// TestPublic_CheckRoutesRunTheGuard: a check route runs the guard as
-// POST /v1/data/authorize with its own query parameters, whatever the
-// request's method, as the Lua rewrite did, so plain parameters pass and
-// ?explain=full is refused in OPA's shape.
-func TestPublic_CheckRoutesRunTheGuard(t *testing.T) {
-	app := newPublicApp(t, true, nil, "")
+// TestPublic_CheckRoutesIgnoreExplain: a check route reads no query
+// parameter beyond the ones its request shape names, so ?explain=full gets
+// the same answer as the plain request.
+func TestPublic_CheckRoutesIgnoreExplain(t *testing.T) {
+	app := newPublicApp(t, nil, "")
 	body := `{"type":"ORDER","operation":"READ"}`
-	if code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=default", body, admin); code != 200 || got != "true" {
-		t.Errorf("POST /access/v1/check/resource?tenant_id=default = %d %s, want 200 true", code, got)
-	}
-	code, got, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?explain=full", body, admin)
-	if code != 401 || got != `{"code":"unauthorized","message":"unauthorized resource access"}` {
-		t.Errorf("POST /access/v1/check/resource?explain=full = %d %s, want 401 in OPA's shape", code, got)
-	}
-	// The test policy opens only POST /v1/data/authorize, so a GET on a
-	// filter route passes the guard only through the POST rewrite.
-	const useFilter = `{"calculationResult":"USE_FILTER_CONDITION","filterCondition":"","mongodbFilterCondition":"","rsqlFilterCondition":"type==ORDER","sqlFilterCondition":"","customFilterCondition":null}`
-	if code, got, _ := call(t, app, http.MethodGet, "/access/v1/check/filter?resourceType=ORDER&operation=READ", "", admin); code != 200 || got != useFilter {
-		t.Errorf("GET /access/v1/check/filter with the guard = %d %s, want 200 %s", code, got, useFilter)
+	for _, path := range []string{"/access/v1/check/resource", "/access/v1/check/resource?explain=full"} {
+		if code, got, _ := call(t, app, http.MethodPost, path, body, admin); code != 200 || got != "true" {
+			t.Errorf("POST %s = %d %s, want 200 true", path, code, got)
+		}
 	}
 }
 
@@ -432,7 +419,7 @@ func TestPublic_RelaysTheDownloadToTheCollector(t *testing.T) {
 	lines := strings.Repeat("{\"decision_id\":\"1\"}\n", 40000)
 	collector, seen := recorder(http.StatusOK, "application/x-ndjson", lines)
 	defer collector.Close()
-	app := newPublicApp(t, false, nil, collector.URL)
+	app := newPublicApp(t, nil, collector.URL)
 
 	code, body, contentType := call(t, app, http.MethodGet, "/internal/v1/decision-logs?since=1", "", nil)
 	if code != 200 || contentType != "application/x-ndjson" || len(body) != len(lines) {
@@ -454,7 +441,7 @@ func TestPublic_ServesTheStoredDecisions(t *testing.T) {
 		t.Fatal(err)
 	}
 	logs := decisionlog.New(decisionlog.Config{Store: store}, nil)
-	app := newPublicApp(t, false, logs, collector.URL)
+	app := newPublicApp(t, logs, collector.URL)
 
 	code, body, contentType := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
 	if code != 200 || contentType != "application/x-ndjson" || !strings.Contains(body, `"decision_id":"d-1"`) {
@@ -481,7 +468,7 @@ func TestPublic_ReportsADecisionLogThatCannotBeRead(t *testing.T) {
 	}
 	logs := decisionlog.New(decisionlog.Config{Store: decisionlog.NewStore(filepath.Join(notADir, "decisions.jsonl"))}, nil)
 	reported := &levels{}
-	app := newPublicAppWithLog(t, false, logs, "", reported)
+	app := newPublicAppWithLog(t, logs, "", reported)
 
 	code, body, _ := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
 	if code != 500 || body != `{"message":"failed to read decision logs"}` {
@@ -501,7 +488,7 @@ func TestPublic_ReportsADecisionLogThatCannotBeRead(t *testing.T) {
 // apart from an empty log, and the timeout is reported as a warning.
 func TestPublic_RelayToACollectorThatDoesNotAnswer(t *testing.T) {
 	reported := &levels{}
-	app := newPublicAppWithLog(t, false, nil, "http://127.0.0.1:1", reported)
+	app := newPublicAppWithLog(t, nil, "http://127.0.0.1:1", reported)
 	code, body, _ := call(t, app, http.MethodGet, "/internal/v1/decision-logs", "", nil)
 	if code != 503 || !strings.Contains(body, "collector unavailable") {
 		t.Errorf("GET /internal/v1/decision-logs with no collector = %d %s, want 503 with a message naming the collector", code, body)
@@ -559,7 +546,7 @@ func nextEvent(t *testing.T, events <-chan decisionlog.Event) decisionlog.Event 
 func TestPublic_LogsTheLegacyDecision(t *testing.T) {
 	logs, events, stop := collector(t)
 	defer stop()
-	app := newPublicApp(t, false, logs, "")
+	app := newPublicApp(t, logs, "")
 	headers := map[string]string{"Authorization": "Bearer m2m", "Incoming-Token": "Bearer admin", "X-Tenant": "acme"}
 
 	code, body, _ := call(t, app, http.MethodPost, "/access/v1/check/resource?tenant_id=default", `{"type":"ORDER","operation":"READ"}`, headers)
@@ -598,7 +585,7 @@ func TestPublic_LogsTheLegacyDecision(t *testing.T) {
 func TestPublic_LogsTheRouteAsOriginalPath(t *testing.T) {
 	logs, events, stop := collector(t)
 	defer stop()
-	app := newPublicApp(t, false, logs, "")
+	app := newPublicApp(t, logs, "")
 	single := `{"type":"ORDER","operation":"READ"}`
 	bulk := `[{"id":"a","type":"ORDER","operation":"READ"}]`
 	operations := `[{"id":"a","type":"ORDER","operations":["READ"]}]`

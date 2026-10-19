@@ -16,9 +16,10 @@ Three modes, independent baselines (D-15 of the parent task):
     tests/svt/scripts/per-scenario-decision-time --mode legacy
     tests/svt/scripts/per-scenario-decision-time --mode opa-direct
 
-The `opa-direct` mode skips the public surface and hits the data API at
-`POST /v1/data/authorize` on `authz-agent:8181`; the column shape is
-identical across the three modes, since one container serves them all.
+The `opa-direct` mode skips the public surface and sends each request to
+`POST /access/v1/authorize` on the internal listener, `authz-agent:8181`;
+the column shape is identical across the three modes, since one container
+serves them all.
 
 Mirrors `tests/svt/scripts/mixed-load-report` in shape, but the report
 contains one H3 sub-section per scenario (six-row RPS table per
@@ -378,14 +379,10 @@ def render_methodology(mode: str) -> list[str]:
                      "`/access/v1/check/filter`), which it translates into "
                      "the same decision.")
     else:  # opa-direct
-        mode_desc = ("requests skip the public surface and hit the data API "
-                     "directly via `POST /v1/data/authorize` on "
-                     "`authz-agent:8181`. The two transports are the ones "
-                     "authz-agent-ADR-0062 pins as byte-identical, so the "
-                     "difference between this mode and `canonical` is the "
-                     "cost of the compatibility layer alone. The decision "
-                     "log is written either way, so its pressure stays part "
-                     "of the cost surface.")
+        mode_desc = ("requests skip the public surface and reach "
+                     "`POST /access/v1/authorize` on the internal listener, "
+                     "`authz-agent:8181`. The decision log is written either "
+                     "way, so its pressure stays part of the cost surface.")
     return [
         "## Methodology",
         "",

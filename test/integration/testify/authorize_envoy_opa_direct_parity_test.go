@@ -22,8 +22,8 @@ import (
 
 // TestAuthorizeEnvoyOpaDirectParity asserts the cross-transport contract of
 // authz-agent-ADR-0062: one canonical authorize request returns the same
-// response bytes on the public surface (POST /access/v1/authorize) and on the
-// data API (POST /v1/data/authorize). Both carry the OPA Data API envelope
+// response bytes on the public port and on the internal port, both at
+// POST /access/v1/authorize. Both carry the OPA Data API envelope
 // {"result": <AuthorizeResponse>}.
 //
 // decision_id and result.requestId differ on every pair of calls by design, so
@@ -47,12 +47,12 @@ func (s *RuntimeSuite) TestAuthorizeEnvoyOpaDirectParity() {
 		envoyURL := s.cfg.BaseURL + "/access/v1/authorize"
 		envoyCode, envoyBody, envoyReqBody, envoyRespHdr, err := DoHTTPFull("POST", envoyURL, headers, bodyBytes)
 		s.Require().NoError(err)
-		// Conformance only declares the public surface; OPA-direct is the same
-		// envelope by ADR-0062 contract but is intentionally out of the
-		// public spec surface.
+		// Conformance only declares the public surface; the internal port
+		// answers the same envelope by ADR-0062 contract but is intentionally
+		// out of the public spec surface.
 		assertConformsToSpec(s.T(), "POST", envoyURL, headers, envoyReqBody, envoyCode, envoyRespHdr, envoyBody)
 
-		opaURL := s.cfg.OPADirectURL + "/v1/data/authorize"
+		opaURL := s.cfg.OPADirectURL + "/access/v1/authorize"
 		opaCode, opaBody, _, _, err := DoHTTPFull("POST", opaURL, headers, bodyBytes)
 		s.Require().NoError(err)
 
@@ -82,10 +82,10 @@ func maskDecisionID(b []byte) string {
 	if _, ok := env["decision_id"]; ok {
 		env["decision_id"] = json.RawMessage(`"<masked>"`)
 	}
-	// ADR-0069: result.requestId is per-request (inbound x-request-id on the
-	// Envoy transport, OPA-generated uuid on the OPA-direct transport), so it is
-	// non-stable across the two independent calls — mask it like decision_id so
-	// the envelopes compare byte-identical modulo the correlation ids.
+	// ADR-0069: result.requestId is the input's requestId or, without one, a
+	// uuid the policy generates per evaluation, so it is non-stable across the
+	// two independent calls — mask it like decision_id so the envelopes
+	// compare byte-identical modulo the correlation ids.
 	if resultRaw, ok := env["result"]; ok {
 		var result map[string]json.RawMessage
 		if err := json.Unmarshal(resultRaw, &result); err == nil {

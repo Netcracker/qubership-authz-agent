@@ -39,22 +39,21 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	if cfg.Addr != "0.0.0.0:8181" || cfg.PublicAddr != "0.0.0.0:8080" {
 		t.Fatalf("default addresses: %+v", cfg)
 	}
-	if cfg.Authorization || cfg.DecisionLogs.URL != "" || len(cfg.DataDirs) != 0 {
+	if cfg.DecisionLogs.URL != "" || len(cfg.DataDirs) != 0 {
 		t.Fatalf("defaults: %+v", cfg)
 	}
 	cfg = loadConfig(fromMap(map[string]string{
-		"authz.http.addr":              ":9090",
-		"authz.public.addr":            ":9091",
-		"authz.data.dirs":              "/a, /b",
-		"authz.data.ignore":            "..*",
-		"authz.data.api.authorization": "true",
-		"authz.decision.log.url":       "http://collector:8183",
-		"authz.decision.log.headers":   "x-request-id,x-authz-original-path",
+		"authz.http.addr":            ":9090",
+		"authz.public.addr":          ":9091",
+		"authz.data.dirs":            "/a, /b",
+		"authz.data.ignore":          "..*",
+		"authz.decision.log.url":     "http://collector:8183",
+		"authz.decision.log.headers": "x-request-id,x-authz-original-path",
 	}))
 	if cfg.Addr != ":9090" || cfg.PublicAddr != ":9091" {
 		t.Fatalf("addresses from env: %+v", cfg)
 	}
-	if !cfg.Authorization || len(cfg.DataDirs) != 2 || cfg.Ignore[0] != "..*" {
+	if len(cfg.DataDirs) != 2 || cfg.Ignore[0] != "..*" {
 		t.Fatalf("env values: %+v", cfg)
 	}
 	if cfg.DecisionLogs.URL != "http://collector:8183" || len(cfg.DecisionLogs.Headers) != 2 || cfg.DecisionLogs.Labels["id"] != "authz-agent" {
@@ -81,8 +80,8 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.M2M != wantM2M {
 		t.Errorf("default m2m = %+v, want %+v", cfg.M2M, wantM2M)
 	}
-	if cfg.OPAAuthTokenFile != "" || cfg.DecisionLogFile != "" {
-		t.Errorf("default secret file %q and decision log file %q, want none", cfg.OPAAuthTokenFile, cfg.DecisionLogFile)
+	if cfg.DecisionLogFile != "" {
+		t.Errorf("default decision log file %q, want none", cfg.DecisionLogFile)
 	}
 	cfg = loadConfig(fromMap(map[string]string{
 		"authz.trusted.providers.file":            "/p.json",
@@ -99,7 +98,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.m2m.client.id.file":                "/id",
 		"authz.m2m.client.secret.file":            "/secret",
 		"authz.m2m.renew.before.seconds":          "30",
-		"authz.opa.auth.token.file":               "/opa-token",
 		"authz.decision.log.file":                 "/var/log/authz/decision-logs.jsonl",
 	}))
 	if cfg.Authn.File != "/p.json" || cfg.Authn.Required || cfg.Authn.HTTPTimeout != 2*time.Second || cfg.Authn.HTTPRetries != 20 ||
@@ -113,8 +111,8 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		cfg.M2M.RenewBefore != 30*time.Second || cfg.M2M.TokenFile != "/t" {
 		t.Errorf("m2m from env = %+v", cfg.M2M)
 	}
-	if cfg.OPAAuthTokenFile != "/opa-token" || cfg.DecisionLogFile != "/var/log/authz/decision-logs.jsonl" {
-		t.Errorf("secret file %q and decision log file %q from env", cfg.OPAAuthTokenFile, cfg.DecisionLogFile)
+	if cfg.DecisionLogFile != "/var/log/authz/decision-logs.jsonl" {
+		t.Errorf("decision log file %q from env", cfg.DecisionLogFile)
 	}
 }
 

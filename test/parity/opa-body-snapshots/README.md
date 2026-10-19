@@ -1,12 +1,12 @@
 # OPA-Native Canonical Authorize Body Snapshots
 
 This directory holds the **authoritative target shape** of the body OPA
-receives on `POST /v1/data/authorize` after the canonical contract
+evaluates on `POST /access/v1/authorize` after the canonical contract
 rebase landed by [authz-agent-ADR-0062](../../../docs/decisions/20260602-authz-agent-adr-0062-canonical-opa-direct-envoy-parity.md).
 
 After the rebase, the canonical client wire-shape **is** the body OPA
-receives. Both transports — `POST /access/v1/authorize` through Envoy
-and `POST /v1/data/authorize` direct to OPA — send the same bytes.
+evaluates. Both of the agent's ports serve `POST /access/v1/authorize`
+and evaluate the same bytes.
 These snapshots are the single source of truth that:
 
 1. the canonical request DTOs in every SDK (shared Java, Spring,
@@ -55,7 +55,7 @@ the byte-identical body OPA actually receives at runtime.
 ## Synthesis methodology
 
 Each snapshot is the byte-identical result of the canonical client request body
-as it arrives at OPA's `POST /v1/data/authorize` endpoint. Following
+as it arrives at `POST /access/v1/authorize`. Following
 [authz-agent-ADR-0062](../../../docs/decisions/20260602-authz-agent-adr-0062-canonical-opa-direct-envoy-parity.md),
 the `/access/v1/authorize` canonical route is **pure routing** with zero body
 mutation — Envoy applies no Lua transform on that route (ADR-0062 Decision 5). The body the client

@@ -110,9 +110,10 @@ def _write_text(path: str, content: str, *, make_executable: bool = False) -> No
 #
 #   - canonical  → POST /access/v1/authorize on Envoy
 #   - legacy     → POST <scenario.legacy_endpoint> on Envoy
-#   - opa-direct → POST /v1/data/authorize on OPA (port 8181 via
-#                  the bridged `jmeter` compose service — OPA's port is
-#                  NOT exposed to the host, see docker-compose.yml).
+#   - opa-direct → POST /access/v1/authorize on the internal listener
+#                  (port 8181 via the bridged `jmeter` compose service,
+#                  because the port is NOT exposed to the host; see
+#                  docker-compose.yml).
 #
 # The opa-direct body wraps the canonical decision input in `{"input":
 # {...}}` and adds `authorizationToken` / `authorizationType` /
@@ -152,7 +153,7 @@ if (mode == "canonical") {{
     '{{"input":{{"resources":[{{"resourceType":"' + rt + '","operation":"' + op + '","resource":{{}}}}],"subject":"Bearer ' + token + '","ignoreRls":true}}}}')
   vars.put("body_raw", "true")
 }} else if (mode == "opa-direct") {{
-  vars.put("req_path", "/v1/data/authorize")
+  vars.put("req_path", "/access/v1/authorize")
   vars.put("req_body", new JsonBuilder([input: [
     authorizationToken: "Bearer " + token,
     authorizationType: "",
@@ -201,7 +202,7 @@ if (mode == "canonical") {{
   vars.put("req_body", new JsonBuilder([input: [resources: resources, subject: "Bearer " + token, ignoreRls: true]]).toString())
   vars.put("body_raw", "true")
 }} else if (mode == "opa-direct") {{
-  vars.put("req_path", "/v1/data/authorize")
+  vars.put("req_path", "/access/v1/authorize")
   vars.put("req_body", new JsonBuilder([input: [
     authorizationToken: "Bearer " + token,
     authorizationType: "",
@@ -239,7 +240,7 @@ if (mode == "canonical") {{
     '{{"input":{{"resources":[{{"resourceType":"' + rt + '","operation":"' + op + '","resource":{{}}}}],"subject":"Bearer ' + token + '","ignoreRls":false}}}}')
   vars.put("body_raw", "true")
 }} else if (mode == "opa-direct") {{
-  vars.put("req_path", "/v1/data/authorize")
+  vars.put("req_path", "/access/v1/authorize")
   vars.put("req_body", new JsonBuilder([input: [
     authorizationToken: "Bearer " + token,
     authorizationType: "",
@@ -278,7 +279,7 @@ if (mode == "canonical") {{
     '{{"input":{{"resources":[{{"resourceType":"' + rt + '","operation":"' + op + '","resource":{{}}}}],"subject":"Bearer ' + token + '","ignoreRls":false}}}}')
   vars.put("body_raw", "true")
 }} else if (mode == "opa-direct") {{
-  vars.put("req_path", "/v1/data/authorize")
+  vars.put("req_path", "/access/v1/authorize")
   vars.put("req_body", new JsonBuilder([input: [
     authorizationToken: "Bearer " + token,
     authorizationType: "",
@@ -316,7 +317,7 @@ if (mode == "canonical") {{
     '{{"input":{{"resources":[{{"resourceType":"' + rt + '","operation":"' + op + '","resource":{{}}}}],"subject":"Bearer ' + token + '","ignoreRls":false}}}}')
   vars.put("body_raw", "true")
 }} else if (mode == "opa-direct") {{
-  vars.put("req_path", "/v1/data/authorize")
+  vars.put("req_path", "/access/v1/authorize")
   vars.put("req_body", new JsonBuilder([input: [
     authorizationToken: "Bearer " + token,
     authorizationType: "",
@@ -365,7 +366,7 @@ if (mode == "canonical") {{
   vars.put("req_body", new JsonBuilder([input: [resources: resources, subject: "Bearer " + token, ignoreRls: false]]).toString())
   vars.put("body_raw", "true")
 }} else if (mode == "opa-direct") {{
-  vars.put("req_path", "/v1/data/authorize")
+  vars.put("req_path", "/access/v1/authorize")
   vars.put("req_body", new JsonBuilder([input: [
     authorizationToken: "Bearer " + token,
     authorizationType: "",
@@ -437,7 +438,7 @@ JMX_HEADER = """<?xml version="1.0" encoding="UTF-8"?>
 Single thread group; the `${{MODE}}` switch maps:
   canonical  → POST /access/v1/authorize on Envoy (${{AUTHZ_HOST}}:${{AUTHZ_PORT}})
   legacy     → POST {legacy_endpoint} on Envoy
-  opa-direct → POST /v1/data/authorize on OPA (point AUTHZ_HOST/AUTHZ_PORT at opa:8181)
+  opa-direct → POST /access/v1/authorize on the internal listener (point AUTHZ_HOST/AUTHZ_PORT at authz-agent:8181)
 Token property: token_svt_bench_{scenario_underscored} (issued by Keycloak for svt-bench-{scenario}).</stringProp>
       <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
@@ -635,8 +636,8 @@ RUN_TEMPLATE = """#!/usr/bin/env bash
 # Transport modes:
 #   canonical / legacy → Envoy boundary, host-networked jmeter-host
 #                         (svt_run_jmeter_mixed_flow → localhost:${SVT_AUTHZ_PORT}).
-#   opa-direct         → OPA boundary, bridged jmeter (svt_run_jmeter_per_scenario_opa_direct
-#                         → opa:8181, /v1/data/authorize). OPA's port is
+#   opa-direct         → internal listener, bridged jmeter (svt_run_jmeter_per_scenario_opa_direct
+#                         → authz-agent:8181, /access/v1/authorize). The internal listener is
 #                         NOT exposed to the host, so the bridged service is required.
 set -euo pipefail
 
@@ -701,7 +702,7 @@ The `${{MODE}}` switch selects:
 - `canonical`  → Envoy → OPA → decision-log-collector: `POST /access/v1/authorize`
 - `legacy`     → Envoy → OPA → decision-log-collector: `POST {legacy_endpoint}`
 - `opa-direct` → OPA → decision-log-collector (Envoy bypassed):
-  `POST /v1/data/authorize` on `opa:8181`
+  `POST /access/v1/authorize` on the internal listener, `authz-agent:8181`
 
 The shared per-scenario JMX lives at
 `tests/svt/load-tests/per-scenario/{scenario}/test.jmx`; per-RPS directories

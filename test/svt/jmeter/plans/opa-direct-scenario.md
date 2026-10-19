@@ -15,7 +15,7 @@ The runner expects a CSV file with these columns:
 | `scenarioLabel` | Short human-readable run label added to the sample name |
 | `requestClass` | Classification tag used in the sample label |
 | `expectedDecision` | Expected aggregate decision: `ALLOW` or `DENY` |
-| `requestBodyTemplate` | Full JSON body posted to `POST /v1/data/authorize`; uses placeholder `__TOKEN__` |
+| `requestBodyTemplate` | Full JSON body posted to `POST /access/v1/authorize`; uses placeholder `__TOKEN__` |
 
 `requestBodyTemplate` must already contain the normalized OPA input envelope:
 
@@ -35,7 +35,7 @@ for the current row user before the sampler executes.
 - one active thread group;
 - one CSV-driven direct OPA request shape per sample;
 - aggregate stage-level throughput controlled by `target_rps`;
-- measured against internal `opa:8181 /v1/data/authorize`.
+- measured against `POST /access/v1/authorize` on the internal listener, `authz-agent:8181`.
 
 ## Configurable Properties
 
@@ -46,5 +46,5 @@ for the current row user before the sampler executes.
 | `duration_seconds` | `60` | Total scenario duration |
 | `target_rps` | `500` | Aggregate request rate |
 | `opa_host` | `opa` | Internal Compose hostname |
-| `opa_port` | `8181` | Internal backend OPA port |
+| `opa_port` | `8181` | Port of the internal listener |
 | `scenario_csv` | `/scenario/requests.csv` | Scenario-specific CSV mounted into the JMeter container |

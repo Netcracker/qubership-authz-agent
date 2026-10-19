@@ -29,7 +29,8 @@ import (
 // environment through configloader: AUTHZ_HTTP_ADDR is `authz.http.addr`,
 // and so on.
 type config struct {
-	// Addr is the listen address of the data API.
+	// Addr is the listen address of the internal surface: the probes, the
+	// metrics, /api-version, and the canonical authorize route.
 	Addr string
 	// PublicAddr is the listen address of the surface the clients call.
 	PublicAddr string
@@ -37,11 +38,6 @@ type config struct {
 	DataDirs []string
 	// Ignore lists file name patterns skipped in DataDirs.
 	Ignore []string
-	// Authorization guards the data API with data.system.authz.allow.
-	Authorization bool
-	// OPAAuthTokenFile names the file whose token the guard lets write,
-	// loaded as data.opa_auth_secret; empty loads none.
-	OPAAuthTokenFile string
 	// DecisionLogs configures the delivery: an empty URL disables the
 	// upload, and DecisionLogFile stores the decisions instead.
 	DecisionLogs decisionlog.Config
@@ -67,13 +63,11 @@ type lookup func(key, fallback string) string
 // loadConfig builds the configuration from the environment.
 func loadConfig(get lookup) config {
 	return config{
-		NDBuiltinCache:   boolean(get, "authz.nd.builtin.cache", true),
-		Addr:             get("authz.http.addr", "0.0.0.0:8181"),
-		PublicAddr:       get("authz.public.addr", "0.0.0.0:8080"),
-		Authorization:    get("authz.data.api.authorization", "false") == "true",
-		OPAAuthTokenFile: get("authz.opa.auth.token.file", ""),
-		DataDirs:         splitList(get("authz.data.dirs", "")),
-		Ignore:           splitList(get("authz.data.ignore", "")),
+		NDBuiltinCache: boolean(get, "authz.nd.builtin.cache", true),
+		Addr:           get("authz.http.addr", "0.0.0.0:8181"),
+		PublicAddr:     get("authz.public.addr", "0.0.0.0:8080"),
+		DataDirs:       splitList(get("authz.data.dirs", "")),
+		Ignore:         splitList(get("authz.data.ignore", "")),
 		DecisionLogs: decisionlog.Config{
 			URL:     get("authz.decision.log.url", ""),
 			Headers: splitList(get("authz.decision.log.headers", "")),

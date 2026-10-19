@@ -75,11 +75,6 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if cfg.OPAAuthTokenFile != "" {
-		if err := loadAuthSecret(ctx, eng, cfg.OPAAuthTokenFile); err != nil {
-			logger.Warnf("data API secret: %v", err)
-		}
-	}
 	if cfg.DecisionLogFile != "" {
 		cfg.DecisionLogs.Store = decisionlog.NewStore(cfg.DecisionLogFile)
 	}
@@ -104,17 +99,15 @@ func main() {
 	}
 	puller := pull.New(cfg.Pull, eng, source, logger)
 	opts := server.Options{
-		Authorization:  cfg.Authorization,
 		Log:            logger,
 		CollectorURL:   cfg.DecisionLogs.URL,
 		NDBuiltinCache: cfg.NDBuiltinCache,
 		Health:         func() server.Report { return report(providers, puller) },
 	}
 
-	// Immutable: strings handed out by the request context, such as a path
-	// segment that becomes a store key or a header that goes into a decision
-	// log event, must not alias the buffer the server reuses for the next
-	// request.
+	// Immutable: strings handed out by the request context, such as a header
+	// that goes into a decision log event, must not alias the buffer the
+	// server reuses for the next request.
 	internal, err := fiberserver.New(fiber.Config{
 		Immutable:             true,
 		BodyLimit:             32 << 20,
@@ -149,10 +142,10 @@ func main() {
 		logger.Errorf("public listener on %s: %v", cfg.PublicAddr, err)
 		os.Exit(1)
 	}
-	dataSocket, err := net.Listen("tcp", cfg.Addr)
+	internalSocket, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
 		_ = publicSocket.Close()
-		logger.Errorf("data API listener on %s: %v", cfg.Addr, err)
+		logger.Errorf("internal listener on %s: %v", cfg.Addr, err)
 		os.Exit(1)
 	}
 
@@ -165,12 +158,12 @@ func main() {
 	if providers != nil {
 		go providers.Run(ctx)
 	}
-	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, data API on %s",
+	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, internal surface on %s",
 		len(modules), cfg.DataDirs, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
 
 	if serveUntilShutdown(ctx, stop, logs, []surface{
 		{"public", public, publicSocket},
-		{"data API", internal, dataSocket},
+		{"internal", internal, internalSocket},
 	}) {
 		os.Exit(1)
 	}
@@ -243,21 +236,6 @@ func get(key, fallback string) string {
 		return ""
 	}
 	return configloader.GetOrDefaultString(key, fallback)
-}
-
-// loadAuthSecret stores the token of file as data.opa_auth_secret, the
-// identity the data API guard lets write. An empty file loads nothing, so
-// every write stays refused.
-func loadAuthSecret(ctx context.Context, eng *engine.Engine, file string) error {
-	raw, err := os.ReadFile(file)
-	if err != nil {
-		return err
-	}
-	token := strings.TrimSpace(string(raw))
-	if token == "" {
-		return nil
-	}
-	return eng.Put(ctx, []string{"opa_auth_secret"}, token)
 }
 
 // report composes the state of the loops: the trusted providers' outcome

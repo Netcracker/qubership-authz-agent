@@ -34,8 +34,8 @@ import (
 )
 
 // testPolicies mirror the shape of the product policies: a decision
-// document and a system.authz guard that opens POST authorize, guards writes
-// with the secret, and refuses explain on the decision endpoint.
+// document that reads its input and the store, and a non-deterministic
+// builtin for the decision log to record.
 const testPolicies = `package authorize
 
 import rego.v1
@@ -45,58 +45,30 @@ allowed := input.user == data.users.admin
 now := time.now_ns()
 `
 
-const testAuthz = `package system.authz
-
-import rego.v1
-
-default allow := false
-
-allow if {
-	input.method == "POST"
-	input.path == ["v1", "data", "authorize"]
-	not input.params.explain
-}
-
-allow if {
-	input.method == "PUT"
-	input.path[0] == "v1"
-	input.identity == data.opa_auth_secret
-}
-
-allow if {
-	input.method == "GET"
-	input.path == ["v1", "data", "users"]
-	input.identity == data.opa_auth_secret
-}
-`
-
-func newApp(t *testing.T, authorization bool, logs *decisionlog.Logger, health func() Report) (*fiber.App, *engine.Engine) {
+func newApp(t *testing.T, logs *decisionlog.Logger, health func() Report) (*fiber.App, *engine.Engine) {
 	t.Helper()
-	return newAppWithLog(t, authorization, logs, health, nil)
+	return newAppWithLog(t, logs, health, nil)
 }
 
 // newAppWithLog is newApp with the diagnostics of the request path sent to
 // log, for a test whose subject is what the surface reports.
-func newAppWithLog(t *testing.T, authorization bool, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
+func newAppWithLog(t *testing.T, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
 	t.Helper()
-	return newAppWithModules(t, map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}, authorization, logs, health, log)
+	return newAppWithModules(t, map[string]string{"authorize.rego": testPolicies}, logs, health, log)
 }
 
 // newAppWithModules is newAppWithLog over policies the test chooses.
-func newAppWithModules(t *testing.T, modules map[string]string, authorization bool, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
+func newAppWithModules(t *testing.T, modules map[string]string, logs *decisionlog.Logger, health func() Report, log Logger) (*fiber.App, *engine.Engine) {
 	t.Helper()
 	eng, err := engine.New(engine.Options{Modules: modules})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
-	if err := eng.Put(context.Background(), []string{"opa_auth_secret"}, "s3cr3t"); err != nil {
-		t.Fatal(err)
-	}
 	if err := eng.Put(context.Background(), []string{"users"}, map[string]any{"admin": "root"}); err != nil {
 		t.Fatal(err)
 	}
 	app := fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
-	Register(app, eng, logs, Options{Authorization: authorization, Health: health, NDBuiltinCache: true, Log: log})
+	Register(app, eng, logs, Options{Health: health, NDBuiltinCache: true, Log: log})
 	return app, eng
 }
 
@@ -130,7 +102,7 @@ func do(t *testing.T, app *fiber.App, method, path, body string, headers map[str
 // when there is no report.
 func TestReady_WaitsForThePolicies(t *testing.T) {
 	report := Report{Healthy: false, Message: "bootstrap threshold not met"}
-	app, _ := newApp(t, false, nil, func() Report { return report })
+	app, _ := newApp(t, nil, func() Report { return report })
 	if code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil); code != 503 || body["message"] != "bootstrap threshold not met" {
 		t.Errorf("GET /ready unhealthy = %d %v, want 503 with the health reason", code, body)
 	}
@@ -145,7 +117,7 @@ func TestReady_WaitsForThePolicies(t *testing.T) {
 	if code, _, raw := do(t, app, http.MethodGet, "/ready", "", nil); code != 200 || raw != `{"status":"ready"}` {
 		t.Errorf("GET /ready loaded = %d %s, want 200 {\"status\":\"ready\"}", code, raw)
 	}
-	plain, _ := newApp(t, false, nil, nil)
+	plain, _ := newApp(t, nil, nil)
 	if code, _, raw := do(t, plain, http.MethodGet, "/ready", "", nil); code != 200 || raw != `{"status":"ready"}` {
 		t.Errorf("GET /ready without a report = %d %s, want 200", code, raw)
 	}
@@ -156,7 +128,7 @@ func TestReady_WaitsForThePolicies(t *testing.T) {
 // is not, and 200 without details when there is no report.
 func TestHealth_ReportsTheLoops(t *testing.T) {
 	report := Report{Healthy: false, Message: "bootstrap threshold not met", Bootstrap: &authn.Details{Mode: "strict", SuccessCount: 0, RequiredCount: 1}}
-	app, _ := newApp(t, false, nil, func() Report { return report })
+	app, _ := newApp(t, nil, func() Report { return report })
 	code, body, raw := do(t, app, http.MethodGet, "/health", "", nil)
 	if code != 503 || body["message"] != "bootstrap threshold not met" {
 		t.Fatalf("GET /health unhealthy = %d %s, want 503 with the message", code, raw)
@@ -170,7 +142,7 @@ func TestHealth_ReportsTheLoops(t *testing.T) {
 	if code != 200 || body["status"] != "healthy" || body["policyConversion"].(map[string]any)["policies"] != float64(3) {
 		t.Fatalf("GET /health healthy = %d %s, want 200 with the conversion counts", code, raw)
 	}
-	plain, _ := newApp(t, false, nil, nil)
+	plain, _ := newApp(t, nil, nil)
 	if code, _, raw := do(t, plain, http.MethodGet, "/health", "", nil); code != 200 || raw != `{"status":"healthy"}` {
 		t.Fatalf("GET /health without a report = %d %s, want 200 {\"status\":\"healthy\"}", code, raw)
 	}
@@ -179,7 +151,7 @@ func TestHealth_ReportsTheLoops(t *testing.T) {
 // TestAPIVersion_LegacyBody: the body is the legacy JSON, byte for byte,
 // with integer versions.
 func TestAPIVersion_LegacyBody(t *testing.T) {
-	app, _ := newApp(t, false, nil, nil)
+	app, _ := newApp(t, nil, nil)
 	code, body, raw := do(t, app, http.MethodGet, "/api-version", "", nil)
 	if code != 200 || raw != LegacyAPIVersion {
 		t.Fatalf("api-version: %d %s", code, raw)
@@ -190,62 +162,57 @@ func TestAPIVersion_LegacyBody(t *testing.T) {
 	}
 }
 
-// TestAuthorize_CanonicalRouteAndDataAPIAgree: the native /access/v1/authorize
-// and the data API path return the same decision envelope.
-func TestAuthorize_CanonicalRouteAndDataAPIAgree(t *testing.T) {
-	app, _ := newApp(t, true, nil, nil)
-	body := `{"input": {"user": "root"}}`
-	code1, r1, _ := do(t, app, http.MethodPost, "/access/v1/authorize", body, nil)
-	code2, r2, _ := do(t, app, http.MethodPost, "/v1/data/authorize", body, nil)
-	if code1 != 200 || code2 != 200 {
-		t.Fatalf("statuses %d %d", code1, code2)
+// TestAuthorize_CanonicalRouteDecides: POST /access/v1/authorize evaluates
+// the authorize document with the body's input and answers the decision
+// envelope, without a decision id when the decisions are not logged.
+func TestAuthorize_CanonicalRouteDecides(t *testing.T) {
+	app, _ := newApp(t, nil, nil)
+	code, body, raw := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "root"}}`, nil)
+	if code != 200 {
+		t.Fatalf("POST /access/v1/authorize = %d %s, want 200", code, raw)
 	}
-	res1 := r1["result"].(map[string]any)
-	res2 := r2["result"].(map[string]any)
-	if res1["allowed"] != true || res2["allowed"] != true {
-		t.Fatalf("allowed: %v %v", res1, res2)
+	if result, _ := body["result"].(map[string]any); result["allowed"] != true {
+		t.Errorf("POST /access/v1/authorize = %s, want result.allowed true", raw)
 	}
-	if _, hasID := r1["decision_id"]; hasID {
-		t.Fatal("decision_id must be absent when decisions are not logged")
+	if _, hasID := body["decision_id"]; hasID {
+		t.Errorf("POST /access/v1/authorize = %s, want no decision_id when decisions are not logged", raw)
 	}
 }
 
 // TestDecide_BadBodyAndUndefined: a malformed body is a 400 in OPA's error
-// shape, and an undefined document answers 200 with an empty object.
+// shape, and an undefined authorize document answers 200 with an empty
+// object.
 func TestDecide_BadBodyAndUndefined(t *testing.T) {
-	app, _ := newApp(t, false, nil, nil)
-	if code, body, _ := do(t, app, http.MethodPost, "/v1/data/authorize", `{"input": `, nil); code != 400 || body["code"] != "invalid_parameter" {
-		t.Fatalf("bad body: %d %v", code, body)
+	app, _ := newApp(t, nil, nil)
+	if code, body, _ := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": `, nil); code != 400 || body["code"] != "invalid_parameter" {
+		t.Errorf("bad body: %d %v, want 400 invalid_parameter", code, body)
 	}
-	if code, _, raw := do(t, app, http.MethodPost, "/v1/data/nothing", `{}`, nil); code != 200 || raw != "{}" {
-		t.Fatalf("undefined document: %d %s", code, raw)
+	// No module declares package authorize, so the document is undefined.
+	other, _ := newAppWithModules(t, map[string]string{"other.rego": "package other\n"}, nil, nil, nil)
+	if code, _, raw := do(t, other, http.MethodPost, "/access/v1/authorize", `{}`, nil); code != 200 || raw != "{}" {
+		t.Errorf("undefined document: %d %s, want 200 {}", code, raw)
 	}
 }
 
-// TestDataAPI_GuardedByPolicy: without the secret a write and a read are
-// refused with 401 in OPA's shape; with it, PUT stores, GET reads, and the
-// next decision sees the new document. PATCH is what the test policy does
-// not open, so it stays refused even with the secret.
-func TestDataAPI_GuardedByPolicy(t *testing.T) {
-	app, _ := newApp(t, true, nil, nil)
-	if code, body, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "x"}`, nil); code != 401 || body["code"] != "unauthorized" {
-		t.Fatalf("PUT without secret: %d %v", code, body)
+// TestRegister_TheStoreIsNotWritableOverHTTP: the internal surface serves no
+// route that writes a document, so a PUT or a PATCH under /v1/data is 404 and
+// the next decision reads the store as it was.
+func TestRegister_TheStoreIsNotWritableOverHTTP(t *testing.T) {
+	app, _ := newApp(t, nil, nil)
+	writes := map[string]string{
+		http.MethodPut:   `{"admin": "mallory"}`,
+		http.MethodPatch: `[{"op": "replace", "path": "/admin", "value": "mallory"}]`,
 	}
-	if code, _, _ := do(t, app, http.MethodGet, "/v1/data/users", "", nil); code != 401 {
-		t.Fatalf("GET without secret: %d", code)
+	for method, body := range writes {
+		if code, _, raw := do(t, app, method, "/v1/data/users", body, nil); code != 404 {
+			t.Errorf("%s /v1/data/users = %d %s, want 404", method, code, raw)
+		}
 	}
-	auth := map[string]string{"Authorization": "Bearer s3cr3t"}
-	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "alice"}`, auth); code != 204 {
-		t.Fatalf("PUT with secret: %d", code)
-	}
-	if code, body, _ := do(t, app, http.MethodGet, "/v1/data/users", "", auth); code != 200 || body["result"].(map[string]any)["admin"] != "alice" {
-		t.Fatalf("GET after PUT: %d %v", code, body)
-	}
-	if code, body, _ := do(t, app, http.MethodPost, "/v1/data/authorize", `{"input": {"user": "alice"}}`, nil); code != 200 || body["result"].(map[string]any)["allowed"] != true {
-		t.Fatalf("decision after PUT: %d %v", code, body)
-	}
-	if code, _, _ := do(t, app, http.MethodPatch, "/v1/data/authn", `[{"op":"add","path":"/k","value":1}]`, auth); code != 401 {
-		t.Fatalf("PATCH is not allowed by the test policy: %d", code)
+	for user, want := range map[string]bool{"root": true, "mallory": false} {
+		_, body, raw := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "`+user+`"}}`, nil)
+		if result, _ := body["result"].(map[string]any); result["allowed"] != want {
+			t.Errorf("decision for %s after the writes = %s, want result.allowed %t", user, raw, want)
+		}
 	}
 }
 
@@ -278,38 +245,6 @@ func (l *levels) at(level string) []string {
 	return out
 }
 
-// TestDataAPI_ReportsARefusal: a request the guard turns away answers 401 and
-// nothing else, so an operator asked why a caller is refused has only the
-// caller's word for it unless the refusal is reported. It is the policy's
-// verdict rather than a failure of the service, so it is a warning, and a
-// request the same guard admits is not reported at all.
-func TestDataAPI_ReportsARefusal(t *testing.T) {
-	reported := &levels{}
-	app, _ := newAppWithLog(t, true, nil, nil, reported)
-
-	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "x"}`, nil); code != 401 {
-		t.Fatalf("PUT without the secret = %d, want 401", code)
-	}
-	warnings := reported.at("warn")
-	if len(warnings) != 1 {
-		t.Fatalf("a refused PUT reported %v, want one warning", reported.lines)
-	}
-	if !strings.Contains(warnings[0], "method=PUT") || !strings.Contains(warnings[0], "path=/v1/data/users") {
-		t.Errorf("the refusal reported %q, want the method PUT and the path /v1/data/users", warnings[0])
-	}
-	if got := reported.at("error"); len(got) != 0 {
-		t.Errorf("a refused request reported %v at error, want none: the policy decided, nothing failed", got)
-	}
-
-	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/users", `{"admin": "alice"}`,
-		map[string]string{"Authorization": "Bearer s3cr3t"}); code != 204 {
-		t.Fatalf("PUT with the secret = %d, want 204", code)
-	}
-	if got := reported.at("warn"); len(got) != 1 {
-		t.Errorf("after a permitted PUT the warnings are %v, want only the refusal's", got)
-	}
-}
-
 // TestDecide_ReportsTheDecisionAtDebug: the decision is the line a policy
 // author asks for, and it names the document and whether it was defined. It
 // is debug because every request writes one, and it carries neither the
@@ -317,10 +252,10 @@ func TestDataAPI_ReportsARefusal(t *testing.T) {
 // decision log is where they are recorded.
 func TestDecide_ReportsTheDecisionAtDebug(t *testing.T) {
 	reported := &levels{}
-	app, _ := newAppWithLog(t, false, nil, nil, reported)
+	app, _ := newAppWithLog(t, nil, nil, reported)
 
-	if code, _, _ := do(t, app, http.MethodPost, "/v1/data/authorize", `{"input": {"user": "alice"}}`, nil); code != 200 {
-		t.Fatalf("POST /v1/data/authorize = %d, want 200", code)
+	if code, _, _ := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "alice"}}`, nil); code != 200 {
+		t.Fatalf("POST /access/v1/authorize = %d, want 200", code)
 	}
 	debug := reported.at("debug")
 	if len(debug) != 1 {
@@ -334,19 +269,9 @@ func TestDecide_ReportsTheDecisionAtDebug(t *testing.T) {
 	}
 }
 
-// conflictingAuthz fails at evaluation rather than deciding: two complete
-// definitions of allow produce different values for the same request, which
-// OPA reports as a conflict.
-const conflictingAuthz = `package system.authz
-
-import rego.v1
-
-allow := true if input.method != ""
-
-allow := false if input.method != ""
-`
-
-// conflictingPolicies makes the decision itself fail, the same way.
+// conflictingPolicies makes the decision fail at evaluation rather than
+// deciding: two complete definitions of allowed produce different values for
+// the same request, which OPA reports as a conflict.
 const conflictingPolicies = `package authorize
 
 import rego.v1
@@ -356,31 +281,6 @@ allowed := true if input.user != ""
 allowed := false if input.user != ""
 `
 
-// TestDataAPI_ReportsAGuardThatCouldNotBeEvaluated: a guard policy that fails
-// to evaluate is the service's own defect, not the caller's, and the 500 the
-// caller receives says nothing an operator can act on. It is reported as an
-// error, with the request it was evaluated for.
-func TestDataAPI_ReportsAGuardThatCouldNotBeEvaluated(t *testing.T) {
-	reported := &levels{}
-	app, _ := newAppWithModules(t, map[string]string{"authorize.rego": testPolicies, "authz.rego": conflictingAuthz},
-		true, nil, nil, reported)
-
-	code, body, _ := do(t, app, http.MethodGet, "/v1/data/users", "", nil)
-	if code != 500 || body["code"] != "internal_error" {
-		t.Fatalf("GET under a failing guard = %d %v, want 500 internal_error", code, body)
-	}
-	errors := reported.at("error")
-	if len(errors) != 1 {
-		t.Fatalf("a guard that could not be evaluated reported %v, want one error", reported.lines)
-	}
-	if !strings.Contains(errors[0], "method=GET") || !strings.Contains(errors[0], "path=/v1/data/users") {
-		t.Errorf("the failure reported %q, want the method GET and the path /v1/data/users", errors[0])
-	}
-	if got := reported.at("warn"); len(got) != 0 {
-		t.Errorf("a guard that failed reported %v at warn, want none: nothing decided", got)
-	}
-}
-
 // TestDecide_ReportsADecisionThatCouldNotBeEvaluated: a policy that fails to
 // evaluate answers 500, and the decision log records nothing for a decision
 // that was never made, so the error line is the only account of it. A caller
@@ -389,12 +289,11 @@ func TestDecide_ReportsADecisionThatCouldNotBeEvaluated(t *testing.T) {
 	reported := &levels{}
 	for name, log := range map[string]Logger{"a logger was passed": reported, "no logger was passed": nil} {
 		t.Run(name, func(t *testing.T) {
-			app, _ := newAppWithModules(t, map[string]string{"authorize.rego": conflictingPolicies, "authz.rego": testAuthz},
-				false, nil, nil, log)
+			app, _ := newAppWithModules(t, map[string]string{"authorize.rego": conflictingPolicies}, nil, nil, log)
 
-			code, body, _ := do(t, app, http.MethodPost, "/v1/data/authorize", `{"input": {"user": "alice"}}`, nil)
+			code, body, _ := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "alice"}}`, nil)
 			if code != 500 || body["code"] != "internal_error" {
-				t.Fatalf("POST /v1/data/authorize under a failing policy = %d %v, want 500 internal_error", code, body)
+				t.Fatalf("POST /access/v1/authorize under a failing policy = %d %v, want 500 internal_error", code, body)
 			}
 		})
 	}
@@ -404,77 +303,6 @@ func TestDecide_ReportsADecisionThatCouldNotBeEvaluated(t *testing.T) {
 	}
 	if !strings.Contains(errors[0], "path=authorize") {
 		t.Errorf("the failure reported %q, want the path authorize", errors[0])
-	}
-}
-
-// TestDataAPI_ReportsAWriteTheStoreRefused: a write the store cannot apply
-// is the service's own failure, and the caller's 500 carries the store's
-// message but reaches no operator. The document under the refused path is
-// left as it was.
-func TestDataAPI_ReportsAWriteTheStoreRefused(t *testing.T) {
-	reported := &levels{}
-	app, _ := newAppWithLog(t, false, nil, nil, reported)
-
-	if code, _, _ := do(t, app, http.MethodPut, "/v1/data/scalar", `5`, nil); code != 204 {
-		t.Fatalf("PUT /v1/data/scalar = %d, want 204", code)
-	}
-	// A child of a scalar: the store has nothing to hang it under.
-	code, body, _ := do(t, app, http.MethodPut, "/v1/data/scalar/child", `6`, nil)
-	if code != 500 || body["code"] != "internal_error" {
-		t.Fatalf("PUT under a scalar = %d %v, want 500 internal_error", code, body)
-	}
-	errors := reported.at("error")
-	if len(errors) != 1 {
-		t.Fatalf("a refused write reported %v, want one error", reported.lines)
-	}
-	if !strings.Contains(errors[0], "PUT path=scalar/child") {
-		t.Errorf("the failure reported %q, want the method and the path it was written to", errors[0])
-	}
-	if code, body, _ := do(t, app, http.MethodGet, "/v1/data/scalar", "", nil); code != 200 || body["result"] != float64(5) {
-		t.Errorf("GET /v1/data/scalar after the refused write = %d %v, want the document unchanged", code, body)
-	}
-}
-
-// TestDataAPI_WriteSemantics: with the guard off, PATCH on a missing
-// document is 404 so a writer can fall back to PUT, PATCH on an existing one
-// updates it, an unsupported op and a bad body are 400, the root cannot be
-// replaced, and a missing document reads as an empty object.
-func TestDataAPI_WriteSemantics(t *testing.T) {
-	app, _ := newApp(t, false, nil, nil)
-	cases := []struct {
-		name, method, path, body string
-		status                   int
-		code                     string
-	}{
-		{"patch missing document", http.MethodPatch, "/v1/data/authn", `[{"op":"add","path":"/k","value":1}]`, 404, "resource_not_found"},
-		{"patch existing document", http.MethodPatch, "/v1/data/users", `[{"op":"add","path":"/admin","value":"bob"}]`, 204, ""},
-		{"patch with an unsupported op", http.MethodPatch, "/v1/data/users", `[{"op":"move","path":"/admin"}]`, 400, "invalid_parameter"},
-		{"put on the root", http.MethodPut, "/v1/data/", `{}`, 400, "invalid_parameter"},
-		{"put with a bad body", http.MethodPut, "/v1/data/users", `{`, 400, "invalid_parameter"},
-	}
-	for _, tc := range cases {
-		code, body, _ := do(t, app, tc.method, tc.path, tc.body, nil)
-		if code != tc.status || (tc.code != "" && body["code"] != tc.code) {
-			t.Errorf("%s: %d %v, want %d %s", tc.name, code, body, tc.status, tc.code)
-		}
-	}
-	if code, _, raw := do(t, app, http.MethodGet, "/v1/data/missing", "", nil); code != 200 || raw != "{}" {
-		t.Fatalf("GET missing: %d %s", code, raw)
-	}
-}
-
-// TestAuthorize_ExplainIsRefused: query parameters reach the policy as
-// input.params, so ?explain=full on the decision endpoint is refused, on
-// the canonical route as on the data API.
-func TestAuthorize_ExplainIsRefused(t *testing.T) {
-	app, _ := newApp(t, true, nil, nil)
-	for _, path := range []string{"/v1/data/authorize", "/access/v1/authorize"} {
-		if code, _, _ := do(t, app, http.MethodPost, path+"?explain=full", `{"input": {}}`, nil); code != 401 {
-			t.Errorf("POST %s?explain=full = %d, want 401", path, code)
-		}
-		if code, _, _ := do(t, app, http.MethodPost, path+"?metrics=true", `{"input": {}}`, nil); code != 200 {
-			t.Errorf("POST %s?metrics=true = %d, want 200", path, code)
-		}
 	}
 }
 
@@ -499,7 +327,7 @@ func TestDecide_LogsTheDecision(t *testing.T) {
 	logs := decisionlog.New(decisionlog.Config{URL: srv.URL, Headers: []string{"x-request-id"}, FlushInterval: 20 * time.Millisecond}, nil)
 	ctx, cancel := context.WithCancel(context.Background())
 	go logs.Run(ctx)
-	app, _ := newApp(t, false, logs, nil)
+	app, _ := newApp(t, logs, nil)
 	code, body, _ := do(t, app, http.MethodPost, "/access/v1/authorize", `{"input": {"user": "root"}}`, map[string]string{"X-Request-Id": "req-1"})
 	if code != 200 || body["decision_id"] == nil {
 		t.Fatalf("logged decision: %d %v", code, body)
@@ -535,7 +363,7 @@ func TestDecide_LogsTheDecision(t *testing.T) {
 // not built on that path either, which the decision cannot show; the
 // condition is shared with the id, so this is where it would break.
 func TestDecide_WithoutLogging(t *testing.T) {
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
@@ -579,7 +407,7 @@ func TestDecide_WithoutTheBuiltinCache(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go logs.Run(ctx)
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies, "authz.rego": testAuthz}})
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": testPolicies}})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
