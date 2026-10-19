@@ -33,6 +33,12 @@ type TransportOptions struct {
 	// as the request ID and the tracing headers of the request being
 	// decided; nil adds none.
 	Headers func(ctx context.Context) http.Header
+	// Unauthorized runs when a request that carried the token gets a 401
+	// response; nil does nothing. The usual choice is [Writer.Renew], which
+	// replaces a token the service no longer accepts. It runs on the
+	// request's goroutine before the response is returned, and the request
+	// is not sent again.
+	Unauthorized func()
 }
 
 // NewTransport returns a transport that sends a request through base after
@@ -76,6 +82,11 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil, ErrNoToken
 		}
 		out.Header.Set("Authorization", "Bearer "+token)
+		resp, err := t.base.RoundTrip(out)
+		if err == nil && resp.StatusCode == http.StatusUnauthorized && t.opts.Unauthorized != nil {
+			t.opts.Unauthorized()
+		}
+		return resp, err
 	}
 	return t.base.RoundTrip(out)
 }

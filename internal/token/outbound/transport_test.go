@@ -302,3 +302,39 @@ func TestAllowHosts(t *testing.T) {
 		}
 	}
 }
+
+// A 401 says the service refused the token only when the transport added
+// it; the other rows are the controls.
+func TestTransport_ReportsA401ToARequestThatCarriedTheToken(t *testing.T) {
+	tests := []struct {
+		name      string
+		status    int
+		authorize bool
+		header    http.Header
+		want      int
+	}{
+		{"401 to a request with the token", http.StatusUnauthorized, true, nil, 1},
+		{"200 to a request with the token", http.StatusOK, true, nil, 0},
+		{"403 to a request with the token", http.StatusForbidden, true, nil, 0},
+		{"401 to a request with its own Authorization", http.StatusUnauthorized, true,
+			http.Header{"Authorization": {"Bearer caller"}}, 0},
+		{"401 to a host that gets no token", http.StatusUnauthorized, false, nil, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			target := newRecorder(t, func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(tt.status) })
+			var reports int
+			rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{
+				Authorize:    func(*url.URL) bool { return tt.authorize },
+				Unauthorized: func() { reports++ },
+			})
+			send(t, rt, target, tt.header)
+			if reports != tt.want {
+				t.Errorf("Unauthorized calls = %d, want %d", reports, tt.want)
+			}
+			if got := len(target.requests()); got != 1 {
+				t.Errorf("requests at the service = %d, want 1: a refused request is not sent again", got)
+			}
+		})
+	}
+}

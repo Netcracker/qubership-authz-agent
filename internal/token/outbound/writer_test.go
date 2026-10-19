@@ -466,3 +466,133 @@ func TestFromSeconds(t *testing.T) {
 		}
 	}
 }
+
+// waitSignals wraps w.wait so that each wait of Run first sends on the
+// returned channel. A Renew sent after that reaches the wait, rather than
+// the drain that ends a token request.
+func waitSignals(w *Writer) <-chan struct{} {
+	waiting := make(chan struct{}, 4)
+	w.wait = func(ctx context.Context, d time.Duration) bool {
+		waiting <- struct{}{}
+		return w.sleep(ctx, d)
+	}
+	return waiting
+}
+
+func TestWriter_RenewMakesRunRequestATokenAtOnce(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	c := newClock()
+	w.now = c.Now
+	written := make(chan struct{}, 2)
+	w.cfg.Written = func() { written <- struct{}{} }
+	waiting := waitSignals(w)
+	runInBackground(t, w.Run)
+	receive(t, written, "the first token")
+	receive(t, waiting, "Run to wait after the first token")
+	c.advance(30 * time.Second)
+	w.Renew()
+	receive(t, written, "the token Renew asked for")
+	if got := e.count(); got != 2 {
+		t.Errorf("token requests = %d, want 2", got)
+	}
+}
+
+func TestWriter_RenewWaitsUntilTheTokenIs30SecondsOld(t *testing.T) {
+	tests := []struct {
+		name string
+		age  time.Duration
+		want int
+	}{
+		{"29 seconds old", 29 * time.Second, 0},
+		{"30 seconds old", 30 * time.Second, 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+			w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+			c := newClock()
+			w.now = c.Now
+			if _, err := w.Refresh(context.Background()); err != nil {
+				t.Fatalf("Refresh() error = %v", err)
+			}
+			c.advance(tt.age)
+			w.Renew()
+			if got := len(w.renew); got != tt.want {
+				t.Errorf("pending renewals after Renew of a token %s old = %d, want %d", tt.age, got, tt.want)
+			}
+		})
+	}
+}
+
+// The identity provider fails every request. The wait here does not take
+// Renew's requests, so a pending one stays visible until the next attempt
+// drains it.
+func TestWriter_RenewCountsAFailedRequestToo(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	e.failures = 1000
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	c := newClock()
+	w.now = c.Now
+	waiting := make(chan struct{}, 4)
+	proceed := make(chan struct{})
+	w.wait = func(ctx context.Context, _ time.Duration) bool {
+		waiting <- struct{}{}
+		select {
+		case <-proceed:
+			return true
+		case <-ctx.Done():
+			return false
+		}
+	}
+	runInBackground(t, w.Run)
+	receive(t, waiting, "Run to wait after the first failure")
+	c.advance(30 * time.Second)
+	w.Renew()
+	proceed <- struct{}{}
+	receive(t, waiting, "Run to wait after the second failure")
+	w.Renew()
+	if got := len(w.renew); got != 0 {
+		t.Errorf("pending renewals after a Renew right after a failed request = %d, want 0", got)
+	}
+	if got := e.count(); got != 2 {
+		t.Errorf("token requests = %d, want 2", got)
+	}
+}
+
+// The pending renewal stands for a Renew that came while Run was requesting
+// a token: the token it asked to replace is the one just replaced.
+func TestWriter_RunDropsARenewThatCameDuringTheRequest(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	w.renew <- struct{}{}
+	w.wait = func(context.Context, time.Duration) bool { return false }
+	w.Run(context.Background())
+	if got := len(w.renew); got != 0 {
+		t.Errorf("pending renewals after the request = %d, want 0", got)
+	}
+}
+
+func TestWriter_RunsWrittenAfterEachTokenItWrites(t *testing.T) {
+	tests := []struct {
+		name   string
+		status int
+		want   int
+	}{
+		{"token obtained", http.StatusOK, 1},
+		{"request refused", http.StatusUnauthorized, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+			e.status = tt.status
+			w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+			var calls int
+			w.cfg.Written = func() { calls++ }
+			_, _ = w.Refresh(context.Background())
+			if calls != tt.want {
+				t.Errorf("Written calls = %d, want %d", calls, tt.want)
+			}
+		})
+	}
+}

@@ -28,10 +28,10 @@ import (
 const DefaultFileInterval = 15 * time.Second
 
 // FileSource holds the token read from one file. It reads the file again
-// on every interval and keeps the new content when it differs, so a token
-// the kubelet or a [Writer] replaces takes effect without a restart. A
-// missing or empty file leaves the previous token in place. It is safe for
-// concurrent use.
+// on every interval and whenever [FileSource.Reload] asks, and keeps the
+// new content when it differs, so a token the kubelet or a [Writer]
+// replaces takes effect without a restart. A missing or empty file leaves
+// the previous token in place. It is safe for concurrent use.
 type FileSource struct {
 	path     string
 	interval time.Duration
@@ -41,6 +41,8 @@ type FileSource struct {
 	token string
 	ready chan struct{}
 	once  sync.Once
+	// reload holds a pending request from Reload.
+	reload chan struct{}
 }
 
 // NewFileSource returns a source for the file at path, read every
@@ -54,7 +56,7 @@ func NewFileSource(path string, interval time.Duration, log Logger) *FileSource 
 	if log == nil {
 		log = discard{}
 	}
-	return &FileSource{path: path, interval: interval, log: log, ready: make(chan struct{})}
+	return &FileSource{path: path, interval: interval, log: log, ready: make(chan struct{}), reload: make(chan struct{}, 1)}
 }
 
 // Token returns the current token, or "" before the first one is read.
@@ -67,7 +69,8 @@ func (s *FileSource) Token() string {
 // Ready is closed once the source holds its first token.
 func (s *FileSource) Ready() <-chan struct{} { return s.ready }
 
-// Run reads the file at once and then every interval until ctx ends.
+// Run reads the file at once, then every interval and whenever
+// [FileSource.Reload] asks, until ctx ends.
 func (s *FileSource) Run(ctx context.Context) {
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
@@ -77,7 +80,18 @@ func (s *FileSource) Run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+		case <-s.reload:
 		}
+	}
+}
+
+// Reload makes Run read the file now rather than at its next interval, for
+// example right after a [Writer] has written a new token. It does not wait
+// for the read.
+func (s *FileSource) Reload() {
+	select {
+	case s.reload <- struct{}{}:
+	default:
 	}
 }
 

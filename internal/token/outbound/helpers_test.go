@@ -120,3 +120,34 @@ func (l *recordingLogger) all() []string {
 func staticToken(token string) func() string {
 	return func() string { return token }
 }
+
+// clock is a settable time source for Writer.now.
+type clock struct {
+	mu  sync.Mutex
+	now time.Time
+}
+
+func newClock() *clock { return &clock{now: time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)} }
+
+func (c *clock) Now() time.Time {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.now
+}
+
+func (c *clock) advance(d time.Duration) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.now = c.now.Add(d)
+}
+
+// receive waits up to five seconds for a value on ch and fails the test
+// with what when none comes.
+func receive(t *testing.T, ch <-chan struct{}, what string) {
+	t.Helper()
+	select {
+	case <-ch:
+	case <-time.After(5 * time.Second):
+		t.Fatalf("timed out after 5 s waiting for %s", what)
+	}
+}

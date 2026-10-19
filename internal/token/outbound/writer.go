@@ -27,6 +27,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -40,6 +41,11 @@ const (
 	defaultFirstBackoff = 2 * time.Second
 	maxBackoff          = 5 * time.Minute
 )
+
+// minRenewInterval is the shortest time between two token requests that
+// [Writer.Renew] starts, so a service that refuses every token costs at
+// most one token request per 30 seconds.
+const minRenewInterval = 30 * time.Second
 
 // maxTokenResponseBytes bounds the body of a token response, 1 MiB
 // (1048576 bytes).
@@ -64,6 +70,10 @@ type WriterConfig struct {
 	// redirect, so the client secret goes to TokenURL alone and a redirect
 	// fails the request.
 	Client *http.Client
+	// Written runs after each token is written to Path; nil does nothing.
+	// The usual choice is [FileSource.Reload] of the source that reads
+	// Path, so the new token is used at once.
+	Written func()
 }
 
 // Writer obtains a token from an identity provider with the client
@@ -73,9 +83,16 @@ type Writer struct {
 	log Logger
 	// firstBackoff is the pause after the first failed attempt in Run.
 	firstBackoff time.Duration
-	// wait pauses Run for d between two attempts, and reports false when
-	// ctx ends first.
+	// wait pauses Run for d between two attempts, or until Renew asks for a
+	// token, and reports false when ctx ends first.
 	wait func(ctx context.Context, d time.Duration) bool
+	// renew holds a pending request from Renew.
+	renew chan struct{}
+	// requested is when the last token request started, whatever its
+	// outcome, in Unix nanoseconds; zero before the first one.
+	requested atomic.Int64
+	// now is the clock requested and Renew read.
+	now func() time.Time
 }
 
 // NewWriter returns a writer for cfg, or an error when cfg names no token
@@ -105,14 +122,17 @@ func NewWriter(cfg WriterConfig, log Logger) (*Writer, error) {
 	if log == nil {
 		log = discard{}
 	}
-	return &Writer{cfg: cfg, log: log, firstBackoff: defaultFirstBackoff, wait: sleep}, nil
+	w := &Writer{cfg: cfg, log: log, firstBackoff: defaultFirstBackoff, renew: make(chan struct{}, 1), now: time.Now}
+	w.wait = w.sleep
+	return w, nil
 }
 
 // Run keeps a valid token in the file until ctx ends. It requests a token at
 // once, and the next one when 70% of the current token's lifetime has passed,
-// but no sooner than a second later. A failed attempt leaves the previous
-// token in the file and is retried with pauses that double from two seconds
-// up to five minutes.
+// but no sooner than a second later, or as soon as [Writer.Renew] asks. A
+// failed attempt leaves the previous token in the file and is retried with
+// pauses that double from two seconds up to five minutes; Renew can start
+// an attempt sooner.
 func (w *Writer) Run(ctx context.Context) {
 	backoff := w.firstBackoff
 	for {
@@ -128,20 +148,42 @@ func (w *Writer) Run(ctx context.Context) {
 			pause = renewal(lifetime)
 			backoff = w.firstBackoff
 		}
+		// The request that just ended answers a Renew that came during it.
+		select {
+		case <-w.renew:
+		default:
+		}
 		if !w.wait(ctx, pause) {
 			return
 		}
 	}
 }
 
-// sleep waits for d and reports true, or reports false as soon as ctx ends.
-func sleep(ctx context.Context, d time.Duration) bool {
+// Renew asks Run to request a new token at once, as when a service has
+// refused the current one with 401. It does nothing within 30 seconds after
+// the start of the previous token request, whether that request succeeded
+// or failed, and it does not wait for the new token.
+func (w *Writer) Renew() {
+	if w.now().Sub(time.Unix(0, w.requested.Load())) < minRenewInterval {
+		return
+	}
+	select {
+	case w.renew <- struct{}{}:
+	default:
+	}
+}
+
+// sleep waits for d or for a request from Renew and reports true, or
+// reports false as soon as ctx ends.
+func (w *Writer) sleep(ctx context.Context, d time.Duration) bool {
 	timer := time.NewTimer(d)
 	defer timer.Stop()
 	select {
 	case <-ctx.Done():
 		return false
 	case <-timer.C:
+		return true
+	case <-w.renew:
 		return true
 	}
 }
@@ -164,6 +206,7 @@ func renewal(lifetime time.Duration) time.Duration {
 // longer than a Duration can hold, about 292 years, is returned as the
 // longest Duration. On an error the file keeps its previous content.
 func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
+	w.requested.Store(w.now().UnixNano())
 	clientID, err := readSecret(w.cfg.ClientIDFile)
 	if err != nil {
 		return 0, fmt.Errorf("client id: %w", err)
@@ -178,6 +221,9 @@ func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 	}
 	if err := writeAtomically(w.cfg.Path, token); err != nil {
 		return 0, err
+	}
+	if w.cfg.Written != nil {
+		w.cfg.Written()
 	}
 	w.log.Infof("outbound token: wrote a token that lives %s to %s", lifetime.Round(time.Second), w.cfg.Path)
 	return lifetime, nil

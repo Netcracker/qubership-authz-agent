@@ -147,3 +147,14 @@ func mustSymlink(t *testing.T, target, link string) {
 		t.Fatal(err)
 	}
 }
+
+func TestFileSource_ReloadReadsTheFileAtOnce(t *testing.T) {
+	path := inTempDir(t, "token")
+	writeFile(t, path, "tok-1")
+	s := NewFileSource(path, time.Hour, nil)
+	runInBackground(t, s.Run)
+	waitFor(t, "the first token", func() bool { return s.Token() == "tok-1" })
+	writeFile(t, path, "tok-2")
+	s.Reload()
+	waitFor(t, "the token written after the first read", func() bool { return s.Token() == "tok-2" })
+}

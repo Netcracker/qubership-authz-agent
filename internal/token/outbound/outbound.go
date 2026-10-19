@@ -19,7 +19,9 @@
 // it there. A [FileSource] reads the file and follows its changes, and
 // [NewTransport] adds the token, the request ID, and the tracing headers to
 // the requests they are meant for at the transport, below anything a policy
-// can read.
+// can read. When a service answers such a request with 401, the transport
+// calls [TransportOptions.Unauthorized], where [Writer.Renew] requests a new
+// token unless the previous request started less than 30 seconds ago.
 package outbound
 
 import "errors"
