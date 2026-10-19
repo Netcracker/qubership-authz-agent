@@ -15,7 +15,6 @@
 package verify
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -38,14 +37,10 @@ import (
 // start is the time every test begins at.
 var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 
-// fakeKeys is a KeySource that holds its keys in memory and counts the calls
-// to Resolve. onResolve, when set, runs inside every Resolve, standing in
-// for the wait for a reload.
+// fakeKeys is a KeySource that holds its keys in memory.
 type fakeKeys struct {
-	mu        sync.Mutex
-	byKID     map[string]keys.Key
-	resolves  int
-	onResolve func()
+	mu    sync.Mutex
+	byKID map[string]keys.Key
 }
 
 func newFakeKeys(signers ...*signer) *fakeKeys {
@@ -56,28 +51,11 @@ func newFakeKeys(signers ...*signer) *fakeKeys {
 	return f
 }
 
-func (f *fakeKeys) Resolve(_ context.Context, kid string) (keys.Key, bool) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.resolves++
-	if f.onResolve != nil {
-		f.onResolve()
-	}
-	k, ok := f.byKID[kid]
-	return k, ok
-}
-
 func (f *fakeKeys) Lookup(kid string) (keys.Key, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	k, ok := f.byKID[kid]
 	return k, ok
-}
-
-func (f *fakeKeys) resolveCount() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return f.resolves
 }
 
 func (f *fakeKeys) set(key keys.Key) {

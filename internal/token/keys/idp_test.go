@@ -57,7 +57,6 @@ type fakeIdP struct {
 	token     string
 	lastAuth  string
 	discovers int
-	fetches   int
 	// gate, when non-nil, holds every JWKS response until it is closed.
 	gate chan struct{}
 }
@@ -106,7 +105,6 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			body, _ = json.Marshal(map[string]string{"jwks_uri": idp.srv.URL + "/jwks"})
 		}
 	case "/jwks":
-		idp.fetches++
 		gate = idp.gate
 		body = idp.jwks
 		if body == nil {
@@ -140,12 +138,6 @@ func (idp *fakeIdP) setGate(gate chan struct{}) {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
 	idp.gate = gate
-}
-
-func (idp *fakeIdP) jwksFetches() int {
-	idp.mu.Lock()
-	defer idp.mu.Unlock()
-	return idp.fetches
 }
 
 func (idp *fakeIdP) discoveries() int {
@@ -265,37 +257,10 @@ func writeFile(t *testing.T, name, content string) string {
 	return path
 }
 
-// clock is a settable time source for Options.now.
-type clock struct {
-	mu  sync.Mutex
-	now time.Time
-}
-
-func newClock() *clock { return &clock{now: time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)} }
-
-func (c *clock) Now() time.Time {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.now
-}
-
-func (c *clock) advance(d time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.now = c.now.Add(d)
-}
-
 // testOptions has Load retry a failed fetch after 10 ms, doubling the pause
-// each time, for up to two seconds, and measures the reload interval with c.
-func testOptions(c *clock) Options {
-	return Options{StartupTimeout: 2 * time.Second, firstRetryDelay: 10 * time.Millisecond, now: c.Now}
-}
-
-// reloadOptions returns testOptions with ReloadOnUnknownKID set.
-func reloadOptions(c *clock) Options {
-	opts := testOptions(c)
-	opts.ReloadOnUnknownKID = true
-	return opts
+// each time, for up to two seconds.
+func testOptions() Options {
+	return Options{StartupTimeout: 2 * time.Second, firstRetryDelay: 10 * time.Millisecond}
 }
 
 // mustLoad loads providers with opts and stops the test when Load fails.

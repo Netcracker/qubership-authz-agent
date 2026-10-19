@@ -25,7 +25,6 @@ package verify
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -114,9 +113,6 @@ type Token struct {
 
 // KeySource finds a signing key by kid; [*keys.Set] implements it.
 type KeySource interface {
-	// Resolve returns the key published under kid, and may reload the keys
-	// first when kid is unknown.
-	Resolve(ctx context.Context, kid string) (keys.Key, bool)
 	// Lookup returns the key published under kid from the keys already
 	// loaded.
 	Lookup(kid string) (keys.Key, bool)
@@ -182,10 +178,8 @@ func New(source KeySource, opts Options) *Verifier {
 // whatever its claims say.
 //
 // A token verified earlier that has not expired is returned from the cache
-// while the [KeySource] returns the same key for its kid. Verify may wait
-// for the source to reload the keys when the kid is unknown; ctx bounds that
-// wait, and exp, nbf, and iat are checked against the time after that wait.
-func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
+// while the [KeySource] returns the same key for its kid.
+func (v *Verifier) Verify(raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
 	if tok := v.cached(digest, now); tok != nil {
@@ -195,7 +189,7 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	key, ok := v.keys.Resolve(ctx, kid)
+	key, ok := v.keys.Lookup(kid)
 	if !ok {
 		return nil, fail(CodeKIDUnknown, "kid %s is published by no trusted provider", short(kid))
 	}
@@ -211,9 +205,6 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Resolve may have waited for a reload, long enough for the token to
-	// expire, so the clock is read again.
-	now = v.opts.now()
 	expiry, err := checkTimes(claims, now, v.opts.Leeway)
 	if err != nil {
 		return nil, err
@@ -245,8 +236,8 @@ func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 }
 
 // readHeader checks that raw is three base64url parts and returns the alg
-// and the kid of its header. Every check here runs before any key is asked
-// for, so a token that fails one never makes the source reload.
+// and the kid of its header. Every check here runs before any key is looked
+// up.
 func readHeader(raw string) (alg, kid string, err error) {
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {

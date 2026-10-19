@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ import (
 func TestLoad_IndexesEveryProvidersKeysByKID(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "a1", nil))
 	b := newIdP(t, ecJWK(t, "b1", nil))
-	set := mustLoad(t, testOptions(newClock()), issuer("a", a), issuer("b", b))
+	set := mustLoad(t, testOptions(), issuer("a", a), issuer("b", b))
 	for kid, provider := range map[string]string{"a1": "a", "b1": "b"} {
 		key, ok := set.Lookup(kid)
 		if !ok {
@@ -49,7 +48,7 @@ func TestLoad_IndexesEveryProvidersKeysByKID(t *testing.T) {
 
 func TestLoad_JWKSURISkipsDiscovery(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(newClock()), Provider{ID: "k8s", JWKSURI: idp.srv.URL + "/jwks"})
+	set := mustLoad(t, testOptions(), Provider{ID: "k8s", JWKSURI: idp.srv.URL + "/jwks"})
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key served at jwksUri", "k1")
 	}
@@ -76,7 +75,7 @@ func TestLoad_SkipsAKeyThatCannotSignAnAcceptedToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			idp := newIdP(t, ecJWK(t, "control", nil), tt.key)
-			set := mustLoad(t, testOptions(newClock()), issuer("realm", idp))
+			set := mustLoad(t, testOptions(), issuer("realm", idp))
 			if _, ok := set.Lookup("case"); ok {
 				t.Errorf("Lookup(%q) found a key, want it skipped", "case")
 			}
@@ -100,7 +99,7 @@ func TestLoad_AcceptsEverySigningKeyType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			set := mustLoad(t, testOptions(newClock()), issuer("realm", newIdP(t, tt.key)))
+			set := mustLoad(t, testOptions(), issuer("realm", newIdP(t, tt.key)))
 			if _, ok := set.Lookup("k"); !ok {
 				t.Errorf("Lookup(%q) found nothing, want the key", "k")
 			}
@@ -125,7 +124,7 @@ func TestLoad_SkipsAWeakRSAKeyWithTheJWXFloorsLowered(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			set := mustLoad(t, testOptions(newClock()), issuer("realm", newIdP(t, control, tt.key)))
+			set := mustLoad(t, testOptions(), issuer("realm", newIdP(t, control, tt.key)))
 			if _, ok := set.Lookup("case"); ok {
 				t.Errorf("Lookup(%q) found a key, want it skipped", "case")
 			}
@@ -139,7 +138,7 @@ func TestLoad_SkipsAWeakRSAKeyWithTheJWXFloorsLowered(t *testing.T) {
 func TestLoad_AcceptsAJWKSOfExactly1MiB(t *testing.T) {
 	idp := newIdP(t)
 	idp.jwks = paddedJWKS(ecJWK(t, "k1", nil), maxResponseBytes)
-	set := mustLoad(t, testOptions(newClock()), issuer("realm", idp))
+	set := mustLoad(t, testOptions(), issuer("realm", idp))
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key of a JWKS of %d bytes", "k1", maxResponseBytes)
 	}
@@ -169,7 +168,7 @@ func TestLoad_FailsForAProviderWhoseKeysCannotBeRead(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			idp := newIdP(t, ecJWK(t, "k1", nil))
 			tt.setup(t, idp)
-			opts := testOptions(newClock())
+			opts := testOptions()
 			opts.StartupTimeout = 200 * time.Millisecond
 			_, err := Load(context.Background(), Config{Providers: []Provider{issuer("realm", idp)}}, opts)
 			if err == nil || !strings.Contains(err.Error(), `provider "realm"`) {
@@ -181,7 +180,7 @@ func TestLoad_FailsForAProviderWhoseKeysCannotBeRead(t *testing.T) {
 
 func TestLoad_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
 	key := ecJWK(t, "k1", nil)
-	set := mustLoad(t, testOptions(newClock()), issuer("realm", newIdP(t, key, key)))
+	set := mustLoad(t, testOptions(), issuer("realm", newIdP(t, key, key)))
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key listed twice", "k1")
 	}
@@ -190,7 +189,7 @@ func TestLoad_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
 func TestLoad_AKIDTwoProvidersPublishIsRefused(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "shared", nil))
 	b := newIdP(t, ecJWK(t, "shared", nil))
-	_, err := Load(context.Background(), Config{Providers: []Provider{issuer("a", a), issuer("b", b)}}, testOptions(newClock()))
+	_, err := Load(context.Background(), Config{Providers: []Provider{issuer("a", a), issuer("b", b)}}, testOptions())
 	if err == nil || !strings.Contains(err.Error(), `kid "shared"`) {
 		t.Errorf("Load() error = %v, want an error naming kid %q", err, "shared")
 	}
@@ -202,7 +201,7 @@ func TestLoad_FailsWhileAnyProviderStaysDown(t *testing.T) {
 	down1.setStatus(http.StatusServiceUnavailable)
 	down2 := newIdP(t)
 	down2.setStatus(http.StatusServiceUnavailable)
-	opts := testOptions(newClock())
+	opts := testOptions()
 	opts.StartupTimeout = 200 * time.Millisecond
 	providers := []Provider{issuer("up", up), issuer("down-1", down1), issuer("down-2", down2)}
 	_, err := Load(context.Background(), Config{Providers: providers}, opts)
@@ -220,7 +219,7 @@ func TestLoad_ReportsTheLastFailureRatherThanTheTimeout(t *testing.T) {
 	gate := make(chan struct{})
 	idp.setGate(gate)
 	t.Cleanup(func() { close(gate) })
-	opts := testOptions(newClock())
+	opts := testOptions()
 	opts.StartupTimeout = 200 * time.Millisecond
 	_, err := Load(context.Background(), Config{Providers: []Provider{issuer("realm", idp)}}, opts)
 	if err == nil || !strings.Contains(err.Error(), "HTTP 503") {
@@ -231,7 +230,7 @@ func TestLoad_ReportsTheLastFailureRatherThanTheTimeout(t *testing.T) {
 func TestLoad_RetriesAProviderUntilItAnswers(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
 	idp.failures = 2
-	set := mustLoad(t, testOptions(newClock()), issuer("realm", idp))
+	set := mustLoad(t, testOptions(), issuer("realm", idp))
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key served after two failures", "k1")
 	}
@@ -241,7 +240,7 @@ func TestLoad_CAFileTrustsAPrivateCertificate(t *testing.T) {
 	idp := newTLSIdP(t, ecJWK(t, "k1", nil))
 	provider := issuer("realm", idp)
 	provider.CAFile = idp.caFile(t)
-	set := mustLoad(t, testOptions(newClock()), provider)
+	set := mustLoad(t, testOptions(), provider)
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key served over TLS", "k1")
 	}
@@ -249,7 +248,7 @@ func TestLoad_CAFileTrustsAPrivateCertificate(t *testing.T) {
 
 func TestLoad_TheSystemRootsRejectAPrivateCertificate(t *testing.T) {
 	idp := newTLSIdP(t, ecJWK(t, "k1", nil))
-	opts := testOptions(newClock())
+	opts := testOptions()
 	opts.StartupTimeout = 200 * time.Millisecond
 	_, err := Load(context.Background(), Config{Providers: []Provider{issuer("realm", idp)}}, opts)
 	var certErr *tls.CertificateVerificationError
@@ -269,7 +268,7 @@ func TestLoad_RefusesAnUnusableCAFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := issuer("realm", newTLSIdP(t, ecJWK(t, "k1", nil)))
 			provider.CAFile = tt.caFile
-			_, err := Load(context.Background(), Config{Providers: []Provider{provider}}, testOptions(newClock()))
+			_, err := Load(context.Background(), Config{Providers: []Provider{provider}}, testOptions())
 			if err == nil || !strings.Contains(err.Error(), "caFile") {
 				t.Errorf("Load() with caFile %s error = %v, want an error naming caFile", tt.caFile, err)
 			}
@@ -288,7 +287,7 @@ func TestLoad_FailsWithoutAUsableTokenFile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			provider := issuer("k8s", newIdP(t, ecJWK(t, "k1", nil)))
 			provider.TokenFile = tt.tokenFile
-			opts := testOptions(newClock())
+			opts := testOptions()
 			opts.StartupTimeout = 200 * time.Millisecond
 			_, err := Load(context.Background(), Config{Providers: []Provider{provider}}, opts)
 			if err == nil || !strings.Contains(err.Error(), "tokenFile") {
@@ -305,7 +304,7 @@ func TestLoad_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	idp.token = "first"
 	provider := issuer("k8s", idp)
 	provider.TokenFile = writeFile(t, "token", "first\n")
-	set := mustLoad(t, testOptions(newClock()), provider)
+	set := mustLoad(t, testOptions(), provider)
 	if got := idp.authorization(); got != "Bearer first" {
 		t.Errorf("Authorization at Load = %q, want %q", got, "Bearer first")
 	}
@@ -342,7 +341,7 @@ func TestLoad_DoesNotFollowARedirectWithTheToken(t *testing.T) {
 			t.Cleanup(redirecting.Close)
 			provider := tt.provider(redirecting.URL)
 			provider.TokenFile = writeFile(t, "token", "sa-token")
-			opts := testOptions(newClock())
+			opts := testOptions()
 			opts.StartupTimeout = 200 * time.Millisecond
 			_, err := Load(context.Background(), Config{Providers: []Provider{provider}}, opts)
 			if err == nil || !strings.Contains(err.Error(), "HTTP 302") {
@@ -377,7 +376,7 @@ func TestAcceptsAlgorithm(t *testing.T) {
 
 func TestKey_Allows(t *testing.T) {
 	idp := newIdP(t, rsaJWK(t, 2048, "declared", nil), rsaJWK(t, 2048, "undeclared", map[string]any{"alg": nil}))
-	set := mustLoad(t, testOptions(newClock()), issuer("realm", idp))
+	set := mustLoad(t, testOptions(), issuer("realm", idp))
 	tests := []struct {
 		kid, alg string
 		want     bool
@@ -400,148 +399,10 @@ func TestKey_Allows(t *testing.T) {
 	}
 }
 
-// The provider rotates a key in after Load, and Lookup checks that it is
-// not loaded yet. The interval has passed, so only ReloadOnUnknownKID
-// decides whether Resolve reloads.
-func TestResolve_ReloadsForAnUnknownKIDOnlyWithReloadOnUnknownKID(t *testing.T) {
-	tests := []struct {
-		name        string
-		reload      bool
-		wantFound   bool
-		wantFetches int
-	}{
-		{"ReloadOnUnknownKID set", true, true, 2},
-		{"ReloadOnUnknownKID unset (default)", false, false, 1},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := newClock()
-			idp := newIdP(t, ecJWK(t, "old", nil))
-			opts := testOptions(c)
-			opts.ReloadOnUnknownKID = tt.reload
-			set := mustLoad(t, opts, issuer("realm", idp))
-			idp.publish(ecJWK(t, "old", nil), ecJWK(t, "rotated", nil))
-			c.advance(DefaultUnknownKeyInterval)
-			if _, ok := set.Lookup("rotated"); ok {
-				t.Fatalf("Lookup(%q) found a key before any reload", "rotated")
-			}
-			if _, found := set.Resolve(context.Background(), "rotated"); found != tt.wantFound {
-				t.Errorf("Resolve(%q) found = %t, want %t", "rotated", found, tt.wantFound)
-			}
-			if got := idp.jwksFetches(); got != tt.wantFetches {
-				t.Errorf("JWKS fetches = %d, want %d", got, tt.wantFetches)
-			}
-		})
-	}
-}
-
-func TestResolve_FindsALoadedKIDWithoutAReload(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
-	c.advance(DefaultUnknownKeyInterval)
-	if _, ok := set.Resolve(context.Background(), "k1"); !ok {
-		t.Errorf("Resolve(%q) found nothing, want the key Load fetched", "k1")
-	}
-	if got := idp.jwksFetches(); got != 1 {
-		t.Errorf("JWKS fetches = %d, want 1: the one Load made", got)
-	}
-}
-
-func TestResolve_DoesNotReloadWithinTheIntervalAfterLoad(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
-	c.advance(DefaultUnknownKeyInterval - time.Second)
-	if _, ok := set.Resolve(context.Background(), "unknown"); ok {
-		t.Errorf("Resolve(%q) found a key, want none", "unknown")
-	}
-	if got := idp.jwksFetches(); got != 1 {
-		t.Errorf("JWKS fetches = %d, want 1: the one Load made", got)
-	}
-}
-
-func TestResolve_DoesNotReloadWithinTheIntervalAfterAReloadItStarted(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
-	c.advance(DefaultUnknownKeyInterval)
-	set.Resolve(context.Background(), "unknown-1")
-	c.advance(DefaultUnknownKeyInterval - time.Second)
-	set.Resolve(context.Background(), "unknown-2")
-	if got := idp.jwksFetches(); got != 2 {
-		t.Errorf("JWKS fetches = %d, want 2: one by Load and one by the first Resolve", got)
-	}
-}
-
-func TestResolve_ReloadsOnceTheIntervalHasPassed(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
-	c.advance(DefaultUnknownKeyInterval)
-	set.Resolve(context.Background(), "unknown")
-	if got := idp.jwksFetches(); got != 2 {
-		t.Errorf("JWKS fetches = %d, want 2: one by Load and one by Resolve", got)
-	}
-}
-
-func TestResolve_ConcurrentUnknownKIDsShareOneReload(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
-	idp.publish(ecJWK(t, "k1", nil), ecJWK(t, "k2", nil))
-	gate := make(chan struct{})
-	idp.setGate(gate)
-	c.advance(DefaultUnknownKeyInterval)
-
-	const callers = 8
-	found := make([]bool, callers)
-	var wg sync.WaitGroup
-	for i := range callers {
-		wg.Go(func() { _, found[i] = set.Resolve(context.Background(), "k2") })
-	}
-	waitFor(t, "the reload to reach the provider", func() bool { return idp.jwksFetches() == 2 })
-	close(gate)
-	wg.Wait()
-
-	if got := idp.jwksFetches(); got != 2 {
-		t.Errorf("JWKS fetches = %d, want 2: one by Load and one shared by %d callers", got, callers)
-	}
-	for i, ok := range found {
-		if !ok {
-			t.Errorf("Resolve(%q) in caller %d found nothing, want the key the shared reload fetched", "k2", i)
-		}
-	}
-}
-
-func TestResolve_ACancelledCallerLeavesTheReloadRunning(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
-	idp.publish(ecJWK(t, "k1", nil), ecJWK(t, "k2", nil))
-	gate := make(chan struct{})
-	idp.setGate(gate)
-	c.advance(DefaultUnknownKeyInterval)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	result := make(chan bool)
-	go func() {
-		_, ok := set.Resolve(ctx, "k2")
-		result <- ok
-	}()
-	waitFor(t, "the reload to reach the provider", func() bool { return idp.jwksFetches() == 2 })
-	cancel()
-	if <-result {
-		t.Errorf("Resolve(%q) with a cancelled context found a key, want none", "k2")
-	}
-	close(gate)
-	waitFor(t, "the reload to load k2", func() bool { _, ok := set.Lookup("k2"); return ok })
-}
-
 func TestRefresh_AProviderThatFailsKeepsItsKeys(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "a-old", nil))
 	b := newIdP(t, ecJWK(t, "b-old", nil))
-	set := mustLoad(t, testOptions(newClock()), issuer("a", a), issuer("b", b))
+	set := mustLoad(t, testOptions(), issuer("a", a), issuer("b", b))
 	a.publish(ecJWK(t, "a-new", nil))
 	b.setStatus(http.StatusServiceUnavailable)
 
@@ -559,7 +420,7 @@ func TestRefresh_AProviderThatFailsKeepsItsKeys(t *testing.T) {
 func TestRefresh_AKIDCollisionKeepsEveryPreviousKey(t *testing.T) {
 	a := newIdP(t, ecJWK(t, "shared", nil))
 	b := newIdP(t, ecJWK(t, "b-old", nil))
-	set := mustLoad(t, testOptions(newClock()), issuer("a", a), issuer("b", b))
+	set := mustLoad(t, testOptions(), issuer("a", a), issuer("b", b))
 	a.publish(ecJWK(t, "shared", nil), ecJWK(t, "a-new", nil))
 	b.publish(ecJWK(t, "shared", nil), ecJWK(t, "b-new", nil))
 
@@ -579,7 +440,7 @@ func TestRefresh_AKIDCollisionKeepsEveryPreviousKey(t *testing.T) {
 
 func TestRun_ReloadsOnTheInterval(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "old", nil))
-	opts := testOptions(newClock())
+	opts := testOptions()
 	opts.RefreshInterval = 20 * time.Millisecond
 	set := mustLoad(t, opts, issuer("realm", idp))
 	idp.publish(ecJWK(t, "new", nil))

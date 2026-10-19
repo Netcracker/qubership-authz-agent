@@ -18,11 +18,10 @@
 // else about it.
 //
 // [ReadConfig] reads the trusted providers file. [Load] fetches every
-// provider's keys and fails unless all of them arrive. [Set.Lookup] and
-// [Set.Resolve] find a key by kid; with [Options.ReloadOnUnknownKID] set,
-// Resolve also reloads the keys when the kid is unknown. [Set.Run] reloads
-// them on a fixed interval. A reload that fails for a provider keeps the
-// keys already loaded for it.
+// provider's keys and fails unless all of them arrive. [Set.Lookup] finds a
+// key by kid. [Set.Run] reloads the keys on a fixed interval, so a key a
+// provider rotates in is found after the next reload or a restart. A reload
+// that fails for a provider keeps the keys already loaded for it.
 package keys
 
 import (
@@ -39,10 +38,9 @@ import (
 
 // Defaults of [Options].
 const (
-	DefaultHTTPTimeout        = 5 * time.Second
-	DefaultStartupTimeout     = time.Minute
-	DefaultRefreshInterval    = 24 * time.Hour
-	DefaultUnknownKeyInterval = 5 * time.Minute
+	DefaultHTTPTimeout     = 5 * time.Second
+	DefaultStartupTimeout  = time.Minute
+	DefaultRefreshInterval = 24 * time.Hour
 )
 
 // The pauses between two attempts in Load start at defaultFirstRetryDelay
@@ -68,23 +66,12 @@ type Options struct {
 	StartupTimeout time.Duration
 	// RefreshInterval is how often [Set.Run] reloads the keys.
 	RefreshInterval time.Duration
-	// ReloadOnUnknownKID makes [Set.Resolve] reload the keys when no
-	// provider published the kid it is asked for, so a key a provider
-	// rotated in is found before the next reload of [Set.Run]. When it is
-	// unset, Resolve sends no request for an unknown kid and finds a rotated
-	// key only after the next reload or a restart.
-	ReloadOnUnknownKID bool
-	// UnknownKeyInterval is the shortest time between a reload and the next
-	// one an unknown kid starts in [Set.Resolve] with ReloadOnUnknownKID set.
-	UnknownKeyInterval time.Duration
 	// Log receives the diagnostics; nil discards them.
 	Log Logger
 
 	// firstRetryDelay is the pause after the first failed attempt in Load;
 	// each later pause doubles, up to maxRetryDelay.
 	firstRetryDelay time.Duration
-	// now is the clock UnknownKeyInterval is measured with.
-	now func() time.Time
 }
 
 func (o Options) withDefaults() Options {
@@ -97,17 +84,11 @@ func (o Options) withDefaults() Options {
 	if o.RefreshInterval <= 0 {
 		o.RefreshInterval = DefaultRefreshInterval
 	}
-	if o.UnknownKeyInterval <= 0 {
-		o.UnknownKeyInterval = DefaultUnknownKeyInterval
-	}
 	if o.Log == nil {
 		o.Log = discard{}
 	}
 	if o.firstRetryDelay <= 0 {
 		o.firstRetryDelay = defaultFirstRetryDelay
-	}
-	if o.now == nil {
-		o.now = time.Now
 	}
 	return o
 }
@@ -164,12 +145,6 @@ type Set struct {
 
 	// reloading serializes Refresh.
 	reloading sync.Mutex
-
-	mu         sync.Mutex
-	lastReload time.Time
-	// inflight is closed when the reload an unknown kid started ends; nil
-	// while none runs.
-	inflight chan struct{}
 }
 
 // snapshot is one consistent generation of the keys; a reload replaces it
@@ -220,7 +195,6 @@ func Load(ctx context.Context, cfg Config, opts Options) (*Set, error) {
 		return nil, err
 	}
 	s.current.Store(snap)
-	s.lastReload = opts.now()
 	return s, nil
 }
 
@@ -276,63 +250,6 @@ func (s *Set) Lookup(kid string) (Key, bool) {
 	return k, ok
 }
 
-// Resolve returns the key published under kid. When no provider published
-// it and [Options.ReloadOnUnknownKID] is unset, Resolve reports false at
-// once. With the option set, Resolve waits for a reload of every
-// provider's keys and looks again: the reload another call already
-// started, or one it starts when the previous reload began at least
-// [Options.UnknownKeyInterval] ago; otherwise it reports false at once.
-// The wait ends early when ctx ends; the reload itself carries on.
-func (s *Set) Resolve(ctx context.Context, kid string) (Key, bool) {
-	if k, ok := s.Lookup(kid); ok {
-		return k, true
-	}
-	if !s.opts.ReloadOnUnknownKID {
-		return Key{}, false
-	}
-	done := s.reloadForUnknownKID(kid)
-	if done == nil {
-		return Key{}, false
-	}
-	select {
-	case <-done:
-	case <-ctx.Done():
-		return Key{}, false
-	}
-	return s.Lookup(kid)
-}
-
-// reloadForUnknownKID returns a channel closed when the reload ends: the one
-// already running, or one it starts. It returns nil when the interval since
-// the previous reload is too short.
-func (s *Set) reloadForUnknownKID(kid string) <-chan struct{} {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.inflight != nil {
-		return s.inflight
-	}
-	if s.opts.now().Sub(s.lastReload) < s.opts.UnknownKeyInterval {
-		return nil
-	}
-	done := make(chan struct{})
-	s.inflight = done
-	go func() {
-		defer func() {
-			s.mu.Lock()
-			s.inflight = nil
-			s.mu.Unlock()
-			close(done)
-		}()
-		s.opts.Log.Infof("trusted providers: kid %q is unknown; reloading the keys", kid)
-		// The reload outlives the request that asked for it, so it does not
-		// take the request's context; HTTPTimeout bounds each fetch.
-		if err := s.Refresh(context.Background()); err != nil {
-			s.opts.Log.Warnf("trusted providers: reload: %v", err)
-		}
-	}()
-	return done
-}
-
 // Refresh fetches the keys of every provider once and replaces the loaded
 // keys with them. A provider whose fetch fails keeps its previous keys, and
 // its error is part of the returned one. When the new keys of two providers
@@ -340,9 +257,6 @@ func (s *Set) reloadForUnknownKID(kid string) <-chan struct{} {
 func (s *Set) Refresh(ctx context.Context) error {
 	s.reloading.Lock()
 	defer s.reloading.Unlock()
-	s.mu.Lock()
-	s.lastReload = s.opts.now()
-	s.mu.Unlock()
 
 	old := s.current.Load()
 	results := make([][]Key, len(s.fetchers))

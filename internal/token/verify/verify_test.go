@@ -15,7 +15,6 @@
 package verify
 
 import (
-	"context"
 	"encoding/json"
 	"reflect"
 	"strings"
@@ -40,7 +39,7 @@ func TestVerify_ReturnsTheClaimsOfAValidToken(t *testing.T) {
 		"realm_access": map[string]any{"roles": []string{"admin"}},
 	})
 
-	tok, err := v.Verify(context.Background(), raw)
+	tok, err := v.Verify(raw)
 	if err != nil {
 		t.Fatalf("Verify() error = %v", err)
 	}
@@ -72,7 +71,7 @@ func TestVerify_AcceptsEveryKeyType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(tt.signer))
-			if _, err := v.Verify(context.Background(), tt.signer.sign(t, claimsAt(start, nil))); err != nil {
+			if _, err := v.Verify(tt.signer.sign(t, claimsAt(start, nil))); err != nil {
 				t.Errorf("Verify() error = %v, want none", err)
 			}
 		})
@@ -108,7 +107,7 @@ func TestVerify_RefusesAMalformedToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(context.Background(), tt.raw)
+			_, err := v.Verify(tt.raw)
 			if codeOf(err) != CodeFormatInvalid {
 				t.Errorf("Verify() error = %v, want code %s", err, CodeFormatInvalid)
 			}
@@ -133,7 +132,7 @@ func TestVerify_RefusesAHeaderThatNamesNoUsableKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(context.Background(), tt.raw)
+			_, err := v.Verify(tt.raw)
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
@@ -159,7 +158,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(context.Background(), tt.raw)
+			_, err := v.Verify(tt.raw)
 			if codeOf(err) != tt.want {
 				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
 			}
@@ -170,11 +169,10 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}
 }
 
-// A source may reload its keys when asked for an unknown kid, as *keys.Set
-// does with ReloadOnUnknownKID set, so a token refused on its form or its
-// algorithm must not cost that reload. Every kid here is unknown to the
-// source.
-func TestVerify_RefusesWithoutAskingForAKey(t *testing.T) {
+// The header and the form are checked before the key: every kid here is
+// unknown to the source, and each token gets the code of its header or
+// form, not TOKEN_KID_UNKNOWN.
+func TestVerify_RefusesOnTheHeaderBeforeLookingUpTheKID(t *testing.T) {
 	header := segment(t, map[string]any{"alg": "ES256", "kid": "random"})
 	tests := []struct {
 		name string
@@ -190,12 +188,9 @@ func TestVerify_RefusesWithoutAskingForAKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			source := newFakeKeys()
 			v, _ := newVerifier(source)
-			_, err := v.Verify(context.Background(), tt.raw)
+			_, err := v.Verify(tt.raw)
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
-			}
-			if got := source.resolveCount(); got != 0 {
-				t.Errorf("Resolve calls = %d, want 0", got)
 			}
 		})
 	}
@@ -221,7 +216,7 @@ func TestVerify_RefusesATokenWhoseSignatureDoesNotVerify(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(trusted))
-			_, err := v.Verify(context.Background(), tt.raw)
+			_, err := v.Verify(tt.raw)
 			if codeOf(err) != CodeSignatureInvalid {
 				t.Errorf("Verify() error = %v, want code %s", err, CodeSignatureInvalid)
 			}
@@ -250,24 +245,11 @@ func TestVerify_RefusesATokenOutsideItsLifetime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, tt.fields)))
+			_, err := v.Verify(s.sign(t, claimsAt(start, tt.fields)))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
 		})
-	}
-}
-
-// Finding the key can wait for a reload; the token expires during that
-// wait, beyond the leeway, and the claims are checked after it.
-func TestVerify_ChecksTheLifetimeAtTheTimeTheKeyIsFound(t *testing.T) {
-	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	source := newFakeKeys(s)
-	v, c := newVerifier(source)
-	source.onResolve = func() { c.advance(time.Minute + DefaultLeeway + time.Second) }
-	_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(time.Minute).Unix()})))
-	if codeOf(err) != CodeExpired {
-		t.Errorf("Verify() error = %v, want code %s", err, CodeExpired)
 	}
 }
 
@@ -285,7 +267,7 @@ func TestVerify_ToleratesTheLeewayAroundItsLifetime(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
-			if _, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, tt.fields))); err != nil {
+			if _, err := v.Verify(s.sign(t, claimsAt(start, tt.fields))); err != nil {
 				t.Errorf("Verify() error = %v, want none", err)
 			}
 		})
@@ -295,7 +277,7 @@ func TestVerify_ToleratesTheLeewayAroundItsLifetime(t *testing.T) {
 func TestVerify_AcceptsAnExpAtTheLargestExactSecond(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	v, _ := newVerifier(newFakeKeys(s))
-	if _, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"exp": int64(1)<<53 - 1}))); err != nil {
+	if _, err := v.Verify(s.sign(t, claimsAt(start, map[string]any{"exp": int64(1)<<53 - 1}))); err != nil {
 		t.Errorf("Verify() with exp 9007199254740991 error = %v, want none", err)
 	}
 }
@@ -319,7 +301,7 @@ func TestVerify_RefusesAnAudienceTheProviderDoesNotList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
+			_, err := v.Verify(s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
@@ -344,40 +326,42 @@ func TestVerify_AcceptsAnAudienceTheProviderAllows(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", tt.provider)
 			v, _ := newVerifier(newFakeKeys(s))
-			if _, err := v.Verify(context.Background(), s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud}))); err != nil {
+			if _, err := v.Verify(s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud}))); err != nil {
 				t.Errorf("Verify() error = %v, want none", err)
 			}
 		})
 	}
 }
 
+// mustVerify verifies raw and stops the test when Verify fails.
+func mustVerify(t *testing.T, v *Verifier, raw string) *Token {
+	t.Helper()
+	tok, err := v.Verify(raw)
+	if err != nil {
+		t.Fatalf("Verify() error = %v", err)
+	}
+	return tok
+}
+
+// A token served from the cache is the *Token an earlier Verify returned;
+// a token checked again is a new one.
 func TestVerify_ServesARepeatedTokenFromTheCache(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	source := newFakeKeys(s)
-	v, _ := newVerifier(source)
+	v, _ := newVerifier(newFakeKeys(s))
 	raw := s.sign(t, claimsAt(start, nil))
-	for range 2 {
-		if _, err := v.Verify(context.Background(), raw); err != nil {
-			t.Fatalf("Verify() error = %v", err)
-		}
-	}
-	if got := source.resolveCount(); got != 1 {
-		t.Errorf("Resolve calls = %d, want 1: the second Verify is served from the cache", got)
+	first := mustVerify(t, v, raw)
+	if again := mustVerify(t, v, raw); again != first {
+		t.Errorf("second Verify returned a new token, want the cached one")
 	}
 }
 
 func TestVerify_WithTheCacheOffChecksEveryTime(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	source := newFakeKeys(s)
-	v := New(source, Options{CacheSize: -1, now: func() time.Time { return start }})
+	v := New(newFakeKeys(s), Options{CacheSize: -1, now: func() time.Time { return start }})
 	raw := s.sign(t, claimsAt(start, nil))
-	for range 2 {
-		if _, err := v.Verify(context.Background(), raw); err != nil {
-			t.Fatalf("Verify() error = %v", err)
-		}
-	}
-	if got := source.resolveCount(); got != 2 {
-		t.Errorf("Resolve calls = %d, want 2", got)
+	first := mustVerify(t, v, raw)
+	if again := mustVerify(t, v, raw); again == first {
+		t.Errorf("second Verify returned the first token, want a new check")
 	}
 }
 
@@ -386,30 +370,24 @@ func TestVerify_RefusesACachedTokenWhoseKeyIsGone(t *testing.T) {
 	source := newFakeKeys(s)
 	v, _ := newVerifier(source)
 	raw := s.sign(t, claimsAt(start, nil))
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() error = %v", err)
-	}
+	mustVerify(t, v, raw)
 	source.remove("k1")
-	_, err := v.Verify(context.Background(), raw)
+	_, err := v.Verify(raw)
 	if codeOf(err) != CodeKIDUnknown {
 		t.Errorf("Verify() after the key is gone error = %v, want code %s", err, CodeKIDUnknown)
 	}
 }
 
+// A reload that fetches the same JWKS again yields a new key value.
 func TestVerify_ChecksACachedTokenAgainAfterItsKeyIsReloaded(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	source := newFakeKeys(s)
 	v, _ := newVerifier(source)
 	raw := s.sign(t, claimsAt(start, nil))
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() error = %v", err)
-	}
+	first := mustVerify(t, v, raw)
 	source.set(s.republished(t))
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() after the reload error = %v", err)
-	}
-	if got := source.resolveCount(); got != 2 {
-		t.Errorf("Resolve calls = %d, want 2: the reloaded key is a new value", got)
+	if again := mustVerify(t, v, raw); again == first {
+		t.Errorf("Verify after the reload returned the cached token, want a new check")
 	}
 }
 
@@ -418,34 +396,22 @@ func TestVerify_AFullCacheRefreshesATokenWhoseKeyWasReloaded(t *testing.T) {
 	source := newFakeKeys(s)
 	v := New(source, Options{CacheSize: 1, now: func() time.Time { return start }})
 	raw := s.sign(t, claimsAt(start, nil))
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() error = %v", err)
-	}
+	mustVerify(t, v, raw)
 	source.set(s.republished(t))
-	for range 2 {
-		if _, err := v.Verify(context.Background(), raw); err != nil {
-			t.Fatalf("Verify() after the reload error = %v", err)
-		}
-	}
-	if got := source.resolveCount(); got != 2 {
-		t.Errorf("Resolve calls = %d, want 2: the check after the reload refreshes the full cache's entry", got)
+	rechecked := mustVerify(t, v, raw)
+	if again := mustVerify(t, v, raw); again != rechecked {
+		t.Errorf("Verify after the recheck returned a new token, want the refreshed cache entry")
 	}
 }
 
 func TestVerify_ServesACachedTokenWithinTheLeewayAfterExp(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	source := newFakeKeys(s)
-	v, c := newVerifier(source)
+	v, c := newVerifier(newFakeKeys(s))
 	raw := s.sign(t, claimsAt(start, nil))
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() error = %v", err)
-	}
+	first := mustVerify(t, v, raw)
 	c.advance(time.Hour + DefaultLeeway - time.Second)
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() within the leeway error = %v", err)
-	}
-	if got := source.resolveCount(); got != 1 {
-		t.Errorf("Resolve calls = %d, want 1: the second Verify is served from the cache", got)
+	if again := mustVerify(t, v, raw); again != first {
+		t.Errorf("Verify within the leeway returned a new token, want the cached one")
 	}
 }
 
@@ -453,51 +419,42 @@ func TestVerify_RefusesACachedTokenOnceItExpires(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	v, c := newVerifier(newFakeKeys(s))
 	raw := s.sign(t, claimsAt(start, nil))
-	if _, err := v.Verify(context.Background(), raw); err != nil {
-		t.Fatalf("Verify() error = %v", err)
-	}
+	mustVerify(t, v, raw)
 	c.advance(time.Hour + DefaultLeeway)
-	_, err := v.Verify(context.Background(), raw)
+	_, err := v.Verify(raw)
 	if codeOf(err) != CodeExpired {
 		t.Errorf("Verify() after exp error = %v, want code %s", err, CodeExpired)
 	}
 }
 
+// The cache holds one token: the first stays cached, and the second is
+// checked anew every time.
 func TestVerify_AFullCacheKeepsNoNewToken(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	source := newFakeKeys(s)
-	c := &clock{now: start}
-	v := New(source, Options{CacheSize: 1, now: c.Now})
+	v := New(newFakeKeys(s), Options{CacheSize: 1, now: func() time.Time { return start }})
 	first := s.sign(t, claimsAt(start, map[string]any{"sub": "first"}))
 	second := s.sign(t, claimsAt(start, map[string]any{"sub": "second"}))
-	for _, raw := range []string{first, second, second, first} {
-		if _, err := v.Verify(context.Background(), raw); err != nil {
-			t.Fatalf("Verify() error = %v", err)
-		}
+	cached := mustVerify(t, v, first)
+	checked := mustVerify(t, v, second)
+	if again := mustVerify(t, v, second); again == checked {
+		t.Errorf("Verify(second) returned the same token twice, want a new check each time")
 	}
-	if got := source.resolveCount(); got != 3 {
-		t.Errorf("Resolve calls = %d, want 3: the first token cached, the second checked twice", got)
+	if again := mustVerify(t, v, first); again != cached {
+		t.Errorf("Verify(first) returned a new token, want the cached one")
 	}
 }
 
 func TestVerify_AFullCacheReplacesAnExpiredToken(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	source := newFakeKeys(s)
 	c := &clock{now: start}
-	v := New(source, Options{CacheSize: 1, now: c.Now})
+	v := New(newFakeKeys(s), Options{CacheSize: 1, now: c.Now})
 	short := s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(time.Minute).Unix()}))
 	long := s.sign(t, claimsAt(start, nil))
-	if _, err := v.Verify(context.Background(), short); err != nil {
-		t.Fatalf("Verify(short) error = %v", err)
-	}
+	mustVerify(t, v, short)
 	c.advance(time.Minute + DefaultLeeway)
-	for range 2 {
-		if _, err := v.Verify(context.Background(), long); err != nil {
-			t.Fatalf("Verify(long) error = %v", err)
-		}
-	}
-	if got := source.resolveCount(); got != 2 {
-		t.Errorf("Resolve calls = %d, want 2: the long token took the expired one's place", got)
+	first := mustVerify(t, v, long)
+	if again := mustVerify(t, v, long); again != first {
+		t.Errorf("second Verify(long) returned a new token, want the one that took the expired token's place")
 	}
 }
 
@@ -511,7 +468,7 @@ func TestVerify_IsSafeForConcurrentUse(t *testing.T) {
 	errs := make([]error, 16)
 	var wg sync.WaitGroup
 	for i := range errs {
-		wg.Go(func() { _, errs[i] = v.Verify(context.Background(), tokens[i%len(tokens)]) })
+		wg.Go(func() { _, errs[i] = v.Verify(tokens[i%len(tokens)]) })
 	}
 	wg.Wait()
 	for i, err := range errs {
