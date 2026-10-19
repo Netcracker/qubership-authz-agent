@@ -206,7 +206,7 @@ func TestServe_FailsOnAnAddressInUse(t *testing.T) {
 			// deadline, and report the shutdown rather than the failure.
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			if failed := serve(ctx, cancel, decisionlog.New(decisionlog.Config{}, nil), cfg, 1, fiber.New(), fiber.New()); !failed {
+			if !serve(ctx, cancel, decisionlog.New(decisionlog.Config{}, nil), cfg, 1, fiber.New(), fiber.New()) {
 				t.Errorf("serve(public %s, internal %s) = false, want the failed start", cfg.PublicAddr, cfg.Addr)
 			}
 			socket, err := net.Listen("tcp", other)
