@@ -77,6 +77,9 @@ const (
 	// CodeAudienceInvalid marks a token whose aud names none of the
 	// provider's audiences, or is neither a string nor an array of strings.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
+	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
+	// service does not accept, or one that names no namespace.
+	CodeNamespaceNotAllowed Code = "TOKEN_NAMESPACE_NOT_ALLOWED"
 )
 
 // Error is the reason a token was refused.
@@ -132,6 +135,12 @@ type Options struct {
 	// CacheSize is the largest number of verified tokens the cache keeps; a
 	// negative value turns the cache off.
 	CacheSize int
+	// Admit, when set, runs on every token Verify is about to return,
+	// verified now or taken from the cache, and the *Error it returns
+	// refuses the token. It holds the checks whose answer can change while
+	// a token stays cached, such as the namespaces a Kubernetes token may
+	// come from.
+	Admit func(*Token) *Error
 
 	// now is the clock the claims are checked against.
 	now func() time.Time
@@ -177,14 +186,30 @@ func New(source KeySource, opts Options) *Verifier {
 // verifies, so a forged token is refused with [CodeSignatureInvalid]
 // whatever its claims say.
 //
-// A token verified earlier that has not expired is returned from the cache
-// while the [KeySource] returns the same key for its kid.
+// A token verified earlier that has not expired is served from the cache,
+// as the *Token the earlier call returned, while the [KeySource] returns the
+// same key for its kid. [Options.Admit] then runs on the token either way.
 func (v *Verifier) Verify(raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
-	if tok := v.cached(digest, now); tok != nil {
-		return tok, nil
+	tok := v.cached(digest, now)
+	if tok == nil {
+		var err error
+		if tok, err = v.check(raw, digest, now); err != nil {
+			return nil, err
+		}
 	}
+	if v.opts.Admit != nil {
+		if err := v.opts.Admit(tok); err != nil {
+			return nil, err
+		}
+	}
+	return tok, nil
+}
+
+// check verifies raw, whose SHA-256 digest is digest, at now and caches the
+// token it returns.
+func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*Token, error) {
 	alg, kid, err := readHeader(raw)
 	if err != nil {
 		return nil, err

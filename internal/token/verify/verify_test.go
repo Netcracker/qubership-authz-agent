@@ -477,3 +477,49 @@ func TestVerify_IsSafeForConcurrentUse(t *testing.T) {
 		}
 	}
 }
+
+func TestVerify_RunsAdmitOnAFreshlyVerifiedToken(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error {
+		return &Error{Code: CodeNamespaceNotAllowed}
+	}})
+	if _, err := v.Verify(s.sign(t, claimsAt(start, nil))); codeOf(err) != CodeNamespaceNotAllowed {
+		t.Errorf("Verify() error = %v, want code %s", err, CodeNamespaceNotAllowed)
+	}
+}
+
+// The answer of Admit can change while a token stays cached, as the allowed
+// namespaces of a Kubernetes token do, so Admit runs on the cached token too.
+func TestVerify_RunsAdmitOnACachedTokenToo(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	var refuse bool
+	v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error {
+		if refuse {
+			return &Error{Code: CodeNamespaceNotAllowed}
+		}
+		return nil
+	}})
+	raw := s.sign(t, claimsAt(start, nil))
+	mustVerify(t, v, raw)
+	refuse = true
+	if _, err := v.Verify(raw); codeOf(err) != CodeNamespaceNotAllowed {
+		t.Errorf("Verify() of the cached token error = %v, want code %s", err, CodeNamespaceNotAllowed)
+	}
+}
+
+func TestVerify_RunsNoAdmitForARefusedToken(t *testing.T) {
+	realm := &keys.Provider{ID: "realm"}
+	published := newSigner(t, "k1", realm)
+	forger := newSigner(t, "k1", realm)
+	var calls int
+	v := New(newFakeKeys(published), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error {
+		calls++
+		return nil
+	}})
+	if _, err := v.Verify(forger.sign(t, claimsAt(start, nil))); codeOf(err) != CodeSignatureInvalid {
+		t.Fatalf("Verify() of a forged token error = %v, want code %s", err, CodeSignatureInvalid)
+	}
+	if calls != 0 {
+		t.Errorf("Admit calls = %d, want 0", calls)
+	}
+}
