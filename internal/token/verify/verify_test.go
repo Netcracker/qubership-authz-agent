@@ -168,9 +168,10 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}
 }
 
-// A source asked for a key reloads it when the kid is unknown, so a token
-// refused on its form or its algorithm must not cost that reload. Every kid
-// here is unknown to the source.
+// A source may reload its keys when asked for an unknown kid, as *keys.Set
+// does with ReloadOnUnknownKID set, so a token refused on its form or its
+// algorithm must not cost that reload. Every kid here is unknown to the
+// source.
 func TestVerify_RefusesWithoutAskingForAKey(t *testing.T) {
 	header := segment(t, map[string]any{"alg": "ES256", "kid": "random"})
 	tests := []struct {

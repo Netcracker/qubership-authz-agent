@@ -19,10 +19,10 @@
 //
 // [ReadConfig] reads the trusted providers file. [Load] fetches every
 // provider's keys and fails unless all of them arrive. [Set.Lookup] and
-// [Set.Resolve] find a key by kid; Resolve also reloads the keys when the
-// kid is unknown, so a key a provider rotated in is picked up without a
-// restart. [Set.Run] reloads them on a fixed interval. A reload that fails
-// for a provider keeps the keys already loaded for it.
+// [Set.Resolve] find a key by kid; with [Options.ReloadOnUnknownKID] set,
+// Resolve also reloads the keys when the kid is unknown. [Set.Run] reloads
+// them on a fixed interval. A reload that fails for a provider keeps the
+// keys already loaded for it.
 package keys
 
 import (
@@ -68,8 +68,14 @@ type Options struct {
 	StartupTimeout time.Duration
 	// RefreshInterval is how often [Set.Run] reloads the keys.
 	RefreshInterval time.Duration
+	// ReloadOnUnknownKID makes [Set.Resolve] reload the keys when no
+	// provider published the kid it is asked for, so a key a provider
+	// rotated in is found before the next reload of [Set.Run]. When it is
+	// unset, Resolve sends no request for an unknown kid and finds a rotated
+	// key only after the next reload or a restart.
+	ReloadOnUnknownKID bool
 	// UnknownKeyInterval is the shortest time between a reload and the next
-	// one an unknown kid starts in [Set.Resolve].
+	// one an unknown kid starts in [Set.Resolve] with ReloadOnUnknownKID set.
 	UnknownKeyInterval time.Duration
 	// Log receives the diagnostics; nil discards them.
 	Log Logger
@@ -271,14 +277,18 @@ func (s *Set) Lookup(kid string) (Key, bool) {
 }
 
 // Resolve returns the key published under kid. When no provider published
-// it, Resolve reloads the keys of every provider and looks again, unless the
-// previous reload began less than [Options.UnknownKeyInterval] ago; then it
-// reports false at once. Callers that ask while such a reload runs wait for
-// it instead of starting another. The wait ends early when ctx ends; the
-// reload itself carries on.
+// it and [Options.ReloadOnUnknownKID] is unset, Resolve reports false at
+// once. With the option set, Resolve waits for a reload of every
+// provider's keys and looks again: the reload another call already
+// started, or one it starts when the previous reload began at least
+// [Options.UnknownKeyInterval] ago; otherwise it reports false at once.
+// The wait ends early when ctx ends; the reload itself carries on.
 func (s *Set) Resolve(ctx context.Context, kid string) (Key, bool) {
 	if k, ok := s.Lookup(kid); ok {
 		return k, true
+	}
+	if !s.opts.ReloadOnUnknownKID {
+		return Key{}, false
 	}
 	done := s.reloadForUnknownKID(kid)
 	if done == nil {

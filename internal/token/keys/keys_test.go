@@ -400,26 +400,58 @@ func TestKey_Allows(t *testing.T) {
 	}
 }
 
-// Lookup before Resolve is the control: the rotated key is unknown until a
-// reload fetches it.
-func TestResolve_AnUnknownKIDReloadsTheKeys(t *testing.T) {
-	c := newClock()
-	idp := newIdP(t, ecJWK(t, "old", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
-	idp.publish(ecJWK(t, "old", nil), ecJWK(t, "rotated", nil))
-	c.advance(DefaultUnknownKeyInterval)
-	if _, ok := set.Lookup("rotated"); ok {
-		t.Fatalf("Lookup(%q) found a key before any reload", "rotated")
+// The provider rotates a key in after Load, and Lookup checks that it is
+// not loaded yet. The interval has passed, so only ReloadOnUnknownKID
+// decides whether Resolve reloads.
+func TestResolve_ReloadsForAnUnknownKIDOnlyWithReloadOnUnknownKID(t *testing.T) {
+	tests := []struct {
+		name        string
+		reload      bool
+		wantFound   bool
+		wantFetches int
+	}{
+		{"ReloadOnUnknownKID set", true, true, 2},
+		{"ReloadOnUnknownKID unset (default)", false, false, 1},
 	}
-	if _, ok := set.Resolve(context.Background(), "rotated"); !ok {
-		t.Errorf("Resolve(%q) found nothing, want the rotated key", "rotated")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := newClock()
+			idp := newIdP(t, ecJWK(t, "old", nil))
+			opts := testOptions(c)
+			opts.ReloadOnUnknownKID = tt.reload
+			set := mustLoad(t, opts, issuer("realm", idp))
+			idp.publish(ecJWK(t, "old", nil), ecJWK(t, "rotated", nil))
+			c.advance(DefaultUnknownKeyInterval)
+			if _, ok := set.Lookup("rotated"); ok {
+				t.Fatalf("Lookup(%q) found a key before any reload", "rotated")
+			}
+			if _, found := set.Resolve(context.Background(), "rotated"); found != tt.wantFound {
+				t.Errorf("Resolve(%q) found = %t, want %t", "rotated", found, tt.wantFound)
+			}
+			if got := idp.jwksFetches(); got != tt.wantFetches {
+				t.Errorf("JWKS fetches = %d, want %d", got, tt.wantFetches)
+			}
+		})
+	}
+}
+
+func TestResolve_FindsALoadedKIDWithoutAReload(t *testing.T) {
+	c := newClock()
+	idp := newIdP(t, ecJWK(t, "k1", nil))
+	set := mustLoad(t, testOptions(c), issuer("realm", idp))
+	c.advance(DefaultUnknownKeyInterval)
+	if _, ok := set.Resolve(context.Background(), "k1"); !ok {
+		t.Errorf("Resolve(%q) found nothing, want the key Load fetched", "k1")
+	}
+	if got := idp.jwksFetches(); got != 1 {
+		t.Errorf("JWKS fetches = %d, want 1: the one Load made", got)
 	}
 }
 
 func TestResolve_DoesNotReloadWithinTheIntervalAfterLoad(t *testing.T) {
 	c := newClock()
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
+	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
 	c.advance(DefaultUnknownKeyInterval - time.Second)
 	if _, ok := set.Resolve(context.Background(), "unknown"); ok {
 		t.Errorf("Resolve(%q) found a key, want none", "unknown")
@@ -432,7 +464,7 @@ func TestResolve_DoesNotReloadWithinTheIntervalAfterLoad(t *testing.T) {
 func TestResolve_DoesNotReloadWithinTheIntervalAfterAReloadItStarted(t *testing.T) {
 	c := newClock()
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
+	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
 	c.advance(DefaultUnknownKeyInterval)
 	set.Resolve(context.Background(), "unknown-1")
 	c.advance(DefaultUnknownKeyInterval - time.Second)
@@ -445,7 +477,7 @@ func TestResolve_DoesNotReloadWithinTheIntervalAfterAReloadItStarted(t *testing.
 func TestResolve_ReloadsOnceTheIntervalHasPassed(t *testing.T) {
 	c := newClock()
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
+	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
 	c.advance(DefaultUnknownKeyInterval)
 	set.Resolve(context.Background(), "unknown")
 	if got := idp.jwksFetches(); got != 2 {
@@ -456,7 +488,7 @@ func TestResolve_ReloadsOnceTheIntervalHasPassed(t *testing.T) {
 func TestResolve_ConcurrentUnknownKIDsShareOneReload(t *testing.T) {
 	c := newClock()
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
+	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
 	idp.publish(ecJWK(t, "k1", nil), ecJWK(t, "k2", nil))
 	gate := make(chan struct{})
 	idp.setGate(gate)
@@ -485,7 +517,7 @@ func TestResolve_ConcurrentUnknownKIDsShareOneReload(t *testing.T) {
 func TestResolve_ACancelledCallerLeavesTheReloadRunning(t *testing.T) {
 	c := newClock()
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(c), issuer("realm", idp))
+	set := mustLoad(t, reloadOptions(c), issuer("realm", idp))
 	idp.publish(ecJWK(t, "k1", nil), ecJWK(t, "k2", nil))
 	gate := make(chan struct{})
 	idp.setGate(gate)

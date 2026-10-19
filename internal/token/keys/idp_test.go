@@ -291,6 +291,13 @@ func testOptions(c *clock) Options {
 	return Options{StartupTimeout: 2 * time.Second, firstRetryDelay: 10 * time.Millisecond, now: c.Now}
 }
 
+// reloadOptions returns testOptions with ReloadOnUnknownKID set.
+func reloadOptions(c *clock) Options {
+	opts := testOptions(c)
+	opts.ReloadOnUnknownKID = true
+	return opts
+}
+
 // mustLoad loads providers with opts and stops the test when Load fails.
 func mustLoad(t *testing.T, opts Options, providers ...Provider) *Set {
 	t.Helper()
