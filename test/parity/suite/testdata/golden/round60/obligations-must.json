@@ -1,0 +1,2610 @@
+{
+  "p60o-001-export-example": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_001",
+          "domain": "PARITY_P60O_001",
+          "fieldPolicyOperation": "ALL",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "4a6f2fa3-4695-117d-9e70-5549394f2a63",
+          "reason": "parity p60o-001-export-example",
+          "resourceType": "all",
+          "roles": [
+            "ROLE_PARITY_P60O_001_4"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_001",
+          "domain": "PARITY_P60O_001",
+          "fieldPolicyOperation": "ALL",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "9691852d-718a-44b0-ccf7-5f5b9fce0b69",
+          "reason": "parity p60o-001-export-example",
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "roles": [
+            "ROLE_PARITY_P60O_001_2",
+            "ROLE_PARITY_P60O_001_3"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_001",
+          "domain": "PARITY_P60O_001",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "101",
+            "102",
+            "103"
+          ],
+          "id": "35bf2ec2-5cb3-e37a-ac9a-37f41d44709e",
+          "reason": "parity p60o-001-export-example",
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "roles": [
+            "ROLE_PARITY_P60O_001_1"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_001",
+          "domain": "PARITY_P60O_001",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "102",
+            "104"
+          ],
+          "id": "91d60b2c-b12c-d813-4057-cc580636625f",
+          "reason": "parity p60o-001-export-example",
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "roles": [
+            "ROLE_PARITY_P60O_001_2"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_001",
+          "domain": "PARITY_P60O_001",
+          "fieldPolicyOperation": "WRITE",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "101",
+            "102"
+          ],
+          "id": "fac9cbce-1226-ff10-f161-d79a1c6ca9bc",
+          "reason": "parity p60o-001-export-example",
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "roles": [
+            "ROLE_PARITY_P60O_001_1"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102",
+                "103"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_1",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102"
+              ],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_2",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_3",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_4",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-001"
+      ]
+    },
+    "pap-read/sequence/after-merged-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102",
+                "103"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_1",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102"
+              ],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_2",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_3",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_4",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-001"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102",
+                "103"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_1",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "102",
+                "104"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_2",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_1",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102"
+              ],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_2",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_3",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_001_4",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-001"
+      ]
+    },
+    "pap-read/sequence/after-raw-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102",
+                "103"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_1",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "102",
+                "104"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_2",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_1",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102"
+              ],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_2",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_001",
+          "role": "ROLE_PARITY_P60O_001_3",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_001_4",
+          "tenantId": "parity-p60o-001",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-001"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-002-merge-example": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_002",
+          "domain": "PARITY_P60O_002",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "101",
+            "102",
+            "103"
+          ],
+          "id": "0331cec0-49b6-0749-f5e8-5f4e064ea006",
+          "reason": "parity p60o-002-merge-example",
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "roles": [
+            "ROLE_PARITY_P60O_002_1"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_002",
+          "domain": "PARITY_P60O_002",
+          "fieldPolicyOperation": "WRITE",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "962693fb-2335-fcdb-fdfc-62dca639b948",
+          "reason": "parity p60o-002-merge-example",
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "roles": [
+            "ROLE_PARITY_P60O_002_2"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_002",
+          "domain": "PARITY_P60O_002",
+          "fieldPolicyOperation": "WRITE",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "101",
+            "102"
+          ],
+          "id": "85970ed3-a8e5-5de4-6af9-bc877dd05f1a",
+          "reason": "parity p60o-002-merge-example",
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "roles": [
+            "ROLE_PARITY_P60O_002_1"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102",
+                "103"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "role": "ROLE_PARITY_P60O_002_1",
+          "tenantId": "parity-p60o-002",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102"
+              ],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "role": "ROLE_PARITY_P60O_002_2",
+          "tenantId": "parity-p60o-002",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-002"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102",
+                "103"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "role": "ROLE_PARITY_P60O_002_1",
+          "tenantId": "parity-p60o-002",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "role": "ROLE_PARITY_P60O_002_1",
+          "tenantId": "parity-p60o-002",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "101",
+                "102"
+              ],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_002",
+          "role": "ROLE_PARITY_P60O_002_2",
+          "tenantId": "parity-p60o-002",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-002"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-003-read-whitelist": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_003",
+          "domain": "PARITY_P60O_003",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1",
+            "f2"
+          ],
+          "id": "e5e8ac1c-87c8-cf04-3ba9-d033046bac86",
+          "reason": "parity p60o-003-read-whitelist",
+          "resourceType": "PARITY_SUITE_P60O_003",
+          "roles": [
+            "ROLE_PARITY_P60O_003_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_003",
+          "role": "ROLE_PARITY_P60O_003_A",
+          "tenantId": "parity-p60o-003",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-003"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_003",
+          "role": "ROLE_PARITY_P60O_003_A",
+          "tenantId": "parity-p60o-003",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-003"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-004-read-full-access": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_004",
+          "domain": "PARITY_P60O_004",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "c5379b0b-6da2-0f54-0eaa-d664ed06e11f",
+          "reason": "parity p60o-004-read-full-access",
+          "resourceType": "PARITY_SUITE_P60O_004",
+          "roles": [
+            "ROLE_PARITY_P60O_004_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_004",
+          "role": "ROLE_PARITY_P60O_004_A",
+          "tenantId": "parity-p60o-004",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-004"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_004",
+          "role": "ROLE_PARITY_P60O_004_A",
+          "tenantId": "parity-p60o-004",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-004"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-005-write-whitelist": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_005",
+          "domain": "PARITY_P60O_005",
+          "fieldPolicyOperation": "WRITE",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1",
+            "f2"
+          ],
+          "id": "6ef1f1d3-f313-1975-a1aa-af78e8188a4d",
+          "reason": "parity p60o-005-write-whitelist",
+          "resourceType": "PARITY_SUITE_P60O_005",
+          "roles": [
+            "ROLE_PARITY_P60O_005_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_005",
+          "role": "ROLE_PARITY_P60O_005_A",
+          "tenantId": "parity-p60o-005",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-005"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_005",
+          "role": "ROLE_PARITY_P60O_005_A",
+          "tenantId": "parity-p60o-005",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-005"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-006-write-full-access": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_006",
+          "domain": "PARITY_P60O_006",
+          "fieldPolicyOperation": "WRITE",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "256426df-ab38-77b9-4410-c3220361dea3",
+          "reason": "parity p60o-006-write-full-access",
+          "resourceType": "PARITY_SUITE_P60O_006",
+          "roles": [
+            "ROLE_PARITY_P60O_006_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_006",
+          "role": "ROLE_PARITY_P60O_006_A",
+          "tenantId": "parity-p60o-006",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-006"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_006",
+          "role": "ROLE_PARITY_P60O_006_A",
+          "tenantId": "parity-p60o-006",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-006"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-007-all-whitelist": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_007",
+          "domain": "PARITY_P60O_007",
+          "fieldPolicyOperation": "ALL",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1",
+            "f2"
+          ],
+          "id": "e868e67a-88f0-bc1a-8e66-6d6dd13e5a8b",
+          "reason": "parity p60o-007-all-whitelist",
+          "resourceType": "PARITY_SUITE_P60O_007",
+          "roles": [
+            "ROLE_PARITY_P60O_007_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_007",
+          "role": "ROLE_PARITY_P60O_007_A",
+          "tenantId": "parity-p60o-007",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-007"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_007",
+          "role": "ROLE_PARITY_P60O_007_A",
+          "tenantId": "parity-p60o-007",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f1",
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-007"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-008-all-full-access": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_008",
+          "domain": "PARITY_P60O_008",
+          "fieldPolicyOperation": "ALL",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "b89baaeb-502f-7257-62bb-72357523e5f4",
+          "reason": "parity p60o-008-all-full-access",
+          "resourceType": "PARITY_SUITE_P60O_008",
+          "roles": [
+            "ROLE_PARITY_P60O_008_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_008",
+          "role": "ROLE_PARITY_P60O_008_A",
+          "tenantId": "parity-p60o-008",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-008"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_008",
+          "role": "ROLE_PARITY_P60O_008_A",
+          "tenantId": "parity-p60o-008",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-008"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-009-empty-whitelist": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {
+      "status": 400,
+      "body": {
+        "message": "'fields' field can't be empty in case 'fieldPolicyType' == 'WHITELIST' for obligation with ID: '7c9b5215-df68-ba23-2679-0d3d563036e0'"
+      }
+    },
+    "pap-read/sequence/after-domain": {"status":404},
+    "pap-read/sequence/after-merged": {"status":200,"body":[]},
+    "pap-read/sequence/after-raw": {"status":200,"body":[]},
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {
+      "status": 400,
+      "message": {
+        "message": "'fields' field can't be empty in case 'fieldPolicyType' == 'WHITELIST' for obligation with ID: '7c9b5215-df68-ba23-2679-0d3d563036e0'"
+      }
+    }
+  },
+  "p60o-010-all-alone": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_010",
+          "domain": "PARITY_P60O_010",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "8232c753-45bb-be6a-f653-5f55604a7978",
+          "reason": "parity p60o-010-all-alone",
+          "resourceType": "all",
+          "roles": [
+            "ROLE_PARITY_P60O_010_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_010_A",
+          "tenantId": "parity-p60o-010",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-010"
+      ]
+    },
+    "pap-read/sequence/after-merged-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_010",
+          "role": "ROLE_PARITY_P60O_010_A",
+          "tenantId": "parity-p60o-010",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-010"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_010_A",
+          "tenantId": "parity-p60o-010",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-010"
+      ]
+    },
+    "pap-read/sequence/after-raw-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_010_A",
+          "tenantId": "parity-p60o-010",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-010"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-011-all-beside-concrete": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_011",
+          "domain": "PARITY_P60O_011",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "FULL_ACCESS",
+          "fields": [],
+          "id": "aea8f774-6ddc-01fc-8df9-84e78947bb4c",
+          "reason": "parity p60o-011-all-beside-concrete",
+          "resourceType": "all",
+          "roles": [
+            "ROLE_PARITY_P60O_011_A"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_011",
+          "domain": "PARITY_P60O_011",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "1dcbb2a4-4019-7682-d14c-978c79eb1ce5",
+          "reason": "parity p60o-011-all-beside-concrete",
+          "resourceType": "PARITY_SUITE_P60O_011",
+          "roles": [
+            "ROLE_PARITY_P60O_011_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_011",
+          "role": "ROLE_PARITY_P60O_011_A",
+          "tenantId": "parity-p60o-011",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-011"
+      ]
+    },
+    "pap-read/sequence/after-merged-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_011",
+          "role": "ROLE_PARITY_P60O_011_A",
+          "tenantId": "parity-p60o-011",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-011"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_011",
+          "role": "ROLE_PARITY_P60O_011_A",
+          "tenantId": "parity-p60o-011",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_011_A",
+          "tenantId": "parity-p60o-011",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-011"
+      ]
+    },
+    "pap-read/sequence/after-raw-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_011",
+          "role": "ROLE_PARITY_P60O_011_A",
+          "tenantId": "parity-p60o-011",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": true
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_011_A",
+          "tenantId": "parity-p60o-011",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-011"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-012-all-unlisted-type": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_012",
+          "domain": "PARITY_P60O_012",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "4397f3a6-0194-7c67-ad47-16aaead66d60",
+          "reason": "parity p60o-012-all-unlisted-type",
+          "resourceType": "all",
+          "roles": [
+            "ROLE_PARITY_P60O_012_A"
+          ]
+        },
+        {
+          "component": "PARITY_SUITE_P60O_012",
+          "domain": "PARITY_P60O_012",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f2"
+          ],
+          "id": "d4be0a47-d86a-0741-db26-e83ab31d4dfb",
+          "reason": "parity p60o-012-all-unlisted-type",
+          "resourceType": "PARITY_SUITE_P60O_012",
+          "roles": [
+            "ROLE_PARITY_P60O_012_B"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_012",
+          "role": "ROLE_PARITY_P60O_012_A",
+          "tenantId": "parity-p60o-012",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_012",
+          "role": "ROLE_PARITY_P60O_012_B",
+          "tenantId": "parity-p60o-012",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-012"
+      ]
+    },
+    "pap-read/sequence/after-merged-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_012_OTHER",
+          "role": "ROLE_PARITY_P60O_012_A",
+          "tenantId": "parity-p60o-012",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-012"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_012_A",
+          "tenantId": "parity-p60o-012",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_012",
+          "role": "ROLE_PARITY_P60O_012_B",
+          "tenantId": "parity-p60o-012",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-012"
+      ]
+    },
+    "pap-read/sequence/after-raw-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "all",
+          "role": "ROLE_PARITY_P60O_012_A",
+          "tenantId": "parity-p60o-012",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-012"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/gone": {"status":404},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-013-two-tenants": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "load-simplified-policies-v1/sequence/declare-second": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-error-v1/sequence/write-second": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_013",
+          "domain": "PARITY_P60O_013",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "60f2178a-ef78-5176-5716-21f5886aee12",
+          "reason": "parity p60o-013-two-tenants",
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "roles": [
+            "ROLE_PARITY_P60O_013_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f9"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013-t",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-013",
+        "parity-p60o-013-t"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f9"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013-t",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-013",
+        "parity-p60o-013-t"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/between": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_013",
+          "domain": "PARITY_P60O_013",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "60f2178a-ef78-5176-5716-21f5886aee12",
+          "reason": "parity p60o-013-two-tenants",
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "roles": [
+            "ROLE_PARITY_P60O_013_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/second-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_013",
+          "domain": "PARITY_P60O_013",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f9"
+          ],
+          "id": "d578aa37-f48c-d234-129c-d6ac3876a70b",
+          "reason": "parity p60o-013-two-tenants",
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "roles": [
+            "ROLE_PARITY_P60O_013_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/second-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f9"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013-t",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-013",
+        "parity-p60o-013-t"
+      ]
+    },
+    "pap-read/sequence/second-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        },
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f9"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_013",
+          "role": "ROLE_PARITY_P60O_013_A",
+          "tenantId": "parity-p60o-013-t",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-013",
+        "parity-p60o-013-t"
+      ]
+    },
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/cleanup-second": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200},
+    "pap-status-v1/sequence/write-second": {"status":200}
+  },
+  "p60o-014-rewrite": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/rewrite": {"status":200,"body":null},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/first-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_014",
+          "domain": "PARITY_P60O_014",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "b7e77078-f831-5d0f-23ec-bf61efe440a5",
+          "reason": "parity p60o-014-rewrite",
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "roles": [
+            "ROLE_PARITY_P60O_014_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/first-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/first-merged-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/first-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/first-raw-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/gone": {"status":404},
+    "pap-read/sequence/second-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_014",
+          "domain": "PARITY_P60O_014",
+          "fieldPolicyOperation": "WRITE",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f2"
+          ],
+          "id": "e02833ab-ac71-391b-6883-f6cb8c6d3a96",
+          "reason": "parity p60o-014-rewrite",
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "roles": [
+            "ROLE_PARITY_P60O_014_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/second-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/second-merged-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/second-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-read/sequence/second-raw-typed": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_014",
+          "role": "ROLE_PARITY_P60O_014_A",
+          "tenantId": "parity-p60o-014",
+          "write": {
+            "whitelist": {
+              "fields": [
+                "f2"
+              ],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-014"
+      ]
+    },
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/rewrite": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-015-undeclared-domain": {
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_015",
+          "domain": "PARITY_P60O_015",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "9dfe9e04-8332-efd8-a353-a85cd3b29ed1",
+          "reason": "parity p60o-015-undeclared-domain",
+          "resourceType": "PARITY_SUITE_P60O_015",
+          "roles": [
+            "ROLE_PARITY_P60O_015_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_015",
+          "role": "ROLE_PARITY_P60O_015_A",
+          "tenantId": "parity-p60o-015",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-015"
+      ]
+    },
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-018-write-twice": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/again": {"status":200,"body":null},
+    "pap-error-v1/sequence/cleanup-again": {"status":200,"body":null},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-read/sequence/first-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_018",
+          "domain": "PARITY_P60O_018",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "acc6139c-863c-fef0-c381-68351b1c4354",
+          "reason": "parity p60o-018-write-twice",
+          "resourceType": "PARITY_SUITE_P60O_018",
+          "roles": [
+            "ROLE_PARITY_P60O_018_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/first-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_018",
+          "role": "ROLE_PARITY_P60O_018_A",
+          "tenantId": "parity-p60o-018",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-018"
+      ]
+    },
+    "pap-read/sequence/first-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_018",
+          "role": "ROLE_PARITY_P60O_018_A",
+          "tenantId": "parity-p60o-018",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-018"
+      ]
+    },
+    "pap-read/sequence/gone": {"status":404},
+    "pap-read/sequence/second-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_018",
+          "domain": "PARITY_P60O_018",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "acc6139c-863c-fef0-c381-68351b1c4354",
+          "reason": "parity p60o-018-write-twice",
+          "resourceType": "PARITY_SUITE_P60O_018",
+          "roles": [
+            "ROLE_PARITY_P60O_018_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/second-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_018",
+          "role": "ROLE_PARITY_P60O_018_A",
+          "tenantId": "parity-p60o-018",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-018"
+      ]
+    },
+    "pap-read/sequence/second-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_018",
+          "role": "ROLE_PARITY_P60O_018_A",
+          "tenantId": "parity-p60o-018",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-018"
+      ]
+    },
+    "pap-status-v1/sequence/again": {"status":200},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/cleanup-again": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-101-v2-feature-off": {
+    "check-filter-v2-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v2-outcome/sequence/bulk": {"status":200,"decision":{"READ":["y0"]}},
+    "check-resource-v2-outcome/sequence/check": {"status":200,"decision":true},
+    "check-resource-v2-outcome/sequence/check-absent": {"status":200,"decision":true},
+    "check-resource-v2-outcome/sequence/check-denied": {"status":200,"decision":false},
+    "check-resource-v2-outcome/sequence/check-false": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/allow": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/cleanup-set": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-901-control-must-first": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_901",
+          "domain": "PARITY_P60O_901",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "e90dbd3a-9733-b6e0-e9a8-b0afe3f0094a",
+          "reason": "parity p60o-901-control-must-first",
+          "resourceType": "PARITY_SUITE_P60O_901",
+          "roles": [
+            "ROLE_PARITY_P60O_901_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_901",
+          "role": "ROLE_PARITY_P60O_901_A",
+          "tenantId": "parity-p60o-901",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-901"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_901",
+          "role": "ROLE_PARITY_P60O_901_A",
+          "tenantId": "parity-p60o-901",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-901"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  },
+  "p60o-951-control-must-last": {
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read/sequence/after-domain": {
+      "status": 200,
+      "body": [
+        {
+          "component": "PARITY_SUITE_P60O_951",
+          "domain": "PARITY_P60O_951",
+          "fieldPolicyOperation": "READ",
+          "fieldPolicyType": "WHITELIST",
+          "fields": [
+            "f1"
+          ],
+          "id": "4a7e5a06-2b24-bc91-30c4-3939d294d10d",
+          "reason": "parity p60o-951-control-must-last",
+          "resourceType": "PARITY_SUITE_P60O_951",
+          "roles": [
+            "ROLE_PARITY_P60O_951_A"
+          ]
+        }
+      ]
+    },
+    "pap-read/sequence/after-merged": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_951",
+          "role": "ROLE_PARITY_P60O_951_A",
+          "tenantId": "parity-p60o-951",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-951"
+      ]
+    },
+    "pap-read/sequence/after-raw": {
+      "status": 200,
+      "body": [
+        {
+          "read": {
+            "whitelist": {
+              "fields": [
+                "f1"
+              ],
+              "fullAccess": false
+            }
+          },
+          "resourceType": "PARITY_SUITE_P60O_951",
+          "role": "ROLE_PARITY_P60O_951_A",
+          "tenantId": "parity-p60o-951",
+          "write": {
+            "whitelist": {
+              "fields": [],
+              "fullAccess": false
+            }
+          }
+        }
+      ],
+      "keptTenants": [
+        "parity-p60o-951"
+      ]
+    },
+    "pap-read/sequence/before": {"status":200,"body":[]},
+    "pap-status-v1/sequence/cleanup": {"status":200},
+    "pap-status-v1/sequence/write": {"status":200}
+  }
+}
