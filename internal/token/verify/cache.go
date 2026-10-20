@@ -45,7 +45,7 @@ func (c *cache) get(digest [sha256.Size]byte, now time.Time, leeway time.Duratio
 	c.mu.RLock()
 	tok := c.entries[digest]
 	c.mu.RUnlock()
-	if tok == nil || !now.Before(tok.Expiry.Add(leeway)) {
+	if tok == nil || !now.Before(tok.expiry.Add(leeway)) {
 		return nil
 	}
 	return tok
@@ -64,7 +64,7 @@ func (c *cache) put(digest [sha256.Size]byte, tok *Token, now time.Time, leeway 
 		}
 		c.nextExpiry = time.Time{}
 		for d, kept := range c.entries {
-			expiry := kept.Expiry.Add(leeway)
+			expiry := kept.expiry.Add(leeway)
 			if !now.Before(expiry) {
 				delete(c.entries, d)
 				continue

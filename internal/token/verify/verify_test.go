@@ -16,6 +16,7 @@ package verify
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -27,33 +28,163 @@ import (
 	"authz-agent/internal/token/keys"
 )
 
-func TestVerify_ReturnsTheClaimsOfAValidToken(t *testing.T) {
-	realm := &keys.Provider{ID: "realm"}
-	s := newSigner(t, "k1", realm)
+// The payload keeps the text of every number, 5.0 among them, and the order
+// of every key, as the provider signed it.
+func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	v, _ := newVerifier(newFakeKeys(s))
-	exp := start.Add(time.Hour)
-	raw := s.sign(t, map[string]any{
-		"sub":          "user-1",
-		"iat":          start.Unix(),
-		"exp":          exp.Unix(),
-		"realm_access": map[string]any{"roles": []string{"admin"}},
-	})
+	payload := `{"sub":"user-1","level":5.0,"realm_access":{"roles":["admin"],"b":1,"a":2},` +
+		`"iss":"https://idp.example/realms/r","iat":1792065600,"exp":1792069200}`
+	raw := s.signPayload(t, []byte(payload), nil)
 
-	tok, err := v.Verify(raw)
-	if err != nil {
-		t.Fatalf("Verify() error = %v", err)
+	tok := mustVerify(t, v, raw)
+	if got := string(tok.Payload()); got != payload {
+		t.Errorf("Payload() = %s, want %s", got, payload)
 	}
-	if tok.Provider != realm || tok.KeyID != "k1" || !tok.Expiry.Equal(exp) {
-		t.Errorf("Verify() = provider %q, kid %q, expiry %s; want %q, %q, %s", tok.Provider.ID, tok.KeyID, tok.Expiry, "realm", "k1", exp)
+	if got := tok.Raw(); got != raw {
+		t.Errorf("Raw() = %q, want the token Verify received, %q", got, raw)
 	}
-	want := map[string]any{
-		"sub":          "user-1",
-		"iat":          json.Number("1792065600"),
-		"exp":          json.Number("1792069200"),
-		"realm_access": map[string]any{"roles": []any{"admin"}},
+	if got := tok.ProviderID(); got != "realm" {
+		t.Errorf("ProviderID() = %q, want %q", got, "realm")
 	}
-	if !reflect.DeepEqual(tok.Claims, want) {
-		t.Errorf("Verify().Claims = %#v, want %#v", tok.Claims, want)
+	if got := tok.KeyID(); got != "k1" {
+		t.Errorf("KeyID() = %q, want %q", got, "k1")
+	}
+	if got := tok.Issuer(); got != "https://idp.example/realms/r" {
+		t.Errorf("Issuer() = %q, want %q", got, "https://idp.example/realms/r")
+	}
+	if got, want := tok.Expiry(), time.Unix(1792069200, 0); !got.Equal(want) {
+		t.Errorf("Expiry() = %s, want %s", got, want)
+	}
+}
+
+// verifyPayload verifies a token of payload, signed by a key of a provider
+// that lists no audiences, at start.
+func verifyPayload(t *testing.T, payload string) *Token {
+	t.Helper()
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	v, _ := newVerifier(newFakeKeys(s))
+	return mustVerify(t, v, s.signPayload(t, []byte(payload), nil))
+}
+
+// The claims are returned as the payload carries them, whatever their type:
+// scope is a number here, level keeps the text 5.0, and tenant-id is null.
+func TestToken_StandardHoldsEachClaimAsThePayloadCarriesIt(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		want    Standard
+	}{
+		{
+			"every claim present",
+			`{"sub":"user-1","preferred_username":"alice","realm_access":{"roles":["admin", "viewer"]},` +
+				`"scope":5,"level":5.0,"tenant-id":null,"iat":1792065600,"exp":1792069200}`,
+			Standard{
+				Subject:           json.RawMessage(`"user-1"`),
+				PreferredUsername: json.RawMessage(`"alice"`),
+				Roles:             json.RawMessage(`["admin", "viewer"]`),
+				Scope:             json.RawMessage(`5`),
+				Level:             json.RawMessage(`5.0`),
+				TenantID:          json.RawMessage(`null`),
+			},
+		},
+		{
+			"roles that is a string",
+			`{"realm_access":{"roles":"admin"},"iat":1792065600,"exp":1792069200}`,
+			Standard{Roles: json.RawMessage(`"admin"`)},
+		},
+		{"no claim present", `{"iat":1792065600,"exp":1792069200}`, Standard{}},
+		{"realm_access that is an array", `{"realm_access":["admin"],"iat":1792065600,"exp":1792069200}`, Standard{}},
+		{"realm_access without roles", `{"realm_access":{"role":"admin"},"iat":1792065600,"exp":1792069200}`, Standard{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := verifyPayload(t, tt.payload).Standard(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Standard() = %s, want %s", fields(got), fields(tt.want))
+			}
+		})
+	}
+}
+
+// fields formats s with the name of every field, so that a nil field shows
+// as a name with nothing after it.
+func fields(s Standard) string {
+	return fmt.Sprintf("{Subject: %s, PreferredUsername: %s, Roles: %s, Scope: %s, Level: %s, TenantID: %s}",
+		s.Subject, s.PreferredUsername, s.Roles, s.Scope, s.Level, s.TenantID)
+}
+
+func TestToken_ClaimHoldsATopLevelClaimAsThePayloadCarriesIt(t *testing.T) {
+	tok := verifyPayload(t, `{"kubernetes.io":{"namespace":"ns","b":1,"a":2},"iat":1792065600,"exp":1792069200}`)
+	tests := []struct {
+		name   string
+		claim  string
+		want   json.RawMessage
+		wantOK bool
+	}{
+		{"claim that is an object", "kubernetes.io", json.RawMessage(`{"namespace":"ns","b":1,"a":2}`), true},
+		{"member of a claim", "namespace", nil, false},
+		{"claim the payload lacks", "sub", nil, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := tok.Claim(tt.claim)
+			if !reflect.DeepEqual(got, tt.want) || ok != tt.wantOK {
+				t.Errorf("Claim(%q) = %s, %t; want %s, %t", tt.claim, got, ok, tt.want, tt.wantOK)
+			}
+		})
+	}
+}
+
+func TestToken_IssuerIsTheIssClaimWhenItIsAString(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		want    string
+	}{
+		{"string", `{"iss":"https://idp.example/realms/r","iat":1792065600,"exp":1792069200}`, "https://idp.example/realms/r"},
+		{"number", `{"iss":5,"iat":1792065600,"exp":1792069200}`, ""},
+		{"null", `{"iss":null,"iat":1792065600,"exp":1792069200}`, ""},
+		{"no iss", `{"iat":1792065600,"exp":1792069200}`, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := verifyPayload(t, tt.payload).Issuer(); got != tt.want {
+				t.Errorf("Issuer() of %s = %q, want %q", tt.payload, got, tt.want)
+			}
+		})
+	}
+}
+
+// Each row overwrites what one method returned and reads it again: the
+// cache shares one Token between callers, so a change one caller makes must
+// not reach the next.
+func TestToken_ReturnsCopiesThatACallerCannotChange(t *testing.T) {
+	tok := verifyPayload(t, `{"sub":"user-1","preferred_username":"alice","realm_access":{"roles":["admin"]},`+
+		`"scope":"openid","level":"high","tenant-id":"t1","iat":1792065600,"exp":1792069200}`)
+	tests := []struct {
+		name string
+		read func() []byte
+	}{
+		{"Payload", func() []byte { return tok.Payload() }},
+		{"Claim", func() []byte { raw, _ := tok.Claim("sub"); return raw }},
+		{"Standard().Subject", func() []byte { return tok.Standard().Subject }},
+		{"Standard().PreferredUsername", func() []byte { return tok.Standard().PreferredUsername }},
+		{"Standard().Roles", func() []byte { return tok.Standard().Roles }},
+		{"Standard().Scope", func() []byte { return tok.Standard().Scope }},
+		{"Standard().Level", func() []byte { return tok.Standard().Level }},
+		{"Standard().TenantID", func() []byte { return tok.Standard().TenantID }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			first := tt.read()
+			want := string(first)
+			for i := range first {
+				first[i] = 'x'
+			}
+			if got := string(tt.read()); got != want {
+				t.Errorf("%s after the caller overwrote the first result = %s, want %s", tt.name, got, want)
+			}
+		})
 	}
 }
 
@@ -152,7 +283,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}{
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": long}, claimsAt(start, nil)), CodeKIDUnknown},
 		{"alg", unsigned(t, map[string]any{"alg": long, "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
-		{"exp", s.signPayload(t, []byte(`{"exp": 1`+strings.Repeat("0", 1000)+`}`), nil), CodeFormatInvalid},
+		{"exp", s.signPayload(t, []byte(`{"aud": "account", "exp": 1`+strings.Repeat("0", 1000)+`}`), nil), CodeFormatInvalid},
 		{"aud", s.sign(t, claimsAt(start, map[string]any{"aud": []any{long, long, long, long, long}})), CodeAudienceInvalid},
 	}
 	for _, tt := range tests {
@@ -226,10 +357,11 @@ func TestVerify_RefusesOnTheHeaderBeforeLookingUpTheKID(t *testing.T) {
 	}
 }
 
-// The expired row is forged as well: the signature is checked before any
-// claim, so the forgery is what Verify reports.
+// Every token here also fails a claim check: none carries the aud the
+// provider requires, and one has expired. The signature is checked before
+// any claim, so the forgery is what Verify reports.
 func TestVerify_RefusesATokenWhoseSignatureDoesNotVerify(t *testing.T) {
-	realm := &keys.Provider{ID: "realm"}
+	realm := &keys.Provider{ID: "realm", Audiences: []string{"account"}}
 	trusted := newSigner(t, "k1", realm)
 	attacker := newSigner(t, "k1", realm)
 	valid := trusted.sign(t, claimsAt(start, nil))
@@ -332,6 +464,34 @@ func TestVerify_RefusesAnAudienceTheProviderDoesNotList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			v, _ := newVerifier(newFakeKeys(s))
 			_, err := v.Verify(s.sign(t, claimsAt(start, map[string]any{"aud": tt.aud})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
+			}
+		})
+	}
+}
+
+// Every token here is outside its lifetime as well, and the audience is
+// what Verify reports.
+func TestVerify_RefusesOnTheAudienceBeforeTheLifetime(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm", Audiences: []string{"account"}})
+	beyond := DefaultLeeway + time.Second
+	tests := []struct {
+		name   string
+		fields map[string]any
+		want   Code
+	}{
+		{"no aud, expired", map[string]any{"exp": start.Add(-beyond).Unix()}, CodeAudienceMissing},
+		{"aud of another client, expired", map[string]any{"aud": "other", "exp": start.Add(-beyond).Unix()}, CodeAudienceInvalid},
+		{"aud of another client, no exp", map[string]any{"aud": "other", "exp": nil}, CodeAudienceInvalid},
+		{"aud of another client, nbf ahead", map[string]any{"aud": "other", "nbf": start.Add(beyond).Unix()}, CodeAudienceInvalid},
+		{"aud of another client, no iat", map[string]any{"aud": "other", "iat": nil}, CodeAudienceInvalid},
+		{"aud of another client, iat ahead", map[string]any{"aud": "other", "iat": start.Add(beyond).Unix()}, CodeAudienceInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(s.sign(t, claimsAt(start, tt.fields)))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %s", err, tt.want)
 			}
@@ -498,7 +658,15 @@ func TestVerify_IsSafeForConcurrentUse(t *testing.T) {
 	errs := make([]error, 16)
 	var wg sync.WaitGroup
 	for i := range errs {
-		wg.Go(func() { _, errs[i] = v.Verify(tokens[i%len(tokens)]) })
+		wg.Go(func() {
+			var tok *Token
+			if tok, errs[i] = v.Verify(tokens[i%len(tokens)]); tok != nil {
+				tok.Payload()
+				tok.Claim("sub")
+				tok.Standard()
+				tok.Issuer()
+			}
+		})
 	}
 	wg.Wait()
 	for i, err := range errs {

@@ -15,6 +15,7 @@
 package verify
 
 import (
+	"bytes"
 	"encoding/json"
 	"math"
 	"slices"
@@ -32,7 +33,7 @@ const maxNumericDate = 1<<53 - 1
 // checkTimes checks exp, nbf, and iat against now with leeway either way,
 // and returns the time exp names. exp and iat are required; nbf is
 // optional.
-func checkTimes(claims map[string]any, now time.Time, leeway time.Duration) (time.Time, error) {
+func checkTimes(claims map[string]json.RawMessage, now time.Time, leeway time.Duration) (time.Time, error) {
 	exp, present, err := numericDate(claims, "exp")
 	if err != nil {
 		return time.Time{}, err
@@ -65,12 +66,12 @@ func checkTimes(claims map[string]any, now time.Time, leeway time.Duration) (tim
 
 // numericDate reads the claim name as a number of seconds since the epoch;
 // present is false when the payload has no such claim.
-func numericDate(claims map[string]any, name string) (t time.Time, present bool, err error) {
+func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, err error) {
 	raw, ok := claims[name]
 	if !ok {
 		return time.Time{}, false, nil
 	}
-	n, ok := raw.(json.Number)
+	n, ok := decode(raw).(json.Number)
 	if !ok {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is not a number", name)
 	}
@@ -86,7 +87,7 @@ func numericDate(claims map[string]any, name string) (t time.Time, present bool,
 // every token passes. Otherwise aud, a string or an array of strings, has to
 // name one of them exactly, and a token without aud passes only when p sets
 // AllowMissingAud.
-func checkAudience(claims map[string]any, p *keys.Provider) error {
+func checkAudience(claims map[string]json.RawMessage, p *keys.Provider) error {
 	if len(p.Audiences) == 0 {
 		return nil
 	}
@@ -98,7 +99,7 @@ func checkAudience(claims map[string]any, p *keys.Provider) error {
 		return fail(CodeAudienceMissing, "token has no aud claim, and provider %q requires one of %q", p.ID, p.Audiences)
 	}
 	var audiences []string
-	switch v := raw.(type) {
+	switch v := decode(raw).(type) {
 	case string:
 		audiences = []string{v}
 	case []any:
@@ -118,4 +119,14 @@ func checkAudience(claims map[string]any, p *keys.Provider) error {
 		}
 	}
 	return fail(CodeAudienceInvalid, "aud %s names none of %q, the audiences of provider %q", shortList(audiences), p.Audiences, p.ID)
+}
+
+// decode parses raw, the JSON text of a claim, with numbers as
+// [json.Number]. It returns nil when raw holds no JSON value.
+func decode(raw json.RawMessage) any {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	var v any
+	_ = dec.Decode(&v)
+	return v
 }

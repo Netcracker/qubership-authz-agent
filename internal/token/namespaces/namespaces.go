@@ -109,10 +109,10 @@ func (a *Allowlist) Allows(namespace string) bool {
 // [verify.CodeNamespaceNotAllowed].
 func (a *Allowlist) Admit(providers ...string) func(*verify.Token) *verify.Error {
 	return func(tok *verify.Token) *verify.Error {
-		if !slices.Contains(providers, tok.Provider.ID) {
+		if !slices.Contains(providers, tok.ProviderID()) {
 			return nil
 		}
-		namespace, ok := namespaceOf(tok.Claims)
+		namespace, ok := namespaceOf(tok)
 		if !ok {
 			return &verify.Error{Code: verify.CodeNamespaceNotAllowed, Detail: "token names no kubernetes.io namespace"}
 		}
@@ -126,15 +126,17 @@ func (a *Allowlist) Admit(providers ...string) func(*verify.Token) *verify.Error
 	}
 }
 
-// namespaceOf returns the kubernetes.io.namespace claim, and false when the
-// claims hold no such string.
-func namespaceOf(claims map[string]any) (string, bool) {
-	k8s, ok := claims["kubernetes.io"].(map[string]any)
-	if !ok {
+// namespaceOf returns the namespace member of the kubernetes.io claim of
+// tok, and false when the claim holds no such non-empty string. Member
+// names match exactly, case included.
+func namespaceOf(tok *verify.Token) (string, bool) {
+	raw, _ := tok.Claim("kubernetes.io")
+	var k8s map[string]json.RawMessage
+	var namespace string
+	if json.Unmarshal(raw, &k8s) != nil || json.Unmarshal(k8s["namespace"], &namespace) != nil {
 		return "", false
 	}
-	namespace, ok := k8s["namespace"].(string)
-	return namespace, ok && namespace != ""
+	return namespace, namespace != ""
 }
 
 // topology is the part of the topology file the allowlist reads.

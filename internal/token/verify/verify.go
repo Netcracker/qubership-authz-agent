@@ -16,8 +16,9 @@
 // providers and returns its claims. [Verifier.Verify] reads nothing from the
 // payload until the signature verifies: the header names the algorithm and
 // the kid, a [KeySource] finds the key, and only a token whose signature
-// that key accepts has its exp, nbf, iat, and aud checked. A refused token
-// yields an [*Error] whose [Code] names the reason.
+// that key accepts has its aud, exp, nbf, and iat checked. A refused token
+// yields an [*Error] whose [Code] names the reason; a verified one is a
+// [*Token], which keeps the payload as the provider signed it.
 //
 // A verified token is cached by the SHA-256 digest of its compact form
 // until it expires, so a token presented again costs a map lookup.
@@ -97,23 +98,83 @@ func fail(code Code, format string, args ...any) *Error {
 	return &Error{Code: code, Detail: fmt.Sprintf(format, args...)}
 }
 
-// Token is a verified token.
+// Token is a verified token. Nothing changes a Token after Verify returns
+// it, and every method that returns JSON text returns a copy, so one Token is
+// safe to read from many goroutines, and the cache shares it between the
+// callers that present the same token.
 type Token struct {
-	// Provider is the provider whose key signed the token.
-	Provider *keys.Provider
-	// KeyID is the kid of that key.
-	KeyID string
-	// Expiry is the time exp names.
-	Expiry time.Time
-	// Claims holds every claim of the payload, with numbers as [json.Number].
-	// Every caller that verifies the same token gets the same map, so no
-	// caller may modify it.
-	Claims map[string]any
+	raw        string
+	payload    []byte
+	claims     map[string]json.RawMessage
+	standard   Standard
+	providerID string
+	keyID      string
+	issuer     string
+	expiry     time.Time
 
 	// key is the key that verified the token. A cached Token is returned
-	// only while the [KeySource] returns this key for KeyID.
+	// only while the [KeySource] returns this key for keyID.
 	key jwk.Key
 }
+
+// Standard holds the claims a policy input is usually built from. Each field
+// is the JSON text of its claim exactly as the payload carries it, or nil
+// when the payload has no such claim. Verify checks neither the presence
+// nor the type of any of them.
+type Standard struct {
+	// Subject is the sub claim.
+	Subject json.RawMessage
+	// PreferredUsername is the preferred_username claim.
+	PreferredUsername json.RawMessage
+	// Roles is the roles member of the realm_access claim. It is nil when
+	// realm_access is not a JSON object or has no roles member.
+	Roles json.RawMessage
+	// Scope is the scope claim.
+	Scope json.RawMessage
+	// Level is the level claim.
+	Level json.RawMessage
+	// TenantID is the tenant-id claim.
+	TenantID json.RawMessage
+}
+
+// Raw returns the token in the compact form Verify received it in.
+func (t *Token) Raw() string { return t.raw }
+
+// Payload returns the JSON text of the payload exactly as the provider
+// signed it, with the text of every number and the order of every key.
+func (t *Token) Payload() json.RawMessage { return bytes.Clone(t.payload) }
+
+// Claim returns the JSON text of the top-level claim name, and false when
+// the payload has no such claim.
+func (t *Token) Claim(name string) (json.RawMessage, bool) {
+	raw, ok := t.claims[name]
+	return bytes.Clone(raw), ok
+}
+
+// Standard returns the claims a policy input is usually built from.
+func (t *Token) Standard() Standard {
+	return Standard{
+		Subject:           bytes.Clone(t.standard.Subject),
+		PreferredUsername: bytes.Clone(t.standard.PreferredUsername),
+		Roles:             bytes.Clone(t.standard.Roles),
+		Scope:             bytes.Clone(t.standard.Scope),
+		Level:             bytes.Clone(t.standard.Level),
+		TenantID:          bytes.Clone(t.standard.TenantID),
+	}
+}
+
+// ProviderID returns the id of the provider whose key verified the token.
+func (t *Token) ProviderID() string { return t.providerID }
+
+// KeyID returns the kid of the key that verified the token.
+func (t *Token) KeyID() string { return t.keyID }
+
+// Issuer returns the iss claim, or "" when the payload has no iss or iss is
+// not a JSON string. Verify accepts a token whatever its iss.
+func (t *Token) Issuer() string { return t.issuer }
+
+// Expiry returns the time exp names.
+func (t *Token) Expiry() time.Time { return t.expiry }
 
 // KeySource finds a signing key by kid; [*keys.Set] implements it.
 type KeySource interface {
@@ -182,8 +243,8 @@ func New(source KeySource, opts Options) *Verifier {
 // Verify checks raw, a JWT in compact serialization without a "Bearer"
 // prefix, and returns the verified token. The checks run in this order, and
 // the first that fails is returned as an [*Error]: the format, the alg and
-// the kid of the header, the key the kid names, the signature, exp, nbf,
-// iat, and aud. Nothing from the payload is read before the signature
+// the kid of the header, the key the kid names, the signature, aud, exp,
+// nbf, and iat. Nothing from the payload is read before the signature
 // verifies, so a forged token is refused with [CodeSignatureInvalid]
 // whatever its claims say.
 //
@@ -231,14 +292,24 @@ func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*
 	if err != nil {
 		return nil, err
 	}
+	if err := checkAudience(claims, key.Provider); err != nil {
+		return nil, err
+	}
 	expiry, err := checkTimes(claims, now, v.opts.Leeway)
 	if err != nil {
 		return nil, err
 	}
-	if err := checkAudience(claims, key.Provider); err != nil {
-		return nil, err
+	tok := &Token{
+		raw:        raw,
+		payload:    payload,
+		claims:     claims,
+		standard:   standardOf(claims),
+		providerID: key.Provider.ID,
+		keyID:      kid,
+		issuer:     stringClaim(claims, "iss"),
+		expiry:     expiry,
+		key:        key.JWK,
 	}
-	tok := &Token{Provider: key.Provider, KeyID: kid, Expiry: expiry, Claims: claims, key: key.JWK}
 	if v.cache != nil {
 		v.cache.put(digest, tok, now, v.opts.Leeway)
 	}
@@ -255,7 +326,7 @@ func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 	if tok == nil {
 		return nil
 	}
-	if key, ok := v.keys.Lookup(tok.KeyID); !ok || key.JWK != tok.key {
+	if key, ok := v.keys.Lookup(tok.keyID); !ok || key.JWK != tok.key {
 		return nil
 	}
 	return tok
@@ -305,12 +376,11 @@ func readHeader(raw string) (alg, kid string, err error) {
 	return header.Alg, header.Kid, nil
 }
 
-// decodeClaims parses the payload as one JSON object, keeping numbers as
-// [json.Number].
-func decodeClaims(payload []byte) (map[string]any, error) {
+// decodeClaims parses the payload as one JSON object and keeps the JSON
+// text of every claim.
+func decodeClaims(payload []byte) (map[string]json.RawMessage, error) {
 	dec := json.NewDecoder(bytes.NewReader(payload))
-	dec.UseNumber()
-	var claims map[string]any
+	var claims map[string]json.RawMessage
 	if err := dec.Decode(&claims); err != nil || claims == nil {
 		return nil, fail(CodeFormatInvalid, "payload is not a JSON object")
 	}
@@ -318,6 +388,32 @@ func decodeClaims(payload []byte) (map[string]any, error) {
 		return nil, fail(CodeFormatInvalid, "payload has data after the JSON object")
 	}
 	return claims, nil
+}
+
+// standardOf picks the claims of a [Standard] out of claims.
+func standardOf(claims map[string]json.RawMessage) Standard {
+	s := Standard{
+		Subject:           claims["sub"],
+		PreferredUsername: claims["preferred_username"],
+		Scope:             claims["scope"],
+		Level:             claims["level"],
+		TenantID:          claims["tenant-id"],
+	}
+	var realmAccess map[string]json.RawMessage
+	if json.Unmarshal(claims["realm_access"], &realmAccess) == nil {
+		s.Roles = realmAccess["roles"]
+	}
+	return s
+}
+
+// stringClaim returns the claim name when it is a JSON string, and ""
+// otherwise.
+func stringClaim(claims map[string]json.RawMessage, name string) string {
+	var s string
+	if json.Unmarshal(claims[name], &s) != nil {
+		return ""
+	}
+	return s
 }
 
 // short quotes s for a detail, cut to 64 bytes: s is the sender's text,

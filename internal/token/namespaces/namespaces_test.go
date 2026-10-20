@@ -15,11 +15,21 @@
 package namespaces
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"encoding/json"
+	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/lestrrat-go/jwx/v3/jwa"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jws"
 
 	"authz-agent/internal/token/keys"
 	"authz-agent/internal/token/verify"
@@ -224,9 +234,49 @@ func TestAllowlist_IsSafeForConcurrentUse(t *testing.T) {
 	wg.Wait()
 }
 
+// oneKey is a verify.KeySource that publishes one key.
+type oneKey struct{ key keys.Key }
+
+func (o oneKey) Lookup(kid string) (keys.Key, bool) { return o.key, kid == o.key.ID }
+
+// verifierFor returns a Verifier that trusts one EC key of provider and runs
+// admit, and a function that signs a token with that key whose claims are an
+// unexpired iat and exp plus fields.
+func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verify.Error) (*verify.Verifier, func(fields map[string]any) string) {
+	t.Helper()
+	private, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	public, err := jwk.Import(&private.PublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	key := keys.Key{Provider: &keys.Provider{ID: provider}, ID: "k1", JWK: public}
+	v := verify.New(oneKey{key}, verify.Options{Admit: admit})
+	sign := func(fields map[string]any) string {
+		now := time.Now()
+		claims := map[string]any{"iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
+		maps.Copy(claims, fields)
+		payload, err := json.Marshal(claims)
+		if err != nil {
+			t.Fatal(err)
+		}
+		headers := jws.NewHeaders()
+		if err := headers.Set(jws.KeyIDKey, key.ID); err != nil {
+			t.Fatal(err)
+		}
+		token, err := jws.Sign(payload, jws.WithKey(jwa.ES256(), private, jws.WithProtectedHeaders(headers)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(token)
+	}
+	return v, sign
+}
+
 func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
 	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
-	admit := a.Admit("kubernetes")
 	tests := []struct {
 		name     string
 		provider string
@@ -239,20 +289,32 @@ func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, verify.CodeNamespaceNotAllowed},
 		{"no kubernetes.io claim", "kubernetes",
 			map[string]any{"sub": "system:serviceaccount:own:agent"}, verify.CodeNamespaceNotAllowed},
+		{"kubernetes.io that is a string", "kubernetes",
+			map[string]any{"kubernetes.io": "sat-peer"}, verify.CodeNamespaceNotAllowed},
 		{"namespace that is not a string", "kubernetes",
 			map[string]any{"kubernetes.io": map[string]any{"namespace": 5}}, verify.CodeNamespaceNotAllowed},
+		{"Namespace that differs in case", "kubernetes",
+			map[string]any{"kubernetes.io": map[string]any{"Namespace": "sat-peer"}}, verify.CodeNamespaceNotAllowed},
+		{"namespace outside the topology beside a Namespace inside it", "kubernetes",
+			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "own", "Namespace": "sat-peer"}`)}, verify.CodeNamespaceNotAllowed},
+		{"namespace given twice, the last time as a number", "kubernetes",
+			map[string]any{"kubernetes.io": json.RawMessage(`{"namespace": "sat-peer", "namespace": 5}`)}, verify.CodeNamespaceNotAllowed},
 		{"another provider's token", "cloud-common",
 			map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tok := &verify.Token{Provider: &keys.Provider{ID: tt.provider}, Claims: tt.claims}
+			v, sign := verifierFor(t, tt.provider, a.Admit("kubernetes"))
+			_, err := v.Verify(sign(tt.claims))
 			var got verify.Code
-			if err := admit(tok); err != nil {
-				got = err.Code
+			var refused *verify.Error
+			if errors.As(err, &refused) {
+				got = refused.Code
+			} else if err != nil {
+				t.Fatalf("Verify() error = %v, want a *verify.Error or none", err)
 			}
 			if got != tt.want {
-				t.Errorf("Admit() code = %q, want %q", got, tt.want)
+				t.Errorf("Verify() code = %q, want %q", got, tt.want)
 			}
 		})
 	}
