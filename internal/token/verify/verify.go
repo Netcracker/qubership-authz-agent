@@ -48,8 +48,9 @@ type Code string
 // Reasons a token is refused.
 const (
 	// CodeFormatInvalid marks a token that is not three base64url parts
-	// separated by dots, whose header or payload is not a JSON object, or
-	// whose exp, nbf, or iat is not a number within ±(2^53 - 1) seconds.
+	// separated by dots, whose header or payload is not a JSON object, whose
+	// header has a crit or a b64 parameter, or whose exp, nbf, or iat is not
+	// a number within ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
 	// CodeAlgNotAllowed marks a token whose header names an algorithm that no
 	// key accepts, or one that the key its kid names does not accept.
@@ -222,7 +223,7 @@ func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*
 		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(kid), key.Provider.ID, alg)
 	}
 	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
-	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact())
+	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
 	if err != nil {
 		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of provider %q", short(kid), key.Provider.ID)
 	}
@@ -260,9 +261,10 @@ func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 	return tok
 }
 
-// readHeader checks that raw is three base64url parts and returns the alg
-// and the kid of its header. Every check here runs before any key is looked
-// up.
+// readHeader checks that raw is three base64url parts whose header is a JSON
+// object without a crit or a b64 parameter, names an accepted alg, and has a
+// kid, and returns the alg and the kid. Every check here runs before any key
+// is looked up.
 func readHeader(raw string) (alg, kid string, err error) {
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {
@@ -275,11 +277,24 @@ func readHeader(raw string) (alg, kid string, err error) {
 		}
 	}
 	var header *struct {
-		Alg string `json:"alg"`
-		Kid string `json:"kid"`
+		Alg  string          `json:"alg"`
+		Kid  string          `json:"kid"`
+		Crit json.RawMessage `json:"crit"`
+		B64  json.RawMessage `json:"b64"`
 	}
 	if err := json.Unmarshal(decoded[0], &header); err != nil || header == nil {
 		return "", "", fail(CodeFormatInvalid, "header is not a JSON object with string alg and kid")
+	}
+	// A recipient has to refuse a token whose crit lists an extension it
+	// does not understand (RFC 7515, section 4.1.11), and the service
+	// understands none.
+	if header.Crit != nil {
+		return "", "", fail(CodeFormatInvalid, "header has a crit parameter, and no extension is supported")
+	}
+	// b64 (RFC 7797) changes what the signature covers, and the service
+	// supports only the default base64url payload.
+	if header.B64 != nil {
+		return "", "", fail(CodeFormatInvalid, "header has a b64 parameter, and only the default payload encoding is supported")
 	}
 	if !keys.AcceptsAlgorithm(header.Alg) {
 		return "", "", fail(CodeAlgNotAllowed, "alg %s is not an accepted signature algorithm", short(header.Alg))

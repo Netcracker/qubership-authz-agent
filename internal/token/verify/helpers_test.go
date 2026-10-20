@@ -139,16 +139,32 @@ func (s *signer) sign(t *testing.T, claims map[string]any) string {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return s.signPayload(t, payload)
+	return s.signPayload(t, payload, nil)
 }
 
-// signPayload returns a compact JWS of payload, which need not be JSON, with
-// the signer's kid.
-func (s *signer) signPayload(t *testing.T, payload []byte) string {
+// signWithHeaders returns a compact JWS of claims whose protected header
+// holds the signer's kid and each entry of header.
+func (s *signer) signWithHeaders(t *testing.T, claims, header map[string]any) string {
+	t.Helper()
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return s.signPayload(t, payload, header)
+}
+
+// signPayload returns a compact JWS of payload, which need not be JSON,
+// whose protected header holds the signer's kid and each entry of header.
+func (s *signer) signPayload(t *testing.T, payload []byte, header map[string]any) string {
 	t.Helper()
 	headers := jws.NewHeaders()
 	if err := headers.Set(jws.KeyIDKey, s.key.ID); err != nil {
 		t.Fatal(err)
+	}
+	for name, value := range header {
+		if err := headers.Set(name, value); err != nil {
+			t.Fatal(err)
+		}
 	}
 	token, err := jws.Sign(payload, jws.WithKey(s.alg, s.private, jws.WithProtectedHeaders(headers)))
 	if err != nil {

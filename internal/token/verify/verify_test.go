@@ -95,9 +95,9 @@ func TestVerify_RefusesAMalformedToken(t *testing.T) {
 		{"payload that is not base64url", header + ".%%%.c2ln"},
 		{"signature that is not base64url", header + "." + segment(t, claimsAt(start, nil)) + ".%%%"},
 		{"alg that is not a string", unsigned(t, map[string]any{"alg": 256, "kid": "k1"}, claimsAt(start, nil))},
-		{"payload that is a JSON array", s.signPayload(t, []byte(`[1, 2]`))},
-		{"payload that is null", s.signPayload(t, []byte(`null`))},
-		{"payload with data after the object", s.signPayload(t, []byte(`{"exp": 1792069200} {}`))},
+		{"payload that is a JSON array", s.signPayload(t, []byte(`[1, 2]`), nil)},
+		{"payload that is null", s.signPayload(t, []byte(`null`), nil)},
+		{"payload with data after the object", s.signPayload(t, []byte(`{"exp": 1792069200} {}`), nil)},
 		{"exp that is a string", s.sign(t, claimsAt(start, map[string]any{"exp": "tomorrow"}))},
 		{"exp of 2^53 seconds", s.sign(t, claimsAt(start, map[string]any{"exp": int64(1) << 53}))},
 		{"exp of 1e300 seconds", s.sign(t, claimsAt(start, map[string]any{"exp": 1e300}))},
@@ -152,7 +152,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}{
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": long}, claimsAt(start, nil)), CodeKIDUnknown},
 		{"alg", unsigned(t, map[string]any{"alg": long, "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
-		{"exp", s.signPayload(t, []byte(`{"exp": 1`+strings.Repeat("0", 1000)+`}`)), CodeFormatInvalid},
+		{"exp", s.signPayload(t, []byte(`{"exp": 1`+strings.Repeat("0", 1000)+`}`), nil), CodeFormatInvalid},
 		{"aud", s.sign(t, claimsAt(start, map[string]any{"aud": []any{long, long, long, long, long}})), CodeAudienceInvalid},
 	}
 	for _, tt := range tests {
@@ -164,6 +164,32 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 			}
 			if size := len(err.Error()); size > 400 {
 				t.Errorf("Verify() error is %d bytes, want at most 400: %.120s...", size, err)
+			}
+		})
+	}
+}
+
+// Every token here carries a valid signature. A header parameter that crit
+// does not name is an extension the service may ignore: that row is the
+// control.
+func TestVerify_RefusesATokenWhoseHeaderHasCrit(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	tests := []struct {
+		name   string
+		header map[string]any
+		want   Code
+	}{
+		{"crit naming an unknown extension", map[string]any{"crit": []string{"x-limit"}, "x-limit": "read-only"}, CodeFormatInvalid},
+		{"crit naming b64", map[string]any{"crit": []string{"b64"}, "b64": true}, CodeFormatInvalid},
+		{"crit that is an empty array", map[string]any{"crit": []string{}}, CodeFormatInvalid},
+		{"extension that crit does not name", map[string]any{"x-limit": "read-only"}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(s.signWithHeaders(t, claimsAt(start, nil), tt.header))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
 	}
@@ -183,6 +209,10 @@ func TestVerify_RefusesOnTheHeaderBeforeLookingUpTheKID(t *testing.T) {
 		{"header that is null", "bnVsbA." + segment(t, claimsAt(start, nil)) + ".c2ln", CodeFormatInvalid},
 		{"payload that is not base64url", header + ".%%%.c2ln", CodeFormatInvalid},
 		{"signature that is not base64url", header + "." + segment(t, claimsAt(start, nil)) + ".%%%", CodeFormatInvalid},
+		{"crit naming an unknown extension", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "crit": []string{"x-limit"}, "x-limit": "read-only"}, claimsAt(start, nil)), CodeFormatInvalid},
+		{"crit that is null", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "crit": nil}, claimsAt(start, nil)), CodeFormatInvalid},
+		{"crit that is a string", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "crit": "x-limit"}, claimsAt(start, nil)), CodeFormatInvalid},
+		{"b64 that is false", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "b64": false}, claimsAt(start, nil)), CodeFormatInvalid},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
