@@ -298,21 +298,29 @@ func signingKey(raw json.RawMessage) (Key, string) {
 	if err != nil {
 		return Key{}, fmt.Sprintf("kid %q: public key: %v", kid, err)
 	}
-	if kty != "RSA" {
-		curve := curveOf(public)
-		if !acceptedCurve(curve) {
-			return Key{}, fmt.Sprintf("kid %q has curve %q, which no accepted algorithm uses", kid, curve)
-		}
-		if want, ok := algorithmCurve[alg]; ok && want != curve {
-			return Key{}, fmt.Sprintf("kid %q declares alg %q, which signs with %s, not with its curve %s", kid, alg, want, curve)
-		}
-	}
-	if rsaKey, ok := public.(jwk.RSAPublicKey); ok {
-		if reason := weakRSA(rsaKey); reason != "" {
-			return Key{}, fmt.Sprintf("kid %q %s", kid, reason)
-		}
+	if reason := unusableKey(public, alg); reason != "" {
+		return Key{}, fmt.Sprintf("kid %q %s", kid, reason)
 	}
 	return Key{ID: kid, JWK: public, alg: alg}, ""
+}
+
+// unusableKey returns why public cannot verify an accepted token, or "": an
+// RSA key falls below minRSAModulusBits or minRSAPublicExponent; an EC or
+// OKP key is on a curve no accepted algorithm signs with, or declares an alg
+// of another curve. public is an RSA, EC, or OKP key, and alg is the
+// algorithm it declares, "" when it declares none.
+func unusableKey(public jwk.Key, alg string) string {
+	if rsaKey, ok := public.(jwk.RSAPublicKey); ok {
+		return weakRSA(rsaKey)
+	}
+	curve := curveOf(public)
+	if !acceptedCurve(curve) {
+		return fmt.Sprintf("has curve %q, which no accepted algorithm uses", curve)
+	}
+	if want, ok := algorithmCurve[alg]; ok && want != curve {
+		return fmt.Sprintf("declares alg %q, which signs with %s, not with its curve %s", alg, want, curve)
+	}
+	return ""
 }
 
 // weakRSA returns why key falls below the RSA floors, or "".
