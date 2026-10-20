@@ -21,7 +21,8 @@
 // provider's keys and fails unless all of them arrive. [Set.Lookup] finds a
 // key by kid. [Set.Run] reloads the keys on a fixed interval, so a key a
 // provider rotates in is found after the next reload or a restart. A reload
-// that fails for a provider keeps the keys already loaded for it.
+// that fails for a provider keeps the keys already loaded for it; a reload
+// that finds no usable signing key in the provider's JWKS removes them.
 package keys
 
 import (
@@ -62,7 +63,7 @@ type Options struct {
 	// HTTPTimeout bounds one discovery or JWKS request.
 	HTTPTimeout time.Duration
 	// StartupTimeout bounds how long [Load] retries a provider whose keys
-	// could not be fetched.
+	// could not be fetched, a JWKS without a usable signing key included.
 	StartupTimeout time.Duration
 	// RefreshInterval is how often [Set.Run] reloads the keys.
 	RefreshInterval time.Duration
@@ -155,8 +156,9 @@ type snapshot struct {
 }
 
 // Load fetches the keys of every provider in cfg and returns them as a
-// [Set]. A provider whose keys cannot be fetched is retried with growing
-// pauses until [Options.StartupTimeout] passes or ctx ends; Load then fails
+// [Set]. A provider whose keys cannot be fetched, or whose JWKS holds no
+// usable signing key, is retried with growing pauses until
+// [Options.StartupTimeout] passes or ctx ends; Load then fails
 // with an error that names every such provider and the last reason. It also
 // fails when cfg breaks [Config.Validate], when a caFile cannot be read, and
 // when two providers publish the same kid.
@@ -252,8 +254,10 @@ func (s *Set) Lookup(kid string) (Key, bool) {
 
 // Refresh fetches the keys of every provider once and replaces the loaded
 // keys with them. A provider whose fetch fails keeps its previous keys, and
-// its error is part of the returned one. When the new keys of two providers
-// share a kid, nothing is replaced. Refresh calls run one at a time.
+// its error is part of the returned one. A provider whose JWKS holds no
+// usable signing key loses its keys, so the tokens they signed are refused.
+// When the new keys of two providers share a kid, nothing is replaced.
+// Refresh calls run one at a time.
 func (s *Set) Refresh(ctx context.Context) error {
 	s.reloading.Lock()
 	defer s.reloading.Unlock()
@@ -271,6 +275,11 @@ func (s *Set) Refresh(ctx context.Context) error {
 	var failures []error
 	for i, f := range s.fetchers {
 		id := f.provider.ID
+		if errors.Is(errs[i], errNoUsableKey) {
+			byProvider[id] = nil
+			s.opts.Log.Warnf("trusted providers: provider %q: %v; its tokens are refused until a reload finds a usable key", id, errs[i])
+			continue
+		}
 		if errs[i] != nil {
 			byProvider[id] = old.byProvider[id]
 			failures = append(failures, fmt.Errorf("provider %q keeps its previous keys: %w", id, errs[i]))

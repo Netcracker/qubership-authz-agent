@@ -94,9 +94,16 @@ func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error
 	return &fetcher{provider: p, client: client, log: log}, nil
 }
 
+// errNoUsableKey reports a JWKS that parses and holds no usable signing key.
+// [Load] retries such a provider and fails when it stays so; [Set.Refresh]
+// removes the provider's keys.
+var errNoUsableKey = errors.New("no usable signing key")
+
 // fetch downloads the provider's JWKS, through discovery when the provider
-// names an issuer, and returns its signing keys. It fails when the JWKS
-// holds no usable signing key, or two different keys under one kid.
+// names an issuer, and returns its signing keys. It fails when a request
+// fails or answers a status other than 2xx, when a document is not the JSON
+// it should be, and when the JWKS lists two different keys under one kid;
+// a JWKS without a usable signing key fails with errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	uri := f.provider.JWKSURI
 	if uri == "" {
@@ -175,10 +182,13 @@ func readToken(path string) (string, error) {
 
 // parseJWKS returns the signing keys of a JWKS document. A key that cannot
 // sign a token the service accepts is skipped with a warning, and the same
-// key listed twice under one kid is kept once.
+// key listed twice under one kid is kept once. A keys member that is null
+// counts as an empty array, the way a Go server writes an empty key set;
+// one that is missing or holds another value is an error, and so is a JWKS
+// left with no usable signing key, which fails with errNoUsableKey.
 func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 	var doc struct {
-		Keys []json.RawMessage `json:"keys"`
+		Keys json.RawMessage `json:"keys"`
 	}
 	if err := json.Unmarshal(body, &doc); err != nil {
 		return nil, err
@@ -186,10 +196,14 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 	if doc.Keys == nil {
 		return nil, errors.New("no keys array")
 	}
+	var entries []json.RawMessage
+	if err := json.Unmarshal(doc.Keys, &entries); err != nil {
+		return nil, fmt.Errorf("keys is not an array: %w", err)
+	}
 	var out []Key
-	thumbprints := make(map[string][]byte, len(doc.Keys))
+	thumbprints := make(map[string][]byte, len(entries))
 	skipped := 0
-	for i, raw := range doc.Keys {
+	for i, raw := range entries {
 		key, reason := signingKey(raw)
 		if reason != "" {
 			skipped++
@@ -213,7 +227,7 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 		out = append(out, key)
 	}
 	if len(out) == 0 {
-		return nil, fmt.Errorf("no usable signing key (%d skipped)", skipped)
+		return nil, fmt.Errorf("%w (%d skipped)", errNoUsableKey, skipped)
 	}
 	return out, nil
 }

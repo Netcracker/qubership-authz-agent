@@ -154,6 +154,9 @@ func TestLoad_FailsForAProviderWhoseKeysCannotBeRead(t *testing.T) {
 		{"discovery jwks_uri that is not http", func(t *testing.T, idp *fakeIdP) { idp.discovery = []byte(`{"jwks_uri": "file:///etc/jwks.json"}`) }},
 		{"discovery that is not JSON", func(t *testing.T, idp *fakeIdP) { idp.discovery = []byte(`<html></html>`) }},
 		{"JWKS without a keys array", func(t *testing.T, idp *fakeIdP) { idp.jwks = []byte(`{}`) }},
+		{"JWKS whose keys array is empty", func(t *testing.T, idp *fakeIdP) { idp.jwks = []byte(`{"keys": []}`) }},
+		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.jwks = []byte(`{"keys": null}`) }},
+		{"JWKS whose keys is an object", func(t *testing.T, idp *fakeIdP) { idp.jwks = []byte(`{"keys": {}}`) }},
 		{"usable JWKS one byte over 1 MiB", func(t *testing.T, idp *fakeIdP) {
 			idp.jwks = paddedJWKS(ecJWK(t, "k1", nil), maxResponseBytes+1)
 		}},
@@ -414,6 +417,39 @@ func TestRefresh_AProviderThatFailsKeepsItsKeys(t *testing.T) {
 		if _, ok := set.Lookup(kid); ok != want {
 			t.Errorf("Lookup(%q) found = %t, want %t", kid, ok, want)
 		}
+	}
+}
+
+// A JWKS that parses and holds no usable signing key removes the provider's
+// keys. A JWKS whose keys member is missing or not an array is a failed
+// fetch, the control, and the old key stays.
+func TestRefresh_AJWKSWithoutAUsableKeyRemovesTheProvidersKeys(t *testing.T) {
+	tests := []struct {
+		name     string
+		serve    func(t *testing.T, idp *fakeIdP)
+		wantKept bool
+	}{
+		{"JWKS whose keys array is empty", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": []}`) }, false},
+		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, false},
+		{"JWKS whose only key is an encryption key", func(t *testing.T, idp *fakeIdP) {
+			idp.publish(ecJWK(t, "enc", map[string]any{"use": "enc"}))
+		}, false},
+		{"JWKS without a keys array", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{}`) }, true},
+		{"JWKS whose keys is an object", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": {}}`) }, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "old", nil))
+			set := mustLoad(t, testOptions(), issuer("realm", idp))
+			tt.serve(t, idp)
+			err := set.Refresh(context.Background())
+			if (err != nil) != tt.wantKept {
+				t.Errorf("Refresh() error = %v, want an error: %t", err, tt.wantKept)
+			}
+			if _, ok := set.Lookup("old"); ok != tt.wantKept {
+				t.Errorf("Lookup(%q) found = %t, want %t", "old", ok, tt.wantKept)
+			}
+		})
 	}
 }
 

@@ -128,6 +128,13 @@ func (idp *fakeIdP) publish(keys ...json.RawMessage) {
 	idp.keys = keys
 }
 
+// setJWKS serves body in place of the JWKS built from the published keys.
+func (idp *fakeIdP) setJWKS(body string) {
+	idp.mu.Lock()
+	defer idp.mu.Unlock()
+	idp.jwks = []byte(body)
+}
+
 func (idp *fakeIdP) setStatus(status int) {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
