@@ -154,10 +154,10 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 			s.Assert().True(seenRequestIDs[requestID], "expected authorize decision logs to include x-request-id %q", requestID)
 		}
 
-		// Canonical route is routing-only (ADR-0062 audit row 6 = D): Envoy
-		// only prefix_rewrites /access/v1/authorize → /v1/data/authorize with
-		// zero header/body mutation, so x-authz-original-path is NOT injected.
-		// An OPA-direct caller on /v1/data/authorize wouldn't carry it either —
+		// Canonical route is routing-only (ADR-0062 audit row 6 = D): the
+		// public surface hands the body to the decision with zero header or
+		// body mutation, so x-authz-original-path is NOT injected. The
+		// internal port's canonical route does not carry it either, and
 		// asserting its absence locks in cross-transport parity.
 		if canonicalLog, ok := logsByRequestID["decision_logs.canonical_path_header"]; ok {
 			originalPath := decisionLogSingleHeaderValue(canonicalLog, "x-authz-original-path")

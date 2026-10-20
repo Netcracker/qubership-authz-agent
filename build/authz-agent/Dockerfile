@@ -1,7 +1,7 @@
 #
 # authz-agent image: the authorization agent as one service. It embeds the
-# Rego policies and the OPA library, and serves the check API, the canonical
-# authorize route, and the data API.
+# Rego policies and the OPA library, and serves the check API and the
+# canonical authorize route.
 #
 # Build context is the repository root:
 #   docker build -t authz-agent -f build/authz-agent/Dockerfile .

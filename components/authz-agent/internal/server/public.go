@@ -41,8 +41,8 @@ const (
 
 // RegisterPublic adds the routes the Envoy container exposed to app, with
 // the same meaning: the check routes of the legacy access-control API
-// translated by package legacy, the canonical authorize route as a data API
-// request, /api-version, /health, the decision-log download, and 404
+// translated by package legacy, the canonical authorize route,
+// /api-version, /health, the decision-log download, and 404
 // {"message":"not found"} for every other path. The download is relayed to
 // the collector of Options.CollectorURL when the decisions are not stored in
 // the service. A route accepts any method, as the Envoy path matches did;
@@ -148,14 +148,9 @@ func (s *Server) relay(base, name string, timeout time.Duration) fiber.Handler {
 	}
 }
 
-// canonical serves /access/v1/authorize as the Envoy route did: the guard
-// runs for /v1/data/authorize under the request's own method, and a POST
-// that passes it is the data API decision. Any other method that passes
-// the guard is 405; OPA would have read or written the document.
+// canonical serves /access/v1/authorize: a POST is the decision at
+// authorize with the input of its body, and any other method is 405.
 func (s *Server) canonical(c *fiber.Ctx) error {
-	if !s.permitted(c, c.Method(), []string{"v1", "data", "authorize"}) {
-		return nil
-	}
 	if c.Method() != fiber.MethodPost {
 		return c.SendStatus(http.StatusMethodNotAllowed)
 	}
@@ -233,16 +228,10 @@ func lastQuery(c *fiber.Ctx, key string) string {
 // check evaluates the canonical decision for a legacy request and writes
 // the response: the body shape builds from the decision, or the authError
 // as {"message": ...} with its status when the policy refused the request.
-// The guard runs for the request as OPA received it, a POST at
-// /v1/data/authorize with the request's query parameters, so ?explain=full
-// stays refused whatever the method. An
-// undefined decision gets the data API's answer, and a failed evaluation
-// 500, so that both stay visible as they were through Envoy. The route is
-// recorded in the decision log as originalPath.
+// An undefined decision gets the envelope without a result, and a failed
+// evaluation 500, so that both stay visible as they were through Envoy. The
+// route is recorded in the decision log as originalPath.
 func (s *Server) check(c *fiber.Ctx, originalPath string, resources []legacy.Resource, shape func(result any) []byte) error {
-	if !s.permitted(c, fiber.MethodPost, []string{"v1", "data", "authorize"}) {
-		return nil
-	}
 	c.Request().Header.Set(originalPathHeader, originalPath)
 	input := legacy.Input(c.GetReqHeaders(), resources)
 	result, defined, id, err := s.evaluate(c, []string{"authorize"}, input)

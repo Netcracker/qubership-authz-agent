@@ -189,18 +189,13 @@ var Catalog = []StepEntry{
 	{"m2m_keycloak.pull_succeeds_with_keycloak_token", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"m2m_keycloak.agent_functional_after_token_refresh", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 
-	// ── opa_lockdown (Step 14 / ADR-0077) ───────────────────────────────
-	// Validates that --authorization=basic + --authentication=token +
-	// system_authz.rego block unauthenticated reads and writes while allowing
-	// authenticated writes (pap-client's OPA bearer token).
-	// POST /v1/data/authorize → 200 is covered by
-	// authorize.envoy_opa_direct.bytewise_response_parity.
-	{"opa_lockdown.authorize_explain_forbidden.401", "n/a", "POST /v1/data/authorize?explain=full (OPA-direct)", "-", "-", "none"},
-	{"opa_lockdown.authorize_plain_still_open.200", "n/a", "POST /v1/data/authorize (OPA-direct, no params)", "-", "-", "none"},
-	{"opa_lockdown.m2m_get_forbidden.403", "n/a", "GET /v1/data/m2m (OPA-direct)", "-", "-", "none"},
-	{"opa_lockdown.pips_get_forbidden.403", "n/a", "GET /v1/data/pips (OPA-direct)", "-", "-", "none"},
-	{"opa_lockdown.write_without_auth.401", "n/a", "PUT /v1/data/opa-lockdown-test (OPA-direct, no auth)", "-", "-", "none"},
-	{"opa_lockdown.write_with_auth.204", "n/a", "PUT /v1/data/opa-lockdown-test (OPA-direct, with token)", "-", "-", "none"},
+	// ── lockdown ────────────────────────────────────────────────────────
+	// The store and the M2M token in it stay out of reach over HTTP: no
+	// route reads or writes a document, and ?explain=full on the canonical
+	// route gets the plain decision.
+	{"lockdown.m2m_read_absent.404", "n/a", "GET /v1/data/m2m (internal port)", "-", "-", "none"},
+	{"lockdown.store_write_absent.404", "n/a", "PUT /v1/data/lockdown-probe (internal port)", "-", "-", "none"},
+	{"lockdown.authorize_explain_ignored.200", "admin", "POST /access/v1/authorize (plain and with ?explain=full)", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 
 	// Verifies that the disk files written by pap-client have the correct
 	// OPA data-dir layout for restart recovery in ConfigMap-mount mode.
@@ -212,8 +207,6 @@ var Catalog = []StepEntry{
 
 	// ── route_security ───────────────────────────────────────────────────
 	{"route_security.authorize_hidden.404", "admin", "POST /authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"route_security.v1_data_authorize_hidden.404", "admin", "POST /v1/data/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"route_security.v1_data_authorize_result_hidden.404", "admin", "POST /v1/data/authorize/result", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"route_security.unknown_path.404", "n/a", "GET /unknown/endpoint", "-", "-", "none"},
 	{"route_security.v2_check_resource.implemented", "admin", "POST /access/v2/check/resource", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"route_security.v1_bulk_operations.implemented", "admin", "POST /access/v1/check/resource/bulk/operations", "ORDER", "READ", "ROLE_ADMINISTRATOR"},

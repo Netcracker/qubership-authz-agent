@@ -40,7 +40,7 @@ CLOUD_TOPOLOGY_KEY: kubernetes.io/hostname
 # app.kubernetes.io/part-of label.
 APPLICATION_NAME: 'Platform-Core-Security'
 # Renders the PodMonitor by which the platform's VictoriaMetrics operator
-# scrapes the agent's metrics at `/prometheus` on its data-api port (8181). Set to
+# scrapes the agent's metrics at `/prometheus` on its internal port (8181). Set to
 # false on a cluster without the monitoring.coreos.com CRDs (a plain kubeadm or
 # kind cluster), where `helm install` fails on the unknown kind.
 MONITORING_ENABLED: true
@@ -59,16 +59,11 @@ DEPLOYMENT_SESSION_ID: ''
 #
 # Registers the access-control-compatible check API on the internal, private and
 # public gateways, and the canonical POST /access/v1/authorize on the internal
-# AND public gateways, routed straight to OPA. The CRs are
+# AND public gateways, every route on the agent's public port (8080). The CRs are
 # `core.netcracker.com/v1` `Mesh` objects handled by core-operator.
 #
-# The authorize route is the one place a PUBLIC gateway fronts the agent's data
-# API. The rewrite sends the prefix to `/v1/data/authorize`, and the
-# `system.authz` policy admits that POST without a bearer token, so nothing at
-# the HTTP layer authenticates the caller. That policy refuses `explain`,
-# `instrument`, `metrics`, and `provenance` here for everyone: the evaluation
-# trace carries the M2M token, and the rewrite preserves the query string. The
-# decision itself still requires a valid token in the request body.
+# Nothing at the HTTP layer authenticates a caller of the authorize route on the
+# PUBLIC gateway: the decision itself requires a valid token in the request body.
 #
 # Registering a prefix another service already serves is NOT a collision that
 # fails or resolves at random — verified on a live stand. The control plane keys a

@@ -860,29 +860,6 @@
             "url": "{{authz_base_url}}/authorize"
           },
           "response": []
-        },
-        {
-          "name": "POST /v1/data/authorize",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"input\": {\n    \"authorizationToken\": \"{{admin_bearer}}\",\n    \"authorizationType\": \"\",\n    \"requestHeaders\": {},\n    \"resources\": [\n      {\n        \"resourceType\": \"ORDER\",\n        \"operation\": \"READ\"\n      }\n    ],\n    \"subject\": \"{{admin_bearer}}\"\n  }\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": "{{authz_base_url}}/v1/data/authorize"
-          },
-          "response": []
         }
       ]
     }

@@ -172,8 +172,7 @@ func (e *Engine) Eval(ctx context.Context, segments []string, input any, ndbc bu
 	return rs[0].Expressions[0].Value, true, nil
 }
 
-// Put replaces the document at segments, creating the parent documents, as
-// `PUT /v1/data/<path>` does on the OPA server.
+// Put replaces the document at segments, creating the parent documents.
 func (e *Engine) Put(ctx context.Context, segments []string, value any) error {
 	path := storage.Path(clone(segments))
 	return storage.Txn(ctx, e.store, storage.WriteParams, func(txn storage.Transaction) error {
@@ -186,60 +185,7 @@ func (e *Engine) Put(ctx context.Context, segments []string, value any) error {
 	})
 }
 
-// PatchOp is one JSON Patch operation applied under a document.
-type PatchOp struct {
-	Op    string `json:"op"`
-	Path  string `json:"path"`
-	Value any    `json:"value"`
-}
-
-// Patch applies JSON Patch operations relative to the document at segments,
-// as `PATCH /v1/data/<path>` does on the OPA server. A missing target
-// document fails with a storage not-found error, which IsNotFound reports.
-func (e *Engine) Patch(ctx context.Context, segments []string, ops []PatchOp) error {
-	root := "/" + strings.Join(clone(segments), "/")
-	return storage.Txn(ctx, e.store, storage.WriteParams, func(txn storage.Transaction) error {
-		for _, op := range ops {
-			var storeOp storage.PatchOp
-			switch op.Op {
-			case "add":
-				storeOp = storage.AddOp
-			case "remove":
-				storeOp = storage.RemoveOp
-			case "replace":
-				storeOp = storage.ReplaceOp
-			default:
-				return fmt.Errorf("unsupported patch op %q", op.Op)
-			}
-			path, ok := storage.ParsePathEscaped(root + op.Path)
-			if !ok {
-				return fmt.Errorf("invalid patch path %q", op.Path)
-			}
-			if err := e.store.Write(ctx, txn, storeOp, path, op.Value); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-// Get reads the document at segments. ok is false when it does not exist.
-func (e *Engine) Get(ctx context.Context, segments []string) (any, bool, error) {
-	value, err := storage.ReadOne(ctx, e.store, storage.Path(clone(segments)))
-	if storage.IsNotFound(err) {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, err
-	}
-	return value, true, nil
-}
-
-// IsNotFound reports whether err is the store's not-found error.
-func IsNotFound(err error) bool { return storage.IsNotFound(err) }
-
-// clone copies the segments so that nothing the caller hands in, such as a
-// path taken from a request buffer that the HTTP server reuses, can change
+// clone copies the segments so that nothing the caller hands in can change
 // a store key later.
 func clone(segments []string) []string {
 	out := make([]string, len(segments))

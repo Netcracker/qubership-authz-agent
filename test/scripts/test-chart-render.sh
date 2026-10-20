@@ -492,7 +492,7 @@ fi
 
 # Every setting the service reads has to reach it, and the objects it reads
 # them from have to be mounted.
-for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR AUTHZ_DATA_API_AUTHORIZATION AUTHZ_OPA_AUTH_TOKEN_FILE \
+for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR \
   AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_JWKS_BOOTSTRAP_REQUIRED AUTHZ_PAP_CLIENT_SOURCE_URL \
   AUTHZ_PAP_CLIENT_PULL_INTERVAL AUTHZ_ENTITLEMENTS_URL AUTHZ_DECISION_LOG_FILE AUTHZ_DECISION_LOG_HEADERS; do
   if [[ "${all_manifests}" == *"name: ${env_name}"* ]]; then
@@ -502,13 +502,30 @@ for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR AUTHZ_DATA_API_AUTHORIZATION A
   fi
 done
 
-for volume in "authz-agent-trusted-providers" "authz-agent-opa-auth" "authz-agent-client-credentials"; do
+for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; do
   if [[ "${all_manifests}" == *"${volume}"* ]]; then
     pass "the agent Pod mounts ${volume}"
   else
     fail "the agent Pod does not mount ${volume}"
   fi
 done
+
+# Every gateway route ends on the public port, the canonical authorize route
+# included, and reaches it under the path the caller sent: a gateway publishes
+# nothing on the internal port.
+mesh="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --show-only templates/mesh-routes.yaml 2>&1 || true)"
+mesh_endpoints="$(grep -oE "endpoint: '[^']*'" <<<"${mesh}" | sort -u | paste -sd, - || true)"
+if [[ "${mesh_endpoints}" == "endpoint: 'http://authz-agent:8080'" && "${mesh}" != *"prefixRewrite"* ]]; then
+  pass "every mesh route ends on the agent's public port 8080, with no path rewrite"
+else
+  fail "the mesh routes render the endpoints ${mesh_endpoints}$([[ "${mesh}" == *"prefixRewrite"* ]] && echo ' and a prefixRewrite'), expected endpoint: 'http://authz-agent:8080' alone and no prefixRewrite"
+fi
+authorize_routes="$(awk '/^  name: / {name = $2} /prefix: \/access\/v1\/authorize$/ {print name}' <<<"${mesh}" | paste -sd, - || true)"
+if [[ "${authorize_routes}" == "'authz-agent-internal-routes','authz-agent-public-routes'" ]]; then
+  pass "the canonical /access/v1/authorize is registered on the internal and public gateways"
+else
+  fail "the canonical /access/v1/authorize is registered in ${authorize_routes:-no route}, expected 'authz-agent-internal-routes','authz-agent-public-routes'"
+fi
 
 # /health answers once the trusted providers are in order and /ready once the
 # policies have loaded too, so a Pod waiting for its policy source is held out
@@ -916,10 +933,10 @@ expect_labels "the stub's Service carries only name, part-of, managed-by and the
     deployment.netcracker.com/sessionId: 's-42'" "$(metadata_labels "${stub_service}")"
 
 service_ports="$(helm template t "${CHART_DIR}" -f "${SIZING}" --show-only templates/service.yaml 2>&1 | grep -E '^    - name: |^      port: ' | tr -d ' ' | paste -sd, - || true)"
-if [[ "${service_ports}" == "-name:web,port:8080,-name:data-api,port:8181" ]]; then
-  pass "the agent's Service names its ports web (8080) and data-api (8181), as the container does"
+if [[ "${service_ports}" == "-name:web,port:8080,-name:internal,port:8181" ]]; then
+  pass "the agent's Service names its ports web (8080) and internal (8181), as the container does"
 else
-  fail "the agent's Service ports render ${service_ports}, expected -name:web,port:8080,-name:data-api,port:8181"
+  fail "the agent's Service ports render ${service_ports}, expected -name:web,port:8080,-name:internal,port:8181"
 fi
 
 sa_namespace="$(field "$(helm template t "${CHART_DIR}" -f "${SIZING}" --set NAMESPACE=ns-x --show-only templates/configmap.yaml 2>&1 | sed -n '/^kind: ServiceAccount/,$p' || true)" namespace:)"
@@ -932,14 +949,14 @@ fi
 # ── PodMonitor ───────────────────────────────────────────────────────────
 #
 # Under MONITORING_ENABLED the agent's metrics are scraped where the service
-# serves them: /prometheus on the data-api port, from the Pods the Service
+# serves them: /prometheus on the internal port, from the Pods the Service
 # selects.
 monitor="$(helm template t "${CHART_DIR}" -f "${SIZING}" --show-only templates/podmonitor.yaml 2>&1 || true)"
 monitor_summary="kind=$(field "${monitor}" kind:) operator=$(field "${monitor}" app.kubernetes.io/processed-by-operator:) port=$(field "${monitor}" port:) path=$(field "${monitor}" path:) interval=$(awk '$1 == "-" && $2 == "interval:" {print $3; exit}' <<<"${monitor}") selector=$(field "$(sed -n '/^  selector:/,$p' <<<"${monitor}")" name:) jobLabel=$(field "${monitor}" jobLabel:) k8s-app=$(field "${monitor}" k8s-app:)"
-if [[ "${monitor_summary}" == "kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent' jobLabel= k8s-app=" ]]; then
-  pass "MONITORING_ENABLED renders a PodMonitor for the VictoriaMetrics operator on data-api /prometheus every 30s for the agent's Pods"
+if [[ "${monitor_summary}" == "kind=PodMonitor operator=victoriametrics-operator port=internal path=/prometheus interval=30s selector='authz-agent' jobLabel= k8s-app=" ]]; then
+  pass "MONITORING_ENABLED renders a PodMonitor for the VictoriaMetrics operator on internal /prometheus every 30s for the agent's Pods"
 else
-  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor operator=victoriametrics-operator port=data-api path=/prometheus interval=30s selector='authz-agent' jobLabel= k8s-app="
+  fail "the PodMonitor renders ${monitor_summary}, expected kind=PodMonitor operator=victoriametrics-operator port=internal path=/prometheus interval=30s selector='authz-agent' jobLabel= k8s-app="
 fi
 if [[ "$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MONITORING_ENABLED=false 2>&1 || true)" != *"kind: PodMonitor"* ]]; then
   pass "MONITORING_ENABLED false renders no PodMonitor"

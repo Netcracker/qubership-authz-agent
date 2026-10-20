@@ -84,10 +84,11 @@ svt_wait_for_public_health() {
   return 1
 }
 
-# The agent answers /ready on its data API once the trusted providers have
-# bootstrapped and the policies have loaded once; the port is not published, so
-# the probe runs from a container on the compose network. The image carries no
-# shell utility, hence the one-shot curl container rather than `compose exec`.
+# The agent serves /ready on its internal listener once the trusted providers
+# have bootstrapped and the policies have loaded once; the port is not
+# published, so the probe runs from a container on the compose network. The
+# image carries no shell utility, hence the one-shot curl container rather than
+# `compose exec`.
 svt_wait_for_backend_health() {
   local attempts="${1:-90}"
   local delay_seconds="${2:-2}"
@@ -698,13 +699,14 @@ WINEOF
 }
 
 # Run a per-scenario JMX in opa-direct mode against the bridged `jmeter`
-# compose service. OPA's port 8181 is NOT exposed to the host, so the
-# host-networked `jmeter-host` service used by svt_run_jmeter_mixed_flow
-# cannot reach it. The per-scenario JMX template reads ${AUTHZ_HOST} /
-# ${AUTHZ_PORT} for the HTTPSampler; for opa-direct we override them to
-# opa:8181 here. window.json is emitted with the same shape as the
-# mixed-flow helper so the driver's Prometheus range queries align to
-# the load window identically across all three transport modes.
+# compose service. The internal listener on port 8181 is NOT exposed to
+# the host, so the host-networked `jmeter-host` service used by
+# svt_run_jmeter_mixed_flow cannot reach it. The per-scenario JMX
+# template reads ${AUTHZ_HOST} / ${AUTHZ_PORT} for the HTTPSampler; for
+# opa-direct we override them to authz-agent:8181 here. window.json is emitted
+# with the same shape as the mixed-flow helper so the driver's
+# Prometheus range queries align to the load window identically across
+# all three transport modes.
 #
 # Usage: svt_run_jmeter_per_scenario_opa_direct <mode> <result_dir>
 #   <jmx_path> <target_rps> <threads> <ramp> <duration> <tokens_file>
@@ -786,7 +788,7 @@ svt_write_run_metadata_opa_direct() {
   "target_endpoint": {
     "host": "authz-agent",
     "port": 8181,
-    "path": "/v1/data/authorize"
+    "path": "/access/v1/authorize"
   },
   "host_baseline": {
     "os": "Ubuntu 24.04.4 LTS",

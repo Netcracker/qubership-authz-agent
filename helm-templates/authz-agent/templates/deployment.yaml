@@ -120,10 +120,6 @@ spec:
         - name: decision-logs
           emptyDir:
             sizeLimit: '{{ .Values.AUTHZ_DECISION_LOG_SIZE_LIMIT }}'
-        - name: opa-auth-token
-          secret:
-            secretName: '{{ .Values.SERVICE_NAME }}-opa-auth'
-            defaultMode: 292
         {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
         # Mount-mode volume: an ALREADY-EXISTING ConfigMap named by
         # AUTHZ_POLICY_CONFIGMAP (authz-agent-ADR-0071), which the chart never
@@ -160,7 +156,7 @@ spec:
             - name: web
               containerPort: 8080
               protocol: TCP
-            - name: data-api
+            - name: internal
               containerPort: 8181
               protocol: TCP
           env:
@@ -170,13 +166,6 @@ spec:
               value: "0.0.0.0:8080"
             - name: AUTHZ_HTTP_ADDR
               value: "0.0.0.0:8181"
-            # The data API is the writing surface of the engine, and the
-            # Service publishes its port, so the policy guard applies to it
-            # here as it did to OPA (authz-agent-ADR-0077).
-            - name: AUTHZ_DATA_API_AUTHORIZATION
-              value: "true"
-            - name: AUTHZ_OPA_AUTH_TOKEN_FILE
-              value: /etc/authz/opa-auth/token
             - name: AUTHZ_TRUSTED_PROVIDERS_FILE
               value: '{{ .Values.AUTHZ_TRUSTED_PROVIDERS_FILE }}'
             - name: AUTHZ_JWKS_BOOTSTRAP_REQUIRED
@@ -225,9 +214,6 @@ spec:
             - name: trusted-providers
               mountPath: /etc/authz
               readOnly: true
-            - name: opa-auth-token
-              mountPath: /etc/authz/opa-auth
-              readOnly: true
             - name: decision-logs
               mountPath: '{{ .Values.AUTHZ_DECISION_LOG_PATH }}'
             {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
@@ -251,7 +237,7 @@ spec:
           readinessProbe:
             httpGet:
               path: /ready
-              port: data-api
+              port: internal
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
@@ -259,7 +245,7 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: data-api
+              port: internal
             initialDelaySeconds: 30
             periodSeconds: 15
             timeoutSeconds: 3

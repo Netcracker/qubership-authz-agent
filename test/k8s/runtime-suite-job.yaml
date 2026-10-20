@@ -79,13 +79,6 @@ spec:
               value: http://pip-stub:8090
             - name: ENTITLEMENTS_MOCK_URL
               value: http://entitlements-mock:8090
-            # The chart generates this token per install; the opa_lockdown
-            # steps read it from the Secret the agent reads.
-            - name: OPA_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: authz-agent-opa-auth
-                  key: token
           resources:
             requests:
               cpu: 100m

@@ -16,6 +16,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -98,36 +100,6 @@ func TestGet(t *testing.T) {
 	}
 }
 
-// TestLoadAuthSecret: the trimmed token of the file becomes
-// data.opa_auth_secret, and an empty file stores nothing.
-func TestLoadAuthSecret(t *testing.T) {
-	eng := newEngine(t)
-	file := filepath.Join(t.TempDir(), "token")
-	if err := os.WriteFile(file, []byte(" s3cret \n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := loadAuthSecret(context.Background(), eng, file); err != nil {
-		t.Fatalf("loadAuthSecret() = %v", err)
-	}
-	if value, ok, _ := eng.Get(context.Background(), []string{"opa_auth_secret"}); !ok || value != "s3cret" {
-		t.Errorf("data.opa_auth_secret = %v, %v; want s3cret", value, ok)
-	}
-	empty := filepath.Join(t.TempDir(), "empty")
-	if err := os.WriteFile(empty, []byte("\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	other := newEngine(t)
-	if err := loadAuthSecret(context.Background(), other, empty); err != nil {
-		t.Fatalf("loadAuthSecret() on an empty file = %v", err)
-	}
-	if _, ok, _ := other.Get(context.Background(), []string{"opa_auth_secret"}); ok {
-		t.Error("an empty file must store no secret")
-	}
-	if err := loadAuthSecret(context.Background(), other, filepath.Join(t.TempDir(), "missing")); err == nil {
-		t.Error("a missing file must be an error")
-	}
-}
-
 // TestServeUntilShutdown_LogsADecisionMadeWhileTheSurfacesDrain: the
 // shutdown waits for the handlers still running, and every one of them
 // produces a decision, so the queue is read until the last has returned.
@@ -183,4 +155,118 @@ func TestServeUntilShutdown_LogsADecisionMadeWhileTheSurfacesDrain(t *testing.T)
 	if !strings.Contains(string(data), "served-while-draining") {
 		t.Errorf("the store holds %q, want the decision of the request the shutdown waited for", data)
 	}
+}
+
+// freeAddress returns a loopback address that no socket holds when it
+// returns.
+func freeAddress(t *testing.T) string {
+	t.Helper()
+	socket, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	address := socket.Addr().String()
+	if err := socket.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return address
+}
+
+// busyAddress returns a loopback address that a socket holds until the test
+// ends.
+func busyAddress(t *testing.T) string {
+	t.Helper()
+	socket, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = socket.Close() })
+	return socket.Addr().String()
+}
+
+// TestServe_FailsOnAnAddressInUse: an address already in use fails the start
+// before either surface serves, whichever surface it belongs to, and the
+// other address is free again afterwards.
+func TestServe_FailsOnAnAddressInUse(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		publicBusy bool
+	}{
+		{"the public address is in use", true},
+		{"the internal address is in use", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config{PublicAddr: freeAddress(t), Addr: busyAddress(t)}
+			other := cfg.PublicAddr
+			if tc.publicBusy {
+				cfg.PublicAddr, cfg.Addr = cfg.Addr, cfg.PublicAddr
+				other = cfg.Addr
+			}
+			// A serve that went on to serve would return only at the
+			// deadline, and report the shutdown rather than the failure.
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if !serve(ctx, cancel, decisionlog.New(decisionlog.Config{}, nil), cfg, 1, fiber.New(), fiber.New()) {
+				t.Errorf("serve(public %s, internal %s) = false, want the failed start", cfg.PublicAddr, cfg.Addr)
+			}
+			socket, err := net.Listen("tcp", other)
+			if err != nil {
+				t.Fatalf("binding %s after the failed start: %v, want the address free", other, err)
+			}
+			_ = socket.Close()
+		})
+	}
+}
+
+// TestServe_ServesBothSurfacesUntilShutdown: each app answers on the address
+// of its own surface, and the end of ctx is a shutdown, not a failure.
+func TestServe_ServesBothSurfacesUntilShutdown(t *testing.T) {
+	apps := map[string]*fiber.App{"public": fiber.New(), "internal": fiber.New()}
+	for name, app := range apps {
+		app.Get("/surface", func(c *fiber.Ctx) error { return c.SendString(name) })
+	}
+	cfg := config{PublicAddr: freeAddress(t), Addr: freeAddress(t)}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan bool, 1)
+	go func() {
+		done <- serve(ctx, cancel, decisionlog.New(decisionlog.Config{}, nil), cfg, 1, apps["public"], apps["internal"])
+	}()
+
+	for name, address := range map[string]string{"public": cfg.PublicAddr, "internal": cfg.Addr} {
+		if got := waitForBody(t, "http://"+address+"/surface"); got != name {
+			t.Errorf("GET http://%s/surface = %q, want %q", address, got, name)
+		}
+	}
+	cancel()
+	select {
+	case failed := <-done:
+		if failed {
+			t.Error("serve() = true, want the shutdown rather than a failed surface")
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("serve has not returned ten seconds after the shutdown")
+	}
+}
+
+// waitForBody polls url until it answers 200 and returns the body. It fails
+// the test with the last error when five seconds pass without an answer.
+func waitForBody(t *testing.T, url string) string {
+	t.Helper()
+	var last error
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
+		resp, err := http.Get(url)
+		if err != nil {
+			last = err
+			continue
+		}
+		body, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+		if err == nil && resp.StatusCode == http.StatusOK {
+			return string(body)
+		}
+		last = fmt.Errorf("status %d, read error %v", resp.StatusCode, err)
+	}
+	t.Fatalf("GET %s did not answer 200 within five seconds; last: %v", url, last)
+	return ""
 }

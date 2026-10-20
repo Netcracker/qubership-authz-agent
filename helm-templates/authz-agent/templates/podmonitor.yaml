@@ -1,7 +1,7 @@
 {{- if .Values.MONITORING_ENABLED }}
 # The platform's PodMonitor, as the platform's charts carry it: the
-# agent serves Prometheus metrics at /prometheus on its data API, the
-# container port named data-api (8181), and the platform's VictoriaMetrics
+# agent serves Prometheus metrics at /prometheus on its internal surface, the
+# container port named internal (8181), and the platform's VictoriaMetrics
 # operator picks the monitor up by the processed-by-operator label. The
 # metrics carry the operator's default job label, <namespace>/<the name of
 # this PodMonitor>.
@@ -21,7 +21,7 @@ metadata:
 spec:
   podMetricsEndpoints:
     - interval: 30s
-      port: data-api
+      port: internal
       scheme: http
       path: /prometheus
   namespaceSelector:

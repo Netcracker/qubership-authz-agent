@@ -14,8 +14,7 @@
 
 // Package server registers the HTTP routes of the agent on Fiber apps: the
 // public surface the clients call, which [Server.RegisterPublic] adds, and
-// the slice of OPA's REST API the other containers of the Pod still use,
-// which [Register] adds.
+// the internal surface the probes read, which [Register] adds.
 package server
 
 import (
@@ -72,13 +71,6 @@ func (discardLogger) ErrorC(context.Context, string, ...any) {
 
 // Options tune the routes.
 type Options struct {
-	// Authorization guards every /v1/data request with data.system.authz.allow,
-	// as `opa run --authorization=basic` does: the request's method, path
-	// segments, query parameters, and bearer token form the policy input.
-	// The canonical /access/v1/authorize route is guarded as
-	// /v1/data/authorize under its own method, and the legacy check routes
-	// as POST /v1/data/authorize.
-	Authorization bool
 	// Health reports the state of the loops the service runs; nil means
 	// the service is healthy and ready as long as it answers.
 	Health func() Report
@@ -110,9 +102,8 @@ type Server struct {
 	opts   Options
 }
 
-// Register adds the routes of the OPA-compatible surface to app: /health,
-// /ready, /api-version, the canonical POST /access/v1/authorize, and the
-// data API under /v1/data.
+// Register adds the routes of the internal surface to app: /health,
+// /ready, /api-version, and the canonical POST /access/v1/authorize.
 func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts Options) *Server {
 	if opts.Log == nil {
 		opts.Log = discardLogger{}
@@ -122,11 +113,6 @@ func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
 	app.Post("/access/v1/authorize", s.canonical)
-	data := app.Group("/v1/data", s.authorize)
-	data.Post("/*", func(c *fiber.Ctx) error { return s.decide(c, dataSegments(c)) })
-	data.Put("/*", func(c *fiber.Ctx) error { return s.put(c, dataSegments(c)) })
-	data.Patch("/*", func(c *fiber.Ctx) error { return s.patch(c, dataSegments(c)) })
-	data.Get("/*", func(c *fiber.Ctx) error { return s.get(c, dataSegments(c)) })
 	return s
 }
 
@@ -228,74 +214,6 @@ func opaError(c *fiber.Ctx, status int, code, message string) error {
 	return c.Status(status).JSON(fiber.Map{"code": code, "message": message})
 }
 
-// authorize is the /v1/data middleware: the request proceeds only when
-// data.system.authz.allow permits it at its own path.
-func (s *Server) authorize(c *fiber.Ctx) error {
-	if !s.permitted(c, c.Method(), strings.Split(strings.Trim(c.Path(), "/"), "/")) {
-		return nil
-	}
-	return c.Next()
-}
-
-// permitted evaluates data.system.authz.allow for the request as a data API
-// request with the given method at path, with the request's query
-// parameters and bearer token. It writes the refusal when the policy denies
-// the request, 401 in the shape of OPA's REST API, or 500 when the policy
-// failed, and returns false. Without Options.Authorization every request is
-// permitted.
-func (s *Server) permitted(c *fiber.Ctx, method string, path []string) bool {
-	if !s.opts.Authorization {
-		return true
-	}
-	segments := make([]any, len(path))
-	for i, seg := range path {
-		segments[i] = strings.Clone(seg)
-	}
-	params := map[string]any{}
-	for k, v := range c.Context().QueryArgs().All() {
-		key := string(k)
-		params[key] = append(asStrings(params[key]), string(v))
-	}
-	input := map[string]any{"method": method, "path": segments, "params": params}
-	if auth := c.Get(fiber.HeaderAuthorization); strings.HasPrefix(auth, "Bearer ") {
-		input["identity"] = strings.Clone(strings.TrimPrefix(auth, "Bearer "))
-	}
-	v, ok, err := s.engine.Eval(c.UserContext(), []string{"system", "authz", "allow"}, input, nil)
-	switch {
-	case err != nil:
-		s.opts.Log.ErrorC(c.UserContext(), "guard: data.system.authz.allow failed method=%s path=/%s: %v",
-			method, strings.Join(path, "/"), err)
-		_ = opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	case ok && v == true:
-		return true
-	default:
-		s.opts.Log.WarnC(c.UserContext(), "guard: request refused by data.system.authz.allow method=%s path=/%s",
-			method, strings.Join(path, "/"))
-		_ = opaError(c, http.StatusUnauthorized, "unauthorized", "unauthorized resource access")
-	}
-	return false
-}
-
-func asStrings(v any) []any {
-	if list, ok := v.([]any); ok {
-		return list
-	}
-	return nil
-}
-
-// dataSegments returns the document path after /v1/data.
-func dataSegments(c *fiber.Ctx) []string {
-	rest := strings.Trim(c.Params("*"), "/")
-	if rest == "" {
-		return nil
-	}
-	parts := strings.Split(rest, "/")
-	for i, p := range parts {
-		parts[i] = strings.Clone(p)
-	}
-	return parts
-}
-
 // decide evaluates the document at segments with the request body as input
 // and answers as OPA's data API does: {"result": ...}, or {} when the
 // document is undefined, plus a decision_id when decisions are logged.
@@ -346,8 +264,9 @@ func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result an
 	return result, defined, id, nil
 }
 
-// envelope is the data API's answer: the result when the decision is
-// defined, and the decision id when it was logged.
+// envelope is the body of a decision in the shape of OPA's data API: the
+// result when the decision is defined, and the decision id when it was
+// logged.
 func envelope(result any, defined bool, id string) fiber.Map {
 	resp := fiber.Map{}
 	if defined {
@@ -400,55 +319,4 @@ func recordedHeaders(c *fiber.Ctx, names []string) map[string][]string {
 		}
 	}
 	return headers
-}
-
-// put stores the request body as the document at segments, as
-// PUT /v1/data/<path> does.
-func (s *Server) put(c *fiber.Ctx, segments []string) error {
-	if len(segments) == 0 {
-		return opaError(c, http.StatusBadRequest, "invalid_parameter", "the root document cannot be replaced")
-	}
-	var value any
-	if err := util.UnmarshalJSON(c.Body(), &value); err != nil {
-		return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
-	}
-	if err := s.engine.Put(c.UserContext(), segments, value); err != nil {
-		s.opts.Log.ErrorC(c.UserContext(), "data API: PUT path=%s failed: %v", strings.Join(segments, "/"), err)
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	return c.SendStatus(http.StatusNoContent)
-}
-
-// patch applies a JSON Patch document at segments, as PATCH /v1/data/<path>
-// does; a missing target answers 404 so the writer can fall back to PUT.
-func (s *Server) patch(c *fiber.Ctx, segments []string) error {
-	var ops []engine.PatchOp
-	if err := util.UnmarshalJSON(c.Body(), &ops); err != nil {
-		return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
-	}
-	err := s.engine.Patch(c.UserContext(), segments, ops)
-	switch {
-	case err == nil:
-		return c.SendStatus(http.StatusNoContent)
-	case engine.IsNotFound(err):
-		return opaError(c, http.StatusNotFound, "resource_not_found", err.Error())
-	default:
-		return opaError(c, http.StatusBadRequest, "invalid_parameter", err.Error())
-	}
-}
-
-// get reads the document at segments without evaluating rules, where
-// OPA's GET /v1/data/<path> evaluates them: a path that names a rule reads
-// as an empty result here. Nothing reaches it in the chart's Pod, whose
-// guard opens no GET under /v1/data.
-func (s *Server) get(c *fiber.Ctx, segments []string) error {
-	value, ok, err := s.engine.Get(c.UserContext(), segments)
-	if err != nil {
-		s.opts.Log.ErrorC(c.UserContext(), "data API: GET path=%s failed: %v", strings.Join(segments, "/"), err)
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	if !ok {
-		return c.JSON(fiber.Map{})
-	}
-	return c.JSON(fiber.Map{"result": value})
 }
