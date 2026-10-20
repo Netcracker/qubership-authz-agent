@@ -99,22 +99,39 @@ func (t *transport) addHeaders(out *http.Request) {
 }
 
 // AllowHosts returns an Authorize function for [TransportOptions] that
-// accepts a URL whose host is one of hosts. An entry with a port, such as
-// "pip:8080" or "[::1]:8080", accepts that port alone; an entry without one,
-// such as "pip", "::1", or "[::1]", accepts every port of that host. Host
-// names compare without regard to case.
+// accepts a URL whose scheme and host match an entry of hosts. An entry is
+// a host with an optional port, such as "pip", "pip:8443", "::1", or
+// "[::1]:8443", and accepts https URLs. Prefixed with "http://", it accepts
+// http URLs instead, so the token travels in clear text only to a host
+// named for it; an "https://" prefix changes nothing. An entry with a port
+// accepts that port alone, and a URL without a port has the default port of
+// its scheme, 443 for https and 80 for http. An entry without a port
+// accepts every port of that host. Host names compare without regard to
+// case.
 func AllowHosts(hosts ...string) func(u *url.URL) bool {
-	withPort := map[string]bool{}
-	anyPort := map[string]bool{}
+	type entry struct{ scheme, host, port string }
+	allowed := map[entry]bool{}
 	for _, h := range hosts {
 		h = strings.ToLower(h)
-		if _, _, err := net.SplitHostPort(h); err == nil {
-			withPort[h] = true
+		scheme := "https"
+		if rest, ok := strings.CutPrefix(h, "http://"); ok {
+			scheme, h = "http", rest
 		} else {
-			anyPort[strings.TrimSuffix(strings.TrimPrefix(h, "["), "]")] = true
+			h = strings.TrimPrefix(h, "https://")
 		}
+		host, port, err := net.SplitHostPort(h)
+		if err != nil {
+			host, port = strings.TrimSuffix(strings.TrimPrefix(h, "["), "]"), ""
+		}
+		allowed[entry{scheme, host, port}] = true
 	}
+	defaultPort := map[string]string{"https": "443", "http": "80"}
 	return func(u *url.URL) bool {
-		return withPort[strings.ToLower(u.Host)] || anyPort[strings.ToLower(u.Hostname())]
+		scheme, host := strings.ToLower(u.Scheme), strings.ToLower(u.Hostname())
+		port := u.Port()
+		if port == "" {
+			port = defaultPort[scheme]
+		}
+		return allowed[entry{scheme, host, ""}] || allowed[entry{scheme, host, port}]
 	}
 }

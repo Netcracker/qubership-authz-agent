@@ -88,7 +88,7 @@ func hostOf(t *testing.T, r *recorder) string {
 func TestTransport_AddsTheTokenForAnAuthorizedHostOnly(t *testing.T) {
 	pip := newRecorder(t, nil)
 	other := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts("http://" + hostOf(t, pip))})
 	tests := []struct {
 		name   string
 		target *recorder
@@ -106,7 +106,7 @@ func TestTransport_AddsTheTokenForAnAuthorizedHostOnly(t *testing.T) {
 
 func TestTransport_KeepsAnAuthorizationTheRequestCarries(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts("http://" + hostOf(t, pip))})
 	got := send(t, rt, pip, http.Header{"Authorization": {"Bearer from-the-policy"}})
 	if values := got.Values("Authorization"); len(values) != 1 || values[0] != "Bearer from-the-policy" {
 		t.Errorf("Authorization = %q, want only %q", values, "Bearer from-the-policy")
@@ -156,7 +156,7 @@ func TestTransport_TakesTheHeadersFromTheRequestsContext(t *testing.T) {
 func TestTransport_LeavesTheCallersRequestUnchanged(t *testing.T) {
 	pip := newRecorder(t, nil)
 	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{
-		Authorize: AllowHosts(hostOf(t, pip)),
+		Authorize: AllowHosts("http://" + hostOf(t, pip)),
 		Headers:   func(context.Context) http.Header { return http.Header{"Traceparent": {"00-trace-span-01"}} },
 	})
 	req, err := http.NewRequest(http.MethodGet, pip.srv.URL+"/pip", nil)
@@ -189,7 +189,7 @@ func (c *closeRecorder) Close() error {
 func TestTransport_SendsWithoutATokenARequestThatNeedsNone(t *testing.T) {
 	pip := newRecorder(t, nil)
 	other := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticToken(""), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken(""), TransportOptions{Authorize: AllowHosts("http://" + hostOf(t, pip))})
 	tests := []struct {
 		name   string
 		target *recorder
@@ -218,7 +218,7 @@ func TestTransport_AsksForTheTokenOnEveryRequest(t *testing.T) {
 		}
 		return "tok-2"
 	}
-	rt := NewTransport(http.DefaultTransport, token, TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, token, TransportOptions{Authorize: AllowHosts("http://" + hostOf(t, pip))})
 	req, err := http.NewRequest(http.MethodGet, pip.srv.URL+"/pip", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -233,7 +233,7 @@ func TestTransport_AsksForTheTokenOnEveryRequest(t *testing.T) {
 
 func TestTransport_FailsWithoutAToken(t *testing.T) {
 	pip := newRecorder(t, nil)
-	rt := NewTransport(http.DefaultTransport, staticToken(""), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})
+	rt := NewTransport(http.DefaultTransport, staticToken(""), TransportOptions{Authorize: AllowHosts("http://" + hostOf(t, pip))})
 	body := &closeRecorder{Reader: strings.NewReader("{}")}
 	req, err := http.NewRequest(http.MethodPost, pip.srv.URL+"/pip", body)
 	if err != nil {
@@ -257,7 +257,7 @@ func TestTransport_DoesNotCarryTheTokenThroughARedirectToAnotherHost(t *testing.
 	pip := newRecorder(t, func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, elsewhere.srv.URL+"/landing", http.StatusFound)
 	})
-	client := &http.Client{Transport: NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts(hostOf(t, pip))})}
+	client := &http.Client{Transport: NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts("http://" + hostOf(t, pip))})}
 	resp, err := client.Get(pip.srv.URL + "/pip")
 	if err != nil {
 		t.Fatalf("Get() error = %v", err)
@@ -275,22 +275,34 @@ func TestTransport_DoesNotCarryTheTokenThroughARedirectToAnotherHost(t *testing.
 }
 
 func TestAllowHosts(t *testing.T) {
-	allow := AllowHosts("pip", "Entitlements:8443", "::1", "[fe80::2]", "[fe80::1]:9000")
+	allow := AllowHosts("pip", "Entitlements:8443", "secure:443", "::1", "[fe80::2]", "[fe80::1]:9000", "http://legacy", "http://plain:8080", "http://plain80:80", "https://explicit")
 	tests := []struct {
 		url  string
 		want bool
 	}{
-		{"http://pip:8080/x", true},
+		{"https://pip:8080/x", true},
 		{"https://PIP/x", true},
-		{"http://entitlements:8443/x", true},
-		{"http://ENTITLEMENTS:8443/x", true},
-		{"http://entitlements:8080/x", false},
-		{"http://[::1]:8080/x", true},
-		{"http://[fe80::2]:7000/x", true},
-		{"http://[fe80::1]:9000/x", true},
-		{"http://[fe80::1]:9001/x", false},
-		{"http://pip.evil.example/x", false},
-		{"http://evilpip/x", false},
+		{"http://pip/x", false},
+		{"https://entitlements:8443/x", true},
+		{"https://ENTITLEMENTS:8443/x", true},
+		{"https://entitlements:8080/x", false},
+		{"http://entitlements:8443/x", false},
+		{"https://secure/x", true},
+		{"https://secure:8443/x", false},
+		{"https://[::1]:8080/x", true},
+		{"https://[fe80::2]:7000/x", true},
+		{"https://[fe80::1]:9000/x", true},
+		{"https://[fe80::1]:9001/x", false},
+		{"http://legacy:9000/x", true},
+		{"https://legacy/x", false},
+		{"http://plain:8080/x", true},
+		{"http://plain/x", false},
+		{"http://plain80/x", true},
+		{"https://explicit/x", true},
+		{"http://explicit/x", false},
+		{"ftp://pip/x", false},
+		{"https://pip.evil.example/x", false},
+		{"https://evilpip/x", false},
 	}
 	for _, tt := range tests {
 		u, err := url.Parse(tt.url)
@@ -300,6 +312,39 @@ func TestAllowHosts(t *testing.T) {
 		if got := allow(u); got != tt.want {
 			t.Errorf("AllowHosts(...)(%s) = %t, want %t", tt.url, got, tt.want)
 		}
+	}
+}
+
+// Both servers listen on 127.0.0.1, and the entry names that host without
+// a port, so only the scheme tells them apart. The request the TLS server
+// received is the control: it shows the token reached the first host.
+func TestTransport_DoesNotCarryTheTokenThroughARedirectToPlainHTTP(t *testing.T) {
+	plain := newRecorder(t, nil)
+	var mu sync.Mutex
+	var secureAuth string
+	secure := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		secureAuth = r.Header.Get("Authorization")
+		mu.Unlock()
+		http.Redirect(w, r, plain.srv.URL+"/landing", http.StatusFound)
+	}))
+	t.Cleanup(secure.Close)
+	client := &http.Client{Transport: NewTransport(secure.Client().Transport, staticToken("tok-1"), TransportOptions{Authorize: AllowHosts("127.0.0.1")})}
+	resp, err := client.Get(secure.URL + "/pip")
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	_ = resp.Body.Close()
+	if len(plain.requests()) != 1 {
+		t.Fatalf("requests after the redirect = %d, want 1", len(plain.requests()))
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if secureAuth != "Bearer tok-1" {
+		t.Errorf("Authorization at the TLS server = %q, want %q", secureAuth, "Bearer tok-1")
+	}
+	if got := plain.requests()[0].Get("Authorization"); got != "" {
+		t.Errorf("Authorization after the redirect to plain HTTP = %q, want none", got)
 	}
 }
 
