@@ -222,6 +222,7 @@ func TestVerify_RefusesAMalformedToken(t *testing.T) {
 		{"header that is not base64url", "%%%." + segment(t, claimsAt(start, nil)) + ".c2ln"},
 		{"header that is not JSON", "bm90IGpzb24." + segment(t, claimsAt(start, nil)) + ".c2ln"},
 		{"header that is null", "bnVsbA." + segment(t, claimsAt(start, nil)) + ".c2ln"},
+		{"header that is a JSON array", "W10." + segment(t, claimsAt(start, nil)) + ".c2ln"},
 		{"kid that is not a string", unsigned(t, map[string]any{"alg": "ES256", "kid": 5}, claimsAt(start, nil))},
 		{"payload that is not base64url", header + ".%%%.c2ln"},
 		{"signature that is not base64url", header + "." + segment(t, claimsAt(start, nil)) + ".%%%"},
@@ -258,6 +259,11 @@ func TestVerify_RefusesAHeaderThatNamesNoUsableKey(t *testing.T) {
 		{"alg HS256", unsigned(t, map[string]any{"alg": "HS256", "kid": "k1"}, claims), CodeAlgNotAllowed},
 		{"alg the key type does not use", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claims), CodeAlgNotAllowed},
 		{"no kid", unsigned(t, map[string]any{"alg": "ES256"}, claims), CodeKIDMissing},
+		{"ALG in place of alg", unsigned(t, map[string]any{"ALG": "ES256", "kid": "k1"}, claims), CodeAlgNotAllowed},
+		{"KID in place of kid", unsigned(t, map[string]any{"alg": "ES256", "KID": "k1"}, claims), CodeKIDMissing},
+		{"alg that is null", unsigned(t, map[string]any{"alg": nil, "kid": "k1"}, claims), CodeAlgNotAllowed},
+		{"kid that is null", unsigned(t, map[string]any{"alg": "ES256", "kid": nil}, claims), CodeKIDMissing},
+		{"empty kid", unsigned(t, map[string]any{"alg": "ES256", "kid": ""}, claims), CodeKIDMissing},
 		{"unknown kid", unsigned(t, map[string]any{"alg": "ES256", "kid": "k2"}, claims), CodeKIDUnknown},
 	}
 	for _, tt := range tests {
@@ -301,9 +307,9 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 }
 
 // Every token here carries a valid signature. A header parameter that crit
-// does not name is an extension the service may ignore: that row is the
-// control.
-func TestVerify_RefusesATokenWhoseHeaderHasCrit(t *testing.T) {
+// does not name is an extension the service may ignore, and so is one whose
+// name differs from crit or b64 in case: those rows verify.
+func TestVerify_RefusesATokenWhoseHeaderHasCritOrB64(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	tests := []struct {
 		name   string
@@ -314,6 +320,9 @@ func TestVerify_RefusesATokenWhoseHeaderHasCrit(t *testing.T) {
 		{"crit naming b64", map[string]any{"crit": []string{"b64"}, "b64": true}, CodeFormatInvalid},
 		{"crit that is an empty array", map[string]any{"crit": []string{}}, CodeFormatInvalid},
 		{"extension that crit does not name", map[string]any{"x-limit": "read-only"}, ""},
+		{"CRIT, which is not crit", map[string]any{"CRIT": []string{"x-limit"}, "x-limit": "read-only"}, ""},
+		{"b64 that is true", map[string]any{"b64": true}, CodeFormatInvalid},
+		{"B64, which is not b64", map[string]any{"B64": false}, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -344,6 +353,7 @@ func TestVerify_RefusesOnTheHeaderBeforeLookingUpTheKID(t *testing.T) {
 		{"crit that is null", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "crit": nil}, claimsAt(start, nil)), CodeFormatInvalid},
 		{"crit that is a string", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "crit": "x-limit"}, claimsAt(start, nil)), CodeFormatInvalid},
 		{"b64 that is false", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "b64": false}, claimsAt(start, nil)), CodeFormatInvalid},
+		{"b64 that is null", unsigned(t, map[string]any{"alg": "ES256", "kid": "random", "b64": nil}, claimsAt(start, nil)), CodeFormatInvalid},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

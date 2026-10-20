@@ -49,12 +49,13 @@ type Code string
 // Reasons a token is refused.
 const (
 	// CodeFormatInvalid marks a token that is not three base64url parts
-	// separated by dots, whose header or payload is not a JSON object, whose
-	// header has a crit or a b64 parameter, or whose exp, nbf, or iat is not
-	// a number within ±(2^53 - 1) seconds.
+	// separated by dots, or whose header or payload is not a JSON object. It
+	// also marks a header whose alg or kid is not a string or that has a crit
+	// or a b64 parameter, and an exp, nbf, or iat that is not a number within
+	// ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
-	// CodeAlgNotAllowed marks a token whose header names an algorithm that no
-	// key accepts, or one that the key its kid names does not accept.
+	// CodeAlgNotAllowed marks a token whose header names no algorithm, one
+	// that no key accepts, or one that the key its kid names does not accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeKIDMissing marks a token whose header has no kid.
 	CodeKIDMissing Code = "TOKEN_KID_MISSING"
@@ -334,8 +335,9 @@ func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 
 // readHeader checks that raw is three base64url parts whose header is a JSON
 // object without a crit or a b64 parameter, names an accepted alg, and has a
-// kid, and returns the alg and the kid. Every check here runs before any key
-// is looked up.
+// kid, and returns the alg and the kid. Parameter names match exactly, case
+// included, so a KID parameter is not read as the kid. Every check here runs
+// before any key is looked up.
 func readHeader(raw string) (alg, kid string, err error) {
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {
@@ -347,33 +349,49 @@ func readHeader(raw string) (alg, kid string, err error) {
 			return "", "", fail(CodeFormatInvalid, "%s is not base64url: %v", name, err)
 		}
 	}
-	var header *struct {
-		Alg  string          `json:"alg"`
-		Kid  string          `json:"kid"`
-		Crit json.RawMessage `json:"crit"`
-		B64  json.RawMessage `json:"b64"`
-	}
+	// encoding/json matches struct fields without regard to case, so the
+	// header is read into a map, whose keys match only the same string, as
+	// RFC 7515, section 10.13, requires.
+	var header map[string]json.RawMessage
 	if err := json.Unmarshal(decoded[0], &header); err != nil || header == nil {
-		return "", "", fail(CodeFormatInvalid, "header is not a JSON object with string alg and kid")
+		return "", "", fail(CodeFormatInvalid, "header is not a JSON object")
+	}
+	if alg, err = headerString(header, "alg"); err != nil {
+		return "", "", fail(CodeFormatInvalid, "header alg is not a string")
+	}
+	if kid, err = headerString(header, "kid"); err != nil {
+		return "", "", fail(CodeFormatInvalid, "header kid is not a string")
 	}
 	// A recipient has to refuse a token whose crit lists an extension it
 	// does not understand (RFC 7515, section 4.1.11), and the service
 	// understands none.
-	if header.Crit != nil {
+	if _, ok := header["crit"]; ok {
 		return "", "", fail(CodeFormatInvalid, "header has a crit parameter, and no extension is supported")
 	}
 	// b64 (RFC 7797) changes what the signature covers, and the service
 	// supports only the default base64url payload.
-	if header.B64 != nil {
+	if _, ok := header["b64"]; ok {
 		return "", "", fail(CodeFormatInvalid, "header has a b64 parameter, and only the default payload encoding is supported")
 	}
-	if !keys.AcceptsAlgorithm(header.Alg) {
-		return "", "", fail(CodeAlgNotAllowed, "alg %s is not an accepted signature algorithm", short(header.Alg))
+	if !keys.AcceptsAlgorithm(alg) {
+		return "", "", fail(CodeAlgNotAllowed, "alg %s is not an accepted signature algorithm", short(alg))
 	}
-	if header.Kid == "" {
+	if kid == "" {
 		return "", "", fail(CodeKIDMissing, "header has no kid")
 	}
-	return header.Alg, header.Kid, nil
+	return alg, kid, nil
+}
+
+// headerString returns the parameter name of header as a string, "" when it
+// is absent or null, and an error when it is any other JSON value.
+func headerString(header map[string]json.RawMessage, name string) (string, error) {
+	raw, ok := header[name]
+	if !ok {
+		return "", nil
+	}
+	var s string
+	err := json.Unmarshal(raw, &s)
+	return s, err
 }
 
 // decodeClaims parses the payload as one JSON object and keeps the JSON
