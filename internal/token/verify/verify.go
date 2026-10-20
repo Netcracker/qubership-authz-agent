@@ -312,7 +312,7 @@ func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*
 		key:        key.JWK,
 	}
 	if v.cache != nil {
-		v.cache.put(digest, tok, now, v.opts.Leeway)
+		v.cache.put(digest, tok)
 	}
 	return tok, nil
 }

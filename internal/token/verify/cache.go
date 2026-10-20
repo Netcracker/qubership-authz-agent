@@ -16,66 +16,40 @@ package verify
 
 import (
 	"crypto/sha256"
-	"sync"
 	"time"
+
+	lru "github.com/hashicorp/golang-lru/v2"
 )
 
 // cache keeps verified tokens by the SHA-256 digest of their compact form
-// until they expire. It holds at most max tokens. A token whose digest is
-// already kept replaces that entry. Any other token that arrives while the
-// cache is full sweeps out the expired entries first, and is not kept when
-// none has expired; a full cache sweeps no more often than its earliest
-// expiry, so an entry that expires before then stays until the next sweep.
+// until they expire. It holds at most the number of tokens newCache was
+// given; a token that arrives while it is full takes the place of the
+// token used least recently. It is safe for concurrent use.
 type cache struct {
-	mu      sync.RWMutex
-	entries map[[sha256.Size]byte]*Token
-	max     int
-	// nextExpiry is the earliest time a kept token expires, as the last
-	// sweep found it; a full cache is not swept again before it.
-	nextExpiry time.Time
+	tokens *lru.Cache[[sha256.Size]byte, *Token]
 }
 
+// newCache returns an empty cache for size tokens; size has to be positive.
 func newCache(size int) *cache {
-	return &cache{entries: make(map[[sha256.Size]byte]*Token), max: size}
+	tokens, _ := lru.New[[sha256.Size]byte, *Token](size)
+	return &cache{tokens: tokens}
 }
 
 // get returns the token kept under digest, or nil when there is none or it
-// has expired at now.
+// has expired at now. An expired token leaves the cache.
 func (c *cache) get(digest [sha256.Size]byte, now time.Time, leeway time.Duration) *Token {
-	c.mu.RLock()
-	tok := c.entries[digest]
-	c.mu.RUnlock()
-	if tok == nil || !now.Before(tok.expiry.Add(leeway)) {
+	tok, ok := c.tokens.Get(digest)
+	if !ok {
+		return nil
+	}
+	if !now.Before(tok.expiry.Add(leeway)) {
+		c.tokens.Remove(digest)
 		return nil
 	}
 	return tok
 }
 
-func (c *cache) put(digest [sha256.Size]byte, tok *Token, now time.Time, leeway time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if _, kept := c.entries[digest]; kept {
-		c.entries[digest] = tok
-		return
-	}
-	if len(c.entries) >= c.max {
-		if now.Before(c.nextExpiry) {
-			return
-		}
-		c.nextExpiry = time.Time{}
-		for d, kept := range c.entries {
-			expiry := kept.expiry.Add(leeway)
-			if !now.Before(expiry) {
-				delete(c.entries, d)
-				continue
-			}
-			if c.nextExpiry.IsZero() || expiry.Before(c.nextExpiry) {
-				c.nextExpiry = expiry
-			}
-		}
-		if len(c.entries) >= c.max {
-			return
-		}
-	}
-	c.entries[digest] = tok
+// put keeps tok under digest, in place of a token kept under it before.
+func (c *cache) put(digest [sha256.Size]byte, tok *Token) {
+	c.tokens.Add(digest, tok)
 }

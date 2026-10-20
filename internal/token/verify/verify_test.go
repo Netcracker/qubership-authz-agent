@@ -628,34 +628,44 @@ func TestVerify_RefusesACachedTokenOnceItExpires(t *testing.T) {
 	}
 }
 
-// The cache holds one token: the first stays cached, and the second is
-// checked anew every time.
-func TestVerify_AFullCacheKeepsNoNewToken(t *testing.T) {
+// The cache holds two tokens. Reading a again makes b the token used least
+// recently, so c takes the place of b, and a stays cached.
+func TestVerify_AFullCacheReplacesTheTokenUsedLeastRecently(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
-	v := New(newFakeKeys(s), Options{CacheSize: 1, now: func() time.Time { return start }})
-	first := s.sign(t, claimsAt(start, map[string]any{"sub": "first"}))
-	second := s.sign(t, claimsAt(start, map[string]any{"sub": "second"}))
-	cached := mustVerify(t, v, first)
-	checked := mustVerify(t, v, second)
-	if mustVerify(t, v, second) == checked {
-		t.Errorf("Verify(second) returned the same token twice, want a new check each time")
+	v := New(newFakeKeys(s), Options{CacheSize: 2, now: func() time.Time { return start }})
+	a := s.sign(t, claimsAt(start, map[string]any{"sub": "a"}))
+	b := s.sign(t, claimsAt(start, map[string]any{"sub": "b"}))
+	c := s.sign(t, claimsAt(start, map[string]any{"sub": "c"}))
+	cachedA := mustVerify(t, v, a)
+	cachedB := mustVerify(t, v, b)
+	mustVerify(t, v, a)
+	mustVerify(t, v, c)
+	if mustVerify(t, v, a) != cachedA {
+		t.Errorf("Verify(a) returned a new token, want the cached one")
 	}
-	if mustVerify(t, v, first) != cached {
-		t.Errorf("Verify(first) returned a new token, want the cached one")
+	if mustVerify(t, v, b) == cachedB {
+		t.Errorf("Verify(b) returned the cached token, want a new check")
 	}
 }
 
-func TestVerify_AFullCacheReplacesAnExpiredToken(t *testing.T) {
+// The cache holds two tokens. Once short has expired, reading it again
+// takes it out of the cache, so b takes its place and a stays cached.
+func TestVerify_AnExpiredTokenLeavesTheCache(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	c := &clock{now: start}
-	v := New(newFakeKeys(s), Options{CacheSize: 1, now: c.Now})
+	v := New(newFakeKeys(s), Options{CacheSize: 2, now: c.Now})
 	short := s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(time.Minute).Unix()}))
-	long := s.sign(t, claimsAt(start, nil))
+	a := s.sign(t, claimsAt(start, map[string]any{"sub": "a"}))
+	b := s.sign(t, claimsAt(start, map[string]any{"sub": "b"}))
 	mustVerify(t, v, short)
+	cachedA := mustVerify(t, v, a)
 	c.advance(time.Minute + DefaultLeeway)
-	first := mustVerify(t, v, long)
-	if mustVerify(t, v, long) != first {
-		t.Errorf("second Verify(long) returned a new token, want the one that took the expired token's place")
+	if _, err := v.Verify(short); codeOf(err) != CodeExpired {
+		t.Fatalf("Verify(short) after exp error = %v, want code %s", err, CodeExpired)
+	}
+	mustVerify(t, v, b)
+	if mustVerify(t, v, a) != cachedA {
+		t.Errorf("Verify(a) returned a new token, want the cached one")
 	}
 }
 
