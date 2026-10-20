@@ -65,13 +65,7 @@ type transport struct {
 
 func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	out := req.Clone(req.Context())
-	if t.opts.Headers != nil {
-		for name, values := range t.opts.Headers(req.Context()) {
-			if out.Header.Get(name) == "" {
-				out.Header[http.CanonicalHeaderKey(name)] = slices.Clone(values)
-			}
-		}
-	}
+	t.addHeaders(out)
 	if t.opts.Authorize != nil && out.Header.Get("Authorization") == "" && t.opts.Authorize(out.URL) {
 		token := t.token()
 		if token == "" {
@@ -89,6 +83,19 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 	return t.base.RoundTrip(out)
+}
+
+// addHeaders adds to out each header that opts.Headers returns for the
+// context of out and that out does not carry yet.
+func (t *transport) addHeaders(out *http.Request) {
+	if t.opts.Headers == nil {
+		return
+	}
+	for name, values := range t.opts.Headers(out.Context()) {
+		if out.Header.Get(name) == "" {
+			out.Header[http.CanonicalHeaderKey(name)] = slices.Clone(values)
+		}
+	}
 }
 
 // AllowHosts returns an Authorize function for [TransportOptions] that

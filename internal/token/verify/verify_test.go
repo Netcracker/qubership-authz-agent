@@ -550,7 +550,7 @@ func TestVerify_ServesARepeatedTokenFromTheCache(t *testing.T) {
 	v, _ := newVerifier(newFakeKeys(s))
 	raw := s.sign(t, claimsAt(start, nil))
 	first := mustVerify(t, v, raw)
-	if again := mustVerify(t, v, raw); again != first {
+	if mustVerify(t, v, raw) != first {
 		t.Errorf("second Verify returned a new token, want the cached one")
 	}
 }
@@ -560,7 +560,7 @@ func TestVerify_WithTheCacheOffChecksEveryTime(t *testing.T) {
 	v := New(newFakeKeys(s), Options{CacheSize: -1, now: func() time.Time { return start }})
 	raw := s.sign(t, claimsAt(start, nil))
 	first := mustVerify(t, v, raw)
-	if again := mustVerify(t, v, raw); again == first {
+	if mustVerify(t, v, raw) == first {
 		t.Errorf("second Verify returned the first token, want a new check")
 	}
 }
@@ -586,7 +586,7 @@ func TestVerify_ChecksACachedTokenAgainAfterItsKeyIsReloaded(t *testing.T) {
 	raw := s.sign(t, claimsAt(start, nil))
 	first := mustVerify(t, v, raw)
 	source.set(s.republished(t))
-	if again := mustVerify(t, v, raw); again == first {
+	if mustVerify(t, v, raw) == first {
 		t.Errorf("Verify after the reload returned the cached token, want a new check")
 	}
 }
@@ -599,7 +599,7 @@ func TestVerify_AFullCacheRefreshesATokenWhoseKeyWasReloaded(t *testing.T) {
 	mustVerify(t, v, raw)
 	source.set(s.republished(t))
 	rechecked := mustVerify(t, v, raw)
-	if again := mustVerify(t, v, raw); again != rechecked {
+	if mustVerify(t, v, raw) != rechecked {
 		t.Errorf("Verify after the recheck returned a new token, want the refreshed cache entry")
 	}
 }
@@ -610,7 +610,7 @@ func TestVerify_ServesACachedTokenWithinTheLeewayAfterExp(t *testing.T) {
 	raw := s.sign(t, claimsAt(start, nil))
 	first := mustVerify(t, v, raw)
 	c.advance(time.Hour + DefaultLeeway - time.Second)
-	if again := mustVerify(t, v, raw); again != first {
+	if mustVerify(t, v, raw) != first {
 		t.Errorf("Verify within the leeway returned a new token, want the cached one")
 	}
 }
@@ -636,10 +636,10 @@ func TestVerify_AFullCacheKeepsNoNewToken(t *testing.T) {
 	second := s.sign(t, claimsAt(start, map[string]any{"sub": "second"}))
 	cached := mustVerify(t, v, first)
 	checked := mustVerify(t, v, second)
-	if again := mustVerify(t, v, second); again == checked {
+	if mustVerify(t, v, second) == checked {
 		t.Errorf("Verify(second) returned the same token twice, want a new check each time")
 	}
-	if again := mustVerify(t, v, first); again != cached {
+	if mustVerify(t, v, first) != cached {
 		t.Errorf("Verify(first) returned a new token, want the cached one")
 	}
 }
@@ -653,7 +653,7 @@ func TestVerify_AFullCacheReplacesAnExpiredToken(t *testing.T) {
 	mustVerify(t, v, short)
 	c.advance(time.Minute + DefaultLeeway)
 	first := mustVerify(t, v, long)
-	if again := mustVerify(t, v, long); again != first {
+	if mustVerify(t, v, long) != first {
 		t.Errorf("second Verify(long) returned a new token, want the one that took the expired token's place")
 	}
 }

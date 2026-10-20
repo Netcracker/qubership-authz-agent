@@ -15,7 +15,7 @@
 // Package verify checks a JWT against the signing keys of the trusted
 // providers and returns its claims. [Verifier.Verify] reads nothing from the
 // payload until the signature verifies: the header names the algorithm and
-// the kid, a [KeySource] finds the key, and only a token whose signature
+// the kid, a [KeyFinder] finds the key, and only a token whose signature
 // that key accepts has its aud, exp, nbf, and iat checked. A refused token
 // yields an [*Error] whose [Code] names the reason; a verified one is a
 // [*Token], which keeps the payload as the provider signed it.
@@ -114,7 +114,7 @@ type Token struct {
 	expiry     time.Time
 
 	// key is the key that verified the token. A cached Token is returned
-	// only while the [KeySource] returns this key for keyID.
+	// only while the [KeyFinder] returns this key for keyID.
 	key jwk.Key
 }
 
@@ -177,8 +177,8 @@ func (t *Token) Issuer() string { return t.issuer }
 // Expiry returns the time exp names.
 func (t *Token) Expiry() time.Time { return t.expiry }
 
-// KeySource finds a signing key by kid; [*keys.Set] implements it.
-type KeySource interface {
+// KeyFinder finds a signing key by kid; [*keys.Set] implements it.
+type KeyFinder interface {
 	// Lookup returns the key published under kid from the keys already
 	// loaded.
 	Lookup(kid string) (keys.Key, bool)
@@ -222,17 +222,17 @@ func (o Options) withDefaults() Options {
 	return o
 }
 
-// Verifier checks tokens against the keys of a [KeySource]. It is safe for
+// Verifier checks tokens against the keys of a [KeyFinder]. It is safe for
 // concurrent use.
 type Verifier struct {
-	keys KeySource
+	keys KeyFinder
 	opts Options
 	// cache is nil when Options.CacheSize turns it off.
 	cache *cache
 }
 
 // New returns a [Verifier] that finds keys in source.
-func New(source KeySource, opts Options) *Verifier {
+func New(source KeyFinder, opts Options) *Verifier {
 	opts = opts.withDefaults()
 	v := &Verifier{keys: source, opts: opts}
 	if opts.CacheSize > 0 {
@@ -250,7 +250,7 @@ func New(source KeySource, opts Options) *Verifier {
 // whatever its claims say.
 //
 // A token verified earlier that has not expired is served from the cache,
-// as the *Token the earlier call returned, while the [KeySource] returns the
+// as the *Token the earlier call returned, while the [KeyFinder] returns the
 // same key for its kid. [Options.Admit] then runs on the token either way.
 func (v *Verifier) Verify(raw string) (*Token, error) {
 	now := v.opts.now()

@@ -234,7 +234,7 @@ func TestAllowlist_IsSafeForConcurrentUse(t *testing.T) {
 	wg.Wait()
 }
 
-// oneKey is a verify.KeySource that publishes one key.
+// oneKey is a verify.KeyFinder that publishes one key.
 type oneKey struct{ key keys.Key }
 
 func (o oneKey) Lookup(kid string) (keys.Key, bool) { return o.key, kid == o.key.ID }

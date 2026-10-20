@@ -37,7 +37,7 @@ import (
 // start is the time every test begins at.
 var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 
-// fakeKeys is a KeySource that holds its keys in memory.
+// fakeKeys is a KeyFinder that holds its keys in memory.
 type fakeKeys struct {
 	mu    sync.Mutex
 	byKID map[string]keys.Key
@@ -226,7 +226,7 @@ func (c *clock) advance(d time.Duration) {
 }
 
 // newVerifier returns a Verifier on source whose clock reads start.
-func newVerifier(source KeySource) (*Verifier, *clock) {
+func newVerifier(source KeyFinder) (*Verifier, *clock) {
 	c := &clock{now: start}
 	return New(source, Options{now: c.Now}), c
 }
