@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/lestrrat-go/jwx/v3/jwa"
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
 
@@ -56,6 +57,38 @@ var algorithmKeyType = map[string]string{
 	"PS256": "RSA", "PS384": "RSA", "PS512": "RSA",
 	"ES256": "EC", "ES384": "EC", "ES512": "EC",
 	"EdDSA": "OKP",
+}
+
+// algorithmCurve maps every accepted algorithm that signs with a single
+// curve to that curve: each ES algorithm to its NIST curve (RFC 7518,
+// section 3.4), and EdDSA to Ed25519, the one curve the service verifies.
+var algorithmCurve = map[string]string{
+	"ES256": "P-256", "ES384": "P-384", "ES512": "P-521",
+	"EdDSA": "Ed25519",
+}
+
+// acceptedCurve reports whether an accepted algorithm signs with curve.
+func acceptedCurve(curve string) bool {
+	for _, c := range algorithmCurve {
+		if c == curve {
+			return true
+		}
+	}
+	return false
+}
+
+// curveOf returns the crv of an EC or OKP key, and "" for any other key.
+func curveOf(key jwk.Key) string {
+	var crv jwa.EllipticCurveAlgorithm
+	switch k := key.(type) {
+	case jwk.ECDSAPublicKey:
+		crv, _ = k.Crv()
+	case jwk.OKPPublicKey:
+		crv, _ = k.Crv()
+	default:
+		return ""
+	}
+	return crv.String()
 }
 
 // fetcher downloads the signing keys of one provider.
@@ -234,9 +267,10 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 
 // signingKey returns the public signing key raw describes, or the reason it
 // is not one: [jwk.ParseKey] refuses it; it has no kid; its use is other
-// than sig; no accepted algorithm uses its key type; it declares an alg that
-// [algorithmKeyType] does not map to its key type; or it is an RSA key below
-// the floors of minRSAModulusBits and minRSAPublicExponent.
+// than sig; no accepted algorithm uses its key type or, for an EC or OKP
+// key, its curve; it declares an alg that [algorithmKeyType] does not map
+// to its key type or [algorithmCurve] does not map to its curve; or it is
+// an RSA key below the floors of minRSAModulusBits and minRSAPublicExponent.
 func signingKey(raw json.RawMessage) (Key, string) {
 	key, err := jwk.ParseKey(raw)
 	if err != nil {
@@ -263,6 +297,15 @@ func signingKey(raw json.RawMessage) (Key, string) {
 	public, err := jwk.PublicKeyOf(key)
 	if err != nil {
 		return Key{}, fmt.Sprintf("kid %q: public key: %v", kid, err)
+	}
+	if kty != "RSA" {
+		curve := curveOf(public)
+		if !acceptedCurve(curve) {
+			return Key{}, fmt.Sprintf("kid %q has curve %q, which no accepted algorithm uses", kid, curve)
+		}
+		if want, ok := algorithmCurve[alg]; ok && want != curve {
+			return Key{}, fmt.Sprintf("kid %q declares alg %q, which signs with %s, not with its curve %s", kid, alg, want, curve)
+		}
 	}
 	if rsaKey, ok := public.(jwk.RSAPublicKey); ok {
 		if reason := weakRSA(rsaKey); reason != "" {

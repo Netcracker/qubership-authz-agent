@@ -119,13 +119,17 @@ type Key struct {
 
 // Allows reports whether a token whose header names alg may be verified
 // with k: alg has to be one of the accepted asymmetric algorithms for the
-// key type of k, and equal to the algorithm the JWK declares when it
-// declares one.
+// key type of k and, for an EC or OKP key, for its curve, and equal to the
+// algorithm the JWK declares when it declares one.
 func (k Key) Allows(alg string) bool {
 	if k.alg != "" {
 		return alg == k.alg
 	}
-	return algorithmKeyType[alg] == k.JWK.KeyType().String()
+	if algorithmKeyType[alg] != k.JWK.KeyType().String() {
+		return false
+	}
+	curve, ok := algorithmCurve[alg]
+	return !ok || curve == curveOf(k.JWK)
 }
 
 // AcceptsAlgorithm reports whether some key may verify a token whose header

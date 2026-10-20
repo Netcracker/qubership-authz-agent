@@ -16,6 +16,7 @@ package keys
 
 import (
 	"context"
+	"crypto/elliptic"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -69,6 +70,8 @@ func TestLoad_SkipsAKeyThatCannotSignAnAcceptedToken(t *testing.T) {
 		{"HMAC algorithm", ecJWK(t, "case", map[string]any{"alg": "HS256"})},
 		{"algorithm none", ecJWK(t, "case", map[string]any{"alg": "none"})},
 		{"algorithm of another key type", ecJWK(t, "case", map[string]any{"alg": "RS256"})},
+		{"algorithm of another curve", ecJWK(t, "case", map[string]any{"alg": "ES384"})},
+		{"OKP key on X25519", x25519JWK(t, "case")},
 		{"RSA modulus of 1024 bits", rsaJWK(t, 1024, "case", nil)},
 		{"RSA key without a modulus", json.RawMessage(`{"kty": "RSA", "kid": "case", "e": "AQAB"}`)},
 	}
@@ -92,6 +95,8 @@ func TestLoad_AcceptsEverySigningKeyType(t *testing.T) {
 		key  json.RawMessage
 	}{
 		{"EC key with ES256", ecJWK(t, "k", nil)},
+		{"EC key on P-384 with ES384", curveJWK(t, elliptic.P384(), "ES384", "k", nil)},
+		{"EC key on P-521 with ES512", curveJWK(t, elliptic.P521(), "ES512", "k", nil)},
 		{"RSA key of 2048 bits with RS256", rsaJWK(t, 2048, "k", nil)},
 		{"OKP key with EdDSA", edJWK(t, "k", nil)},
 		{"key without use", ecJWK(t, "k", map[string]any{"use": nil})},
@@ -382,7 +387,13 @@ func TestAcceptsAlgorithm(t *testing.T) {
 }
 
 func TestKey_Allows(t *testing.T) {
-	idp := newIdP(t, rsaJWK(t, 2048, "declared", nil), rsaJWK(t, 2048, "undeclared", map[string]any{"alg": nil}))
+	idp := newIdP(t,
+		rsaJWK(t, 2048, "declared", nil),
+		rsaJWK(t, 2048, "undeclared", map[string]any{"alg": nil}),
+		ecJWK(t, "p256", map[string]any{"alg": nil}),
+		curveJWK(t, elliptic.P521(), "ES512", "p521", map[string]any{"alg": nil}),
+		edJWK(t, "ed25519", map[string]any{"alg": nil}),
+	)
 	set := mustLoad(t, testOptions(), issuer("realm", idp))
 	tests := []struct {
 		kid, alg string
@@ -394,6 +405,11 @@ func TestKey_Allows(t *testing.T) {
 		{"undeclared", "ES256", false},
 		{"undeclared", "HS256", false},
 		{"undeclared", "none", false},
+		{"p256", "ES256", true},
+		{"p256", "ES512", false},
+		{"p521", "ES512", true},
+		{"p521", "ES256", false},
+		{"ed25519", "EdDSA", true},
 	}
 	for _, tt := range tests {
 		key, ok := set.Lookup(tt.kid)

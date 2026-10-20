@@ -16,6 +16,7 @@ package keys
 
 import (
 	"context"
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -181,11 +182,29 @@ func direct(id string, idp *fakeIdP) Provider {
 // removes it.
 func ecJWK(t *testing.T, kid string, fields map[string]any) json.RawMessage {
 	t.Helper()
-	private, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	return curveJWK(t, elliptic.P256(), "ES256", kid, fields)
+}
+
+// curveJWK returns the public JWK of a new EC key on curve with kid, alg,
+// and use sig, with fields applied as in ecJWK.
+func curveJWK(t *testing.T, curve elliptic.Curve, alg, kid string, fields map[string]any) json.RawMessage {
+	t.Helper()
+	private, err := ecdsa.GenerateKey(curve, rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return publicJWK(t, &private.PublicKey, map[string]any{"kid": kid, "alg": "ES256", "use": "sig"}, fields)
+	return publicJWK(t, &private.PublicKey, map[string]any{"kid": kid, "alg": alg, "use": "sig"}, fields)
+}
+
+// x25519JWK returns the public JWK of a new X25519 key, an OKP key that
+// agrees on secrets and signs nothing, with kid and use sig.
+func x25519JWK(t *testing.T, kid string) json.RawMessage {
+	t.Helper()
+	private, err := ecdh.X25519().GenerateKey(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return publicJWK(t, private.PublicKey(), map[string]any{"kid": kid, "use": "sig"}, nil)
 }
 
 // edJWK returns the public JWK of a new Ed25519 key with kid, alg EdDSA, and

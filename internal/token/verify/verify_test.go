@@ -258,6 +258,7 @@ func TestVerify_RefusesAHeaderThatNamesNoUsableKey(t *testing.T) {
 		{"alg none", unsigned(t, map[string]any{"alg": "none", "kid": "k1"}, claims), CodeAlgNotAllowed},
 		{"alg HS256", unsigned(t, map[string]any{"alg": "HS256", "kid": "k1"}, claims), CodeAlgNotAllowed},
 		{"alg the key type does not use", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claims), CodeAlgNotAllowed},
+		{"alg the curve of the key does not use", unsigned(t, map[string]any{"alg": "ES512", "kid": "k1"}, claims), CodeAlgNotAllowed},
 		{"no kid", unsigned(t, map[string]any{"alg": "ES256"}, claims), CodeKIDMissing},
 		{"ALG in place of alg", unsigned(t, map[string]any{"ALG": "ES256", "kid": "k1"}, claims), CodeAlgNotAllowed},
 		{"KID in place of kid", unsigned(t, map[string]any{"alg": "ES256", "KID": "k1"}, claims), CodeKIDMissing},
