@@ -56,11 +56,11 @@ type Provider struct {
 	// CAFile is a PEM bundle that replaces the system roots for HTTPS
 	// requests to this provider.
 	CAFile string `json:"caFile,omitempty"`
-	// TokenFile holds a bearer token sent with every discovery and JWKS
-	// request to this provider. It is read on every request, so a rotated
-	// token takes effect without a restart. Because no request follows a
-	// redirect, the token goes only where the configuration and the
-	// discovery document point.
+	// TokenFile holds a bearer token sent with every JWKS request to this
+	// provider. It requires JWKSURI, and no request follows a redirect, so
+	// the token goes only to the address the configuration names. It is
+	// read on every request, so a rotated token takes effect without a
+	// restart.
 	TokenFile string `json:"tokenFile,omitempty"`
 }
 
@@ -129,6 +129,8 @@ func (p Provider) validate() error {
 		return fmt.Errorf("provider %q sets neither issuer nor jwksUri", p.ID)
 	case p.Issuer != "" && p.JWKSURI != "":
 		return fmt.Errorf("provider %q sets both issuer and jwksUri; keep one", p.ID)
+	case p.TokenFile != "" && p.JWKSURI == "":
+		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token is sent only to a jwksUri the configuration names", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
 	}

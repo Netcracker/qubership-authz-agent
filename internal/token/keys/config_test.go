@@ -61,6 +61,7 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"duplicate id", map[string]any{"id": "a", "issuer": "https://idp.example/realms/b"}},
 		{"neither issuer nor jwksUri", map[string]any{"id": "b"}},
 		{"both issuer and jwksUri", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "jwksUri": "https://idp.example/realms/b/certs"}},
+		{"tokenFile with issuer", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "tokenFile": "/var/run/token"}},
 		{"allowMissingAud without audiences", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "allowMissingAud": true}},
 		{"empty audience", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "audiences": []string{""}}},
 		{"issuer that is not http", map[string]any{"id": "b", "issuer": "ftp://idp.example/realms/b"}},

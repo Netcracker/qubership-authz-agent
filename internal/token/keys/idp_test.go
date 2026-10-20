@@ -171,6 +171,11 @@ func issuer(id string, idp *fakeIdP) Provider {
 	return Provider{ID: id, Issuer: idp.srv.URL}
 }
 
+// direct is a provider whose JWKS is fetched from idp without discovery.
+func direct(id string, idp *fakeIdP) Provider {
+	return Provider{ID: id, JWKSURI: idp.srv.URL + "/jwks"}
+}
+
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
 // use sig. Each entry of fields sets that member of the JWK, and a nil value
 // removes it.

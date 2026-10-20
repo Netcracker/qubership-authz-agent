@@ -48,7 +48,7 @@ func TestLoad_IndexesEveryProvidersKeysByKID(t *testing.T) {
 
 func TestLoad_JWKSURISkipsDiscovery(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
-	set := mustLoad(t, testOptions(), Provider{ID: "k8s", JWKSURI: idp.srv.URL + "/jwks"})
+	set := mustLoad(t, testOptions(), direct("k8s", idp))
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key served at jwksUri", "k1")
 	}
@@ -288,7 +288,7 @@ func TestLoad_FailsWithoutAUsableTokenFile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := issuer("k8s", newIdP(t, ecJWK(t, "k1", nil)))
+			provider := direct("k8s", newIdP(t, ecJWK(t, "k1", nil)))
 			provider.TokenFile = tt.tokenFile
 			opts := testOptions()
 			opts.StartupTimeout = 200 * time.Millisecond
@@ -305,7 +305,7 @@ func TestLoad_FailsWithoutAUsableTokenFile(t *testing.T) {
 func TestLoad_TokenFileIsReadOnEveryRequest(t *testing.T) {
 	idp := newIdP(t, ecJWK(t, "k1", nil))
 	idp.token = "first"
-	provider := issuer("k8s", idp)
+	provider := direct("k8s", idp)
 	provider.TokenFile = writeFile(t, "token", "first\n")
 	set := mustLoad(t, testOptions(), provider)
 	if got := idp.authorization(); got != "Bearer first" {
@@ -326,14 +326,19 @@ func TestLoad_TokenFileIsReadOnEveryRequest(t *testing.T) {
 }
 
 // Each redirect target listens on the same host at another port, where an
-// HTTP client still forwards an Authorization header.
-func TestLoad_DoesNotFollowARedirectWithTheToken(t *testing.T) {
+// HTTP client still forwards an Authorization header. Only the JWKS request
+// carries a token: a provider that names an issuer cannot have a tokenFile.
+func TestLoad_DoesNotFollowARedirect(t *testing.T) {
 	tests := []struct {
 		name     string
-		provider func(redirecting string) Provider
+		provider func(t *testing.T, redirecting string) Provider
 	}{
-		{"discovery request", func(redirecting string) Provider { return Provider{ID: "k8s", Issuer: redirecting} }},
-		{"JWKS request", func(redirecting string) Provider { return Provider{ID: "k8s", JWKSURI: redirecting + "/jwks"} }},
+		{"discovery request", func(_ *testing.T, redirecting string) Provider {
+			return Provider{ID: "k8s", Issuer: redirecting}
+		}},
+		{"JWKS request with the token", func(t *testing.T, redirecting string) Provider {
+			return Provider{ID: "k8s", JWKSURI: redirecting + "/jwks", TokenFile: writeFile(t, "token", "sa-token")}
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -342,8 +347,7 @@ func TestLoad_DoesNotFollowARedirectWithTheToken(t *testing.T) {
 				http.Redirect(w, r, target.srv.URL+r.URL.Path, http.StatusFound)
 			}))
 			t.Cleanup(redirecting.Close)
-			provider := tt.provider(redirecting.URL)
-			provider.TokenFile = writeFile(t, "token", "sa-token")
+			provider := tt.provider(t, redirecting.URL)
 			opts := testOptions()
 			opts.StartupTimeout = 200 * time.Millisecond
 			_, err := Load(context.Background(), Config{Providers: []Provider{provider}}, opts)
