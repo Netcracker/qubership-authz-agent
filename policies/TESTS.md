@@ -50,7 +50,7 @@ and with the current project docs in `docs/ai/`.
 5. `make e2e`
    - Installs Keycloak plus `authz-agent` from the Helm chart on a kind cluster.
    - Executes the Testify integration suite as a Job inside the cluster.
-   - Uploads simplified runtime policies through the guarded data API during suite setup.
+   - Uploads simplified runtime policies to the authz-policy-admin during suite setup; the agent pulls them from there.
    - Mirrors the implemented legacy check-endpoint integration coverage from
      the internal access-control source repository
      (`CheckEndpointTest.java` and `CheckEndpointV2Test.java`).
@@ -132,7 +132,7 @@ The `policy_language` suite covers all documented condition operators and key gr
 | Legacy check/resource | `Incoming-Token` precedence, `401` mapping, tenant invariance, null body => `400`, missing required fields => `400`, wrong address => `404` |
 | Legacy check/resource/bulk | denied IDs, empty array, malformed entries, null body => `400`, missing required fields => `400`, tenant invariance, large payload of 3000 allowed IDs with non-restrictive RLS, wrong address => `404` |
 | Legacy check/filter | `calculationResult`, deny/allow paths, tenant invariance, missing `resourceType` => `400`, wrong address => `404` |
-| Public boundary | `/authorize` and `/v1/data/authorize` not exposed; not-yet-implemented legacy routes return `404` |
+| Public boundary | `/authorize` not exposed; not-yet-implemented legacy routes return `404` |
 | Runner behavior | Suite runs as a Job inside the cluster, step-level PASS/FAIL reporting, catalog-validated coverage |
 
 ## Fixture Conventions

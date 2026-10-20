@@ -46,12 +46,10 @@ type RuntimeConfig struct {
 	// that serves the entitlements endpoint; the suite pins and resets it
 	// there. The agent reaches the same stub through AUTHZ_ENTITLEMENTS_URL.
 	EntitlementsMockURL string
-	// authz-agent-ADR-0062 cross-transport contract: the same OPA Data
-	// API envelope is exposed on both the Envoy mount
-	// (`/access/v1/authorize`) and the OPA-direct mount
-	// (`/v1/data/authorize`). OPADirectURL is the address of the latter, the
-	// OPA port of the agent Service, so the suite can drive both transports
-	// from the same process for parity assertions.
+	// OPADirectURL is the address of the agent's internal port, which serves
+	// the canonical POST /access/v1/authorize beside the probes. The parity
+	// step compares its answer with the public port's, and the lockdown steps
+	// check that it serves no store document.
 	OPADirectURL string
 	// ACStubURL is the URL of the authz-policy-admin that serves the
 	// access-control v3 config API to the PolicyPuller. The pap-client pull
@@ -69,12 +67,6 @@ type RuntimeConfig struct {
 	// token from Keycloak (M2M_KEYCLOAK_PROFILE=true), as the kind harness
 	// configures it. When false, m2m_keycloak catalog steps are skipped.
 	M2MKeycloakProfile bool
-	// OPAAuthToken is the shared bearer token that pap-client sends to OPA on
-	// write requests (PUT/PATCH /v1/data/**). Used by opa_lockdown tests that
-	// verify authenticated writes are accepted (authz-agent-ADR-0077).
-	// The kind harness reads it from the chart's Secret. Default:
-	// "test-opa-auth-token".
-	OPAAuthToken string
 }
 
 // LoadConfig builds RuntimeConfig from environment variables. The kind Job
@@ -115,7 +107,6 @@ func LoadConfig() RuntimeConfig {
 		OPADirectURL:          envOr("OPA_DIRECT_URL", "http://localhost:18181"),
 		PullInterval:          pullInterval,
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
-		OPAAuthToken:          envOr("OPA_AUTH_TOKEN", "test-opa-auth-token"),
 	}
 }
 

@@ -45,16 +45,15 @@ default general_pip_activation := {}
 #
 # It lives under its own document root, data.m2m, NOT under data.pips beside the
 # PIP configuration: the pull loop replaces data.pips wholesale on every tick,
-# and a data API PUT replaces rather than merges, so a token stored there is
-# erased within one tick.  See ADR-0076.
+# so a token stored there is erased within one tick.  See ADR-0076.
 m2m_bearer_token := data.m2m.bearerToken
 default m2m_bearer_token := ""
 
 # ── x-request-id correlation (ADR-0069) ──────────────────────────────────
 # OPA owns the id: use the inbound input.requestId when present, else generate
 # one with a FIXED key so nd_builtin_cache (ADR-0063) returns the same id across
-# every PIP call site in this evaluation. A caller reaching the data API
-# directly brings no id, so generation must live here.
+# every PIP call site in this evaluation. A canonical request whose input
+# carries no requestId brings no id, so generation must live here.
 
 request_id := id if {
 	id := trim_space(object.get(input, "requestId", ""))

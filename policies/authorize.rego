@@ -37,7 +37,7 @@ import rego.v1
 # includes a sub-package in its parent's data tree (verified: even
 # underscore-prefixed sub-package names like `_internals` remain visible
 # under `data.authorize`). With a sub-package layout, the wire response
-# of `POST /v1/data/authorize` would leak the entire internal compute
+# of `POST /access/v1/authorize` would leak the entire internal compute
 # graph (~200+ rule outputs, including `_admission_validation` and the
 # raw decision tree) in the `result` envelope. A sibling package is the
 # narrowest deviation from the ADR-0062 logical naming that preserves

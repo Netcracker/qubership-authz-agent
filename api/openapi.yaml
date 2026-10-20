@@ -57,17 +57,15 @@ paths:
         or more `ResourceInput` entries. The canonical request body is the
         `AuthorizeRequestEnvelope` — an OPA Data API envelope of the form
         `{ "input": <AuthorizeRequest> }`. The same envelopes are the
-        contract on both transports: the public mount at
-        `/access/v1/authorize` and the data API mount at
-        `/v1/data/authorize` accept and forward the bodies byte-identically
+        contract on both of the agent's ports, the public one and the
+        internal one, which serve this route byte-identically
         (authz-agent-ADR-0062). Admission and subject authentication
         tokens live in `input.authorizationToken` and `input.subject` — no
         HTTP-level `Authorization` / `Incoming-Token` / `Authorization-Type`
         header is consulted on this route. Admission or subject
         authentication failure is conveyed in-band, not as an HTTP error:
         the route returns HTTP 200 with `result.authError.{ status,reason }`
-        (e.g. `status: 401`), identically on the public surface and on the
-        data API, because the data API always answers 200
+        (e.g. `status: 401`), identically on both ports
         (authz-agent-ADR-0062 Decision 11).
       security: []
       requestBody:
@@ -813,9 +811,8 @@ components:
       description: |
         OPA Data API envelope wrapping the canonical authorize request.
         The canonical client posts this envelope verbatim and the agent
-        accepts the same bytes on both transports (Envoy
-        `/access/v1/authorize` and OPA-direct `/v1/data/authorize`) per
-        authz-agent-ADR-0062.
+        accepts the same bytes at `/access/v1/authorize` on both of its
+        ports per authz-agent-ADR-0062.
       properties:
         input:
           $ref: '#/components/schemas/AuthorizeRequest'
@@ -898,9 +895,8 @@ components:
       required: [result]
       description: |
         OPA Data API envelope wrapping the canonical authorize response.
-        The agent emits this envelope verbatim on both transports (Envoy
-        `/access/v1/authorize` and OPA-direct `/v1/data/authorize`) per
-        authz-agent-ADR-0062. SDK clients deserialize this wrapper, then
+        The agent emits this envelope verbatim at `/access/v1/authorize` on
+        both of its ports per authz-agent-ADR-0062. SDK clients deserialize this wrapper, then
         unwrap `result` to obtain the `AuthorizeResponse` shape.
 
         OPA always injects a top-level `decision_id` alongside `result`
@@ -927,7 +923,8 @@ components:
         On the admission-failure branch the object carries only
         `authError` — OPA never converts authentication failures into
         an HTTP 401 because the canonical surface is the OPA Data API
-        envelope verbatim on both transports (authz-agent-ADR-0062).
+        envelope verbatim on both of the agent's ports
+        (authz-agent-ADR-0062).
         Callers must inspect `authError` before treating the response
         as a decision.
       properties:

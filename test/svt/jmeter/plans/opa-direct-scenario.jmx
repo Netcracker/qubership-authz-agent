@@ -92,7 +92,7 @@ vars.put("request_body", template.replace("__TOKEN__", token))
           </collectionProp>
         </HeaderManager>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /v1/data/authorize" enabled="true">
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /access/v1/authorize" enabled="true">
           <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
             <collectionProp name="Arguments.arguments">
@@ -106,7 +106,7 @@ vars.put("request_body", template.replace("__TOKEN__", token))
           <stringProp name="HTTPSampler.domain">${OPA_HOST}</stringProp>
           <stringProp name="HTTPSampler.port">${OPA_PORT}</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
-          <stringProp name="HTTPSampler.path">/v1/data/authorize</stringProp>
+          <stringProp name="HTTPSampler.path">/access/v1/authorize</stringProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
         </HTTPSamplerProxy>

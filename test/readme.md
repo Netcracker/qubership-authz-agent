@@ -5,7 +5,7 @@
 This file defines the recommended regression test set for `authz-agent`.
 It is aligned with the repository architecture and compatibility contract:
 
-1. `POST /v1/data/authorize` on the data API is the single decision endpoint.
+1. `POST /access/v1/authorize` is the single decision endpoint.
 2. The agent's public surface is the compatibility facade for canonical and legacy APIs.
 3. Authorization semantics are two-stage: OLS first, RLS second when `ignoreRls=false`.
 4. Canonical and compatibility flows use bearer-token `subject` values, with verification inside OPA.
@@ -137,8 +137,6 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `wildcard_access.legacy.check_filter_all_op` | order-reader | `POST /access/v1/check/filter` | UNKNOWN_TYPE | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.restore_original_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `route_security.authorize_hidden.404` | admin | `POST /authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `route_security.v1_data_authorize_hidden.404` | admin | `POST /v1/data/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `route_security.v1_data_authorize_result_hidden.404` | admin | `POST /v1/data/authorize/result` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.unknown_path.404` | n/a | `GET /unknown/endpoint` | - | - | none |
 | `route_security.v2_check_resource.implemented` | admin | `POST /access/v2/check/resource` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.v1_bulk_operations.implemented` | admin | `POST /access/v1/check/resource/bulk/operations` | ORDER | READ | ROLE_ADMINISTRATOR |
@@ -147,12 +145,9 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `route_security.api_version.static` | n/a | `GET /api-version` | - | - | none |
 | `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `opa_lockdown.authorize_explain_forbidden.401` | n/a | `POST /v1/data/authorize?explain=full (OPA-direct)` | - | - | none |
-| `opa_lockdown.authorize_plain_still_open.200` | n/a | `POST /v1/data/authorize (OPA-direct, no params)` | - | - | none |
-| `opa_lockdown.m2m_get_forbidden.403` | n/a | `GET /v1/data/m2m (OPA-direct)` | - | - | none |
-| `opa_lockdown.pips_get_forbidden.403` | n/a | `GET /v1/data/pips (OPA-direct)` | - | - | none |
-| `opa_lockdown.write_without_auth.401` | n/a | `PUT /v1/data/opa-lockdown-test (OPA-direct, no auth)` | - | - | none |
-| `opa_lockdown.write_with_auth.204` | n/a | `PUT /v1/data/opa-lockdown-test (OPA-direct, with token)` | - | - | none |
+| `lockdown.m2m_read_absent.404` | n/a | `GET /v1/data/m2m (internal port)` | - | - | none |
+| `lockdown.store_write_absent.404` | n/a | `PUT /v1/data/lockdown-probe (internal port)` | - | - | none |
+| `lockdown.authorize_explain_ignored.200` | admin | `POST /access/v1/authorize (plain and with ?explain=full)` | ORDER | READ | ROLE_ADMINISTRATOR |
 
 ## Recommended Suite Matrix
 
@@ -163,7 +158,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | Token verification and subject normalization | `P0` | Valid token, expired token, wrong issuer, unknown `kid`, no roles, `realm_access.roles` only, non-realm claim ignored, service token, object-form `subject` rejection, anonymous compatibility mode | `policies/token_auth_contract_test.rego` |
 | Legacy v1 endpoint mapping | `P0` | `/access/v1/check/resource`, `/access/v1/check/resource/bulk`, `/access/v1/check/filter` request mapping, response remapping, stable error shape, tenant pass-through ignored in decisioning | Rego contract tests plus runtime checks |
 | Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization`-only token source (ADR-0021), `Incoming-Token` ignored, admission `401` mapping, deterministic DENY reasons, mounted runtime data wiring | the kind harness under `test/k8s/` via `make e2e` |
-| Public route wiring | `P1` | Per-route request and response translation, public non-exposure of `/authorize`, `/v1/data/authorize`, and `/v1/data/authorize/result`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
+| Public route wiring | `P1` | Per-route request and response translation, public non-exposure of `/authorize`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
 | Simplified policy normalization | `P1` | OLS/RLS split, role-scoped RLS index, `conditionAst` usage, `condition=true` fallback, `predicate=true` fallback, explicit-role wildcard normalization for `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL`, unconditional-access short-circuit semantics for all wildcard buckets, unknown field preservation | New unit suite under `tests/unit/` |
 | Deferred legacy v1 bulk operations and preview APIs | `Deferred` | Historical baseline only: `/access/v1/check/resource/bulk/operations` and `/preview/v1/check/resource/bulk/operations` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
 | Deferred legacy v2 APIs and `/api-version` | `Deferred` | Historical baseline only: `/access/v2/check/resource`, `/access/v2/check/resource/bulk/operations`, `/preview/v2/check/resource/bulk/operations`, `/access/v2/check/filter`, and `/api-version` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
@@ -233,8 +228,8 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - Runtime tests execute as a Job inside the cluster (Testify suite under `test/integration/testify/`).
 - Runtime stack loads mounted policy data instead of relying on image-baked defaults.
 - OIDC discovery bootstrap populates runtime authn data before compatibility checks run.
-- The public surface still answers `/access/v1/authorize` and every supported compatibility endpoint with the
-  decision of `/v1/data/authorize`.
+- The public surface answers `/access/v1/authorize` and every supported compatibility endpoint with the decision of
+  the `authorize` document.
 - `/access/v1/check/resource/bulk` handles large payloads such as 3000 allowed IDs without restrictive RLS predicates.
 
 ## Minimum CI Gate

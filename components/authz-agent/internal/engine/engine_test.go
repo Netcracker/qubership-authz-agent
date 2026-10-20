@@ -64,9 +64,10 @@ func TestEval_InputAndUndefined(t *testing.T) {
 	}
 }
 
-// TestPutGetPatch_DocumentsReachTheRules: documents written through Put and
-// Patch are what the rules read, and Get returns them as stored.
-func TestPutGetPatch_DocumentsReachTheRules(t *testing.T) {
+// TestPut_DocumentsReachTheRules: a document written through Put is what the
+// rules read, and a Put under a path that does not exist yet creates its
+// parents.
+func TestPut_DocumentsReachTheRules(t *testing.T) {
 	e := newTestEngine(t)
 	ctx := context.Background()
 	if err := e.Put(ctx, []string{"policies"}, map[string]any{"roles": []any{"a"}}); err != nil {
@@ -79,33 +80,11 @@ func TestPutGetPatch_DocumentsReachTheRules(t *testing.T) {
 	if got := v.([]any); len(got) != 1 || got[0] != "a" {
 		t.Fatalf("roles = %v, want [a]", got)
 	}
-	err = e.Patch(ctx, []string{"policies"}, []PatchOp{{Op: "add", Path: "/roles", Value: []any{"a", "b"}}})
-	if err != nil {
-		t.Fatalf("Patch: %v", err)
-	}
-	stored, ok, err := e.Get(ctx, []string{"policies", "roles"})
-	if err != nil || !ok || len(stored.([]any)) != 2 {
-		t.Fatalf("Get after Patch: %v ok=%v err=%v", stored, ok, err)
-	}
 	if err := e.Put(ctx, []string{"deep", "er", "doc"}, "x"); err != nil {
 		t.Fatalf("Put with parents: %v", err)
 	}
-	if _, ok, _ := e.Get(ctx, []string{"deep", "er", "doc"}); !ok {
-		t.Fatal("nested document not found after Put")
-	}
-}
-
-// TestPatch_MissingDocumentIsNotFound: patching a document that does not exist
-// fails with the not-found error the data API maps to 404, so a writer can
-// fall back to a full PUT.
-func TestPatch_MissingDocumentIsNotFound(t *testing.T) {
-	e := newTestEngine(t)
-	err := e.Patch(context.Background(), []string{"authn"}, []PatchOp{{Op: "add", Path: "/x", Value: 1}})
-	if err == nil || !IsNotFound(err) {
-		t.Fatalf("Patch on a missing document: err=%v, want not found", err)
-	}
-	if err := e.Patch(context.Background(), []string{"authn"}, []PatchOp{{Op: "move", Path: "/x"}}); err == nil {
-		t.Fatal("unsupported op must fail")
+	if v, ok, err := e.Eval(ctx, []string{"deep", "er", "doc"}, nil, nil); err != nil || !ok || v != "x" {
+		t.Fatalf("data.deep.er.doc after Put = %v ok=%v err=%v, want x", v, ok, err)
 	}
 }
 
@@ -151,10 +130,10 @@ func TestNew_DataDirsSeedTheStore(t *testing.T) {
 	if v, ok, _ := e.Eval(ctx, []string{"t", "roles"}, nil, nil); !ok || len(v.([]any)) != 1 {
 		t.Fatalf("roles from the data dir: %v ok=%v", v, ok)
 	}
-	if _, ok, _ := e.Get(ctx, []string{"authn", "jwksByKid", "k"}); !ok {
+	if _, ok, _ := e.Eval(ctx, []string{"authn", "jwksByKid", "k"}, nil, nil); !ok {
 		t.Fatal("authn/jwks.json did not land under data.authn")
 	}
-	if _, ok, _ := e.Get(ctx, []string{"stale"}); ok {
+	if _, ok, _ := e.Eval(ctx, []string{"stale"}, nil, nil); ok {
 		t.Fatal("..data must be ignored")
 	}
 }
@@ -171,8 +150,8 @@ func TestNew_RejectsBrokenPolicy(t *testing.T) {
 }
 
 // TestNew_EmbeddedProductPoliciesCompile: the policies the service ships
-// compile on the library, and system.authz answers a write with the secret
-// the way the OPA server's authorizer expected it to.
+// compile on the library, and the authorize document they define is what a
+// decision reads.
 func TestNew_EmbeddedProductPoliciesCompile(t *testing.T) {
 	modules, err := policies.Modules()
 	if err != nil {
@@ -182,28 +161,13 @@ func TestNew_EmbeddedProductPoliciesCompile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New with product policies: %v", err)
 	}
-	ctx := context.Background()
-	if err := e.Put(ctx, []string{"opa_auth_secret"}, "s3cr3t"); err != nil {
-		t.Fatal(err)
+	v, ok, err := e.Eval(context.Background(), []string{"authorize"}, map[string]any{}, nil)
+	if err != nil || !ok {
+		t.Fatalf("data.authorize with an empty input: ok=%v err=%v", ok, err)
 	}
-	allowed := func(input map[string]any) bool {
-		v, ok, err := e.Eval(ctx, []string{"system", "authz", "allow"}, input, nil)
-		if err != nil {
-			t.Fatalf("system.authz: %v", err)
-		}
-		return ok && v == true
-	}
-	if !allowed(map[string]any{"method": "PUT", "path": []any{"v1", "data", "policies"}, "identity": "s3cr3t", "params": map[string]any{}}) {
-		t.Error("PUT with the secret must be allowed")
-	}
-	if allowed(map[string]any{"method": "PUT", "path": []any{"v1", "data", "policies"}, "params": map[string]any{}}) {
-		t.Error("PUT without identity must be denied")
-	}
-	if !allowed(map[string]any{"method": "POST", "path": []any{"v1", "data", "authorize"}, "params": map[string]any{}}) {
-		t.Error("POST authorize must be open")
-	}
-	if allowed(map[string]any{"method": "POST", "path": []any{"v1", "data", "authorize"}, "params": map[string]any{"explain": []any{"full"}}}) {
-		t.Error("POST authorize with explain must be denied")
+	decision, _ := v.(map[string]any)
+	if results, _ := decision["results"].([]any); results == nil || len(results) != 0 || decision["rlsIgnored"] != false {
+		t.Errorf("data.authorize with an empty input = %v, want rlsIgnored false and an empty results list", v)
 	}
 }
 

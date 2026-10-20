@@ -75,8 +75,7 @@ access-control registers on its public and private gateways, minus everything
 this agent does not serve (its whole management surface).
 
 These go to port 8080, the agent's public listener, which answers each legacy
-route in the shape access-control's clients expect. Routing one of them to the
-data API on 8181 instead would return the raw policy document.
+route in the shape access-control's clients expect.
 */}}
 {{- define "authz-agent.meshCheckRules" -}}
 - match:
@@ -101,24 +100,6 @@ with label core.netcracker.com/secret-type=m2m; see docs/architecture.md §
 obtain its M2M token, the pull loop never authenticates, and the Pod stays
 NotReady indefinitely. Helm cannot verify Secret existence at template time.
 */}}
-{{/*
-Data API write-path authentication token (authz-agent-ADR-0077).
-
-Generated once per install (randAlphaNum 32) and preserved across upgrades via
-the Helm `lookup` function, so that a client holding the old token is not cut
-off by a `helm upgrade`. When the Secret already exists, its current value is
-reused; on a fresh install a new random value is generated.
-*/}}
-{{- define "authz-agent.opaAuthToken" -}}
-{{- $secretName := printf "%s-opa-auth" .Values.SERVICE_NAME -}}
-{{- $existing := lookup "v1" "Secret" .Release.Namespace $secretName -}}
-{{- if and $existing $existing.data (index $existing.data "token") -}}
-{{- index $existing.data "token" | b64dec -}}
-{{- else -}}
-{{- randAlphaNum 32 -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "authz-agent.validateValues" -}}
 {{/*
 The platform's HorizontalPodAutoscaler template renders maxReplicas from

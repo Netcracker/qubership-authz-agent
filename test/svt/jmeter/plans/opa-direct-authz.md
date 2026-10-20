@@ -3,16 +3,16 @@
 ## Purpose
 
 Internal-only SVT scenario for backend-isolated diagnostics. Exercises the same semantic workload
-mix as the main baseline scenario but sends normalized authorization requests directly to backend
-OPA instead of going through Envoy.
+mix as the main baseline scenario but sends normalized authorization requests to
+`POST /access/v1/authorize` on the internal listener instead of the public surface.
 
 ## Semantic Coverage
 
 | Semantic Family | Direct OPA Shape | CSV Source |
 | ----------------- | ------------------ | ------------ |
-| Single-resource authorization | `POST /v1/data/authorize` with one normalized `resources[]` item | `requests.csv` |
-| Filter-style authorization | `POST /v1/data/authorize` with one normalized empty-resource item | `requests-filter.csv` |
-| Bulk authorization | `POST /v1/data/authorize` with multiple normalized `resources[]` items | `requests-bulk.csv` |
+| Single-resource authorization | `POST /access/v1/authorize` with one normalized `resources[]` item | `requests.csv` |
+| Filter-style authorization | `POST /access/v1/authorize` with one normalized empty-resource item | `requests-filter.csv` |
+| Bulk authorization | `POST /access/v1/authorize` with multiple normalized `resources[]` items | `requests-bulk.csv` |
 
 ## Dataset
 
@@ -55,8 +55,8 @@ The profile is intentionally internal-only:
 
 - target host is Compose service `opa`;
 - target port is `8181`;
-- target path is `/v1/data/authorize`; and
-- OPA is not exposed on the public host interface for this scenario.
+- target path is `/access/v1/authorize`; and
+- the internal listener is not published on the host interface.
 
 ## Token Strategy
 
@@ -72,7 +72,7 @@ passed to JMeter via a properties file. No token acquisition happens inside the 
 | `duration_seconds` | `60` | Total test duration |
 | `target_rps` | `500` | Aggregate stage-level throughput target (split across 3 groups) |
 | `opa_host` | `opa` | Internal Compose hostname |
-| `opa_port` | `8181` | Internal backend OPA port |
+| `opa_port` | `8181` | Port of the internal listener |
 
 ## Input Files
 
