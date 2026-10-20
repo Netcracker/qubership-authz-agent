@@ -16,15 +16,18 @@
 // token may come from. The allowed namespaces are the origin and the peer
 // namespace of the composite baseline and of every satellite in the
 // topology file. [Allowlist.Admit] applies them to the tokens of chosen
-// providers as [verify.Options.Admit].
+// providers as [verify.Options.Admit], and [Allowlist.Run] keeps them
+// current.
 package namespaces
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"authz-agent/internal/token/verify"
@@ -32,8 +35,8 @@ import (
 
 // Defaults of [Options].
 const (
-	DefaultTopologyFile = "/etc/topology/data"
-	DefaultTTL          = 20 * time.Second
+	DefaultTopologyFile    = "/etc/topology/data"
+	DefaultRefreshInterval = 20 * time.Second
 )
 
 // Logger receives the diagnostics.
@@ -49,57 +52,71 @@ type Options struct {
 	// allowed while the topology file cannot be read or parsed; once the
 	// file parses, it is allowed only if the topology names it.
 	Namespace string
-	// TTL is how long the namespaces read from the file stay in use before
-	// the file is read again.
-	TTL time.Duration
+	// RefreshInterval is how often [Allowlist.Run] reads the file again.
+	RefreshInterval time.Duration
 	// Log receives the diagnostics; nil discards them.
 	Log Logger
-
-	// now is the clock TTL is measured with.
-	now func() time.Time
 }
 
-// Allowlist holds the allowed namespaces and reads the topology file again
-// once they are older than [Options.TTL]. It is safe for concurrent use.
+// Allowlist holds the allowed namespaces. It is safe for concurrent use,
+// and [Allowlist.Allows] never reads the file or waits for a read.
 type Allowlist struct {
-	opts Options
+	opts    Options
+	allowed atomic.Pointer[map[string]bool]
 
-	mu      sync.Mutex
-	allowed map[string]bool
-	read    time.Time
+	// reading serializes reads of the topology file and guards fallback.
+	reading sync.Mutex
 	// fallback is whether the last read fell back to Options.Namespace; the
 	// warning is logged when that starts, not on every read.
 	fallback bool
 }
 
-// New returns an Allowlist for opts. It reads the topology file on its
-// first use.
+// New reads the topology file and returns an Allowlist of the namespaces it
+// allows. The namespaces change only when [Allowlist.Run] reads the file
+// again.
 func New(opts Options) *Allowlist {
 	if opts.TopologyFile == "" {
 		opts.TopologyFile = DefaultTopologyFile
 	}
-	if opts.TTL <= 0 {
-		opts.TTL = DefaultTTL
+	if opts.RefreshInterval <= 0 {
+		opts.RefreshInterval = DefaultRefreshInterval
 	}
 	if opts.Log == nil {
 		opts.Log = discard{}
 	}
-	if opts.now == nil {
-		opts.now = time.Now
-	}
-	return &Allowlist{opts: opts}
+	a := &Allowlist{opts: opts}
+	a.reload()
+	return a
 }
 
-// Allows reports whether a token from namespace is allowed.
+// Allows reports whether a token from namespace is allowed, by the
+// namespaces the topology file allowed when it was read last.
 func (a *Allowlist) Allows(namespace string) bool {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	now := a.opts.now()
-	if a.allowed == nil || now.Sub(a.read) >= a.opts.TTL {
-		a.allowed = a.load()
-		a.read = now
+	return (*a.allowed.Load())[namespace]
+}
+
+// Run reads the topology file again every [Options.RefreshInterval] until
+// ctx ends.
+func (a *Allowlist) Run(ctx context.Context) {
+	ticker := time.NewTicker(a.opts.RefreshInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			a.reload()
+		}
 	}
-	return a.allowed[namespace]
+}
+
+// reload reads the topology file and replaces the allowed namespaces with
+// the ones it allows.
+func (a *Allowlist) reload() {
+	a.reading.Lock()
+	defer a.reading.Unlock()
+	allowed := a.load()
+	a.allowed.Store(&allowed)
 }
 
 // Admit returns a check for [verify.Options.Admit] that refuses a token

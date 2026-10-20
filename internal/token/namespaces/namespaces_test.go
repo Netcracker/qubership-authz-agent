@@ -15,6 +15,7 @@
 package namespaces
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -57,24 +58,6 @@ func writeTopology(t *testing.T, content string) string {
 		t.Fatal(err)
 	}
 	return path
-}
-
-// clock is a settable time source for Options.now.
-type clock struct {
-	mu  sync.Mutex
-	now time.Time
-}
-
-func (c *clock) Now() time.Time {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	return c.now
-}
-
-func (c *clock) advance(d time.Duration) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.now = c.now.Add(d)
 }
 
 // The service's own namespace, own, is not in the topology and is the
@@ -143,23 +126,51 @@ func TestAllowlist_AllowsNoneForATopologyWithoutAComposite(t *testing.T) {
 	}
 }
 
-func TestAllowlist_ReadsTheFileAgainOnceTheTTLPasses(t *testing.T) {
+// Allows keeps answering from the file as New read it: the change is
+// allowed only once reload reads the file again.
+func TestAllowlist_KeepsTheNamespacesUntilTheFileIsReadAgain(t *testing.T) {
 	path := writeTopology(t, `{"composite": {"baseline": {"origin": "first"}}}`)
-	c := &clock{now: time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}
-	a := New(Options{TopologyFile: path, now: c.Now})
-	if !a.Allows("first") {
-		t.Fatalf("Allows(%q) = false before the change, want true", "first")
-	}
+	a := New(Options{TopologyFile: path})
 	if err := os.WriteFile(path, []byte(`{"composite": {"baseline": {"origin": "second"}}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	c.advance(19 * time.Second)
-	if a.Allows("second") {
-		t.Errorf("Allows(%q) 19 s after the read = true, want false: the first read is still in use", "second")
+	if !a.Allows("first") {
+		t.Errorf("Allows(%q) before the file is read again = false, want true", "first")
 	}
-	c.advance(time.Second)
+	if a.Allows("second") {
+		t.Errorf("Allows(%q) before the file is read again = true, want false", "second")
+	}
+	a.reload()
 	if !a.Allows("second") {
-		t.Errorf("Allows(%q) 20 s after the read = false, want true", "second")
+		t.Errorf("Allows(%q) after the file is read again = false, want true", "second")
+	}
+	if a.Allows("first") {
+		t.Errorf("Allows(%q) after the file is read again = true, want false", "first")
+	}
+}
+
+func TestAllowlist_RunReadsTheFileAgainOnTheInterval(t *testing.T) {
+	path := writeTopology(t, `{"composite": {"baseline": {"origin": "first"}}}`)
+	a := New(Options{TopologyFile: path, RefreshInterval: 10 * time.Millisecond})
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		a.Run(ctx)
+	}()
+	t.Cleanup(func() {
+		cancel()
+		<-done
+	})
+	if err := os.WriteFile(path, []byte(`{"composite": {"baseline": {"origin": "second"}}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for !a.Allows("second") {
+		if time.Now().After(deadline) {
+			t.Fatalf("Allows(%q) is still false 5 s after the change; Allows(%q) = %t", "second", "first", a.Allows("first"))
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 }
 
@@ -184,12 +195,9 @@ func (l *recordingLogger) count() int {
 // The file stays missing across three reads; the fallback is reported once.
 func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 	log := &recordingLogger{}
-	c := &clock{now: time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}
-	a := New(Options{TopologyFile: filepath.Join(t.TempDir(), "absent"), Namespace: "own", Log: log, now: c.Now})
-	for range 3 {
-		a.Allows("own")
-		c.advance(DefaultTTL)
-	}
+	a := New(Options{TopologyFile: filepath.Join(t.TempDir(), "absent"), Namespace: "own", Log: log})
+	a.reload()
+	a.reload()
 	if got := log.count(); got != 1 {
 		t.Errorf("warnings = %d, want 1", got)
 	}
@@ -197,29 +205,31 @@ func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 
 func TestAllowlist_WarnsAgainWhenTheTopologyGoesAwayAgain(t *testing.T) {
 	log := &recordingLogger{}
-	c := &clock{now: time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}
 	path := filepath.Join(t.TempDir(), "data")
-	a := New(Options{TopologyFile: path, Namespace: "own", Log: log, now: c.Now})
-	a.Allows("own")
+	a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
 	if err := os.WriteFile(path, []byte(composite), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	c.advance(DefaultTTL)
-	a.Allows("own")
+	a.reload()
 	if err := os.Remove(path); err != nil {
 		t.Fatal(err)
 	}
-	c.advance(DefaultTTL)
-	a.Allows("own")
+	a.reload()
 	if got := log.count(); got != 2 {
 		t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
 	}
 }
 
+// Run with -race: eight readers call Allows while the file is read again
+// fifty times.
 func TestAllowlist_IsSafeForConcurrentUse(t *testing.T) {
-	c := &clock{now: time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)}
-	a := New(Options{TopologyFile: writeTopology(t, composite), now: c.Now})
+	a := New(Options{TopologyFile: writeTopology(t, composite)})
 	var wg sync.WaitGroup
+	wg.Go(func() {
+		for range 50 {
+			a.reload()
+		}
+	})
 	for range 8 {
 		wg.Go(func() {
 			for range 50 {
@@ -227,7 +237,6 @@ func TestAllowlist_IsSafeForConcurrentUse(t *testing.T) {
 					t.Errorf("Allows(%q) = false, want true", "base-origin")
 					return
 				}
-				c.advance(time.Second)
 			}
 		})
 	}
