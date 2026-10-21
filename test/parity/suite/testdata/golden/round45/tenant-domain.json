@@ -7060,7 +7060,10 @@
     "check-resource-v1-outcome/sequence/after-emptying": {"status":200,"decision":false},
     "check-resource-v1-outcome/sequence/first-policy": {"status":200,"decision":false},
     "load-simplified-policies-v1/sequence/empty-the-policies": {"status":200},
-    "load-simplified-policies-v1/sequence/write-two-policies": {"status":400},
+    "load-simplified-policies-v1/sequence/write-two-policies": {
+      "status": 400,
+      "message": "Expression [resource.a ==]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.a =="
+    },
     "pap-error-v1/sequence/write-two-policies": {
       "status": 400,
       "body": "Expression [resource.a ==]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.a =="
