@@ -46,7 +46,8 @@
           }
         ]
       }
-    }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-control-last-should": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
@@ -55,7 +56,28 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":200},
     "pap-error-v1/sequence/write-3": {"status":200,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-control-last-should",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o007": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -1352,7 +1374,8 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":200},
     "pap-error-v1/sequence/write-3": {"status":200,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o072": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -1365,7 +1388,8 @@
       "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"parity-r29-not-a-uuid\": UUID has to be represented by standard 36-char representation"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o073": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -1382,7 +1406,37 @@
       "body": "Expression [subject.roles CONTAINS 'ROLE_PARITY_READER' AND subject.parityR14Failing == 'v']: Invalid expression: PIPs aren't supported in target except for TOKEN, HEADER and MAPPING PIP type"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cachePeriod": 1,
+            "cacheable": true,
+            "domain": "PARITY_ISOLATED",
+            "name": "subject.permissionScope",
+            "pipType": "PERMISSION_SCOPE",
+            "tenantId": "parity-p47-o073",
+            "type": "UUID",
+            "url": "http://pip-mock:8090"
+          },
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR14Failing",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "subject.parityR14Failing"
+            },
+            "tenantId": "parity-p47-o073",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r14-failing"
+          }
+        ]
+      }
+    }
   },
   "p47-o074": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -1395,7 +1449,8 @@
       "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o075": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -1430,7 +1485,8 @@
       "body": "Cannot construct instance of `\u003credacted\u003e`, problem: effect is marked non-null but is null"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o077": {
     "import-pip-customization-v1/sequence/write-1": {"status":200},
@@ -1509,7 +1565,8 @@
           }
         ]
       }
-    }
+    },
+    "pap-read-raw-v1/sequence/write-1-raw-sets": {"status":500,"body":{"message":"internal_server_error"}}
   },
   "p47-o081": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
@@ -1522,7 +1579,42 @@
     "load-simplified-policies-v1/sequence/prior-3": {"status":200},
     "pap-error-v1/sequence/write-1": {"status":204,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR40HeldAddSet",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r40open-m2m-held-custom-add-set",
+              "x": "${subject.isM2M}"
+            },
+            "tenantId": "parity-p47-o081",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-custom-add-set"
+          },
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o081",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o082": {
     "load-policy-sets-v1/sequence/write-1": {
@@ -1822,7 +1914,28 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o096",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o097": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -1875,7 +1988,28 @@
       "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o098",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o099": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -1911,6 +2045,28 @@
         ]
       }
     },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o099",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o100": {
@@ -1950,6 +2106,28 @@
         ]
       }
     },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o100",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o101": {
@@ -2066,6 +2244,28 @@
         ]
       }
     },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o103",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o104": {
@@ -2075,7 +2275,28 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":400,"message":{"message":"simplified policy 'operation' field can't be null"}},
     "pap-error-v1/sequence/write-3": {"status":400,"body":{"message":"simplified policy 'operation' field can't be null"}},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o104",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o105": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -2324,6 +2545,28 @@
         ]
       }
     },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o111",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o112": {
@@ -2388,7 +2631,28 @@
       "body": "Expression [tRuE]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: tRuE"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o114",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o115": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -2454,7 +2718,28 @@
       "body": "Expression [resource.x == \\\"v\\\"]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o119",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o120": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2467,7 +2752,28 @@
       "body": "Expression [resource.x IN 'a', 5, TRUE]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o120",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o121": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2480,7 +2786,28 @@
       "body": "Expression [resource.x IN 'a', resource.y]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o121",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o122": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2493,7 +2820,28 @@
       "body": "Expression [resource.uri MATCH /v1/{id}/items]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o122",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o123": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2506,7 +2854,28 @@
       "body": "Expression [NOT resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: NOT resource.a == 'y'"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o123",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o124": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2519,7 +2888,28 @@
       "body": "Expression [subject.parityUnknown == 'x']: Invalid expression: subject.parityUnknown PIP doesn't exist"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o124",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o125": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2532,7 +2922,28 @@
       "body": "Expression [operation == 'READ']: Invalid expression: Operation is not supported for condition"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o125",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o126": {
     "load-policy-sets-v1/sequence/prior-1": {"status":200},
@@ -2558,14 +2969,56 @@
       "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_OTHER\": not one of the values accepted for Enum class: [SIMPLIFIED, DEFAULT]"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o127",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o128": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
     "load-policy-sets-v1/sequence/write-1": {"status":500},
     "pap-error-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o128",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o129": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2582,7 +3035,28 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o129",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o130": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2602,7 +3076,41 @@
       "body": "Expression [subject allowed 'LIST' on resource]: Invalid expression: Has access conditions aren't supported in target"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR15Failing",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "subject.parityR15Failing"
+            },
+            "tenantId": "parity-p47-o130",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r15-failing"
+          },
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o130",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o131": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2619,7 +3127,28 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o131",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o132": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -2632,7 +3161,28 @@
       "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"ONLY_ONE_APPLICABLE\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
     },
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "headers": "X-Parity-Cp-Fwd",
+            "httpMethod": "POST",
+            "jsonPath": "$.a",
+            "name": "subject.parityR29CpGeneral",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29structure-cpip"
+            },
+            "tenantId": "parity-p47-o132",
+            "type": "JSON",
+            "url": "http://pip-mock:8090/api/v1/pip/r29structure-cpip"
+          }
+        ]
+      }
+    }
   },
   "p47-o133": {
     "import-pip-customization-v1/sequence/write-1": {

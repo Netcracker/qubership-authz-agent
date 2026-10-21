@@ -3,6 +3,64 @@
     "check-resource-v1-outcome/sequence/as-the-reader": {"status":200,"decision":true},
     "load-policy-sets-v1/sequence/upload": {"status":200},
     "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_P56C_TOKEN",
+            "httpMethod": "POST",
+            "name": "subject.parityP56cToken",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "p56c-pip-call-token"
+            },
+            "tenantId": "parity-p56c-pip-call-token",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/p56c-token"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p56c-pip-call-token",
+            "name": "p56c-pip-call-token set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p56c-pip-call-token set-policy",
+                "policyId": "84bcd10b-243f-db5b-bbf7-795af8f7fd5e",
+                "rules": [
+                  {
+                    "condition": "subject.parityP56cToken CONTAINS 'v'",
+                    "effect": "ALLOW",
+                    "name": "p56c-pip-call-token probe",
+                    "ruleId": "a4c2e8a5-ede7-fdaa-8c94-98dbc8f741d3",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p56c-pip-call-token"
+                  }
+                ],
+                "target": "true",
+                "tenantId": "parity-p56c-pip-call-token"
+              }
+            ],
+            "policySetId": "4fa57ac3-fd6e-5555-b24e-97c4bca3f66e",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P56C_PIP_CALL_TOKEN'",
+            "tenantId": "parity-p56c-pip-call-token",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
     "pip-call/sequence/as-the-reader": {
       "calls": 1,
       "requestAttributes": {
@@ -18,10 +76,88 @@
   },
   "p56c-pip-token-control-first": {
     "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/sequence/upload": {"status":200}
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p56c-pip-token-control-first",
+            "name": "p56c-pip-token-control-first set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p56c-pip-token-control-first set-policy",
+                "policyId": "224d7bf5-32c2-804a-ec4b-4da54e380bd8",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p56c-pip-token-control-first allow",
+                    "ruleId": "718d1a75-6ff6-d6c0-5eec-2dd182d002e1",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p56c-pip-token-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p56c-pip-token-control-first"
+              }
+            ],
+            "policySetId": "9c5345e9-4d2e-e508-baeb-1d2d398a8581",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P56C_PIP_TOKEN_CONTROL_FIRST'",
+            "tenantId": "parity-p56c-pip-token-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
   },
   "p56c-pip-token-control-last": {
     "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
-    "load-policy-sets-v1/sequence/upload": {"status":200}
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p56c-pip-token-control-last",
+            "name": "p56c-pip-token-control-last set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p56c-pip-token-control-last set-policy",
+                "policyId": "74356a82-fee4-f3c3-352a-ffa9c9dedc64",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p56c-pip-token-control-last allow",
+                    "ruleId": "090305fe-3048-8864-0cde-89d2bf05f03b",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p56c-pip-token-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p56c-pip-token-control-last"
+              }
+            ],
+            "policySetId": "3dfeccca-5270-0369-93f1-a0f594d76ef7",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P56C_PIP_TOKEN_CONTROL_LAST'",
+            "tenantId": "parity-p56c-pip-token-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
   }
 }

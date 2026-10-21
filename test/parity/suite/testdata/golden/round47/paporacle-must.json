@@ -46,7 +46,8 @@
           }
         ]
       }
-    }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-control-last-must": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
@@ -95,7 +96,8 @@
           }
         ]
       }
-    }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o001": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -207,7 +209,8 @@
       "body": "Cannot construct instance of `\u003credacted\u003e`, problem: effect is marked non-null but is null"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o008": {
     "load-policy-sets-v1/sequence/prior-1": {"status":200},
@@ -572,6 +575,46 @@
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read-raw-v1/sequence/write-2": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_ISOLATED",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R16S_S16_PIP_NAME_WITH_A_DASH_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R16S_S16_PIP_NAME_WITH_A_DASH_READ_Policy",
+                "policyId": "a6e6d054-7124-f905-1728-d2b7cf9132d5",
+                "rules": [
+                  {
+                    "condition": "subject.parityR16S-dash == 'v' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "s16-pip-name-with-a-dash",
+                    "ruleId": "00000000-0000-0000-0000-0000000f0001",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o016"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p47-o016"
+              }
+            ],
+            "policySetId": "7ca6e6d0-5471-24f9-0517-28d2b7cf9132",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_R16S_S16_PIP_NAME_WITH_A_DASH'",
+            "tenantId": "parity-p47-o016",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o017": {
@@ -591,7 +634,8 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o018": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -628,7 +672,8 @@
       "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o020": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -644,6 +689,46 @@
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read-raw-v1/sequence/write-2": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_ISOLATED",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R36K_R36GAPS_MAPPING_TABLE_A_TEXT_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R36K_R36GAPS_MAPPING_TABLE_A_TEXT_READ_Policy",
+                "policyId": "a136c72e-de23-4973-c838-5fce10aa8b9c",
+                "rules": [
+                  {
+                    "condition": "subject.permissions CONTAINS 'PARITY_R36_TEXT' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "r36gaps-mapping-table-a-text",
+                    "ruleId": "00000000-0000-0000-0000-0000000f0001",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o020"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p47-o020"
+              }
+            ],
+            "policySetId": "f9a136c7-2ede-2349-73c8-385fce10aa8b",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_R36K_R36GAPS_MAPPING_TABLE_A_TEXT'",
+            "tenantId": "parity-p47-o020",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o021": {
@@ -696,6 +781,46 @@
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
     "pap-read-raw-v1/sequence/write-2": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_ISOLATED",
+            "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R29F_R29PIPFIELD_NAME_STARTS_WITH_DIGIT_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_ISOLATED_PARITY_PARITY_SUITE_R29F_R29PIPFIELD_NAME_STARTS_WITH_DIGIT_READ_Policy",
+                "policyId": "90f21fba-dd66-f43a-d3b3-85e6f518e0b2",
+                "rules": [
+                  {
+                    "condition": "subject.1parityR29 == 'v' OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "r29pipfield-name-starts-with-digit",
+                    "ruleId": "00000000-0000-0000-0000-0000000f0001",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o023"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p47-o023"
+              }
+            ],
+            "policySetId": "2690f21f-badd-66f4-3ad3-b385e6f518e0",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_R29F_R29PIPFIELD_NAME_STARTS_WITH_DIGIT'",
+            "tenantId": "parity-p47-o023",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
     "pap-read/sequence/write-2": {"status":404}
   },
   "p47-o024": {
@@ -789,7 +914,8 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o030": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -798,7 +924,8 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":400,"message":{"message":"Error at index 0 in: \"parity\""}},
     "pap-error-v1/sequence/write-3": {"status":400,"body":{"message":"Error at index 0 in: \"parity\""}},
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o031": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -914,7 +1041,8 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o039": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -927,7 +1055,8 @@
       "body": "Expression [resource.x MATCH 'ab*']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.x MATCH 'ab*'"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o040": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -944,7 +1073,8 @@
       }
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o041": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -957,14 +1087,16 @@
       "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_OTHER\": not one of the values accepted for Enum class: [SIMPLIFIED, DEFAULT]"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o042": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
     "load-policy-sets-v1/sequence/write-1": {"status":500},
     "pap-error-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o043": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -977,7 +1109,8 @@
       "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_R29_BOGUS\": not one of the values accepted for Enum class: [DRAFT, ARCHIVED, INACTIVE, ACTIVE]"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o044": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -1088,6 +1221,36 @@
           }
         ]
       }
+    },
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cachePeriod": 1,
+            "cacheable": true,
+            "domain": "PARITY_ISOLATED",
+            "name": "subject.permissionScope",
+            "pipType": "PERMISSION_SCOPE",
+            "tenantId": "parity-p47-o044",
+            "type": "UUID",
+            "url": "http://pip-mock:8090"
+          },
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR14Failing",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "subject.parityR14Failing"
+            },
+            "tenantId": "parity-p47-o044",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r14-failing"
+          }
+        ]
+      }
     }
   },
   "p47-o045": {
@@ -1101,7 +1264,8 @@
       "body": "Expression []: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: "
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o046": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":false},
@@ -1167,6 +1331,26 @@
           }
         ]
       }
+    },
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR15Failing",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "subject.parityR15Failing"
+            },
+            "tenantId": "parity-p47-o046",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r15-failing"
+          }
+        ]
+      }
     }
   },
   "p47-o047": {
@@ -1180,7 +1364,8 @@
       "body": "Cannot deserialize value of type `\u003credacted\u003e` from String \"PARITY_NO_SUCH_ALGORITHM\": not one of the values accepted for Enum class: [PERMIT_OVERRIDES, DENY_OVERRIDES, PERMIT_UNLESS_DENY, DENY_UNLESS_PERMIT]"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-1": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o048": {
     "import-pip-customization-v1/sequence/write-1": {
@@ -1261,7 +1446,8 @@
       "body": "Expression [subject.parityUndeclared == 'x']: Invalid expression: subject.parityUndeclared PIP doesn't exist"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o053": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -1332,7 +1518,8 @@
       "body": "Expression [resource.a == 'y' OR subject.permissionScope.region IS NULL]: Invalid expression: subject.permissionScope PIP doesn't exist"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o058": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -1403,7 +1590,8 @@
       "body": "Expression [operation == 'READ']: Invalid expression: Operation is not supported for condition"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o063": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -1432,7 +1620,8 @@
       "body": "Expression [True]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: True"
     },
     "pap-read-raw-v1/sequence/before": {"status":200,"body":{"policySets":[]}},
-    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}}
+    "pap-read-raw-v1/sequence/write-3": {"status":200,"body":{"policySets":[]}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o065": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},

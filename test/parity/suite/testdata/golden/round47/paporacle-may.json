@@ -46,7 +46,8 @@
           }
         ]
       }
-    }
+    },
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-control-last-may": {
     "check-resource-v1-outcome/sequence/probe": {"status":200,"decision":true},
@@ -55,7 +56,8 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":200},
     "pap-error-v1/sequence/write-3": {"status":200,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o079": {
     "check-resource-v1-outcome/sequence/probe": {
@@ -169,6 +171,27 @@
           }
         ]
       }
+    },
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "domain": "PARITY_ISOLATED",
+            "httpMethod": "POST",
+            "name": "subject.parityR40HeldAddSet",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r40open-m2m-held-custom-add-set",
+              "x": "${subject.isM2M}"
+            },
+            "tenantId": "parity-p47-o079",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-custom-add-set"
+          }
+        ]
+      }
     }
   },
   "p47-o139": {
@@ -178,7 +201,61 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":200},
     "pap-error-v1/sequence/write-3": {"status":200,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {
+      "status": 200,
+      "body": {
+        "pips": [
+          {
+            "cacheable": false,
+            "claim": "department",
+            "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001",
+            "name": "subject.parityR29PairsTok",
+            "pipType": "TOKEN",
+            "tenantId": "parity-p47-o139",
+            "type": "UUID"
+          },
+          {
+            "cacheable": false,
+            "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001",
+            "header": "x-parity-r29-pairs",
+            "name": "subject.parityR29PairsHdr",
+            "pipType": "HEADER",
+            "tenantId": "parity-p47-o139",
+            "type": "UUID"
+          },
+          {
+            "cacheable": false,
+            "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001",
+            "httpMethod": "POST",
+            "name": "subject.parityR29PairsGen",
+            "pipType": "GENERAL",
+            "requestAttributes": {
+              "case": "r29-pairs-gen"
+            },
+            "tenantId": "parity-p47-o139",
+            "type": "UUID",
+            "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen"
+          },
+          {
+            "cacheable": true,
+            "customMapping": {
+              "subject.roles": {
+                "ROLE_PARITY_READER": [
+                  "p1",
+                  "p2"
+                ]
+              }
+            },
+            "name": "subject.permissions",
+            "pipType": "MAPPING",
+            "productMapping": {},
+            "tenantId": "parity-p47-o139",
+            "type": "UUID"
+          }
+        ]
+      }
+    }
   },
   "p47-o140": {
     "load-policy-sets-v1/sequence/write-1": {"status":200},
@@ -270,7 +347,8 @@
     "load-simplified-policies-v1/sequence/write-3": {"status":200},
     "pap-error-v1/sequence/write-3": {"status":200,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-3": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-3-raw-pips": {"status":200,"body":{"pips":[]}}
   },
   "p47-o153": {
     "load-simplified-policies-v1/sequence/write-1": {"status":200},
@@ -454,6 +532,7 @@
     "import-customization-v1/sequence/write-1": {"status":200},
     "pap-error-v1/sequence/write-1": {"status":200,"body":null},
     "pap-read-raw-v1/sequence/before": {"status":500,"body":{"message":"internal_server_error"}},
-    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}}
+    "pap-read-raw-v1/sequence/write-1": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read-raw-v1/sequence/write-1-raw-pips": {"status":200,"body":{"pips":[]}}
   }
 }
