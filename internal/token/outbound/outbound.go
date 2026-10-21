@@ -21,7 +21,9 @@
 // the requests they are meant for at the transport, below anything a policy
 // can read. When a service answers such a request with 401, the transport
 // calls [TransportOptions.Unauthorized], where [Writer.Renew] requests a new
-// token unless the previous request started less than 30 seconds ago.
+// token unless the previous request started less than 30 seconds ago. A
+// request that finds no token, an expired one included, calls
+// [TransportOptions.NoToken], where Renew does the same.
 package outbound
 
 import "errors"

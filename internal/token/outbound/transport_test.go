@@ -250,6 +250,42 @@ func TestTransport_FailsWithoutAToken(t *testing.T) {
 	}
 }
 
+// NoToken runs only for a request that needs the token and finds none; the
+// other rows are the controls.
+func TestTransport_ReportsARequestThatFindsNoToken(t *testing.T) {
+	pip := newRecorder(t, nil)
+	other := newRecorder(t, nil)
+	tests := []struct {
+		name   string
+		token  string
+		target *recorder
+		want   int
+	}{
+		{"authorized host without a token", "", pip, 1},
+		{"authorized host with a token", "tok-1", pip, 0},
+		{"host without the token", "", other, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var calls int
+			rt := NewTransport(http.DefaultTransport, staticToken(tt.token), TransportOptions{
+				Authorize: AllowHosts("http://" + hostOf(t, pip)),
+				NoToken:   func() { calls++ },
+			})
+			req, err := http.NewRequest(http.MethodGet, tt.target.srv.URL+"/pip", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if resp, err := rt.RoundTrip(req); err == nil {
+				_ = resp.Body.Close()
+			}
+			if calls != tt.want {
+				t.Errorf("NoToken calls = %d, want %d", calls, tt.want)
+			}
+		})
+	}
+}
+
 // The request the PIP received is the control: it shows the token reached
 // the first host.
 func TestTransport_DoesNotCarryTheTokenThroughARedirectToAnotherHost(t *testing.T) {

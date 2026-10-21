@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -70,6 +71,10 @@ type WriterConfig struct {
 	// redirect, so the client secret goes to TokenURL alone and a redirect
 	// fails the request.
 	Client *http.Client
+	// BasicAuth sends the client id and secret in an HTTP Basic
+	// Authorization header, each form-encoded first, as RFC 6749, section
+	// 2.3.1, requires. Without it they go in the form body.
+	BasicAuth bool
 	// Written runs after each token is written to Path; nil does nothing.
 	// The usual choice is [FileSource.Reload] of the source that reads
 	// Path, so the new token is used at once.
@@ -230,14 +235,17 @@ func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 }
 
 func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (string, time.Duration, error) {
-	form := url.Values{
-		"grant_type":    {"client_credentials"},
-		"client_id":     {clientID},
-		"client_secret": {clientSecret},
+	form := url.Values{"grant_type": {"client_credentials"}}
+	if !w.cfg.BasicAuth {
+		form.Set("client_id", clientID)
+		form.Set("client_secret", clientSecret)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.cfg.TokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return "", 0, err
+	}
+	if w.cfg.BasicAuth {
+		req.SetBasicAuth(url.QueryEscape(clientID), url.QueryEscape(clientSecret))
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
@@ -251,7 +259,7 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 		return "", 0, fmt.Errorf("POST %s: read body: %w", w.cfg.TokenURL, err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return "", 0, fmt.Errorf("POST %s: HTTP %d", w.cfg.TokenURL, resp.StatusCode)
+		return "", 0, fmt.Errorf("POST %s: HTTP %d%s", w.cfg.TokenURL, resp.StatusCode, oauthError(body))
 	}
 	var tr struct {
 		AccessToken string  `json:"access_token"`
@@ -270,12 +278,41 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 	if err != nil {
 		return "", 0, fmt.Errorf("POST %s: token response has no expires_in, and %w", w.cfg.TokenURL, err)
 	}
-	lifetime := fromSeconds(exp - float64(time.Now().UnixNano())/float64(time.Second))
-	if lifetime <= 0 {
-		expired := time.Unix(int64(exp), 0).UTC().Format(time.RFC3339)
+	left := exp - float64(time.Now().UnixNano())/float64(time.Second)
+	if left <= 0 {
+		expired := expiresAt(tr.AccessToken).UTC().Format(time.RFC3339)
 		return "", 0, fmt.Errorf("POST %s: the token expired at %s", w.cfg.TokenURL, expired)
 	}
-	return tr.AccessToken, lifetime, nil
+	return tr.AccessToken, fromSeconds(left), nil
+}
+
+// oauthError returns the error member of an OAuth error response (RFC 6749,
+// section 5.2) and its error_description, as text to append to an error
+// message, or "" when body is not such a response. The provider wrote both
+// values and the message goes into a log line, so each is quoted and cut:
+// the error to 64 runes, the description to 200.
+func oauthError(body []byte) string {
+	var e struct {
+		Error       string `json:"error"`
+		Description string `json:"error_description"`
+	}
+	if json.Unmarshal(body, &e) != nil || e.Error == "" {
+		return ""
+	}
+	text := ", error " + quoted(e.Error, 64)
+	if e.Description != "" {
+		text += ": " + quoted(e.Description, 200)
+	}
+	return text
+}
+
+// quoted quotes s, cut to its first limit runes with "..." after the cut.
+func quoted(s string, limit int) string {
+	runes := []rune(s)
+	if len(runes) <= limit {
+		return strconv.Quote(s)
+	}
+	return strconv.Quote(string(runes[:limit])) + "..."
 }
 
 // fromSeconds converts a count of seconds to a Duration. A count of more
@@ -290,8 +327,10 @@ func fromSeconds(s float64) time.Duration {
 }
 
 // expiry reads the exp claim of a JWT without verifying it and returns it in
-// seconds since the Unix epoch. The token comes straight from the provider,
-// and the time only decides when to ask for the next one.
+// seconds since the Unix epoch. The token is the service's own, from the
+// provider's token response or from the file a [FileSource] reads, and its
+// exp decides when the Writer asks for the next token and until when
+// [FileSource.Token] returns it.
 func expiry(token string) (float64, error) {
 	parts := strings.Split(token, ".")
 	if len(parts) != 3 {
@@ -302,12 +341,32 @@ func expiry(token string) (float64, error) {
 		return 0, errors.New("the token payload is not base64url")
 	}
 	var claims struct {
-		Exp float64 `json:"exp"`
+		Exp *float64 `json:"exp"`
 	}
-	if err := json.Unmarshal(payload, &claims); err != nil || claims.Exp <= 0 {
+	if err := json.Unmarshal(payload, &claims); err != nil || claims.Exp == nil {
 		return 0, errors.New("the token has no exp claim")
 	}
-	return claims.Exp, nil
+	return *claims.Exp, nil
+}
+
+// maxExp is the latest exp that expiresAt takes as a time, 2^53 - 1
+// (9007199254740991) seconds after the epoch, the largest integer I-JSON
+// (RFC 7493) allows.
+const maxExp = 1<<53 - 1
+
+// expiresAt returns the time the exp claim of token names, without
+// verifying the token. An exp of zero or below gives the Unix epoch, a time
+// long past. A token that is not a JWT with an exp claim, or whose exp is
+// later than maxExp, gives the zero time, which stands for no expiry.
+func expiresAt(token string) time.Time {
+	exp, err := expiry(token)
+	switch {
+	case err != nil || exp > maxExp:
+		return time.Time{}
+	case exp <= 0:
+		return time.Unix(0, 0)
+	}
+	return time.Unix(int64(exp), 0)
 }
 
 func readSecret(path string) (string, error) {

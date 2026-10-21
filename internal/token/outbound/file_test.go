@@ -61,6 +61,114 @@ func TestFileSource_FollowsATokenTheKubeletSwaps(t *testing.T) {
 	waitFor(t, "the swapped token", func() bool { return s.Token() == "second" })
 }
 
+// The token expires a minute after the clock's start: it is returned a
+// second before exp and not at exp.
+func TestFileSource_ReturnsNoTokenOnceItsExpHasPassed(t *testing.T) {
+	c := newClock()
+	path := inTempDir(t, "token")
+	token := jwtExpiringAt(t, c.Now().Add(time.Minute))
+	writeFile(t, path, token)
+	s := NewFileSource(path, time.Hour, nil)
+	s.now = c.Now
+	s.read()
+	c.advance(time.Minute - time.Second)
+	if got := s.Token(); got != token {
+		t.Fatalf("Token() a second before exp = %q, want the token", got)
+	}
+	c.advance(time.Second)
+	if got := s.Token(); got != "" {
+		t.Errorf("Token() at exp = %q, want none", got)
+	}
+}
+
+func TestFileSource_ReturnsANewerTokenAfterTheOldOneExpired(t *testing.T) {
+	c := newClock()
+	path := inTempDir(t, "token")
+	writeFile(t, path, jwtExpiringAt(t, c.Now().Add(time.Minute)))
+	s := NewFileSource(path, time.Hour, nil)
+	s.now = c.Now
+	s.read()
+	c.advance(time.Hour)
+	newer := jwtExpiringAt(t, c.Now().Add(time.Hour))
+	writeFile(t, path, newer)
+	s.read()
+	if got := s.Token(); got != newer {
+		t.Errorf("Token() after a newer token is read = %q, want the newer token", got)
+	}
+}
+
+// A receiver refuses such a token as expired, so the source does not
+// return it either.
+func TestFileSource_TakesAnExpOfZeroOrBelowAsPassed(t *testing.T) {
+	tests := []struct {
+		name string
+		exp  float64
+	}{
+		{"exp of 0", 0},
+		{"exp of -5", -5},
+		{"exp of -1e300", -1e300},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := inTempDir(t, "token")
+			writeFile(t, path, unsignedJWT(t, map[string]any{"exp": tt.exp}))
+			s := NewFileSource(path, time.Hour, nil)
+			s.read()
+			if got := s.Token(); got != "" {
+				t.Errorf("Token() with exp %g = %q, want none", tt.exp, got)
+			}
+		})
+	}
+}
+
+func TestFileSource_KeepsATokenWithoutAnExpItCanRead(t *testing.T) {
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{"opaque token", "opaque"},
+		{"JWT without exp", unsignedJWT(t, map[string]any{"sub": "authz-agent"})},
+		{"JWT with an exp beyond 2^53 seconds", unsignedJWT(t, map[string]any{"exp": 1e300})},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := newClock()
+			path := inTempDir(t, "token")
+			writeFile(t, path, tt.token)
+			s := NewFileSource(path, time.Hour, nil)
+			s.now = c.Now
+			s.read()
+			c.advance(100 * 365 * 24 * time.Hour)
+			if got := s.Token(); got != tt.token {
+				t.Errorf("Token() a century later = %q, want %q", got, tt.token)
+			}
+		})
+	}
+}
+
+// An expired token, such as one left in the file by an earlier run, does
+// not make the source ready; the fresh token written after it does.
+func TestFileSource_IsNotReadyWithAnExpiredToken(t *testing.T) {
+	c := newClock()
+	path := inTempDir(t, "token")
+	writeFile(t, path, jwtExpiringAt(t, c.Now().Add(-time.Minute)))
+	s := NewFileSource(path, time.Hour, nil)
+	s.now = c.Now
+	s.read()
+	select {
+	case <-s.Ready():
+		t.Fatalf("Ready is closed with an expired token, want it open")
+	default:
+	}
+	writeFile(t, path, jwtExpiringAt(t, c.Now().Add(time.Hour)))
+	s.read()
+	select {
+	case <-s.Ready():
+	default:
+		t.Errorf("Ready is open after a fresh token is read, want it closed")
+	}
+}
+
 // The tests that call read directly do so because a read that changes
 // nothing is not observable through Run.
 func TestFileSource_WaitsForAMissingFile(t *testing.T) {
@@ -110,19 +218,32 @@ func TestFileSource_RunsWithTheDefaultIntervalForZero(t *testing.T) {
 	waitFor(t, "the token", func() bool { return s.Token() == "first" })
 }
 
+// Each read logs a line, for a new token or for an expired one, and no line
+// carries the token.
 func TestFileSource_NeverLogsTheToken(t *testing.T) {
-	path := inTempDir(t, "token")
-	writeFile(t, path, "tok-secret-1")
-	log := &recordingLogger{}
-	s := NewFileSource(path, time.Hour, log)
-	s.read()
-	for _, m := range log.all() {
-		if strings.Contains(m, "tok-secret-1") {
-			t.Errorf("log message %q carries the token", m)
-		}
+	tests := []struct {
+		name  string
+		token string
+	}{
+		{"new token", "tok-secret-1"},
+		{"expired token", jwtExpiringAt(t, time.Now().Add(-time.Minute))},
 	}
-	if len(log.all()) == 0 {
-		t.Errorf("read logged nothing, want the line it writes for a new token")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := inTempDir(t, "token")
+			writeFile(t, path, tt.token)
+			log := &recordingLogger{}
+			s := NewFileSource(path, time.Hour, log)
+			s.read()
+			for _, m := range log.all() {
+				if strings.Contains(m, tt.token) {
+					t.Errorf("log message %q carries the token", m)
+				}
+			}
+			if len(log.all()) == 0 {
+				t.Errorf("read logged nothing, want a line about the token")
+			}
+		})
 	}
 }
 

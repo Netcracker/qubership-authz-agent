@@ -121,7 +121,7 @@ func staticToken(token string) func() string {
 	return func() string { return token }
 }
 
-// clock is a settable time source for Writer.now.
+// clock is a settable time source for Writer.now and FileSource.now.
 type clock struct {
 	mu  sync.Mutex
 	now time.Time

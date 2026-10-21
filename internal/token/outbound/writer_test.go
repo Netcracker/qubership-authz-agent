@@ -16,6 +16,7 @@ package outbound
 
 import (
 	"context"
+	"encoding/base64"
 	"math"
 	"net/http"
 	"net/http/httptest"
@@ -29,9 +30,10 @@ import (
 	"time"
 )
 
-// tokenEndpoint is a fake token endpoint. It records the path and the form
-// of the last request and counts the requests. It answers the first
-// failures requests with 503 and every later one with status and body.
+// tokenEndpoint is a fake token endpoint. It records the path, the form,
+// and the Authorization header of the last request and counts the
+// requests. It answers the first failures requests with 503 and every later
+// one with status and body.
 type tokenEndpoint struct {
 	srv *httptest.Server
 
@@ -41,6 +43,7 @@ type tokenEndpoint struct {
 	failures int
 	lastPath string
 	lastForm url.Values
+	lastAuth string
 	requests int
 }
 
@@ -54,6 +57,7 @@ func newTokenEndpoint(t *testing.T, body string) *tokenEndpoint {
 		e.requests++
 		e.lastPath = r.URL.Path
 		e.lastForm = r.PostForm
+		e.lastAuth = r.Header.Get("Authorization")
 		if e.failures > 0 {
 			e.failures--
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -70,6 +74,12 @@ func (e *tokenEndpoint) form() url.Values {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	return e.lastForm
+}
+
+func (e *tokenEndpoint) authorization() string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.lastAuth
 }
 
 func (e *tokenEndpoint) path() string {
@@ -130,6 +140,62 @@ func TestWriter_RefreshWritesTheTokenItObtains(t *testing.T) {
 	}
 	if got := e.path(); got != "/token" {
 		t.Errorf("token request path = %q, want %q", got, "/token")
+	}
+	if got := e.authorization(); got != "" {
+		t.Errorf("token request Authorization = %q, want none", got)
+	}
+}
+
+// The id and the secret hold characters that form encoding changes, a colon
+// among them, which would split the header in the wrong place; the Writer
+// encodes both values, as RFC 6749, section 2.3.1, requires.
+func TestWriter_SendsTheCredentialsInABasicHeaderWhenAsked(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
+	w, secretFile := newTestWriter(t, e, inTempDir(t, "token"))
+	writeFile(t, filepath.Join(filepath.Dir(secretFile), "username"), "agent:1\n")
+	writeFile(t, secretFile, "p@ss word:1\n")
+	w.cfg.BasicAuth = true
+
+	if _, err := w.Refresh(context.Background()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
+	want := "Basic " + base64.StdEncoding.EncodeToString([]byte("agent%3A1:p%40ss+word%3A1"))
+	if got := e.authorization(); got != want {
+		t.Errorf("token request Authorization = %q, want %q", got, want)
+	}
+	if got, want := e.form().Encode(), "grant_type=client_credentials"; got != want {
+		t.Errorf("token request form = %s, want %s", got, want)
+	}
+}
+
+func TestWriter_ReportsTheErrorTheProviderNames(t *testing.T) {
+	tests := []struct {
+		name string
+		body string
+		want string
+	}{
+		{"error with a description", `{"error": "invalid_client", "error_description": "Invalid client credentials"}`,
+			`HTTP 401, error "invalid_client": "Invalid client credentials"`},
+		{"error without a description", `{"error": "invalid_client"}`, `HTTP 401, error "invalid_client"`},
+		{"description with a line break", `{"error": "invalid_request", "error_description": "line one\nline two"}`,
+			`HTTP 401, error "invalid_request": "line one\nline two"`},
+		{"error of 65 runes", `{"error": "` + strings.Repeat("e", 65) + `"}`,
+			`HTTP 401, error "` + strings.Repeat("e", 64) + `"...`},
+		{"description of 201 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 201) + `"}`,
+			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"...`},
+		{"JSON that is not an OAuth error", `{"message": "Unauthorized"}`, `HTTP 401`},
+		{"body that is not JSON", `<html>Unauthorized</html>`, `HTTP 401`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newTokenEndpoint(t, tt.body)
+			e.status = http.StatusUnauthorized
+			w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+			_, err := w.Refresh(context.Background())
+			if err == nil || !strings.HasSuffix(err.Error(), tt.want) {
+				t.Errorf("Refresh() error = %v, want one that ends with %s", err, tt.want)
+			}
+		})
 	}
 }
 

@@ -39,6 +39,12 @@ type TransportOptions struct {
 	// request's goroutine before the response is returned, and the request
 	// is not sent again.
 	Unauthorized func()
+	// NoToken runs when a request that has to carry the token finds none,
+	// just before the request fails with [ErrNoToken]; nil does nothing.
+	// The usual choice is [Writer.Renew], as for Unauthorized, so a token
+	// that expired while the provider kept failing is asked for again as
+	// soon as a request needs it.
+	NoToken func()
 }
 
 // NewTransport returns a transport that sends a request through base after
@@ -46,8 +52,8 @@ type TransportOptions struct {
 // request's context and the request does not carry yet. It adds
 // Authorization: Bearer with the result of token to a request whose URL
 // opts.Authorize accepts and that carries no Authorization of its own;
-// while token returns "", such a request is not sent and fails with
-// [ErrNoToken]. token is called for every such request, possibly from
+// while token returns "", such a request is not sent: opts.NoToken runs,
+// and the request fails with [ErrNoToken]. token is called for every such request, possibly from
 // several goroutines at once; [FileSource.Token] is such a function.
 //
 // The additions go on a copy of the request, so the caller's request, and
@@ -69,11 +75,7 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.opts.Authorize != nil && out.Header.Get("Authorization") == "" && t.opts.Authorize(out.URL) {
 		token := t.token()
 		if token == "" {
-			// A RoundTripper closes the request body even when it fails.
-			if req.Body != nil {
-				_ = req.Body.Close()
-			}
-			return nil, ErrNoToken
+			return nil, t.noToken(req)
 		}
 		out.Header.Set("Authorization", "Bearer "+token)
 		resp, err := t.base.RoundTrip(out)
@@ -83,6 +85,18 @@ func (t *transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return resp, err
 	}
 	return t.base.RoundTrip(out)
+}
+
+// noToken closes the body of req, as a RoundTripper does even when it
+// fails, runs opts.NoToken, and returns ErrNoToken.
+func (t *transport) noToken(req *http.Request) error {
+	if req.Body != nil {
+		_ = req.Body.Close()
+	}
+	if t.opts.NoToken != nil {
+		t.opts.NoToken()
+	}
+	return ErrNoToken
 }
 
 // addHeaders adds to out each header that opts.Headers returns for the
