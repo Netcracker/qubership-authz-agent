@@ -34,9 +34,9 @@ info:
         on-disk value is `0.0.1`; the build pipeline rewrites it for
         release artefacts.
 servers:
-  - url: http://localhost:18080
-    description: Public authorization surface (host-published port, runtime integration suite).
-  - url: http://localhost:18080
+  - url: http://localhost:8080
+    description: Public authorization surface, reached from the host through a port-forward to the agent Service (`docs/local-integration-tests.md`).
+  - url: http://localhost:8080
     description: Internal admin surface; same listener, segregated by the `/internal/v1/` URL prefix.
 tags:
   - name: public
