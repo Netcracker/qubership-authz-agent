@@ -4,6 +4,8 @@ go 1.26.8
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.15
+	github.com/hashicorp/golang-lru/v2 v2.0.7
+	github.com/lestrrat-go/jwx/v3 v3.3.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.3
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.2
 	github.com/open-policy-agent/opa v1.21.3
@@ -35,7 +37,6 @@ require (
 	github.com/lestrrat-go/dsig-secp256k1 v1.0.0 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc/v3 v3.0.6 // indirect
-	github.com/lestrrat-go/jwx/v3 v3.3.0 // indirect
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
