@@ -34,10 +34,10 @@ on:
         default: "100"
         options: ["100", "200", "300", "400", "500", "1000"]
       mode:
-        description: "canonical and legacy reach the public surface; opa-direct reaches POST /access/v1/authorize on the internal listener"
+        description: "legacy sends each scenario's requests to the check routes on the public listener"
         type: choice
-        default: canonical
-        options: [canonical, legacy, opa-direct]
+        default: legacy
+        options: [legacy]
       duration-seconds:
         description: "Length of the measured window"
         type: string
