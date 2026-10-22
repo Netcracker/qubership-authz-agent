@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "c4a8a215-4d43-40c7-a2ae-b2f7b930fc3f",
     "name": "Authz Agent Runtime (kind port-forward)",
-    "description": "Collection for the runtime stack on kind (make e2e), reached through port-forwards as described in docs/local-integration-tests.md. Includes token acquisition, policy upload, authorization endpoints, and not-yet-wired compatibility endpoints.",
+    "description": "Collection for the runtime stack on kind (make e2e), reached through port-forwards as described in docs/local-integration-tests.md. Includes token acquisition, the check routes of the access-control API (v1, v2, and preview), `/api-version`, and requests to removed routes, which expect 404.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -524,7 +524,7 @@
       ]
     },
     {
-      "name": "8. Contract Endpoints (not wired, expected 404)",
+      "name": "8. v2, preview, and bulk-operations check routes, and /api-version",
       "item": [
         {
           "name": "GET /api-version",

@@ -5,15 +5,17 @@ info:
   description: |
     HTTP contract served by the Authz Agent runtime.
 
-    The agent exposes a single listener on port 8080 carrying both the
-    public authorization surface (the access-control check API: v1, v2,
-    and preview) and the internal admin surface
-    (`/internal/v1/decision-logs`). The `PUT /internal/v1/policies` and
-    `PUT /internal/v1/pips` upload endpoints have been removed (ADR-0071);
-    policy data is now delivered via the pull loop or a mounted ConfigMap
-    (ADR-0072). The internal admin endpoint is isolated by URL prefix only;
-    there is no separate listener port in the current runtime. The two
-    `servers` entries below distinguish the two intents.
+    This contract covers the public listener, port 8080
+    (`AUTHZ_PUBLIC_ADDR`). It carries the public authorization surface
+    (the access-control check API: v1, v2, and preview), `/api-version`
+    and `/health`, and the internal admin surface
+    (`/internal/v1/decision-logs`). The internal admin endpoint is
+    isolated by URL prefix only. The two `servers` entries below
+    distinguish the two intents.
+
+    A second listener, port 8181 (`AUTHZ_HTTP_ADDR`), serves the probes
+    the chart configures (`/health`, `/ready`), `/api-version`, and the
+    metrics (`/prometheus`). It is not part of this contract.
 
     Notation:
       - `bearerAuth` covers the `Authorization: Bearer <jwt>` admission
@@ -40,7 +42,7 @@ tags:
   - name: public
     description: Authorization decision endpoints reachable by every workload via the public ingress.
   - name: internal-admin
-    description: Operator/control-plane endpoints (policy upload, PIP upload, decision-log retrieval).
+    description: Operator endpoints (decision-log retrieval).
   - name: meta
     description: Service metadata endpoints (`/api-version`, `/health`).
 security:
@@ -612,11 +614,12 @@ paths:
     get:
       operationId: health_get
       tags: [meta]
-      summary: Liveness / readiness probe.
+      summary: Health of the agent on the public listener.
       description: |
         Returns `200 { "status": "healthy" }` once the agent's trusted
-        providers have settled. A degraded strict-mode agent that fails the
-        JWKS bootstrap returns `503 { "status": ..., "message": ... }`.
+        providers have settled. An agent whose trusted providers fail to
+        bootstrap, or whose trusted-providers configuration is invalid,
+        returns `503 { "message": ..., "details": ... }`.
       security: []
       responses:
         '200':
@@ -873,8 +876,9 @@ components:
         message:
           type: string
           description: |
-            Human-readable summary of the failed readiness criterion
-            (`OPA not ready`, `bootstrap status unavailable`,
+            Human-readable summary of the failed health criterion
+            (`trusted providers configuration is invalid`,
+            `required identity providers did not bootstrap`,
             `bootstrap threshold not met`).
         details:
           $ref: '#/components/schemas/HealthErrorDetails'
@@ -882,10 +886,10 @@ components:
       type: object
       additionalProperties: false
       description: |
-        Diagnostic context for unhealthy responses. Fields are emitted
-        only when relevant — `opaReady` reflects the upstream OPA probe,
-        `bootstrap` is present when the failure was the JWKS bootstrap
-        threshold check, and `configError` is present when the
+        Diagnostic context for unhealthy responses. `opaReady` is always
+        `true`, because the policy engine runs inside the agent's
+        process. `bootstrap` is present when the failure was the JWKS
+        bootstrap threshold check, and `configError` is present when the
         trusted-providers configuration file is unreadable or invalid
         (authz-agent-ADR-0075).
       properties:
