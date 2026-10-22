@@ -72,12 +72,23 @@ func newPublicApp(t *testing.T, logs *decisionlog.Logger, collector string) *fib
 // routes, as the platform's Fiber builder installs it in main.
 func newPublicAppWithLog(t *testing.T, logs *decisionlog.Logger, collector string, log Logger) *fiber.App {
 	t.Helper()
-	eng, err := engine.New(engine.Options{Modules: map[string]string{"authorize.rego": publicPolicy}})
+	return newPublicAppOver(t, map[string]string{"authorize.rego": publicPolicy}, logs,
+		Options{CollectorURL: collector, NDBuiltinCache: true, Log: log})
+}
+
+// newPublicAppOver builds the public surface over modules, with
+// data.users.admin set to root, the decisions logged to logs, and the
+// platform's context middleware ahead of the routes.
+func newPublicAppOver(t *testing.T, modules map[string]string, logs *decisionlog.Logger, opts Options) *fiber.App {
+	t.Helper()
+	eng, err := engine.New(engine.Options{Modules: modules})
 	if err != nil {
 		t.Fatalf("engine: %v", err)
 	}
-	srv := Register(fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true}), eng, logs,
-		Options{CollectorURL: collector, NDBuiltinCache: true, Log: log})
+	if err := eng.Put(context.Background(), []string{"users"}, map[string]any{"admin": "root"}); err != nil {
+		t.Fatal(err)
+	}
+	srv := Register(fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true}), eng, logs, opts)
 	app := fiber.New(fiber.Config{Immutable: true, StrictRouting: true, CaseSensitive: true, DisableStartupMessage: true})
 	app.Use(platformContext)
 	srv.RegisterPublic(app)
@@ -340,10 +351,9 @@ func TestPublic_Filter(t *testing.T) {
 	}
 }
 
-// TestPublic_Surface: the routes Envoy exposed answer as they did, and
-// everything else is 404 {"message":"not found"}.
-// The canonical route reads no query parameter, so ?explain=full gets the
-// plain decision and no evaluation trace.
+// TestPublic_Surface: the check routes, /api-version, /health, and the
+// decision-log download answer as Envoy answered them, and every other path,
+// /access/v1/authorize included, is 404 {"message":"not found"}.
 func TestPublic_Surface(t *testing.T) {
 	app := newPublicApp(t, nil, "")
 	authorize := `{"input":{"subject":"Bearer admin","resources":[{"resourceType":"ORDER","operation":"READ"}]}}`
@@ -352,12 +362,8 @@ func TestPublic_Surface(t *testing.T) {
 		status                   int
 		want                     string
 	}{
-		{"the canonical route is the decision", http.MethodPost, "/access/v1/authorize", authorize, 200,
-			`{"result":{"results":[{"isAllowed":true,"predicates":[{"predicate":"type==ORDER","predicateType":"rsql"}]}],"rlsIgnored":false}}`},
-		{"explain on the canonical route gets the plain decision", http.MethodPost, "/access/v1/authorize?explain=full", authorize, 200,
-			`{"result":{"results":[{"isAllowed":true,"predicates":[{"predicate":"type==ORDER","predicateType":"rsql"}]}],"rlsIgnored":false}}`},
 		{"an unknown path", http.MethodGet, "/unknown/endpoint", "", 404, `{"message":"not found"}`},
-		{"a path under the canonical route", http.MethodPost, "/access/v1/authorize/result", authorize, 404, `{"message":"not found"}`},
+		{"POST /access/v1/authorize", http.MethodPost, "/access/v1/authorize", authorize, 404, `{"message":"not found"}`},
 		{"a check route with a trailing slash", http.MethodPost, "/access/v1/check/resource/", `{"type":"ORDER","operation":"READ"}`, 404, `{"message":"not found"}`},
 		{"a mistyped check route", http.MethodPost, "/access/v1/check/resourc", `{"type":"ORDER","operation":"READ"}`, 404, `{"message":"not found"}`},
 		{"api-version by GET", http.MethodGet, "/api-version", "", 200, LegacyAPIVersion},
@@ -373,15 +379,6 @@ func TestPublic_Surface(t *testing.T) {
 				t.Errorf("%s %s = %d %s, want %d %s", tc.method, tc.path, code, body, tc.status, tc.want)
 			}
 		})
-	}
-}
-
-// TestPublic_CanonicalRouteUnderOtherMethods: a method other than POST on
-// the canonical route is 405.
-func TestPublic_CanonicalRouteUnderOtherMethods(t *testing.T) {
-	app := newPublicApp(t, nil, "")
-	if code, body, _ := call(t, app, http.MethodGet, "/access/v1/authorize", "", nil); code != 405 || !strings.Contains(body, "Method Not Allowed") {
-		t.Errorf("GET /access/v1/authorize = %d %s, want 405 Method Not Allowed", code, body)
 	}
 }
 

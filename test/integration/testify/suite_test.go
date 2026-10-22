@@ -292,24 +292,6 @@ func jsonObj(b []byte) map[string]interface{} {
 	return m
 }
 
-// authErrorFrom extracts the canonical authError object from an unwrapped
-// AuthorizeResponse body. ADR-0062 surfaces admission/subject auth failures as
-// HTTP 200 with `result.authError = {status, message, reason}` instead of an
-// HTTP-level 401. The caller passes the already-unwrapped inner result.
-func authErrorFrom(t *testing.T, body []byte) map[string]interface{} {
-	t.Helper()
-	j := jsonObj(body)
-	raw, ok := j["authError"]
-	if !ok {
-		t.Fatalf("expected canonical result.authError; body=%s", string(body))
-	}
-	authErr, ok := raw.(map[string]interface{})
-	if !ok {
-		t.Fatalf("authError must be object; body=%s", string(body))
-	}
-	return authErr
-}
-
 func jsonArr(b []byte) []interface{} {
 	var a []interface{}
 	_ = json.Unmarshal(b, &a)
@@ -335,67 +317,4 @@ func incomingTokenHeader(token string) map[string]string {
 
 func jsonHeader() map[string]string {
 	return map[string]string{"Content-Type": "application/json"}
-}
-
-// canonicalAuthorizeBody builds an ADR-0062-shaped /access/v1/authorize body.
-//
-// The (R) fields (authorizationToken / authorizationType / requestHeaders)
-// move from Envoy Lua injection into the canonical body, and the whole shape
-// is wrapped in the OPA Data API envelope {"input": <body>}. admissionToken
-// and subject must already carry the "Bearer " prefix; pass empty strings to
-// model admission-failure / no-subject scenarios. The caller-supplied `extra`
-// fields (resources, ignoreRls, flsRequired, ...) are folded into input.
-func canonicalAuthorizeBody(admissionToken, subject string, extra map[string]interface{}) map[string]interface{} {
-	input := map[string]interface{}{
-		"authorizationToken": admissionToken,
-		"authorizationType":  "",
-		"requestHeaders":     map[string]interface{}{},
-	}
-	input["subject"] = subject
-	for k, v := range extra {
-		input[k] = v
-	}
-	return map[string]interface{}{"input": input}
-}
-
-// postAuthorize posts a canonical /access/v1/authorize request with no HTTP
-// Authorization header (ADR-0062 — the admission token rides inside
-// body.authorizationToken). Extra request headers (e.g. X-Request-Id) can be
-// supplied via extraHeaders.
-//
-// The wire response is the OPA Data API envelope `{"result": <AuthorizeResponse>}`
-// (authz-agent-ADR-0062). Spec conformance validates the envelope inside
-// s.post; this helper then unwraps `result` so existing assertions can keep
-// accessing the canonical `AuthorizeResponse` fields (`rlsIgnored`, `results`,
-// ...) directly. Non-200 / non-enveloped bodies pass through unchanged.
-func (s *RuntimeSuite) postAuthorize(admissionToken, subject string, body map[string]interface{}, extraHeaders ...map[string]string) (int, []byte) {
-	s.T().Helper()
-	h := jsonHeader()
-	for _, eh := range extraHeaders {
-		for k, v := range eh {
-			h[k] = v
-		}
-	}
-	code, raw := s.post("/access/v1/authorize", h, canonicalAuthorizeBody(admissionToken, subject, body))
-	return code, unwrapOPAResultEnvelope(raw)
-}
-
-// unwrapOPAResultEnvelope returns the bytes of envelope.result when the body
-// is an OPA Data API envelope, or the body unchanged otherwise. Used by
-// authorize-call helpers so assertion code keeps speaking the canonical
-// AuthorizeResponse shape after the ADR-0062 cutover.
-func unwrapOPAResultEnvelope(raw []byte) []byte {
-	if len(raw) == 0 {
-		return raw
-	}
-	var env struct {
-		Result json.RawMessage `json:"result"`
-	}
-	if err := json.Unmarshal(raw, &env); err != nil {
-		return raw
-	}
-	if len(env.Result) == 0 {
-		return raw
-	}
-	return []byte(env.Result)
 }

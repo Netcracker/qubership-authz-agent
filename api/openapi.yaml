@@ -6,8 +6,8 @@ info:
     HTTP contract served by the Authz Agent runtime.
 
     The agent exposes a single listener on port 8080 carrying both the
-    public authorization surface (legacy v1 + v2 + preview + the canonical
-    `/access/v1/authorize`) and the internal admin surface
+    public authorization surface (the access-control check API: v1, v2,
+    and preview) and the internal admin surface
     (`/internal/v1/decision-logs`). The `PUT /internal/v1/policies` and
     `PUT /internal/v1/pips` upload endpoints have been removed (ADR-0071);
     policy data is now delivered via the pull loop or a mounted ConfigMap
@@ -46,100 +46,6 @@ tags:
 security:
   - bearerAuth: []
 paths:
-  /access/v1/authorize:
-    post:
-      operationId: access_v1_authorize
-      tags: [public]
-      summary: Canonical authorization decision.
-      description: |
-        Returns an `AuthorizeResponseEnvelope` of the form
-        `{ "result": <AuthorizeResponse> }` describing the decision for one
-        or more `ResourceInput` entries. The canonical request body is the
-        `AuthorizeRequestEnvelope` — an OPA Data API envelope of the form
-        `{ "input": <AuthorizeRequest> }`. The same envelopes are the
-        contract on both of the agent's ports, the public one and the
-        internal one, which serve this route byte-identically
-        (authz-agent-ADR-0062). Admission and subject authentication
-        tokens live in `input.authorizationToken` and `input.subject` — no
-        HTTP-level `Authorization` / `Incoming-Token` / `Authorization-Type`
-        header is consulted on this route. Admission or subject
-        authentication failure is conveyed in-band, not as an HTTP error:
-        the route returns HTTP 200 with `result.authError.{ status,reason }`
-        (e.g. `status: 401`), identically on both ports
-        (authz-agent-ADR-0062 Decision 11).
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AuthorizeRequestEnvelope'
-            examples:
-              rls_deny_short_circuit:
-                summary: OLS DENY short-circuits before RLS (no roles).
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-guestUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "READ", "resource": { "id": "cust-4", "ownerId": "user-1" } }], "subject": "Bearer <test-jwt-for-guestUser1>", "ignoreRls": false } }
-              multi_resource:
-                summary: Multiple resources, input order preserved, ignoreRls=true.
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-viewerUser2>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "READ", "resource": { "id": "cust-5" } }, { "resourceType": "Invoice", "operation": "READ", "resource": { "id": "inv-1" } }], "subject": "Bearer <test-jwt-for-viewerUser2>", "ignoreRls": true } }
-              rls_default_allow:
-                summary: ignoreRls omitted (RLS evaluated by default), ALLOW with predicate.
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-viewerUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "READ", "resource": { "id": "cust-1" } }], "subject": "Bearer <test-jwt-for-viewerUser1>" } }
-              allow_with_predicate:
-                summary: RLS ALLOW returning an ownership predicate.
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-editorUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "UPDATE", "resource": { "id": "cust-2", "ownerId": "user-1" } }], "subject": "Bearer <test-jwt-for-editorUser1>", "ignoreRls": false } }
-              ols_allow_rls_deny:
-                summary: OLS ALLOW but RLS DENY (ABAC validation failure).
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-editorUser1>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "Customer", "operation": "UPDATE", "resource": { "id": "cust-3", "ownerId": "user-999" } }], "subject": "Bearer <test-jwt-for-editorUser1>", "ignoreRls": false } }
-              pip_substitution:
-                summary: GENERAL PIP value substituted into the rendered predicate.
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-admin>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "CUSTOMER", "operation": "READ", "resource": { "customerId": "C1" } }], "subject": "Bearer <test-jwt-for-admin>", "ignoreRls": false } }
-              token_bound_alias:
-                summary: TOKEN PIP claim aliased into the predicate.
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-admin>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "TOKEN_PIP_POSITIVE", "operation": "READ" }], "subject": "Bearer <test-jwt-for-admin>", "ignoreRls": false } }
-              wildcard:
-                summary: Wildcard (all-resource-types/all-operations) ALLOW.
-                value: { "input": { "authorizationToken": "Bearer <test-jwt-for-admin>", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "UNKNOWN_TYPE", "operation": "DELETE" }], "subject": "Bearer <test-jwt-for-admin>", "ignoreRls": false } }
-              admission_failure:
-                summary: Empty admission token — produces HTTP 200 + result.authError.
-                value: { "input": { "authorizationToken": "", "authorizationType": "", "requestHeaders": {}, "resources": [{ "resourceType": "ORDER", "operation": "READ" }], "subject": "" } }
-      responses:
-        '200':
-          description: |
-            Decision returned. Admission or subject authentication failure is
-            also conveyed here as HTTP 200 with `result.authError`
-            (authz-agent-ADR-0062 Decision 11), never as a 4xx status.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthorizeResponseEnvelope'
-              examples:
-                rls_deny_short_circuit:
-                  summary: OLS DENY short-circuit, no roles.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "READ", "isAllowed": false, "reason": "No user roles associated with resource and operation" }] } }
-                multi_resource:
-                  summary: Per-resource decisions returned in input order.
-                  value: { "result": { "rlsIgnored": true, "results": [{ "resourceType": "Customer", "operation": "READ", "isAllowed": true }, { "resourceType": "Invoice", "operation": "READ", "isAllowed": false, "reason": "No user roles associated with resource and operation" }] } }
-                rls_default_allow:
-                  summary: RLS-by-default ALLOW with ownership predicate.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "READ", "isAllowed": true, "predicates": [{ "predicate": "ownerId==user-1", "predicateType": "rsql" }] }] } }
-                allow_with_predicate:
-                  summary: RLS ALLOW carrying an ownership predicate.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "UPDATE", "isAllowed": true, "predicates": [{ "predicate": "ownerId==user-1", "predicateType": "rsql" }] }] } }
-                ols_allow_rls_deny:
-                  summary: OLS ALLOW overturned by an RLS/ABAC DENY.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "resourceType": "Customer", "operation": "UPDATE", "isAllowed": false, "reason": "ABAC validations failed for roles { ROLE_EDITOR }" }] } }
-                pip_substitution:
-                  summary: GENERAL PIP value substituted into an RSQL predicate.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "isAllowed": true, "operation": "READ", "predicates": [{ "predicate": "customerId=in=(\"C1\", \"C2\", \"C3\")", "predicateType": "rsql" }], "resourceType": "CUSTOMER" }] } }
-                token_bound_alias:
-                  summary: TOKEN PIP claim substituted into an RSQL predicate.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "isAllowed": true, "operation": "READ", "predicates": [{ "predicate": "ownerEmail==\"admin@example.com\"", "predicateType": "rsql" }], "resourceType": "TOKEN_PIP_POSITIVE" }] } }
-                wildcard:
-                  summary: Wildcard ALLOW with no predicates.
-                  value: { "result": { "rlsIgnored": false, "results": [{ "isAllowed": true, "operation": "DELETE", "resourceType": "UNKNOWN_TYPE" }] } }
-                admission_failure:
-                  summary: In-band admission failure — HTTP 200 + result.authError (status 401).
-                  value: { "result": { "authError": { "message": "Authorization token is missing", "reason": "Authorization token is missing", "status": 401 } } }
   /access/v1/check/resource:
     post:
       operationId: access_v1_check_resource
@@ -775,8 +681,7 @@ components:
       description: |
         Legacy subject-token relay (ADR-0049). On legacy routes this
         header carries the end-user JWT and takes precedence over
-        `Authorization` for policy evaluation. Tolerated but ignored on
-        `/access/v1/authorize`.
+        `Authorization` for policy evaluation.
       schema:
         type: string
     AuthorizationTypeHeader:
@@ -804,199 +709,10 @@ components:
       schema:
         type: string
   schemas:
-    AuthorizeRequestEnvelope:
-      type: object
-      additionalProperties: false
-      required: [input]
-      description: |
-        OPA Data API envelope wrapping the canonical authorize request.
-        The canonical client posts this envelope verbatim and the agent
-        accepts the same bytes at `/access/v1/authorize` on both of its
-        ports per authz-agent-ADR-0062.
-      properties:
-        input:
-          $ref: '#/components/schemas/AuthorizeRequest'
-    AuthorizeRequest:
-      type: object
-      additionalProperties: false
-      required:
-        - authorizationToken
-        - authorizationType
-        - requestHeaders
-        - resources
-        - subject
-      properties:
-        authorizationToken:
-          type: string
-          description: |
-            `Bearer <jwt>` admission token. Promoted into the canonical
-            wire-shape by authz-agent-ADR-0062 — replaces the inbound
-            `Authorization` HTTP header that the Envoy Lua filter used to
-            inject on the previous canonical wire. May be the empty
-            string when the caller has no admission token; the admission
-            gate then short-circuits as today.
-        authorizationType:
-          type: string
-          description: |
-            Selects the admission flow. The literal value `anonymous`
-            engages anonymous-mode subject identity (identity.rego); any
-            other value (including the empty string default) selects the
-            standard subject-token flow.
-        requestHeaders:
-          $ref: '#/components/schemas/RequestHeaders'
-        resources:
-          type: array
-          items:
-            $ref: '#/components/schemas/ResourceInput'
-        subject:
-          type: string
-          description: |
-            `Bearer <jwt>` of the end-user subject (or empty string for
-            the anonymous flow). Carries the same Bearer string as
-            `authorizationToken` in the standard flow — the runtime
-            short-circuits the second token validation when
-            `subject == authorizationToken`.
-        ignoreRls:
-          type: boolean
-          description: |
-            Opt-out switch for record-level security evaluation. When
-            `true`, the agent runs OLS only and skips RLS. When omitted,
-            RLS is evaluated (the safe-by-default behaviour preserved
-            from authz-agent-ADR-0015 under the new naming established in
-            authz-agent-ADR-0059).
-    RequestHeaders:
-      type: object
-      additionalProperties:
-        type: string
-      description: |
-        Lowercased non-secret HTTP request headers forwarded as the
-        inbound HEADER PIP source (pip.rego). The map MUST NOT carry the
-        inbound `Authorization` or `Incoming-Token` header values, even
-        empty, per the authz-agent-ADR-0049 token-isolation guard — the
-        SDK-side skip-list is the canonical enforcement point.
-    ResourceInput:
-      type: object
-      additionalProperties: false
-      required: [resourceType, operation]
-      properties:
-        resourceType:
-          type: string
-        operation:
-          type: string
-        resource:
-          $ref: '#/components/schemas/ResourceAttributes'
     ResourceAttributes:
       type: object
       additionalProperties: true
       description: Open attribute bag exercised by per-resource policy conditions.
-    AuthorizeResponseEnvelope:
-      type: object
-      additionalProperties: false
-      required: [result]
-      description: |
-        OPA Data API envelope wrapping the canonical authorize response.
-        The agent emits this envelope verbatim at `/access/v1/authorize` on
-        both of its ports per authz-agent-ADR-0062. SDK clients deserialize this wrapper, then
-        unwrap `result` to obtain the `AuthorizeResponse` shape.
-
-        OPA always injects a top-level `decision_id` alongside `result`
-        (UUID per evaluation, surfaced in decision logs). Optional metric
-        / provenance fields are not enabled in this build.
-      properties:
-        result:
-          $ref: '#/components/schemas/AuthorizeResponse'
-        decision_id:
-          type: string
-          description: |
-            OPA-injected per-evaluation decision identifier. Always present.
-            Surfaced unchanged from OPA's Data API response envelope.
-    AuthorizeResponse:
-      type: object
-      additionalProperties: false
-      description: |
-        Canonical authorize payload, polymorphic by branch.
-
-        On the success branch the object carries `rlsIgnored` and
-        `results`. PIP resolution context is no longer surfaced on the
-        response — it is captured only in the decision log via OPA-native
-        `nd_builtin_cache` (authz-agent-ADR-0063).
-        On the admission-failure branch the object carries only
-        `authError` — OPA never converts authentication failures into
-        an HTTP 401 because the canonical surface is the OPA Data API
-        envelope verbatim on both of the agent's ports
-        (authz-agent-ADR-0062).
-        Callers must inspect `authError` before treating the response
-        as a decision.
-      properties:
-        rlsIgnored:
-          type: boolean
-          description: |
-            Server-side state assertion: `true` iff the request carried
-            `ignoreRls=true` and the agent therefore evaluated OLS only.
-            Replaces the previous `rlsRequested` echo per
-            authz-agent-ADR-0059.
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/AuthorizeResult'
-        authError:
-          $ref: '#/components/schemas/AuthorizeAuthError'
-        requestId:
-          type: string
-          description: |
-            Correlation id echoed for this evaluation (authz-agent-ADR-0069).
-            OPA owns it: the inbound `x-request-id` when the request carried
-            one, else a generated `uuid.rfc4122` that is stable across every
-            PIP / entitlements call in the decision. Present on every branch
-            (success and admission-failure) so any decision is correlatable.
-    AuthorizeAuthError:
-      type: object
-      additionalProperties: false
-      required: [status, message, reason]
-      description: |
-        Embedded auth-failure marker. Present only when the canonical
-        authorize call could not be evaluated as a decision — e.g.
-        missing admission token, expired subject token, malformed
-        Bearer prefix. The wire HTTP status is 200 regardless
-        (authz-agent-ADR-0062); the embedded `status` carries the
-        semantic code the caller should surface to its own consumers.
-      properties:
-        status:
-          type: integer
-          description: Semantic HTTP-style status code (e.g. 401).
-        message:
-          type: string
-        reason:
-          type: string
-    AuthorizeResult:
-      type: object
-      additionalProperties: false
-      required: [isAllowed, resourceType, operation]
-      properties:
-        isAllowed:
-          type: boolean
-          description: Allow/deny outcome for this result item; true = allow, false = deny.
-        resourceType:
-          type: string
-        operation:
-          type: string
-        reason:
-          type: string
-          description: Present on isAllowed:false results; explains why authorization failed.
-        predicates:
-          type: array
-          items:
-            $ref: '#/components/schemas/AuthorizePredicate'
-    AuthorizePredicate:
-      type: object
-      additionalProperties: false
-      required: [predicateType, predicate]
-      properties:
-        predicateType:
-          type: string
-          example: rsql
-        predicate:
-          type: string
     CheckResourceRequest:
       type: object
       additionalProperties: false

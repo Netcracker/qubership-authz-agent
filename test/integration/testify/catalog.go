@@ -42,21 +42,6 @@ var Catalog = []StepEntry{
 	{"setup.pip_upload", "n/a", "PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}", "-", "-", "none"},
 	{"setup.wait_for_agent", "admin", "POST /access/v1/check/resource", "-", "-", "ROLE_ADMINISTRATOR"},
 
-	// ── authorize ────────────────────────────────────────────────────────
-	{"authorize.order_read.rls_true.deny", "order-reader", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"authorize.order_read.response_structure", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"authorize.public_doc_read.rls_default.allow", "admin", "POST /access/v1/authorize", "PUBLIC_DOC", "READ", "ROLE_ADMINISTRATOR"},
-	{"authorize.multi_resource.order_preserved", "order-reader", "POST /access/v1/authorize", "ORDER,ATTACHMENT", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"authorize.no_token.401", "n/a", "POST /access/v1/authorize", "ORDER", "READ", "none"},
-	{"authorize.expired_token.401", "order-reader", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER (expired)"},
-	{"authorize.invalid_token.401", "n/a", "POST /access/v1/authorize", "ORDER", "READ", "none (invalid)"},
-	{"authorize.naked_authorization_token.401", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"authorize.naked_subject_token.deny", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"authorize.missing_subject.401", "n/a", "POST /access/v1/authorize", "ORDER", "READ", "none"},
-	{"authorize.empty_body.401", "n/a", "POST /access/v1/authorize", "-", "-", "none"},
-	{"authorize.predicate_subject_attr_substituted", "admin", "POST /access/v1/authorize", "PUBLIC_DOC", "READ", "ROLE_ADMINISTRATOR"},
-	{"authorize.predicate_pip_value_substituted", "admin", "POST /access/v1/authorize", "CUSTOMER", "READ", "ROLE_ADMINISTRATOR"},
-
 	// ── check_resource ───────────────────────────────────────────────────
 	{"check_resource.order_read.rls_deny", "order-reader", "POST /access/v1/check/resource", "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_resource.incoming_token_used_for_subject", "order-reader", "POST /access/v1/check/resource", "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
@@ -71,6 +56,10 @@ var Catalog = []StepEntry{
 	{"check_resource.incoming_token_precedence_over_authorization", "admin+order-reader", "POST /access/v1/check/resource", "BULK_OPEN", "READ", "ROLE_ADMINISTRATOR (Authorization) / ROLE_ORDER_MANAGEMENT_RO_USER (Incoming-Token)"},
 	{"check_resource.anonymous_subject_marker", "admin", "POST /access/v1/check/resource", "BULK_OPEN", "READ", "ROLE_ADMINISTRATOR (M2M) / anonymous (subject)"},
 	{"check_resource.incoming_token_stripped_from_header_pip", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
+	{"check_resource.invalid_authorization.401", "n/a", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "none (invalid)"},
+	{"check_resource.authorization_without_bearer.401", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
+	{"check_resource.incoming_token_without_bearer.deny", "admin", "POST /access/v1/check/resource", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+	{"check_resource.pip_value_substituted", "admin", "POST /access/v1/check/resource", "CUSTOMER", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── check_resource_bulk ──────────────────────────────────────────────
 	{"check_resource_bulk.owner_mismatch.denied", "order-reader", "POST /access/v1/check/resource/bulk", "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
@@ -96,6 +85,7 @@ var Catalog = []StepEntry{
 	{"check_filter.no_token.401", "n/a", "POST /access/v1/check/filter", "ORDER", "READ", "none"},
 	{"check_filter.missing_resource_type.400", "admin", "POST /access/v1/check/filter", "-", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.wrong_address.404", "admin", "POST /access/v1/check/filte", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+	{"check_filter.predicate_subject_attr_substituted", "admin", "POST /access/v1/check/filter", "PUBLIC_DOC", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── pip_general ─────────────────────────────────────────────────────
 	{"pip_general.stub_reset", "n/a", "POST (pip-stub reset)", "-", "-", "none"},
@@ -120,18 +110,17 @@ var Catalog = []StepEntry{
 	{"pip_jsonpath.restore_default_stub", "n/a", "PUT (pip-stub configure)", "-", "-", "none"},
 
 	// ── rls_aggregation ──────────────────────────────────────────────────
-	{"authorize.multi_frag.rls_or_aggregation", "admin", "POST /access/v1/authorize", "MULTI_FRAG_ITEM", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.multi_frag.rsql_or_aggregation", "admin", "POST /access/v1/check/filter", "MULTI_FRAG_ITEM", "READ", "ROLE_ADMINISTRATOR"},
 
-	// ── token_pip_authorize (ADR-0046) ─────────────────────────────────
-	{"token_pip_authorize.upload_token_pips", "n/a", "PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}", "TOKEN_PIP_POSITIVE,TOKEN_PIP_DEFAULT", "READ", "none"},
-	{"token_pip_authorize.positive_alias_in_predicate", "admin", "POST /access/v1/authorize", "TOKEN_PIP_POSITIVE", "READ", "ROLE_ADMINISTRATOR"},
-	{"token_pip_authorize.default_value_fallback", "admin", "POST /access/v1/authorize", "TOKEN_PIP_DEFAULT", "READ", "ROLE_ADMINISTRATOR"},
+	// ── token_pip_filter (ADR-0046) ─────────────────────────────────
+	{"token_pip_filter.upload_token_pips", "n/a", "PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}", "TOKEN_PIP_POSITIVE,TOKEN_PIP_DEFAULT", "READ", "none"},
+	{"token_pip_filter.positive_alias_in_filter", "admin", "POST /access/v1/check/filter", "TOKEN_PIP_POSITIVE", "READ", "ROLE_ADMINISTRATOR"},
+	{"token_pip_filter.default_value_fallback", "admin", "POST /access/v1/check/filter", "TOKEN_PIP_DEFAULT", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── pip_deny_reason ─────────────────────────────────────────────────
 	{"pip_deny.upload_broken_pip", "n/a", "PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}", "PIP_FAIL_TEST", "READ", "none"},
-	{"pip_deny.pip_failure_deny_reason", "admin", "POST /access/v1/authorize", "PIP_FAIL_TEST", "READ", "ROLE_ADMINISTRATOR"},
-	{"pip_deny.missing_attr_deny_reason", "admin", "POST /access/v1/authorize", "ATTR_MISS_TEST", "READ", "ROLE_ADMINISTRATOR"},
+	{"pip_deny.pip_failure_deny_reason", "admin", "POST /access/v1/check/resource", "PIP_FAIL_TEST", "READ", "ROLE_ADMINISTRATOR"},
+	{"pip_deny.missing_attr_deny_reason", "admin", "POST /access/v1/check/resource", "ATTR_MISS_TEST", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── health ───────────────────────────────────────────────────────────
 	{"health.healthy_strict", "n/a", "GET /health", "-", "-", "none"},
@@ -155,27 +144,16 @@ var Catalog = []StepEntry{
 	{"entitlements.is_empty.allow_when_empty", "admin", "POST /access/v1/check/resource", "ENT_EMPTY", "READ", "ROLE_ADMINISTRATOR"},
 	{"entitlements.multi_as_union.allow", "admin", "POST /access/v1/check/resource", "ENT_MULTI", "READ", "ROLE_ADMINISTRATOR"},
 	{"decision_logs.catalog_coverage", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
-	{"decision_logs.canonical_path_header", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"decision_logs.legacy_path_header", "admin", "POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-
-	// ── opa_request_parity (ADR-0032) ───────────────────────────────────
-	{"parity.single_resource", "admin", "POST /access/v1/authorize + POST /access/v1/check/resource", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"parity.bulk", "admin", "POST /access/v1/authorize + POST /access/v1/check/resource/bulk", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"parity.filter", "admin", "POST /access/v1/authorize + POST /access/v1/check/filter", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"parity.response_envelope_shape", "admin", "POST /access/v1/authorize", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"parity.original_path_no_effect", "admin", "POST /access/v1/authorize (x2)", "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
-	{"authorize.envoy_opa_direct.bytewise_response_parity", "admin", "POST /access/v1/authorize (Envoy + OPA-direct)", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── wildcard_access (ADR-0040) ──────────────────────────────────────
 	{"wildcard_access.upload_wildcard_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
-	{"wildcard_access.all_all.admin_allow_any", "admin", "POST /access/v1/authorize", "UNKNOWN_TYPE", "DELETE", "ROLE_ADMINISTRATOR"},
-	{"wildcard_access.all_all.no_predicates", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"wildcard_access.all_all.no_deny_reason", "admin", "POST /access/v1/authorize", "WC_EXACT_ONLY", "READ", "ROLE_ADMINISTRATOR"},
-	{"wildcard_access.all_op.reader_read_any_rt", "order-reader", "POST /access/v1/authorize", "UNKNOWN_TYPE", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"wildcard_access.all_op.reader_delete_denied", "order-reader", "POST /access/v1/authorize", "UNKNOWN_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"wildcard_access.rt_all.reader_any_op", "order-reader", "POST /access/v1/authorize", "WC_RT_TARGET", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"wildcard_access.rt_all.reader_other_rt_denied", "order-reader", "POST /access/v1/authorize", "OTHER_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"wildcard_access.mixed.partial_wildcard", "order-reader", "POST /access/v1/authorize", "WC_RT_TARGET,INVOICE", "DELETE,READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"wildcard_access.all_all.no_predicates", "admin", "POST /access/v1/check/filter", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+	{"wildcard_access.all_all.no_deny_reason", "admin", "POST /access/v1/check/resource", "WC_EXACT_ONLY", "READ", "ROLE_ADMINISTRATOR"},
+	{"wildcard_access.all_op.reader_delete_denied", "order-reader", "POST /access/v1/check/resource", "UNKNOWN_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"wildcard_access.rt_all.reader_any_op", "order-reader", "POST /access/v1/check/filter", "WC_RT_TARGET", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"wildcard_access.rt_all.reader_other_rt_denied", "order-reader", "POST /access/v1/check/resource", "OTHER_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"wildcard_access.mixed.partial_wildcard", "order-reader", "POST /access/v1/check/resource/bulk", "WC_RT_TARGET,INVOICE", "DELETE,READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.legacy.check_resource_all_all", "admin", "POST /access/v1/check/resource", "UNKNOWN_TYPE", "DELETE", "ROLE_ADMINISTRATOR"},
 	{"wildcard_access.legacy.check_resource_bulk_all_all", "admin", "POST /access/v1/check/resource/bulk", "UNKNOWN_TYPE", "DELETE", "ROLE_ADMINISTRATOR"},
 	{"wildcard_access.legacy.check_filter_all_op", "order-reader", "POST /access/v1/check/filter", "UNKNOWN_TYPE", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
@@ -191,11 +169,11 @@ var Catalog = []StepEntry{
 
 	// ── lockdown ────────────────────────────────────────────────────────
 	// The store and the M2M token in it stay out of reach over HTTP: no
-	// route reads or writes a document, and ?explain=full on the canonical
-	// route gets the plain decision.
+	// route reads or writes a document, and ?explain=full on a check route
+	// gets the plain decision.
 	{"lockdown.m2m_read_absent.404", "n/a", "GET /v1/data/m2m (internal port)", "-", "-", "none"},
 	{"lockdown.store_write_absent.404", "n/a", "PUT /v1/data/lockdown-probe (internal port)", "-", "-", "none"},
-	{"lockdown.authorize_explain_ignored.200", "admin", "POST /access/v1/authorize (plain and with ?explain=full)", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+	{"lockdown.check_explain_ignored.200", "admin", "POST /access/v1/check/resource (plain and with ?explain=full)", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 
 	// Verifies that the disk files written by pap-client have the correct
 	// OPA data-dir layout for restart recovery in ConfigMap-mount mode.
@@ -207,6 +185,7 @@ var Catalog = []StepEntry{
 
 	// ── route_security ───────────────────────────────────────────────────
 	{"route_security.authorize_hidden.404", "admin", "POST /authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+	{"route_security.access_authorize_absent.404", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"route_security.unknown_path.404", "n/a", "GET /unknown/endpoint", "-", "-", "none"},
 	{"route_security.v2_check_resource.implemented", "admin", "POST /access/v2/check/resource", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"route_security.v1_bulk_operations.implemented", "admin", "POST /access/v1/check/resource/bulk/operations", "ORDER", "READ", "ROLE_ADMINISTRATOR"},

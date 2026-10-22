@@ -47,9 +47,7 @@ type RuntimeConfig struct {
 	// there. The agent reaches the same stub through AUTHZ_ENTITLEMENTS_URL.
 	EntitlementsMockURL string
 	// OPADirectURL is the address of the agent's internal port, which serves
-	// the canonical POST /access/v1/authorize beside the probes. The parity
-	// step compares its answer with the public port's, and the lockdown steps
-	// check that it serves no store document.
+	// the probes. The lockdown steps check that it serves no store document.
 	OPADirectURL string
 	// ACStubURL is the URL of the authz-policy-admin that serves the
 	// access-control v3 config API to the PolicyPuller. The pap-client pull

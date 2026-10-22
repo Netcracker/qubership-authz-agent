@@ -53,18 +53,6 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 		}
 	})
 
-	// Make a canonical authorize request to seed a decision log entry with a known request ID.
-	s.Step("decision_logs.canonical_path_header", func() {
-		token := "Bearer " + s.validAdminToken
-		code, _ := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "ORDER", "operation": "READ"},
-			},
-			"ignoreRls": true,
-		})
-		s.Require().Equal(200, code)
-	})
-
 	// Make a legacy check/resource request to seed a decision log entry with a known request ID.
 	s.Step("decision_logs.legacy_path_header", func() {
 		h := incomingTokenHeader(s.validAdminToken)
@@ -84,7 +72,6 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 		// of breaking on the first non-empty batch (R11).
 		requiredRequestIDs := []string{
 			"setup.wait_for_agent",
-			"authorize.order_read.rls_true.deny",
 			"check_resource.order_read.rls_deny",
 			"check_resource_bulk.owner_mismatch.denied",
 			"check_filter.calculation_result_present",
@@ -123,9 +110,6 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 				requestIDs := decisionLogHeaderValues(obj, "x-request-id")
 				s.Require().NotEmpty(requestIDs, "authorize decision log line %d must include x-request-id", i+1)
 				for _, requestID := range requestIDs {
-					if isParityTestRequestID(requestID) {
-						continue
-					}
 					_, knownStep := CatalogByName[requestID]
 					s.Require().True(knownStep, "authorize decision log line %d contains unknown x-request-id %q", i+1, requestID)
 					seenRequestIDs[requestID] = true
@@ -152,21 +136,6 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 		s.Require().Greater(authorizeEvents, 0, "expected at least one authorize decision log event")
 		for _, requestID := range requiredRequestIDs {
 			s.Assert().True(seenRequestIDs[requestID], "expected authorize decision logs to include x-request-id %q", requestID)
-		}
-
-		// Canonical route is routing-only (ADR-0062 audit row 6 = D): the
-		// public surface hands the body to the decision with zero header or
-		// body mutation, so x-authz-original-path is NOT injected. The
-		// internal port's canonical route does not carry it either, and
-		// asserting its absence locks in cross-transport parity.
-		if canonicalLog, ok := logsByRequestID["decision_logs.canonical_path_header"]; ok {
-			originalPath := decisionLogSingleHeaderValue(canonicalLog, "x-authz-original-path")
-			s.Assert().Equal("", originalPath,
-				"canonical route is routing-only: x-authz-original-path must be absent, got %q", originalPath)
-
-			// Canonical result must have rlsIgnored + results shape.
-			s.Assert().True(decisionLogResultIsCanonical(canonicalLog),
-				"canonical authorize decision log must have canonical result shape (rlsIgnored + results)")
 		}
 
 		// Assert x-authz-original-path for legacy route (/access/v1/check/resource).
@@ -221,9 +190,6 @@ func (s *RuntimeSuite) TestZZDecisionLogsCatalogCoverage() {
 						"authorize decision log line %d must include x-request-id", i+1)
 
 					for _, requestID := range requestIDs {
-						if isParityTestRequestID(requestID) {
-							continue
-						}
 						_, knownStep := CatalogByName[requestID]
 						s.Require().True(knownStep,
 							"authorize decision log line %d contains unknown x-request-id %q", i+1, requestID)
@@ -235,16 +201,6 @@ func (s *RuntimeSuite) TestZZDecisionLogsCatalogCoverage() {
 
 			missing = missingExpectedDecisionLogSteps(expected, seen)
 			if len(missing) == 0 {
-				// Canonical route is routing-only: x-authz-original-path must be
-				// absent (audit row 6 = D). The canonical result shape is the
-				// surviving route discriminator in the decision log.
-				canonicalLog, ok := logsByRequestID["decision_logs.canonical_path_header"]
-				s.Require().True(ok, "missing decision log for decision_logs.canonical_path_header")
-				s.Assert().Equal("", decisionLogSingleHeaderValue(canonicalLog, "x-authz-original-path"),
-					"canonical route is routing-only: x-authz-original-path must be absent")
-				s.Assert().True(decisionLogResultIsCanonical(canonicalLog),
-					"canonical route decision log must keep canonical result shape")
-
 				// Legacy path header must be preserved and result must stay canonical in OPA logs.
 				legacyLog, ok := logsByRequestID["decision_logs.legacy_path_header"]
 				s.Require().True(ok, "missing decision log for decision_logs.legacy_path_header")
@@ -430,8 +386,7 @@ func catalogStepShouldReachOPA(entry StepEntry) bool {
 		return false
 	}
 
-	return path == "/access/v1/authorize" ||
-		path == "/access/v1/check/resource" ||
+	return path == "/access/v1/check/resource" ||
 		path == "/access/v1/check/resource/bulk" ||
 		path == "/access/v1/check/resource/bulk/operations" ||
 		path == "/preview/v1/check/resource/bulk/operations" ||
@@ -452,21 +407,82 @@ func catalogStepRejectedBeforeOPA(stepName string) bool {
 		"check_filter.missing_resource_type.400":
 		return true
 	default:
-		// Parity steps tag each request of a pair with its own X-Request-Id
-		// (not the step name) to tell the two decision-log events apart, so
-		// they never appear under their catalog step name.
-		if strings.HasPrefix(stepName, "parity.") {
-			return true
-		}
 		return false
 	}
 }
 
-// isParityTestRequestID returns true for the X-Request-Id values the parity
-// steps use to tell a pair of decision-log events apart. These are not
-// catalog step names.
-func isParityTestRequestID(requestID string) bool {
-	return strings.HasPrefix(requestID, "parity-")
+// stepDecisionLogEvents downloads the decision log and returns the events of
+// the current step's requests, found by the step name each request carried as
+// X-Request-Id, oldest first.
+func (s *RuntimeSuite) stepDecisionLogEvents() []map[string]any {
+	s.T().Helper()
+	requestID := s.currentRequestID()
+	status, body := s.get("/internal/v1/decision-logs", nil)
+	s.Require().Equal(200, status, "decision-log download must succeed; body: %s", string(body))
+	var events []map[string]any
+	for _, line := range strings.Split(strings.TrimSpace(string(body)), "\n") {
+		var event map[string]any
+		if json.Unmarshal([]byte(line), &event) != nil {
+			continue
+		}
+		for _, id := range decisionLogHeaderValues(event, "x-request-id") {
+			if id == requestID {
+				events = append(events, event)
+			}
+		}
+	}
+	return events
+}
+
+// decisionLogMark returns how many events the decision log holds for the
+// current step before its request, so that loggedDecision returns the event
+// of that request even when the suite runs again against the same install.
+func (s *RuntimeSuite) decisionLogMark() int {
+	s.T().Helper()
+	return len(s.stepDecisionLogEvents())
+}
+
+// loggedDecision waits up to 40 seconds for the first decision-log event of
+// the current step after mark, and returns the decision it recorded. No
+// check-route answer carries the reason a resource was denied or the
+// predicates it was given, so a test reads them here.
+func (s *RuntimeSuite) loggedDecision(mark int) map[string]interface{} {
+	s.T().Helper()
+	deadline := time.Now().Add(40 * time.Second)
+	for {
+		if events := s.stepDecisionLogEvents(); len(events) > mark {
+			decision, _ := events[mark]["result"].(map[string]interface{})
+			s.Require().NotNil(decision, "the decision-log event of %s carries no decision", s.currentRequestID())
+			return decision
+		}
+		s.Require().True(time.Now().Before(deadline), "no new decision-log event for %s within 40s", s.currentRequestID())
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+// loggedPredicate returns the text of the predicate of predicateType in a
+// logged result, or "" when the result has none.
+func loggedPredicate(result map[string]interface{}, predicateType string) string {
+	predicates, _ := result["predicates"].([]interface{})
+	for _, p := range predicates {
+		entry, _ := p.(map[string]interface{})
+		if entry["predicateType"] == predicateType {
+			text, _ := entry["predicate"].(string)
+			return text
+		}
+	}
+	return ""
+}
+
+// firstLoggedResult returns the result of the first resource of a logged
+// decision, or an empty map when the decision has none.
+func firstLoggedResult(decision map[string]interface{}) map[string]interface{} {
+	results, _ := decision["results"].([]interface{})
+	if len(results) == 0 {
+		return map[string]interface{}{}
+	}
+	first, _ := results[0].(map[string]interface{})
+	return first
 }
 
 func missingExpectedDecisionLogSteps(expected []string, seen map[string]bool) []string {

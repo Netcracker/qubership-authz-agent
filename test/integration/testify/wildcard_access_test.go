@@ -30,150 +30,74 @@ func (s *RuntimeSuite) TestWildcardAccess() {
 	})
 
 	// ── ALL/ALL: admin allows any resource/operation ────────────────────
-
-	s.Step("wildcard_access.all_all.admin_allow_any", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "UNKNOWN_TYPE", "operation": "DELETE"},
-			},
-			"ignoreRls": false,
-		})
-		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-	})
+	// wildcard_access.legacy.check_resource_all_all covers an unknown type.
 
 	s.Step("wildcard_access.all_all.no_predicates", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "ORDER", "operation": "READ"},
-			},
-			"ignoreRls": false,
-		})
+		h := incomingTokenHeader(s.validAdminToken)
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/filter?resourceType=ORDER&operation=READ", h, map[string]interface{}{})
 		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-		_, hasPreds := r0["predicates"]
+		s.Assert().Equal("ALLOW", jsonObj(b)["calculationResult"],
+			"wildcard short-circuit must allow without a filter condition")
+		_, hasPreds := firstLoggedResult(s.loggedDecision(mark))["predicates"]
 		s.Assert().False(hasPreds, "wildcard short-circuit must not produce predicates")
 	})
 
 	s.Step("wildcard_access.all_all.no_deny_reason", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "WC_EXACT_ONLY", "operation": "READ"},
-			},
-			"ignoreRls": false,
-		})
+		h := incomingTokenHeader(s.validAdminToken)
+		body := map[string]interface{}{"type": "WC_EXACT_ONLY", "operation": "READ", "resource": map[string]interface{}{}}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-		_, hasReason := r0["reason"]
+		s.Assert().Equal("true", bodyStr(b))
+		_, hasReason := firstLoggedResult(s.loggedDecision(mark))["reason"]
 		s.Assert().False(hasReason, "wildcard short-circuit must not produce reason")
 	})
 
 	// ── ALL/<operation>: order-reader READ on any resourceType ──────────
-
-	s.Step("wildcard_access.all_op.reader_read_any_rt", func() {
-		token := "Bearer " + s.validOrderReaderToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "UNKNOWN_TYPE", "operation": "READ"},
-			},
-			"ignoreRls": false,
-		})
-		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-		_, hasPreds := r0["predicates"]
-		s.Assert().False(hasPreds, "wildcard operation short-circuit must not produce predicates")
-	})
+	// wildcard_access.legacy.check_filter_all_op covers the allowed READ.
 
 	s.Step("wildcard_access.all_op.reader_delete_denied", func() {
-		token := "Bearer " + s.validOrderReaderToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "UNKNOWN_TYPE", "operation": "DELETE"},
-			},
-			"ignoreRls": true,
-		})
+		h := incomingTokenHeader(s.validOrderReaderToken)
+		body := map[string]interface{}{"type": "UNKNOWN_TYPE", "operation": "DELETE", "resource": map[string]interface{}{}}
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(false, r0["isAllowed"],
+		s.Assert().Equal("false", bodyStr(b),
 			"order-reader has ALL/READ wildcard but not ALL/DELETE")
 	})
 
 	// ── <resourceType>/ALL: order-reader any op on WC_RT_TARGET ────────
 
 	s.Step("wildcard_access.rt_all.reader_any_op", func() {
-		token := "Bearer " + s.validOrderReaderToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "WC_RT_TARGET", "operation": "DELETE"},
-			},
-			"ignoreRls": false,
-		})
+		h := incomingTokenHeader(s.validOrderReaderToken)
+		code, b := s.post("/access/v1/check/filter?resourceType=WC_RT_TARGET&operation=DELETE", h, map[string]interface{}{})
 		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-		_, hasPreds := r0["predicates"]
-		s.Assert().False(hasPreds, "wildcard resourceType short-circuit must not produce predicates")
+		s.Assert().Equal("ALLOW", jsonObj(b)["calculationResult"],
+			"wildcard resourceType short-circuit must allow without a filter condition")
 	})
 
 	s.Step("wildcard_access.rt_all.reader_other_rt_denied", func() {
-		token := "Bearer " + s.validOrderReaderToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "OTHER_TYPE", "operation": "DELETE"},
-			},
-			"ignoreRls": true,
-		})
+		h := incomingTokenHeader(s.validOrderReaderToken)
+		body := map[string]interface{}{"type": "OTHER_TYPE", "operation": "DELETE", "resource": map[string]interface{}{}}
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(false, r0["isAllowed"],
+		s.Assert().Equal("false", bodyStr(b),
 			"order-reader has WC_RT_TARGET/ALL but not OTHER_TYPE/ALL")
 	})
 
 	// ── Mixed: wildcard-matched + unmatched in same request ─────────────
 
 	s.Step("wildcard_access.mixed.partial_wildcard", func() {
-		token := "Bearer " + s.validOrderReaderToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "WC_RT_TARGET", "operation": "DELETE"},
-				{"resourceType": "INVOICE", "operation": "READ"},
-			},
-			"ignoreRls": true,
-		})
+		h := incomingTokenHeader(s.validOrderReaderToken)
+		body := []map[string]interface{}{
+			{"id": "wc-rt", "type": "WC_RT_TARGET", "operation": "DELETE", "resource": map[string]interface{}{}},
+			{"id": "wc-op", "type": "INVOICE", "operation": "READ", "resource": map[string]interface{}{}},
+		}
+		code, b := s.post("/access/v1/check/resource/bulk?tenant_id=default", h, body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		j := jsonObj(b)
-		results := j["results"].([]interface{})
-		s.Require().Len(results, 2)
-
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"],
-			"WC_RT_TARGET/DELETE should be allowed via resourceType wildcard")
-
-		r1 := results[1].(map[string]interface{})
-		// INVOICE/READ matches ALL/READ wildcard for order-reader
-		s.Assert().Equal(true, r1["isAllowed"],
-			"INVOICE/READ should be allowed via operation wildcard (ALL/READ)")
+		ids := jsonStrArr(b)
+		s.Assert().Contains(ids, "wc-rt", "WC_RT_TARGET/DELETE should be allowed via resourceType wildcard")
+		s.Assert().Contains(ids, "wc-op", "INVOICE/READ should be allowed via operation wildcard (ALL/READ)")
 	})
 
 	// ── Legacy endpoints with wildcard-access ───────────────────────────

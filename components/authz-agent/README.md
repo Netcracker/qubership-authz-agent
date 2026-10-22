@@ -23,12 +23,12 @@ in ADR 0080 under `docs/decisions`.
   before it expires, or read from a file another party keeps current. It is sent to the policy source and published
   as `data.m2m.bearerToken` for the PIP calls.
 - `internal/legacy`: the check routes of the legacy access-control API. Each route's body and headers become the
-  canonical authorize input, and the decision becomes the response shape of that route.
-- `internal/server`: the routes, on two listeners. The public surface carries the nine check routes, the canonical
-  `POST /access/v1/authorize`, `GET /api-version`, `/health`, `GET /internal/v1/decision-logs`, and
-  `404 {"message":"not found"}` for every other path. The internal surface carries `/health`, `/ready`,
-  `/api-version`, `/prometheus`, and `POST /access/v1/authorize`. No route reads or writes a store document: the
-  store is written in the process, from `AUTHZ_DATA_DIRS` at start and by the loops after.
+  input of the `authorize` decision, and the decision becomes the response shape of that route.
+- `internal/server`: the routes, on two listeners. The public surface carries the nine check routes,
+  `GET /api-version`, `/health`, `GET /internal/v1/decision-logs`, and `404 {"message":"not found"}` for every
+  other path. The internal surface carries `/health`, `/ready`, `/api-version`, and `/prometheus`. No route reads
+  or writes a store document: the store is written in the process, from `AUTHZ_DATA_DIRS` at start and by the
+  loops after.
 - `main.go` and `config.go`: configuration from the environment through configloader.
 
 The chart assembles the agent Pod as this one container.
@@ -39,7 +39,7 @@ The chart assembles the agent Pod as this one container.
 | --- | --- | --- |
 | `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
-| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, `/api-version`, and the canonical authorize route |
+| `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
 | `AUTHZ_ND_BUILTIN_CACHE` | `true` | Record the non-deterministic builtin calls of a decision, the PIP requests and their responses, into its decision-log event |
 | `AUTHZ_DATA_DIRS` | empty | Comma-separated directories whose JSON and YAML files seed the store at start |
 | `AUTHZ_DATA_IGNORE` | empty | Comma-separated file name patterns skipped in those directories, such as `..*` |

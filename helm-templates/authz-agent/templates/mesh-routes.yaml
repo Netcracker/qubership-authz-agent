@@ -62,18 +62,6 @@ spec:
                   prefix: /access/v1/check/filter
               - match:
                   prefix: /access/v2/check/filter
-              # The canonical authorize API, on the public listener like the
-              # check API, with a 30s timeout.
-              #
-              # A prefix, not an exact path: the control plane rejects
-              # `match.path` with CORE-MESH-CP-4001 "has empty prefix field",
-              # taking the WHOLE CR down with it, so one bad rule leaves none of
-              # this gateway's routes registered. A longer path such as
-              # `/access/v1/authorize/<x>` reaches the listener, which answers
-              # 404.
-              - match:
-                  prefix: /access/v1/authorize
-                timeout: 30000
 ---
 apiVersion: core.netcracker.com/v1
 kind: Mesh
@@ -140,12 +128,4 @@ spec:
               endpoint: 'http://{{ .Values.SERVICE_NAME }}:8080'
             rules:
               {{- include "authz-agent.meshCheckRules" . | nindent 14 }}
-              # The canonical authorize API, as on the internal gateway. It is
-              # unauthenticated at the HTTP layer: the answer is 200 and the
-              # decision itself carries the auth outcome, because no ext_authz
-              # sits in front. A caller with no token gets a decision object
-              # saying so, not a 401.
-              - match:
-                  prefix: /access/v1/authorize
-                timeout: 30000
 {{- end }}

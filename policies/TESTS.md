@@ -10,7 +10,7 @@ and with the current project docs in `docs/ai/`.
 ## Suite Inventory
 
 1. `authorize_contract_test.rego`
-   - Validates canonical `/access/v1/authorize` behavior against golden fixtures.
+   - Validates the `authorize` decision against golden fixtures.
    - Covers the canonical decision matrix:
      - omitted `ignoreRls` defaults to `false` (RLS evaluated);
      - explicit `ignoreRls=true` keeps OLS-only behavior;

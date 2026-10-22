@@ -18,16 +18,13 @@
 package server
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/topdown/builtins"
-	"github.com/open-policy-agent/opa/v1/util"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/decisionlog"
@@ -38,9 +35,6 @@ import (
 // LegacyAPIVersion is the body of GET /api-version: the specification
 // versions the legacy service announces, kept byte for byte.
 const LegacyAPIVersion = `{"specs":[{"specRootUrl":"/access","major":3,"minor":0,"supportedMajors":[1,2,3]},{"specRootUrl":"/api","major":1,"minor":1,"supportedMajors":[1]},{"specRootUrl":"/template","major":1,"minor":0,"supportedMajors":[1]},{"specRootUrl":"/preview","major":2,"minor":0,"supportedMajors":[1,2]}]}`
-
-// decodeErrorPrefix opens the message of a request body OPA could not decode.
-const decodeErrorPrefix = "error(s) occurred while decoding request: "
 
 // Logger receives what the request path has to report. Every method takes
 // the request's context, which carries the id the platform log format prints
@@ -103,7 +97,7 @@ type Server struct {
 }
 
 // Register adds the routes of the internal surface to app: /health,
-// /ready, /api-version, and the canonical POST /access/v1/authorize.
+// /ready, and /api-version.
 func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts Options) *Server {
 	if opts.Log == nil {
 		opts.Log = discardLogger{}
@@ -112,7 +106,6 @@ func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
-	app.Post("/access/v1/authorize", s.canonical)
 	return s
 }
 
@@ -214,31 +207,6 @@ func opaError(c *fiber.Ctx, status int, code, message string) error {
 	return c.Status(status).JSON(fiber.Map{"code": code, "message": message})
 }
 
-// decide evaluates the document at segments with the request body as input
-// and answers as OPA's data API does: {"result": ...}, or {} when the
-// document is undefined, plus a decision_id when decisions are logged.
-func (s *Server) decide(c *fiber.Ctx, segments []string) error {
-	var input any
-	if body := bytes.TrimSpace(c.Body()); len(body) > 0 {
-		var req struct {
-			Input json.RawMessage `json:"input"`
-		}
-		if err := json.Unmarshal(body, &req); err != nil {
-			return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
-		}
-		if len(req.Input) > 0 {
-			if err := util.UnmarshalJSON(req.Input, &input); err != nil {
-				return opaError(c, http.StatusBadRequest, "invalid_parameter", decodeErrorPrefix+err.Error())
-			}
-		}
-	}
-	result, defined, id, err := s.evaluate(c, segments, input)
-	if err != nil {
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	return c.JSON(envelope(result, defined, id))
-}
-
 // evaluate runs the decision at segments with input and, when decisions are
 // logged, records it under a fresh decision id; id is "" otherwise. defined
 // is false when the document is undefined.
@@ -250,8 +218,7 @@ func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result an
 	}
 	result, defined, err = s.engine.Eval(c.UserContext(), segments, input, ndbc)
 	if err != nil {
-		// Reported here rather than at the two callers: both answer 500 and
-		// the legacy one, which every check route reaches, reported nothing.
+		// Reported here because the caller answers 500 and reports nothing.
 		s.opts.Log.ErrorC(c.UserContext(), "decision failed path=%s: %v", strings.Join(segments, "/"), err)
 		return nil, false, "", err
 	}
@@ -264,18 +231,14 @@ func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result an
 	return result, defined, id, nil
 }
 
-// envelope is the body of a decision in the shape of OPA's data API: the
-// result when the decision is defined, and the decision id when it was
+// undefinedEnvelope is the body of an undefined decision in the shape of
+// OPA's data API: no result, and the decision id when the decision was
 // logged.
-func envelope(result any, defined bool, id string) fiber.Map {
-	resp := fiber.Map{}
-	if defined {
-		resp["result"] = result
+func undefinedEnvelope(id string) fiber.Map {
+	if id == "" {
+		return fiber.Map{}
 	}
-	if id != "" {
-		resp["decision_id"] = id
-	}
-	return resp
+	return fiber.Map{"decision_id": id}
 }
 
 func (s *Server) logDecision(c *fiber.Ctx, id string, segments []string, input, result any, ok bool, ndbc builtins.NDBCache) {

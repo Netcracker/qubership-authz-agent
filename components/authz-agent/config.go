@@ -30,7 +30,7 @@ import (
 // and so on.
 type config struct {
 	// Addr is the listen address of the internal surface: the probes, the
-	// metrics, /api-version, and the canonical authorize route.
+	// metrics, and /api-version.
 	Addr string
 	// PublicAddr is the listen address of the surface the clients call.
 	PublicAddr string

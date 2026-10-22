@@ -5,10 +5,10 @@
 This file defines the recommended regression test set for `authz-agent`.
 It is aligned with the repository architecture and compatibility contract:
 
-1. `POST /access/v1/authorize` is the single decision endpoint.
-2. The agent's public surface is the compatibility facade for canonical and legacy APIs.
-3. Authorization semantics are two-stage: OLS first, RLS second when `ignoreRls=false`.
-4. Canonical and compatibility flows use bearer-token `subject` values, with verification inside OPA.
+1. The agent serves the access-control check API, and every check route is answered with the decision of the
+   `authorize` document.
+2. Authorization semantics are two-stage: OLS first, RLS second when `ignoreRls=false`.
+3. The check routes take bearer tokens in the `Authorization` and `Incoming-Token` headers, which OPA verifies.
 
 ## Priority Levels
 
@@ -32,19 +32,6 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `setup.policy_upload` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `setup.pip_upload` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | - | - | none |
 | `setup.wait_for_agent` | admin | `POST /access/v1/check/resource` | - | - | ROLE_ADMINISTRATOR |
-| `authorize.order_read.rls_true.deny` | order-reader | `POST /access/v1/authorize` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `authorize.order_read.response_structure` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `authorize.public_doc_read.rls_default.allow` | admin | `POST /access/v1/authorize` | PUBLIC_DOC | READ | ROLE_ADMINISTRATOR |
-| `authorize.multi_resource.order_preserved` | order-reader | `POST /access/v1/authorize` | ORDER,ATTACHMENT | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `authorize.no_token.401` | n/a | `POST /access/v1/authorize` | ORDER | READ | none |
-| `authorize.expired_token.401` | order-reader | `POST /access/v1/authorize` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER (expired) |
-| `authorize.invalid_token.401` | n/a | `POST /access/v1/authorize` | ORDER | READ | none (invalid) |
-| `authorize.naked_authorization_token.401` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `authorize.naked_subject_token.deny` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `authorize.missing_subject.401` | n/a | `POST /access/v1/authorize` | ORDER | READ | none |
-| `authorize.empty_body.401` | n/a | `POST /access/v1/authorize` | - | - | none |
-| `authorize.predicate_subject_attr_substituted` | admin | `POST /access/v1/authorize` | PUBLIC_DOC | READ | ROLE_ADMINISTRATOR |
-| `authorize.predicate_pip_value_substituted` | admin | `POST /access/v1/authorize` | CUSTOMER | READ | ROLE_ADMINISTRATOR |
 | `check_resource.order_read.rls_deny` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.incoming_token_used_for_subject` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.expired_authorization.401` | order-reader | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ORDER_MANAGEMENT_RO_USER (expired) |
@@ -58,6 +45,10 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_resource.incoming_token_precedence_over_authorization` | admin+order-reader | `POST /access/v1/check/resource` | BULK_OPEN | READ | ROLE_ADMINISTRATOR (Authorization) / ROLE_ORDER_MANAGEMENT_RO_USER (Incoming-Token) |
 | `check_resource.anonymous_subject_marker` | admin | `POST /access/v1/check/resource` | BULK_OPEN | READ | ROLE_ADMINISTRATOR (M2M) / anonymous (subject) |
 | `check_resource.incoming_token_stripped_from_header_pip` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
+| `check_resource.invalid_authorization.401` | n/a | `POST /access/v1/check/resource` | ATTACHMENT | READ | none (invalid) |
+| `check_resource.authorization_without_bearer.401` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
+| `check_resource.incoming_token_without_bearer.deny` | admin | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ADMINISTRATOR |
+| `check_resource.pip_value_substituted` | admin | `POST /access/v1/check/resource` | CUSTOMER | READ | ROLE_ADMINISTRATOR |
 | `check_resource_bulk.owner_mismatch.denied` | order-reader | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource_bulk.unknown_type.denied` | admin | `POST /access/v1/check/resource/bulk` | INVOICE | READ | ROLE_ADMINISTRATOR |
 | `check_resource_bulk.empty_array` | admin | `POST /access/v1/check/resource/bulk` | - | - | ROLE_ADMINISTRATOR |
@@ -79,6 +70,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_filter.no_token.401` | n/a | `POST /access/v1/check/filter` | ORDER | READ | none |
 | `check_filter.missing_resource_type.400` | admin | `POST /access/v1/check/filter` | - | READ | ROLE_ADMINISTRATOR |
 | `check_filter.wrong_address.404` | admin | `POST /access/v1/check/filte` | ORDER | READ | ROLE_ADMINISTRATOR |
+| `check_filter.predicate_subject_attr_substituted` | admin | `POST /access/v1/check/filter` | PUBLIC_DOC | READ | ROLE_ADMINISTRATOR |
 | `pip_general.stub_reset` | n/a | `POST (pip-stub reset)` | - | - | none |
 | `pip_general.upload_pips_for_general` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | CUSTOMER | READ | none |
 | `pip_general.active_pip_called` | admin | `POST /access/v1/check/filter` | CUSTOMER | READ | ROLE_ADMINISTRATOR |
@@ -97,14 +89,13 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `pip_jsonpath.bulk_extracts_ids_and_filters` | admin | `POST /access/v1/check/resource/bulk` | CUSTOMER | READ | ROLE_ADMINISTRATOR |
 | `pip_jsonpath.restore_legacy_pip` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | CUSTOMER | READ | none |
 | `pip_jsonpath.restore_default_stub` | n/a | `PUT (pip-stub configure)` | - | - | none |
-| `authorize.multi_frag.rls_or_aggregation` | admin | `POST /access/v1/authorize` | MULTI_FRAG_ITEM | READ | ROLE_ADMINISTRATOR |
 | `check_filter.multi_frag.rsql_or_aggregation` | admin | `POST /access/v1/check/filter` | MULTI_FRAG_ITEM | READ | ROLE_ADMINISTRATOR |
-| `token_pip_authorize.upload_token_pips` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | TOKEN_PIP_POSITIVE,TOKEN_PIP_DEFAULT | READ | none |
-| `token_pip_authorize.positive_alias_in_predicate` | admin | `POST /access/v1/authorize` | TOKEN_PIP_POSITIVE | READ | ROLE_ADMINISTRATOR |
-| `token_pip_authorize.default_value_fallback` | admin | `POST /access/v1/authorize` | TOKEN_PIP_DEFAULT | READ | ROLE_ADMINISTRATOR |
+| `token_pip_filter.upload_token_pips` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | TOKEN_PIP_POSITIVE,TOKEN_PIP_DEFAULT | READ | none |
+| `token_pip_filter.positive_alias_in_filter` | admin | `POST /access/v1/check/filter` | TOKEN_PIP_POSITIVE | READ | ROLE_ADMINISTRATOR |
+| `token_pip_filter.default_value_fallback` | admin | `POST /access/v1/check/filter` | TOKEN_PIP_DEFAULT | READ | ROLE_ADMINISTRATOR |
 | `pip_deny.upload_broken_pip` | n/a | `PUT /access/v1/simplifiedPolicies/domainPIPs/{domain}` | PIP_FAIL_TEST | READ | none |
-| `pip_deny.pip_failure_deny_reason` | admin | `POST /access/v1/authorize` | PIP_FAIL_TEST | READ | ROLE_ADMINISTRATOR |
-| `pip_deny.missing_attr_deny_reason` | admin | `POST /access/v1/authorize` | ATTR_MISS_TEST | READ | ROLE_ADMINISTRATOR |
+| `pip_deny.pip_failure_deny_reason` | admin | `POST /access/v1/check/resource` | PIP_FAIL_TEST | READ | ROLE_ADMINISTRATOR |
+| `pip_deny.missing_attr_deny_reason` | admin | `POST /access/v1/check/resource` | ATTR_MISS_TEST | READ | ROLE_ADMINISTRATOR |
 | `health.healthy_strict` | n/a | `GET /health` | - | - | none |
 | `health.method_not_allowed` | n/a | `POST /health` | - | - | none |
 | `health.regression.check_resource` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
@@ -115,50 +106,42 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `entitlements.is_empty.allow_when_empty` | admin | `POST /access/v1/check/resource` | ENT_EMPTY | READ | ROLE_ADMINISTRATOR |
 | `entitlements.multi_as_union.allow` | admin | `POST /access/v1/check/resource` | ENT_MULTI | READ | ROLE_ADMINISTRATOR |
 | `decision_logs.catalog_coverage` | n/a | `GET /internal/v1/decision-logs` | - | - | none |
-| `decision_logs.canonical_path_header` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `decision_logs.legacy_path_header` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `parity.single_resource` | admin | `POST /access/v1/authorize + POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `parity.bulk` | admin | `POST /access/v1/authorize + POST /access/v1/check/resource/bulk` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `parity.filter` | admin | `POST /access/v1/authorize + POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `parity.response_envelope_shape` | admin | `POST /access/v1/authorize` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `parity.original_path_no_effect` | admin | `POST /access/v1/authorize (x2)` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `authorize.envoy_opa_direct.bytewise_response_parity` | admin | `POST /access/v1/authorize (Envoy + OPA-direct)` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `wildcard_access.upload_wildcard_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
-| `wildcard_access.all_all.admin_allow_any` | admin | `POST /access/v1/authorize` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_all.no_predicates` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_all.no_deny_reason` | admin | `POST /access/v1/authorize` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_op.reader_read_any_rt` | order-reader | `POST /access/v1/authorize` | UNKNOWN_TYPE | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.all_op.reader_delete_denied` | order-reader | `POST /access/v1/authorize` | UNKNOWN_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.rt_all.reader_any_op` | order-reader | `POST /access/v1/authorize` | WC_RT_TARGET | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.rt_all.reader_other_rt_denied` | order-reader | `POST /access/v1/authorize` | OTHER_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/authorize` | WC_RT_TARGET,INVOICE | DELETE,READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.all_all.no_predicates` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
+| `wildcard_access.all_all.no_deny_reason` | admin | `POST /access/v1/check/resource` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
+| `wildcard_access.all_op.reader_delete_denied` | order-reader | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.rt_all.reader_any_op` | order-reader | `POST /access/v1/check/filter` | WC_RT_TARGET | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.rt_all.reader_other_rt_denied` | order-reader | `POST /access/v1/check/resource` | OTHER_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,INVOICE | DELETE,READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.legacy.check_resource_all_all` | admin | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
 | `wildcard_access.legacy.check_resource_bulk_all_all` | admin | `POST /access/v1/check/resource/bulk` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
 | `wildcard_access.legacy.check_filter_all_op` | order-reader | `POST /access/v1/check/filter` | UNKNOWN_TYPE | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.restore_original_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
+| `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
+| `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
+| `lockdown.m2m_read_absent.404` | n/a | `GET /v1/data/m2m (internal port)` | - | - | none |
+| `lockdown.store_write_absent.404` | n/a | `PUT /v1/data/lockdown-probe (internal port)` | - | - | none |
+| `lockdown.check_explain_ignored.200` | admin | `POST /access/v1/check/resource (plain and with ?explain=full)` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.authorize_hidden.404` | admin | `POST /authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
+| `route_security.access_authorize_absent.404` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.unknown_path.404` | n/a | `GET /unknown/endpoint` | - | - | none |
 | `route_security.v2_check_resource.implemented` | admin | `POST /access/v2/check/resource` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.v1_bulk_operations.implemented` | admin | `POST /access/v1/check/resource/bulk/operations` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.v2_bulk_operations.implemented` | admin | `POST /access/v2/check/resource/bulk/operations` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.v2_check_filter.implemented` | admin | `POST /access/v2/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.api_version.static` | n/a | `GET /api-version` | - | - | none |
-| `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
-| `lockdown.m2m_read_absent.404` | n/a | `GET /v1/data/m2m (internal port)` | - | - | none |
-| `lockdown.store_write_absent.404` | n/a | `PUT /v1/data/lockdown-probe (internal port)` | - | - | none |
-| `lockdown.authorize_explain_ignored.200` | admin | `POST /access/v1/authorize (plain and with ?explain=full)` | ORDER | READ | ROLE_ADMINISTRATOR |
 
 ## Recommended Suite Matrix
 
 | Area | Priority | Recommended cases | Suggested location |
 | --- | --- | --- | --- |
-| Canonical `/access/v1/authorize` contract | `P0` | Request validation, `ignoreRls` omitted=`false` plus explicit `true` behavior, multi-resource order preservation, `ALLOW`/`DENY` mapping, `predicates[]` omission rules, auth failure mapping | `policies/authorize_contract_test.rego` |
+| Decision contract of the `authorize` document | `P0` | Request validation, `ignoreRls` omitted=`false` plus explicit `true` behavior, multi-resource order preservation, `ALLOW`/`DENY` mapping, `predicates[]` omission rules, auth failure mapping | `policies/authorize_contract_test.rego` |
 | Policy language semantics | `P0` | Operator coverage, precedence, parentheses, JSONPath behavior, `has access`, normalized `conditionAst` evaluation, predicate passthrough | `policies/policy_language_contract_test.rego` |
 | Token verification and subject normalization | `P0` | Valid token, expired token, wrong issuer, unknown `kid`, no roles, `realm_access.roles` only, non-realm claim ignored, service token, object-form `subject` rejection, anonymous compatibility mode | `policies/token_auth_contract_test.rego` |
 | Legacy v1 endpoint mapping | `P0` | `/access/v1/check/resource`, `/access/v1/check/resource/bulk`, `/access/v1/check/filter` request mapping, response remapping, stable error shape, tenant pass-through ignored in decisioning | Rego contract tests plus runtime checks |
-| Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization`-only token source (ADR-0021), `Incoming-Token` ignored, admission `401` mapping, deterministic DENY reasons, mounted runtime data wiring | the kind harness under `test/k8s/` via `make e2e` |
-| Public route wiring | `P1` | Per-route request and response translation, public non-exposure of `/authorize`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
+| Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization` admission token and `Incoming-Token` subject token, admission `401` mapping, deterministic DENY reasons, mounted runtime data wiring | the kind harness under `test/k8s/` via `make e2e` |
+| Public route wiring | `P1` | Per-route request and response translation, public non-exposure of `/authorize` and `/access/v1/authorize`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
 | Simplified policy normalization | `P1` | OLS/RLS split, role-scoped RLS index, `conditionAst` usage, `condition=true` fallback, `predicate=true` fallback, explicit-role wildcard normalization for `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL`, unconditional-access short-circuit semantics for all wildcard buckets, unknown field preservation | New unit suite under `tests/unit/` |
 | Deferred legacy v1 bulk operations and preview APIs | `Deferred` | Historical baseline only: `/access/v1/check/resource/bulk/operations` and `/preview/v1/check/resource/bulk/operations` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
 | Deferred legacy v2 APIs and `/api-version` | `Deferred` | Historical baseline only: `/access/v2/check/resource`, `/access/v2/check/resource/bulk/operations`, `/preview/v2/check/resource/bulk/operations`, `/access/v2/check/filter`, and `/api-version` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
@@ -166,11 +149,11 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 
 ## Required Test Cases By Contract Area
 
-### 1. Canonical `/access/v1/authorize`
+### 1. Decision Contract of the `authorize` Document
 
 - Single-resource `ALLOW` with omitted `ignoreRls` and `rlsIgnored=false`.
 - Single-resource `ALLOW` with `ignoreRls=true`.
-- Single-resource `ALLOW` with `ignoreRls=false` and returned canonical `predicates[]`.
+- Single-resource `ALLOW` with `ignoreRls=false` and returned `predicates[]`.
 - OLS deny short-circuits RLS and returns `DENY`.
 - OLS allow + RLS deny returns `DENY` when `ignoreRls=false`.
 - OLS allow + RLS rule present returns RLS-aware result when `ignoreRls` is omitted.
@@ -183,7 +166,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 
 ### 2. Legacy v1 Compatibility Endpoints
 
-- `/access/v1/check/resource` maps to one canonical resource and returns JSON boolean.
+- `/access/v1/check/resource` maps to one resource of the decision input and returns JSON boolean.
 - `/access/v1/check/resource/bulk` returns only allowed IDs and preserves input-to-output ID association.
 - `/access/v1/check/filter` uses `calculationResult` and correct `filterCondition` behavior.
 - `/access/v1/check/resource` returns `400` for null body and for missing required `type`/`operation` fields.
@@ -202,13 +185,12 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 
 ### 4. Authentication and Token Source
 
-- Token source is `Authorization` header only; `Incoming-Token` is no longer supported and is silently ignored (ADR-0021).
-- Canonical endpoint uses dual-token model: `Authorization` header for admission, `subject` body field for OLS/RLS evaluation.
-- Legacy endpoints derive both admission and subject from `Authorization` header.
-- Invalid `Authorization` token returns `401` with `reason` (canonical) or `message` (legacy) (ADR-0022).
-- Valid `Authorization` + invalid `subject` returns `200` with `decision=DENY` and `reason` for canonical endpoints.
-- Missing token returns auth error on canonical and compatibility paths unless anonymous mode is explicitly allowed.
-- Object-form `subject` is rejected on all canonical authorize evaluation paths.
+- The admission token is the `Authorization` header. The subject token is `Incoming-Token` when it is present, the
+  `Authorization` token otherwise, and none when `Authorization-Type` is `anonymous`.
+- Invalid `Authorization` token returns `401` with `message` (ADR-0022).
+- Valid `Authorization` + invalid subject token returns `200` with a denial, and the decision log records the `reason`.
+- Missing token returns `401` unless anonymous mode is explicitly allowed.
+- An object-form `subject` in the decision input is rejected.
 - Authorization roles are derived only from `realm_access.roles`; non-realm claims like `groups`, `authorities`, direct `roles`, and `resource_access.*.roles` are ignored.
 
 ### 5. Policy Normalization and Simplified Policy Compatibility
@@ -228,8 +210,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - Runtime tests execute as a Job inside the cluster (Testify suite under `test/integration/testify/`).
 - Runtime stack loads mounted policy data instead of relying on image-baked defaults.
 - OIDC discovery bootstrap populates runtime authn data before compatibility checks run.
-- The public surface answers `/access/v1/authorize` and every supported compatibility endpoint with the decision of
-  the `authorize` document.
+- The public surface answers every supported check route with the decision of the `authorize` document.
 - `/access/v1/check/resource/bulk` handles large payloads such as 3000 allowed IDs without restrictive RLS predicates.
 
 ## Minimum CI Gate
@@ -255,7 +236,7 @@ If deferred legacy endpoints are explicitly brought back into active scope in a 
 
 The repository already has a solid baseline for:
 
-- canonical `/access/v1/authorize` contract testing;
+- the decision contract of the `authorize` document;
 - policy language coverage;
 - token verification and subject normalization;
 - runtime auth precedence checks for `/access/v1/check/resource`.

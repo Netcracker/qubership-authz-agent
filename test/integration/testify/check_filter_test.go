@@ -16,6 +16,8 @@
 
 package runtimetest
 
+import "strings"
+
 func (s *RuntimeSuite) TestCheckFilter() {
 	s.Step("check_filter.calculation_result_present", func() {
 		h := incomingTokenHeader(s.validAdminToken)
@@ -121,5 +123,22 @@ func (s *RuntimeSuite) TestCheckFilter() {
 		code, b := s.post("/access/v1/check/filte?resourceType=ORDER&operation=READ&tenant_id=default", h, map[string]interface{}{})
 		s.Require().Equal(404, code)
 		s.Assert().Equal("not found", jsonObj(b)["message"])
+	})
+
+	// The rsql filter names the subject by the id in its token: the policy's
+	// ${subject.id} template is substituted.
+	s.Step("check_filter.predicate_subject_attr_substituted", func() {
+		h := incomingTokenHeader(s.validAdminToken)
+		code, b := s.post("/access/v1/check/filter?resourceType=PUBLIC_DOC&operation=READ", h, map[string]interface{}{})
+		s.Require().Equal(200, code, "body: %s", string(b))
+		j := jsonObj(b)
+		s.Assert().Equal("USE_FILTER_CONDITION", j["calculationResult"])
+		rsql, _ := j["rsqlFilterCondition"].(string)
+		s.Assert().True(strings.HasPrefix(rsql, "subjectId=="),
+			"rsqlFilterCondition must start with subjectId==, got: %s", rsql)
+		s.Assert().NotContains(rsql, "${subject.",
+			"${subject.id} must be substituted, got: %s", rsql)
+		s.Assert().Greater(len(rsql), len("subjectId=="),
+			"the substituted id must not be empty, got: %s", rsql)
 	})
 }
