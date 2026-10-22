@@ -187,7 +187,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 
 - The admission token is the `Authorization` header. The subject token is `Incoming-Token` when it is present, the
   `Authorization` token otherwise, and none when `Authorization-Type` is `anonymous`.
-- Invalid `Authorization` token returns `401` with `message` (ADR-0022).
+- Invalid `Authorization` token returns `401` with `message`.
 - Valid `Authorization` + invalid subject token returns `200` with a denial, and the decision log records the `reason`.
 - Missing token returns `401` unless anonymous mode is explicitly allowed.
 - An object-form `subject` in the decision input is rejected.
@@ -246,7 +246,3 @@ The main recommended additions are:
 - dedicated simplified-policy normalization tests outside the current Rego contract suites;
 - continued hardening of the already implemented surface as behavior evolves;
 - deferred legacy endpoints only if a future handover explicitly brings them back into active implementation scope.
-
-Legacy source references used for these compatibility expectations live in the
-internal access-control source repository (`CheckEndpointTest.java` and
-`CheckEndpointV2Test.java` in the check-endpoint integration test suite).

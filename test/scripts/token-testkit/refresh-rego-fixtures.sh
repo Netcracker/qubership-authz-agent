@@ -31,8 +31,8 @@ VALID_EXPIRES_IN="315360000"
 EXPIRED_ISSUED_AT="1577836800"
 EXPIRED_EXPIRES_IN="300"
 
-# A second key of the SAME provider. This is the rotation flow of
-# authz-agent-ADR-0075 in fixture form: a realm publishes two keys at once and
+# A second key of the SAME provider. This is the key rotation flow
+# in fixture form: a realm publishes two keys at once and
 # tokens signed by either must verify, so the operator can add a key, restart,
 # and only then retire the old one.
 SECOND_KEY_ID="second-key"
@@ -204,7 +204,7 @@ second_key_token="$(mint_token "user-second-key" "ROLE_VIEWER" "${VALID_ISSUED_A
 # first candidate cannot verify it and the second one can.
 colliding_kid_token="$(mint_token "user-colliding-kid" "ROLE_VIEWER" "${VALID_ISSUED_AT}" "${VALID_EXPIRES_IN}" "{}" "${COLLIDING_ISSUER}" "${KID}" "${COLLIDING_PRIVATE_KEY}")"
 
-# A properly signed token carrying no `iss` claim at all. Since ADR-0075 nothing
+# A properly signed token carrying no `iss` claim at all. Nothing
 # reads that claim, so this must authenticate — the counterpart to `wrongIssuer`,
 # which carries a different one.
 no_issuer_token="$("${MINT_SCRIPT}" \
@@ -253,7 +253,7 @@ symmetric_alg_token="$("${MINT_SCRIPT}" \
   --issued-at "${VALID_ISSUED_AT}" \
   --expires-in "${VALID_EXPIRES_IN}")"
 
-# `data.authn` in the shape pap-client publishes it (authz-agent-ADR-0075):
+# `data.authn` in the shape pap-client publishes it:
 # providers keyed by id, keys keyed by kid with a one-key JWKS per candidate.
 authn_document="$(
   jq -n \

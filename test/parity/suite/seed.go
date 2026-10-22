@@ -36,7 +36,7 @@ type DomainSeeder interface {
 	SeedDomain(ctx context.Context, domain string, fixtureRoot fs.FS) error
 }
 
-// legacyPapSeeder preserves the Step 3 legacy PAP lifecycle byte-for-byte.
+// legacyPapSeeder preserves the legacy PAP seeding lifecycle byte-for-byte.
 type legacyPapSeeder struct {
 	cfg    Config
 	tokens *TokenFactory
@@ -172,7 +172,7 @@ func (ds *legacyPapSeeder) putJSON(ctx context.Context, endpoint, token string, 
 // substantive difference between this seeder and the legacy one. The legacy
 // seeder PUT straight at access-control's PAP and the decision path saw the new
 // policies on the next request; here the seeder writes to a stub and the agent's
-// PolicyPuller picks it up on its own tick (authz-agent-ADR-0071). Nothing in
+// PolicyPuller picks it up on its own tick. Nothing in
 // the suite waits for that tick, so without this delay SetupSuite seeds and
 // immediately asserts against whatever the agent still holds.
 //
@@ -238,15 +238,15 @@ func (ds *authzAgentInternalSeeder) SeedDomain(ctx context.Context, domain strin
 		}
 	}
 	if len(regular) > 0 {
-		fmt.Printf("[paritysuite] authz-agent seeder: skipped %d regular full-policy fixture(s) under policies/regular (D-AA-E)\n", len(regular))
+		fmt.Printf("[paritysuite] authz-agent seeder: skipped %d regular full-policy fixture(s) under policies/regular\n", len(regular))
 	}
 	awaitPull(ctx)
 	return nil
 }
 
 // simplifiedPath builds access-control's simplified-policy path for a domain.
-// The stub serves these paths verbatim (authz-agent-ADR-0073), so this seeder and
-// the legacy access-control seeder above now address the same URLs.
+// The stub serves these paths verbatim, so this seeder and
+// legacyPapSeeder address the same URLs.
 func simplifiedPath(kind, domain string) string {
 	return "/access/v1/simplifiedPolicies/" + kind + "/" + url.PathEscape(domain)
 }

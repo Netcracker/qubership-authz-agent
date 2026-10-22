@@ -15,9 +15,8 @@
 package paritysuite
 
 // Package note — pip_control.go wraps the real pipstub control surface at
-// test/integration/pipstub/main.go:50-183. Three caveats surfaced during
-// the initial analysis (OQ-SUITE-10 in the archived parity handover); this
-// file encodes them deliberately so test authors do not rediscover them:
+// test/integration/pipstub/main.go:50-183. This file encodes three caveats
+// of that surface so test authors do not rediscover them:
 //
 //  1. Control path is PUT|POST /pip-stub/configure (pipstub/main.go:52),
 //     NOT /__mock__/responses. Body is a JSON array of pipRoute objects.
@@ -30,12 +29,12 @@ package paritysuite
 //  3. Path matching is strictly literal against r.URL.Path
 //     (pipstub/main.go:110). No wildcards / regex / templates. The
 //     PinEntitlementsV3ForUser helper resolves the per-user literal path
-//     once per pin call — see OQ-SUITE-11 option 1.
+//     once per pin call.
 //
-// The same control surface is reused for the entitlements-mock service
-// added by D-U. Two PipController instances are therefore
-// instantiated at SetupSuite time: one bound to Config.PipMockControlURL
-// for pip-mock, one bound to Config.EAMockControlURL for entitlements-mock.
+// The same control surface is reused for the entitlements-mock service.
+// Two PipController instances are therefore instantiated at SetupSuite time:
+// one bound to Config.PipMockControlURL for pip-mock, one bound to
+// Config.EAMockControlURL for entitlements-mock.
 
 import (
 	"bytes"
@@ -65,7 +64,7 @@ type pipStubRoute struct {
 }
 
 // PipStubCall mirrors pipstub's callRecord JSON payload from GET
-// /pip-stub/calls. The stub now also captures query + body (ADR-0066 request
+// /pip-stub/calls. The stub also captures query + body (request
 // args); those fields are added here as needed by assertion code. Note: header
 // NAMES in Headers are lowercased by the stub (flattenHeaders, pipstub/main.go)
 // for case-insensitive matching — look them up in lowercase (e.g.
@@ -118,8 +117,8 @@ func (pc *PipController) PinRoute(ctx context.Context, path string, resp PipStub
 }
 
 // PinEntitlementsV3ForUser resolves the V3 per-user EA path template once
-// against the literal user id and pins it via PinRoute. Per OQ-SUITE-11
-// option 1 this is how the ENT block works around pipstub's lack of
+// against the literal user id and pins it via PinRoute. This is how the
+// ENT block works around pipstub's lack of
 // path templating.
 func (pc *PipController) PinEntitlementsV3ForUser(ctx context.Context, userID string, resp PipStubResponse) error {
 	if userID == "" {

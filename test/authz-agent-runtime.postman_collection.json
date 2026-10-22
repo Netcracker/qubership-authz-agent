@@ -195,7 +195,7 @@
               "options": {"raw": {"language": "json"}}
             },
             "url": "{{authz_base_url}}/access/v1/check/resource?tenant_id={{tenant_id}}",
-            "description": "Incoming-Token is silently ignored; only Authorization is used (ADR-0021)"
+            "description": "Incoming-Token is silently ignored; only Authorization is used"
           },
           "response": []
         },

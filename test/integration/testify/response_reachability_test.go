@@ -49,7 +49,7 @@ const previewBulkOperationsUnexercised = "preview bulk/operations shares its han
 const healthUnavailableUnexercised = "GET /health 503 needs an agent whose OPA is not ready or whose strict-mode JWKS bootstrap failed; the harness runs the suite against a healthy agent. Covered by the policyadmin unit tests."
 
 // reachabilityWhitelist lists spec-declared responses that a full suite run
-// does not exercise, each with the reason it stays unexercised (ADR-0064). The lint's pass-2 flags any entry that
+// does not exercise, each with the reason it stays unexercised. The lint's pass-2 flags any entry that
 // is no longer declared in the spec, or that has become exercised, so the list
 // cannot silently rot into a rubber stamp that re-hides drift.
 var reachabilityWhitelist = map[responseTriple]string{
@@ -77,7 +77,7 @@ var reachabilityWhitelist = map[responseTriple]string{
 	{Method: "GET", Path: "/health", Status: 503}: healthUnavailableUnexercised,
 }
 
-// TestZZZResponseReachabilityCoverage is the ADR-0064 response-reachability
+// TestZZZResponseReachabilityCoverage is the response-reachability
 // lint. It runs last in the suite (lexicographically after
 // TestZZDecisionLogsCatalogCoverage) so the conformance hook's exercised-set is
 // fully populated by every prior step. It closes the reverse direction the

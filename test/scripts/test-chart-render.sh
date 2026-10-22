@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Chart-render assertions for the trusted-provider constructor
-# (authz-agent-ADR-0075).
+# Chart-render assertions for the trusted-provider constructor.
 #
 # The constructor is the one piece of this feature with no unit test behind it:
 # what it produces is a rendered ConfigMap, and the only way to be sure a plain

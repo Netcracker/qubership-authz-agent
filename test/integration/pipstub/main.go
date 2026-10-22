@@ -13,8 +13,7 @@
 // limitations under the License.
 
 // Command pip-stub is the mock PIP/entitlements endpoint used by test/parity
-// and test/integration. It has two layers, additively (ADR-0066 request-args
-// work):
+// and test/integration. It has two layers, additively:
 //
 //   - Legacy path-routing: register {path -> [responses]} via a JSON
 //     PUT/POST /pip-stub/configure, or the hardcoded defaults. Responses are

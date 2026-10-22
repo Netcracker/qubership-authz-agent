@@ -1,5 +1,5 @@
 # Static pip-stub rule config for the GENERAL PIP request-args parity/integration
-# cases (authz-agent-ADR-0066..0069). Loaded when PIP_STUB_CONFIG points here,
+# cases. Loaded when PIP_STUB_CONFIG points here,
 # bind-mounted read-only into pip-mock. Rules are matched top-down; the first
 # rule whose `match` fully matches wins. `match` is AND over the listed fields;
 # omitted fields are wildcards. A query/header value of "*" means "present with

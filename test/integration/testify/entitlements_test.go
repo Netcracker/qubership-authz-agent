@@ -28,8 +28,7 @@ import (
 )
 
 // ──────────────────────────────────────────────────────────────────────────
-// ADR-0054 / D-AG-11 / D-AG-15 — runtime integration coverage for the
-// container-pinned entitlements PIP.
+// Runtime integration coverage for the container-pinned entitlements PIP.
 //
 // Each Step pins a per-user V3 entitlements-aggregator response on the
 // `entitlements-mock` pip-stub instance (the harness runs it next to the
@@ -40,9 +39,7 @@ import (
 //
 // The tests share one policy upload per step so the harness stays flat
 // — each case calls `uploadEntitlementsPolicies` with the ENT condition
-// it wants. This mirrors how Step 6's parity suite pins per-user EA
-// responses and then drives rows 76–83 through the canonical check
-// surface.
+// it wants. The parity suite pins per-user EA responses the same way.
 // ──────────────────────────────────────────────────────────────────────────
 
 // adminSubjectID extracts the `sub` claim from the admin access token the
@@ -163,18 +160,17 @@ func (s *RuntimeSuite) checkResourceDecision(resourceType, operation string, res
 	return strings.TrimSpace(string(b)) == "true"
 }
 
-// TestEntitlementsRuntime exercises the ADR-0054 matrix end-to-end.
+// TestEntitlementsRuntime exercises the entitlements PIP end-to-end.
 // Requires the harness entitlements-mock service and AUTHZ_ENTITLEMENTS_URL
-// set on the agent. Per
-// D-AG-19 this coverage is mandatory on every integration-suite run —
-// if the stub is unreachable the test fails loudly rather than
-// skipping, so a stack that omits the D-AG-15 wiring cannot hide a
+// set on the agent. This coverage is mandatory on every integration-suite
+// run — if the stub is unreachable the test fails loudly rather than
+// skipping, so a stack that omits the entitlements-mock service cannot hide a
 // regression in the resolver, the pivot, or the upload-rejection
 // path.
 func (s *RuntimeSuite) TestEntitlementsRuntime() {
 	s.Require().True(
 		entitlementsMockReachable(s.cfg),
-		"entitlements-mock must be reachable at %s — the runtime stack must include the D-AG-15 entitlements-mock service block; per D-AG-19 this is not optional",
+		"entitlements-mock must be reachable at %s — the runtime stack must include the entitlements-mock service; this coverage is not optional",
 		s.cfg.EntitlementsMockURL,
 	)
 
@@ -240,7 +236,7 @@ func (s *RuntimeSuite) TestEntitlementsRuntime() {
 }
 
 // entitlementsMockReachable probes the entitlements-mock pip-stub
-// control plane for liveness. Per D-AG-19 this is used as a hard
+// control plane for liveness. It is used as a hard
 // precondition in TestEntitlementsRuntime — if the harness came up
 // without the entitlements-mock service, the integration suite fails
 // loudly on this check instead of silently skipping ENT coverage.

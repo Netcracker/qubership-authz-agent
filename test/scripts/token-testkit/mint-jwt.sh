@@ -36,12 +36,11 @@ Optional:
                                where the verifier's own public key is used as an
                                HMAC secret.
   --hmac-key <path>            Secret file for --algorithm HS256 (its raw bytes).
-  --no-kid                     Omit the kid header claim. Rejected by the policy
-                               since authz-agent-ADR-0075; kept mintable so the
-                               rejection can be asserted.
+  --no-kid                     Omit the kid header claim. Rejected by the policy;
+                               kept mintable so the rejection can be asserted.
   --drop-claim <name>          Remove a claim from the payload before signing.
                                Repeatable. For minting a token without `iss`,
-                               which since authz-agent-ADR-0075 must still verify.
+                               which must still verify.
   --audiences <csv>            Audience list CSV (default: authz-agent)
   --roles <csv>                realm_access.roles CSV (default: ROLE_VIEWER)
   --scope <scope string>       Scope claim value (default: empty)
