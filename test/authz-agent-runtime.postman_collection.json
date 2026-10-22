@@ -700,10 +700,24 @@
       ]
     },
     {
-      "name": "9. Hidden/Internal (expected 404 on public Envoy)",
+      "name": "9. Removed routes (expected 404)",
       "item": [
         {
           "name": "POST /authorize",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the route is not served', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.eql('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -727,6 +741,20 @@
         },
         {
           "name": "POST /access/v1/authorize",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the route is not served', function () {",
+                  "  pm.response.to.have.status(404);",
+                  "  pm.expect(pm.response.json().message).to.eql('not found');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [

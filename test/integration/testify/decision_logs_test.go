@@ -64,12 +64,11 @@ func (s *RuntimeSuite) TestDecisionLogs() {
 	})
 
 	s.Step("decision_logs.content_is_ndjson", func() {
-		// OPA ships decision logs in async batches (~once/second, see
-		// opa-config.yaml min_delay_seconds/max_delay_seconds), so the two
-		// RLS-deny events emitted by the immediately-preceding steps can land
-		// a beat after this step starts. Retry until the specific request IDs
-		// this step asserts are all present (or the deadline lapses), instead
-		// of breaking on the first non-empty batch (R11).
+		// The agent's decision logger delivers events in batches at most a
+		// second apart (the default FlushInterval), so an event of an earlier
+		// step can appear only after this step starts. Retry until every
+		// request ID in requiredRequestIDs is present or the deadline passes,
+		// rather than stopping at the first non-empty download.
 		requiredRequestIDs := []string{
 			"setup.wait_for_agent",
 			"check_resource.order_read.rls_deny",
@@ -300,8 +299,9 @@ func decisionLogSingleHeaderValue(obj map[string]any, headerName string) string 
 	return values[0]
 }
 
-// decisionLogResultIsCanonical checks that the OPA decision log result has the canonical
-// AuthorizeResponse shape: an object with "rlsIgnored" (bool) and "results" (array).
+// decisionLogResultIsCanonical reports whether the event's result has the
+// "rlsIgnored" and "results" keys of the authorize policy's canonical
+// response, which an admitted request gets.
 func decisionLogResultIsCanonical(obj map[string]any) bool {
 	result, ok := obj["result"].(map[string]any)
 	if !ok {
