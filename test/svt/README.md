@@ -64,9 +64,7 @@ tests/svt/
 │   ├── ols-single/
 │   ├── ols-bulk-50/
 │   ├── identity-verify-token/
-│   ├── identity-validate-jwt/
-│   ├── wildcard-all-single/
-│   └── wildcard-mixed-bulk/
+│   └── identity-validate-jwt/
 ├── load-tests/                        # per-test load scenarios
 │   ├── run                            # suite-level runner (all full, then all opa-direct)
 │   ├── full/                          # public-surface tests (canonical + legacy pairs)
@@ -144,7 +142,7 @@ tests/svt/profiler/<scenario>/
 └── profile-trace.sh
 ```
 
-Authorize-result profiler directories (`ols-*`, `rls-*`, `wildcard-*`) may also include:
+Authorize-result profiler directories (`ols-*`, `rls-*`) may also include:
 
 ```text
 ├── data-real-token.json
@@ -186,8 +184,6 @@ tests/svt/profiler/identity-validate-jwt/profile.sh
 TOKEN_KIND=service tests/svt/profiler/identity-validate-jwt/profile.sh
 tests/svt/profiler/rls-predicate-pips/profile-real-token.sh
 tests/svt/profiler/rls-predicate-pips/bench-real-token.sh
-tests/svt/profiler/wildcard-mixed-bulk/profile-real-token.sh
-tests/svt/profiler/wildcard-mixed-bulk/bench-real-token.sh
 
 # 7. Individual per-mode scenario matrix
 tests/svt/scripts/run-individual-svt-matrix
@@ -330,8 +326,8 @@ load-tests/mixed-flow/
         └── mixed-load-report-<mode>-<timestamp>.md
 ```
 
-The 8-scenario mix is composed from the existing profiler set (same fixtures as
-`tests/svt/scripts/bench-report`). Per-thread-group share: `20% ols-single-10roles
+The 8-scenario mix takes the request shapes of the profiler scenarios of the same names;
+`wildcard-all-single` has no profiler scenario. Per-thread-group share: `20% ols-single-10roles
 / 5% rls-predicate / 5% rls-condition / 5% ols-bulk-100 / 25% rls-condition-2-expression
 / 25% rls-predicate-summary-2-predicates / 10% rls-predicate-pips-2-token-pip
 / 5% wildcard-all-single`. `ols-bulk-100` follows D-4 (1 HTTP request = 1 RPS slot,

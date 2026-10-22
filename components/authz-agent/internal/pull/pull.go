@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package pull keeps data.policies and data.pips, the documents the
-// decision policies read, in step with their source: the v3 configuration
-// API of the policy source, fetched every interval and converted to the
-// simplified model. [Puller.Status] reports the first successful load, which
-// readiness waits for, and the counts of the last conversion.
+// Package pull keeps the policies in step with their source, the v3
+// configuration API of the policy source, fetched every interval: the
+// per-tenant snapshots of [Config.Snapshots], built from the documents as
+// sent. [Puller.Status] reports the first successful load, which readiness
+// waits for.
 package pull
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -29,12 +28,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/open-policy-agent/opa/v1/util"
-
-	"authz-agent/internal/acconfig"
-	"authz-agent/internal/pips"
-	"authz-agent/internal/simplifiedpolicies"
 )
 
 // Defaults of Config.
@@ -56,20 +49,23 @@ type Config struct {
 	Interval time.Duration
 	// HTTPTimeout bounds one fetch from the source.
 	HTTPTimeout time.Duration
-	// Entitlements is the entitlements PIP pinned by the deployment; nil
-	// adds none.
-	Entitlements *pips.EntitlementsConfig
+	// Snapshots receives the fetched documents as the source sent them; nil
+	// sends them nowhere.
+	Snapshots SnapshotLoader
 }
 
-// Putter receives the documents.
-type Putter interface {
-	Put(ctx context.Context, path []string, value any) error
+// SnapshotLoader builds the per-tenant policies from the documents of
+// /access/v3/config/policySets and /access/v3/config/pips. An error means
+// the documents could not be read at all, and nothing was published.
+type SnapshotLoader interface {
+	LoadSnapshots(ctx context.Context, policySets, pips []byte) error
 }
 
 // Tokens supplies the bearer token the source is fetched with; nil fetches
-// without one.
+// without one. When Bearer returns an error, such as for a token that has
+// expired, the pull sends no request and fails with that error.
 type Tokens interface {
-	Token() string
+	Bearer() (string, error)
 	Ready() <-chan struct{}
 }
 
@@ -80,36 +76,21 @@ type Logger interface {
 	Warnf(format string, args ...any)
 }
 
-// Conversion counts what the last conversion of the source's policy sets
-// produced. A pull that fetched every policy set and converted none is a
-// successful pull by every other measure, and it is what an authorization
-// outage looks like from outside.
-type Conversion struct {
-	PolicySets        int `json:"policySets"`
-	PolicySetsSkipped int `json:"policySetsSkipped"`
-	Rules             int `json:"rules"`
-	RulesSkipped      int `json:"rulesSkipped"`
-	RulesDenySkipped  int `json:"rulesDenySkipped"`
-	Policies          int `json:"policies"`
-}
-
 // Status reports the pull. PoliciesLoaded is set by the first successful
 // load and never cleared: a source that becomes unreachable leaves the
-// documents already in the store, which are better than none. Reason
+// snapshots already published, which are better than none. Reason
 // explains a PoliciesLoaded set without a load because the pull is
 // disabled.
 type Status struct {
-	PoliciesLoaded bool        `json:"policiesLoaded"`
-	FirstSuccessAt string      `json:"firstSuccessAt,omitempty"`
-	LastSuccessAt  string      `json:"lastSuccessAt,omitempty"`
-	Reason         string      `json:"reason,omitempty"`
-	Conversion     *Conversion `json:"conversion,omitempty"`
+	PoliciesLoaded bool   `json:"policiesLoaded"`
+	FirstSuccessAt string `json:"firstSuccessAt,omitempty"`
+	LastSuccessAt  string `json:"lastSuccessAt,omitempty"`
+	Reason         string `json:"reason,omitempty"`
 }
 
-// Puller loads the documents into one store.
+// Puller loads the documents into the snapshots.
 type Puller struct {
 	cfg    Config
-	store  Putter
 	tokens Tokens
 	log    Logger
 	client *http.Client
@@ -119,15 +100,14 @@ type Puller struct {
 	// fetched them after it.
 	loadMu sync.Mutex
 
-	mu             sync.Mutex
-	status         Status
-	firstSuccess   time.Time
-	lastConversion *Conversion
+	mu           sync.Mutex
+	status       Status
+	firstSuccess time.Time
 }
 
 // New returns a puller for cfg; an HTTPTimeout that is zero or negative
 // and a negative Interval take the defaults.
-func New(cfg Config, store Putter, tokens Tokens, logger Logger) *Puller {
+func New(cfg Config, tokens Tokens, logger Logger) *Puller {
 	if cfg.Interval < 0 {
 		cfg.Interval = DefaultInterval
 	}
@@ -136,7 +116,6 @@ func New(cfg Config, store Putter, tokens Tokens, logger Logger) *Puller {
 	}
 	return &Puller{
 		cfg:    cfg,
-		store:  store,
 		tokens: tokens,
 		log:    logger,
 		client: &http.Client{Timeout: cfg.HTTPTimeout},
@@ -152,7 +131,7 @@ func (p *Puller) Status() Status {
 
 // Run loads the documents from the source every interval until ctx ends,
 // starting with an immediate load. A failed load keeps the previous
-// documents and is retried on the next tick.
+// snapshots and is retried on the next tick.
 func (p *Puller) Run(ctx context.Context) {
 	if strings.TrimSpace(p.cfg.SourceURL) == "" {
 		p.log.Infof("policies: pull disabled, no source URL")
@@ -181,14 +160,14 @@ func (p *Puller) Run(ctx context.Context) {
 
 func (p *Puller) pull(ctx context.Context) {
 	if err := p.PullNow(ctx); err != nil {
-		p.log.Warnf("policies: pull failed, keeping the previous documents: %v", err)
+		p.log.Warnf("policies: pull failed, keeping the previous snapshots: %v", err)
 	}
 }
 
-// PullNow loads the documents once, as a tick of [Puller.Run] does, and
-// returns once they are stored or the load has failed. The documents it
-// stores were fetched after the call: a load already in progress finishes
-// first. A failed load keeps the previous documents. It loads whatever the
+// PullNow loads the snapshots once, as a tick of [Puller.Run] does, and
+// returns once they are loaded or the load has failed. The policies it
+// loads were fetched after the call: a load already in progress finishes
+// first. A failed load keeps the previous snapshots. It loads whatever the
 // pull interval, even 0; with no source URL it returns an error and loads
 // nothing.
 func (p *Puller) PullNow(ctx context.Context) error {
@@ -217,8 +196,8 @@ func (p *Puller) waitForToken(ctx context.Context) {
 }
 
 // PullOnce fetches the policy sets and the PIPs from the source and loads
-// them; the documents in the store are untouched when any step fails. Loads
-// run one at a time: a call waits for the load in progress to finish.
+// them into the snapshots. Loads run one at a time: a call waits for the
+// load in progress to finish.
 //
 // The load is reported at info until [Puller.PullNow], which every tick of
 // [Puller.Run] calls, has recorded a first success, and at debug from then
@@ -228,7 +207,10 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	defer p.loadMu.Unlock()
 	token := ""
 	if p.tokens != nil {
-		token = p.tokens.Token()
+		var err error
+		if token, err = p.tokens.Bearer(); err != nil {
+			return fmt.Errorf("fetch policySets: no token to present: %w", err)
+		}
 	}
 	policySets, err := p.fetch(ctx, p.cfg.SourceURL+"/access/v3/config/policySets", token)
 	if err != nil {
@@ -238,32 +220,12 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("fetch pips: %w", err)
 	}
-	policyList, stats, err := acconfig.ConvertPolicySets(policySets, p.log)
-	if err != nil {
-		return fmt.Errorf("convert policySets: %w", err)
-	}
-	conversion := Conversion(stats)
-	if stats.RulesSkipped > 0 || stats.PolicySetsSkipped > 0 {
-		p.log.Warnf("policies: conversion dropped data: %d/%d policy sets and %d/%d rules could not be converted (%d policies produced)",
-			stats.PolicySetsSkipped, stats.PolicySets, stats.RulesSkipped, stats.Rules, stats.Policies)
-	}
-	pipList, err := acconfig.ConvertPIPs(pipsRaw, p.log)
-	if err != nil {
-		return fmt.Errorf("convert pips: %w", err)
-	}
-	policies, err := simplifiedpolicies.NormalizePolicies(policyList)
-	if err != nil {
-		return fmt.Errorf("normalize policies: %w", err)
-	}
-	pipDoc, _, err := pips.NormalizeItems(pipList)
-	if err != nil {
-		return fmt.Errorf("normalize pips: %w", err)
-	}
-	if err := p.load(ctx, policies, pipDoc); err != nil {
-		return err
+	if p.cfg.Snapshots != nil {
+		if err := p.cfg.Snapshots.LoadSnapshots(ctx, policySets, pipsRaw); err != nil {
+			return fmt.Errorf("load snapshots: %w", err)
+		}
 	}
 	p.mu.Lock()
-	p.lastConversion = &conversion
 	first := p.firstSuccess.IsZero()
 	p.mu.Unlock()
 	// Every tick loads the source again, changed or not, so after the first
@@ -273,30 +235,7 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	if first {
 		report = p.log.Infof
 	}
-	report("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
-	return nil
-}
-
-// load completes the PIP document with the pinned entitlements and the
-// activation index of the general PIPs, then stores both documents in the
-// form [roundTrip] gives them.
-func (p *Puller) load(ctx context.Context, policies map[string]any, pipDoc *pips.PIPDocument) error {
-	pips.ApplyEntitlementsOverride(pipDoc, p.cfg.Entitlements)
-	pipDoc.Normalized.Activation.GeneralByResourceTypeOperation = pips.BuildActivationIndexFromPolicies(pipDoc.Normalized.Remote.General, policies)
-	policiesDoc, err := roundTrip(policies)
-	if err != nil {
-		return fmt.Errorf("encode policies: %w", err)
-	}
-	pipsDoc, err := roundTrip(pipDoc.Normalized)
-	if err != nil {
-		return fmt.Errorf("encode pips: %w", err)
-	}
-	if err := p.store.Put(ctx, []string{"policies"}, policiesDoc); err != nil {
-		return fmt.Errorf("store policies: %w", err)
-	}
-	if err := p.store.Put(ctx, []string{"pips"}, pipsDoc); err != nil {
-		return fmt.Errorf("store pips: %w", err)
-	}
+	report("policies: updated from %s", p.cfg.SourceURL)
 	return nil
 }
 
@@ -335,7 +274,6 @@ func (p *Puller) loaded() {
 		PoliciesLoaded: true,
 		FirstSuccessAt: p.firstSuccess.Format(time.RFC3339),
 		LastSuccessAt:  now.Format(time.RFC3339),
-		Conversion:     p.lastConversion,
 	}
 }
 
@@ -343,18 +281,4 @@ func (p *Puller) disabled(reason string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.status = Status{PoliciesLoaded: true, Reason: reason}
-}
-
-// roundTrip converts a Go value to the JSON values the store holds, with
-// numbers as json.Number, as OPA's own JSON decoding produces them.
-func roundTrip(v any) (any, error) {
-	raw, err := json.Marshal(v)
-	if err != nil {
-		return nil, err
-	}
-	var out any
-	if err := util.UnmarshalJSON(raw, &out); err != nil {
-		return nil, err
-	}
-	return out, nil
 }

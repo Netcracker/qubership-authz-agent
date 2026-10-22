@@ -16,7 +16,7 @@ package pull
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -26,12 +26,9 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"authz-agent/internal/pips"
 )
 
-// policySets is a v3 policy-sets response with one SIMPLIFIED policy set of
-// one rule and one DEFAULT policy set, which the converter skips.
+// policySets is a v3 policy-sets response; the puller hands it on as sent.
 const policySets = `{
   "hash": "hash-ps-v1",
   "lastModificationTimestamp": "2026-01-01T00:00:00",
@@ -51,8 +48,7 @@ const policySets = `{
   ]
 }`
 
-// pipsResponse is a v3 PIPs response with one TOKEN PIP and one FILTERED
-// PIP, which the converter skips.
+// pipsResponse is a v3 PIPs response; the puller hands it on as sent.
 const pipsResponse = `{
   "hash": "hash-pip-v1",
   "lastModificationTimestamp": "2026-01-01T00:00:00",
@@ -62,50 +58,31 @@ const pipsResponse = `{
   ]
 }`
 
-type store struct {
-	mu   sync.Mutex
-	puts map[string][]any
+// loader records the documents of every load; err, when set, is what
+// every load returns.
+type loader struct {
+	mu    sync.Mutex
+	loads [][2]string
+	err   error
 }
 
-func (s *store) Put(_ context.Context, path []string, value any) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.puts == nil {
-		s.puts = map[string][]any{}
-	}
-	key := strings.Join(path, "/")
-	s.puts[key] = append(s.puts[key], value)
-	return nil
+func (l *loader) LoadSnapshots(_ context.Context, policySets, pips []byte) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.loads = append(l.loads, [2]string{string(policySets), string(pips)})
+	return l.err
 }
 
-func (s *store) count(path string) int {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return len(s.puts[path])
-}
-
-// last decodes the last document stored at path through JSON.
-func (s *store) last(t *testing.T, path string) map[string]any {
-	t.Helper()
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	values := s.puts[path]
-	if len(values) == 0 {
-		t.Fatalf("nothing stored at %s", path)
-	}
-	raw, err := json.Marshal(values[len(values)-1])
-	if err != nil {
-		t.Fatal(err)
-	}
-	var doc map[string]any
-	if err := json.Unmarshal(raw, &doc); err != nil {
-		t.Fatal(err)
-	}
-	return doc
+func (l *loader) count() int {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return len(l.loads)
 }
 
 type tokens struct {
 	token string
+	// err, when set, is what Bearer returns instead of the token.
+	err   error
 	ready chan struct{}
 }
 
@@ -115,8 +92,8 @@ func readyTokens(token string) *tokens {
 	return &tokens{token: token, ready: ready}
 }
 
-func (t *tokens) Token() string          { return t.token }
-func (t *tokens) Ready() <-chan struct{} { return t.ready }
+func (t *tokens) Bearer() (string, error) { return t.token, t.err }
+func (t *tokens) Ready() <-chan struct{}  { return t.ready }
 
 type quiet struct{}
 
@@ -191,35 +168,27 @@ func waitFor(t *testing.T, what string, cond func() bool) {
 }
 
 // TestRun_LoadsTheSource: the first pull fetches both documents with the
-// bearer token, converts them, stores data.policies and data.pips, and
-// reports the policies loaded with the conversion counts.
+// bearer token, hands them to the snapshots as the source sent them, and
+// reports the policies loaded.
 func TestRun_LoadsTheSource(t *testing.T) {
 	srv, authorization := source(t, http.StatusOK)
-	st := &store{}
-	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, st, readyTokens("tok"), quiet{})
+	snaps := &loader{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, readyTokens("tok"), quiet{})
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go p.Run(ctx)
 
 	waitFor(t, "the first load", func() bool { return p.Status().PoliciesLoaded })
-	status := p.Status()
-	want := Conversion{PolicySets: 1, Rules: 1, Policies: 1}
-	if status.Conversion == nil || *status.Conversion != want || status.FirstSuccessAt == "" || status.Reason != "" {
-		t.Errorf("Status() = %+v, want conversion %+v with a first success time", status, want)
+	if status := p.Status(); status.FirstSuccessAt == "" || status.Reason != "" {
+		t.Errorf("Status() = %+v, want a first success time and no reason", status)
 	}
 	if *authorization != "Bearer tok" {
 		t.Errorf("Authorization sent = %q, want Bearer tok", *authorization)
 	}
-	if st.count("policies") != 1 || st.count("pips") != 1 {
-		t.Fatalf("stored %d policies and %d pips documents, want one each", st.count("policies"), st.count("pips"))
-	}
-	policies := st.last(t, "policies")
-	if len(policies) == 0 {
-		t.Errorf("data.policies = %v, want the normalized document", policies)
-	}
-	byName, _ := st.last(t, "pips")["byName"].(map[string]any)
-	if _, ok := byName["subject.azp"]; !ok || len(byName) != 1 {
-		t.Errorf("data.pips.byName = %v, want subject.azp alone", byName)
+	snaps.mu.Lock()
+	defer snaps.mu.Unlock()
+	if len(snaps.loads) == 0 || snaps.loads[0] != [2]string{policySets, pipsResponse} {
+		t.Errorf("loads = %q, want the two documents as sent", snaps.loads)
 	}
 }
 
@@ -230,7 +199,7 @@ func TestRun_LoadsTheSource(t *testing.T) {
 func TestRun_ReportsTheFirstLoadAtInfoAndTheRestAtDebug(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
 	rec := &recorder{}
-	p := New(Config{SourceURL: srv.URL, Interval: 20 * time.Millisecond}, &store{}, nil, rec)
+	p := New(Config{SourceURL: srv.URL, Interval: 20 * time.Millisecond}, nil, rec)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go p.Run(ctx)
@@ -247,41 +216,32 @@ func TestRun_ReportsTheFirstLoadAtInfoAndTheRestAtDebug(t *testing.T) {
 	}
 }
 
-// TestPullOnce_KeepsTheDocumentsOnFailure: a source that fails leaves the
-// store untouched and returns the error, and so does a source whose
-// documents cannot be converted.
-func TestPullOnce_KeepsTheDocumentsOnFailure(t *testing.T) {
+// TestPullOnce_LoadsNothingOnFailure: a source that fails hands nothing to
+// the snapshots and returns the error.
+func TestPullOnce_LoadsNothingOnFailure(t *testing.T) {
 	failing, _ := source(t, http.StatusInternalServerError)
-	broken := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte(`{"policySets": "no"`))
-	}))
-	defer broken.Close()
-	for name, url := range map[string]string{"an HTTP 500": failing.URL, "a body that is not JSON": broken.URL} {
-		t.Run(name, func(t *testing.T) {
-			st := &store{}
-			p := New(Config{SourceURL: url, Interval: time.Hour}, st, nil, quiet{})
-			if err := p.PullOnce(context.Background()); err == nil {
-				t.Fatal("PullOnce() = nil, want an error")
-			}
-			if st.count("policies") != 0 || st.count("pips") != 0 || p.Status().PoliciesLoaded {
-				t.Errorf("after the failure: %d policies, %d pips, status %+v; want nothing stored and not loaded", st.count("policies"), st.count("pips"), p.Status())
-			}
-		})
+	snaps := &loader{}
+	p := New(Config{SourceURL: failing.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
+	if err := p.PullOnce(context.Background()); err == nil {
+		t.Fatal("PullOnce() = nil, want an error")
+	}
+	if snaps.count() != 0 || p.Status().PoliciesLoaded {
+		t.Errorf("after the failure: %d loads, status %+v; want none and not loaded", snaps.count(), p.Status())
 	}
 }
 
 // TestPull_KeepsTheLoadedPoliciesWhenALaterPullFails: once a pull has loaded
-// the source, a pull that fails stores nothing, and the status that /health
+// the source, a pull that fails loads nothing, and the status that /health
 // and /ready read stays as the successful pull set it.
 func TestPull_KeepsTheLoadedPoliciesWhenALaterPullFails(t *testing.T) {
 	healthy, _ := source(t, http.StatusOK)
 	failing, _ := source(t, http.StatusInternalServerError)
-	st := &store{}
-	p := New(Config{SourceURL: healthy.URL, Interval: time.Hour}, st, nil, quiet{})
+	snaps := &loader{}
+	p := New(Config{SourceURL: healthy.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
 	p.pull(context.Background())
 	loaded := p.Status()
-	if !loaded.PoliciesLoaded || st.count("policies") != 1 || st.count("pips") != 1 {
-		t.Fatalf("after the first pull: %d policies, %d pips, status %+v; want one of each stored and loaded", st.count("policies"), st.count("pips"), loaded)
+	if !loaded.PoliciesLoaded || snaps.count() != 1 {
+		t.Fatalf("after the first pull: %d loads, status %+v; want one load and loaded", snaps.count(), loaded)
 	}
 
 	p.cfg.SourceURL = failing.URL
@@ -289,8 +249,32 @@ func TestPull_KeepsTheLoadedPoliciesWhenALaterPullFails(t *testing.T) {
 	if got := p.Status(); !reflect.DeepEqual(got, loaded) {
 		t.Errorf("Status() after the failed pull = %+v, want %+v", got, loaded)
 	}
-	if st.count("policies") != 1 || st.count("pips") != 1 {
-		t.Errorf("after the failed pull: %d policies and %d pips documents stored, want the one of each from the first pull", st.count("policies"), st.count("pips"))
+	if snaps.count() != 1 {
+		t.Errorf("loads after the failed pull = %d, want the one from the first pull", snaps.count())
+	}
+}
+
+// TestPullOnce_SendsNothingWithoutACurrentToken: a token source that has no
+// current token, such as one whose token expired after a failed refresh,
+// fails the pull before any request, with the source's error.
+func TestPullOnce_SendsNothingWithoutACurrentToken(t *testing.T) {
+	var requests atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+	}))
+	defer srv.Close()
+	expired := readyTokens("old")
+	expired.err = errors.New("m2m token: expired at 2026-11-04T12:00:00Z")
+	snaps := &loader{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, expired, quiet{})
+
+	err := p.PullOnce(context.Background())
+
+	if err == nil || !strings.Contains(err.Error(), "no token to present: m2m token: expired") {
+		t.Errorf("PullOnce() = %v, want the error of the token source", err)
+	}
+	if n := requests.Load(); n != 0 || snaps.count() != 0 {
+		t.Errorf("requests at the source = %d, loads = %d; want 0 and 0", n, snaps.count())
 	}
 }
 
@@ -298,7 +282,7 @@ func TestPull_KeepsTheLoadedPoliciesWhenALaterPullFails(t *testing.T) {
 // Authorization header.
 func TestPullOnce_WithoutTokens(t *testing.T) {
 	srv, authorization := source(t, http.StatusOK)
-	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, &store{}, nil, quiet{})
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, nil, quiet{})
 	if err := p.PullOnce(context.Background()); err != nil {
 		t.Fatalf("PullOnce() = %v", err)
 	}
@@ -320,40 +304,43 @@ func TestRun_Disabled(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			st := &store{}
-			p := New(tc.cfg, st, nil, quiet{})
+			snaps := &loader{}
+			tc.cfg.Snapshots = snaps
+			p := New(tc.cfg, nil, quiet{})
 			p.Run(context.Background())
 			if status := p.Status(); !status.PoliciesLoaded || status.Reason != tc.reason {
 				t.Errorf("Status() = %+v, want loaded with reason %q", status, tc.reason)
 			}
-			if st.count("policies") != 0 {
-				t.Errorf("stored %d policies documents, want none", st.count("policies"))
+			if snaps.count() != 0 {
+				t.Errorf("loads = %d, want none", snaps.count())
 			}
 		})
 	}
 }
 
-// TestLoad_PinsTheEntitlements: the entitlements PIP of the deployment is
-// added to the PIP document as it is stored.
-func TestLoad_PinsTheEntitlements(t *testing.T) {
+// TestPullOnce_ReportsAFailedLoad: documents the snapshots cannot read fail
+// the pull with the snapshots' error, and the policies are not loaded.
+func TestPullOnce_ReportsAFailedLoad(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
-	st := &store{}
-	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Entitlements: &pips.EntitlementsConfig{URL: "http://entitlements:8080", HTTPTimeoutSeconds: 2, HTTPRetries: 3}}, st, nil, quiet{})
-	if err := p.PullOnce(context.Background()); err != nil {
-		t.Fatalf("PullOnce() = %v", err)
+	snaps := &loader{err: errors.New("the export names no tenant")}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
+	p.pull(context.Background())
+
+	err := p.PullOnce(context.Background())
+
+	if err == nil || !strings.Contains(err.Error(), "load snapshots: the export names no tenant") {
+		t.Errorf("PullOnce() = %v, want the error of the snapshots", err)
 	}
-	remote, _ := st.last(t, "pips")["remote"].(map[string]any)
-	entitlements, _ := remote["entitlements"].(map[string]any)
-	if !reflect.DeepEqual(entitlements["url"], "http://entitlements:8080") {
-		t.Errorf("data.pips.remote.entitlements = %v, want the pinned URL", entitlements)
+	if p.Status().PoliciesLoaded {
+		t.Errorf("Status() = %+v, want not loaded", p.Status())
 	}
 }
 
-// TestPullNow_StoresTheDocumentsOfALaterChangeLast: a load that fetched the
+// TestPullNow_LoadsTheSnapshotsOfALaterChangeLast: a load that fetched the
 // policy sets before a change at the source is still running when PullNow is
 // called; PullNow waits for it, and the policies fetched after the change
-// are stored last.
-func TestPullNow_StoresTheDocumentsOfALaterChangeLast(t *testing.T) {
+// are loaded last.
+func TestPullNow_LoadsTheSnapshotsOfALaterChangeLast(t *testing.T) {
 	var role atomic.Value
 	role.Store("ROLE_V1")
 	fetched := make(chan struct{})
@@ -377,8 +364,8 @@ func TestPullNow_StoresTheDocumentsOfALaterChangeLast(t *testing.T) {
 	var releaseOnce sync.Once
 	defer srv.Close()
 	defer releaseOnce.Do(func() { close(release) })
-	st := &store{}
-	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, st, nil, quiet{})
+	snaps := &loader{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
 
 	earlier := make(chan error, 1)
 	go func() { earlier <- p.PullOnce(context.Background()) }()
@@ -387,7 +374,7 @@ func TestPullNow_StoresTheDocumentsOfALaterChangeLast(t *testing.T) {
 	now := make(chan error, 1)
 	go func() { now <- p.PullNow(context.Background()) }()
 	// A PullNow that does not wait for the earlier load returns here, before
-	// the earlier load stores the policy sets it fetched first.
+	// the earlier load hands on the policy sets it fetched first.
 	select {
 	case err := <-now:
 		now <- err
@@ -401,43 +388,38 @@ func TestPullNow_StoresTheDocumentsOfALaterChangeLast(t *testing.T) {
 	if err := <-now; err != nil {
 		t.Fatalf("PullNow() = %v", err)
 	}
-	if got, want := storedRoles(t, st), []string{"ROLE_V1", "ROLE_V2"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("roles of the stored policies, in store order = %q, want %q", got, want)
+	if got, want := loadedRoles(snaps), []string{"ROLE_V1", "ROLE_V2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("roles of the loaded policy sets, in load order = %q, want %q", got, want)
 	}
 }
 
-// storedRoles returns, for every document stored at policies in store order,
+// loadedRoles returns, for every policy-sets document loaded in load order,
 // which of ROLE_V1 and ROLE_V2 it names.
-func storedRoles(t *testing.T, st *store) []string {
-	t.Helper()
-	st.mu.Lock()
-	defer st.mu.Unlock()
+func loadedRoles(l *loader) []string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	var roles []string
-	for _, doc := range st.puts["policies"] {
-		raw, err := json.Marshal(doc)
-		if err != nil {
-			t.Fatal(err)
-		}
+	for _, load := range l.loads {
 		switch {
-		case strings.Contains(string(raw), "ROLE_V1"):
+		case strings.Contains(load[0], "ROLE_V1"):
 			roles = append(roles, "ROLE_V1")
-		case strings.Contains(string(raw), "ROLE_V2"):
+		case strings.Contains(load[0], "ROLE_V2"):
 			roles = append(roles, "ROLE_V2")
 		default:
-			roles = append(roles, "neither: "+string(raw))
+			roles = append(roles, "neither: "+load[0])
 		}
 	}
 	return roles
 }
 
 func TestPullNow_WithoutASourceURLLoadsNothing(t *testing.T) {
-	st := &store{}
-	p := New(Config{Interval: time.Hour}, st, nil, quiet{})
+	snaps := &loader{}
+	p := New(Config{Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
 
 	err := p.PullNow(context.Background())
 
-	if err == nil || !strings.Contains(err.Error(), "source URL empty") || st.count("policies") != 0 || p.Status().PoliciesLoaded {
-		t.Errorf("PullNow() = %v, %d policies stored, Status() = %+v; want the empty source URL reported, nothing stored, not loaded",
-			err, st.count("policies"), p.Status())
+	if err == nil || !strings.Contains(err.Error(), "source URL empty") || snaps.count() != 0 || p.Status().PoliciesLoaded {
+		t.Errorf("PullNow() = %v, %d loads, Status() = %+v; want the empty source URL reported, nothing loaded, not loaded",
+			err, snaps.count(), p.Status())
 	}
 }

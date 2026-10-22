@@ -17,6 +17,7 @@ package legacyvalue
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -335,4 +336,49 @@ func recordText(r Record) string {
 	}
 	return fmt.Sprintf("{s: %s, t: %s, j: %s, k: %q, ck: %q, ks: %q, o: %q, n: %s}",
 		r.State, r.Class, r.Type, deref(r.Key), deref(r.CaseKey), r.Keys, deref(r.Structure), n)
+}
+
+// writeQuoted writes what strconv.Quote returns, on both sides of the plain
+// ASCII it writes without escaping: the edges of printable ASCII, a quote, a
+// backslash, a control character, DEL, and a letter beyond ASCII.
+func TestWriteQuotedQuotesAsStrconv(t *testing.T) {
+	for _, s := range []string{"", "plain", " ", "~", "a\"b", `c\d`, "x\x01", "tab\t", "\x7f", "é", "a\xffb"} {
+		var b strings.Builder
+		writeQuoted(&b, s)
+		if got, want := b.String(), strconv.Quote(s); got != want {
+			t.Errorf("writeQuoted(%q) = %s, want %s", s, got, want)
+		}
+	}
+}
+
+// The record OfParts builds with some of the parts of a list is the record of
+// Of with the other parts left out, null elements, nested lists, and objects
+// included.
+func TestOfPartsLeavesOutTheOtherParts(t *testing.T) {
+	docs := []string{`["Straße", "x\"y", 1.50, true]`, `[null, "a", [2, null], {"B": []}]`, `[1, 1, "1"]`, `[]`,
+		`"a"`, `{"a": [1]}`}
+	for _, doc := range docs {
+		v := mustDecode(t, doc)
+		whole := Of(v)
+		for p := Parts(0); p <= AllParts; p++ {
+			want := whole
+			if _, ok := v.([]jsonvalue.Value); ok {
+				if p&PartKey == 0 {
+					want.Key, want.CaseKey = nil, nil
+				}
+				if p&PartKeys == 0 {
+					want.Keys = nil
+				}
+				if p&PartStructure == 0 {
+					want.Structure = nil
+				}
+				if p&PartElements == 0 {
+					want.Elements = nil
+				}
+			}
+			if got := OfParts(v, p); !reflect.DeepEqual(got, want) {
+				t.Errorf("OfParts(%s, %04b) = %s, want %s", doc, p, recordText(got), recordText(want))
+			}
+		}
+	}
 }

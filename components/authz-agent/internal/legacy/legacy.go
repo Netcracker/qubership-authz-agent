@@ -56,6 +56,16 @@ type Resource struct {
 	ResourceType any
 	Operation    any
 	Resource     any
+	// Raw holds the same three fields as the request wrote them, member
+	// order and number text included, for the generated policies; a field
+	// the request left out is empty.
+	Raw RawResource
+}
+
+// RawResource is the JSON text of a resource's fields as the request wrote
+// them; an empty field is one the request left out.
+type RawResource struct {
+	Type, Operation, Resource json.RawMessage
 }
 
 // Entry is the legacy id and operation behind one Resource of a
@@ -232,14 +242,11 @@ func CheckResourceBulkOperationsV2(body []byte) ([]Resource, []Entry, *RequestEr
 }
 
 // CheckFilter builds the resource of the check/filter routes from the query
-// parameters. resourceType must not be blank; an operation that is blank
-// means ALL. Both values reach the policy as sent, spaces included.
+// parameters. resourceType must not be blank. Both values are kept as sent,
+// spaces included; an operation the request left out is empty.
 func CheckFilter(resourceType, operation string) ([]Resource, *RequestError) {
 	if strings.TrimSpace(resourceType) == "" {
 		return nil, errBadRequest
-	}
-	if strings.TrimSpace(operation) == "" {
-		operation = "ALL"
 	}
 	return []Resource{{ResourceType: resourceType, Operation: operation, Resource: map[string]any{}}}, nil
 }
@@ -270,7 +277,8 @@ func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
 	if err != nil {
 		return Resource{}, err
 	}
-	return Resource{ResourceType: t, Operation: o, Resource: r}, nil
+	return Resource{ResourceType: t, Operation: o, Resource: r,
+		Raw: RawResource{Type: typ, Operation: op, Resource: res}}, nil
 }
 
 // expand appends one Resource and Entry per operation of a bulk/operations
@@ -286,6 +294,7 @@ func expand(resources []Resource, entries []Entry, typ json.RawMessage, ops []js
 			return nil, nil, err
 		}
 		r.Operation = name
+		r.Raw.Operation = op
 		resources = append(resources, r)
 		entries = append(entries, Entry{ID: id, Operation: name})
 	}
@@ -502,68 +511,6 @@ func CheckResourceBulkOperationsResponse(result any, entries []Entry, v2 bool) [
 		return mustJSON(map[string]any{"decision": byOperation})
 	}
 	return mustJSON(byOperation)
-}
-
-// filterResponse is the wire shape of the check/filter routes, in the field
-// order the legacy service used.
-type filterResponse struct {
-	CalculationResult      string  `json:"calculationResult"`
-	FilterCondition        string  `json:"filterCondition"`
-	MongodbFilterCondition string  `json:"mongodbFilterCondition"`
-	RsqlFilterCondition    string  `json:"rsqlFilterCondition"`
-	SQLFilterCondition     string  `json:"sqlFilterCondition"`
-	CustomFilterCondition  *string `json:"customFilterCondition"`
-}
-
-// FilterResponse is the body of the check/filter routes. A missing or
-// denied first result is DENY with every condition empty. An allowed result
-// without predicates of the types rsql, querydsl, mongodb, sql, or custom is
-// ALLOW. With any of them it is USE_FILTER_CONDITION: the querydsl
-// predicate as filterCondition, the others in their own fields, and
-// customFilterCondition null unless a custom predicate exists.
-func FilterResponse(result any) []byte {
-	r := first(results(result))
-	if !allowed(r) {
-		return mustJSON(filterResponse{CalculationResult: "DENY"})
-	}
-	predicates, _ := object(r)["predicates"].([]any)
-	rsql := predicate(predicates, "rsql")
-	querydsl := predicate(predicates, "querydsl")
-	mongodb := predicate(predicates, "mongodb")
-	sql := predicate(predicates, "sql")
-	custom := predicate(predicates, "custom")
-	resp := filterResponse{CalculationResult: "ALLOW", FilterCondition: querydsl}
-	if custom != "" {
-		resp.CustomFilterCondition = &custom
-	}
-	if rsql != "" || querydsl != "" || mongodb != "" || sql != "" || custom != "" {
-		resp.CalculationResult = "USE_FILTER_CONDITION"
-		resp.MongodbFilterCondition = mongodb
-		resp.RsqlFilterCondition = rsql
-		resp.SQLFilterCondition = sql
-	}
-	return mustJSON(resp)
-}
-
-// predicate is the text of the first predicate of the given type: a string
-// as it is, any other value as JSON, and "" when the result has none or
-// the predicate is null.
-func predicate(predicates []any, typ string) string {
-	for _, p := range predicates {
-		fields := object(p)
-		if fields["predicateType"] != typ {
-			continue
-		}
-		switch v := fields["predicate"].(type) {
-		case nil:
-			return ""
-		case string:
-			return v
-		default:
-			return string(mustJSON(v))
-		}
-	}
-	return ""
 }
 
 func object(v any) map[string]any {

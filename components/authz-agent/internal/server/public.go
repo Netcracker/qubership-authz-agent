@@ -91,7 +91,7 @@ func (s *Server) checkResource(v2 bool) fiber.Handler {
 		if err != nil {
 			return s.refuse(c, err)
 		}
-		return s.check(c, resources, func(result any) []byte {
+		return s.decide(c, resources, func(result any) []byte {
 			return legacy.CheckResourceResponse(result, v2)
 		})
 	}
@@ -102,7 +102,7 @@ func (s *Server) checkResourceBulk(c *fiber.Ctx) error {
 	if err != nil {
 		return s.refuse(c, err)
 	}
-	return s.check(c, resources, func(result any) []byte {
+	return s.decide(c, resources, func(result any) []byte {
 		return legacy.CheckResourceBulkResponse(result, ids)
 	})
 }
@@ -123,7 +123,7 @@ func (s *Server) checkResourceBulkOperations(v2 bool) fiber.Handler {
 			// the Lua filter answered it without calling OPA.
 			return sendJSON(c, http.StatusOK, legacy.CheckResourceBulkOperationsResponse(nil, nil, v2))
 		}
-		return s.check(c, resources, func(result any) []byte {
+		return s.decide(c, resources, func(result any) []byte {
 			return legacy.CheckResourceBulkOperationsResponse(result, entries, v2)
 		})
 	}
@@ -134,7 +134,7 @@ func (s *Server) checkFilter(c *fiber.Ctx) error {
 	if err != nil {
 		return s.refuse(c, err)
 	}
-	return s.check(c, resources, legacy.FilterResponse)
+	return s.filter(c, resources[0])
 }
 
 // lastQuery is the value of the last query parameter named key, "" when
@@ -147,27 +147,6 @@ func lastQuery(c *fiber.Ctx, key string) string {
 		}
 	}
 	return value
-}
-
-// check evaluates the canonical decision for a legacy request and writes
-// the response: the body shape builds from the decision, or the authError
-// as {"message": ...} with its status when the policy refused the request.
-// An undefined decision gets the empty envelope without a result, and a
-// failed evaluation 500, so that both stay visible as they were through
-// Envoy.
-func (s *Server) check(c *fiber.Ctx, resources []legacy.Resource, shape func(result any) []byte) error {
-	input := legacy.Input(c.GetReqHeaders(), resources)
-	result, defined, err := s.evaluate(c, []string{"authorize"}, input)
-	if err != nil {
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	if !defined {
-		return c.JSON(fiber.Map{})
-	}
-	if status, body, refused := legacy.AuthError(result); refused {
-		return sendJSON(c, status, body)
-	}
-	return sendJSON(c, http.StatusOK, shape(result))
 }
 
 // refuse writes a request the legacy API rejects before any policy runs:

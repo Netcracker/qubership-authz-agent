@@ -20,13 +20,12 @@ package server
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/engine"
-	"authz-agent/components/authz-agent/internal/pull"
+	"authz-agent/components/authz-agent/internal/snapshot"
 )
 
 // LegacyAPIVersion is the body of GET /api-version: the specification
@@ -66,6 +65,13 @@ type Options struct {
 	// are stored. Only a build with the paritytest tag routes a request to
 	// it.
 	PullNow func(ctx context.Context) error
+	// Snapshots answers check/resource and its bulk routes with the
+	// generated policies of the request's tenant; nil answers them, like
+	// check/filter, with the embedded policies.
+	Snapshots *snapshot.Registry
+	// DefaultTenant is the tenant of a request that names none by the
+	// query parameter tenant_id or the header Tenant.
+	DefaultTenant func() string
 }
 
 // Server owns the handlers.
@@ -102,15 +108,16 @@ type Report struct {
 	// Bootstrap carries the counts when a bootstrap threshold is not met or
 	// a required provider is missing.
 	Bootstrap *authn.Details
-	// Conversion counts the last policy conversion, on either outcome.
-	Conversion *pull.Conversion
-	Loaded     bool
+	Loaded    bool
+	// Snapshots is the state of every tenant's generated policies, nil
+	// without a registry.
+	Snapshots *snapshot.Health
 }
 
 // HealthResponse is the body of a healthy GET /health.
 type HealthResponse struct {
-	Status           string           `json:"status"`
-	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
+	Status    string           `json:"status"`
+	Snapshots *snapshot.Health `json:"snapshots,omitempty"`
 }
 
 // HealthErrorResponse is the body of a 503 GET /health or GET /ready.
@@ -124,24 +131,26 @@ type HealthErrorResponse struct {
 // separate engine to wait for. The field stays because the body's shape is
 // what the platform's probes and dashboards already read.
 type HealthErrorDetails struct {
-	OPAReady         *bool            `json:"opaReady,omitempty"`
-	ConfigError      string           `json:"configError,omitempty"`
-	Bootstrap        *authn.Details   `json:"bootstrap,omitempty"`
-	PolicyConversion *pull.Conversion `json:"policyConversion,omitempty"`
+	OPAReady    *bool            `json:"opaReady,omitempty"`
+	ConfigError string           `json:"configError,omitempty"`
+	Bootstrap   *authn.Details   `json:"bootstrap,omitempty"`
+	Snapshots   *snapshot.Health `json:"snapshots,omitempty"`
 }
 
-// health answers 200 with the conversion counts
-// when healthy, 503 with the reason and its details otherwise. The
-// policies' first load is not part of it, so a liveness probe does not
-// restart a service that is still waiting for its source; /ready carries
-// that.
+// health answers 200 with the state of every
+// tenant's generated policies when healthy, 503 with the reason and its
+// details otherwise. A tenant whose candidate was refused leaves the
+// service healthy: the tenant names the refusal, and the other tenants
+// are served. The policies' first load is not part of it, so a liveness
+// probe does not restart a service that is still waiting for its source;
+// /ready carries that.
 func (s *Server) health(c *fiber.Ctx) error {
 	if s.opts.Health == nil {
 		return c.JSON(HealthResponse{Status: "healthy"})
 	}
 	report := s.opts.Health()
 	if report.Healthy {
-		return c.JSON(HealthResponse{Status: "healthy", PolicyConversion: report.Conversion})
+		return c.JSON(HealthResponse{Status: "healthy", Snapshots: report.Snapshots})
 	}
 	return unavailable(c, report)
 }
@@ -169,10 +178,10 @@ func unavailable(c *fiber.Ctx, report Report) error {
 	return c.Status(http.StatusServiceUnavailable).JSON(HealthErrorResponse{
 		Message: report.Message,
 		Details: &HealthErrorDetails{
-			OPAReady:         &ready,
-			ConfigError:      report.ConfigError,
-			Bootstrap:        report.Bootstrap,
-			PolicyConversion: report.Conversion,
+			OPAReady:    &ready,
+			ConfigError: report.ConfigError,
+			Bootstrap:   report.Bootstrap,
+			Snapshots:   report.Snapshots,
 		},
 	})
 }
@@ -185,17 +194,4 @@ func apiVersion(c *fiber.Ctx) error {
 // opaError writes an error body in the shape of OPA's REST API.
 func opaError(c *fiber.Ctx, status int, code, message string) error {
 	return c.Status(status).JSON(fiber.Map{"code": code, "message": message})
-}
-
-// evaluate runs the decision at segments with input. defined is false when
-// the document is undefined.
-func (s *Server) evaluate(c *fiber.Ctx, segments []string, input any) (result any, defined bool, err error) {
-	result, defined, err = s.engine.Eval(c.UserContext(), segments, input)
-	if err != nil {
-		// Reported here because the caller answers 500 and reports nothing.
-		s.opts.Log.ErrorC(c.UserContext(), "decision failed path=%s: %v", strings.Join(segments, "/"), err)
-		return nil, false, err
-	}
-	s.opts.Log.DebugC(c.UserContext(), "decision path=%s defined=%t", strings.Join(segments, "/"), defined)
-	return result, defined, nil
 }
