@@ -1,0 +1,392 @@
+{
+  "sp58-assign-level-blank-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level ' ' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level ' ' is incorrect"}}
+  },
+  "sp58-assign-level-edge-lf": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level '\ncustom\n' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level '\ncustom\n' is incorrect"}}
+  },
+  "sp58-assign-level-edge-nbsp": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level ' custom ' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level ' custom ' is incorrect"}}
+  },
+  "sp58-assign-level-edge-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level ' custom ' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level ' custom ' is incorrect"}}
+  },
+  "sp58-assign-level-edge-tab": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level '\tcustom\t' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level '\tcustom\t' is incorrect"}}
+  },
+  "sp58-assign-level-empty-string": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level '' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level '' is incorrect"}}
+  },
+  "sp58-assign-level-null": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-level-one-element-list": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-level-other-type": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":400,"body":{"message":"Provided level '5' is incorrect"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":400,"message":{"message":"Provided level '5' is incorrect"}}
+  },
+  "sp58-assign-mapping-absent": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":500}
+  },
+  "sp58-assign-mapping-blank-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-mapping-empty-string": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from String value (token `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-mapping-null": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":500}
+  },
+  "sp58-assign-permission-absent": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":500}
+  },
+  "sp58-assign-permission-blank-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-permission-edge-lf": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-permission-edge-nbsp": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-permission-edge-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-permission-edge-tab": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-permission-empty-string": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-permission-null": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":500}
+  },
+  "sp58-assign-permission-one-element-list": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-permission-other-type": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-pipnames-blank-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-pipnames-empty-string": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot coerce empty String (\"\") to element of `\u003credacted\u003e` (but could if coercion was enabled using `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-pipnames-null": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-pipnames-other-type": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('subject.permissions')"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot construct instance of `\u003credacted\u003e` (although at least one Creator exists): no String-argument constructor/factory method to deserialize from String value ('subject.permissions')"
+    }
+  },
+  "sp58-assign-reference-first": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-reference-last": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-blank-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-edge-lf": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-edge-nbsp": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-edge-space": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-edge-tab": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-empty-string": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  },
+  "sp58-assign-role-null": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":500,"body":{"message":"internal_server_error"}},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":500}
+  },
+  "sp58-assign-role-one-element-list": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {
+      "status": 400,
+      "body": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    },
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {
+      "status": 400,
+      "message": "Cannot deserialize value of type `\u003credacted\u003e` from Array value (token `\u003credacted\u003e`)"
+    }
+  },
+  "sp58-assign-role-other-type": {
+    "check-resource-v1-outcome/sequence/after": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/before": {"status":200,"decision":false},
+    "load-simplified-policies-v1/sequence/declare-the-domain": {"status":201},
+    "load-simplified-policies-v1/sequence/write-the-policy": {"status":200},
+    "pap-error-v1/sequence/assign": {"status":200,"body":null},
+    "pap-read/sequence/read": {"status":200,"body":{"level":"custom","permissions":[]}},
+    "pap-status-v1/sequence/assign": {"status":200}
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "d2r58-c97cd09664": {
+    "check-filter-v1-outcome/regular/after-q0": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q0": {"status":200,"decision":{"READ":[],"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/after-q1": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q1": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":200,"allowed":[]},
+    "check-resource-bulk-v1-outcome/regular/q3": {"status":400,"message":{"message":"The request 'operation' cannot be empty"}},
+    "import-customization-v1/regular/custom": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with '8a917d1a-8a30-841f-e410-6147ed2407ac' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "d2r58-f9-control-first-or": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

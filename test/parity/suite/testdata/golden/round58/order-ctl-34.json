@@ -1,0 +1,15 @@
+{
+  "r58ord-4b582dc5fe-ctl34": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-diff2-34-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-f33-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

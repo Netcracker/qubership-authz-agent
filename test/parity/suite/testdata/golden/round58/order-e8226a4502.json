@@ -1,0 +1,26 @@
+{
+  "r58ord-e8226a4502": {
+    "check-filter-v1-outcome/regular/filter-both": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": "",
+        "mongodbFilterCondition": "",
+        "rsqlFilterCondition": "",
+        "sqlFilterCondition": "",
+        "customFilterCondition": null
+      }
+    },
+    "import-customization-v1/regular/first": {"status":200},
+    "import-customization-v1/regular/second": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-e8226a4502-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-e8226a4502-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

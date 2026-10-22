@@ -1,0 +1,40 @@
+{
+  "r58ord-diff2-46-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-f45-control-last-or": {
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-read": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-n-when-the-pip-was-skipped": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r58ord-f78051e156-ctl46": {
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "r58ord-f996afd0dd-ctl46": {
+    "import-customization-v1/regular/custom": {
+      "status": 400,
+      "message": [
+        {
+          "message": "Cannot find referenced item. Policy Set with 'c1270d9d-d6a2-e1f8-efa1-33e7a06734e7' id is absent on 'PROJECT' level.",
+          "priority": "ERROR"
+        }
+      ]
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "r58ord-fad2fd51b7-ctl46": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [\\u00A0true\\u00A0]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    }
+  },
+  "r58ord-ffb3d04d18-ctl46": {
+    "load-policy-sets-v1/regular/upload-1": {
+      "status": 400,
+      "message": "Expression [\\u00A0true\\u00A0]: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage."
+    }
+  }
+}
