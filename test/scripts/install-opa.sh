@@ -99,8 +99,12 @@ trap cleanup EXIT
 echo "Installing OPA v${OPA_VERSION} (${OPA_PLATFORM})"
 echo "Download URL: ${OPA_DOWNLOAD_URL}"
 
-curl -fsSL "${OPA_DOWNLOAD_URL}" -o "${tmp_bin}"
-curl -fsSL "${OPA_DOWNLOAD_SHA_URL}" -o "${tmp_sha}"
+# Retry transient network failures, and abort a transfer that stalls below 1 KB/s for a minute so
+# that it is retried too. --retry-all-errors needs curl 7.71.0 or later. The SHA check below still
+# rejects a corrupt download.
+curl_opts=(-fsSL --connect-timeout 30 --retry 5 --retry-delay 2 --retry-all-errors --speed-limit 1024 --speed-time 60)
+curl "${curl_opts[@]}" "${OPA_DOWNLOAD_URL}" -o "${tmp_bin}"
+curl "${curl_opts[@]}" "${OPA_DOWNLOAD_SHA_URL}" -o "${tmp_sha}"
 
 expected_sha="$(awk '{print $1}' "${tmp_sha}")"
 actual_sha="$(sha256_file "${tmp_bin}")"
