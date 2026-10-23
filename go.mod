@@ -3,7 +3,7 @@ module authz-agent
 go 1.26.8
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.15
+	github.com/gofiber/fiber/v2 v2.52.16
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/lestrrat-go/jwx/v3 v3.4.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.3
