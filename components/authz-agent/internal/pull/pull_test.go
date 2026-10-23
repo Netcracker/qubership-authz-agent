@@ -20,8 +20,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -62,10 +60,6 @@ const pipsResponse = `{
     {"name": "subject.filtered", "pipType": "FILTERED", "domain": "TestDomain", "tenantId": "default"}
   ]
 }`
-
-const simplePolicies = `[{"component": "TestDomain", "resourceType": "TestResource", "operation": "READ", "roles": ["ROLE_TEST"]}]`
-
-const simplePIPs = `[{"name": "subject.azp", "pipType": "TOKEN", "claim": "azp"}]`
 
 type store struct {
 	mu   sync.Mutex
@@ -160,13 +154,11 @@ func (r *recorder) updates() []string {
 }
 
 // source serves the v3 responses and records the Authorization header of
-// the last request and the number of requests.
-func source(t *testing.T, status int) (*httptest.Server, *string, *int) {
+// the last request.
+func source(t *testing.T, status int) (*httptest.Server, *string) {
 	t.Helper()
 	var authorization string
-	var requests int
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requests++
 		authorization = r.Header.Get("Authorization")
 		if r.Header.Get("Accept") != "application/json" {
 			t.Errorf("Accept = %q, want application/json", r.Header.Get("Accept"))
@@ -182,7 +174,7 @@ func source(t *testing.T, status int) (*httptest.Server, *string, *int) {
 		}
 	}))
 	t.Cleanup(srv.Close)
-	return srv, &authorization, &requests
+	return srv, &authorization
 }
 
 func waitFor(t *testing.T, what string, cond func() bool) {
@@ -201,7 +193,7 @@ func waitFor(t *testing.T, what string, cond func() bool) {
 // bearer token, converts them, stores data.policies and data.pips, and
 // reports the policies loaded with the conversion counts.
 func TestRun_LoadsTheSource(t *testing.T) {
-	srv, authorization, _ := source(t, http.StatusOK)
+	srv, authorization := source(t, http.StatusOK)
 	st := &store{}
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, st, readyTokens("tok"), quiet{})
 	ctx, cancel := context.WithCancel(context.Background())
@@ -235,7 +227,7 @@ func TestRun_LoadsTheSource(t *testing.T) {
 // the first one said. Only the first is reported at info; at the default
 // interval of 30 seconds the rest would be 2880 identical lines a day.
 func TestRun_ReportsTheFirstLoadAtInfoAndTheRestAtDebug(t *testing.T) {
-	srv, _, _ := source(t, http.StatusOK)
+	srv, _ := source(t, http.StatusOK)
 	rec := &recorder{}
 	p := New(Config{SourceURL: srv.URL, Interval: 20 * time.Millisecond}, &store{}, nil, rec)
 	ctx, cancel := context.WithCancel(context.Background())
@@ -258,7 +250,7 @@ func TestRun_ReportsTheFirstLoadAtInfoAndTheRestAtDebug(t *testing.T) {
 // store untouched and returns the error, and so does a source whose
 // documents cannot be converted.
 func TestPullOnce_KeepsTheDocumentsOnFailure(t *testing.T) {
-	failing, _, _ := source(t, http.StatusInternalServerError)
+	failing, _ := source(t, http.StatusInternalServerError)
 	broken := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(`{"policySets": "no"`))
 	}))
@@ -277,10 +269,34 @@ func TestPullOnce_KeepsTheDocumentsOnFailure(t *testing.T) {
 	}
 }
 
+// TestPull_KeepsTheLoadedPoliciesWhenALaterPullFails: once a pull has loaded
+// the source, a pull that fails stores nothing, and the status that /health
+// and /ready read stays as the successful pull set it.
+func TestPull_KeepsTheLoadedPoliciesWhenALaterPullFails(t *testing.T) {
+	healthy, _ := source(t, http.StatusOK)
+	failing, _ := source(t, http.StatusInternalServerError)
+	st := &store{}
+	p := New(Config{SourceURL: healthy.URL, Interval: time.Hour}, st, nil, quiet{})
+	p.pull(context.Background())
+	loaded := p.Status()
+	if !loaded.PoliciesLoaded || st.count("policies") != 1 || st.count("pips") != 1 {
+		t.Fatalf("after the first pull: %d policies, %d pips, status %+v; want one of each stored and loaded", st.count("policies"), st.count("pips"), loaded)
+	}
+
+	p.cfg.SourceURL = failing.URL
+	p.pull(context.Background())
+	if got := p.Status(); !reflect.DeepEqual(got, loaded) {
+		t.Errorf("Status() after the failed pull = %+v, want %+v", got, loaded)
+	}
+	if st.count("policies") != 1 || st.count("pips") != 1 {
+		t.Errorf("after the failed pull: %d policies and %d pips documents stored, want the one of each from the first pull", st.count("policies"), st.count("pips"))
+	}
+}
+
 // TestPullOnce_WithoutTokens: with no token source the fetch carries no
 // Authorization header.
 func TestPullOnce_WithoutTokens(t *testing.T) {
-	srv, authorization, _ := source(t, http.StatusOK)
+	srv, authorization := source(t, http.StatusOK)
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, &store{}, nil, quiet{})
 	if err := p.PullOnce(context.Background()); err != nil {
 		t.Fatalf("PullOnce() = %v", err)
@@ -290,9 +306,8 @@ func TestPullOnce_WithoutTokens(t *testing.T) {
 	}
 }
 
-// TestRun_Disabled: without a source, or with a zero interval, with or
-// without a mount, the status reports the policies as loaded with the
-// reason, so readiness does not wait.
+// TestRun_Disabled: without a source, or with a zero interval, the status
+// reports the policies as loaded with the reason, so readiness does not wait.
 func TestRun_Disabled(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -301,7 +316,6 @@ func TestRun_Disabled(t *testing.T) {
 	}{
 		{"no source", Config{Interval: time.Second}, "pull disabled: source URL empty"},
 		{"a zero interval", Config{SourceURL: "http://source", Interval: 0}, "pull disabled: interval is 0"},
-		{"a mount with a zero interval", Config{MountDir: t.TempDir(), Interval: 0}, "mount watcher disabled: interval is 0"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -318,50 +332,10 @@ func TestRun_Disabled(t *testing.T) {
 	}
 }
 
-// TestRun_Mount: a mount directory wins over the source, which is never
-// asked; its files are loaded when they appear and reloaded when either
-// changes, and left alone otherwise.
-func TestRun_Mount(t *testing.T) {
-	dir := t.TempDir()
-	write := func(name, content string) {
-		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
-	write(MountPoliciesFile, simplePolicies)
-	write(MountPIPsFile, simplePIPs)
-	srv, _, requests := source(t, http.StatusOK)
-	st := &store{}
-	p := New(Config{SourceURL: srv.URL, MountDir: dir, Interval: 20 * time.Millisecond}, st, nil, quiet{})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go p.Run(ctx)
-
-	waitFor(t, "the mount to load", func() bool { return p.Status().PoliciesLoaded })
-	if st.count("policies") != 1 || st.count("pips") != 1 {
-		t.Fatalf("stored %d policies and %d pips documents, want one each", st.count("policies"), st.count("pips"))
-	}
-	time.Sleep(60 * time.Millisecond)
-	if st.count("policies") != 1 {
-		t.Errorf("stored %d policies documents with the files unchanged, want 1", st.count("policies"))
-	}
-	write(MountPoliciesFile, `[{"component": "TestDomain", "resourceType": "Order", "operation": "DELETE", "roles": ["ROLE_MANAGER"]}]`)
-	waitFor(t, "the changed mount to reload", func() bool { return st.count("policies") == 2 })
-	if st.count("pips") != 2 {
-		t.Errorf("stored %d pips documents after the change, want 2", st.count("pips"))
-	}
-	if changed, err := p.ApplyMount(ctx); changed || err != nil {
-		t.Errorf("ApplyMount() after the reload = %v, %v; want false, nil", changed, err)
-	}
-	if *requests != 0 {
-		t.Errorf("the source saw %d requests, want none with a mount", *requests)
-	}
-}
-
 // TestLoad_PinsTheEntitlements: the entitlements PIP of the deployment is
 // added to the PIP document as it is stored.
 func TestLoad_PinsTheEntitlements(t *testing.T) {
-	srv, _, _ := source(t, http.StatusOK)
+	srv, _ := source(t, http.StatusOK)
 	st := &store{}
 	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Entitlements: &pips.EntitlementsConfig{URL: "http://entitlements:8080", HTTPTimeoutSeconds: 2, HTTPRetries: 3}}, st, nil, quiet{})
 	if err := p.PullOnce(context.Background()); err != nil {
