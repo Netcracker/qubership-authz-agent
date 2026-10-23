@@ -117,7 +117,7 @@ func rejectUnsupported(idx int, pipType string, pip SimplifiedPIP) error {
 	case PipTypeEntitlements:
 		// D-AG-16 / ADR-0054: ENTITLEMENT is container-pinned and is
 		// materialised at startup from AUTHZ_ENTITLEMENTS_URL + companions.
-		// It cannot be delivered via the pull loop or a ConfigMap mount;
+		// It cannot be delivered via the pull loop;
 		// the error message names the runtime knob so the operator knows
 		// what to set without having to read the ADR.
 		return fmt.Errorf(

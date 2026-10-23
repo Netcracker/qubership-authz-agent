@@ -71,7 +71,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.Authn != wantAuthn {
 		t.Errorf("default trusted providers = %+v, want %+v", cfg.Authn, wantAuthn)
 	}
-	wantPull := pull.Config{Interval: 30 * time.Second, MountDir: "/etc/authz/policies", HTTPTimeout: 30 * time.Second}
+	wantPull := pull.Config{Interval: 30 * time.Second, HTTPTimeout: 30 * time.Second}
 	if cfg.Pull != wantPull {
 		t.Errorf("default pull = %+v, want %+v", cfg.Pull, wantPull)
 	}
@@ -92,7 +92,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.tenant.manager.url":                "",
 		"authz.pap.client.source.url":             "http://policy-admin:18090/",
 		"authz.pap.client.pull.interval":          "2",
-		"authz.policy.mount.dir":                  "/mount",
 		"authz.pap.client.token.file":             "/t",
 		"authz.m2m.token.url":                     "http://idp/token",
 		"authz.m2m.client.id.file":                "/id",
@@ -104,7 +103,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "" {
 		t.Errorf("trusted providers from env = %+v", cfg.Authn)
 	}
-	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second || cfg.Pull.MountDir != "/mount" {
+	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second {
 		t.Errorf("pull from env = %+v", cfg.Pull)
 	}
 	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != "/id" || cfg.M2M.ClientSecretFile != "/secret" ||
