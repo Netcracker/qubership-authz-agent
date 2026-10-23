@@ -91,6 +91,9 @@ cd test/integration/testify && go test -count=1 ./...
 
 # Pip-stub module
 cd test/integration/pipstub && go test -count=1 ./...
+
+# Tenant-manager emulator module
+cd test/integration/tenantmanager && go test -count=1 ./...
 ```
 
 ### Unit tests — Rego

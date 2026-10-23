@@ -15,14 +15,19 @@ MONITORING_ENABLED: false
 
 # The harness Keycloak. The chart composes <base>/auth/realms/<realm> for each
 # realm: cloud-common is the M2M realm the agent takes its token from,
-# authz-test is where the suite's users and clients live.
+# authz-test is where the suite's users and clients live. default and
+# unregistered are tenant realms, which Keycloak names by an identifier: the
+# agent resolves default through the tenant-manager emulator, which does not
+# know unregistered, so the keys of that realm are never loaded.
 IDENTITY_PROVIDER_URL: http://keycloak:8080
 AUTHZ_IDP_REALMS:
   - cloud-common
   - authz-test
+  - default
+  - unregistered
 
-# No tenant-manager in the harness; an empty value disables realm resolution.
-AUTHZ_TENANT_MANAGER_URL: ""
+# The tenant-manager emulator of the harness (test/k8s/tenant-manager.yaml).
+AUTHZ_TENANT_MANAGER_URL: http://tenant-manager:8080
 
 # The suite uploads policies and PIPs through the authz-policy-admin stub,
 # installed from its own chart with policy-admin-values.yaml in this directory;

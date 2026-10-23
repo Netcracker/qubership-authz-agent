@@ -43,7 +43,7 @@ spec:
             - name: management
               containerPort: 9000
           # KC_HTTP_RELATIVE_PATH prefixes the management endpoints too, so the
-          # health path carries /auth. Cold start with two realm imports takes
+          # health path carries /auth. Cold start with four realm imports takes
           # about a minute; the startup probe allows five.
           startupProbe:
             httpGet:

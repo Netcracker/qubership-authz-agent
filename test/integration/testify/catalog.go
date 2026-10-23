@@ -185,6 +185,12 @@ var Catalog = []StepEntry{
 	{"lockdown.store_write_absent.404", "n/a", "PUT /v1/data/lockdown-probe (internal port)", "-", "-", "none"},
 	{"lockdown.check_explain_ignored.200", "admin", "POST /access/v1/check/resource (plain and with ?explain=full)", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 
+	// ── tenant_realm ────────────────────────────────────────────────────
+	// A tenant realm is named by an identifier; the agent learns it from the
+	// tenant-manager emulator, which knows default and not unregistered.
+	{"tenant_realm.resolved_realm_token_accepted", "admin (tenant default)", epCheckResource, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+	{"tenant_realm.unregistered_realm_token.401", "admin (tenant unregistered)", epCheckResource, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
+
 	// Verifies that the disk files written by pap-client have the correct
 	// OPA data-dir layout for restart recovery in ConfigMap-mount mode.
 	// In mount mode (MountWatcher) pap-client does NOT republish to OPA

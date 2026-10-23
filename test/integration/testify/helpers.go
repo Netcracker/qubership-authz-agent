@@ -42,6 +42,13 @@ type RuntimeConfig struct {
 	KcPassword            string
 	KcTokenScope          string
 	KcExpiredWaitSeconds  int
+	// KcTenantBaseURL is the base URL of a tenant realm that Keycloak names by
+	// an identifier and the tenant-manager emulator knows by the name the
+	// chart configures; KcUnregisteredTenantBaseURL is the base URL of a
+	// tenant realm the emulator does not know. Both realms have a client and
+	// an admin user with the client id, secret, and password of KcBaseURL.
+	KcTenantBaseURL             string
+	KcUnregisteredTenantBaseURL string
 	// EntitlementsMockURL is the control URL of the second pip-stub instance
 	// that serves the entitlements endpoint; the suite pins and resets it
 	// there. The agent reaches the same stub through AUTHZ_ENTITLEMENTS_URL.
@@ -105,6 +112,9 @@ func LoadConfig() RuntimeConfig {
 		OPADirectURL:          envOr("OPA_DIRECT_URL", "http://localhost:18181"),
 		PullInterval:          pullInterval,
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
+		// The realm identifiers of test/k8s/authn/tenant-*-realm.json.
+		KcTenantBaseURL:             envOr("KC_TENANT_BASE_URL", "http://localhost:15556/auth/realms/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b"),
+		KcUnregisteredTenantBaseURL: envOr("KC_UNREGISTERED_TENANT_BASE_URL", "http://localhost:15556/auth/realms/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a"),
 	}
 }
 
