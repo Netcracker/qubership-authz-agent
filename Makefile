@@ -1,8 +1,10 @@
 # lint: run all linters against the full tree (mirrors CI super-linter checks).
 #
 # Requires: golangci-lint, shellcheck, yamllint, npx (markdownlint-cli2),
-#           python3, zizmor.  Install zizmor/yamllint: pip install yamllint zizmor
-lint:
+#           python3, zizmor, helm, docker (for test-stand-files), hadolint,
+#           kubeconform, trivy.  Install zizmor/yamllint: pip install yamllint zizmor
+#           Install hadolint/kubeconform/trivy: mise install (versions in mise.toml)
+lint: test-stand-files
 	@echo "[lint] Go — root module"
 	golangci-lint run ./...
 	@echo "[lint] Go — test/parity/suite"
@@ -24,6 +26,8 @@ lint:
 	@echo "[lint] Markdown"
 	npx --yes markdownlint-cli2 --config .github/linters/.markdown-lint.yml "**/*.md" "#node_modules" \
 	    "#apm_modules" "#.agents" "#.claude/rules" "#.claude/skills" "#.cursor/rules"
+	@echo "[lint] Dockerfiles and rendered charts"
+	bash test/scripts/lint-images-and-charts.sh
 	@echo "[lint] GitHub Actions (zizmor)"
 	$${ZIZMOR_BIN:-$${HOME}/.local/bin/zizmor} --config .github/linters/zizmor.yaml \
 	    .github/workflows/*.yaml .github/workflows/*.yml
