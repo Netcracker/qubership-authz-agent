@@ -35,7 +35,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v4/jwk"
 )
 
 // fakeIdP serves an OIDC discovery document at /.well-known/openid-configuration
