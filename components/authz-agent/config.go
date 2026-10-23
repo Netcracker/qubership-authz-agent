@@ -85,7 +85,6 @@ func loadConfig(get lookup) config {
 		Pull: pull.Config{
 			SourceURL:   strings.TrimRight(get("authz.pap.client.source.url", ""), "/"),
 			Interval:    seconds(get, "authz.pap.client.pull.interval", pull.DefaultInterval),
-			MountDir:    get("authz.policy.mount.dir", pull.DefaultMountDir),
 			HTTPTimeout: pull.DefaultHTTPTimeout,
 		},
 		M2M: m2m.Config{
