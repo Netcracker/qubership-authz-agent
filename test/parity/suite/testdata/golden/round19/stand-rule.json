@@ -30,16 +30,7 @@
     "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "s19-filter-while-broken": {
-    "check-filter-v1-outcome/regular/filter": {
-      "status": 400,
-      "result": {
-        "calculationResult": "",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": ""
-      }
-    },
+    "check-filter-v1-outcome/regular/filter": {"status":400,"result":{"calculationResult":""}},
     "load-policy-sets-v1/regular/upload-1": {"status":200}
   },
   "s19-reads-a": {

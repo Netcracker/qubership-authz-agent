@@ -1,26 +1,26 @@
 {
   "allow-baseline": {
     "calculationResult": "ALLOW",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
-    "rsqlFilterCondition": "",
-    "sqlFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
+    "rsqlFilterCondition": null,
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "anon": {
     "calculationResult": "DENY",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
-    "rsqlFilterCondition": "",
-    "sqlFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
+    "rsqlFilterCondition": null,
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "deny-incoming": {
     "calculationResult": "DENY",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
-    "rsqlFilterCondition": "",
-    "sqlFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
+    "rsqlFilterCondition": null,
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "full-use-filter": {
@@ -33,42 +33,42 @@
   },
   "general-pip-dict": {
     "calculationResult": "USE_FILTER_CONDITION",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
     "rsqlFilterCondition": "id=in=(\"row10-dict-2\", \"row10-dict-1\");amount=le=\"1000\"",
-    "sqlFilterCondition": "",
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "general-pip-list": {
     "calculationResult": "USE_FILTER_CONDITION",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
     "rsqlFilterCondition": "id=in=(\"row10-list-2\", \"row10-list-1\")",
-    "sqlFilterCondition": "",
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "header-pip": {
     "calculationResult": "USE_FILTER_CONDITION",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
     "rsqlFilterCondition": "region==\"parity-allow\"",
-    "sqlFilterCondition": "",
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "rls-happy": {
     "calculationResult": "USE_FILTER_CONDITION",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
     "rsqlFilterCondition": "ownerId==00000000-0000-0000-0000-000000000101",
-    "sqlFilterCondition": "",
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   },
   "token-pip": {
     "calculationResult": "USE_FILTER_CONDITION",
-    "filterCondition": "",
-    "mongodbFilterCondition": "",
+    "filterCondition": null,
+    "mongodbFilterCondition": null,
     "rsqlFilterCondition": "department==\"finance\"",
-    "sqlFilterCondition": "",
+    "sqlFilterCondition": null,
     "customFilterCondition": null
   }
 }

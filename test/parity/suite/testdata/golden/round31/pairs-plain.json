@@ -5,9 +5,9 @@
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
         "filterCondition": "((PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S.f7a.in(\"ROLE_PARITY_READER\")).not()).and((PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S.f6a.eq(\"finance\")).not())",
-        "mongodbFilterCondition": "{ \"$or\": [ {{ \"f7a\": { \"$nin\": [ \"ROLE_PARITY_READER\" ] } }}, {{ \"f6a\": [ { \"$uuid\": \"finance\" } ] }},{ { \"$and\": [ { \"$or\": [ { \"f10a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f10b\": \"v1\" } ] }, { \"f10c\": \"v2\" } ] } } ] }",
+        "mongodbFilterCondition": "{ \"$or\": [ { { \"$and\": [ { \"$or\": [ { \"f10a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f10b\": \"v1\" } ] }, { \"f10c\": \"v2\" } ] } },{{ \"f7a\": { \"$nin\": [ \"ROLE_PARITY_READER\" ] } }}, {{ \"f6a\": [ { \"$uuid\": \"finance\" } ] }} ] }",
         "rsqlFilterCondition": "f7a=out=(\"ROLE_PARITY_READER\");f6a!=\"finance\"",
-        "sqlFilterCondition": "NOT (f8a IN ('ROLE_PARITY_READER')) AND NOT (f7a IN ('ROLE_PARITY_READER')) AND NOT (f6a='finance')",
+        "sqlFilterCondition": "NOT (f7a IN ('ROLE_PARITY_READER')) AND NOT (f8a IN ('ROLE_PARITY_READER')) AND NOT (f6a='finance')",
         "customFilterCondition": null
       }
     },
@@ -15,10 +15,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
+        "filterCondition": null,
         "mongodbFilterCondition": "{ { \"$and\": [ { \"$or\": [ { \"f10a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f10b\": \"v1\" } ] }, { \"f10c\": \"v2\" } ] } }",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -30,10 +30,10 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -45,9 +45,9 @@
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
         "filterCondition": "((PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S.f2a.in(\"h1\", \"h2\")).or(PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S.f2b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S.f2c.eq(\"v2\"))",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -56,9 +56,9 @@
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
         "filterCondition": "((PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S.f2a.in(\"h1\", \"h2\")).or(PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S.f2b.eq(\"v1\"))).and(PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S.f2c.eq(\"v2\"))",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -70,10 +70,10 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },

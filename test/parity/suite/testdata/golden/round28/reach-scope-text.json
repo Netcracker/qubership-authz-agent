@@ -8,31 +8,13 @@
     "load-policy-sets-v1/regular/upload-1": {"status":200}
   },
   "r28reach-scope-text-deny-unless-permit": {
-    "check-filter-v1-outcome/regular/filter": {
-      "status": 500,
-      "result": {
-        "calculationResult": "",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": ""
-      }
-    },
+    "check-filter-v1-outcome/regular/filter": {"status":500,"result":{"calculationResult":""}},
     "check-resource-v1-outcome/regular/read": {"status":500,"decision":false},
     "load-policy-sets-v1/regular/upload-1": {"status":200},
     "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r28reach-scope-text-permit-unless-deny": {
-    "check-filter-v1-outcome/regular/filter": {
-      "status": 500,
-      "result": {
-        "calculationResult": "",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": ""
-      }
-    },
+    "check-filter-v1-outcome/regular/filter": {"status":500,"result":{"calculationResult":""}},
     "check-resource-v1-outcome/regular/read": {"status":500,"decision":false},
     "load-policy-sets-v1/regular/upload-1": {"status":200},
     "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}

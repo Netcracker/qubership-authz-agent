@@ -16,24 +16,15 @@
     "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
   },
   "r32gaps-on-behalf-http-500-filter": {
-    "check-filter-v1-outcome/regular/filter-as-self": {
-      "status": 500,
-      "result": {
-        "calculationResult": "",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": ""
-      }
-    },
+    "check-filter-v1-outcome/regular/filter-as-self": {"status":500,"result":{"calculationResult":""}},
     "check-filter-v1-outcome/regular/filter-without-user-id": {
       "status": 200,
       "result": {
         "calculationResult": "ALLOW",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },

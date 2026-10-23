@@ -11,10 +11,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "f==\"m\"",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -27,23 +27,14 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
-    "check-filter-v1-outcome/regular/q2": {
-      "status": 404,
-      "result": {
-        "calculationResult": "",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": ""
-      }
-    },
+    "check-filter-v1-outcome/regular/q2": {"status":404,"result":{"calculationResult":""}},
     "check-resource-bulk-operations-v1-outcome/regular/q3": {"status":200,"decision":{"":["rp30","rp31"]}},
     "check-resource-v1-outcome/regular/after-q1": {"status":200,"decision":true},
     "check-resource-v1-outcome/regular/q0": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},

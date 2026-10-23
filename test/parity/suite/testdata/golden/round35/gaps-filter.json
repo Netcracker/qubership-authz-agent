@@ -12,10 +12,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": {
           "logic": {
             "path": "8454bef6-468c-77a7-a7fe-14132429c229"
@@ -38,10 +38,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": {
           "logic": {
             "path": "6bff6ef3-ddbf-4071-4a3d-40fa2931971f"
@@ -67,10 +67,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": {
           "logic": {
             "path": "79fc3247-4e97-7b74-bdba-8cd6669e633c"
@@ -93,10 +93,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "f6==v",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": {
           "logic": {
             "path": "44b0976d-7c42-ea71-dce1-20b854574065"
@@ -121,17 +121,14 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": {
           "logic": {
             "op": "OR",
             "apply": [
-              {
-                "path": "9e4a1375-6cce-f0a5-0731-7ece2facabb1"
-              },
               {
                 "op": "OR",
                 "apply": [
@@ -142,6 +139,9 @@
                     "path": "a965b191-9561-1682-4ca0-3ec37e8c848a"
                   }
                 ]
+              },
+              {
+                "path": "9e4a1375-6cce-f0a5-0731-7ece2facabb1"
               }
             ]
           },
@@ -181,10 +181,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "f1=in=()",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -196,10 +196,10 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -210,10 +210,10 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -225,10 +225,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "f2=in=(\"ROLE_PARITY_READER\", \"ROLE_PARITY_REVIEWER\")",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -240,10 +240,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
+        "filterCondition": null,
         "mongodbFilterCondition": "{ { \"f4\": { \"$in\": ${subject.parityR35Number} } } }",
         "rsqlFilterCondition": "f4=in=(${subject.parityR35Number})",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },

@@ -14,10 +14,10 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -56,10 +56,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "f1a=in=(\"x\", \"y\");f1b==v1;f1c==",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -67,10 +67,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "f1a=in=(\"x\", \"y\");f1b==v1;f1c==",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -82,10 +82,10 @@
       "status": 200,
       "result": {
         "calculationResult": "DENY",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -96,10 +96,10 @@
       "status": 200,
       "result": {
         "calculationResult": "ALLOW",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -112,10 +112,10 @@
       "status": 200,
       "result": {
         "calculationResult": "ALLOW",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
-        "sqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -134,10 +134,10 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
         "rsqlFilterCondition": "(fa==v0,fb==v1);fc!=v2",
-        "sqlFilterCondition": "",
+        "sqlFilterCondition": null,
         "customFilterCondition": null
       }
     },
@@ -149,9 +149,9 @@
       "status": 200,
       "result": {
         "calculationResult": "USE_FILTER_CONDITION",
-        "filterCondition": "",
-        "mongodbFilterCondition": "",
-        "rsqlFilterCondition": "",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
         "sqlFilterCondition": "(fa='v0' OR fb='v1') AND NOT (fc='v2')",
         "customFilterCondition": null
       }
