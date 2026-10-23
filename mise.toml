@@ -1,0 +1,7 @@
+# Linters that test/scripts/lint-images-and-charts.sh runs, for make lint and
+# for the Chart lint and render CI job. Run `mise install` to put them on PATH;
+# Renovate updates the versions.
+[tools]
+"aqua:hadolint/hadolint" = "2.15.1"
+"aqua:yannh/kubeconform" = "0.8.0"
+"aqua:aquasecurity/trivy" = "0.74.0"

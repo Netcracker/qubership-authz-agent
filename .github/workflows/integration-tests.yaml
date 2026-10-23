@@ -4,7 +4,9 @@
 # Everything the Build workflow (go-build.yaml) does not cover:
 #   rego                 Rego policy tests with the OPA CLI
 #   chart                helm lint of the three charts and the chart-render
-#                        assertions, on Helm 3 and on Helm 4
+#                        assertions, on Helm 3 and on Helm 4; hadolint over the
+#                        Dockerfiles, kubeconform over the rendered charts, and
+#                        trivy config over the rendered product charts
 #   integration-compile  go vet with -tags integration, so a broken integration
 #                        test file fails here instead of after a cluster boot
 #   jsonpath-jayway      internal/jsonpath against Jayway JsonPath on the JVM,
@@ -78,7 +80,8 @@ jobs:
 
       # The charts support Helm 3.19 or later and Helm 4, so both lint and
       # render them. renovate.json keeps the Helm 3 pin on the latest 3.19.x
-      # and the Helm 4 pin on the latest 4.x.
+      # and the Helm 4 pin on the latest 4.x. lint-images-and-charts.sh holds
+      # the list of charts and values files.
       - name: Set up Helm 3
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
@@ -86,11 +89,7 @@ jobs:
 
       - name: Lint and render the charts with Helm 3
         run: |
-          helm version --short
-          helm lint helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml
-          helm lint helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml
-          helm lint helm-templates/authz-test-stand -f test/k8s/test-stand-values.yaml
-          helm lint helm-templates/authz-test-stand -f test/k8s/parity/test-stand-values.yaml
+          bash test/scripts/lint-images-and-charts.sh --lint-only
           bash test/scripts/test-chart-render.sh
 
       - name: Set up Helm 4
@@ -100,12 +99,17 @@ jobs:
 
       - name: Lint and render the charts with Helm 4
         run: |
-          helm version --short
-          helm lint helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml
-          helm lint helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml
-          helm lint helm-templates/authz-test-stand -f test/k8s/test-stand-values.yaml
-          helm lint helm-templates/authz-test-stand -f test/k8s/parity/test-stand-values.yaml
+          bash test/scripts/lint-images-and-charts.sh --lint-only
           bash test/scripts/test-chart-render.sh
+
+      # Installs hadolint, kubeconform, and trivy at the versions mise.toml pins.
+      - name: Install hadolint, kubeconform, and trivy
+        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+        with:
+          version: 2026.10.17
+
+      - name: Lint the Dockerfiles and the rendered charts
+        run: bash test/scripts/lint-images-and-charts.sh
 
   integration-compile:
     name: Vet tagged suites
