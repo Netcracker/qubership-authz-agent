@@ -14,6 +14,12 @@
       "matchPackageNames": ["github.com/gofiber/fiber/v2"],
       "matchUpdateTypes": ["major"],
       "enabled": false
+    },
+    {
+      "description": "Jayway JsonPath stays at 2.9.0, one of the versions legacy access-control evaluates its paths with: internal/jsonpath is tested against it, and a newer Jayway is not the behavior the agent has to match. Change it together with the version the legacy service ships, and with the JsonPath checkout in the jsonpath-jayway job of .github/workflows/integration-tests.yaml and internal/jsonpath/testdata/jayway/recorder/pom.xml.",
+      "matchManagers": ["maven"],
+      "matchPackageNames": ["com.jayway.jsonpath:json-path"],
+      "enabled": false
     }
   ]
 }

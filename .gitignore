@@ -40,3 +40,7 @@ test/svt/profiler/**/input-real-token.json
 
 # APM dependencies
 apm_modules/
+
+# Class path make test-jayway resolves, and the agent make jayway-suite-calls builds
+/internal/jsonpath/testdata/jayway/target/
+/internal/jsonpath/testdata/jayway/recorder/target/
