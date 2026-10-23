@@ -108,7 +108,7 @@ func newEdSigner(t *testing.T, kid string, provider *keys.Provider) *signer {
 
 func signerFor(t *testing.T, alg jwa.SignatureAlgorithm, private, public any, kid string, provider *keys.Provider) *signer {
 	t.Helper()
-	key, err := jwk.Import(public)
+	key, err := jwk.Import[jwk.Key](public)
 	if err != nil {
 		t.Fatal(err)
 	}

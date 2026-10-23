@@ -244,7 +244,7 @@ func rsaJWK(t *testing.T, bits int, kid string, fields map[string]any) json.RawM
 
 func publicJWK(t *testing.T, public any, defaults, fields map[string]any) json.RawMessage {
 	t.Helper()
-	key, err := jwk.Import(public)
+	key, err := jwk.Import[jwk.Key](public)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -41,8 +41,7 @@ const maxResponseBytes = 1 << 20
 // The weakest RSA public key a provider may sign with: a modulus of
 // minRSAModulusBits and a public exponent of minRSAPublicExponent.
 // [jwk.ParseKey] applies the same floors by default, but they are
-// process-wide settings any package can lower, and OPA sets both to zero
-// when it is linked in.
+// process-wide settings any package in the binary can lower.
 const (
 	minRSAModulusBits    = 2048
 	minRSAPublicExponent = 3
