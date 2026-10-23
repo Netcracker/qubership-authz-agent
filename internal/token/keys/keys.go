@@ -14,15 +14,18 @@
 
 // Package keys holds the signing keys of the trusted identity providers and
 // finds the key a token's kid names. A provider is any OIDC provider: the
-// package reads its JWKS, through discovery or directly, and knows nothing
-// else about it.
+// package reads its JWKS, through discovery or directly. For a tenant realm
+// it also queries tenant-manager, which maps a tenant's name to the
+// identifier its Keycloak realm is named by.
 //
 // [ReadConfig] reads the trusted providers file. [Load] fetches every
-// provider's keys and fails unless all of them arrive. [Set.Lookup] finds a
-// key by kid. [Set.Run] reloads the keys on a fixed interval, so a key a
-// provider rotates in is found after the next reload or a restart. A reload
-// that fails for a provider keeps the keys already loaded for it; a reload
-// that finds no usable signing key in the provider's JWKS removes them.
+// provider's keys and fails unless all of them arrive; for a provider that
+// sets [Provider.TenantRealm] it first queries tenant-manager until it
+// accepts an answer, which it keeps. [Set.Lookup] finds a key by kid. [Set.Run]
+// reloads the keys on a fixed interval, so a key a provider rotates in is
+// found after the next reload or a restart. A reload that fails for a
+// provider keeps the keys already loaded for it; a reload that finds no
+// usable signing key in the provider's JWKS removes them.
 package keys
 
 import (
@@ -60,10 +63,11 @@ type Logger interface {
 // Options tunes how a [Set] fetches and reloads keys. A zero field takes its
 // default.
 type Options struct {
-	// HTTPTimeout bounds one discovery or JWKS request.
+	// HTTPTimeout bounds one discovery, JWKS, or tenant-manager request.
 	HTTPTimeout time.Duration
 	// StartupTimeout bounds how long [Load] retries a provider whose keys
-	// could not be fetched, a JWKS without a usable signing key included.
+	// could not be fetched, a JWKS without a usable signing key and a tenant
+	// realm tenant-manager does not resolve included.
 	StartupTimeout time.Duration
 	// RefreshInterval is how often [Set.Run] reloads the keys.
 	RefreshInterval time.Duration
@@ -160,20 +164,24 @@ type snapshot struct {
 }
 
 // Load fetches the keys of every provider in cfg and returns them as a
-// [Set]. A provider whose keys cannot be fetched, or whose JWKS holds no
-// usable signing key, is retried with growing pauses until
-// [Options.StartupTimeout] passes or ctx ends; Load then fails
-// with an error that names every such provider and the last reason. It also
-// fails when cfg breaks [Config.Validate], when a caFile cannot be read, and
-// when two providers publish the same kid.
+// [Set]. Load retries with growing pauses a provider whose keys cannot be
+// fetched, whose JWKS holds no usable signing key, or whose tenant realm
+// tenant-manager does not resolve, until [Options.StartupTimeout] passes or
+// ctx ends; it then fails with an error that names every such provider and
+// the last reason. It also fails when cfg breaks [Config.Validate], when a
+// caFile cannot be read, and when two providers publish the same kid.
 func Load(ctx context.Context, cfg Config, opts Options) (*Set, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 	opts = opts.withDefaults()
 	s := &Set{opts: opts}
+	var tenants *tenantResolver
+	if cfg.TenantManagerURL != "" {
+		tenants = newTenantResolver(cfg.TenantManagerURL, opts.HTTPTimeout)
+	}
 	for _, p := range cfg.Providers {
-		f, err := newFetcher(&p, opts.HTTPTimeout, opts.Log)
+		f, err := newFetcher(&p, opts.HTTPTimeout, opts.Log, tenants)
 		if err != nil {
 			return nil, err
 		}

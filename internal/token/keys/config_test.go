@@ -42,6 +42,23 @@ func TestParseConfig_ReadsBothAddressForms(t *testing.T) {
 	}
 }
 
+func TestParseConfig_ReadsATenantRealm(t *testing.T) {
+	doc := `{"tenantManagerUrl": "http://tenant-manager:8080", "providers": [
+		{"id": "default", "issuer": "https://idp.example/auth/realms/default", "tenantRealm": true}
+	]}`
+	want := Config{
+		Providers:        []Provider{{ID: "default", Issuer: "https://idp.example/auth/realms/default", TenantRealm: true}},
+		TenantManagerURL: "http://tenant-manager:8080",
+	}
+	got, err := ParseConfig([]byte(doc))
+	if err != nil {
+		t.Fatalf("ParseConfig() error = %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("ParseConfig() = %+v, want %+v", got, want)
+	}
+}
+
 // Every document puts a valid provider first and breaks one rule in the
 // second, so an error that names providers[1] blames the entry at fault.
 func TestParseConfig_AcceptsAnIDOfLettersDigitsDotsUnderscoresAndHyphens(t *testing.T) {
@@ -67,21 +84,71 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"issuer that is not http", map[string]any{"id": "b", "issuer": "ftp://idp.example/realms/b"}},
 		{"issuer without a host", map[string]any{"id": "b", "issuer": "https:///realms/b"}},
 		{"jwksUri that is not http", map[string]any{"id": "b", "jwksUri": "file:///etc/jwks.json"}},
+		{"tenantRealm without tenantManagerUrl", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "tenantRealm": true}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			doc, err := json.Marshal(map[string]any{"providers": []any{
-				map[string]any{"id": "a", "issuer": "https://idp.example/realms/a"},
-				tt.entry,
-			}})
-			if err != nil {
-				t.Fatal(err)
-			}
-			_, err = ParseConfig(doc)
-			if err == nil || !strings.Contains(err.Error(), "providers[1]") {
-				t.Errorf("ParseConfig(%s) error = %v, want an error naming providers[1]", doc, err)
+			rejectsSecondProvider(t, nil, map[string]any{"id": "a", "issuer": "https://idp.example/realms/a"}, tt.entry)
+		})
+	}
+}
+
+// The document names tenant-manager, so each entry breaks only the rule of
+// its own case.
+func TestParseConfig_RejectsATenantRealmThatBreaksARule(t *testing.T) {
+	tests := []struct {
+		name  string
+		entry map[string]any
+	}{
+		{"tenantRealm with jwksUri", map[string]any{"id": "b", "jwksUri": "https://idp.example/realms/b/certs", "tenantRealm": true}},
+		{"issuer without a path segment", map[string]any{"id": "b", "issuer": "https://idp.example/", "tenantRealm": true}},
+		{"issuer ending in one dot", map[string]any{"id": "b", "issuer": "https://idp.example/realms/.", "tenantRealm": true}},
+		{"issuer ending in two dots", map[string]any{"id": "b", "issuer": "https://idp.example/realms/..", "tenantRealm": true}},
+		{"issuer ending in a name with a space", map[string]any{"id": "b", "issuer": "https://idp.example/realms/tenant%20b", "tenantRealm": true}},
+		{"issuer ending in a name of 129 characters", map[string]any{"id": "b", "issuer": "https://idp.example/realms/" + strings.Repeat("a", 129), "tenantRealm": true}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rejectsSecondProvider(t, map[string]any{"tenantManagerUrl": "http://tenant-manager:8080"},
+				map[string]any{"id": "a", "issuer": "https://idp.example/realms/a", "tenantRealm": true}, tt.entry)
+		})
+	}
+}
+
+func TestParseConfig_AcceptsATenantName(t *testing.T) {
+	tests := []struct {
+		name   string
+		tenant string
+	}{
+		{"letters, digits, '.', '_', and '-'", "Acme_corp.v2-x"},
+		{"128 characters", strings.Repeat("a", 128)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc := `{"tenantManagerUrl": "http://tenant-manager:8080", "providers": [
+				{"id": "b", "issuer": "https://idp.example/realms/` + tt.tenant + `", "tenantRealm": true}]}`
+			if _, err := ParseConfig([]byte(doc)); err != nil {
+				t.Errorf("ParseConfig(%s) error = %v, want none", doc, err)
 			}
 		})
+	}
+}
+
+// rejectsSecondProvider parses a document whose providers are first and
+// entry, with the top-level members of top, and fails the test unless the
+// error names providers[1].
+func rejectsSecondProvider(t *testing.T, top, first, entry map[string]any) {
+	t.Helper()
+	members := map[string]any{"providers": []any{first, entry}}
+	for name, value := range top {
+		members[name] = value
+	}
+	doc, err := json.Marshal(members)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParseConfig(doc); err == nil || !strings.Contains(err.Error(), "providers[1]") {
+		t.Errorf("ParseConfig(%s) error = %v, want an error naming providers[1]", doc, err)
 	}
 }
 
@@ -96,6 +163,8 @@ func TestParseConfig_RejectsADocumentThatBreaksARule(t *testing.T) {
 		{"unknown top-level field", `{"providers": [{"id": "a", "issuer": "https://idp.example/realms/a"}], "mode": "strict"}`},
 		{"second JSON value", `{"providers": [{"id": "a", "issuer": "https://idp.example/realms/a"}]} {}`},
 		{"not JSON", `providers: []`},
+		{"tenantManagerUrl without a scheme", `{"providers": [{"id": "a", "issuer": "https://idp.example/realms/a"}], "tenantManagerUrl": "tenant-manager:8080"}`},
+		{"tenantManagerUrl with a query", `{"providers": [{"id": "a", "issuer": "https://idp.example/realms/a"}], "tenantManagerUrl": "http://tenant-manager:8080?x=1"}`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

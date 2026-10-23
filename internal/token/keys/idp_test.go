@@ -60,6 +60,9 @@ type fakeIdP struct {
 	discovers int
 	// gate, when non-nil, holds every JWKS response until it is closed.
 	gate chan struct{}
+	// realmPath, when set, moves the discovery document under it, the way
+	// Keycloak serves a realm under /auth/realms/<realm>.
+	realmPath string
 }
 
 func newIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
@@ -67,6 +70,17 @@ func newIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
 	idp := &fakeIdP{keys: keys}
 	idp.srv = httptest.NewServer(idp)
 	t.Cleanup(idp.srv.Close)
+	return idp
+}
+
+// newRealmIdP is a fakeIdP that serves its discovery document under
+// realmPath only.
+func newRealmIdP(t *testing.T, realmPath string, keys ...json.RawMessage) *fakeIdP {
+	t.Helper()
+	idp := newIdP(t, keys...)
+	idp.mu.Lock()
+	defer idp.mu.Unlock()
+	idp.realmPath = realmPath
 	return idp
 }
 
@@ -98,8 +112,9 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	var body []byte
 	var gate chan struct{}
+	discoveryPath := idp.realmPath + "/.well-known/openid-configuration"
 	switch r.URL.Path {
-	case "/.well-known/openid-configuration":
+	case discoveryPath:
 		idp.discovers++
 		body = idp.discovery
 		if body == nil {
@@ -170,6 +185,12 @@ func (idp *fakeIdP) caFile(t *testing.T) string {
 // issuer is a provider found through the discovery document of idp.
 func issuer(id string, idp *fakeIdP) Provider {
 	return Provider{ID: id, Issuer: idp.srv.URL}
+}
+
+// tenantIssuer is a tenant realm provider whose issuer is path under the
+// address of idp; the last segment of path is the tenant name.
+func tenantIssuer(id, path string, idp *fakeIdP) Provider {
+	return Provider{ID: id, Issuer: idp.srv.URL + path, TenantRealm: true}
 }
 
 // direct is a provider whose JWKS is fetched from idp without discovery.
