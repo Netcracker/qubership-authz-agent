@@ -46,6 +46,9 @@ func TestParseCondition(t *testing.T) {
 		{"resource.p MATCH /api/*", `resource.p MATCH pattern("/api/*")`},
 		{"resource.p MATCH resource.q", `resource.p MATCH resource.q`},
 		{"resource.p NOT MATCH subject.name", `resource.p NOT_MATCH subject.name`},
+		{"resource.v MATCH resource.*", `resource.v MATCH resource.*`},
+		{"resource.v NOT MATCH resource.*", `resource.v NOT_MATCH resource.*`},
+		{"resource.v MATCH subject.l[:]", `resource.v MATCH resource.subject.l[:]`},
 		{"subject allowed 'EDIT' on resource OR subject.isM2M", `subject allowed "EDIT" on resource OR subject.isM2M`},
 		{"TRUE AND resource.a == 1", `TRUE AND resource.a EQ 1`},
 		{"subject.region.code == 'x'", `pip("subject.region.code") EQ "x"`},
@@ -127,7 +130,6 @@ func TestParseConditionMarksAPathOutsideTheJSONPathSubset(t *testing.T) {
 		text string
 		want string
 	}{
-		{"resource.v MATCH resource.*", `resource.v MATCH unsupported(jsonpath "resource.*")`},
 		{"resource.a[*] == 1", `resource.a[*] EQ 1`},
 		{"resource.x/y == 1", `unsupported(jsonpath "resource.x/y") EQ 1`},
 		{"resource.a['b','c'] == 1", `unsupported(jsonpath "resource.a['b','c']") EQ 1`},

@@ -40,7 +40,8 @@ func (e *SyntaxError) Error() string {
 // subject.permissionScope reads the pass as a [PassValue].
 //
 // A resource path the agent cannot execute yet becomes an [Unsupported]
-// operand. Text the PAP refuses returns a *SyntaxError.
+// operand, except on the right of MATCH and NOT MATCH, where the path is
+// pattern text. Text the PAP refuses returns a *SyntaxError.
 func ParseCondition(text string, place Place, iterVar string) (*Condition, error) {
 	if strings.EqualFold(text, "true") || strings.EqualFold(text, "false") {
 		return NewCondition(place, []Atom{Const{Value: strings.EqualFold(text, "true")}})
@@ -407,10 +408,12 @@ func (p *parser) pattern() (Operand, error) {
 		return nil, p.fail("number as a MATCH pattern")
 	case !isASCII(tok) || strings.Contains(tok, "+") || tok == "resource" || tok == "subject":
 		return nil, p.fail("MATCH pattern: " + tok)
+	// The pattern is the text of the attribute operand, which is never read,
+	// so the path need not compile.
 	case strings.HasPrefix(tok, "subject.") && strings.Contains(tok, "["):
-		return p.resource("."+tok, tok), nil
+		return Resource{Path: "." + tok}, nil
 	case strings.HasPrefix(tok, "resource."):
-		return p.resource(tok[len("resource"):], tok), nil
+		return Resource{Path: tok[len("resource"):]}, nil
 	case strings.HasPrefix(tok, "subject."):
 		return p.subject(tok[len("subject."):]), nil
 	}

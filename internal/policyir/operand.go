@@ -47,6 +47,10 @@ type ResourceType struct{}
 // ".items[?(@.k == 'v')].length()". A path written without the resource prefix,
 // and a subject attribute token that holds a bracket, are resource paths too, and
 // a frontend writes them here with their leading dot: ".a.b", ".subject.l[0]".
+//
+// On the right of MATCH and NOT MATCH the pattern is the text "resource"
+// followed by Path, and the resource is not read, so there Path may be one that
+// package jsonpath does not compile, such as ".*".
 type Resource struct {
 	Path string
 }
