@@ -109,6 +109,16 @@ make test-jayway
 make test-jayway JSONPATH_COMPARISON_DIR=/path/to/json-path-comparison
 ```
 
+The paths and documents that Jayway's own tests evaluate are a third set of inputs. `make jayway-suite-calls` runs
+those tests with a Java agent that records each read, and writes the calls into `JAYWAY_SUITE_CALLS`; `JAYWAY_SRC_DIR`
+is a checkout of [json-path/JsonPath](https://github.com/json-path/JsonPath) at tag `json-path-2.9.0`. Its Gradle build
+runs on Java 17, not on 21:
+
+```sh
+JAVA_HOME=/path/to/jdk-17 make jayway-suite-calls JAYWAY_SRC_DIR=/path/to/JsonPath JAYWAY_SUITE_CALLS=/tmp/jayway-calls
+make test-jayway JAYWAY_SUITE_CALLS=/tmp/jayway-calls
+```
+
 The test fails on an answer that differs from Jayway's unless `internal/jsonpath/jayway_test.go` lists the difference.
 
 ### Unit tests — Rego

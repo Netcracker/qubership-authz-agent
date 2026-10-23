@@ -7,8 +7,9 @@
 #   integration-compile  go vet with -tags integration, so a broken integration
 #                        test file fails here instead of after a cluster boot
 #   jsonpath-jayway      internal/jsonpath against Jayway JsonPath on the JVM,
-#                        over the package's cases and the json-path-comparison
-#                        queries (Makefile test-jayway)
+#                        over the package's cases, the json-path-comparison
+#                        queries, and the calls Jayway's own tests make
+#                        (Makefile jayway-suite-calls, test-jayway)
 #   kind-e2e             the Helm chart installed on a kind cluster and the
 #                        runtime suite run against it (Makefile e2e-* targets,
 #                        see test/k8s/README.md)
@@ -113,7 +114,7 @@ jobs:
   jsonpath-jayway:
     name: jsonPath against Jayway
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -132,21 +133,43 @@ jobs:
           path: json-path-comparison
           persist-credentials: false
 
+      # The tag of the json-path version in internal/jsonpath/testdata/jayway/pom.xml.
+      - name: Checkout JsonPath
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: json-path/JsonPath
+          ref: af7e516c69df680a6584fca7180ef082eb67c96c # json-path-2.9.0
+          path: JsonPath
+          persist-credentials: false
+
       - name: Set up Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: go.mod
 
+      # Java 17 runs the Gradle 7.4.2 of JsonPath; 21, the last one listed,
+      # is the default for the rest.
       - name: Set up Java
         uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: |
+            17
+            21
           cache: maven
-          cache-dependency-path: internal/jsonpath/testdata/jayway/pom.xml
+          cache-dependency-path: |
+            internal/jsonpath/testdata/jayway/pom.xml
+            internal/jsonpath/testdata/jayway/recorder/pom.xml
+
+      - name: Record the calls of Jayway's tests
+        run: |
+          JAVA_HOME="$JAVA_HOME_17_X64" make jayway-suite-calls \
+            JAYWAY_SRC_DIR="$GITHUB_WORKSPACE/JsonPath" JAYWAY_SUITE_CALLS="$RUNNER_TEMP/jayway-suite-calls"
 
       - name: Compare with Jayway
-        run: make test-jayway JSONPATH_COMPARISON_DIR="$GITHUB_WORKSPACE/json-path-comparison"
+        run: |
+          make test-jayway JSONPATH_COMPARISON_DIR="$GITHUB_WORKSPACE/json-path-comparison" \
+            JAYWAY_SUITE_CALLS="$RUNNER_TEMP/jayway-suite-calls"
 
   kind-e2e:
     name: Kind end-to-end

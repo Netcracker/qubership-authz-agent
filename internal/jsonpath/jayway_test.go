@@ -20,10 +20,12 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -148,6 +150,85 @@ func TestSelect_ComparisonSuiteAgreesWithJayway(t *testing.T) {
 		cases = append(cases, selectCase{name: filepath.Base(filepath.Dir(sel)), doc: string(document), path: path})
 	}
 	compareWithJayway(t, cases, knownComparisonSuiteDifferences, minComparedSuiteQueries)
+}
+
+// TestSelect_JaywayTestSuiteAgreesWithJayway runs the paths and documents
+// that Jayway JsonPath's own tests evaluate through Select and Jayway.
+// JAYWAY_SUITE_CALLS names the directory that testdata/jayway/recorder writes
+// while those tests run; make jayway-suite-calls fills it. A pair that several
+// tests evaluate is compared once, named after the first test in name order,
+// as Class.method#n for the method's nth recorded call. Jayway reads a path
+// that starts with neither $ nor @ as if it started with "$.", and so does the
+// test. A path that starts with @ is skipped, as Compile takes the part of a
+// path after the $. At least minComparedJaywaySuiteCalls pairs are compared.
+func TestSelect_JaywayTestSuiteAgreesWithJayway(t *testing.T) {
+	dir := os.Getenv("JAYWAY_SUITE_CALLS")
+	if dir == "" {
+		t.Skip("JAYWAY_SUITE_CALLS is not set")
+	}
+	files, err := filepath.Glob(filepath.Join(dir, "*.jsonl"))
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no recorded calls under %s: %v", dir, err)
+	}
+	type call struct {
+		Test         string  `json:"test"`
+		Seq          int     `json:"seq"`
+		Path         string  `json:"path"`
+		Doc          *string `json:"doc"`
+		CompileError bool    `json:"compileError"`
+	}
+	type pair struct{ doc, path string }
+	names := map[pair]string{}
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for line := range bytes.Lines(data) {
+			var c call
+			if err := json.Unmarshal(line, &c); err != nil {
+				t.Fatalf("%s: %v: %s", file, err, line)
+			}
+			var path string
+			switch {
+			case strings.HasPrefix(c.Path, "$"):
+				path = c.Path[1:]
+			case strings.HasPrefix(c.Path, "@"):
+				continue
+			default:
+				path = "." + c.Path
+			}
+			doc := "null"
+			if !c.CompileError {
+				var buf bytes.Buffer
+				if err := json.Compact(&buf, []byte(*c.Doc)); err != nil {
+					t.Fatalf("%s: the document of %s#%d is not JSON: %v", file, c.Test, c.Seq, err)
+				}
+				doc = buf.String()
+			}
+			name := fmt.Sprintf("%s#%d", c.Test, c.Seq)
+			if old, seen := names[pair{doc, path}]; !seen || name < old {
+				names[pair{doc, path}] = name
+			}
+		}
+	}
+	cases := make([]selectCase, 0, len(names))
+	for p, name := range names {
+		cases = append(cases, selectCase{name: name, doc: p.doc, path: p.path})
+	}
+	slices.SortFunc(cases, func(a, b selectCase) int { return strings.Compare(a.name, b.name) })
+	compareWithJayway(t, cases, knownJaywaySuiteDifferences, minComparedJaywaySuiteCalls)
+}
+
+// minComparedJaywaySuiteCalls is a little below the 395 pairs from the tests
+// of Jayway JsonPath 2.9.0 that the package compiles or that Jayway and the
+// package both refuse.
+const minComparedJaywaySuiteCalls = 390
+
+// knownJaywaySuiteDifferences names the pairs from Jayway's own tests whose
+// answer differs from Jayway's, with what Jayway does instead.
+var knownJaywaySuiteDifferences = map[string]string{
+	"internal.function.KeySetFunctionTest.testKeySet#1": "Jayway returns the keys as a set; the agent returns its Java text, [a, b]",
 }
 
 // minComparedSuiteQueries is a little below the 144 json-path-comparison
