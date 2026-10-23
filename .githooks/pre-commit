@@ -43,6 +43,7 @@ if [[ ${#GO_FILES[@]} -gt 0 ]]; then
         "test/parity/suite"
         "test/integration/testify"
         "test/integration/pipstub"
+        "test/integration/tenantmanager"
     )
     for f in "${GO_FILES[@]}"; do
         for mod in "${MODULES[@]}"; do

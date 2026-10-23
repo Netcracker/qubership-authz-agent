@@ -123,6 +123,8 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `lockdown.m2m_read_absent.404` | n/a | `GET /v1/data/m2m (internal port)` | - | - | none |
 | `lockdown.store_write_absent.404` | n/a | `PUT /v1/data/lockdown-probe (internal port)` | - | - | none |
 | `lockdown.check_explain_ignored.200` | admin | `POST /access/v1/check/resource (plain and with ?explain=full)` | ORDER | READ | ROLE_ADMINISTRATOR |
+| `tenant_realm.resolved_realm_token_accepted` | admin (tenant default) | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ADMINISTRATOR |
+| `tenant_realm.unregistered_realm_token.401` | admin (tenant unregistered) | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.authorize_hidden.404` | admin | `POST /authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.access_authorize_absent.404` | admin | `POST /access/v1/authorize` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `route_security.unknown_path.404` | n/a | `GET /unknown/endpoint` | - | - | none |

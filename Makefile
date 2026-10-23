@@ -11,6 +11,8 @@ lint:
 	cd test/integration/testify && golangci-lint run --build-tags integration ./...
 	@echo "[lint] Go — test/integration/pipstub"
 	cd test/integration/pipstub && golangci-lint run ./...
+	@echo "[lint] Go — test/integration/tenantmanager"
+	cd test/integration/tenantmanager && golangci-lint run ./...
 	@echo "[lint] Shell"
 	find . -name '*.sh' -not -path './.git/*' | xargs shellcheck --severity=error
 	@echo "[lint] YAML"
@@ -48,8 +50,8 @@ E2E_HELM_ARGS ?=
 E2E_BASE_URL ?= http://authz-agent:8080
 PARITY_AC_BASE_URL ?= http://authz-agent:8080
 E2E_AUTHN := test/k8s/authn
-E2E_IMAGES := authz-agent authz-policy-admin pip-stub authz-runtime-suite \
-              authz-parity-suite
+E2E_IMAGES := authz-agent authz-policy-admin pip-stub tenant-manager \
+              authz-runtime-suite authz-parity-suite
 
 e2e: e2e-cluster e2e-images e2e-harness e2e-install e2e-suite
 
@@ -61,19 +63,22 @@ e2e-images:
 	docker build -t local/authz-agent:ci               -f build/authz-agent/Dockerfile .
 	docker build -t local/authz-policy-admin:ci        -f build/authz-policy-admin/Dockerfile .
 	docker build -t local/pip-stub:ci                  -f test/integration/pipstub/Dockerfile test/integration/pipstub
+	docker build -t local/tenant-manager:ci            -f test/integration/tenantmanager/Dockerfile test/integration/tenantmanager
 	docker build -t local/authz-runtime-suite:ci       -f test/integration/testify/Dockerfile .
 	docker build -t local/authz-parity-suite:ci        -f test/parity/suite/Dockerfile test/parity/suite
 	kind load docker-image --name $(KIND_CLUSTER) $(addprefix local/,$(addsuffix :ci,$(E2E_IMAGES)))
 
-# Keycloak with the repository realm imports, the two stubs, and the M2M
-# client-credentials Secret the chart expects the platform to provision.
+# Keycloak with the repository realm imports, the two stubs, the tenant-manager
+# emulator, and the M2M client-credentials Secret the chart expects the
+# platform to provision.
 e2e-harness:
 	kubectl --context kind-$(KIND_CLUSTER) create namespace $(E2E_NAMESPACE) --dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
-	$(E2E_KUBECTL) create configmap keycloak-realms --from-file=$(E2E_AUTHN)/authz-test-realm.json --from-file=$(E2E_AUTHN)/cloud-common-realm.json --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
+	$(E2E_KUBECTL) create configmap keycloak-realms --from-file=$(E2E_AUTHN)/authz-test-realm.json --from-file=$(E2E_AUTHN)/cloud-common-realm.json --from-file=$(E2E_AUTHN)/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b-realm.json --from-file=$(E2E_AUTHN)/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a-realm.json --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
 	$(E2E_KUBECTL) create secret generic authz-agent-client-credentials --from-file=username=$(E2E_AUTHN)/m2m-credentials/username --from-file=password=$(E2E_AUTHN)/m2m-credentials/password --from-literal=name=authz-agent --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
-	$(E2E_KUBECTL) apply -f test/k8s/keycloak.yaml -f test/k8s/pip-stub.yaml -f test/k8s/entitlements-mock.yaml
+	$(E2E_KUBECTL) apply -f test/k8s/keycloak.yaml -f test/k8s/pip-stub.yaml -f test/k8s/entitlements-mock.yaml -f test/k8s/tenant-manager.yaml
 	$(E2E_KUBECTL) rollout status deploy/pip-stub --timeout=2m
 	$(E2E_KUBECTL) rollout status deploy/entitlements-mock --timeout=2m
+	$(E2E_KUBECTL) rollout status deploy/tenant-manager --timeout=2m
 	$(E2E_KUBECTL) rollout status deploy/keycloak --timeout=10m
 
 # The stub first: the agent reports Ready only once it has pulled its policies,
@@ -98,7 +103,7 @@ e2e-suite:
 # already has. Restart every Deployment that runs a local image and wait until
 # it is Ready again, so the next `e2e-suite` tests the new build. Keycloak is
 # pulled, not built, and keeps running.
-E2E_LOCAL_DEPLOYMENTS := authz-agent authz-policy-admin pip-stub entitlements-mock
+E2E_LOCAL_DEPLOYMENTS := authz-agent authz-policy-admin pip-stub entitlements-mock tenant-manager
 e2e-restart:
 	$(E2E_KUBECTL) rollout restart $(addprefix deploy/,$(E2E_LOCAL_DEPLOYMENTS))
 	for d in $(E2E_LOCAL_DEPLOYMENTS); do $(E2E_KUBECTL) rollout status deploy/$$d --timeout=3m || exit 1; done

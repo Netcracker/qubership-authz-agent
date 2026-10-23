@@ -14,8 +14,8 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 
 - Orchestrator: the `e2e-*` targets in the [Makefile](../Makefile). `make e2e` runs them in order.
 - The harness under [test/k8s/](../test/k8s/): Keycloak with the realm imports from `test/k8s/authn/`, the `pip-stub`
-  the uploaded PIP definitions call, a second stub instance as `entitlements-mock`, and chart values that point the
-  agent at them.
+  the uploaded PIP definitions call, a second stub instance as `entitlements-mock`, the `tenant-manager` emulator that
+  names the identifier of a tenant realm, and chart values that point the agent at them.
 - The agent under test comes from the Helm chart in `helm-templates/authz-agent`, installed with `test/k8s/values.yaml`;
   its policy source, the `authz-policy-admin` stub, from `helm-templates/authz-policy-admin` with
   `test/k8s/policy-admin-values.yaml`.
@@ -76,6 +76,7 @@ minutes on a slow network; later runs reuse it.
 | --- | --- |
 | `local/authz-agent:ci`, `local/authz-policy-admin:ci` | `build/*/Dockerfile`, the product images |
 | `local/pip-stub:ci` | `test/integration/pipstub/Dockerfile` |
+| `local/tenant-manager:ci` | `test/integration/tenantmanager/Dockerfile`, the tenant-manager emulator |
 | `local/authz-runtime-suite:ci` | `test/integration/testify/Dockerfile`, the suite compiled with `go test -c -tags integration` |
 | `local/authz-parity-suite:ci` | `test/parity/suite/Dockerfile`, used by `make parity` |
 
@@ -98,7 +99,7 @@ Step by step, in the order `make e2e` runs them:
 | --- | --- |
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
 | `e2e-images` | Builds the images above and loads them into the cluster |
-| `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak and the stubs; waits until they are Ready |
+| `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak, the stubs, and the tenant-manager emulator; waits until they are Ready |
 | `e2e-install` | `helm upgrade --install` of the stub chart with its dev resource profile and `test/k8s/policy-admin-values.yaml`, then of the agent chart with its dev resource profile and `test/k8s/values.yaml`, each with `--wait` |
 | `e2e-suite` | Applies the Job and its RBAC, streams its log, and fails if the Job did not complete |
 
@@ -126,6 +127,15 @@ make e2e-down     # delete the cluster
   `setup.wait_for_agent`:
 
   ```bash
+  kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent
+  ```
+
+- Changed realm imports under `test/k8s/authn/`: re-run `e2e-harness`, which updates the ConfigMap, then restart
+  Keycloak, which imports realms only at start, and the agent after it:
+
+  ```bash
+  kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/keycloak
+  kubectl --context kind-authz-e2e -n authz-e2e rollout status deploy/keycloak --timeout=10m
   kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent
   ```
 

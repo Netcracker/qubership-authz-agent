@@ -6,14 +6,15 @@
 #
 # Module configuration note
 # -------------------------
-# This repository has four Go modules:
+# This repository has five Go modules:
 #   .                              — the product module (two binaries, zero external deps)
 #   test/parity/suite              — parity-replay test suite
 #   test/integration/testify       — runtime integration suite (needs a running stack)
 #   test/integration/pipstub       — pip-stub service used by the integration suite
+#   test/integration/tenantmanager — tenant-manager emulator the agent calls in the kind harness
 #
 # The shared workflow takes a single go-module-dir and would only build and test
-# the product module.  The explicit go-module-configs list below makes all four
+# the product module.  The explicit go-module-configs list below makes all five
 # modules visible so CI does not silently skip the test suites.
 #
 # The integration-tagged suites are not built here: without -tags integration
@@ -59,7 +60,8 @@ jobs:
           {"dir": ".",                        "cover-packages": "./..."},
           {"dir": "test/parity/suite",        "cover-packages": "./..."},
           {"dir": "test/integration/testify", "cover-packages": "./..."},
-          {"dir": "test/integration/pipstub", "cover-packages": "./..."}
+          {"dir": "test/integration/pipstub", "cover-packages": "./..."},
+          {"dir": "test/integration/tenantmanager", "cover-packages": "./..."}
         ]
     # The shared workflow declares exactly one secret; pass it explicitly
     # instead of `secrets: inherit` (zizmor: secrets-inherit).
