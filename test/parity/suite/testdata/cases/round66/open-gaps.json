@@ -1,0 +1,677 @@
+{
+ "about": "Round 66: the reach gaps left as round 66 candidates, outside obligations, one case each in a tenant of its own: a second import of a customization over a stored entry, permissions assigned with a mapping item that is no permission text, an import of PIPs the PAP refuses; and an import of sets whose policySetId is no UUID.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p66x-gaps-control-first",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P66X_GAPS_CONTROL_FIRST",
+   "tenant": "parity-p66x-gaps-control-first",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-gaps-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "6d6e855c-0dfa-11cd-b46b-76729860b7ba",
+       "name": "p66x-gaps-control-first s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_GAPS_CONTROL_FIRST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "fe14da77-8c83-016c-85f6-d0d00e75437b",
+         "name": "p66x-gaps-control-first s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "298ba7e3-f478-2d32-d44f-3b872d27d110",
+           "name": "p66x-gaps-control-first s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_GAPS_CONTROL_FIRST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66x-gaps-control-first",
+      "PARITY_SUITE_P66X_GAPS_CONTROL_FIRST"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p66g-second-import-null-over-stored",
+   "about": "Two imports of a set customization at CUSTOMER: the first gives the set a description and the policy READ, the second sends the description null over it.",
+   "resourceType": "PARITY_SUITE_P66G_SECOND_IMPORT_NULL_OVER_STORED",
+   "tenant": "parity-p66g-second-import-null-over-stored",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66g-second-import-null-over-stored"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "bcb56bf9-f1e1-94c3-af6f-d36fa4c20e3b",
+       "name": "p66g-second-import-null-over-stored s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66G_SECOND_IMPORT_NULL_OVER_STORED'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "34e15b48-304d-a0f5-7b79-1e2a6180cdb2",
+         "name": "p66g-second-import-null-over-stored s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "70f988bd-2b1c-8957-7d60-34a2a8ce3295",
+           "name": "p66g-second-import-null-over-stored s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w2-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "bcb56bf9-f1e1-94c3-af6f-d36fa4c20e3b",
+       "policies": [
+        {
+         "policyId": "34e15b48-304d-a0f5-7b79-1e2a6180cdb2",
+         "rules": [
+          {
+           "ruleId": "70f988bd-2b1c-8957-7d60-34a2a8ce3295",
+           "name": "p66g-second-import-null-over-stored s rule",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ],
+       "description": "parity p66g first"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-read",
+       "type": "PARITY_SUITE_P66G_SECOND_IMPORT_NULL_OVER_STORED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w3-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "bcb56bf9-f1e1-94c3-af6f-d36fa4c20e3b",
+       "policies": [
+        {
+         "policyId": "34e15b48-304d-a0f5-7b79-1e2a6180cdb2",
+         "rules": [
+          {
+           "ruleId": "70f988bd-2b1c-8957-7d60-34a2a8ce3295",
+           "name": "p66g-second-import-null-over-stored s rule",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ],
+       "description": null
+      }
+     ],
+     "requests": [
+      {
+       "name": "w3-read",
+       "type": "PARITY_SUITE_P66G_SECOND_IMPORT_NULL_OVER_STORED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66g-second-import-null-over-stored",
+      "PARITY_SUITE_P66G_SECOND_IMPORT_NULL_OVER_STORED"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "bcb56bf9-f1e1-94c3-af6f-d36fa4c20e3b",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66g-second-import-child-without-id",
+   "about": "Two imports of a set customization at CUSTOMER, each adding a policy without policyId beside nothing else: the second import meets a stored child entry without an id beside a new one.",
+   "resourceType": "PARITY_SUITE_P66G_SECOND_IMPORT_CHILD_WITHOUT_ID",
+   "tenant": "parity-p66g-second-import-child-without-id",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66g-second-import-child-without-id"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1290b7af-76c7-9b1b-abf7-e4d0b45d3fa8",
+       "name": "p66g-second-import-child-without-id s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66G_SECOND_IMPORT_CHILD_WITHOUT_ID'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "1bf4f07c-9c5f-e7ed-410a-444351a41d09",
+         "name": "p66g-second-import-child-without-id s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "1d8d59a6-04a9-9297-14aa-c05eb2a58e55",
+           "name": "p66g-second-import-child-without-id s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w2-list"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1290b7af-76c7-9b1b-abf7-e4d0b45d3fa8",
+       "policies": [
+        {
+         "name": "p66g-second-import-child-without-id added",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4a54e57e-a08f-4d4d-67c4-31b548800007",
+           "name": "p66g-second-import-child-without-id added rule",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-list",
+       "type": "PARITY_SUITE_P66G_SECOND_IMPORT_CHILD_WITHOUT_ID",
+       "operation": "LIST"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w3-list"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1290b7af-76c7-9b1b-abf7-e4d0b45d3fa8",
+       "policies": [
+        {
+         "name": "p66g-second-import-child-without-id added",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4a54e57e-a08f-4d4d-67c4-31b548800007",
+           "name": "p66g-second-import-child-without-id added rule",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "w3-list",
+       "type": "PARITY_SUITE_P66G_SECOND_IMPORT_CHILD_WITHOUT_ID",
+       "operation": "LIST"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66g-second-import-child-without-id",
+      "PARITY_SUITE_P66G_SECOND_IMPORT_CHILD_WITHOUT_ID"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "1290b7af-76c7-9b1b-abf7-e4d0b45d3fa8",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p66g-assign-permission-not-text",
+   "about": "Permissions assigned with a mapping item whose permission is a number, and with an item that is a text, not an object.",
+   "resourceType": "PARITY_SUITE_P66G_ASSIGN_PERMISSION_NOT_TEXT",
+   "tenant": "parity-p66g-assign-permission-not-text",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "assign-permissions",
+     "args": {},
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": {
+      "role": "ROLE_PARITY_P66G_ASSIGN",
+      "level": "custom",
+      "mapping": [
+       {
+        "permission": "5"
+       }
+      ]
+     }
+    },
+    {
+     "name": "w2",
+     "op": "assign-permissions",
+     "args": {},
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": {
+      "role": "ROLE_PARITY_P66G_ASSIGN",
+      "level": "custom",
+      "mapping": [
+       "parity_p66g"
+      ]
+     }
+    },
+    {
+     "name": "r1",
+     "op": "read-permissions",
+     "args": {
+      "role": "ROLE_PARITY_P66G_ASSIGN",
+      "level": "custom"
+     },
+     "observe": [
+      "read:read-permissions"
+     ],
+     "markers": [
+      "ROLE_PARITY_P66G_ASSIGN"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p66g-import-pips-refused",
+   "about": "An import of the PIP export with a HEADER declaration that names no header.",
+   "resourceType": "PARITY_SUITE_P66G_IMPORT_PIPS_REFUSED",
+   "tenant": "parity-p66g-import-pips-refused",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "import-pips",
+     "args": {},
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP66gNoHeader",
+       "pipType": "HEADER",
+       "domain": "PARITY_P66G_IMPORT",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "r1",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read:read-config-pips"
+     ],
+     "markers": [
+      "subject.parityP66gNoHeader"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p66g-import-sets-refused-id",
+   "about": "An import of the v3 export whose policySetId is no UUID (the id checks of the import refuse nothing under PCFG id_text trim, so this asks the refusal of the upload's own checks).",
+   "resourceType": "PARITY_SUITE_P66G_IMPORT_SETS_REFUSED_ID",
+   "tenant": "parity-p66g-import-sets-refused-id",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "import-sets",
+     "args": {},
+     "observe": [
+      "status",
+      "error-class",
+      "read-raw:read-config-sets"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "parity p66g not a uuid",
+       "name": "p66g-import-sets-refused-id s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66G_IMPORT_SETS_REFUSED_ID'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "c5a53b49-28e0-7ba0-ed20-1dc12dcef69c",
+         "name": "p66g-import-sets-refused-id s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "cda2136c-ad61-63cd-4f92-bce44a73184c",
+           "name": "p66g-import-sets-refused-id s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE",
+       "externalId": "parity-p66g-import-sets-refused-id"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p66x-gaps-control-last",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P66X_GAPS_CONTROL_LAST",
+   "tenant": "parity-p66x-gaps-control-last",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-gaps-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "ef9f62e5-720c-2847-36b8-93203b2cd156",
+       "name": "p66x-gaps-control-last s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_GAPS_CONTROL_LAST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "5844d3e3-8fa0-0c24-874e-dd96473b3a50",
+         "name": "p66x-gaps-control-last s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "608fb94c-78e3-36ce-d29a-dfd0c752b1eb",
+           "name": "p66x-gaps-control-last s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_GAPS_CONTROL_LAST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66x-gaps-control-last",
+      "PARITY_SUITE_P66X_GAPS_CONTROL_LAST"
+     ]
+    }
+   ]
+  }
+ ]
+}
