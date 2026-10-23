@@ -111,7 +111,7 @@ var Catalog = []StepEntry{
 	{"pip_general.bulk_stub_verify_called", "n/a", "GET (pip-stub /calls)", "CUSTOMER", "READ", "none"},
 	{"pip_general.restore_default_stub", "n/a", "PUT (pip-stub configure)", "-", "-", "none"},
 
-	// ── pip_jsonpath (D-AF-U) ──────────────────────────────────────────
+	// ── pip_jsonpath ───────────────────────────────────────────────────
 	{"pip_jsonpath.stub_reset", "n/a", "POST (pip-stub reset)", "-", "-", "none"},
 	{"pip_jsonpath.upload_json_pip", "n/a", epUploadPIPs, "CUSTOMER", "READ", "none"},
 	{"pip_jsonpath.pin_json_response", "n/a", "PUT (pip-stub configure)", "-", "-", "none"},
@@ -122,7 +122,7 @@ var Catalog = []StepEntry{
 	// ── rls_aggregation ──────────────────────────────────────────────────
 	{"check_filter.multi_frag.rsql_or_aggregation", "admin", epCheckFilter, "MULTI_FRAG_ITEM", "READ", "ROLE_ADMINISTRATOR"},
 
-	// ── token_pip_filter (ADR-0046) ─────────────────────────────────
+	// ── token_pip_filter ────────────────────────────────────────────
 	{"token_pip_filter.upload_token_pips", "n/a", epUploadPIPs, "TOKEN_PIP_POSITIVE,TOKEN_PIP_DEFAULT", "READ", "none"},
 	{"token_pip_filter.positive_alias_in_filter", "admin", epCheckFilter, "TOKEN_PIP_POSITIVE", "READ", "ROLE_ADMINISTRATOR"},
 	{"token_pip_filter.default_value_fallback", "admin", epCheckFilter, "TOKEN_PIP_DEFAULT", "READ", "ROLE_ADMINISTRATOR"},
@@ -143,7 +143,7 @@ var Catalog = []StepEntry{
 	{"decision_logs.download_no_token.200", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
 	{"decision_logs.content_is_ndjson", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
 
-	// ── entitlements (ADR-0054 / D-AG-15) ────────────────────────────────
+	// ── entitlements ─────────────────────────────────────────────────────
 	// Exercises the container-pinned entitlements PIP end-to-end: the test
 	// pins a per-user response on the entitlements-mock stub, uploads an
 	// ENT-flavoured policy via PUT /access/v1/simplifiedPolicies/domainPolicies/{domain} (pull loop), then drives
@@ -156,7 +156,7 @@ var Catalog = []StepEntry{
 	{"decision_logs.catalog_coverage", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
 	{"decision_logs.legacy_path_header", "admin", epCheckResource, "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 
-	// ── wildcard_access (ADR-0040) ──────────────────────────────────────
+	// ── wildcard_access ─────────────────────────────────────────────────
 	{"wildcard_access.upload_wildcard_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
 	{"wildcard_access.all_all.no_predicates", "admin", epCheckFilter, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"wildcard_access.all_all.no_deny_reason", "admin", epCheckResource, "WC_EXACT_ONLY", "READ", "ROLE_ADMINISTRATOR"},
@@ -169,7 +169,7 @@ var Catalog = []StepEntry{
 	{"wildcard_access.legacy.check_filter_all_op", userOrderReader, epCheckFilter, "UNKNOWN_TYPE", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.restore_original_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
 
-	// ── m2m_keycloak (Step 15) ──────────────────────────────────────────
+	// ── m2m_keycloak ────────────────────────────────────────────────────
 	// These steps run only when M2M_KEYCLOAK_PROFILE=true, as the kind
 	// harness sets it. Against an agent with a static M2M token they are
 	// skipped — the step body calls t.Skip() so the catalog coverage check

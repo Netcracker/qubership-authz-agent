@@ -20,7 +20,7 @@ info:
     Notation:
       - `bearerAuth` covers the `Authorization: Bearer <jwt>` admission
         token applied across the public surface. The legacy
-        `Incoming-Token` and `Authorization-Type` headers (ADR-0049) are
+        `Incoming-Token` and `Authorization-Type` headers are
         modelled as per-operation header parameters because they are
         optional supplements, not standalone auth schemes.
       - `additionalProperties` is set explicitly on every schema. Open
@@ -34,9 +34,9 @@ info:
         on-disk value is `0.0.1`; the build pipeline rewrites it for
         release artefacts.
 servers:
-  - url: http://localhost:18080
-    description: Public authorization surface (host-published port, runtime integration suite).
-  - url: http://localhost:18080
+  - url: http://localhost:8080
+    description: Public authorization surface, reached from the host through a port-forward to the agent Service (`docs/local-integration-tests.md`).
+  - url: http://localhost:8080
     description: Internal admin surface; same listener, segregated by the `/internal/v1/` URL prefix.
 tags:
   - name: public
@@ -596,8 +596,6 @@ paths:
       summary: Spec-version advertisement consumed by the legacy thin client.
       description: |
         Served as a static response; the policy engine never sees it.
-        Re-introduced by ADR-0049 to drive the thin client's interceptor
-        selection (relay vs. forward).
       security: []
       responses:
         '200':
@@ -682,7 +680,7 @@ components:
       in: header
       required: false
       description: |
-        Legacy subject-token relay (ADR-0049). On legacy routes this
+        Legacy subject-token relay. On legacy routes this
         header carries the end-user JWT and takes precedence over
         `Authorization` for policy evaluation.
       schema:
@@ -890,8 +888,7 @@ components:
         `true`, because the policy engine runs inside the agent's
         process. `bootstrap` is present when the failure was the JWKS
         bootstrap threshold check, and `configError` is present when the
-        trusted-providers configuration file is unreadable or invalid
-        (authz-agent-ADR-0075).
+        trusted-providers configuration file is unreadable or invalid.
       properties:
         opaReady:
           type: boolean
@@ -900,7 +897,7 @@ components:
           description: |
             Present when the trusted-providers configuration file could not
             be read or parsed. A rejected config is surfaced here rather
-            than silently clearing thresholds (authz-agent-ADR-0075).
+            than silently clearing thresholds.
         bootstrap:
           $ref: '#/components/schemas/BootstrapHealthDetails'
         policyConversion:
@@ -911,8 +908,7 @@ components:
       required: [policySets, policySetsSkipped, rules, rulesSkipped, rulesDenySkipped, policies]
       description: |
         Counts from the most recent conversion of the access-control policy
-        set into the OPA document, read from the pull-status file
-        (authz-agent-ADR-0078). Present only in pull mode and only after the
+        set into the OPA document. Present only in pull mode and only after the
         first successful pull; absent in ConfigMap-mount mode and before the
         first pull completes.
 
@@ -942,7 +938,7 @@ components:
           description: |
             Rules dropped because their target did not parse. Fail-closed:
             an unrecognised role target skips the policy rather than granting
-            open access (authz-agent-ADR-0078).
+            open access.
         rulesDenySkipped:
           type: integer
           description: DENY-effect rules skipped; the converter emits ALLOW rules only.
@@ -968,8 +964,8 @@ components:
           description: |
             Names the identity providers marked `required: true` in the
             trusted-providers file that did not bootstrap successfully.
-            Present only when at least one required provider is absent
-            (authz-agent-ADR-0075). Omitted when all required providers
+            Present only when at least one required provider is absent.
+            Omitted when all required providers
             are healthy.
     LegacyErrorResponse:
       type: object

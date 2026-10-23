@@ -28,14 +28,13 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().Equal("false", bodyStr(b))
 	})
 
-	// ADR-0049: Incoming-Token is the preferred subject source on legacy
+	// Incoming-Token is the preferred subject source on legacy
 	// ingress. The thin client sends the M2M token in Authorization (for
 	// admission) and the end-user token in Incoming-Token (for policy
 	// evaluation). Here we send an expired end-user token in Incoming-Token
 	// so subject validation fails and the canonical DENY path fires; the
 	// Authorization (admission) token is valid, so this returns HTTP 200
-	// with body "false" (not HTTP 401). Under pre-ADR-0049 behavior this
-	// test erroneously asserted the header was ignored.
+	// with body "false" (not HTTP 401).
 	s.Step("check_resource.incoming_token_used_for_subject", func() {
 		h := map[string]string{
 			"Content-Type":   "application/json",
@@ -112,9 +111,8 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().True(v == "true" || v == "false", "response must be boolean string, got: %s", v)
 	})
 
-	// Parity catalogue row 10: the legacy CheckRequestValidator
-	// rejects missing required parameters with a field-specific message
-	// (CheckRequestValidator.java:31-44). Envoy Lua now emits
+	// A missing required parameter is rejected with a field-specific
+	// message. Envoy Lua now emits
 	// "Missing required parameter: <field>" so the body substring
 	// includes "parameter"/"type"/"operation" — matching the tolerance
 	// set the parity suite's TestRow11ValidationMissingOperation uses.
@@ -140,7 +138,7 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().Equal("not found", jsonObj(b)["message"])
 	})
 
-	// ADR-0049: on legacy ingress the policy-evaluation subject comes from
+	// On legacy ingress the policy-evaluation subject comes from
 	// Incoming-Token when present, with Authorization reserved for admission.
 	// BULK_OPEN READ is allowed for ROLE_ADMINISTRATOR only; sending an
 	// admin Authorization (admission) together with an order-reader
@@ -163,7 +161,7 @@ func (s *RuntimeSuite) TestCheckResource() {
 			"Incoming-Token (order-reader) must take precedence over Authorization (admin) for subject evaluation")
 	})
 
-	// ADR-0049: anonymous ingress is signalled by Authorization-Type:
+	// Anonymous ingress is signalled by Authorization-Type:
 	// anonymous. Envoy must leave subject empty so canonical identity.rego
 	// matches the anonymous_subject path. Admission still requires a valid
 	// Authorization (M2M) token.
@@ -183,7 +181,7 @@ func (s *RuntimeSuite) TestCheckResource() {
 			"anonymous subject has no roles — BULK_OPEN READ must DENY")
 	})
 
-	// ADR-0049 decision item 3: incoming-token must never appear in
+	// The Incoming-Token header must never appear in
 	// input.requestHeaders. We rely on HEADER PIP resolution to never see
 	// the bearer string; a misconfigured HEADER PIP that tried to bind
 	// subject.incomingToken would otherwise leak the raw token. This step
@@ -287,7 +285,7 @@ func (s *RuntimeSuite) TestCheckResource() {
 		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("true", bodyStr(b))
-		// D-AF-R (OQ-AF-6, 2026-04-15): PIP-resolved array elements are
+		// PIP-resolved array elements are
 		// JSON-quoted and comma-space-joined.
 		s.Assert().Equal(`customerId=in=("C1", "C2", "C3")`,
 			loggedPredicate(firstLoggedResult(s.loggedDecision(mark)), "rsql"))

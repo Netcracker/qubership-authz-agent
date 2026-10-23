@@ -9,7 +9,12 @@ superseded by
 [authz-agent-ADR-0081](20261019-authz-agent-adr-0081-remove-the-data-api.md):
 `POST /access/v1/authorize` is the only decision endpoint, the parity
 test compares the agent's two ports at that path, and port 8181 is
-named `internal`.
+named `internal`. That decision endpoint and that parity test are in
+turn superseded by the removal of `POST /access/v1/authorize` in
+[PR #109](https://github.com/Netcracker/qubership-authz-agent/pull/109).
+The canonical request and response envelopes of decisions 3, 4, and 11
+no longer reach a client, and the agent's clients call the check routes
+of the access-control API on port 8080.
 
 ## Context
 

@@ -3,9 +3,8 @@
 ## Purpose
 
 This directory contains contract-focused tests for the Authz Agent OPA layer.
-The suites are specification-first and aligned with the policy grammar and
-limitation documentation in the internal access-control source repository,
-and with the current project docs in `docs/ai/`.
+The suites are specification-first and follow the policy grammar and its
+limitations.
 
 ## Suite Inventory
 
@@ -33,7 +32,7 @@ and with the current project docs in `docs/ai/`.
      - no roles;
      - object-form `subject` rejection;
      - anonymous compatibility mode;
-     - `realm_access.roles`-only role derivation (ADR-0019);
+     - `realm_access.roles`-only role derivation;
      - non-realm claims (`groups`, `authorities`, direct `roles`, `resource_access.*.roles`) ignored;
      - large role-cardinality corner cases.
 4. `normalization_contract_test.rego`
@@ -51,9 +50,7 @@ and with the current project docs in `docs/ai/`.
    - Installs Keycloak plus `authz-agent` from the Helm chart on a kind cluster.
    - Executes the Testify integration suite as a Job inside the cluster.
    - Uploads simplified runtime policies to the authz-policy-admin during suite setup; the agent pulls them from there.
-   - Mirrors the implemented legacy check-endpoint integration coverage from
-     the internal access-control source repository
-     (`CheckEndpointTest.java` and `CheckEndpointV2Test.java`).
+   - Covers the legacy check endpoints the agent implements.
 
 ## Subject Contract
 
@@ -80,7 +77,7 @@ Predecoded object-form `subject` is not part of the contract and must not be use
 | Token validity | valid, expired, wrong issuer, unknown `kid` |
 | Subject type | user token, service token, anonymous compatibility flow, `verifiedTokens` cache-hit fast path |
 | Role cardinality | zero roles, single role, many roles, many roles with one match, many roles with no match |
-| Role claim sources | `realm_access.roles` only (ADR-0019); non-realm claims (`groups`, `authorities`, direct `roles`, `resource_access.*.roles`) verified as ignored |
+| Role claim sources | `realm_access.roles` only; non-realm claims (`groups`, `authorities`, direct `roles`, `resource_access.*.roles`) verified as ignored |
 | Role normalization | uppercase normalization, duplicate elimination |
 | Rejection paths | object-form `subject` rejected even with internal flags |
 

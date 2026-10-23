@@ -23,8 +23,8 @@ import (
 	"authz-agent/test/parity/suite/model"
 )
 
-// Row 30 — GENERAL (HTTP) PIP request-args & contract extension
-// (authz-agent-ADR-0066..0069). These are NOT legacy-parity golden cases: they
+// Row 30 — GENERAL (HTTP) PIP request-args & contract extension.
+// These are NOT legacy-parity golden cases: they
 // exercise the NEW request-args contract that access-control has no equivalent
 // for (substitution into query/headers/body, response.extract, per-request
 // timeout, x-request-id correlation, operand-local failure isolation). They
@@ -38,7 +38,7 @@ import (
 // authz-agent, where the request-args PIPs are not seeded.
 func (s *ParitySuite) skipUnlessAuthzAgent() {
 	if !isAuthzAgentProfile(s.cfg.Profile) {
-		s.T().Skipf("row 30 tests the authz-agent GENERAL PIP request-args contract (authz-agent-ADR-0066..0069), which access-control does not implement; PARITY_PROFILE=%s", s.cfg.Profile)
+		s.T().Skipf("row 30 tests the authz-agent GENERAL PIP request-args contract, which access-control does not implement; PARITY_PROFILE=%s", s.cfg.Profile)
 	}
 }
 

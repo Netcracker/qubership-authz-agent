@@ -3,7 +3,10 @@
 ## Status
 
 Accepted. The part of the Decision that keeps the slice of OPA's REST data API, and the Consequences that follow from
-it, are superseded by [authz-agent-ADR-0081](20261019-authz-agent-adr-0081-remove-the-data-api.md).
+it, are superseded by [authz-agent-ADR-0081](20261019-authz-agent-adr-0081-remove-the-data-api.md). The parts that
+keep `POST /access/v1/authorize` and its canonical contract are superseded by the removal of that route in
+[PR #109](https://github.com/Netcracker/qubership-authz-agent/pull/109): on port 8080 the agent serves the check routes
+of the access-control API, `/api-version`, `/health`, and `/internal/v1/decision-logs`.
 
 <!-- markdownlint-disable-next-line MD001 -->
 #### Date

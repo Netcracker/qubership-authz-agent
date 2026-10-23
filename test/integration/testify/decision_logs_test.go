@@ -208,8 +208,7 @@ func (s *RuntimeSuite) TestZZDecisionLogsCatalogCoverage() {
 					"legacy route decision log must keep canonical result shape in OPA logs")
 
 				// GENERAL PIP full HTTP response must be persisted in decision logs
-				// via OPA-native nd_builtin_cache (authz-agent-ADR-0063 — replaces
-				// the retired result.pipTrace[] channel). The allowedCustomers PIP
+				// via OPA-native nd_builtin_cache. The allowedCustomers PIP
 				// is the http.send whose request URL hits /api/v1/pip/allowed.
 				pipLog, ok := logsByRequestID["pip_general.active_pip_called"]
 				s.Require().True(ok, "missing decision log for pip_general.active_pip_called")
@@ -313,9 +312,8 @@ func decisionLogResultIsCanonical(obj map[string]any) bool {
 }
 
 // decisionLogHTTPSendResponse extracts the http.send result for the PIP call
-// whose request URL contains urlSubstring from the event's nd_builtin_cache
-// (authz-agent-ADR-0063 — replaces the retired result.pipTrace[] channel). OPA
-// keys nd_builtin_cache["http.send"] by the JSON-serialized request operand, so
+// whose request URL contains urlSubstring from the event's nd_builtin_cache.
+// OPA keys nd_builtin_cache["http.send"] by the JSON-serialized request operand, so
 // the backend URL is matched against the cache key.
 func decisionLogHTTPSendResponse(obj map[string]any, urlSubstring string) (map[string]any, bool) {
 	ndCache, ok := obj["nd_builtin_cache"].(map[string]any)

@@ -47,7 +47,7 @@ func (s *RuntimeSuite) TestRouteSecurity() {
 		s.Assert().Equal("not found", jsonObj(b)["message"])
 	})
 
-	// v2 surface implemented in Envoy per D-AF-L.
+	// v2 surface implemented in Envoy.
 	// /access/v2/check/resource lands via check_resource_v2.lua and
 	// returns the {"decision": bool} wrapper shape the v2 thin client
 	// expects. Admin token here has no policy granting ORDER READ so the
@@ -117,7 +117,7 @@ func (s *RuntimeSuite) TestRouteSecurity() {
 		s.Assert().True(hasCalc, "response must include calculationResult; got %s", string(b))
 	})
 
-	// ADR-0049: /api-version is an Envoy-owned static handler returning the
+	// /api-version is an Envoy-owned static handler returning the
 	// legacy byte shape so the thin client's interceptor selection can pick
 	// the relay (Incoming-Token) path. The response is served directly by
 	// Envoy and never reaches OPA; it must be reachable without any
@@ -131,7 +131,7 @@ func (s *RuntimeSuite) TestRouteSecurity() {
 		s.Require().NotEmpty(specs, "specs array must not be empty")
 
 		// Verify the legacy byte shape: integer major/minor/supportedMajors
-		// (D-AF-M: match legacy golden byte-for-byte). Row-0 of specs is
+		// (match legacy golden byte-for-byte). Row-0 of specs is
 		// /access and its major must be an integer, not a string.
 		first, ok := specs[0].(map[string]interface{})
 		s.Require().True(ok, "specs[0] must be object")

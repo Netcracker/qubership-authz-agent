@@ -114,7 +114,7 @@ var specValidationOptions = &openapi3filter.Options{
 
 // responseTriple identifies one (method, spec path template, status) response
 // declared in the OpenAPI document. It is the key shared by the conformance
-// hook's exercised-set and the ADR-0064 response-reachability lint
+// hook's exercised-set and the response-reachability lint
 // (TestZZZResponseReachabilityCoverage).
 type responseTriple struct {
 	Method string
@@ -130,7 +130,7 @@ var (
 // recordExercisedResponse marks one (method, spec path, status) response as
 // having been validated against the spec at least once during this test
 // process. The conformance hook calls it on every successful ValidateResponse;
-// the terminal reachability lint reads the accumulated set (ADR-0064).
+// the terminal reachability lint reads the accumulated set.
 func recordExercisedResponse(method, path string, status int) {
 	exercisedResponsesMu.Lock()
 	exercisedResponses[responseTriple{Method: method, Path: path, Status: status}] = true
@@ -247,7 +247,7 @@ func assertConformsToSpecOpts(t *testing.T, method, rawURL string, reqHeaders ma
 		t.Fatalf("spec response validation failed for %s %s (status %d): %v\nbody: %s", method, parsed.Path, statusCode, err, truncate(respBody, 512))
 	}
 
-	// ADR-0064 response-reachability: record the spec route+method+status just
+	// Record the spec route+method+status just
 	// validated so the terminal coverage lint can prove every declared response
 	// is reachable. route.Path is the spec path template, matching the keys the
 	// lint enumerates from doc.Paths.

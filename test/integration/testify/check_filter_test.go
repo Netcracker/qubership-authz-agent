@@ -39,7 +39,7 @@ func (s *RuntimeSuite) TestCheckFilter() {
 	// tests/parity/suite/testdata/golden/check-filter-v1/*.json pin the
 	// legacy wire shape — `customFilterCondition` is JSON `null` on every
 	// simplified-policy path (legacy only emits a string there for regular
-	// full-policy rules, which row 4 / ADR-0051 permanently defers). The
+	// full-policy rules). The
 	// other five fields stay strings; only `customFilterCondition` is
 	// allowed to be null.
 	s.Step("check_filter.deny_all_fields", func() {
@@ -100,8 +100,7 @@ func (s *RuntimeSuite) TestCheckFilter() {
 
 	// `filterCondition` is always empty on the
 	// simplified-policy path (legacy's generic `predicate` template
-	// does not exist in simplified format). Decision D-AF-S
-	// (2026-04-15, supersedes ADR-0025): two-fragment RSQL
+	// does not exist in simplified format). Two-fragment RSQL
 	// aggregation is flat comma-joined — legacy does not wrap each
 	// item in parentheses.
 	s.Step("check_filter.multi_frag.rsql_or_aggregation", func() {
@@ -112,7 +111,7 @@ func (s *RuntimeSuite) TestCheckFilter() {
 		s.Assert().Equal("USE_FILTER_CONDITION", j["calculationResult"])
 		rsql, _ := j["rsqlFilterCondition"].(string)
 		s.Assert().Equal("dept==engineering,dept==management", rsql,
-			"rsqlFilterCondition must be flat comma-joined per D-AF-S, got: %s", rsql)
+			"rsqlFilterCondition must be flat comma-joined, got: %s", rsql)
 		filter, _ := j["filterCondition"].(string)
 		s.Assert().Equal("", filter,
 			"filterCondition is always empty on the simplified-policy path per the parity goldens, got: %s", filter)

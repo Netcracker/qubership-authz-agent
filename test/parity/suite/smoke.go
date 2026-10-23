@@ -30,12 +30,12 @@ import (
 // before any test method runs.
 func RunSmokePhase(ctx context.Context, cfg Config, tokens *TokenFactory, pipMock *PipController) error {
 	if isAuthzAgentProfile(cfg.Profile) {
-		// ADR-0049 landed at the Envoy + Lua layer
+		// Legacy-ingress compatibility landed at the Envoy + Lua layer
 		// (/api-version + Incoming-Token subject derivation + prohibited
-		// HEADER PIP). A later ADR-0049 stage landed every deferred v1 / v2
+		// HEADER PIP). A later stage landed every deferred v1 / v2
 		// compatibility endpoint as an Envoy + Lua transform, so step 8
 		// (v2 check-resource) is graduated out of the skip list.
-		// A final ADR-0049 stage landed the narrow `allowMissingAud` opt-in
+		// A final stage landed the narrow `allowMissingAud` opt-in
 		// canonical-path branch in identity.rego (plus the parity-agent
 		// trusted-providers.json opt-in), so steps 5/6/7 — the
 		// Incoming-Token parity assertions that previously failed at

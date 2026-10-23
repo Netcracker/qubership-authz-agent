@@ -199,8 +199,8 @@ audiences_json="$(jq -cn --arg csv "${audiences_csv}" '$csv | split(",") | map(g
 jwks_uri="https://idp.example.test/realms/${provider_id}/protocol/openid-connect/certs"
 
 # The generated entry uses the explicit form: `jwksUri` is fetched directly and
-# `issuer` is absent. An entry carrying both is rejected at load
-# (authz-agent-ADR-0075) — and the issuer here would in any case never be
+# `issuer` is absent. An entry carrying both is rejected at load,
+# and the issuer here would in any case never be
 # reachable, since these keys exist only on disk. The issuer stays in the
 # manifest, where the minting side reads it as the `iss` claim to stamp.
 
