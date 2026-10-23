@@ -25,8 +25,9 @@ import (
 type Form string
 
 // The forms the agent cannot execute yet. A frontend writes every form except
-// FormNestedIterate as an [Unsupported] atom or operand; [Tree.Unsupported]
-// finds FormNestedIterate from the shape of the tree.
+// FormNestedIterate and FormPIPExtension as an [Unsupported] atom or operand;
+// [Tree.Unsupported] finds FormNestedIterate from the shape of the tree and
+// FormPIPExtension from [PIP.Unsupported].
 const (
 	// FormJSONPath is a resource path that package jsonpath does not compile.
 	FormJSONPath Form = "jsonpath"
@@ -35,11 +36,20 @@ const (
 	// FormPIPType is a reference to a PIP whose pipType the specification does
 	// not evaluate in a condition.
 	FormPIPType Form = "pip-type"
+	// FormSyntax is condition text of an export that the agent's parser
+	// refuses. The PAP refuses such text too, so its presence means the two
+	// parsers disagree.
+	FormSyntax Form = "syntax"
 	// FormNestedIterate is a set with iterate inside a set with iterate.
 	FormNestedIterate Form = "nested-iterate"
+	// FormPIPExtension is a PIP declaration with fields of an extension the
+	// legacy service does not have.
+	FormPIPExtension Form = "pip-extension"
 )
 
-var forms = []Form{FormJSONPath, FormOperand, FormPIPType, FormNestedIterate}
+var forms = []Form{
+	FormJSONPath, FormOperand, FormPIPType, FormSyntax, FormNestedIterate, FormPIPExtension,
+}
 
 // Unsupported stands for an atom or an operand the agent cannot execute yet.
 // Text is the source text of the form, so the report can quote it.
@@ -67,11 +77,17 @@ type Finding struct {
 	Text  string
 }
 
-// Unsupported lists every form of the tree the agent cannot execute yet, in
-// tree order. A tree with an empty list can be generated in full; a generator
+// Unsupported lists every form of the tree the agent cannot execute yet: the
+// PIP declarations first, then the simplified groups and the sets in tree
+// order. A tree with an empty list can be generated in full; a generator
 // rejects any other tree as a whole.
 func (t *Tree) Unsupported() []Finding {
 	var out []Finding
+	for _, p := range t.PIPs {
+		if p.Unsupported != "" {
+			out = append(out, Finding{Where: fmt.Sprintf("pip %q", p.Name), Form: FormPIPExtension, Text: p.Unsupported})
+		}
+	}
 	cond := func(where string, c *Condition) {
 		if c == nil {
 			return

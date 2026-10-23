@@ -106,6 +106,9 @@ type SimplifiedGroup struct {
 // SimplifiedPolicy is one simplified policy. Its effect is ALLOW.
 type SimplifiedPolicy struct {
 	ID string
+	// Frontend marks a policy applicable for the frontend: in the export, a
+	// rule of ruleType APPLICABLE_FOR_FRONTEND.
+	Frontend bool
 	// Operation is the operation as written, possibly "ALL", or empty when the
 	// policy names none.
 	Operation string
@@ -151,6 +154,10 @@ type Policy struct {
 	ID        string
 	Name      string
 	Algorithm Algorithm
+	// Status is the status as written, empty when absent; the
+	// specification's profile decides which statuses a check and a filter
+	// read.
+	Status string
 	// Target is at [PlacePolicyTarget], or nil.
 	Target *Condition
 	Rules  []*Rule
@@ -161,6 +168,11 @@ type Rule struct {
 	ID     string
 	Name   string
 	Effect Effect
+	// Status is the status as written, empty when absent, as
+	// [Policy.Status].
+	Status string
+	// Frontend marks a rule of ruleType APPLICABLE_FOR_FRONTEND.
+	Frontend bool
 	// Target is at [PlaceRuleTarget], or nil.
 	Target *Condition
 	// Condition is at [PlaceRuleCondition], or nil.
@@ -195,8 +207,9 @@ type PIP struct {
 	Claim string
 	// Header is the request header of a HEADER PIP.
 	Header string
-	// DefaultValue is the default of a TOKEN or HEADER PIP, or nil.
-	DefaultValue *string
+	// DefaultValue is the JSON value of defaultValue as written, empty when
+	// the field is absent.
+	DefaultValue string
 
 	URL        string
 	HTTPMethod string
@@ -204,9 +217,13 @@ type PIP struct {
 	JSONPath   string
 	// ReturnType is the type field: UUID, REGULAR, JSON, or empty.
 	ReturnType string
-	// ForwardHeaders are the names of the request headers the call forwards,
-	// which the export writes as one comma-separated string.
-	ForwardHeaders []string
+	// Headers names the request headers the call forwards, as the
+	// comma-separated text the export writes.
+	Headers string
+	// ResourceType is the resource type of a FILTERED PIP.
+	ResourceType string
+	// Domain is the domain that declares the PIP.
+	Domain string
 	// RequestAttributes maps an attribute name to its JSON value as written.
 	RequestAttributes map[string]string
 
@@ -214,6 +231,11 @@ type PIP struct {
 	// written, or empty.
 	ProductMapping string
 	CustomMapping  string
+
+	// Unsupported names what the declaration carries that the agent cannot
+	// execute yet, such as a field of an extension the legacy service does
+	// not have; empty when there is nothing.
+	Unsupported string
 }
 
 // PIP returns the declaration named name, and false when the tree declares

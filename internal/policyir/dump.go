@@ -42,7 +42,7 @@ func (t *Tree) Dump() string {
 	for _, g := range t.Simplified {
 		line(0, "simplified domain=%q component=%q resourceType=%q", g.Domain, g.Component, g.ResourceType)
 		for _, p := range g.Policies {
-			line(1, "policy %q operation=%q roles=%s", p.ID, p.Operation, quoteAll(p.Roles))
+			line(1, "policy %q operation=%q roles=%s%s", p.ID, p.Operation, quoteAll(p.Roles), frontend(p.Frontend))
 			dumpCondition(line, 2, "condition", p.Condition)
 			dumpPredicates(line, 2, p.Predicates)
 		}
@@ -58,14 +58,14 @@ func (t *Tree) Dump() string {
 			line(depth+1, "iterate var=%q algorithm=%s", s.Iterate.Var, s.Iterate.Algorithm)
 		}
 		for _, p := range s.Policies {
-			line(depth+1, "policy %q name=%q algorithm=%s", p.ID, p.Name, algorithm(p.Algorithm))
+			line(depth+1, "policy %q name=%q algorithm=%s%s", p.ID, p.Name, algorithm(p.Algorithm), status(p.Status))
 			dumpCondition(line, depth+2, "target", p.Target)
 			for _, r := range p.Rules {
 				effect := string(r.Effect)
 				if r.Effect == EffectAbsent {
 					effect = "absent"
 				}
-				line(depth+2, "rule %q name=%q effect=%s", r.ID, r.Name, effect)
+				line(depth+2, "rule %q name=%q effect=%s%s%s", r.ID, r.Name, effect, status(r.Status), frontend(r.Frontend))
 				dumpCondition(line, depth+3, "target", r.Target)
 				dumpCondition(line, depth+3, "condition", r.Condition)
 				dumpPredicates(line, depth+3, r.Predicates)
@@ -79,6 +79,20 @@ func (t *Tree) Dump() string {
 		set(0, s)
 	}
 	return b.String()
+}
+
+func status(s string) string {
+	if s == "" {
+		return ""
+	}
+	return fmt.Sprintf(" status=%q", s)
+}
+
+func frontend(f bool) string {
+	if f {
+		return " frontend"
+	}
+	return ""
 }
 
 func algorithm(a Algorithm) string {
@@ -95,25 +109,29 @@ func pipFields(p *PIP) string {
 			fmt.Fprintf(&b, " %s=%q", k, v)
 		}
 	}
+	raw := func(k, v string) {
+		if v != "" {
+			fmt.Fprintf(&b, " %s=%s", k, v)
+		}
+	}
 	fmt.Fprintf(&b, " type=%s", p.Type)
 	str("claim", p.Claim)
 	str("header", p.Header)
-	if p.DefaultValue != nil {
-		fmt.Fprintf(&b, " defaultValue=%q", *p.DefaultValue)
-	}
+	raw("defaultValue", p.DefaultValue)
 	str("url", p.URL)
 	str("httpMethod", p.HTTPMethod)
 	str("beanName", p.BeanName)
 	str("jsonPath", p.JSONPath)
 	str("returnType", p.ReturnType)
-	if len(p.ForwardHeaders) > 0 {
-		fmt.Fprintf(&b, " headers=%s", quoteAll(p.ForwardHeaders))
-	}
+	str("headers", p.Headers)
+	str("resourceType", p.ResourceType)
+	str("domain", p.Domain)
 	if len(p.RequestAttributes) > 0 {
 		fmt.Fprintf(&b, " requestAttributes=%s", sortedMap(p.RequestAttributes))
 	}
-	str("productMapping", p.ProductMapping)
-	str("customMapping", p.CustomMapping)
+	raw("productMapping", p.ProductMapping)
+	raw("customMapping", p.CustomMapping)
+	str("unsupported", p.Unsupported)
 	return b.String()
 }
 

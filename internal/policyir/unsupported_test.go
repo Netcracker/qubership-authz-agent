@@ -46,12 +46,14 @@ func TestTreeUnsupportedListsEveryForm(t *testing.T) {
 		Compare{Op: OpEQ, Left: Resource{Path: ".a"}, Right: Unsupported{Form: FormPIPType, Text: "subject.scope"}})
 	p.sets[0].Sets = append(p.sets[0].Sets,
 		&PolicySet{ID: "s3", Sets: []*PolicySet{{ID: "s4", Iterate: &Iterate{Var: "w", Algorithm: AlgorithmDenyOverrides}}}})
+	p.pips[0].Unsupported = "query, body"
 	tree, err := NewTree(p.simplified, p.sets, p.pips)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	want := []Finding{
+		{Where: `pip "subject.region"`, Form: FormPIPExtension, Text: "query, body"},
 		{Where: `simplified "d"/"c"/"uri" > policy "sp1" > condition`, Form: FormJSONPath, Text: "resource.a[:]"},
 		{Where: `set "s1" > policy "p1" > target`, Form: FormPIPType, Text: "subject.scope"},
 		{Where: `set "s1" > policy "p1" > rule "r1" > condition`, Form: FormOperand, Text: "subject.x.y.z"},

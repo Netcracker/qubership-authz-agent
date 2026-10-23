@@ -169,7 +169,7 @@ func (Bool) literal()   {}
 
 // numberSyntax is the number literal the PAP accepts: 005 and -0.5 are numbers,
 // -05, -0.0, -0.50, .5, 5., and 5e0 are not.
-var numberSyntax = regexp.MustCompile(`^(?:\d+(?:\.\d+)?|-[1-9]\d*(?:\.\d+)?|-0\.\d*[1-9])$`)
+var numberSyntax = regexp.MustCompile(`^(?:\p{Nd}+(?:\.\p{Nd}+)?|-[1-9]\p{Nd}*(?:\.\p{Nd}+)?|-0\.\p{Nd}*[1-9])$`)
 
 // NewNumber returns the number literal written as text, or an error when the
 // PAP refuses text as a number.

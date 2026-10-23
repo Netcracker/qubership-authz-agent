@@ -14,8 +14,8 @@
 
 // Package policyir is the intermediate representation of the policies of one
 // tenant: policy sets, policies, rules, simplified policies, their targets and
-// conditions, and the PIP declarations. A frontend builds a [Tree] from the
-// tenant's configuration, and the Rego generator reads it.
+// conditions, and the PIP declarations. [FromRegular] builds one [Tree] per
+// tenant from the v3 configuration export, and the Rego generator reads it.
 //
 // The representation covers every form the PAP accepts, including forms no
 // tenant uses today. A form the agent cannot execute yet stays in the tree as an
@@ -29,9 +29,10 @@
 // as written, with an explicit zero value for "absent". Children keep their
 // source order, so a trace and a filter can be built in that order.
 //
-// A frontend has already applied customizations and statuses: the tree holds
-// the effective policies only. Nodes are built with struct literals or
-// constructors, and [NewTree] checks the whole tree against every invariant
-// documented here. The fields stay exported and NewTree does not copy them, so
+// The legacy service applies customizations before it exports, and a frontend
+// drops the top-level sets whose status keeps them out; every other status stays
+// in the tree as written, for the profile to read. Nodes are built with struct
+// literals or constructors, and [NewTree] checks the whole tree against every
+// invariant documented here. The fields stay exported and NewTree does not copy them, so
 // the guarantee holds for a tree that nobody changes after NewTree returns it.
 package policyir
