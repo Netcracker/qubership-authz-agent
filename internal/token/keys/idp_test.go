@@ -35,7 +35,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v4/jwk"
 )
 
 // fakeIdP serves an OIDC discovery document at /.well-known/openid-configuration
@@ -244,7 +244,7 @@ func rsaJWK(t *testing.T, bits int, kid string, fields map[string]any) json.RawM
 
 func publicJWK(t *testing.T, public any, defaults, fields map[string]any) json.RawMessage {
 	t.Helper()
-	key, err := jwk.Import(public)
+	key, err := jwk.Import[jwk.Key](public)
 	if err != nil {
 		t.Fatal(err)
 	}
