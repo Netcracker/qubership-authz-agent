@@ -58,12 +58,8 @@ DEPLOYMENT_SESSION_ID: ''
 # Service-mesh route registration (authz-agent-ADR-0074).
 #
 # Registers the access-control-compatible check API on the internal, private and
-# public gateways, and the canonical POST /access/v1/authorize on the internal
-# AND public gateways, every route on the agent's public port (8080). The CRs are
+# public gateways, every route on the agent's public port (8080). The CRs are
 # `core.netcracker.com/v1` `Mesh` objects handled by core-operator.
-#
-# Nothing at the HTTP layer authenticates a caller of the authorize route on the
-# PUBLIC gateway: the decision itself requires a valid token in the request body.
 #
 # Registering a prefix another service already serves is NOT a collision that
 # fails or resolves at random — verified on a live stand. The control plane keys a
@@ -294,7 +290,7 @@ AUTHZ_POLICY_CONFIGMAP: ''
 # loop or a ConfigMap mount, the agent materialises it at startup from these
 # values. The Rego resolver then calls
 # `<AUTHZ_ENTITLEMENTS_URL>/api/v3/user-entitlements/user/<subject id>` once per
-# authorize request.
+# decision request.
 #
 # Empty (default) leaves the resolver off. Policies that read
 # `entitledResources` then evaluate against an empty set, which is also what the

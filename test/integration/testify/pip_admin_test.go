@@ -23,8 +23,8 @@ import (
 	"strings"
 )
 
-func (s *RuntimeSuite) TestTokenPIPAuthorize() {
-	s.Step("token_pip_authorize.upload_token_pips", func() {
+func (s *RuntimeSuite) TestTokenPIPFilter() {
+	s.Step("token_pip_filter.upload_token_pips", func() {
 		pips := `[
 			{"name":"subject.emailFromToken","pipType":"TOKEN","claim":"email"},
 			{"name":"subject.deptFromToken","pipType":"TOKEN","claim":"department","defaultValue":"unknown"}
@@ -34,56 +34,31 @@ func (s *RuntimeSuite) TestTokenPIPAuthorize() {
 		s.waitForACPull()
 	})
 
-	s.Step("token_pip_authorize.positive_alias_in_predicate", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "TOKEN_PIP_POSITIVE", "operation": "READ"},
-			},
-			"ignoreRls": false,
-		})
+	s.Step("token_pip_filter.positive_alias_in_filter", func() {
+		h := incomingTokenHeader(s.validAdminToken)
+		code, b := s.post("/access/v1/check/filter?resourceType=TOKEN_PIP_POSITIVE&operation=READ", h, map[string]interface{}{})
 		s.Require().Equal(200, code, "body: %s", string(b))
-
 		j := jsonObj(b)
-		results, ok := j["results"].([]interface{})
-		s.Require().True(ok, "results must be array")
-		s.Require().Len(results, 1)
-
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-
-		pred := rsqlPredicateFrom(r0)
-		s.Assert().True(strings.HasPrefix(pred, "ownerEmail=="),
-			"predicate must start with ownerEmail==, got: %s", pred)
-		s.Assert().NotContains(pred, "${subject.",
-			"TOKEN PIP alias must be substituted, got: %s", pred)
-		s.Assert().True(strings.Contains(pred, "@"),
-			"substituted email must contain @, got: %s", pred)
+		s.Assert().Equal("USE_FILTER_CONDITION", j["calculationResult"])
+		rsql, _ := j["rsqlFilterCondition"].(string)
+		s.Assert().True(strings.HasPrefix(rsql, "ownerEmail=="),
+			"rsqlFilterCondition must start with ownerEmail==, got: %s", rsql)
+		s.Assert().NotContains(rsql, "${subject.",
+			"TOKEN PIP alias must be substituted, got: %s", rsql)
+		s.Assert().True(strings.Contains(rsql, "@"),
+			"substituted email must contain @, got: %s", rsql)
 	})
 
-	s.Step("token_pip_authorize.default_value_fallback", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{"resourceType": "TOKEN_PIP_DEFAULT", "operation": "READ"},
-			},
-			"ignoreRls": false,
-		})
+	s.Step("token_pip_filter.default_value_fallback", func() {
+		h := incomingTokenHeader(s.validAdminToken)
+		code, b := s.post("/access/v1/check/filter?resourceType=TOKEN_PIP_DEFAULT&operation=READ", h, map[string]interface{}{})
 		s.Require().Equal(200, code, "body: %s", string(b))
-
 		j := jsonObj(b)
-		results, ok := j["results"].([]interface{})
-		s.Require().True(ok, "results must be array")
-		s.Require().Len(results, 1)
-
-		r0 := results[0].(map[string]interface{})
-		s.Assert().Equal(true, r0["isAllowed"])
-
-		pred := rsqlPredicateFrom(r0)
+		s.Assert().Equal("USE_FILTER_CONDITION", j["calculationResult"])
 		// D-AF-R (OQ-AF-6, 2026-04-15): scalar-string default value
 		// is JSON-quoted in the rendered predicate.
-		s.Assert().Equal(`dept=="unknown"`, pred,
-			"missing JWT claim must fall back to defaultValue, got: %s", pred)
+		s.Assert().Equal(`dept=="unknown"`, j["rsqlFilterCondition"],
+			"missing JWT claim must fall back to defaultValue")
 	})
 }
 
@@ -100,53 +75,23 @@ func (s *RuntimeSuite) TestPIPDenyReason() {
 	})
 
 	s.Step("pip_deny.pip_failure_deny_reason", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{
-					"resourceType": "PIP_FAIL_TEST",
-					"operation":    "READ",
-					"resource":     map[string]interface{}{"ownerId": "X"},
-				},
-			},
-			"ignoreRls": false,
-		})
+		body := map[string]interface{}{"type": "PIP_FAIL_TEST", "operation": "READ", "resource": map[string]interface{}{"ownerId": "X"}}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-
-		j := jsonObj(b)
-		results, ok := j["results"].([]interface{})
-		s.Require().True(ok, "results must be array")
-		s.Require().Len(results, 1)
-
-		result := results[0].(map[string]interface{})
-		s.Assert().Equal(false, result["isAllowed"])
-		reason, _ := result["reason"].(string)
+		s.Assert().Equal("false", bodyStr(b))
+		reason, _ := firstLoggedResult(s.loggedDecision(mark))["reason"].(string)
 		s.Assert().Contains(reason, "PIP resolution failed: brokenPip",
 			"deny reason must mention PIP failure, got: %s", reason)
 	})
 
 	s.Step("pip_deny.missing_attr_deny_reason", func() {
-		token := "Bearer " + s.validAdminToken
-		code, b := s.postAuthorize(token, token, map[string]interface{}{
-			"resources": []map[string]interface{}{
-				{
-					"resourceType": "ATTR_MISS_TEST",
-					"operation":    "READ",
-					"resource":     map[string]interface{}{"ownerId": "X"},
-				},
-			},
-			"ignoreRls": false,
-		})
+		body := map[string]interface{}{"type": "ATTR_MISS_TEST", "operation": "READ", "resource": map[string]interface{}{"ownerId": "X"}}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
 		s.Require().Equal(200, code, "body: %s", string(b))
-
-		j := jsonObj(b)
-		results, ok := j["results"].([]interface{})
-		s.Require().True(ok, "results must be array")
-		s.Require().Len(results, 1)
-
-		result := results[0].(map[string]interface{})
-		s.Assert().Equal(false, result["isAllowed"])
-		reason, _ := result["reason"].(string)
+		s.Assert().Equal("false", bodyStr(b))
+		reason, _ := firstLoggedResult(s.loggedDecision(mark))["reason"].(string)
 		s.Assert().Contains(reason, "subject attribute not found: nonExistentAttr",
 			"deny reason must mention missing attr, got: %s", reason)
 	})
@@ -278,7 +223,7 @@ func (s *RuntimeSuite) TestPIPGeneralActivation() {
 	s.Step("pip_general.restore_default_stub", func() {
 		// D-AF-W item 5d: restore the pip-stub default so subsequent
 		// testify steps that rely on `["C1","C2","C3"]` (e.g.
-		// `authorize.predicate_pip_value_substituted`) do not inherit
+		// `pip_general.active_pip_called`) do not inherit
 		// this test's `cust-keep-*` pin.
 		payload := `[{"path":"/api/v1/pip/allowed","responses":[{"statusCode":200,"body":["C1","C2","C3"]}]}]`
 		code, _ := s.doHTTPDirect(
@@ -351,7 +296,7 @@ func (s *RuntimeSuite) TestPIPJsonPathExtraction() {
 	s.Step("pip_jsonpath.restore_default_stub", func() {
 		// D-AF-W item 5d: restore the pip-stub default `/api/v1/pip/allowed`
 		// response so later tests that rely on `["C1","C2","C3"]`
-		// (e.g. `authorize.predicate_pip_value_substituted`) do not
+		// (e.g. `pip_general.active_pip_called`) do not
 		// inherit residual state from this test's `/api/v1/pip/meta`
 		// pin. `/api/v1/pip/meta` stays pinned with the dict payload
 		// because no later testify step depends on a different body

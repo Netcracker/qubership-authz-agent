@@ -39,15 +39,14 @@ const (
 	decisionLogsTimeout = 30 * time.Second
 )
 
-// RegisterPublic adds the routes the Envoy container exposed to app, with
-// the same meaning: the check routes of the legacy access-control API
-// translated by package legacy, the canonical authorize route,
-// /api-version, /health, the decision-log download, and 404
-// {"message":"not found"} for every other path. The download is relayed to
-// the collector of Options.CollectorURL when the decisions are not stored in
-// the service. A route accepts any method, as the Envoy path matches did;
-// the check routes then read the body, and the filter routes the query,
-// whatever the method.
+// RegisterPublic adds the public routes to app: the check routes of the
+// legacy access-control API translated by package legacy, /api-version,
+// /health, the decision-log download, and 404 {"message":"not found"} for
+// every other path. Each answers as the Envoy container answered it. The
+// download is relayed to the collector of Options.CollectorURL when the
+// decisions are not stored in the service. A route accepts any method, as
+// the Envoy path matches did; the check routes then read the body, and the
+// filter routes the query, whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
 	app.Use(s.requestID)
 	switch {
@@ -56,7 +55,6 @@ func (s *Server) RegisterPublic(app *fiber.App) {
 	case s.opts.CollectorURL != "":
 		app.All("/internal/v1/decision-logs", s.relay(s.opts.CollectorURL, "collector", decisionLogsTimeout))
 	}
-	app.All("/access/v1/authorize", s.canonical)
 	app.All("/access/v1/check/resource/bulk/operations", s.checkResourceBulkOperations(false))
 	app.All("/preview/v1/check/resource/bulk/operations", s.checkResourceBulkOperations(false))
 	app.All("/access/v1/check/resource/bulk", s.checkResourceBulk)
@@ -148,15 +146,6 @@ func (s *Server) relay(base, name string, timeout time.Duration) fiber.Handler {
 	}
 }
 
-// canonical serves /access/v1/authorize: a POST is the decision at
-// authorize with the input of its body, and any other method is 405.
-func (s *Server) canonical(c *fiber.Ctx) error {
-	if c.Method() != fiber.MethodPost {
-		return c.SendStatus(http.StatusMethodNotAllowed)
-	}
-	return s.decide(c, []string{"authorize"})
-}
-
 func (s *Server) checkResource(originalPath string, v2 bool) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		resources, err := legacy.CheckResource(c.Body())
@@ -239,7 +228,7 @@ func (s *Server) check(c *fiber.Ctx, originalPath string, resources []legacy.Res
 		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
 	}
 	if !defined {
-		return c.JSON(envelope(nil, false, id))
+		return c.JSON(undefinedEnvelope(id))
 	}
 	if status, body, refused := legacy.AuthError(result); refused {
 		return sendJSON(c, status, body)

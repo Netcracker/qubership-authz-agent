@@ -27,6 +27,20 @@ func (s *RuntimeSuite) TestRouteSecurity() {
 		s.Assert().Equal("not found", jsonObj(b)["message"])
 	})
 
+	// The agent serves the access-control check API and no decision route
+	// of its own, so /access/v1/authorize is a path it does not know.
+	s.Step("route_security.access_authorize_absent.404", func() {
+		token := "Bearer " + s.validAdminToken
+		body := map[string]interface{}{"input": map[string]interface{}{
+			"authorizationToken": token,
+			"subject":            token,
+			"resources":          []map[string]interface{}{{"resourceType": "ORDER", "operation": "READ"}},
+		}}
+		code, b := s.post("/access/v1/authorize", jsonHeader(), body)
+		s.Require().Equal(404, code)
+		s.Assert().Equal("not found", jsonObj(b)["message"])
+	})
+
 	s.Step("route_security.unknown_path.404", func() {
 		code, b := s.get("/unknown/endpoint", nil)
 		s.Require().Equal(404, code)

@@ -36,12 +36,13 @@ import rego.v1
 # Why a sibling top-level package and not a sub-package: OPA 1.x always
 # includes a sub-package in its parent's data tree (verified: even
 # underscore-prefixed sub-package names like `_internals` remain visible
-# under `data.authorize`). With a sub-package layout, the wire response
-# of `POST /access/v1/authorize` would leak the entire internal compute
-# graph (~200+ rule outputs, including `_admission_validation` and the
-# raw decision tree) in the `result` envelope. A sibling package is the
-# narrowest deviation from the ADR-0062 logical naming that preserves
-# the wire-shape invariant. An OPA alias rule
+# under `data.authorize`). With a sub-package layout, the decision at
+# `data.authorize` would carry the entire internal compute graph (~200+
+# rule outputs, including `_admission_validation` and the raw decision
+# tree), and the decision log records the decision whole. A sibling
+# package is the narrowest deviation from the ADR-0062 logical naming
+# that keeps the decision to the rules this package defines. An OPA
+# alias rule
 # `data.authorize.result := data.authorize` would trigger the recursion
 # check.
 

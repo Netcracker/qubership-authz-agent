@@ -97,7 +97,6 @@ case:
 ```text
 test/parity/
 ├── README.md                            (this file)
-├── opa-body-snapshots/                  (9 OPA request/response captures for reference)
 └── suite/                               (Go/testify parity suite)
     ├── Dockerfile                       (suite image for the kind run)
     ├── config.go

@@ -193,23 +193,21 @@ svt_restart_agent() {
   # tick plus a margin, derived from the interval the stack runs with.
   svt_log "waiting ${SVT_PULL_WAIT_SECONDS}s for the pull loop to apply re-seeded data..."
   sleep "${SVT_PULL_WAIT_SECONDS}"
-  # Warm OPA's Rego JIT + Envoy upstream connection pool before the
-  # measurement window opens. Without this, the first 200-500 ms of
-  # any JMeter run land on cold caches and the p99 tail at high RPS
-  # carries a one-shot compile-pause that biases the whole window
-  # (visible as a `med=3 ms / p95=47 ms` blow-out in canonical
-  # ols-single @ 1000 RPS). Best-effort — failures do not abort.
+  # Warm OPA's Rego caches before the measurement window opens.
+  # Without this, the first 200-500 ms of any JMeter run land on cold
+  # caches and the p99 tail at high RPS carries a one-shot
+  # compile-pause that biases the whole window (visible as a
+  # `med=3 ms / p95=47 ms` blow-out in an earlier ols-single @ 1000 RPS
+  # sweep). Best-effort — failures do not abort.
   if [[ -n "${TOKEN_SVT_ADMIN:-}" ]]; then
-    svt_log "warming OPA Rego cache (50 admin authorize calls)..."
-    local _warmup_body
-    _warmup_body=$(printf '{"input":{"resources":[{"resourceType":"ORDER","operation":"READ","resource":{}}],"subject":"Bearer %s","ignoreRls":true}}' "${TOKEN_SVT_ADMIN}")
+    svt_log "warming OPA Rego cache (50 admin check/resource calls)..."
     local _i
     for _i in $(seq 1 50); do
       curl -sf -o /dev/null -X POST \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer ${TOKEN_SVT_ADMIN}" \
-        --data-raw "${_warmup_body}" \
-        "http://localhost:${SVT_AUTHZ_PORT}/access/v1/authorize" 2>/dev/null || break
+        --data-raw '{"type":"ORDER","operation":"READ","resource":{}}' \
+        "http://localhost:${SVT_AUTHZ_PORT}/access/v1/check/resource" 2>/dev/null || break
     done
   fi
   svt_log "OPA restart complete"

@@ -510,9 +510,8 @@ for volume in "authz-agent-trusted-providers" "authz-agent-client-credentials"; 
   fi
 done
 
-# Every gateway route ends on the public port, the canonical authorize route
-# included, and reaches it under the path the caller sent: a gateway publishes
-# nothing on the internal port.
+# Every gateway route ends on the public port and reaches it under the path the
+# caller sent: a gateway publishes nothing on the internal port.
 mesh="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set MESH_ROUTES_ENABLED=true --show-only templates/mesh-routes.yaml 2>&1 || true)"
 mesh_endpoints="$(grep -oE "endpoint: '[^']*'" <<<"${mesh}" | sort -u | paste -sd, - || true)"
 if [[ "${mesh_endpoints}" == "endpoint: 'http://authz-agent:8080'" && "${mesh}" != *"prefixRewrite"* ]]; then
@@ -520,11 +519,12 @@ if [[ "${mesh_endpoints}" == "endpoint: 'http://authz-agent:8080'" && "${mesh}" 
 else
   fail "the mesh routes render the endpoints ${mesh_endpoints}$([[ "${mesh}" == *"prefixRewrite"* ]] && echo ' and a prefixRewrite'), expected endpoint: 'http://authz-agent:8080' alone and no prefixRewrite"
 fi
-authorize_routes="$(awk '/^  name: / {name = $2} /prefix: \/access\/v1\/authorize$/ {print name}' <<<"${mesh}" | paste -sd, - || true)"
-if [[ "${authorize_routes}" == "'authz-agent-internal-routes','authz-agent-public-routes'" ]]; then
-  pass "the canonical /access/v1/authorize is registered on the internal and public gateways"
+# The agent serves the access-control check API and no decision route of its
+# own, so no gateway registers /access/v1/authorize.
+if [[ "${mesh}" != *"/access/v1/authorize"* ]]; then
+  pass "no gateway registers /access/v1/authorize"
 else
-  fail "the canonical /access/v1/authorize is registered in ${authorize_routes:-no route}, expected 'authz-agent-internal-routes','authz-agent-public-routes'"
+  fail "a gateway registers /access/v1/authorize, which the agent does not serve"
 fi
 
 # /health answers once the trusted providers are in order and /ready once the

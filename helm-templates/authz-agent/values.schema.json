@@ -216,7 +216,7 @@
       "$id": "#/properties/MESH_ROUTES_ENABLED",
       "type": "boolean",
       "title": "The MESH_ROUTES_ENABLED schema",
-      "description": "Registers the check API and POST /access/v1/authorize on the platform gateways through Mesh custom resources handled by core-operator. Set to false on a cluster without core-operator, or when access-control keeps serving these routes in the same namespace",
+      "description": "Registers the check API on the platform gateways through Mesh custom resources handled by core-operator. Set to false on a cluster without core-operator, or when access-control keeps serving these routes in the same namespace",
       "default": true,
       "examples": [
         true,

@@ -215,4 +215,81 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().Equal(bodyStr(b1), bodyStr(b2),
 			"incoming-token must not alter decision through HEADER PIP resolution")
 	})
+
+	// A token that is not a JWT fails admission, and the decision log names
+	// the format as the reason.
+	s.Step("check_resource.invalid_authorization.401", func() {
+		h := map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": "Bearer not-a-jwt",
+		}
+		body := map[string]interface{}{
+			"type": "ATTACHMENT", "operation": "READ", "resource": map[string]interface{}{},
+		}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
+		s.Require().Equal(401, code)
+		s.Assert().NotEmpty(jsonObj(b)["message"], "legacy 401 must include message")
+		authError, _ := s.loggedDecision(mark)["authError"].(map[string]interface{})
+		s.Assert().Equal("Token is not a valid JWT", authError["reason"])
+	})
+
+	// The admission token has to carry the Bearer scheme: a valid token sent
+	// without it fails admission, and the decision log names the scheme.
+	s.Step("check_resource.authorization_without_bearer.401", func() {
+		h := map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": s.validAdminToken,
+		}
+		body := map[string]interface{}{
+			"type": "ATTACHMENT", "operation": "READ", "resource": map[string]interface{}{},
+		}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
+		s.Require().Equal(401, code)
+		s.Assert().NotEmpty(jsonObj(b)["message"], "legacy 401 must include message")
+		authError, _ := s.loggedDecision(mark)["authError"].(map[string]interface{})
+		s.Assert().Equal("Authorization scheme must be Bearer", authError["reason"])
+	})
+
+	// A subject token without the Bearer scheme fails authentication after
+	// admission passed: the resource is denied with 200, and the decision log
+	// names the scheme as the reason.
+	s.Step("check_resource.incoming_token_without_bearer.deny", func() {
+		h := map[string]string{
+			"Content-Type":   "application/json",
+			"Authorization":  "Bearer " + s.validAdminToken,
+			"Incoming-Token": s.validAdminToken,
+		}
+		body := map[string]interface{}{
+			"type": "ORDER", "operation": "READ", "resource": map[string]interface{}{},
+		}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", h, body)
+		s.Require().Equal(200, code)
+		s.Assert().Equal("false", bodyStr(b))
+		s.Assert().Equal("Authorization scheme must be Bearer", firstLoggedResult(s.loggedDecision(mark))["reason"])
+	})
+
+	// The policy's ${subject.allowedCustomers} template is filled from the
+	// GENERAL PIP the pip-stub answers, and the decision log records the rsql
+	// predicate it rendered. The step pins the stub's answer itself, because
+	// another step may have pinned a different one.
+	s.Step("check_resource.pip_value_substituted", func() {
+		pin := `[{"path":"/api/v1/pip/allowed","responses":[{"statusCode":200,"body":["C1","C2","C3"]}]}]`
+		pinCode, _ := s.doHTTPDirect("PUT", s.cfg.PIPStubURL+"/pip-stub/configure",
+			map[string]string{"Content-Type": "application/json"}, []byte(pin))
+		s.Require().Equal(200, pinCode)
+		body := map[string]interface{}{
+			"type": "CUSTOMER", "operation": "READ", "resource": map[string]interface{}{"customerId": "C1"},
+		}
+		mark := s.decisionLogMark()
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
+		s.Require().Equal(200, code, "body: %s", string(b))
+		s.Assert().Equal("true", bodyStr(b))
+		// D-AF-R (OQ-AF-6, 2026-04-15): PIP-resolved array elements are
+		// JSON-quoted and comma-space-joined.
+		s.Assert().Equal(`customerId=in=("C1", "C2", "C3")`,
+			loggedPredicate(firstLoggedResult(s.loggedDecision(mark)), "rsql"))
+	})
 }

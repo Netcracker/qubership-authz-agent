@@ -24,25 +24,21 @@ import (
 	"strings"
 )
 
-// d2FrozenCheckFamily is the shared justification for the check-family
+// checkFamilyRepresentatives is the shared justification for the check-family
 // negative-path (400/401) responses the suite does not exercise. The 400/401
 // contract is identical across the check/resource, check/resource/bulk* and
 // check/filter variants; the v1 check/resource, check/resource/bulk and
-// check/filter negative-path steps are the representative coverage. Per-variant
-// negative tests are NOT added because the non-canonical check surface is
-// D2-frozen by the ADR-0062 canonical-parity task (integration scenarios that
-// do not target /access/v1/authorize must not be modified). A future task that
-// lifts D2 (or adds per-variant negative steps) removes these entries.
-const d2FrozenCheckFamily = "check-family 400/401 is identical across variants; covered by the v1 check/resource + bulk + filter representatives. Per-variant negative tests are D2-frozen (non-canonical surface) under the ADR-0062 task."
+// check/filter negative-path steps are the representative coverage. A step
+// that exercises one of these responses makes its entry stale, and the lint
+// then asks for the entry to go.
+const checkFamilyRepresentatives = "check-family 400/401 is identical across variants; covered by the v1 check/resource, bulk, and filter representatives."
 
 // previewBulkOperationsUnexercised justifies the fully-unexercised /preview
-// bulk/operations routes. These are real Envoy routes backed by
-// check_resource_bulk_operations.lua, but the suite exercises only the /access
-// sibling endpoints (route_security.{v1,v2}_bulk_operations.implemented), never
-// the /preview variants — so all three declared statuses (200/400/401) are
-// unexercised. Adding a /preview step is a D2-frozen non-canonical test edit
-// under the ADR-0062 task.
-const previewBulkOperationsUnexercised = "preview bulk/operations is a real Envoy route, but the suite exercises only the /access sibling, not the /preview variant. Adding a /preview test is frozen as a non-canonical edit under ADR-0062 (D2)."
+// bulk/operations routes. They share their handler with the /access siblings,
+// which route_security.{v1,v2}_bulk_operations.implemented exercise, so the
+// suite sends none of the /preview requests and all three declared statuses
+// (200/400/401) stay unexercised.
+const previewBulkOperationsUnexercised = "preview bulk/operations shares its handler with the /access sibling, which the suite exercises; the /preview variant is not exercised."
 
 // healthUnavailableUnexercised justifies GET /health 503. The agent returns
 // it only while OPA is not ready or the strict-mode JWKS bootstrap has not
@@ -53,21 +49,20 @@ const previewBulkOperationsUnexercised = "preview bulk/operations is a real Envo
 const healthUnavailableUnexercised = "GET /health 503 needs an agent whose OPA is not ready or whose strict-mode JWKS bootstrap failed; the harness runs the suite against a healthy agent. Covered by the policyadmin unit tests."
 
 // reachabilityWhitelist lists spec-declared responses that a full suite run
-// does not exercise and that this task may not add a test for, each with the
-// reason it stays unexercised (ADR-0064). The lint's pass-2 flags any entry that
+// does not exercise, each with the reason it stays unexercised (ADR-0064). The lint's pass-2 flags any entry that
 // is no longer declared in the spec, or that has become exercised, so the list
 // cannot silently rot into a rubber stamp that re-hides drift.
 var reachabilityWhitelist = map[responseTriple]string{
 	// /access check-family variants whose happy-200 is exercised but whose
 	// 400/401 negative paths are not (representative coverage lives on v1).
-	{Method: "POST", Path: "/access/v1/check/resource/bulk/operations", Status: 400}: d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v1/check/resource/bulk/operations", Status: 401}: d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v2/check/resource", Status: 400}:                 d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v2/check/resource", Status: 401}:                 d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v2/check/resource/bulk/operations", Status: 400}: d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v2/check/resource/bulk/operations", Status: 401}: d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v2/check/filter", Status: 400}:                   d2FrozenCheckFamily,
-	{Method: "POST", Path: "/access/v2/check/filter", Status: 401}:                   d2FrozenCheckFamily,
+	{Method: "POST", Path: "/access/v1/check/resource/bulk/operations", Status: 400}: checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v1/check/resource/bulk/operations", Status: 401}: checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v2/check/resource", Status: 400}:                 checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v2/check/resource", Status: 401}:                 checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v2/check/resource/bulk/operations", Status: 400}: checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v2/check/resource/bulk/operations", Status: 401}: checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v2/check/filter", Status: 400}:                   checkFamilyRepresentatives,
+	{Method: "POST", Path: "/access/v2/check/filter", Status: 401}:                   checkFamilyRepresentatives,
 
 	// /preview bulk/operations: fully unexercised (200/400/401) — the suite
 	// only hits the /access siblings.
@@ -88,9 +83,7 @@ var reachabilityWhitelist = map[responseTriple]string{
 // fully populated by every prior step. It closes the reverse direction the
 // forward-only validator cannot: every (path, method, status) response declared
 // in the OpenAPI document must have been exercised by at least one runtime
-// exchange or be explicitly whitelisted with a reason. The orphan
-// /access/v1/authorize '401' that motivated ADR-0064 fails this lint (authorize
-// only ever returns 200, and 401 is not whitelisted).
+// exchange or be explicitly whitelisted with a reason.
 //
 // Gated to the full-suite invocation (FULL_RUNTIME_SUITE=true): a filtered run
 // leaves the exercised-set incomplete and would false-flag — the same

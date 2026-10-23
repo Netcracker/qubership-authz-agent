@@ -2,7 +2,12 @@
 
 ## Status
 
-Accepted
+Accepted. The parts that keep `POST /access/v1/authorize` are superseded by the removal of that route in
+[PR #109](https://github.com/Netcracker/qubership-authz-agent/pull/109): the route on ports 8080 and 8181 and in the
+mesh routes, its canonical envelopes, the parity test that compared the two ports at that path, and the SVT `canonical`
+and `opa-direct` modes, which the load-test workflow no longer offers. The lockdown step for `?explain=full` runs on
+`/access/v1/check/resource`. The agent keeps no canonical decision route: its clients call the check routes of the
+access-control API on port 8080, and port 8181 serves `/health`, `/ready`, `/api-version`, and `/prometheus`.
 
 <!-- markdownlint-disable-next-line MD001 -->
 #### Date

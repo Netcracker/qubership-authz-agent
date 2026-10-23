@@ -63,8 +63,8 @@ docker run --rm hello-world
 ## 3. Resources
 
 The cluster is one kind node. The harness plus the agent need roughly 2 CPUs and 4 GB of memory free for Docker;
-Keycloak is the heaviest part. No host port is published. The first run pulls Keycloak and OPA into the node, which
-takes minutes on a slow network; later runs reuse them.
+Keycloak is the heaviest part. No host port is published. The first run pulls Keycloak into the node, which takes
+minutes on a slow network; later runs reuse it.
 
 ---
 
@@ -80,7 +80,7 @@ takes minutes on a slow network; later runs reuse them.
 | `local/authz-parity-suite:ci` | `test/parity/suite/Dockerfile`, used by `make parity` |
 
 The images are built for the host platform and loaded with `kind load`; the node runs the same architecture, so
-nothing is emulated. OPA and Keycloak are pulled by the node from their registries.
+nothing is emulated. Keycloak is pulled by the node from its registry.
 
 ---
 
@@ -177,7 +177,7 @@ The minimum CI gate for compatibility-sensitive changes is listed in [test/readm
 | `go test` → `[build failed]` | `GOROOT` points at a different toolchain than `go` on `PATH`. Unset it or fix your profile (section 2). |
 | `make e2e-cluster` fails | Docker is not running, or your user cannot reach `docker.sock` (section 2). |
 | The Job Pod stays `Pending` or reports `ErrImageNeverPull` | The images are not in the cluster; run `make e2e-images`. |
-| `helm --wait` times out on the first run | The node is still pulling Keycloak or OPA. Check `kubectl -n authz-e2e get pods`, then rerun `make e2e-install`. |
+| `make e2e-harness` times out at `rollout status deploy/keycloak` on the first run | The node is still pulling Keycloak. Check `kubectl -n authz-e2e get pods`, then rerun `make e2e-harness`. |
 | `setup.wait_for_agent` fails after a harness rerun | Keycloak has new realm keys; restart the agent (section 6). |
 | Need logs after a run | `make e2e-logs`, then look under `test/artifacts/kind/`. |
 | Cluster left behind | `make e2e-down`. |
