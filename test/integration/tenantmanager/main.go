@@ -25,8 +25,11 @@
 //
 //	TENANT_MANAGER_TENANTS=default=6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b
 //
-// TENANT_MANAGER_PORT sets the listen port, 8080 by default. GET /health
-// returns 200 for a readiness probe.
+// TENANT_MANAGER_LISTEN_PORT sets the listen port, 8080 by default. The name
+// avoids TENANT_MANAGER_PORT, which Kubernetes sets to the Service address,
+// such as tcp://10.96.0.1:8080, in every Pod of a namespace that has a
+// Service named tenant-manager. GET /health returns 200 for a readiness
+// probe.
 package main
 
 import (
@@ -109,7 +112,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("TENANT_MANAGER_TENANTS: %v", err)
 	}
-	port := os.Getenv("TENANT_MANAGER_PORT")
+	port := os.Getenv("TENANT_MANAGER_LISTEN_PORT")
 	if port == "" {
 		port = "8080"
 	}

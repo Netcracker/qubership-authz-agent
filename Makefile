@@ -73,7 +73,7 @@ e2e-images:
 # platform to provision.
 e2e-harness:
 	kubectl --context kind-$(KIND_CLUSTER) create namespace $(E2E_NAMESPACE) --dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
-	$(E2E_KUBECTL) create configmap keycloak-realms --from-file=$(E2E_AUTHN)/authz-test-realm.json --from-file=$(E2E_AUTHN)/cloud-common-realm.json --from-file=$(E2E_AUTHN)/tenant-default-realm.json --from-file=$(E2E_AUTHN)/tenant-unregistered-realm.json --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
+	$(E2E_KUBECTL) create configmap keycloak-realms --from-file=$(E2E_AUTHN)/authz-test-realm.json --from-file=$(E2E_AUTHN)/cloud-common-realm.json --from-file=$(E2E_AUTHN)/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b-realm.json --from-file=$(E2E_AUTHN)/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a-realm.json --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
 	$(E2E_KUBECTL) create secret generic authz-agent-client-credentials --from-file=username=$(E2E_AUTHN)/m2m-credentials/username --from-file=password=$(E2E_AUTHN)/m2m-credentials/password --from-literal=name=authz-agent --dry-run=client -o yaml | $(E2E_KUBECTL) apply -f -
 	$(E2E_KUBECTL) apply -f test/k8s/keycloak.yaml -f test/k8s/pip-stub.yaml -f test/k8s/entitlements-mock.yaml -f test/k8s/tenant-manager.yaml
 	$(E2E_KUBECTL) rollout status deploy/pip-stub --timeout=2m

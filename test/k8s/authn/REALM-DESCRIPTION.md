@@ -108,16 +108,16 @@ A Keycloak-issued access token for the `order-reader` user contains (among other
 
 ## Tenant realms
 
-`tenant-default-realm.json` and `tenant-unregistered-realm.json` mimic the realms identity-provider creates for
-tenants: the realm name is an identifier, and the tenant's name is only the display name. Each holds the `authz-agent`
-client and the `admin` user with `ROLE_ADMINISTRATOR`, with the same secret and password as `authz-test`. The client
-has no audience mapper, so a tenant token carries no `aud: authz-agent`; the generated provider list checks no
-audience.
+Two realm imports mimic the realms identity-provider creates for tenants: the realm name is an identifier, and the
+tenant's name is only the display name. Keycloak's directory import takes a file only when its name is
+`<realm name>-realm.json`, so each file is named by its identifier. Each realm holds the `authz-agent` client and the
+`admin` user with `ROLE_ADMINISTRATOR`, with the same secret and password as `authz-test`. The client has no audience
+mapper, so a tenant token carries no `aud: authz-agent`; the generated provider list checks no audience.
 
 | File | Realm name | Display name | Known to the tenant-manager emulator |
 | --- | --- | --- | --- |
-| `tenant-default-realm.json` | `6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b` | `default` | Yes |
-| `tenant-unregistered-realm.json` | `0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a` | `unregistered` | No |
+| `6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b-realm.json` | `6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b` | `default` | Yes |
+| `0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a-realm.json` | `0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a` | `unregistered` | No |
 
 `test/k8s/values.yaml` lists both realms by display name in `AUTHZ_IDP_REALMS`. The agent asks the emulator
 (`test/k8s/tenant-manager.yaml`) for the identifier of each, so it loads the keys of `default` and has none for
@@ -128,6 +128,6 @@ audience.
 | Artifact                 | Path                                                             |
 | ------------------------ | ---------------------------------------------------------------- |
 | Realm import JSON        | `test/k8s/authn/authz-test-realm.json`                           |
-| Tenant realm imports     | `test/k8s/authn/tenant-*-realm.json`                             |
+| Tenant realm imports     | `test/k8s/authn/<realm identifier>-realm.json`                   |
 | This description         | `test/k8s/authn/REALM-DESCRIPTION.md`                            |
 | Identity provider wiring | `IDENTITY_PROVIDER_URL` in `test/k8s/values.yaml`                |
