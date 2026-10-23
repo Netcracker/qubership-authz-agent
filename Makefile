@@ -34,6 +34,16 @@ install-hooks:
 	git config core.hooksPath .githooks
 	@echo "[install-hooks] pre-commit hook active (core.hooksPath=.githooks)"
 
+# test-jayway: compare internal/jsonpath with Jayway JsonPath on the JVM.
+# Needs java 17 or later and mvn; Maven resolves the Jayway jars from
+# testdata/jayway/pom.xml. Set JSONPATH_COMPARISON_DIR to a checkout of
+# github.com/cburgmer/json-path-comparison to run its queries too.
+JAYWAY_DIR := internal/jsonpath/testdata/jayway
+test-jayway:
+	mvn -q -B -f $(JAYWAY_DIR)/pom.xml dependency:build-classpath -Dmdep.outputFile=$(CURDIR)/$(JAYWAY_DIR)/target/classpath.txt
+	test -s $(JAYWAY_DIR)/target/classpath.txt
+	JAYWAY_CLASSPATH="$$(cat $(JAYWAY_DIR)/target/classpath.txt)" go test -count=1 -tags jayway -run Jayway ./internal/jsonpath/
+
 # ── kind end-to-end ──────────────────────────────────────────────────────────
 # Install the chart on a kind cluster and run the runtime suite against it.
 # `make e2e` runs every step; CI calls the same targets one by one. See
@@ -167,4 +177,4 @@ parity-logs:
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
 
-.PHONY: lint install-hooks e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs

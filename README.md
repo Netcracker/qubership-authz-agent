@@ -96,6 +96,21 @@ cd test/integration/pipstub && go test -count=1 ./...
 cd test/integration/tenantmanager && go test -count=1 ./...
 ```
 
+### jsonPath against Jayway
+
+`internal/jsonpath` is compared with Jayway JsonPath 2.9.0, one of the versions legacy access-control evaluates jsonPath
+with. The
+test needs Java 17 or later and Maven, which resolves the Jayway jars:
+
+```sh
+make test-jayway
+
+# Also run the queries of a json-path-comparison checkout
+make test-jayway JSONPATH_COMPARISON_DIR=/path/to/json-path-comparison
+```
+
+The test fails on an answer that differs from Jayway's unless `internal/jsonpath/jayway_test.go` lists the difference.
+
 ### Unit tests — Rego
 
 ```sh

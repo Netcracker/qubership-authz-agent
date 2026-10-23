@@ -6,6 +6,9 @@
 #   chart                helm lint plus the chart-render assertions
 #   integration-compile  go vet with -tags integration, so a broken integration
 #                        test file fails here instead of after a cluster boot
+#   jsonpath-jayway      internal/jsonpath against Jayway JsonPath on the JVM,
+#                        over the package's cases and the json-path-comparison
+#                        queries (Makefile test-jayway)
 #   kind-e2e             the Helm chart installed on a kind cluster and the
 #                        runtime suite run against it (Makefile e2e-* targets,
 #                        see test/k8s/README.md)
@@ -107,6 +110,44 @@ jobs:
         working-directory: test/parity/suite
         run: go vet -tags integration ./...
 
+  jsonpath-jayway:
+    name: jsonPath against Jayway
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The queries are under GPL-3.0, so the job reads them from their own
+      # repository, pinned to one commit, and this repository holds none of them.
+      - name: Checkout json-path-comparison
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: cburgmer/json-path-comparison
+          ref: e090dae440ac22a5da2a33a74ea65c351124fe97
+          path: json-path-comparison
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: internal/jsonpath/testdata/jayway/pom.xml
+
+      - name: Compare with Jayway
+        run: make test-jayway JSONPATH_COMPARISON_DIR="$GITHUB_WORKSPACE/json-path-comparison"
+
   kind-e2e:
     name: Kind end-to-end
     runs-on: ubuntu-latest
@@ -206,7 +247,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
-    needs: [rego, chart, integration-compile, kind-e2e, kind-parity]
+    needs: [rego, chart, integration-compile, jsonpath-jayway, kind-e2e, kind-parity]
     if: always()
     steps:
       - name: Check job results
