@@ -96,6 +96,13 @@ type fetcher struct {
 	provider *Provider
 	client   *http.Client
 	log      Logger
+	// tenants resolves the realm of a provider that sets TenantRealm; nil
+	// for any other provider.
+	tenants *tenantResolver
+	// issuer is the address discovery starts from: Provider.Issuer, or for a
+	// tenant realm the issuer with the realm identifier, set by the first
+	// fetch that resolves it and kept for every later one.
+	issuer string
 }
 
 // newFetcher builds the HTTP client for p: the proxy settings of the
@@ -104,7 +111,7 @@ type fetcher struct {
 // token of p.TokenFile to a redirect target on the same host or a subdomain
 // of it, whatever its port or scheme, so a redirect ends the request as a
 // failure instead.
-func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error) {
+func newFetcher(p *Provider, timeout time.Duration, log Logger, tenants *tenantResolver) (*fetcher, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if p.CAFile != "" {
 		pem, err := os.ReadFile(p.CAFile)
@@ -117,14 +124,25 @@ func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
 	}
-	client := &http.Client{
+	f := &fetcher{provider: p, client: noRedirectClient(transport, timeout), log: log}
+	if p.TenantRealm {
+		f.tenants = tenants
+	} else {
+		f.issuer = p.Issuer
+	}
+	return f, nil
+}
+
+// noRedirectClient returns a client over transport that bounds each request
+// by timeout and returns a redirect as the response instead of following it.
+func noRedirectClient(transport *http.Transport, timeout time.Duration) *http.Client {
+	return &http.Client{
 		Transport: transport,
 		Timeout:   timeout,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-	return &fetcher{provider: p, client: client, log: log}, nil
 }
 
 // errNoUsableKey reports a JWKS that parses and holds no usable signing key.
@@ -133,14 +151,20 @@ func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error
 var errNoUsableKey = errors.New("no usable signing key")
 
 // fetch downloads the provider's JWKS, through discovery when the provider
-// names an issuer, and returns its signing keys. It fails when a request
-// fails or answers a status other than 2xx, when a document is not the JSON
-// it should be, and when the JWKS lists two different keys under one kid;
-// a JWKS without a usable signing key fails with errNoUsableKey.
+// names an issuer, and returns its signing keys. For a tenant realm whose
+// identifier is not known yet it first queries tenant-manager, and keeps an
+// accepted answer even when the rest of the fetch fails. It fails when
+// tenant-manager does not resolve the tenant, when a request fails or
+// answers a status other than 2xx, when a document is not the JSON it should
+// be, and when the JWKS lists two different keys under one kid; a JWKS
+// without a usable signing key fails with errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	uri := f.provider.JWKSURI
 	if uri == "" {
-		discovery := strings.TrimRight(f.provider.Issuer, "/") + "/.well-known/openid-configuration"
+		if err := f.resolveIssuer(ctx); err != nil {
+			return nil, err
+		}
+		discovery := strings.TrimRight(f.issuer, "/") + "/.well-known/openid-configuration"
 		body, err := f.get(ctx, discovery)
 		if err != nil {
 			return nil, err
@@ -165,6 +189,23 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 		return nil, fmt.Errorf("JWKS %s: %w", uri, err)
 	}
 	return keys, nil
+}
+
+// resolveIssuer sets f.issuer for a tenant realm whose identifier is not
+// known yet: it queries tenant-manager for the realm of the tenant the
+// issuer names and puts the identifier in place of the name.
+func (f *fetcher) resolveIssuer(ctx context.Context) error {
+	if f.issuer != "" {
+		return nil
+	}
+	name, _ := tenantName(f.provider.Issuer)
+	realm, err := f.tenants.realm(ctx, name)
+	if err != nil {
+		return fmt.Errorf("tenant %q: %w", name, err)
+	}
+	f.issuer = realmIssuer(f.provider.Issuer, realm)
+	f.log.Infof("trusted providers: provider %q: tenant %q is realm %q; keys come from %s", f.provider.ID, name, realm, f.issuer)
+	return nil
 }
 
 // get returns the body of a 2xx response to a GET of url, with the bearer

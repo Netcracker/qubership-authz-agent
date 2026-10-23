@@ -29,6 +29,11 @@ import (
 // lists every identity provider whose keys sign a token the service accepts.
 type Config struct {
 	Providers []Provider `json:"providers"`
+	// TenantManagerURL is the base address of tenant-manager, an absolute
+	// http or https URL without a query or fragment. [Load] queries it for
+	// the realm identifier of every provider that sets
+	// [Provider.TenantRealm]; such a provider requires it.
+	TenantManagerURL string `json:"tenantManagerUrl,omitempty"`
 }
 
 // Provider is one trusted identity provider. It names the address of its
@@ -42,7 +47,9 @@ type Provider struct {
 	ID string `json:"id"`
 	// Issuer is the base address of the provider, an absolute http or https
 	// URL. The keys are found through the OIDC discovery document under it,
-	// at /.well-known/openid-configuration.
+	// at /.well-known/openid-configuration; for a provider that sets
+	// TenantRealm, under the issuer with the realm identifier in place of
+	// its last path segment.
 	Issuer string `json:"issuer,omitempty"`
 	// JWKSURI is the address of the provider's JWKS, an absolute http or
 	// https URL.
@@ -62,6 +69,15 @@ type Provider struct {
 	// read on every request, so a rotated token takes effect without a
 	// restart.
 	TokenFile string `json:"tokenFile,omitempty"`
+	// TenantRealm marks the last path segment of Issuer as the name of a
+	// tenant whose Keycloak realm is named by an identifier the
+	// configuration does not hold. [Load] queries tenant-manager for the
+	// identifier until it accepts an answer, keeps that answer for the life
+	// of the [Set], and fetches the keys from the issuer with the identifier
+	// in place of the name; [Set.Refresh] does not query again. It requires
+	// Issuer, a last path segment of 1 to 128 letters, digits, '.', '_', and
+	// '-' other than "." and "..", and [Config.TenantManagerURL].
+	TenantRealm bool `json:"tenantRealm,omitempty"`
 }
 
 // validProviderID is the accepted shape of [Provider.ID].
@@ -99,17 +115,29 @@ func ParseConfig(data []byte) (Config, error) {
 	return cfg, nil
 }
 
-// Validate returns an error for an empty provider list and for the first
-// entry that breaks a rule of [Provider]; the error names the entry by its
-// index in Providers.
+// Validate returns an error for an empty provider list, for a
+// TenantManagerURL that is set and is not an absolute http or https URL
+// without a query or fragment, and for the first entry that breaks a rule of
+// [Provider]; the error names the entry by its index in Providers.
 func (c Config) Validate() error {
 	if len(c.Providers) == 0 {
 		return errors.New("no providers configured")
+	}
+	if c.TenantManagerURL != "" {
+		if err := checkHTTPURL(c.TenantManagerURL); err != nil {
+			return fmt.Errorf("tenantManagerUrl: %w", err)
+		}
+		if u, _ := url.Parse(c.TenantManagerURL); u.RawQuery != "" || u.Fragment != "" {
+			return fmt.Errorf("tenantManagerUrl %q has a query or a fragment; the lookup path and query are appended to it", c.TenantManagerURL)
+		}
 	}
 	seen := make(map[string]bool, len(c.Providers))
 	for i, p := range c.Providers {
 		if err := p.validate(); err != nil {
 			return fmt.Errorf("providers[%d]: %w", i, err)
+		}
+		if p.TenantRealm && c.TenantManagerURL == "" {
+			return fmt.Errorf("providers[%d]: provider %q sets tenantRealm without tenantManagerUrl", i, p.ID)
 		}
 		if seen[p.ID] {
 			return fmt.Errorf("providers[%d]: id %q is used by an earlier provider", i, p.ID)
@@ -133,6 +161,8 @@ func (p Provider) validate() error {
 		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token is sent only to a jwksUri the configuration names", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
+	case p.TenantRealm && p.Issuer == "":
+		return fmt.Errorf("provider %q sets tenantRealm without issuer; the tenant name is the last path segment of the issuer", p.ID)
 	}
 	for _, aud := range p.Audiences {
 		if aud == "" {
@@ -145,6 +175,11 @@ func (p Provider) validate() error {
 	}
 	if err := checkHTTPURL(address); err != nil {
 		return fmt.Errorf("provider %q %s: %w", p.ID, field, err)
+	}
+	if p.TenantRealm {
+		if _, ok := tenantName(p.Issuer); !ok {
+			return fmt.Errorf("provider %q sets tenantRealm, and issuer %q does not end in a tenant name of %s", p.ID, p.Issuer, realmSegmentRule)
+		}
 	}
 	return nil
 }
