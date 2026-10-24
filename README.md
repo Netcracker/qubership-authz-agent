@@ -46,6 +46,9 @@ helm template helm-templates/authz-agent -f helm-templates/authz-agent/resource-
 helm template helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml
 ```
 
+The kind suites run on a third chart, the test fixture `helm-templates/authz-test-stand/`; see
+[its README](helm-templates/authz-test-stand/README.md). The charts support Helm 3.19 or later, or Helm 4.x.
+
 ## Building images
 
 Each image has its own Dockerfile under `build/`:
@@ -75,7 +78,9 @@ verified from a clean clone on public images.
 - [OPA CLI](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (for Rego tests; also installable via `bash test/scripts/install-opa.sh`)
 - Docker, `kind`, and `kubectl` (for the integration and parity suites, which run on kind)
 - Docker Compose (for the load suite only)
-- `helm` (for chart render test)
+- `helm` 3.19 or later, or 4.x (for the chart render test, and to install the test stand and run the suites on kind); see
+  [docs/local-integration-tests.md](docs/local-integration-tests.md#2-prerequisites) for the versions the kind targets
+  need
 
 ### Unit tests — Go
 

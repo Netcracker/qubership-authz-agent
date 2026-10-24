@@ -1,8 +1,10 @@
 # Parity IdP seed realms
 
-These realm files are imported by the `idp` Deployment in [keycloak.yaml](../keycloak.yaml)
-with Keycloak's `--import-realm`; `make parity-harness` packs them into the `parity-realms`
-ConfigMap.
+These realm files are the realms of the parity test stand. The test-stand chart,
+[`helm-templates/authz-test-stand`](../../../../helm-templates/authz-test-stand), imports them
+into Keycloak at every start when its `idp.realms` value is `parity`, as in
+[`test-stand-values.yaml`](../test-stand-values.yaml). `make test-stand-files` copies them into
+the chart and adds the users of `test/parity/suite/testdata/realm/` to the `parity` realm.
 
 The realms also give the stand two tenants: `parity-realm.json` holds `mt-a` and `mt-a-admin`
 with `ROLE_MT_READER` and `ROLE_MT_ADMIN`, the users of tenant A, and `parity-mt-b-realm.json` is
@@ -13,7 +15,7 @@ claim.
 ## Why the notes live here and not in the JSON
 
 Each entry below used to be a `_comment` key inside the realm JSON. The
-identity-provider fork tolerated unknown keys; stock Keycloak 26.6.4 does not, and
+identity-provider fork tolerated unknown keys; stock Keycloak 26 does not, and
 the import aborts with `Unrecognized field "_comment" (class RealmRepresentation)`.
 That blocked the `infra-keycloak` image, so the notes moved out of the data and into
 this file, word for word. Do not put `_comment` back into the JSON.

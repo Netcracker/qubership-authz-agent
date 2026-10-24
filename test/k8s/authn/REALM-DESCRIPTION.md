@@ -4,15 +4,15 @@ This document describes the repository-managed Keycloak realm import used by the
 
 ## Realm
 
-| Property                         | Value                                       |
-| -------------------------------- | ------------------------------------------- |
-| Realm name                       | `authz-test`                                |
-| Issuer (fixed via `KC_HOSTNAME`) | `http://keycloak:8080/realms/authz-test`    |
-| OIDC discovery                   | `<issuer>/.well-known/openid-configuration` |
-| JWKS URI                         | `<issuer>/protocol/openid-connect/certs`    |
-| Token endpoint                   | `<issuer>/protocol/openid-connect/token`    |
-| SSL required                     | `none` (dev mode)                           |
-| Access token lifespan            | 30 minutes (realm default)                  |
+| Property                         | Value                                         |
+| -------------------------------- | --------------------------------------------- |
+| Realm name                       | `authz-test`                                  |
+| Issuer (fixed via `KC_HOSTNAME`) | `http://keycloak:8080/auth/realms/authz-test` |
+| OIDC discovery                   | `<issuer>/.well-known/openid-configuration`   |
+| JWKS URI                         | `<issuer>/protocol/openid-connect/certs`      |
+| Token endpoint                   | `<issuer>/protocol/openid-connect/token`      |
+| SSL required                     | `none` (dev mode)                             |
+| Access token lifespan            | 30 minutes (realm default)                    |
 
 ## Clients
 
@@ -67,21 +67,20 @@ Both users have `emailVerified: true` and `enabled: true`.
 
 ## Import Procedure
 
-1. The realm JSON file is mounted into the Keycloak container at
-   `/opt/keycloak/data/import/authz-test-realm.json`.
-2. Keycloak is started with `start-dev --import-realm --health-enabled=true`.
-   The `KC_HOSTNAME=http://keycloak:8080` env var fixes the token issuer to the
-   container-network hostname regardless of the host-side access URL, ensuring
-   that tokens acquired from `http://localhost:<KC_HTTP_PORT>` still carry
-   `iss: http://keycloak:8080/realms/authz-test` matching the trusted-provider config.
-3. On first startup, Keycloak imports the realm, clients, roles, and users from the JSON file.
-4. The import creates the realm with all configuration as a single atomic operation.
+1. The test-stand chart, `helm-templates/authz-test-stand`, puts the realm JSON files into a
+   ConfigMap mounted at `/opt/keycloak/data/import`.
+2. The container starts with `start-dev --import-realm` and imports them at every start.
+   `KC_HOSTNAME=http://keycloak:8080/auth` fixes the token issuer to the in-cluster Service name, so tokens carry
+   `iss: http://keycloak:8080/auth/realms/authz-test`, matching the trusted-provider config.
+3. The import creates the realm, clients, roles, and users from the JSON file. A change to the
+   file takes effect after `make e2e-harness`, which regenerates the chart files and restarts
+   the Pod.
 
 ## How the Runtime Environment Uses This Import
 
-1. `make e2e-harness` packs `authz-test-realm.json` into the `keycloak-realms` ConfigMap, which
-   `test/k8s/keycloak.yaml` mounts into the Keycloak container.
-2. `authz-agent` trusted-provider config points to `http://keycloak:8080/realms/authz-test`.
+1. `make e2e-harness` installs the test-stand chart with `test/k8s/test-stand-values.yaml`,
+   which runs Keycloak with `authz-test-realm.json`, `cloud-common-realm.json`, and the two tenant realms below.
+2. `authz-agent` trusted-provider config points to `http://keycloak:8080/auth/realms/authz-test`.
 3. On startup, `authz-agent` bootstrap fetches OIDC discovery from the Keycloak issuer,
    resolves the `jwks_uri`, downloads the JWKS, and writes it into the OPA data path.
 4. The Testify integration suite acquires tokens from Keycloak using the password grant:
@@ -95,7 +94,7 @@ A Keycloak-issued access token for the `order-reader` user contains (among other
 
 ```json
 {
-  "iss": "http://keycloak:8080/realms/authz-test",
+  "iss": "http://keycloak:8080/auth/realms/authz-test",
   "sub": "<keycloak-generated-uuid>",
   "aud": ["authz-agent"],
   "preferred_username": "order-reader",
@@ -120,7 +119,7 @@ mapper, so a tenant token carries no `aud: authz-agent`; the generated provider 
 | `0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a-realm.json` | `0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a` | `unregistered` | No |
 
 `test/k8s/values.yaml` lists both realms by display name in `AUTHZ_IDP_REALMS`. The agent asks the emulator
-(`test/k8s/tenant-manager.yaml`) for the identifier of each, so it loads the keys of `default` and has none for
+(`tenantManager` in `test/k8s/test-stand-values.yaml`) for the identifier of each, so it loads the keys of `default` and has none for
 `unregistered`. The `tenant_realm.*` steps of the suite check both.
 
 ## Artifact Location

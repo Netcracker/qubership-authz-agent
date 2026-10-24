@@ -10,6 +10,10 @@ escalation, and every capability dropped, so the stand starts in a namespace tha
 Standard. Each container except Keycloak has a read-only root filesystem: Keycloak writes its dev-mode database and its
 Quarkus build under `/opt/keycloak` at start.
 
+The kind harnesses install it with [`test/k8s/test-stand-values.yaml`](../../test/k8s/test-stand-values.yaml) (the
+runtime suite) and [`test/k8s/parity/test-stand-values.yaml`](../../test/k8s/parity/test-stand-values.yaml) (the parity
+suite); see [`test/k8s/README.md`](../../test/k8s/README.md).
+
 ## Generated files
 
 The chart reads the realm files and the pip-stub rule files from `files/`, which git does not track. In a checkout,
@@ -40,5 +44,5 @@ kubectl logs job/parity-suite
 `helm test` exits non-zero when the suite fails, and deletes the Job of the previous run before it starts a new one. It
 waits no longer than `--timeout`. Three limits bound a run, each no lower than the one before: `-test.timeout` in
 `suite.args`, `suite.activeDeadlineSeconds`, and `--timeout`. The chart supports Helm 3.19 or later, or Helm 4.x,
-except that Helm 4.0.0 to 4.1.0 do not end `helm test` when the Job fails and wait out `--timeout`; use Helm 3, or Helm
-4.1.1 or later.
+except that Helm 4.0.0 to 4.1.0 do not end `helm test` when the Job fails and wait out `--timeout`; the Makefile
+targets stop it themselves, and by hand use Helm 3, or Helm 4.1.1 or later.

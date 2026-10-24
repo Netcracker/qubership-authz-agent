@@ -1,5 +1,6 @@
 # The test stand of the authz-agent suites. Every part is off by default; a
-# stand turns on the parts it needs.
+# stand turns on the parts it needs. The kind harnesses keep their values in
+# test/k8s/test-stand-values.yaml and test/k8s/parity/test-stand-values.yaml.
 #
 # The realm and stub files under files/ are generated, not kept in git: run
 # `make test-stand-files` before installing the chart from a checkout.
