@@ -3,18 +3,19 @@
 #
 # Everything the Build workflow (go-build.yaml) does not cover:
 #   rego                 Rego policy tests with the OPA CLI
-#   chart                helm lint plus the chart-render assertions
+#   chart                helm lint of the three charts and the chart-render
+#                        assertions, on Helm 3 and on Helm 4
 #   integration-compile  go vet with -tags integration, so a broken integration
 #                        test file fails here instead of after a cluster boot
 #   jsonpath-jayway      internal/jsonpath against Jayway JsonPath on the JVM,
 #                        over the package's cases, the json-path-comparison
 #                        queries, and the calls Jayway's own tests make
 #                        (Makefile jayway-suite-calls, test-jayway)
-#   kind-e2e             the Helm chart installed on a kind cluster and the
-#                        runtime suite run against it (Makefile e2e-* targets,
-#                        see test/k8s/README.md)
-#   kind-parity          the chart on kind again, in its own namespace, with the
-#                        parity replay suite against it (Makefile parity-* targets)
+#   kind-e2e             the test stand and the two charts installed on a kind
+#                        cluster with Helm 4, and the runtime suite run against
+#                        them (Makefile e2e-* targets, see test/k8s/README.md)
+#   kind-parity          the same on kind with Helm 3, in its own namespace,
+#                        with the parity replay suite (Makefile parity-* targets)
 #   ci-gate              one status check for branch protection
 #
 # No paths filter on purpose: ci-gate is meant to be a required check, and a
@@ -70,18 +71,41 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Helm
+      # The test-stand chart reads generated realm and stub files; without
+      # them its templates fail, so lint renders it after the files exist.
+      - name: Generate the test-stand files
+        run: make test-stand-files
+
+      # The charts support Helm 3.19 or later and Helm 4, so both lint and
+      # render them. renovate.json keeps the Helm 3 pin on the latest 3.19.x
+      # and the Helm 4 pin on the latest 4.x.
+      - name: Set up Helm 3
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.19.5
+
+      - name: Lint and render the charts with Helm 3
+        run: |
+          helm version --short
+          helm lint helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml
+          helm lint helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml
+          helm lint helm-templates/authz-test-stand -f test/k8s/test-stand-values.yaml
+          helm lint helm-templates/authz-test-stand -f test/k8s/parity/test-stand-values.yaml
+          bash test/scripts/test-chart-render.sh
+
+      - name: Set up Helm 4
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v4.3.1
 
-      - name: Lint the charts
+      - name: Lint and render the charts with Helm 4
         run: |
+          helm version --short
           helm lint helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml
           helm lint helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml
-
-      - name: Render assertions
-        run: bash test/scripts/test-chart-render.sh
+          helm lint helm-templates/authz-test-stand -f test/k8s/test-stand-values.yaml
+          helm lint helm-templates/authz-test-stand -f test/k8s/parity/test-stand-values.yaml
+          bash test/scripts/test-chart-render.sh
 
   integration-compile:
     name: Vet tagged suites
@@ -231,10 +255,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Helm 3 here and Helm 4 in kind-e2e, so helm test and the suite
+      # targets run on both majors.
       - name: Set up Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v4.3.1
+          version: v3.19.5
 
       - name: Create kind cluster
         uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1

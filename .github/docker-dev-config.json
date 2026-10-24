@@ -9,6 +9,21 @@
       "name": "qubership-authz-policy-admin",
       "file": "./build/authz-policy-admin/Dockerfile",
       "context": "."
+    },
+    {
+      "name": "qubership-authz-pip-stub",
+      "file": "./test/integration/pipstub/Dockerfile",
+      "context": "./test/integration/pipstub"
+    },
+    {
+      "name": "qubership-authz-parity-suite",
+      "file": "./test/parity/suite/Dockerfile",
+      "context": "./test/parity/suite"
+    },
+    {
+      "name": "qubership-authz-agent-transfer",
+      "file": "./build/authz-agent-transfer/Dockerfile",
+      "context": "."
     }
   ],
   "platforms": "linux/amd64,linux/arm64"

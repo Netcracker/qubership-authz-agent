@@ -1,0 +1,65 @@
+{{- if .Values.tenantManager.enabled }}
+{{- $tenants := list }}
+{{- range $name, $id := .Values.tenantManager.tenants }}
+{{- $tenants = append $tenants (printf "%s=%s" $name $id) }}
+{{- end }}
+{{- if not $tenants }}
+{{- fail "tenantManager.tenants is required" }}
+{{- end }}
+# The agent asks the emulator for the identifier of a tenant realm whose name
+# its chart configures; the stand's Keycloak names that realm by the
+# identifier, as identity-provider does.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.tenantManager.name }}
+  labels:
+    {{- include "authz-test-stand.labels" (dict "root" $ "name" .Values.tenantManager.name "component" "tenant-manager") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.tenantManager.name }}
+  template:
+    metadata:
+      labels:
+        {{- include "authz-test-stand.labels" (dict "root" $ "name" .Values.tenantManager.name "component" "tenant-manager") | nindent 8 }}
+    spec:
+      # The emulator calls no Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "authz-test-stand.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: tenant-manager
+          image: {{ printf "%s:%s" (required "tenantManager.imageRepository is required" .Values.tenantManager.imageRepository) (required "TAG is required" .Values.TAG) }}
+          imagePullPolicy: {{ .Values.IMAGE_PULL_POLICY }}
+          env:
+            - name: TENANT_MANAGER_TENANTS
+              value: {{ join "," $tenants | quote }}
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 2
+          securityContext:
+            {{- include "authz-test-stand.containerSecurityContext" true | nindent 12 }}
+          resources:
+            {{- toYaml .Values.tenantManager.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.tenantManager.name }}
+  labels:
+    {{- include "authz-test-stand.labels" (dict "root" $ "name" .Values.tenantManager.name "component" "tenant-manager") | nindent 4 }}
+spec:
+  selector:
+    app: {{ .Values.tenantManager.name }}
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+{{- end }}

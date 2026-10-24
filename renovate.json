@@ -20,6 +20,22 @@
       "matchManagers": ["maven"],
       "matchPackageNames": ["com.jayway.jsonpath:json-path"],
       "enabled": false
+    },
+    {
+      "description": "integration-tests.yaml sets up Helm 3 and Helm 4 side by side so the charts are checked on both. The docs support Helm 3.19 or later, so the Helm 3 pin takes only 3.19.x patch releases: a move to a later Helm 3 would leave the oldest supported minor untested, and a move to Helm 4 would leave Helm 3 untested.",
+      "matchManagers": ["github-actions"],
+      "matchFileNames": [".github/workflows/integration-tests.yaml"],
+      "matchDepNames": ["helm"],
+      "matchCurrentVersion": "/^v?3\\./",
+      "allowedVersions": "/^v?3\\.19\\./"
+    },
+    {
+      "description": "The Helm 4 pins take every Helm 4 release, so they stay on the latest 4.x; a Helm 5 is a new pin next to these, not an update of them.",
+      "matchManagers": ["github-actions"],
+      "matchFileNames": [".github/workflows/integration-tests.yaml"],
+      "matchDepNames": ["helm"],
+      "matchCurrentVersion": "/^v?4\\./",
+      "allowedVersions": "/^v?4\\./"
     }
   ]
 }

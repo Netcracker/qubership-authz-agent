@@ -1,0 +1,69 @@
+{{- if .Values.suite.enabled }}
+{{- if .Values.suite.serviceAccount }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.suite.name }}
+  labels:
+    {{- include "authz-test-stand.labels" (dict "root" $ "name" .Values.suite.name "component" "suite") | nindent 4 }}
+automountServiceAccountToken: false
+---
+{{- end }}
+# `helm test` deletes the Job of the previous run before it creates this one,
+# and keeps it afterwards so its log stays readable.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.suite.name }}
+  labels:
+    {{- include "authz-test-stand.labels" (dict "root" $ "name" .Values.suite.name "component" "suite") | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {{ .Values.suite.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "authz-test-stand.labels" (dict "root" $ "name" .Values.suite.name "component" "suite") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- if .Values.suite.serviceAccount }}
+      serviceAccountName: {{ .Values.suite.name }}
+      {{- end }}
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "authz-test-stand.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: {{ .Values.suite.name }}
+          image: {{ printf "%s:%s" .Values.suite.imageRepository (required "TAG is required" .Values.TAG) }}
+          imagePullPolicy: {{ .Values.IMAGE_PULL_POLICY }}
+          args:
+            {{- toYaml .Values.suite.args | nindent 12 }}
+          env:
+            {{- range $name, $value := .Values.suite.env }}
+            - name: {{ $name }}
+              value: {{ $value | toString | quote }}
+            {{- end }}
+            {{- range $name, $ref := .Values.suite.secretEnv }}
+            - name: {{ $name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $ref.secret }}
+                  key: {{ $ref.key }}
+            {{- end }}
+          securityContext:
+            {{- include "authz-test-stand.containerSecurityContext" true | nindent 12 }}
+          resources:
+            {{- toYaml .Values.suite.resources | nindent 12 }}
+          # The root filesystem is read-only; a test that asks for a temporary
+          # directory gets this one.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: {{ .Values.suite.resources.limits | default dict | dig "ephemeral-storage" "256Mi" }}
+{{- end }}

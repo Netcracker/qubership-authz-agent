@@ -46,6 +46,9 @@ helm template helm-templates/authz-agent -f helm-templates/authz-agent/resource-
 helm template helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml
 ```
 
+The kind suites run on a third chart, the test fixture `helm-templates/authz-test-stand/`; see
+[its README](helm-templates/authz-test-stand/README.md). The charts support Helm 3.19 or later, or Helm 4.x.
+
 ## Building images
 
 Each image has its own Dockerfile under `build/`:
@@ -56,13 +59,20 @@ docker build -t authz-agent:local        -f build/authz-agent/Dockerfile .
 docker build -t authz-policy-admin:local -f build/authz-policy-admin/Dockerfile .
 ```
 
-CI builds both via `.github/docker-dev-config.json` and publishes them as
-`ghcr.io/netcracker/qubership-authz-agent` and
-`ghcr.io/netcracker/qubership-authz-policy-admin`, named as the platform names
-its images: `qubership-` plus the service. A release is cut by hand with the
+The images are named as the platform names its images: `qubership-` plus the
+service, as in `ghcr.io/netcracker/qubership-authz-agent` and
+`ghcr.io/netcracker/qubership-authz-policy-admin`. On every push to `main` or an
+`lts/**` branch, and on every pull request from a branch of this repository, CI
+builds the five components of `.github/docker-dev-config.json` (the two
+services, the test stand's images, and the transfer image) and pushes them to
+ghcr.io; a pull request from a fork builds none of them. A release is cut by hand with the
 Docker Images Release workflow (`.github/workflows/docker-release.yaml`), which
-tags the commit, builds the two images `.qubership/docker.cfg` lists, and
+tags the commit, builds the images `.qubership/docker.cfg` lists, and
 publishes the GitHub release with notes composed from the merged pull requests.
+Besides the two services, the release publishes the test stand's images,
+`qubership-authz-pip-stub` and `qubership-authz-parity-suite`, and
+`qubership-authz-agent-transfer`, which carries the Helm charts; see
+[helm-templates/authz-test-stand](helm-templates/authz-test-stand/README.md).
 
 ## Testing
 
@@ -75,7 +85,9 @@ verified from a clean clone on public images.
 - [OPA CLI](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (for Rego tests; also installable via `bash test/scripts/install-opa.sh`)
 - Docker, `kind`, and `kubectl` (for the integration and parity suites, which run on kind)
 - Docker Compose (for the load suite only)
-- `helm` (for chart render test)
+- `helm` 3.19 or later, or 4.x (for the chart render test, and to install the test stand and run the suites on kind); see
+  [docs/local-integration-tests.md](docs/local-integration-tests.md#2-prerequisites) for the versions the kind targets
+  need
 
 ### Unit tests — Go
 
