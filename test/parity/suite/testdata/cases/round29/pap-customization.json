@@ -1,0 +1,535 @@
+{
+ "about": "Validations of a customization import: a set or policy used as a path, or a rule to disable, that no loaded set has, and a new rule without effect. Each case uploads one set, imports a customization at level CUSTOMER (field customize), and asks one READ after the import; the import golden is the answer. The file opens and closes with a control.",
+ "resourceTypePrefix": "PARITY_SUITE_R29P_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-control-first",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "p",
+         "rules": [
+          {
+           "key": "added",
+           "name": "parity r29 added",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'w'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-unknown-set-path-ok",
+   "requests": [],
+   "about": "Valid twin of r29pap-customization-unknown-set-path-bad: the same upload within the constraint (customization unknown set path)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "unknown",
+       "policies": [
+        {
+         "key": "unknown",
+         "rules": [
+          {
+           "key": "added",
+           "name": "parity r29 added",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'w'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-unknown-set-path-bad",
+   "requests": [],
+   "about": "Breaks an upload constraint (customization unknown set path); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "p",
+         "rules": [
+          {
+           "key": "added",
+           "name": "parity r29 added",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'w'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-unknown-policy-path-ok",
+   "requests": [],
+   "about": "Valid twin of r29pap-customization-unknown-policy-path-bad: the same upload within the constraint (customization unknown policy path)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "unknown",
+         "rules": [
+          {
+           "key": "added",
+           "name": "parity r29 added",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'w'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-unknown-policy-path-bad",
+   "requests": [],
+   "about": "Breaks an upload constraint (customization unknown policy path); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "other",
+         "target": "true",
+         "condition": "resource.a == 'w'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "p",
+         "rules": [
+          {
+           "key": "other",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-disable-unknown-rule-ok",
+   "requests": [],
+   "about": "Valid twin of r29pap-customization-disable-unknown-rule-bad: the same upload within the constraint (customization disable unknown rule)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "p",
+         "rules": [
+          {
+           "key": "unknown",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-disable-unknown-rule-bad",
+   "requests": [],
+   "about": "Breaks an upload constraint (customization disable unknown rule); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "p",
+         "rules": [
+          {
+           "key": "added",
+           "name": "parity r29 added",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'w'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-rule-without-effect-ok",
+   "requests": [],
+   "about": "Valid twin of r29pap-customization-rule-without-effect-bad: the same upload within the constraint (customization rule without effect)."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s",
+       "policies": [
+        {
+         "key": "p",
+         "rules": [
+          {
+           "key": "added",
+           "name": "parity r29 added",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'w'"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "a": "y"
+       }
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-rule-without-effect-bad",
+   "requests": [],
+   "about": "Breaks an upload constraint (customization rule without effect); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "id": "r29pap-customization-control-last",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  }
+ ]
+}

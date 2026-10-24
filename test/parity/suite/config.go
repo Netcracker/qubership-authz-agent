@@ -69,6 +69,12 @@ type Config struct {
 	// the parity harness. Default http://localhost:28092.
 	EAMockControlURL string
 
+	// UMMockControlURL is the base URL of the user-management-mock service,
+	// the pip-stub instance access-control reaches as the User Management API
+	// to look up the user of a request with userId. Default
+	// http://localhost:28194.
+	UMMockControlURL string
+
 	// TenantID is the value the suite sends in the tenant_id query param
 	// (D-V item 6). Defaults to "default" — the tenant the Step 2 smoke
 	// fixtures use.
@@ -78,9 +84,100 @@ type Config struct {
 	// D-L (always "PARITY" in Step 3).
 	DomainName string
 
-	// Profile is the active PARITY_PROFILE. The only supported value is
-	// "authz-agent" (golden collection cannot run from this repository).
+	// Profile is the active PARITY_PROFILE: "authz-agent", or
+	// "authz-agent-export" for the export-fed agent of TestExportFedAgent
+	// (golden collection cannot run from this repository).
 	Profile string
+
+	// Tenants describes the two-tenant stand the tenant-scoped cases need. The
+	// kind parity harness has one realm, so these cases skip unless it is set.
+	Tenants TenantStand
+
+	// TenantClaim holds the clients of the parity realm whose tokens carry a
+	// tenant-id claim, for the cases that record what the claim does to a
+	// decision.
+	TenantClaim TenantClaimClients
+	// TokenSubject holds the clients of
+	// testdata/realm-clients/token-subject-clients.json by client id, for the
+	// cases whose token lacks a claim or carries an array in place of a
+	// string; see requestSpec.Subject.
+	TokenSubject map[string]ClientCredentials
+}
+
+// ClientCredentials identify one confidential client of the parity realm.
+type ClientCredentials struct {
+	ID     string
+	Secret string
+}
+
+// TenantClaimClients are the clients of the parity realm that add a hardcoded
+// tenant-id claim to the tokens they issue. The realm import under
+// test/k8s/parity/idp-seed declares them; on a stand with another realm they
+// have to exist with the same claim values.
+type TenantClaimClients struct {
+	// M2MTenantA issues service-account tokens whose tenant-id is tenant A's
+	// identifier: Tenants.A.ID where the stand has two tenants, TenantID
+	// otherwise. On the kind harness both are "default".
+	M2MTenantA ClientCredentials
+	// M2MTenantB issues service-account tokens whose tenant-id is tenant B's
+	// identifier, Tenants.B.ID. The realm import carries a placeholder, since
+	// the kind harness has no tenant B; the cases that use this client skip
+	// there.
+	M2MTenantB ClientCredentials
+	// M2MTenantUnknown issues service-account tokens whose tenant-id is a
+	// tenant no stand has.
+	M2MTenantUnknown ClientCredentials
+	// M2MTenantEmpty issues service-account tokens whose tenant-id is the empty
+	// string.
+	M2MTenantEmpty ClientCredentials
+	// EndUserTenantA issues password-grant tokens for the parity users with
+	// tenant A's identifier as the tenant-id.
+	EndUserTenantA ClientCredentials
+}
+
+// loadTenantClaimClients reads PARITY_CLAIM_{M2M_TENANT_A,M2M_TENANT_B,
+// M2M_TENANT_UNKNOWN,M2M_TENANT_EMPTY,END_USER_TENANT_A}_CLIENT_{ID,SECRET}. The defaults are the
+// clients of the realm import.
+func loadTenantClaimClients() TenantClaimClients {
+	client := func(key, id, secret string) ClientCredentials {
+		return ClientCredentials{
+			ID:     envOr("PARITY_CLAIM_"+key+"_CLIENT_ID", id),
+			Secret: envOr("PARITY_CLAIM_"+key+"_CLIENT_SECRET", secret),
+		}
+	}
+	return TenantClaimClients{
+		M2MTenantA:       client("M2M_TENANT_A", "parity-m2m-tenant-a", "ParityM2MTenantASecret1!@#"),
+		M2MTenantB:       client("M2M_TENANT_B", "parity-m2m-tenant-b", "ParityM2MTenantBSecret1!@#"),
+		M2MTenantUnknown: client("M2M_TENANT_UNKNOWN", "parity-m2m-tenant-unknown", "ParityM2MTenantUnknownSecret1!@#"),
+		M2MTenantEmpty:   client("M2M_TENANT_EMPTY", "parity-m2m-tenant-empty", "ParityM2MTenantEmptySecret1!@#"),
+		EndUserTenantA:   client("END_USER_TENANT_A", "parity-end-user-tenant-a", "ParityEndUserTenantASecret1!@#"),
+	}
+}
+
+// tokenSubjectSecret is the secret every client of
+// testdata/realm-clients/token-subject-clients.json declares.
+const tokenSubjectSecret = "ParityTokenSubjectSecret1!@#"
+
+// tokenSubjectClients holds the client ids of
+// testdata/realm-clients/token-subject-clients.json, each with whether the
+// client has a service account. TestTokenSubjectClients_MatchTheRealmFile
+// fails when the file and this table differ.
+var tokenSubjectClients = map[string]bool{
+	"parity-ts-bare":         true,
+	"parity-ts-arrays":       false,
+	"parity-ts-scalar-roles": false,
+}
+
+// loadTokenSubjectClients returns the clients of tokenSubjectClients by client
+// id. PARITY_TOKEN_SUBJECT_SECRET replaces the secret all of them share in the
+// realm file.
+func loadTokenSubjectClients() map[string]ClientCredentials {
+	secret := envOr("PARITY_TOKEN_SUBJECT_SECRET", tokenSubjectSecret)
+	clients := map[string]ClientCredentials{}
+	for id := range tokenSubjectClients {
+		clients[id] = ClientCredentials{ID: id, Secret: secret}
+	}
+	return clients
 }
 
 // LoadConfig builds a Config from the PARITY_* environment variables. Missing
@@ -101,9 +198,13 @@ func LoadConfig() Config {
 		EndUserPassword:     envOr("PARITY_END_USER_PASSWORD", "ParityPass1!@#"),
 		PipMockControlURL:   envOr("PARITY_PIP_MOCK_CONTROL_URL", "http://localhost:"+envOr("PARITY_PIP_PORT", "28191")),
 		EAMockControlURL:    envOr("PARITY_EA_MOCK_CONTROL_URL", "http://localhost:"+envOr("PARITY_EA_PORT", "28192")),
+		UMMockControlURL:    envOr("PARITY_UM_MOCK_CONTROL_URL", "http://localhost:"+envOr("PARITY_UM_PORT", "28194")),
 		TenantID:            envOr("PARITY_TENANT_ID", "default"),
 		DomainName:          envOr("PARITY_DOMAIN_NAME", "PARITY"),
 		Profile:             profile,
+		Tenants:             loadTenantStand(),
+		TenantClaim:         loadTenantClaimClients(),
+		TokenSubject:        loadTokenSubjectClients(),
 	}
 }
 
@@ -121,7 +222,7 @@ func isAuthzAgentProfile(profile string) bool {
 
 func defaultACBaseURL(profile string) string {
 	portKey, fallback := "PARITY_AC_PORT", "28090"
-	if isAuthzAgentProfile(profile) {
+	if isAuthzAgentProfile(profile) || isExportFedProfile(profile) {
 		portKey, fallback = "PARITY_AUTHZ_PORT", "28100"
 	}
 	return "http://localhost:" + envOr(portKey, fallback)
@@ -129,7 +230,7 @@ func defaultACBaseURL(profile string) string {
 
 func defaultIDPBaseURL(profile string) string {
 	portKey, fallback := "PARITY_IDP_PORT", "25557"
-	if isAuthzAgentProfile(profile) {
+	if isAuthzAgentProfile(profile) || isExportFedProfile(profile) {
 		portKey, fallback = "PARITY_AUTHZ_IDP_PORT", "25558"
 	}
 	return "http://localhost:" + envOr(portKey, fallback) + "/auth/realms/parity"

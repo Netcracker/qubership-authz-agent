@@ -1,0 +1,629 @@
+{
+ "about": "How equality and membership treat a value that is not a string in the case the literal is written in. The agent's own condition parser accepts every condition here, and no earlier golden records the answers. Two recorded answers look like they disagree about numbers, and the vn cases are written to settle them rather than to add a third: c1-number-literal/float records resource.n == 5 as false for the attribute 5.0, and c11-decimal-number-equals/trailing-zero records resource.n == 5.5 as true for the attribute 5.50. One rule explains both: parse the attribute to a double, then compare the string forms; 5.50 renders as \"5.5\" and equals the literal, while 5.0 renders as \"5.0\" and does not equal \"5\". vn1/two-decimal-places (5.00), vn1/exponent (5e0) and vn5 (1e2 against the literal 100) tell that reading from the one where the literal's own form picks the comparison: under the double-then-string rule all three are true, and under the second only the ones whose literal is written the same way. vn2, a fractional literal against an integer attribute, and vn4, the negated side, carry the remaining columns. Each case carries the request a working operator answers true, because a condition access-control accepts and never evaluates answers false to every request; resource['x'] and MATCH against an attribute are already recorded as behaving that way (j7, a2).",
+ "resourceTypePrefix": "PARITY_SUITE_VAL_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "vn1-integer-literal-against-written-decimals",
+   "resourceType": "PARITY_SUITE_VAL_VN1",
+   "about": "Numbers. c1 records the integer literal against 5, \"5\" and 5.0; the vn1 to vn3 cases carry the forms it left out, and each repeats an answer c1 or c11 already has as its control.",
+   "condition": "resource.n == 5",
+   "requests": [
+    {
+     "name": "integer",
+     "resource": {
+      "id": "val-vn1",
+      "n": 5
+     }
+    },
+    {
+     "name": "one-decimal-place-as-a-string",
+     "resource": {
+      "id": "val-vn1",
+      "n": "5.0"
+     }
+    },
+    {
+     "name": "two-decimal-places",
+     "resource": {
+      "id": "val-vn1",
+      "n": 5.00
+     }
+    },
+    {
+     "name": "exponent",
+     "resource": {
+      "id": "val-vn1",
+      "n": 5e0
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn2-fractional-literal-against-an-integer",
+   "resourceType": "PARITY_SUITE_VAL_VN2",
+   "about": "Numbers. c1 records the integer literal against 5, \"5\" and 5.0; the vn1 to vn3 cases carry the forms it left out, and each repeats an answer c1 or c11 already has as its control.",
+   "condition": "resource.n == 5.0",
+   "requests": [
+    {
+     "name": "one-decimal-place",
+     "resource": {
+      "id": "val-vn2",
+      "n": 5.0
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "val-vn2",
+      "n": 5
+     }
+    },
+    {
+     "name": "two-decimal-places",
+     "resource": {
+      "id": "val-vn2",
+      "n": 5.00
+     }
+    },
+    {
+     "name": "integer-as-a-string",
+     "resource": {
+      "id": "val-vn2",
+      "n": "5"
+     }
+    },
+    {
+     "name": "one-decimal-place-as-a-string",
+     "resource": {
+      "id": "val-vn2",
+      "n": "5.0"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn3-fractional-literal-against-longer-decimals",
+   "resourceType": "PARITY_SUITE_VAL_VN3",
+   "about": "Numbers. c1 records the integer literal against 5, \"5\" and 5.0; the vn1 to vn3 cases carry the forms it left out, and each repeats an answer c1 or c11 already has as its control.",
+   "condition": "resource.n == 5.5",
+   "requests": [
+    {
+     "name": "one-decimal-place",
+     "resource": {
+      "id": "val-vn3",
+      "n": 5.5
+     }
+    },
+    {
+     "name": "two-decimal-places-as-a-string",
+     "resource": {
+      "id": "val-vn3",
+      "n": "5.50"
+     }
+    },
+    {
+     "name": "four-decimal-places",
+     "resource": {
+      "id": "val-vn3",
+      "n": 5.5000
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn4-integer-literal-negated",
+   "resourceType": "PARITY_SUITE_VAL_VN4",
+   "about": "The negated side of the same rule, which the translator has to project the same way and which no recorded case covers.",
+   "condition": "resource.n != 5",
+   "requests": [
+    {
+     "name": "integer",
+     "resource": {
+      "id": "val-vn4",
+      "n": 5
+     }
+    },
+    {
+     "name": "one-decimal-place",
+     "resource": {
+      "id": "val-vn4",
+      "n": 5.0
+     }
+    },
+    {
+     "name": "integer-as-a-string",
+     "resource": {
+      "id": "val-vn4",
+      "n": "5"
+     }
+    },
+    {
+     "name": "another-integer",
+     "resource": {
+      "id": "val-vn4",
+      "n": 6
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn5-exponent-against-a-plain-integer",
+   "resourceType": "PARITY_SUITE_VAL_VN5",
+   "condition": "resource.n == 100",
+   "requests": [
+    {
+     "name": "plain-integer",
+     "resource": {
+      "id": "val-vn5",
+      "n": 100
+     }
+    },
+    {
+     "name": "exponent",
+     "resource": {
+      "id": "val-vn5",
+      "n": 1e2
+     }
+    },
+    {
+     "name": "exponent-as-a-string",
+     "resource": {
+      "id": "val-vn5",
+      "n": "1e2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn6-integer-past-float-precision",
+   "resourceType": "PARITY_SUITE_VAL_VN6",
+   "about": "c2 records the literal 9007199254740993 as unequal to its neighbor below, so equality survives the first integer a float64 cannot hold. This is the same pair with the literal on the other side, which a comparison that rounds one operand only would answer differently.",
+   "condition": "resource.n == 9007199254740992",
+   "requests": [
+    {
+     "name": "exact",
+     "resource": {
+      "id": "val-vn6",
+      "n": 9007199254740992
+     }
+    },
+    {
+     "name": "neighbour-above",
+     "resource": {
+      "id": "val-vn6",
+      "n": 9007199254740993
+     }
+    },
+    {
+     "name": "exact-as-a-string",
+     "resource": {
+      "id": "val-vn6",
+      "n": "9007199254740992"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn7-relational-over-a-non-number",
+   "resourceType": "PARITY_SUITE_VAL_VN7",
+   "about": "Relational operators compare numerically, so the string \"10\" is greater than 5 (c3, in the round 2 semantics cases). These are the operands where a numeric comparison has no value to work with, each sent on its own so that one refusal does not mask the next. numeric-string-above is the control.",
+   "condition": "resource.n > 5",
+   "requests": [
+    {
+     "name": "numeric-string-above",
+     "resource": {
+      "id": "val-vn7",
+      "n": "10"
+     }
+    },
+    {
+     "name": "non-numeric-string",
+     "resource": {
+      "id": "val-vn7",
+      "n": "abc"
+     }
+    },
+    {
+     "name": "boolean",
+     "resource": {
+      "id": "val-vn7",
+      "n": true
+     }
+    },
+    {
+     "name": "null",
+     "resource": {
+      "id": "val-vn7",
+      "n": null
+     }
+    },
+    {
+     "name": "collection",
+     "resource": {
+      "id": "val-vn7",
+      "n": [
+       6
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "vn8-relational-over-negative-strings",
+   "resourceType": "PARITY_SUITE_VAL_VN8",
+   "condition": "resource.n > -5",
+   "requests": [
+    {
+     "name": "negative-string-above",
+     "resource": {
+      "id": "val-vn8",
+      "n": "-4"
+     }
+    },
+    {
+     "name": "negative-string-below",
+     "resource": {
+      "id": "val-vn8",
+      "n": "-10"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vc1-long-s-against-ascii-s",
+   "resourceType": "PARITY_SUITE_VAL_VC1",
+   "about": "Case outside ASCII. Two strings differing only in ASCII case are equal (c5-string-equals-other-case, in the round 2 semantics cases), and that leaves two readings: the comparison ignores case, or both operands are lower-cased first. vc1 separates them, because the long s upper-cases to S and lower-cases to itself. vc2 and vc3 add the pairs whose two cases are not the same length and whose lower case carries a combining mark.",
+   "condition": "resource.x == 's'",
+   "requests": [
+    {
+     "name": "ascii-lower-case",
+     "resource": {
+      "id": "val-vc1",
+      "x": "s"
+     }
+    },
+    {
+     "name": "ascii-upper-case",
+     "resource": {
+      "id": "val-vc1",
+      "x": "S"
+     }
+    },
+    {
+     "name": "long-s",
+     "resource": {
+      "id": "val-vc1",
+      "x": "ſ"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vc2-sharp-s-against-a-pair-of-s",
+   "resourceType": "PARITY_SUITE_VAL_VC2",
+   "condition": "resource.x == 'ss'",
+   "requests": [
+    {
+     "name": "lower-case-pair",
+     "resource": {
+      "id": "val-vc2",
+      "x": "ss"
+     }
+    },
+    {
+     "name": "upper-case-pair",
+     "resource": {
+      "id": "val-vc2",
+      "x": "SS"
+     }
+    },
+    {
+     "name": "sharp-s",
+     "resource": {
+      "id": "val-vc2",
+      "x": "ß"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vc3-dotted-and-dotless-i",
+   "resourceType": "PARITY_SUITE_VAL_VC3",
+   "condition": "resource.x == 'i'",
+   "requests": [
+    {
+     "name": "ascii-lower-case",
+     "resource": {
+      "id": "val-vc3",
+      "x": "i"
+     }
+    },
+    {
+     "name": "ascii-upper-case",
+     "resource": {
+      "id": "val-vc3",
+      "x": "I"
+     }
+    },
+    {
+     "name": "capital-i-with-dot-above",
+     "resource": {
+      "id": "val-vc3",
+      "x": "İ"
+     }
+    },
+    {
+     "name": "dotless-lower-case-i",
+     "resource": {
+      "id": "val-vc3",
+      "x": "ı"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vc4-cyrillic-case",
+   "resourceType": "PARITY_SUITE_VAL_VC4",
+   "condition": "resource.x == 'я'",
+   "requests": [
+    {
+     "name": "lower-case",
+     "resource": {
+      "id": "val-vc4",
+      "x": "я"
+     }
+    },
+    {
+     "name": "upper-case",
+     "resource": {
+      "id": "val-vc4",
+      "x": "Я"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vc5-cyrillic-case-under-in",
+   "resourceType": "PARITY_SUITE_VAL_VC5",
+   "condition": "resource.x IN 'я', 'other'",
+   "requests": [
+    {
+     "name": "lower-case",
+     "resource": {
+      "id": "val-vc5",
+      "x": "я"
+     }
+    },
+    {
+     "name": "upper-case",
+     "resource": {
+      "id": "val-vc5",
+      "x": "Я"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vc6-cyrillic-case-under-contains",
+   "resourceType": "PARITY_SUITE_VAL_VC6",
+   "condition": "resource.tags CONTAINS 'я'",
+   "requests": [
+    {
+     "name": "lower-case-element",
+     "resource": {
+      "id": "val-vc6",
+      "tags": [
+       "я"
+      ]
+     }
+    },
+    {
+     "name": "upper-case-element",
+     "resource": {
+      "id": "val-vc6",
+      "tags": [
+       "Я"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "vt1-number-against-a-string-literal",
+   "resourceType": "PARITY_SUITE_VAL_VT1",
+   "about": "Operands whose JSON type is not the literal's.",
+   "condition": "resource.n == '5'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "val-vt1",
+      "n": "5"
+     }
+    },
+    {
+     "name": "number",
+     "resource": {
+      "id": "val-vt1",
+      "n": 5
+     }
+    },
+    {
+     "name": "number-with-a-decimal-place",
+     "resource": {
+      "id": "val-vt1",
+      "n": 5.0
+     }
+    }
+   ]
+  },
+  {
+   "id": "vt2-boolean-against-an-upper-case-string-literal",
+   "resourceType": "PARITY_SUITE_VAL_VT2",
+   "about": "A boolean equals its own string form, and two strings equal each other across ASCII case; this case asks whether the two rules compose.",
+   "condition": "resource.b == 'TRUE'",
+   "requests": [
+    {
+     "name": "string-in-the-same-case",
+     "resource": {
+      "id": "val-vt2",
+      "b": "TRUE"
+     }
+    },
+    {
+     "name": "string-in-lower-case",
+     "resource": {
+      "id": "val-vt2",
+      "b": "true"
+     }
+    },
+    {
+     "name": "boolean-true",
+     "resource": {
+      "id": "val-vt2",
+      "b": true
+     }
+    },
+    {
+     "name": "boolean-false",
+     "resource": {
+      "id": "val-vt2",
+      "b": false
+     }
+    }
+   ]
+  },
+  {
+   "id": "vt3-contains-over-elements-in-another-case",
+   "resourceType": "PARITY_SUITE_VAL_VT3",
+   "condition": "resource.tags CONTAINS 'RED'",
+   "requests": [
+    {
+     "name": "element-in-the-same-case",
+     "resource": {
+      "id": "val-vt3",
+      "tags": [
+       "RED"
+      ]
+     }
+    },
+    {
+     "name": "element-in-lower-case",
+     "resource": {
+      "id": "val-vt3",
+      "tags": [
+       "red"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "vt4-contains-over-numbers",
+   "resourceType": "PARITY_SUITE_VAL_VT4",
+   "condition": "resource.ns CONTAINS 5",
+   "requests": [
+    {
+     "name": "number-element",
+     "resource": {
+      "id": "val-vt4",
+      "ns": [
+       5
+      ]
+     }
+    },
+    {
+     "name": "string-element",
+     "resource": {
+      "id": "val-vt4",
+      "ns": [
+       "5"
+      ]
+     }
+    },
+    {
+     "name": "element-with-a-decimal-place",
+     "resource": {
+      "id": "val-vt4",
+      "ns": [
+       5.0
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "vt5-contains-over-an-object",
+   "resourceType": "PARITY_SUITE_VAL_VT5",
+   "about": "Whether CONTAINS over an object reads its keys, its values, or neither. Both object requests can be false at once, so the control is a-collection-holding-the-value: CONTAINS over a collection holding the value is recorded as true (l5), and a false answer there means the attribute path rather than the object.",
+   "condition": "resource.o CONTAINS 'k'",
+   "requests": [
+    {
+     "name": "a-collection-holding-the-value",
+     "resource": {
+      "id": "val-vt5",
+      "o": [
+       "k"
+      ]
+     }
+    },
+    {
+     "name": "an-object-with-the-value-as-a-key",
+     "resource": {
+      "id": "val-vt5",
+      "o": {
+       "k": "v"
+      }
+     }
+    },
+    {
+     "name": "an-object-with-the-value-as-a-value",
+     "resource": {
+      "id": "val-vt5",
+      "o": {
+       "v": "k"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "vt6-in-a-list-of-mixed-types",
+   "resourceType": "PARITY_SUITE_VAL_VT6",
+   "about": "A list literal whose members have three different types. l8 records a number list; this case adds the mixed one, and asks which member each attribute finds.",
+   "condition": "resource.x IN 'a', 5, TRUE",
+   "requests": [
+    {
+     "name": "the-string-member",
+     "resource": {
+      "id": "val-vt6",
+      "x": "a"
+     }
+    },
+    {
+     "name": "the-number-member",
+     "resource": {
+      "id": "val-vt6",
+      "x": 5
+     }
+    },
+    {
+     "name": "the-boolean-member",
+     "resource": {
+      "id": "val-vt6",
+      "x": true
+     }
+    },
+    {
+     "name": "no-member",
+     "resource": {
+      "id": "val-vt6",
+      "x": "b"
+     }
+    }
+   ]
+  }
+ ]
+}

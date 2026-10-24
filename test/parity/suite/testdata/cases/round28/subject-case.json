@@ -1,0 +1,105 @@
+{
+ "about": "Whether the subject's own attributes compare as a resource attribute does, without regard to case: subject.name is parity-reader and subject.type USER, compared with the same text in another case under == and IN. Each condition is `<comparison> OR resource.a == 'y'`, asked with resource.a 'n' and 'y'.  The case r28subj-another-user is a control for the case format: its request names another user of the parity realm.",
+ "resourceTypePrefix": "PARITY_SUITE_R28C_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r28subj-name-upper",
+   "about": "subject.name against its text in upper case.",
+   "condition": "subject.name == 'PARITY-READER' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-type-lower",
+   "about": "subject.type against its text in lower case.",
+   "condition": "subject.type == 'user' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-name-upper-in",
+   "about": "subject.name in a list that holds its text in upper case.",
+   "condition": "subject.name IN 'PARITY-READER', 'zz' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r28"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r28subj-another-user",
+   "about": "The request's subject is parity-other, whose role ROLE_PARITY_OTHER the policy names: true with resource.a 'n' says the subject of the request is the user it names.",
+   "condition": "subject.name == 'parity-other' AND subject.id == '00000000-0000-0000-0000-000000000104' OR resource.a == 'y'",
+   "roles": [
+    "ROLE_PARITY_OTHER"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r28"
+     },
+     "subject": "user:parity-other",
+     "subjectClaims": {
+      "sub": "00000000-0000-0000-0000-000000000104",
+      "preferred_username": "parity-other"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r28"
+     },
+     "subject": "user:parity-other",
+     "subjectClaims": {
+      "sub": "00000000-0000-0000-0000-000000000104",
+      "preferred_username": "parity-other"
+     }
+    }
+   ]
+  }
+ ]
+}

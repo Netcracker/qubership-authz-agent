@@ -1,0 +1,2883 @@
+{
+ "about": "Sentinel and poison probes in the set tree: a rule, policy or nested set under a target that is true, false, ends or fails; a sentinel rule beside a sibling rule, policy, nested set or top-level set whose outcome cannot stop the stand from reading it (not terminal, not failed); the passes of an iterate node over two grants; two bulk items; a PIP another PIP's requestAttributes names; a filter predicate's placeholder. Every request records the calls of /api/v1/pip/s44-sent.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_SENT_NODES_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/s44-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity sentinel poison"
+   }
+  },
+  "/api/v1/pip/s44-sent": {
+   "statusCode": 200,
+   "body": [
+    "m"
+   ]
+  }
+ },
+ "pips": {
+  "s44-failed": {
+   "name": "subject.parityS44Failed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s44-failed",
+   "requestAttributes": {
+    "case": "s44-failed"
+   }
+  },
+  "s44-sent": {
+   "name": "subject.parityS44Sent",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/s44-sent",
+   "requestAttributes": {
+    "case": "s44-sent"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "sn44-nodes-control-first",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-deny-overrides-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-filter-predicate-t",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityS44Sent}"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-gate-abort",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "resource.s44absent == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-deny-unless-permit-err",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityS44Failed == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-nested-after-own-deny-overrides-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "sent",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'z'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-bulk-item",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "bulk",
+     "pipCalls": "/api/v1/pip/s44-sent",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "t": "y",
+        "v": "m",
+        "l": [
+         "m"
+        ],
+        "n": 5,
+        "vn": null,
+        "id": "i1"
+       }
+      },
+      {
+       "id": "i2",
+       "operation": "READ",
+       "resource": {
+        "t": "y",
+        "v": "m",
+        "l": [
+         "m"
+        ],
+        "n": 5,
+        "vn": null,
+        "id": "i2"
+       }
+      }
+     ]
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-own-before-nested-deny-overrides-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "x",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-after-deny-unless-permit-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-after-deny-unless-permit-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-before-permit-overrides-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-dup-condition",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-dup-rules",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "r2",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-filter-rule-gate-f",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_NONE'",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-gate-abort",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "resource.s44absent == 'y'",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-set-gate-abort",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.s44absent == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'm'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-top-set-deny",
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s2",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p2",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-permit-overrides-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-permit-unless-deny-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-own-before-nested-permit-unless-deny-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "x",
+           "target": "true",
+           "condition": "resource.t == 'n'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-nested-after-own-deny-unless-permit-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "sent",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'z'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-nested-after-own-permit-unless-deny-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "sent",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'z'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-own-before-nested-deny-unless-permit-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "x",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-after-deny-overrides-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-after-permit-unless-deny-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-gate-f",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "resource.t == 'n'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-after-deny-overrides-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-after-permit-overrides-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-before-deny-overrides-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-before-permit-unless-deny-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-gate-f",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "resource.t == 'n'",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-set-gate-f",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.t == 'n'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'm'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-filter-predicate-f",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_NONE'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityS44Sent}"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-filter-rule-gate-t",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-deny-overrides-err",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityS44Failed == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-deny-unless-permit-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-permit-overrides-err",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityS44Failed == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-permit-overrides-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-permit-unless-deny-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-iterate-permit-unless-deny-err",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "subject.permissionScope.region CONTAINS 'r2'",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityS44Failed == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-nested-after-own-permit-overrides-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "sent",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'z'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-own-before-nested-permit-overrides-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p2",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "x",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-after-permit-overrides-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-policy-gate-t",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "resource.t == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-after-permit-unless-deny-na",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-before-deny-unless-permit-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-rule-gate-t",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "resource.t == 'y'",
+         "condition": "subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-set-gate-t",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.t == 'y'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "p",
+         "target": "true",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r",
+           "target": "true",
+           "condition": "subject.parityS44Sent CONTAINS 'm'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-top-set-na",
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "x",
+         "target": "true",
+         "condition": "resource.t == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s2",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p2",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "sent",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  },
+  {
+   "id": "sn44-nodes-control-last",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityS44Sent CONTAINS 'z' OR subject.parityS44Sent CONTAINS 'm'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "t": "y",
+      "v": "m",
+      "l": [
+       "m"
+      ],
+      "n": 5,
+      "vn": null,
+      "id": "sn"
+     },
+     "pipCalls": "/api/v1/pip/s44-sent"
+    }
+   ],
+   "pips": [
+    "s44-failed",
+    "s44-sent",
+    "scope"
+   ]
+  }
+ ],
+ "standVersion": true
+}

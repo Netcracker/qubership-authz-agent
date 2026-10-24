@@ -1,0 +1,185 @@
+{
+ "about": "A PIP value with a repeat: a GENERAL body [\"v\", \"v\"] and a HEADER value v,v under ==. True if the repeats collapse into the one value v; a list of two values ends the rule.",
+ "resourceTypePrefix": "PARITY_SUITE_R29D_",
+ "pins": {
+  "/api/v1/pip/r29doc-twice": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "twice": {
+   "name": "subject.parityR29DocTwice",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29doc-twice"
+  },
+  "header": {
+   "name": "subject.parityR29DocHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-doc",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r29doc-general-repeated-value",
+   "about": "GENERAL body [\"v\", \"v\"].",
+   "condition": "subject.parityR29DocTwice == 'v' OR resource.a == 'y'",
+   "pips": [
+    "header",
+    "twice"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-general-repeated-value-in-a-deny-rule",
+   "about": "GENERAL body [\"v\", \"v\"]. The same condition in a DENY rule: an ended rule allows, a failed decision denies.",
+   "pips": [
+    "header",
+    "twice"
+   ],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityR29DocTwice == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-header-repeated-value",
+   "about": "HEADER value v,v.",
+   "condition": "subject.parityR29DocHeader == 'v' OR resource.a == 'y'",
+   "pips": [
+    "header",
+    "twice"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r29-doc": "v,v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r29-doc": "v,v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-header-repeated-value-in-a-deny-rule",
+   "about": "HEADER value v,v. The same condition in a DENY rule: an ended rule allows, a failed decision denies.",
+   "pips": [
+    "header",
+    "twice"
+   ],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.parityR29DocHeader == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     },
+     "headers": {
+      "x-parity-r29-doc": "v,v"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     },
+     "headers": {
+      "x-parity-r29-doc": "v,v"
+     }
+    }
+   ]
+  }
+ ]
+}

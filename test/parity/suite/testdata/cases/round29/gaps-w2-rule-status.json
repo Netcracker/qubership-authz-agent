@@ -1,0 +1,258 @@
+{
+ "about": "A rule uploaded with status INACTIVE (through the rule's fields object, which the runner copies over the rule's wire form). The expected reading skips the rule as a disabled one; the alternative is that the upload does not read a rule's status and the rule applies. The rule's condition is resource.a == 'y', asked with a 'n' and 'y'; an ACTIVE twin is the control.",
+ "resourceTypePrefix": "PARITY_SUITE_R29W_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29gaps-w2-rule-status-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-rule-status-inactive-allow",
+   "about": "One ALLOW rule with status INACTIVE under DENY_UNLESS_PERMIT. For a-y: false if the status disables the rule, true if the upload ignores it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "status": "INACTIVE"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-rule-status-active-allow",
+   "about": "One ALLOW rule with status ACTIVE under DENY_UNLESS_PERMIT. For a-y: true (control).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "fields": {
+          "status": "ACTIVE"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-rule-status-inactive-deny",
+   "about": "One DENY rule with status INACTIVE under PERMIT_UNLESS_DENY. For a-y: true if the status disables the rule, false if the upload ignores it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "fields": {
+          "status": "INACTIVE"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-rule-status-active-deny",
+   "about": "One DENY rule with status ACTIVE under PERMIT_UNLESS_DENY. For a-y: false (control).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "fields": {
+          "status": "ACTIVE"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-w2-rule-status-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

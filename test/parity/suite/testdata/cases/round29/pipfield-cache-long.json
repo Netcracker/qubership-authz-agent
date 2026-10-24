@@ -1,0 +1,97 @@
+{
+ "about": "Whether a cached GENERAL answer outlives one minute: cachePeriod 120 with cacheable true, and cacheable true alone, asked again 70 s after the first request. Each case waits 70 s.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-long-period-120": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-long-cacheable-alone": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "long-period-120": {
+   "name": "subject.parityR29LongPeriod120",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": true,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-long-period-120",
+   "requestAttributes": {
+    "case": "r29pipfield-long-period-120"
+   },
+   "cachePeriod": 120
+  },
+  "long-cacheable-alone": {
+   "name": "subject.parityR29LongCacheableAlone",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": true,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-long-cacheable-alone",
+   "requestAttributes": {
+    "case": "r29pipfield-long-cacheable-alone"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-long-period-120",
+   "about": "GENERAL PIP declared with {'cacheable': True, 'cachePeriod': 120}",
+   "condition": "subject.parityR29LongPeriod120 == 'v' OR resource.a == 'y'",
+   "pips": [
+    "long-period-120"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-long-period-120"
+    },
+    {
+     "name": "after-70s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-long-period-120",
+     "pauseMs": 70000
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-long-cacheable-alone",
+   "about": "GENERAL PIP declared with {'cacheable': True}",
+   "condition": "subject.parityR29LongCacheableAlone == 'v' OR resource.a == 'y'",
+   "pips": [
+    "long-cacheable-alone"
+   ],
+   "requests": [
+    {
+     "name": "first",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-long-cacheable-alone"
+    },
+    {
+     "name": "after-70s",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-long-cacheable-alone",
+     "pauseMs": 70000
+    }
+   ]
+  }
+ ]
+}

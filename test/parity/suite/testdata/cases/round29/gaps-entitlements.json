@@ -1,0 +1,57 @@
+{
+ "about": "The entitlements service answers the reader with one entitlement of type PARITY_R29_ENT whose Owner reference lists e1 and whose Viewer reference lists e2. Each comparison is `<comparison> OR resource.a == 'y'`.",
+ "resourceTypePrefix": "PARITY_SUITE_R29E_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29gaps-entitlements-other-reference",
+   "about": "e2 is listed under Viewer only. True if as('Owner') does not filter the references by name.",
+   "condition": "subject.entitledResources.of('PARITY_R29_ENT').as('Owner') CONTAINS 'e2' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r18",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r18",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ],
+ "entitlements": {
+  "statusCode": 200,
+  "body": {
+   "entitlements": [
+    {
+     "resourceType": "PARITY_R29_ENT",
+     "references": [
+      {
+       "name": "Owner",
+       "resources": [
+        {
+         "resourceId": "e1"
+        }
+       ]
+      },
+      {
+       "name": "Viewer",
+       "resources": [
+        {
+         "resourceId": "e2"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

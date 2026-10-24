@@ -1,0 +1,582 @@
+{
+ "about": "Where the order of evaluation reaches. In each case one child fails the decision when it is evaluated: its only rule is ALLOW with the condition subject.parityR22Failing == 'v', and that GENERAL PIP answers 500. Its sibling permits unconditionally. The pair is two ALLOW rules of one policy, two policies of one set, two nested sets of one set, or two sets at the top, under DENY_UNLESS_PERMIT and PERMIT_OVERRIDES, where a permit is final. Each case has a check and a filter request, both classed by the failing PIP's route, so a golden says whether the failing child was evaluated. Record on several stands. A request that shows one class on every stand is an answer too: a filter that evaluates every policy and set reads the PIP whatever the order.",
+ "resourceTypePrefix": "PARITY_SUITE_R22O_",
+ "pins": {
+  "/api/v1/pip/r22-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 22 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR22Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r22-failing",
+   "requestAttributes": {
+    "case": "r22-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o22-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o22-rules-deny-unless-permit",
+   "about": "Two ALLOW rules of one DENY_UNLESS_PERMIT policy in a DENY_UNLESS_PERMIT set: fails, declared first, and allow.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-policies-deny-unless-permit",
+   "about": "Two DENY_UNLESS_PERMIT policies of one DENY_UNLESS_PERMIT set: the failing one first, then the one that permits.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "failing",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-nested-sets-deny-unless-permit",
+   "about": "Two nested DENY_UNLESS_PERMIT sets of one DENY_UNLESS_PERMIT set, one policy each: the failing set first, then the one that permits.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "failing",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "failing",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "fails",
+           "target": "true",
+           "condition": "subject.parityR22Failing == 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "key": "allow",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "allow",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-top-sets-deny-unless-permit",
+   "about": "Two DENY_UNLESS_PERMIT sets at the top for one resource type, one policy each: the failing set first, then the one that permits.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "failing",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "failing",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "allow",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-rules-permit-overrides",
+   "about": "Two ALLOW rules of one PERMIT_OVERRIDES policy in a PERMIT_OVERRIDES set: fails, declared first, and allow.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-policies-permit-overrides",
+   "about": "Two PERMIT_OVERRIDES policies of one PERMIT_OVERRIDES set: the failing one first, then the one that permits.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "failing",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-nested-sets-permit-overrides",
+   "about": "Two nested PERMIT_OVERRIDES sets of one PERMIT_OVERRIDES set, one policy each: the failing set first, then the one that permits.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "failing",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "policies": [
+        {
+         "key": "failing",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "fails",
+           "target": "true",
+           "condition": "subject.parityR22Failing == 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "key": "allow",
+       "target": "resourceType == '{{resourceType}}'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "policies": [
+        {
+         "key": "allow",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_OVERRIDES",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-top-sets-permit-overrides",
+   "about": "Two PERMIT_OVERRIDES sets at the top for one resource type, one policy each: the failing set first, then the one that permits.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "failing",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "failing",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "fails",
+         "target": "true",
+         "condition": "subject.parityR22Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "allow",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22"
+     },
+     "classifyBy": "/api/v1/pip/r22-failing"
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r22-failing"
+    }
+   ]
+  },
+  {
+   "id": "o22-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r22",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

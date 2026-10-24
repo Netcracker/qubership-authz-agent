@@ -1,0 +1,7334 @@
+{
+ "about": "Metamorphic relations over the shape of the configuration: the cases come in pairs of two configurations, or two requests of one, whose answers the documented semantics says agree: a child that cannot matter added, siblings reordered, a node wrapped or flattened, duplicated, split, a condition moved between targets, a customization undone or applied in the other order, bulk and filter against single checks. A pair that disagrees is a finding whatever each answer is. Control cases first and last: they must answer alike.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_MT_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/obs-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity observation wrapper"
+   }
+  },
+  "/api/v1/pip/r16-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 16 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR16Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r16-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR16Failing"
+   },
+   "cacheable": false
+  },
+  "obs-subject-parityobsfailed": {
+   "name": "subject.parityObsFailed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/obs-failed",
+   "requestAttributes": {
+    "case": "obs-failed"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "mt44-g2-control-first",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-0-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-3-t27",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND subject.permissionScope.region CONTAINS 'r1'",
+     "policies": [],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "resource.a == 'y'",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [],
+   "customize": [
+    {
+     "name": "first",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s1",
+       "sets": [
+        {
+         "key": "s1-s0",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s1",
+       "sets": [
+        {
+         "key": "s1-s0",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "rules": [
+            {
+             "key": "s1-s0-p0-added",
+             "target": "true",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-both",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-3-t28",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND subject.permissionScope.region CONTAINS 'r1'",
+     "policies": [],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "resource.a == 'y'",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [],
+   "customize": [
+    {
+     "name": "first",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s1",
+       "sets": [
+        {
+         "key": "s1-s0",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "rules": [
+            {
+             "key": "s1-s0-p0-added",
+             "target": "true",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s1",
+       "sets": [
+        {
+         "key": "s1-s0",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-both",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-4-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "false",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "operation == 'READ'",
+         "condition": "false",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r2",
+         "target": "resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "operation == 'READ'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "false",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "resource.b == 'y'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "q==3",
+            "mongodbPredicate": "{\"q\": 3}"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s1-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s1-s0-p0",
+           "target": "false",
+           "rules": [],
+           "algorithm": "PERMIT_OVERRIDES"
+          }
+         ],
+         "sets": [],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ]
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-4-t16",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "false",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "operation == 'READ'",
+         "condition": "false",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r2",
+         "target": "resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "operation == 'READ'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "false",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "resource.b == 'y'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "q==3",
+            "mongodbPredicate": "{\"q\": 3}"
+           }
+          }
+         ]
+        },
+        {
+         "key": "s0-s1-s0-p0",
+         "target": "false",
+         "rules": [],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-10-t39",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "pt",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "sets": [],
+     "policies": [
+      {
+       "key": "pt-p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "s0-s0-p0-r1",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-10-t40",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "pt",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "algorithm": "DENY_OVERRIDES",
+     "sets": [],
+     "policies": [
+      {
+       "key": "pt-p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "s0-s0-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-12-t47",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "resource.b == 'y'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         },
+         "fields": {
+          "ruleType": "DEFAULT"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s1-p0-r2",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "fields": {
+      "type": "DEFAULT"
+     }
+    }
+   ],
+   "requests": [],
+   "customize": [
+    {
+     "name": "first",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "true",
+           "condition": "false",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s1",
+       "policies": [
+        {
+         "key": "s1-p0",
+         "status": "INACTIVE"
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-both",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-12-t48",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "resource.b == 'y'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         },
+         "fields": {
+          "ruleType": "DEFAULT"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s1-p0-r2",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "fields": {
+      "type": "DEFAULT"
+     }
+    }
+   ],
+   "requests": [],
+   "customize": [
+    {
+     "name": "first",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s1",
+       "policies": [
+        {
+         "key": "s1-p0",
+         "status": "INACTIVE"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "true",
+           "condition": "false",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-both",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t1",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "add1",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "add1-p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "add1-r",
+         "target": "true",
+         "condition": "resource.obsMark == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t4",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "add4",
+       "target": "false",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "add4-r",
+         "target": "true",
+         "condition": "resource.obsMark == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t5",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "add5",
+         "target": "true",
+         "condition": "resource.obsMark == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t8",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "wrap8",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "resource.b == 'y'",
+           "condition": "resource.b == 'y'",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t11",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p0-r0d11",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t12",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "s0-p0d12",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0d12",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t13",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    },
+    {
+     "key": "s0d13",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0d13",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0d13",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t14",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y' OR subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t15",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p0-r0-or",
+         "target": "resource.b == 'y'",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t26",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y' AND resource.b == 'y'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t31",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "resource.b == 'y'",
+           "condition": "false",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-imported",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-imported",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-imported",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "delete": {
+      "key": "s0",
+      "recursive": true
+     },
+     "requests": [
+      {
+       "name": "ry-deleted",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-deleted",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-deleted",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-20-t33",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "resource.b == 'y'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-imported",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-imported",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-imported",
+       "filter": true
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "delete": {
+      "key": "s0",
+      "recursive": true
+     },
+     "requests": [
+      {
+       "name": "ry-deleted",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-deleted",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-deleted",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-22-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND subject.permissionScope.region CONTAINS 'r1'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "resource.a == 'y'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "NOT_APPLICABLE"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         },
+         "fields": {
+          "tenantId": "default"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "resource.a == 'y'",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "false",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-22-t38",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND subject.permissionScope.region CONTAINS 'r1'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "resource.a == 'y'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "NOT_APPLICABLE"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         },
+         "fields": {
+          "tenantId": "default"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "false",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "resource.a == 'y'",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-32-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "USE_FILTER_CONDITION"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "resource.b == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "status": "ARCHIVED",
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "operation == 'READ'",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "false",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r1'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s1-s0-p1",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [
+        {
+         "key": "s1-s0-s0",
+         "target": "resource.a == 'y'",
+         "policies": [
+          {
+           "key": "s1-s0-s0-p0",
+           "target": "resource.a == 'y'",
+           "rules": [
+            {
+             "key": "s1-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "resource.b == 'y'",
+             "effect": "ALLOW",
+             "predicates": {
+              "rsqlPredicate": "f==${subject.parityR16Failing}"
+             }
+            },
+            {
+             "key": "s1-s0-s0-p0-r1",
+             "target": "subject.permissionScope.region CONTAINS 'r1'",
+             "condition": "resource.a == 'y'",
+             "effect": "ALLOW",
+             "fields": {
+              "tenantId": "default"
+             }
+            }
+           ],
+           "algorithm": "DENY_UNLESS_PERMIT"
+          },
+          {
+           "key": "s1-s0-s0-p1",
+           "target": "operation == 'READ'",
+           "rules": []
+          }
+         ],
+         "sets": [],
+         "status": "ARCHIVED",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ]
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-32-t1",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "USE_FILTER_CONDITION"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "resource.b == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "status": "ARCHIVED",
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "operation == 'READ'",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "false",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r1'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s1-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "add1",
+           "target": "true",
+           "condition": "resource.obsMark == 'n'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [
+        {
+         "key": "s1-s0-s0",
+         "target": "resource.a == 'y'",
+         "policies": [
+          {
+           "key": "s1-s0-s0-p0",
+           "target": "resource.a == 'y'",
+           "rules": [
+            {
+             "key": "s1-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "resource.b == 'y'",
+             "effect": "ALLOW",
+             "predicates": {
+              "rsqlPredicate": "f==${subject.parityR16Failing}"
+             }
+            },
+            {
+             "key": "s1-s0-s0-p0-r1",
+             "target": "subject.permissionScope.region CONTAINS 'r1'",
+             "condition": "resource.a == 'y'",
+             "effect": "ALLOW",
+             "fields": {
+              "tenantId": "default"
+             }
+            }
+           ],
+           "algorithm": "DENY_UNLESS_PERMIT"
+          },
+          {
+           "key": "s1-s0-s0-p1",
+           "target": "operation == 'READ'",
+           "rules": []
+          }
+         ],
+         "sets": [],
+         "status": "ARCHIVED",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ]
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-32-t9",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "USE_FILTER_CONDITION"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "resource.b == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "status": "ARCHIVED",
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "operation == 'READ'",
+       "policies": [
+        {
+         "key": "s1-s0-p1",
+         "target": "true",
+         "rules": []
+        },
+        {
+         "key": "s1-s0-p0",
+         "target": "false",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r1'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [
+        {
+         "key": "s1-s0-s0",
+         "target": "resource.a == 'y'",
+         "policies": [
+          {
+           "key": "s1-s0-s0-p0",
+           "target": "resource.a == 'y'",
+           "rules": [
+            {
+             "key": "s1-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "resource.b == 'y'",
+             "effect": "ALLOW",
+             "predicates": {
+              "rsqlPredicate": "f==${subject.parityR16Failing}"
+             }
+            },
+            {
+             "key": "s1-s0-s0-p0-r1",
+             "target": "subject.permissionScope.region CONTAINS 'r1'",
+             "condition": "resource.a == 'y'",
+             "effect": "ALLOW",
+             "fields": {
+              "tenantId": "default"
+             }
+            }
+           ],
+           "algorithm": "DENY_UNLESS_PERMIT"
+          },
+          {
+           "key": "s1-s0-s0-p1",
+           "target": "operation == 'READ'",
+           "rules": []
+          }
+         ],
+         "sets": [],
+         "status": "ARCHIVED",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ]
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-32-t17",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "USE_FILTER_CONDITION"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "resource.b == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "status": "ARCHIVED",
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "wrap17",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s1-s0",
+         "target": "operation == 'READ'",
+         "policies": [
+          {
+           "key": "s1-s0-p0",
+           "target": "false",
+           "rules": [
+            {
+             "key": "s1-s0-p0-r0",
+             "target": "true",
+             "condition": "subject.permissionScope.region CONTAINS 'r1'",
+             "effect": "ALLOW"
+            }
+           ],
+           "algorithm": "PERMIT_OVERRIDES"
+          },
+          {
+           "key": "s1-s0-p1",
+           "target": "true",
+           "rules": []
+          }
+         ],
+         "sets": [
+          {
+           "key": "s1-s0-s0",
+           "target": "resource.a == 'y'",
+           "policies": [
+            {
+             "key": "s1-s0-s0-p0",
+             "target": "resource.a == 'y'",
+             "rules": [
+              {
+               "key": "s1-s0-s0-p0-r0",
+               "target": "true",
+               "condition": "resource.b == 'y'",
+               "effect": "ALLOW",
+               "predicates": {
+                "rsqlPredicate": "f==${subject.parityR16Failing}"
+               }
+              },
+              {
+               "key": "s1-s0-s0-p0-r1",
+               "target": "subject.permissionScope.region CONTAINS 'r1'",
+               "condition": "resource.a == 'y'",
+               "effect": "ALLOW",
+               "fields": {
+                "tenantId": "default"
+               }
+              }
+             ],
+             "algorithm": "DENY_UNLESS_PERMIT"
+            },
+            {
+             "key": "s1-s0-s0-p1",
+             "target": "operation == 'READ'",
+             "rules": []
+            }
+           ],
+           "sets": [],
+           "status": "ARCHIVED",
+           "algorithm": "DENY_UNLESS_PERMIT",
+           "iterate": {
+            "foreach": "subject.permissionScope",
+            "algorithm": "DENY_OVERRIDES"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t2",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "add2",
+       "target": "false",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "add2-r",
+         "target": "true",
+         "condition": "resource.obsMark == 'n'",
+         "effect": "DENY"
+        }
+       ]
+      },
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t7",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    },
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t8",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{\"q\": 3}",
+          "rsqlPredicate": "q==3"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t9",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t11",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    }
+   ],
+   "requests": [],
+   "resourceType": "PARITY_SUITE_R44_MT_UPLOAD_37_AB"
+  },
+  {
+   "id": "mt44-37-t12",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R44_MT_UPLOAD_37_AB"
+  },
+  {
+   "id": "mt44-37-t13",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [],
+   "resourceType": "PARITY_SUITE_R44_MT_UPLOAD_37_BA"
+  },
+  {
+   "id": "mt44-37-t14",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R44_MT_UPLOAD_37_BA"
+  },
+  {
+   "id": "mt44-37-t15",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "wrap15",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "q==3",
+            "mongodbPredicate": "{\"q\": 3}"
+           }
+          },
+          {
+           "key": "s1-p0-r1",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t21",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        },
+        {
+         "key": "s0-p0-r1d21",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t23",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "s1-p0-r1d23",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-37-t39",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t1",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [
+      {
+       "key": "add1",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "add1-p",
+         "target": "true",
+         "algorithm": "DENY_OVERRIDES",
+         "rules": [
+          {
+           "key": "add1-r",
+           "target": "true",
+           "condition": "resource.obsMark == 'n'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t6",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "add6",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "add6-r",
+         "target": "true",
+         "condition": "resource.obsMark == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t7",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        },
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t8",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{\"q\": 3}",
+          "rsqlPredicate": "q==3"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t9",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t12",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [
+      {
+       "key": "wrap12",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t16",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "wrap16",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t20",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        },
+        {
+         "key": "s0-p1-r1d20",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t21",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        },
+        {
+         "key": "s0-p2-r1d21",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t35",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "false",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t45",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [],
+   "customize": [
+    {
+     "name": "first",
+     "level": "PROJECT",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p2",
+         "status": "INACTIVE"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p2",
+         "rules": [
+          {
+           "key": "s0-p2-r1",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-both",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-45-t46",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "operation == 'READ'",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "true",
+         "condition": "false",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      },
+      {
+       "key": "s0-p2",
+       "target": "false",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY",
+         "fields": {
+          "ruleType": "APPLICABLE_FOR_FRONTEND"
+         }
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "mongodbPredicate": "{\"m\": 1}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_UNLESS_PERMIT"
+    }
+   ],
+   "requests": [],
+   "customize": [
+    {
+     "name": "first",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p2",
+         "rules": [
+          {
+           "key": "s0-p2-r1",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "second",
+     "level": "PROJECT",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0-p2",
+         "status": "INACTIVE"
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "ry-both",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "rn-both",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "name": "filter-both",
+       "filter": true
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-62-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "false",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityR16Failing}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-62-t1",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "false",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityR16Failing}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "add1",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "add1-r",
+         "target": "true",
+         "condition": "subject.parityObsFailed == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-62-t6",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "false",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityR16Failing}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "add6",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "add6-p",
+         "target": "true",
+         "algorithm": "DENY_OVERRIDES",
+         "rules": [
+          {
+           "key": "add6-r",
+           "target": "true",
+           "condition": "resource.obsAbsent == 'y'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-62-t13",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.a == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "false",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityR16Failing}"
+         }
+        },
+        {
+         "key": "s0-p0-r0d13",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "false",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f==${subject.parityR16Failing}"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-122-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "false",
+         "condition": "false",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "DENY"
+          },
+          {
+           "key": "s0-s0-p0-r2",
+           "target": "false",
+           "condition": "false",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "false",
+           "condition": "true",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p1-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "mongodbPredicate": "{\"m\": 1}"
+           }
+          }
+         ]
+        },
+        {
+         "key": "s0-s0-p2",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s0-p2-r0",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'y'",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-122-t20",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "false",
+         "condition": "false",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "DENY"
+          },
+          {
+           "key": "s0-s0-p0-r2",
+           "target": "false",
+           "condition": "false",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "false",
+           "condition": "true",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p1-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "mongodbPredicate": "{\"m\": 1}"
+           }
+          }
+         ]
+        },
+        {
+         "key": "s0-s0-p2",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s0-p2-r0",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'y'",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      },
+      {
+       "key": "s0-s0d20",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0d20",
+         "target": "operation == 'READ'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0d20",
+           "target": "true",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p0-r1d20",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "DENY"
+          },
+          {
+           "key": "s0-s0-p0-r2d20",
+           "target": "false",
+           "condition": "false",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        },
+        {
+         "key": "s0-s0-p1d20",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0d20",
+           "target": "false",
+           "condition": "true",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p1-r1d20",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "mongodbPredicate": "{\"m\": 1}"
+           }
+          }
+         ]
+        },
+        {
+         "key": "s0-s0-p2d20",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s0-p2-r0d20",
+           "target": "operation == 'READ'",
+           "condition": "resource.a == 'y'",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-167-x",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "false",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p1-r2",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p2",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "resource.a == 'y'",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-rev",
+     "bulk": [
+      {
+       "id": "mtn",
+       "operation": "READ",
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mty",
+       "operation": "READ",
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulkops",
+     "bulkOperations": [
+      {
+       "id": "mty",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mty",
+        "a": "y",
+        "b": "y",
+        "obsMark": "y"
+       }
+      },
+      {
+       "id": "mtn",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "mtn",
+        "a": "n",
+        "obsMark": "y"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "mt44-167-t17",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "false",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p1-r2",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1d17",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0d17",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        },
+        {
+         "key": "s0-p1-r1d17",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p1-r2d17",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p2",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "resource.a == 'y'",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-167-t18",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "false",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        },
+        {
+         "key": "s0-p1-r1",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p1-r2",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p2",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p2-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p2-r1",
+         "target": "resource.a == 'y'",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    },
+    {
+     "key": "s0d18",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0d18",
+       "target": "operation == 'READ'",
+       "rules": [
+        {
+         "key": "s0-p0-r0d18",
+         "target": "true",
+         "condition": "false",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1d18",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0d18",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        },
+        {
+         "key": "s0-p1-r1d18",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p1-r2d18",
+         "target": "true",
+         "condition": "resource.b == 'y'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p2d18",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p2-r0d18",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p2-r1d18",
+         "target": "resource.a == 'y'",
+         "condition": "resource.a == 'y'",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "mt44-g2-control-last",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}' AND resource.b == 'y'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "mty",
+      "a": "y",
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "mtn",
+      "a": "n",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

@@ -1,0 +1,1430 @@
+{
+ "about": "Upload constraints on PIP declarations that no earlier golden decides. Each constraint is a case with a valid declaration followed by a case with a declaration that breaks the constraint; the load golden of each is the answer. No case reads its PIP; each case replaces its domain's declaration, so a refusal does not reach the next case. The file opens and closes with a control.",
+ "resourceTypePrefix": "PARITY_SUITE_R29P_",
+ "pins": {},
+ "pips": {
+  "r29pap-header-authorization-bad-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "Authorization",
+   "cacheable": false
+  },
+  "r29pap-pip-name-empty-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-empty-bad-p0": {
+   "name": "",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-absent-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-absent-bad-p0": {
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-without-subject-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-without-subject-bad-p0": {
+   "name": "parityR29NoSubject",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-digit-first-ok-p0": {
+   "name": "subject.parityR29Digit1",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-digit-first-bad-p0": {
+   "name": "subject.1parityR29",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-underscore-first-ok-p0": {
+   "name": "subject.parityR29_under",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-underscore-first-bad-p0": {
+   "name": "subject._parityR29",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-dollar-ok-p0": {
+   "name": "subject.parityR29x",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-dollar-bad-p0": {
+   "name": "subject.parityR29$x",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-type-unknown-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-pip-type-unknown-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "PARITY_R29_BOGUS",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-pip-return-type-unknown-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "UUID",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-return-type-unknown-bad-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "PARITY_R29_BOGUS",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-return-type-json-on-header-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-return-type-json-on-header-bad-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "JSON",
+   "header": "X-Parity-R29-H",
+   "cacheable": false,
+   "jsonPath": "$.value"
+  },
+  "r29pap-general-without-url-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-general-without-url-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-filtered-without-url-ok-p0": {
+   "name": "subject.parityR29F.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "resourceType": "PARITY_R29_FILTERED",
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-filtered",
+   "requestAttributes": {
+    "case": "r29-pap-filtered"
+   }
+  },
+  "r29pap-filtered-without-url-bad-p0": {
+   "name": "subject.parityR29F.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "resourceType": "PARITY_R29_FILTERED",
+   "requestAttributes": {
+    "case": "r29-pap-filtered"
+   }
+  },
+  "r29pap-scope-without-url-ok-p0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": "1"
+  },
+  "r29pap-scope-without-url-bad-p0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "cacheable": false,
+   "cachePeriod": "1"
+  },
+  "r29pap-general-json-without-jsonpath-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-general-json-without-jsonpath-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-general-http-method-put-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "GET",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-general-http-method-put-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "PUT",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-general-forwards-authorization-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   },
+   "headers": "X-Parity-R29-A"
+  },
+  "r29pap-general-forwards-authorization-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   },
+   "headers": "Authorization"
+  },
+  "r29pap-general-forwards-tenant-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   },
+   "headers": "X-Parity-R29-A,X-Parity-R29-B"
+  },
+  "r29pap-general-forwards-tenant-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   },
+   "headers": "X-Parity-R29-A,Tenant"
+  },
+  "r29pap-filtered-forwards-authorization-ok-p0": {
+   "name": "subject.parityR29F.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "resourceType": "PARITY_R29_FILTERED",
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-filtered",
+   "requestAttributes": {
+    "case": "r29-pap-filtered"
+   },
+   "headers": "X-Parity-R29-A"
+  },
+  "r29pap-filtered-forwards-authorization-bad-p0": {
+   "name": "subject.parityR29F.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "resourceType": "PARITY_R29_FILTERED",
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-filtered",
+   "requestAttributes": {
+    "case": "r29-pap-filtered"
+   },
+   "headers": "authorization"
+  },
+  "r29pap-general-forwards-blank-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   },
+   "headers": "X-Parity-R29-A,X-Parity-R29-B"
+  },
+  "r29pap-general-forwards-blank-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   },
+   "headers": "X-Parity-R29-A, ,X-Parity-R29-B"
+  },
+  "r29pap-header-two-names-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-A",
+   "cacheable": false
+  },
+  "r29pap-header-two-names-bad-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-A,X-Parity-R29-B",
+   "cacheable": false
+  },
+  "r29pap-scope-cache-period-zero-ok-p0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": "1"
+  },
+  "r29pap-scope-cache-period-zero-bad-p0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": "0"
+  },
+  "r29pap-scope-other-name-ok-p0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": "1"
+  },
+  "r29pap-scope-other-name-bad-p0": {
+   "name": "subject.parityR29Scope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": "1"
+  },
+  "r29pap-mapping-name-outside-permissions-ok-p0": {
+   "name": "subject.permissions.parityR29M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_P"
+     ]
+    }
+   }
+  },
+  "r29pap-mapping-name-outside-permissions-bad-p0": {
+   "name": "subject.parityR29Mapping",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_P"
+     ]
+    }
+   }
+  },
+  "r29pap-pip-name-twice-in-upload-ok-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-twice-in-upload-ok-p1": {
+   "name": "subject.parityR29H2",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-B",
+   "cacheable": false
+  },
+  "r29pap-pip-name-twice-in-upload-bad-p0": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-name-twice-in-upload-bad-p1": {
+   "name": "subject.parityR29H",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-B",
+   "cacheable": false
+  },
+  "r29pap-header-name-in-another-domain-ok-before0-p0": {
+   "name": "subject.parityR29Twin",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-header-name-in-another-domain-ok-p0": {
+   "name": "subject.parityR29Twin2",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-header-name-in-another-domain-bad-before0-p0": {
+   "name": "subject.parityR29Twin",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-header-name-in-another-domain-bad-p0": {
+   "name": "subject.parityR29Twin",
+   "pipType": "HEADER",
+   "type": "REGULAR",
+   "header": "X-Parity-R29-H",
+   "cacheable": false
+  },
+  "r29pap-pip-cacheable-text-ok-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": true,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-pip-cacheable-text-bad-p0": {
+   "name": "subject.parityR29G",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "httpMethod": "POST",
+   "cacheable": "yes",
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pap-general",
+   "requestAttributes": {
+    "case": "r29-pap-general"
+   }
+  },
+  "r29pap-mapping-custom-mapping-list-ok-p0": {
+   "name": "subject.permissions.parityR29M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_P"
+     ]
+    }
+   }
+  },
+  "r29pap-mapping-custom-mapping-list-bad-p0": {
+   "name": "subject.permissions.parityR29M",
+   "pipType": "MAPPING",
+   "customMapping": [
+    [
+     "PARITY_R29_P"
+    ]
+   ]
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pap-pips-control-first",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  },
+  {
+   "pips": [
+    "r29pap-header-authorization-bad-p0"
+   ],
+   "id": "r29pap-header-authorization-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: the PAP refuses this upload (header authorization), as the goldens load-simplified-policies-v1/isolated/r28pip-header-authorization-canonical-no-default-simplified-none.json, load-simplified-policies-v1/isolated/r28pip-header-authorization-no-default-simplified-none.json show."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-empty-ok-p0"
+   ],
+   "id": "r29pap-pip-name-empty-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-empty-bad: the same upload within the constraint (pip name empty)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-empty-bad-p0"
+   ],
+   "id": "r29pap-pip-name-empty-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name empty); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-absent-ok-p0"
+   ],
+   "id": "r29pap-pip-name-absent-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-absent-bad: the same upload within the constraint (pip name absent)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-absent-bad-p0"
+   ],
+   "id": "r29pap-pip-name-absent-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name absent); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-without-subject-ok-p0"
+   ],
+   "id": "r29pap-pip-name-without-subject-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-without-subject-bad: the same upload within the constraint (pip name without subject)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-without-subject-bad-p0"
+   ],
+   "id": "r29pap-pip-name-without-subject-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name without subject); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-digit-first-ok-p0"
+   ],
+   "id": "r29pap-pip-name-digit-first-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-digit-first-bad: the same upload within the constraint (pip name digit first)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-digit-first-bad-p0"
+   ],
+   "id": "r29pap-pip-name-digit-first-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name digit first); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-underscore-first-ok-p0"
+   ],
+   "id": "r29pap-pip-name-underscore-first-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-underscore-first-bad: the same upload within the constraint (pip name underscore first)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-underscore-first-bad-p0"
+   ],
+   "id": "r29pap-pip-name-underscore-first-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name underscore first); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-dollar-ok-p0"
+   ],
+   "id": "r29pap-pip-name-dollar-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-dollar-bad: the same upload within the constraint (pip name dollar)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-dollar-bad-p0"
+   ],
+   "id": "r29pap-pip-name-dollar-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name dollar); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-type-unknown-ok-p0"
+   ],
+   "id": "r29pap-pip-type-unknown-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-type-unknown-bad: the same upload within the constraint (pip type unknown)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-type-unknown-bad-p0"
+   ],
+   "id": "r29pap-pip-type-unknown-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip type unknown); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-return-type-unknown-ok-p0"
+   ],
+   "id": "r29pap-pip-return-type-unknown-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-return-type-unknown-bad: the same upload within the constraint (pip return type unknown)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-return-type-unknown-bad-p0"
+   ],
+   "id": "r29pap-pip-return-type-unknown-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip return type unknown); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-return-type-json-on-header-ok-p0"
+   ],
+   "id": "r29pap-pip-return-type-json-on-header-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-return-type-json-on-header-bad: the same upload within the constraint (pip return type json on header)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-return-type-json-on-header-bad-p0"
+   ],
+   "id": "r29pap-pip-return-type-json-on-header-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip return type json on header); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-general-without-url-ok-p0"
+   ],
+   "id": "r29pap-general-without-url-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-general-without-url-bad: the same upload within the constraint (general without url)."
+  },
+  {
+   "pips": [
+    "r29pap-general-without-url-bad-p0"
+   ],
+   "id": "r29pap-general-without-url-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (general without url); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-filtered-without-url-ok-p0"
+   ],
+   "id": "r29pap-filtered-without-url-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-filtered-without-url-bad: the same upload within the constraint (filtered without url)."
+  },
+  {
+   "pips": [
+    "r29pap-filtered-without-url-bad-p0"
+   ],
+   "id": "r29pap-filtered-without-url-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (filtered without url); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-scope-without-url-ok-p0"
+   ],
+   "id": "r29pap-scope-without-url-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-scope-without-url-bad: the same upload within the constraint (scope without url)."
+  },
+  {
+   "pips": [
+    "r29pap-scope-without-url-bad-p0"
+   ],
+   "id": "r29pap-scope-without-url-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (scope without url); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-general-json-without-jsonpath-ok-p0"
+   ],
+   "id": "r29pap-general-json-without-jsonpath-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-general-json-without-jsonpath-bad: the same upload within the constraint (general json without jsonpath)."
+  },
+  {
+   "pips": [
+    "r29pap-general-json-without-jsonpath-bad-p0"
+   ],
+   "id": "r29pap-general-json-without-jsonpath-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (general json without jsonpath); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-general-http-method-put-ok-p0"
+   ],
+   "id": "r29pap-general-http-method-put-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-general-http-method-put-bad: the same upload within the constraint (general http method put)."
+  },
+  {
+   "pips": [
+    "r29pap-general-http-method-put-bad-p0"
+   ],
+   "id": "r29pap-general-http-method-put-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (general http method put); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-general-forwards-authorization-ok-p0"
+   ],
+   "id": "r29pap-general-forwards-authorization-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-general-forwards-authorization-bad: the same upload within the constraint (general forwards authorization)."
+  },
+  {
+   "pips": [
+    "r29pap-general-forwards-authorization-bad-p0"
+   ],
+   "id": "r29pap-general-forwards-authorization-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (general forwards authorization); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-general-forwards-tenant-ok-p0"
+   ],
+   "id": "r29pap-general-forwards-tenant-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-general-forwards-tenant-bad: the same upload within the constraint (general forwards tenant)."
+  },
+  {
+   "pips": [
+    "r29pap-general-forwards-tenant-bad-p0"
+   ],
+   "id": "r29pap-general-forwards-tenant-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (general forwards tenant); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-filtered-forwards-authorization-ok-p0"
+   ],
+   "id": "r29pap-filtered-forwards-authorization-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-filtered-forwards-authorization-bad: the same upload within the constraint (filtered forwards authorization)."
+  },
+  {
+   "pips": [
+    "r29pap-filtered-forwards-authorization-bad-p0"
+   ],
+   "id": "r29pap-filtered-forwards-authorization-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (filtered forwards authorization); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-general-forwards-blank-ok-p0"
+   ],
+   "id": "r29pap-general-forwards-blank-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-general-forwards-blank-bad: the same upload within the constraint (general forwards blank)."
+  },
+  {
+   "pips": [
+    "r29pap-general-forwards-blank-bad-p0"
+   ],
+   "id": "r29pap-general-forwards-blank-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (general forwards blank); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-header-two-names-ok-p0"
+   ],
+   "id": "r29pap-header-two-names-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-header-two-names-bad: the same upload within the constraint (header two names)."
+  },
+  {
+   "pips": [
+    "r29pap-header-two-names-bad-p0"
+   ],
+   "id": "r29pap-header-two-names-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (header two names); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-scope-cache-period-zero-ok-p0"
+   ],
+   "id": "r29pap-scope-cache-period-zero-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-scope-cache-period-zero-bad: the same upload within the constraint (scope cache period zero)."
+  },
+  {
+   "pips": [
+    "r29pap-scope-cache-period-zero-bad-p0"
+   ],
+   "id": "r29pap-scope-cache-period-zero-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (scope cache period zero); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-scope-other-name-ok-p0"
+   ],
+   "id": "r29pap-scope-other-name-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-scope-other-name-bad: the same upload within the constraint (scope other name)."
+  },
+  {
+   "pips": [
+    "r29pap-scope-other-name-bad-p0"
+   ],
+   "id": "r29pap-scope-other-name-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (scope other name); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-mapping-name-outside-permissions-ok-p0"
+   ],
+   "id": "r29pap-mapping-name-outside-permissions-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-mapping-name-outside-permissions-bad: the same upload within the constraint (mapping name outside permissions)."
+  },
+  {
+   "pips": [
+    "r29pap-mapping-name-outside-permissions-bad-p0"
+   ],
+   "id": "r29pap-mapping-name-outside-permissions-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (mapping name outside permissions); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-twice-in-upload-ok-p0",
+    "r29pap-pip-name-twice-in-upload-ok-p1"
+   ],
+   "id": "r29pap-pip-name-twice-in-upload-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-name-twice-in-upload-bad: the same upload within the constraint (pip name twice in upload)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-name-twice-in-upload-bad-p0",
+    "r29pap-pip-name-twice-in-upload-bad-p1"
+   ],
+   "id": "r29pap-pip-name-twice-in-upload-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip name twice in upload); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-header-name-in-another-domain-ok-before0-p0"
+   ],
+   "domain": "PARITY_ISOLATED_B",
+   "id": "r29pap-header-name-in-another-domain-ok-before0",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "pips": [
+    "r29pap-header-name-in-another-domain-ok-p0"
+   ],
+   "id": "r29pap-header-name-in-another-domain-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-header-name-in-another-domain-bad: the same upload within the constraint (header name in another domain)."
+  },
+  {
+   "pips": [
+    "r29pap-header-name-in-another-domain-bad-before0-p0"
+   ],
+   "domain": "PARITY_ISOLATED_B",
+   "id": "r29pap-header-name-in-another-domain-bad-before0",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "pips": [
+    "r29pap-header-name-in-another-domain-bad-p0"
+   ],
+   "id": "r29pap-header-name-in-another-domain-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (header name in another domain); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-pip-cacheable-text-ok-p0"
+   ],
+   "id": "r29pap-pip-cacheable-text-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-pip-cacheable-text-bad: the same upload within the constraint (pip cacheable text)."
+  },
+  {
+   "pips": [
+    "r29pap-pip-cacheable-text-bad-p0"
+   ],
+   "id": "r29pap-pip-cacheable-text-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (pip cacheable text); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "pips": [
+    "r29pap-mapping-custom-mapping-list-ok-p0"
+   ],
+   "id": "r29pap-mapping-custom-mapping-list-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-mapping-custom-mapping-list-bad: the same upload within the constraint (mapping custom mapping list)."
+  },
+  {
+   "pips": [
+    "r29pap-mapping-custom-mapping-list-bad-p0"
+   ],
+   "id": "r29pap-mapping-custom-mapping-list-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (mapping custom mapping list); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "id": "r29pap-pips-control-last",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  }
+ ]
+}

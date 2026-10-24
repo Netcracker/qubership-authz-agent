@@ -1,0 +1,442 @@
+{
+ "about": "The cases of round 20 context.json whose answer changed from stand to stand: a DENY rule probe beside an ALLOW rule true, where probe fails the decision when it is evaluated and is skipped once allow has permitted. Each request is classed by the call log of the GENERAL PIP that probe reads, so its golden is filed under -when-the-pip-was-read or -when-the-pip-was-skipped. c20-000681 and c20-001721 read no GENERAL PIP in round 20; here probe first reads subject.parityR21Seen, which answers ['v'], and the comparison of round 20 follows. The order is chosen per case, so a request needs recording on several stands before both classes show.",
+ "resourceTypePrefix": "PARITY_SUITE_R21O_",
+ "pins": {
+  "/api/v1/pip/c20-021477-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-015979-r": {
+   "statusCode": 200,
+   "body": [
+    5,
+    6
+   ]
+  },
+  "/api/v1/pip/c20-010565-l": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/pip/c20-010565-r": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  },
+  "/api/v1/pip/r21-seen-000681": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r21-seen-001721": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "c20-021477-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-021477-l",
+   "requestAttributes": {
+    "case": "c20-021477-l"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c20-030990-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  },
+  "c20-004968-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-000681-seen": {
+   "name": "subject.parityR21Seen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r21-seen-000681",
+   "requestAttributes": {
+    "case": "r21-seen-000681"
+   }
+  },
+  "c20-052498-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-052498-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "realm_access.roles",
+   "cacheable": false
+  },
+  "c20-036557-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-015979-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-015979-r",
+   "requestAttributes": {
+    "case": "c20-015979-r"
+   }
+  },
+  "c20-001721-seen": {
+   "name": "subject.parityR21Seen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r21-seen-001721",
+   "requestAttributes": {
+    "case": "r21-seen-001721"
+   }
+  },
+  "c20-010565-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-010565-l",
+   "requestAttributes": {
+    "case": "c20-010565-l"
+   }
+  },
+  "c20-010565-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-010565-r",
+   "requestAttributes": {
+    "case": "c20-010565-r"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o21-order-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o21-c20-021477",
+   "pips": [
+    "c20-021477-generalL",
+    "scope",
+    "c20-030990-mapping",
+    "c20-004968-headerL"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityCxGL CONTAINS ANY subject.permissionScope.tag",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/c20-021477-l"
+    }
+   ],
+   "about": "11 pairs of context dimensions no golden reached, among them lk=pip:GENERAL, rs=SCOPE_OUTSIDE; ls=list[bool], eff=DENY; ls=list[bool], ep=filter; ls=list[bool], out=ERR. Round 20 left its goldens out: the decision changed between stands. Classed by /api/v1/pip/c20-021477-l."
+  },
+  {
+   "id": "o21-c20-000681",
+   "pips": [
+    "c20-000681-seen",
+    "scope",
+    "c20-030990-mapping",
+    "c20-004968-headerL",
+    "c20-021477-generalL",
+    "c20-052498-headerR",
+    "c20-052498-tokenL",
+    "c20-036557-tokenR",
+    "c20-015979-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR21Seen == 'n' OR subject.id NOT IN subject.permissionScope.tag",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "classifyBy": "/api/v1/pip/r21-seen-000681"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.id, rs=SCOPE_OUTSIDE. Round 20 left its goldens out: the decision changed between stands. Rebuilt: probe first reads subject.parityR21Seen, then the comparison of round 20. Classed by /api/v1/pip/r21-seen-000681."
+  },
+  {
+   "id": "o21-c20-001721",
+   "pips": [
+    "c20-001721-seen",
+    "scope",
+    "c20-030990-mapping",
+    "c20-004968-headerL",
+    "c20-021477-generalL",
+    "c20-052498-headerR",
+    "c20-052498-tokenL",
+    "c20-036557-tokenR",
+    "c20-015979-generalR"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR21Seen == 'v' AND resourceType IN subject.permissionScope.tag",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "classifyBy": "/api/v1/pip/r21-seen-001721"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "classifyBy": "/api/v1/pip/r21-seen-001721"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=resourceType, rs=SCOPE_OUTSIDE. Round 20 left its goldens out: the decision changed between stands. Rebuilt: probe first reads subject.parityR21Seen, then the comparison of round 20. Classed by /api/v1/pip/r21-seen-001721."
+  },
+  {
+   "id": "o21-c20-010565",
+   "pips": [
+    "c20-010565-generalL",
+    "c20-010565-generalR",
+    "scope",
+    "c20-030990-mapping",
+    "c20-004968-headerL",
+    "c20-052498-headerR",
+    "c20-052498-tokenL",
+    "c20-036557-tokenR",
+    "c20-000681-seen"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resourceType == 'PARITY_CX_NONE' OR subject.parityCxGL CONTAINS subject.parityCxGR",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "classifyBy": "/api/v1/pip/c20-010565-l"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "classifyBy": "/api/v1/pip/c20-010565-l"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them ls=list[bool], rs=ERROR. Round 20 left its goldens out: the decision changed between stands. Classed by /api/v1/pip/c20-010565-l."
+  },
+  {
+   "id": "o21-order-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  }
+ ]
+}

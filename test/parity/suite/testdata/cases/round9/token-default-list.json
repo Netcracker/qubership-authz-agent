@@ -1,0 +1,73 @@
+{
+ "about": "Whether the defaultValue of a TOKEN PIP is split on commas, as a HEADER PIP's is (hl4 CONTAINS 'y' true, hl5 == 'x, y' false); p2 records a defaultValue without a comma. td-header-default-contains repeats hl4 in the same run, the control that the defaultValue form is accepted and applied. The agent's condition parser accepts both conditions.",
+ "resourceTypePrefix": "PARITY_SUITE_R9_",
+ "pins": {},
+ "pips": {
+  "tokendefault": {
+   "name": "subject.parityR9TokenDefault",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parity_r9_no_such_claim",
+   "defaultValue": "x, y",
+   "cacheable": false
+  },
+  "headerdefault": {
+   "name": "subject.parityHdrList",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-hdr-list",
+   "cacheable": false,
+   "defaultValue": "x, y"
+  }
+ },
+ "cases": [
+  {
+   "id": "td-token-default-contains",
+   "resourceType": "PARITY_SUITE_R9_TD_CONTAINS",
+   "condition": "subject.parityR9TokenDefault CONTAINS 'y'",
+   "pips": [
+    "tokendefault"
+   ],
+   "requests": [
+    {
+     "name": "claim-absent",
+     "resource": {
+      "id": "r9-tokdef"
+     }
+    }
+   ]
+  },
+  {
+   "id": "td-token-default-equals-the-string",
+   "resourceType": "PARITY_SUITE_R9_TD_EQUALS",
+   "condition": "subject.parityR9TokenDefault == 'x, y'",
+   "pips": [
+    "tokendefault"
+   ],
+   "requests": [
+    {
+     "name": "claim-absent",
+     "resource": {
+      "id": "r9-tokdef"
+     }
+    }
+   ]
+  },
+  {
+   "id": "td-header-default-contains",
+   "resourceType": "PARITY_SUITE_R9_TD_HEADER",
+   "condition": "subject.parityHdrList CONTAINS 'y'",
+   "pips": [
+    "headerdefault"
+   ],
+   "requests": [
+    {
+     "name": "no-header",
+     "resource": {
+      "id": "r9-tokdef"
+     }
+    }
+   ]
+  }
+ ]
+}

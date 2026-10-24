@@ -1,0 +1,473 @@
+{
+ "about": "Implementation idioms of the PAP: whether a blank text, a trimmed name, a split list, a text in a boolean or integer field, a UUID or an httpMethod in another case is taken as the specification reads it. The upload status is the answer; an isolated case uploads its own domain, so a refused declaration does not reach the next case.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_IDIOM_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityidiombindinttext0": {
+   "name": "subject.parityIdiomBindIntText0",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "cachePeriod": "+5"
+  },
+  "obs-subject-parityidiomblankclaim0": {
+   "name": "subject.parityIdiomBlankClaim0",
+   "pipType": "TOKEN",
+   "claim": "\f",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomblankclaim2": {
+   "name": "subject.parityIdiomBlankClaim2",
+   "pipType": "TOKEN",
+   "claim": "　",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomblankclaim4": {
+   "name": "subject.parityIdiomBlankClaim4",
+   "pipType": "TOKEN",
+   "claim": " ",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomblankforwarded2": {
+   "name": "subject.parityIdiomBlankForwarded2",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "x-parity-a,　"
+  },
+  "obs-subject-parityidiomblankforwarded4": {
+   "name": "subject.parityIdiomBlankForwarded4",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "x-parity-a, "
+  },
+  "obs-subject-parityidiomblankheader0": {
+   "name": "subject.parityIdiomBlankHeader0",
+   "pipType": "HEADER",
+   "header": "\f",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomblankheader2": {
+   "name": "subject.parityIdiomBlankHeader2",
+   "pipType": "HEADER",
+   "header": "　",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomblankheader4": {
+   "name": "subject.parityIdiomBlankHeader4",
+   "pipType": "HEADER",
+   "header": " ",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomforwardednametrim0": {
+   "name": "subject.parityIdiomForwardedNameTrim0",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "\fauthorization"
+  },
+  "obs-subject-parityidiomforwardednametrim2": {
+   "name": "subject.parityIdiomForwardedNameTrim2",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "　authorization"
+  },
+  "obs-subject-parityidiomforwardednametrim4": {
+   "name": "subject.parityIdiomForwardedNameTrim4",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": " authorization"
+  },
+  "obs-subject-parityidiomforwardedsplit0": {
+   "name": "subject.parityIdiomForwardedSplit0",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "x-parity-a,"
+  },
+  "obs-subject-parityidiomheadernametrim0": {
+   "name": "subject.parityIdiomHeaderNameTrim0",
+   "pipType": "HEADER",
+   "header": "\fauthorization",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomheadernametrim2": {
+   "name": "subject.parityIdiomHeaderNameTrim2",
+   "pipType": "HEADER",
+   "header": "　authorization",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomheadernametrim4": {
+   "name": "subject.parityIdiomHeaderNameTrim4",
+   "pipType": "HEADER",
+   "header": " authorization",
+   "cacheable": false
+  },
+  "obs-subject-parityidiomhttpmethodcase0": {
+   "name": "subject.parityIdiomHttpMethodCase0",
+   "pipType": "GENERAL",
+   "httpMethod": "get",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen"
+  }
+ },
+ "cases": [
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "id": "id44-control-first"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankheader0"
+   ],
+   "id": "id44-blank-header-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankheader2"
+   ],
+   "id": "id44-blank-header-1"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankheader4"
+   ],
+   "id": "id44-blank-header-2"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankclaim0"
+   ],
+   "id": "id44-blank-claim-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankclaim2"
+   ],
+   "id": "id44-blank-claim-1"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankclaim4"
+   ],
+   "id": "id44-blank-claim-2"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomheadernametrim0"
+   ],
+   "id": "id44-header-name-trim-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomheadernametrim2"
+   ],
+   "id": "id44-header-name-trim-1"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomheadernametrim4"
+   ],
+   "id": "id44-header-name-trim-2"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomforwardedsplit0"
+   ],
+   "id": "id44-forwarded-split-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomforwardednametrim0"
+   ],
+   "id": "id44-forwarded-name-trim-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomforwardednametrim2"
+   ],
+   "id": "id44-forwarded-name-trim-1"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomforwardednametrim4"
+   ],
+   "id": "id44-forwarded-name-trim-2"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankforwarded2"
+   ],
+   "id": "id44-blank-forwarded-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomblankforwarded4"
+   ],
+   "id": "id44-blank-forwarded-1"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomhttpmethodcase0"
+   ],
+   "id": "id44-http-method-case-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "policy": {
+    "id": "1-1-1-1-1"
+   },
+   "id": "id44-uuid-text-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "policy": {
+    "applicableForFrontend": "True"
+   },
+   "id": "id44-bind-bool-text-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "policy": {
+    "applicableForFrontend": " true"
+   },
+   "id": "id44-bind-bool-text-1"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiombindinttext0"
+   ],
+   "id": "id44-bind-int-text-0"
+  },
+  {
+   "condition": "resource.m == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "m": "y"
+     }
+    }
+   ],
+   "id": "id44-control-last"
+  }
+ ],
+ "standVersion": true
+}

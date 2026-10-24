@@ -1,0 +1,326 @@
+{
+ "about": "A rule whose condition reads a GENERAL PIP that answers a JSON number or a JSON boolean, beside a rule of the same policy that allows. No earlier golden records such a value in a condition: the limits of t8a and t8b are pinned as strings. The shape is failed-pip-beside-allow-*'s, which records that a PIP answering 500 beside an allowing rule refuses the whole answer, under the same two algorithms, where a permit is not terminal and every rule is evaluated whatever order the stand takes them in. READ is an ALLOW reading the number beside an ALLOW, UPDATE the same with the boolean, DELETE a DENY reading the number beside an ALLOW, and PROBE the rule that reads a PIP answering a string, alone: the control that the declarations and pip-mock work. Every case declares all six PIPs, because an upload of the domain replaces its declarations while the sets of the earlier case are still loaded. Each case fails unless pip-mock received a call on each of its three routes.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {
+  "/api/v1/pip/r9-value-Number-permit-unless-deny": {
+   "statusCode": 200,
+   "body": {
+    "value": 1000
+   }
+  },
+  "/api/v1/pip/r9-value-Boolean-permit-unless-deny": {
+   "statusCode": 200,
+   "body": {
+    "value": true
+   }
+  },
+  "/api/v1/pip/r9-value-String-permit-unless-deny": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r9-value-Number-deny-overrides": {
+   "statusCode": 200,
+   "body": {
+    "value": 1000
+   }
+  },
+  "/api/v1/pip/r9-value-Boolean-deny-overrides": {
+   "statusCode": 200,
+   "body": {
+    "value": true
+   }
+  },
+  "/api/v1/pip/r9-value-String-deny-overrides": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  }
+ },
+ "pips": {
+  "number-permit-unless-deny": {
+   "name": "subject.parityR9NumberPermitUnlessDeny",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-value-Number-permit-unless-deny",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_NON_STRING_PIP_BESIDE_ALLOW_PERMIT_UNLESS_DENY"
+   },
+   "cacheable": false
+  },
+  "boolean-permit-unless-deny": {
+   "name": "subject.parityR9BooleanPermitUnlessDeny",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-value-Boolean-permit-unless-deny",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_NON_STRING_PIP_BESIDE_ALLOW_PERMIT_UNLESS_DENY"
+   },
+   "cacheable": false
+  },
+  "string-permit-unless-deny": {
+   "name": "subject.parityR9StringPermitUnlessDeny",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-value-String-permit-unless-deny",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_NON_STRING_PIP_BESIDE_ALLOW_PERMIT_UNLESS_DENY"
+   },
+   "cacheable": false
+  },
+  "number-deny-overrides": {
+   "name": "subject.parityR9NumberDenyOverrides",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-value-Number-deny-overrides",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_NON_STRING_PIP_BESIDE_ALLOW_DENY_OVERRIDES"
+   },
+   "cacheable": false
+  },
+  "boolean-deny-overrides": {
+   "name": "subject.parityR9BooleanDenyOverrides",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-value-Boolean-deny-overrides",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_NON_STRING_PIP_BESIDE_ALLOW_DENY_OVERRIDES"
+   },
+   "cacheable": false
+  },
+  "string-deny-overrides": {
+   "name": "subject.parityR9StringDenyOverrides",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-value-String-deny-overrides",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_REG_NON_STRING_PIP_BESIDE_ALLOW_DENY_OVERRIDES"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "non-string-pip-beside-allow-permit-unless-deny",
+   "pips": [
+    "number-permit-unless-deny",
+    "boolean-permit-unless-deny",
+    "string-permit-unless-deny",
+    "number-deny-overrides",
+    "boolean-deny-overrides",
+    "string-deny-overrides"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/r9-value-Number-permit-unless-deny",
+    "/api/v1/pip/r9-value-Boolean-permit-unless-deny",
+    "/api/v1/pip/r9-value-String-permit-unless-deny"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-allow-reads-the-number",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR9NumberPermitUnlessDeny != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow-reads-the-boolean",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.parityR9BooleanPermitUnlessDeny != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny-reads-the-number",
+         "target": "operation == 'DELETE'",
+         "condition": "subject.parityR9NumberPermitUnlessDeny != 'x'",
+         "effect": "DENY"
+        },
+        {
+         "key": "delete-allow",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-reads-the-string",
+         "target": "operation == 'PROBE'",
+         "condition": "subject.parityR9StringPermitUnlessDeny == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "number-allow-beside-allow",
+     "operation": "READ",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    },
+    {
+     "name": "boolean-allow-beside-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    },
+    {
+     "name": "number-deny-beside-allow",
+     "operation": "DELETE",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    },
+    {
+     "name": "string-pip-alone",
+     "operation": "PROBE",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    }
+   ]
+  },
+  {
+   "id": "non-string-pip-beside-allow-deny-overrides",
+   "pips": [
+    "number-permit-unless-deny",
+    "boolean-permit-unless-deny",
+    "string-permit-unless-deny",
+    "number-deny-overrides",
+    "boolean-deny-overrides",
+    "string-deny-overrides"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/r9-value-Number-deny-overrides",
+    "/api/v1/pip/r9-value-Boolean-deny-overrides",
+    "/api/v1/pip/r9-value-String-deny-overrides"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "read-allow-reads-the-number",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR9NumberDenyOverrides != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow-reads-the-boolean",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.parityR9BooleanDenyOverrides != 'x'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "delete-deny-reads-the-number",
+         "target": "operation == 'DELETE'",
+         "condition": "subject.parityR9NumberDenyOverrides != 'x'",
+         "effect": "DENY"
+        },
+        {
+         "key": "delete-allow",
+         "target": "operation == 'DELETE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "probe-allow-reads-the-string",
+         "target": "operation == 'PROBE'",
+         "condition": "subject.parityR9StringDenyOverrides == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "number-allow-beside-allow",
+     "operation": "READ",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    },
+    {
+     "name": "boolean-allow-beside-allow",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    },
+    {
+     "name": "number-deny-beside-allow",
+     "operation": "DELETE",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    },
+    {
+     "name": "string-pip-alone",
+     "operation": "PROBE",
+     "resource": {
+      "id": "r9-pip-value"
+     }
+    }
+   ]
+  }
+ ]
+}

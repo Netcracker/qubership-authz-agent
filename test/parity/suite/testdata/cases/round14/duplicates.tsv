@@ -1,0 +1,28 @@
+# Cases generate.py leaves out: each holds exactly what the kept case beside it holds.
+# case	kept case
+jp-index-then-key-alone	jp-negative-index-alone
+jp-index-then-key-or	jp-negative-index-or
+ok-subject-roles-not-equals-on-the-right	ok-subject-roles-equals-on-the-right
+ok-subject-scopes-equals-on-the-right	ok-subject-roles-equals-on-the-right
+ok-subject-scopes-not-equals-on-the-right	ok-subject-roles-equals-on-the-right
+r14-failing-pip-in-a-policy-target-allow	r14-failing-pip-in-a-policy-target-deny
+r14-failing-pip-in-a-set-target-allow	r14-failing-pip-in-a-set-target-deny
+re-match-or	ra-match-or
+re-not-match-alone	ra-not-match-alone
+re-not-match-or	ra-not-match-or
+rf-match-or	rn-match-or
+rf-not-match-alone	rn-not-match-alone
+rf-not-match-or	rn-match-or
+rh-not-match-or	rh-match-or
+rn-not-match-or	rn-match-or
+rx-match-or	ra-match-or
+rx-not-match-alone	ra-not-match-alone
+rx-not-match-or	ra-not-match-or
+sx-boolean-lower-case	sx-boolean-upper-case
+sx-decimal-without-integer-part	sx-exponent
+sx-equals-word	r29pap-pips-control-first
+sx-pip-on-the-right-of-match	rn-not-match-alone
+sx-roles-on-the-right-of-equals	ok-subject-roles-equals-on-the-right
+sx-small-negative-decimal	sx-negative-decimal
+sx-trailing-dot	sx-exponent
+sx-whole-true-upper-case	sx-whole-true-lower-case

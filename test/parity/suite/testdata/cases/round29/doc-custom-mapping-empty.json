@@ -1,0 +1,90 @@
+{
+ "about": "A MAPPING PIP with customMapping {} beside a productMapping that grants PARITY_R29_DOC_P to the reader's role. True if productMapping applies; false if the empty customMapping counts and switches productMapping off.",
+ "resourceTypePrefix": "PARITY_SUITE_R29D_",
+ "pins": {},
+ "pips": {
+  "mapping": {
+   "name": "subject.permissions",
+   "pipType": "MAPPING",
+   "customMapping": {},
+   "productMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_DOC_P"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29doc-empty-custom-mapping",
+   "about": "customMapping {}.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R29_DOC_P' OR resource.a == 'y'",
+   "pips": [
+    "mapping"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29doc-empty-custom-mapping-in-a-deny-rule",
+   "about": "customMapping {}. The same condition in a DENY rule: an ended rule allows, a failed decision denies.",
+   "pips": [
+    "mapping"
+   ],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R29_DOC_P' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29doc",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29doc",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}
