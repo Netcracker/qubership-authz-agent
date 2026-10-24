@@ -20,13 +20,13 @@ import (
 )
 
 // BigDecimalText returns the text Java's new BigDecimal(s).toString() gives,
-// and false where BigDecimal refuses s, as [ParseDecimal] does. Unlike a
+// and false where BigDecimal refuses s, as [ParseBigDecimal] does. Unlike a
 // [Decimal], the text keeps the scale: 5.0 stays 5.0 and 1e7 becomes 1E+7.
 // A number has plain notation while its scale is not negative and the exponent
 // of its first digit is at least -6, so 0.000001 stays plain and 0.0000001
 // becomes 1E-7. Zero has no sign.
 func BigDecimalText(s string) (string, bool) {
-	if _, ok := ParseDecimal(s); !ok {
+	if _, ok := ParseBigDecimal(s); !ok {
 		return "", false
 	}
 	rs := []rune(s)
