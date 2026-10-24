@@ -21,6 +21,11 @@
 # the compiler leaves those files out, so this workflow covers the non-integration
 # tests only.  integration-tests.yaml compiles the tagged suites and runs the
 # runtime suite against the Helm chart on a kind cluster.
+#
+# After the build, scan-images runs Grype and Trivy over the images the build
+# pushed and uploads the findings to code scanning (Security tab); see the
+# comment on scan-targets. security-scan.yml repeats the scan daily for CVEs
+# published after the build.
 
 name: CI
 
@@ -67,6 +72,85 @@ jobs:
     # instead of `secrets: inherit` (zizmor: secrets-inherit).
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # The images the build job pushed for this commit, by digest. Which images
+  # to scan is the security.scan flag of .qubership/docker.cfg, the file the
+  # organisation's security-scan template reads; the build itself publishes
+  # the components of .github/docker-dev-config.json, which lists the same
+  # images. The shared workflow exposes no outputs, so the tag is rebuilt the
+  # way its metadata step names it: the branch with "/" replaced by "-", a
+  # dash, and the first seven characters of GITHUB_SHA (main-58316ca). A fork
+  # pull request pushes nothing and is skipped.
+  scan-targets:
+    name: Images to scan
+    needs: [build]
+    if: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      images: ${{ steps.images.outputs.images }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .qubership/docker.cfg
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve docker config
+        id: config
+        uses: netcracker/qubership-workflow-hub/actions/config-resolver@e6afd0a6bcc4f24d73e3e4d5fb9a31ada009e3f1 # v2.8.2
+        with:
+          file-path: .qubership/docker.cfg
+
+      - name: Resolve the image digests
+        id: images
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          CONFIG: ${{ steps.config.outputs.config }}
+          REF_NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          docker login ghcr.io -u "$ACTOR" --password-stdin <<< "$GH_TOKEN"
+          tag="${REF_NAME//\//-}-${GITHUB_SHA::7}"
+          images=()
+          for image in $(jq -r '.[] | select(.security_scan == true) | .image | ascii_downcase' <<< "$CONFIG"); do
+            digest="$(docker buildx imagetools inspect "$image:${tag,,}" --format '{{json .Manifest}}' | jq -r .digest)"
+            echo "$image:${tag,,} is $image@$digest"
+            images+=("$image@$digest")
+          done
+          echo "images=$(printf '%s\n' "${images[@]}" | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
+  # Grype and Trivy over each image, HIGH and CRITICAL only, results uploaded
+  # as SARIF to the repository's code scanning. The scan reports and does not
+  # gate: the shared workflow runs both scanners with failing turned off, and
+  # a CVE published against a base image would otherwise fail every unrelated
+  # pull request. A scan that cannot run fails the job (continue-on-error).
+  # Scanning by digest keeps one code-scanning category per image and branch,
+  # so a later scan of the branch closes the alerts an earlier one opened.
+  scan-images:
+    name: Scan
+    needs: [scan-targets]
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.scan-targets.outputs.images) }}
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@e6afd0a6bcc4f24d73e3e4d5fb9a31ada009e3f1 # v2.8.2
+    with:
+      target: docker
+      image: ${{ matrix.image }}
+      continue-on-error: false
+      # The shared workflow installs the latest release otherwise.
+      trivy-version: v0.74.0
+      grype-version: v0.120.1
 
   build-gate:
     name: Build gate
