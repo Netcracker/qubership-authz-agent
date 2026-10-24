@@ -1,0 +1,115 @@
+[
+  {
+    "_comment": "TOKEN PIP on a claim the token lacks, with no defaultValue.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P1A",
+    "resourceType": "PARITY_SUITE_SEM_P1A",
+    "operation": "READ",
+    "condition": "subject.parityNoClaim == 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0016"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P1B",
+    "resourceType": "PARITY_SUITE_SEM_P1B",
+    "operation": "READ",
+    "condition": "subject.parityNoClaim != 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0017"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P1C",
+    "resourceType": "PARITY_SUITE_SEM_P1C",
+    "operation": "READ",
+    "condition": "subject.parityNoClaim IS NULL",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0018"
+  },
+  {
+    "_comment": "TOKEN PIP on a claim the token lacks, with defaultValue none.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P2",
+    "resourceType": "PARITY_SUITE_SEM_P2",
+    "operation": "READ",
+    "condition": "subject.parityNoClaimDefault == 'none'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d0019"
+  },
+  {
+    "_comment": "GENERAL PIP the case pins to HTTP 500.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P3A",
+    "resourceType": "PARITY_SUITE_SEM_P3A",
+    "operation": "READ",
+    "condition": "subject.parityBroken != 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d001a"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P3B",
+    "resourceType": "PARITY_SUITE_SEM_P3B",
+    "operation": "READ",
+    "condition": "resource.a == 'y' OR subject.parityBroken == 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d001b"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P3C",
+    "resourceType": "PARITY_SUITE_SEM_P3C",
+    "operation": "READ",
+    "condition": "subject.parityBroken == 'x' OR resource.a == 'y'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d001c"
+  },
+  {
+    "_comment": "GENERAL PIP whose jsonPath matches nothing in the response.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P4",
+    "resourceType": "PARITY_SUITE_SEM_P4",
+    "operation": "READ",
+    "condition": "subject.parityEmptyJson != 'x'",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d001d"
+  },
+  {
+    "_comment": "P5: placeholder of a TOKEN PIP with no value inside the predicate.",
+    "component": "PARITY",
+    "reason": "PARITY_SUITE_SEM_P5",
+    "resourceType": "PARITY_SUITE_SEM_P5",
+    "operation": "LIST",
+    "rsqlPredicate": "owner==${subject.parityNoClaim}",
+    "roles": [
+      "ROLE_PARITY_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d001e"
+  }
+]

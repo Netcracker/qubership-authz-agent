@@ -25,10 +25,9 @@ import (
 )
 
 // Row 16 — validation of duplicate ids on POST /access/v1/check/resource/bulk.
-// CheckRequestValidator (CheckRequestValidator.java:76-94) raises
-// NotUniqueResourcesIdsException when two entries share the same id; the
-// server returns HTTP 400. Again this path reaches the server because the
-// Go helper has no pre-validator.
+// Access-control refuses a bulk request in which two entries share one id
+// with HTTP 400. This path reaches the server because the Go helper has no
+// pre-validator.
 func (s *ParitySuite) TestRow16ValidationDuplicateIds() {
 	ctx := context.Background()
 

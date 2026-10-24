@@ -1,0 +1,11162 @@
+{
+ "about": "What every operator gives over resource.x of each JSON type against literals of several types: strings in several spellings, integers, a negative, decimals including the JSON number 5.0, booleans, lists of strings, integers, mixed and nested values, an object, and a list of objects. Each condition runs alone and on the left of OR resource.a == 'y', and each request names the value it sends.",
+ "resourceTypePrefix": "PARITY_SUITE_R14_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "vm-equals-string-alone",
+   "condition": "resource.x == 'v'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-string-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-string-or",
+   "condition": "resource.x == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-string-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-integer-alone",
+   "condition": "resource.x == 5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-integer-or",
+   "condition": "resource.x == 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-decimal-alone",
+   "condition": "resource.x == 5.5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-decimal-or",
+   "condition": "resource.x == 5.5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-decimal-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-negative-alone",
+   "condition": "resource.x == -5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-negative-or",
+   "condition": "resource.x == -5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-negative-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-true-alone",
+   "condition": "resource.x == true",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-true-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-equals-true-or",
+   "condition": "resource.x == true OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-equals-true-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-equals-string-alone",
+   "condition": "resource.x != 'v'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-equals-string-or",
+   "condition": "resource.x != 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-equals-string-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-equals-integer-alone",
+   "condition": "resource.x != 5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-equals-integer-or",
+   "condition": "resource.x != 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-equals-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-than-integer-alone",
+   "condition": "resource.x < 6",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-than-integer-or",
+   "condition": "resource.x < 6 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-than-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-than-decimal-alone",
+   "condition": "resource.x < 5.6",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-than-decimal-or",
+   "condition": "resource.x < 5.6 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-than-decimal-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-than-string-alone",
+   "condition": "resource.x < '6'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-than-string-or",
+   "condition": "resource.x < '6' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-than-string-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-or-equal-integer-alone",
+   "condition": "resource.x >= 5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-or-equal-integer-or",
+   "condition": "resource.x >= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-or-equal-decimal-alone",
+   "condition": "resource.x >= 5.5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-or-equal-decimal-or",
+   "condition": "resource.x >= 5.5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-decimal-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-or-equal-string-alone",
+   "condition": "resource.x >= '5'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-or-equal-string-or",
+   "condition": "resource.x >= '5' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-or-equal-string-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-or-equal-integer-alone",
+   "condition": "resource.x <= 5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-less-or-equal-integer-or",
+   "condition": "resource.x <= 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-less-or-equal-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-than-integer-alone",
+   "condition": "resource.x > 4",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-greater-than-integer-or",
+   "condition": "resource.x > 4 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-greater-than-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-in-strings-alone",
+   "condition": "resource.x IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-in-strings-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-in-strings-or",
+   "condition": "resource.x IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-in-strings-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-in-numbers-alone",
+   "condition": "resource.x IN 5, 6",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-in-numbers-or",
+   "condition": "resource.x IN 5, 6 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-in-numbers-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-in-strings-alone",
+   "condition": "resource.x NOT IN 'v', 'w'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-in-strings-or",
+   "condition": "resource.x NOT IN 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-in-strings-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-string-alone",
+   "condition": "resource.x CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-string-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-string-or",
+   "condition": "resource.x CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-string-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-integer-alone",
+   "condition": "resource.x CONTAINS 5",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-integer-or",
+   "condition": "resource.x CONTAINS 5 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-integer-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-contains-string-alone",
+   "condition": "resource.x NOT CONTAINS 'v'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-contains-string-or",
+   "condition": "resource.x NOT CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-contains-string-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-any-strings-alone",
+   "condition": "resource.x CONTAINS ANY 'v', 'z'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-any-strings-or",
+   "condition": "resource.x CONTAINS ANY 'v', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-any-strings-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-any-numbers-alone",
+   "condition": "resource.x CONTAINS ANY 5, 7",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-contains-any-numbers-or",
+   "condition": "resource.x CONTAINS ANY 5, 7 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-contains-any-numbers-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-contains-any-strings-alone",
+   "condition": "resource.x NOT CONTAINS ANY 'v', 'z'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-contains-any-strings-or",
+   "condition": "resource.x NOT CONTAINS ANY 'v', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-contains-any-strings-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-subset-strings-alone",
+   "condition": "resource.x IS SUBSET 'v', 'w', 'z'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-subset-strings-or",
+   "condition": "resource.x IS SUBSET 'v', 'w', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-subset-strings-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-subset-numbers-alone",
+   "condition": "resource.x IS SUBSET 5, 6, 7",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-subset-numbers-or",
+   "condition": "resource.x IS SUBSET 5, 6, 7 OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-subset-numbers-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-not-subset-strings-alone",
+   "condition": "resource.x IS NOT SUBSET 'v', 'w', 'z'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-not-subset-strings-or",
+   "condition": "resource.x IS NOT SUBSET 'v', 'w', 'z' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-not-subset-strings-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-match-alone",
+   "condition": "resource.x MATCH v*",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-match-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-match-or",
+   "condition": "resource.x MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-match-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-match-alone",
+   "condition": "resource.x NOT MATCH v*",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-match-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-not-match-or",
+   "condition": "resource.x NOT MATCH v* OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-not-match-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-null-alone",
+   "condition": "resource.x IS NULL",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-null-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-null-or",
+   "condition": "resource.x IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-null-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-not-null-alone",
+   "condition": "resource.x IS NOT NULL",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-not-null-or",
+   "condition": "resource.x IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-not-null-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-empty-alone",
+   "condition": "resource.x IS EMPTY",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-empty-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-empty-or",
+   "condition": "resource.x IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-empty-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-not-empty-alone",
+   "condition": "resource.x IS NOT EMPTY",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-alone",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "vm-is-not-empty-or",
+   "condition": "resource.x IS NOT EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": "v",
+      "a": "y"
+     }
+    },
+    {
+     "name": "upper-case-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": "V",
+      "a": "y"
+     }
+    },
+    {
+     "name": "numeric-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": "5",
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": "5.0",
+      "a": "y"
+     }
+    },
+    {
+     "name": "empty-string",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": "",
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "other-integer",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": 6,
+      "a": "y"
+     }
+    },
+    {
+     "name": "negative",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": -5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": 5.5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "decimal-integral",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": 5.0,
+      "a": "y"
+     }
+    },
+    {
+     "name": "true",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": true,
+      "a": "y"
+     }
+    },
+    {
+     "name": "false",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": false,
+      "a": "y"
+     }
+    },
+    {
+     "name": "string-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": [
+       "v",
+       "w"
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "integer-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": [
+       5,
+       6
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "mixed-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": [
+       "v",
+       5
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "nested-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "a": "y"
+     }
+    },
+    {
+     "name": "object",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": {
+       "k": "v"
+      },
+      "a": "y"
+     }
+    },
+    {
+     "name": "object-list",
+     "resource": {
+      "id": "r14-vm-is-not-empty-or",
+      "x": [
+       {
+        "k": "v"
+       }
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

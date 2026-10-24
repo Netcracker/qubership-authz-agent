@@ -1,0 +1,380 @@
+{
+ "about": "check/resource and check/filter with the query parameter userId. The expected reading: the caller must be allowed VIEW_AS_ANOTHER_USER on resource type OnBehalfOfUserAuthorization, else false and DENY; then access-control reads the user from the User Management API and decides as that user. The resource set allows READ to anyone. With no authorization set, then with one that authorizes the M2M client, then with one that authorizes the reader as well (the earlier case's set stays loaded). userId names the reader itself, an id no user has, and the empty string. Without a User Management API on the stand, a lookup that runs fails: 500 or false.",
+ "resourceTypePrefix": "PARITY_SUITE_R29ST_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29structure-on-behalf-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-on-behalf-without-authorization",
+   "about": "No set answers VIEW_AS_ANOTHER_USER. A request with userId: true if userId is ignored, false and DENY if the caller must be authorized, 400 if refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "read-as-an-unknown-user",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-0000000000fe"
+    },
+    {
+     "name": "read-with-an-empty-user-id",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": ""
+    },
+    {
+     "name": "m2m-read",
+     "resource": {
+      "id": "r29"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "m2m-read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "filter-as-the-reader",
+     "filter": true,
+     "userId": "00000000-0000-0000-0000-000000000101"
+    }
+   ]
+  },
+  {
+   "id": "r29structure-on-behalf-m2m-authorized",
+   "about": "A set allows VIEW_AS_ANOTHER_USER to the M2M client (role ROLE_M2M) only. The M2M request with userId passes the authorization; the reader's does not, if the caller is the end user of Incoming-Token.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "authorization",
+     "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "view-as",
+       "target": "subject.roles CONTAINS 'ROLE_M2M'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "view",
+         "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "read-as-an-unknown-user",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-0000000000fe"
+    },
+    {
+     "name": "read-with-an-empty-user-id",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": ""
+    },
+    {
+     "name": "m2m-read",
+     "resource": {
+      "id": "r29"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "m2m-read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "filter-as-the-reader",
+     "filter": true,
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "authorization-check",
+     "type": "OnBehalfOfUserAuthorization",
+     "operation": "VIEW_AS_ANOTHER_USER",
+     "resource": {
+      "id": "r29"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "authorization-check-reader",
+     "type": "OnBehalfOfUserAuthorization",
+     "operation": "VIEW_AS_ANOTHER_USER",
+     "resource": {
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-on-behalf-reader-authorized",
+   "about": "A second set allows VIEW_AS_ANOTHER_USER to the reader too. A request with userId passes the authorization; then true if the lookup changes nothing or finds the reader, 500 or false if it fails.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "authorization",
+     "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "view-as",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "view",
+         "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "read-as-an-unknown-user",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-0000000000fe"
+    },
+    {
+     "name": "read-with-an-empty-user-id",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": ""
+    },
+    {
+     "name": "m2m-read",
+     "resource": {
+      "id": "r29"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "m2m-read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    },
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "filter-as-the-reader",
+     "filter": true,
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "authorization-check-reader",
+     "type": "OnBehalfOfUserAuthorization",
+     "operation": "VIEW_AS_ANOTHER_USER",
+     "resource": {
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-on-behalf-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

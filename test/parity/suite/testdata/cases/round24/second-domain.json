@@ -1,0 +1,114 @@
+{
+ "about": "A GENERAL PIP name declared in two domains of one tenant. The first case declares subject.parityR24Twin in the domain PARITY_ISOLATED_B, the second declares it again in the suite's domain. The function empties both domains when it ends.",
+ "resourceTypePrefix": "PARITY_SUITE_R24X_",
+ "pins": {
+  "/api/v1/pip/r24-twin-first": {
+   "statusCode": 200,
+   "body": {
+    "value": "first"
+   }
+  },
+  "/api/v1/pip/r24-twin-second": {
+   "statusCode": 200,
+   "body": {
+    "value": "second"
+   }
+  }
+ },
+ "pips": {
+  "first": {
+   "name": "subject.parityR24Twin",
+   "url": "http://pip-mock:8090/api/v1/pip/r24-twin-first",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "case": "r24-twin-first"
+   }
+  },
+  "second": {
+   "name": "subject.parityR24Twin",
+   "url": "http://pip-mock:8090/api/v1/pip/r24-twin-second",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "case": "r24-twin-second"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "s24-twin-first-domain",
+   "about": "Declares subject.parityR24Twin in PARITY_ISOLATED_B, with a policy that allows when it answers first.",
+   "condition": "subject.parityR24Twin == 'first'",
+   "pips": [
+    "first"
+   ],
+   "domain": "PARITY_ISOLATED_B",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-twin-second-domain-refused",
+   "about": "Seconds twin-pip/upload-the-second-domain: the PAP refuses a GENERAL PIP whose name another domain of the tenant declares, with 409. Here the suite's domain declares it second, at another route. The load golden is the answer; the read runs only if the upload is accepted.",
+   "condition": "subject.parityR24Twin == 'second'",
+   "pips": [
+    "second"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s24-control-after-the-second-domain",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r24",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

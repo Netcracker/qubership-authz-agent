@@ -1,0 +1,245 @@
+{
+ "about": "Filter rules for iterate nodes without grants, asked one set deeper and under PERMIT_UNLESS_DENY. The scope service answers every case of this file with no grants.",
+ "resourceTypePrefix": "PARITY_SUITE_R23N_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [],
+      "type": "USER"
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "cachePeriod": 1,
+   "cacheable": false,
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090"
+  }
+ },
+ "cases": [
+  {
+   "id": "s23-second-carrier-scope-no-grants-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-060-under-a-permit-unless-deny-set",
+   "about": "Seconds the golden regular/r13-node-deny-unless-permit-no-grants/filter. Pins what an iterate node without grants gives in the filter, here in a set under PERMIT_UNLESS_DENY.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       },
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-061-one-set-deeper",
+   "about": "Seconds the golden regular/r13-node-permit-overrides-no-grants/filter. Pins what an iterate node without grants gives in the filter, here one set deeper.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "allowed==1"
+           }
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s0",
+         "target": "true",
+         "algorithm": "DENY_OVERRIDES",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "PERMIT_OVERRIDES"
+         },
+         "policies": [
+          {
+           "key": "s0-s0-p0",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "s0-s0-p0-r0",
+             "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+             "condition": "subject.permissionScope.region CONTAINS resource.region",
+             "effect": "ALLOW",
+             "predicates": {
+              "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+             }
+            }
+           ],
+           "algorithm": "DENY_UNLESS_PERMIT"
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-second-carrier-scope-no-grants-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

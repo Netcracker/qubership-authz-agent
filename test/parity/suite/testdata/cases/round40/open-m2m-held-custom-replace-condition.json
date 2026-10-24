@@ -1,0 +1,187 @@
+{
+ "about": "Whether a rule whose condition a CUSTOMER customization replaces still holds its uploaded condition that names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}.",
+ "resourceTypePrefix": "PARITY_SUITE_R40RC_",
+ "pins": {
+  "/api/v1/pip/r40open-m2m-held-custom-replace-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR40HeldReplaceCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-custom-replace-condition",
+   "requestAttributes": {
+    "case": "r40open-m2m-held-custom-replace-condition",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r40openm2mheldcustomreplacecondition-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r40open-m2m-held-custom-replace-condition",
+   "pips": [
+    "held"
+   ],
+   "about": "An ACTIVE top-level set whose only rule allows on resource.a == 'y' OR subject.parityR40HeldReplaceCondition == 'v'; before the customization every request answers 400. A CUSTOMER customization replaces the rule with one that allows on resource.a == 'y' and does not name the GENERAL. after-read-a-y and after-read-other answer 400 if the tenant holds the uploaded condition; true if it holds the conditions the customizations make. The runner deletes the customization after the case, so the last control answers 400 under both readings.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR40HeldReplaceCondition == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-read-a-y",
+     "resource": {
+      "id": "r40",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-replace-condition"
+    },
+    {
+     "name": "before-read-other",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R40RC_R40OPENM2MHELDCUSTOMREPLACECONDITION_CONTROL_FIRST"
+    }
+   ],
+   "customize": [
+    {
+     "name": "replace",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "allow",
+           "name": "customized allow",
+           "target": "true",
+           "condition": "resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-read-a-y",
+       "resource": {
+        "id": "r40",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-replace-condition"
+      },
+      {
+       "name": "after-read-other",
+       "resource": {
+        "id": "r40",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R40RC_R40OPENM2MHELDCUSTOMREPLACECONDITION_CONTROL_FIRST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r40openm2mheldcustomreplacecondition-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

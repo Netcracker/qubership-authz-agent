@@ -1,0 +1,229 @@
+{
+ "about": "What a DENY_OVERRIDES iterate node over zero grants contributes to a filter. scope-set-algorithm records such a node under a PERMIT_UNLESS_DENY set, where a node that denies and a node that does not apply give one answer, unless a PERMIT_UNLESS_DENY set with no child that applies gives ALLOW in a filter (not-applicable-filter.json). The node sits in a nested DENY_OVERRIDES set beside the allowed==1 policy under a DENY_OVERRIDES set, where the two differ. Each case pins the scope service to its own answer and waits out the scope's cachePeriod before its first request, as permission-scope-wire does, then sends the filter on LIST and check/resource on LIST in regions r1 and r2. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "fn-nested-deny-overrides-iterate-node-no-grants",
+   "about": "DENY if the node denies, and allowed==1 if it does not apply, the answer of fn-nested-set-without-an-applicable-policy-under-deny-overrides.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r12-iterate-node",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r12-iterate-node",
+      "region": "r2"
+     }
+    }
+   ],
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "type": "USER",
+        "id": "00000000-0000-0000-0000-000000000101",
+        "name": "parity-reader",
+        "isInherited": false,
+        "policies": []
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "fn-nested-deny-overrides-iterate-node-one-grant-r1",
+   "about": "The control that the scope is read and the pass is reached: check/resource on LIST in region r2 is false, because the pass denies and DENY_OVERRIDES carries the deny up. Region r1 is true whether the pass applies or not, since the predicate policy allows LIST in check/resource.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r12-iterate-node",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r12-iterate-node",
+      "region": "r2"
+     }
+    }
+   ],
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "type": "USER",
+        "id": "00000000-0000-0000-0000-000000000101",
+        "name": "parity-reader",
+        "isInherited": false,
+        "policies": [
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r1"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

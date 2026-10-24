@@ -1,0 +1,347 @@
+{
+ "about": "What subject.permissions holds, read through a placeholder of check/filter. u10-subject-permissions-is-empty and u11-subject-permissions-contains record false for IS EMPTY and for CONTAINS with no MAPPING PIP declared, and false under IS EMPTY is what a non-empty list, a null, and an absent attribute all produce. A predicate that names the list as a placeholder renders it in the response, the way general-pip-list renders a PIP collection, and the rendering tells the three apart. Each case is one regular set whose LIST rule carries ${subject.permissions} in its rsql and sql predicates, and one filter request. The cases partition the MAPPING PIPs declared beside the set: none; one for a role the reader does not hold; one for the reader's role, the control that the placeholder renders a granted permission (pm1-mapping-pip-merged-list records the grant itself); two that grant different permissions, which says whether two declarations are merged into one list; two that grant the same permission, which says whether the merged list holds it once; and one that grants an empty list. permission-list-scopes-and-roles renders ${subject.scopes} and ${subject.roles}, the two other list-valued subject keys, with no MAPPING PIP declared. A case replaces the domain's PIPs only when it declares some, so the two cases with no declaration run first, on the domain the previous test's cleanup emptied, and every case after them declares its own. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {
+  "other-role": {
+   "name": "subject.permissions.PARITY_OTHER",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "parity_other_permission"
+     ]
+    }
+   }
+  },
+  "the-role": {
+   "name": "subject.permissions.PARITY_LIST",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  },
+  "one": {
+   "name": "subject.permissions.PARITY_LIST_ONE",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  },
+  "two-other": {
+   "name": "subject.permissions.PARITY_LIST_TWO",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_other_permission"
+     ]
+    }
+   }
+  },
+  "two-same": {
+   "name": "subject.permissions.PARITY_LIST_TWO",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  },
+  "empty": {
+   "name": "subject.permissions.PARITY_LIST_EMPTY",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": []
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "permission-list-no-mapping",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "permission-list-scopes-and-roles",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "scopes=in=(${subject.scopes})",
+          "sqlPredicate": "roles IN (${subject.roles})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "permission-list-mapping-for-another-role",
+   "pips": [
+    "other-role"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "permission-list-mapping-for-the-role",
+   "pips": [
+    "the-role"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "permission-list-two-mappings-with-different-permissions",
+   "pips": [
+    "one",
+    "two-other"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "permission-list-two-mappings-with-the-same-permission",
+   "pips": [
+    "one",
+    "two-same"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "permission-list-mapping-with-an-empty-list",
+   "pips": [
+    "empty"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

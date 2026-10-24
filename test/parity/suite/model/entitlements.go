@@ -14,11 +14,8 @@
 
 package model
 
-// GetDirectUserEntitlementsResponse mirrors the EA v3 direct-user response
-// consumed by EntitlementsPipServiceImpl#getUserEntitlementsMappingV3 on the
-// legacy side. The payload shape is verified against
-// access-control-java-libs/.../movetoapi/entitlements/model/*.java and the EA
-// integration-test fixture expectedGetDirectUserEntitlementResponse.json.
+// GetDirectUserEntitlementsResponse is the EA v3 direct-user response the
+// legacy service reads when it resolves subject.entitledResources.
 type GetDirectUserEntitlementsResponse struct {
 	Entitlements          []Entitlement `json:"entitlements"`
 	Definitions           []Definition  `json:"definitions"`

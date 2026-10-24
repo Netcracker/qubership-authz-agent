@@ -1,0 +1,1557 @@
+{
+ "about": "Customization entries with the fields domain, component, type, tenantId and externalId (fields of a set), entries naming another tenant, an effective set the upload would refuse, and the level and recursive parameters of the import and the delete. Each case asks before and after; the read rule allows READ, the update rule never holds.",
+ "resourceTypePrefix": "PARITY_SUITE_R29ST_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29structure-custom-fields-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-meta-domain",
+   "about": "An entry for a set no level has, with domain 'PARITY_ISOLATED', no other field, and a policy with an ALLOW rule on UPDATE under it. Import 200 and update after true if the field makes the entry an addition; 400 (\"Cannot find referenced item\") if the field is no field of the set's own and the entry a path.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "added",
+       "domain": "PARITY_ISOLATED",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-upd",
+           "name": "added update",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-meta-component",
+   "about": "An entry for a set no level has, with component 'PARITY', no other field, and a policy with an ALLOW rule on UPDATE under it. Import 200 and update after true if the field makes the entry an addition; 400 (\"Cannot find referenced item\") if the field is no field of the set's own and the entry a path.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "added",
+       "component": "PARITY",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-upd",
+           "name": "added update",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-meta-type",
+   "about": "An entry for a set no level has, with type 'DEFAULT', no other field, and a policy with an ALLOW rule on UPDATE under it. Import 200 and update after true if the field makes the entry an addition; 400 (\"Cannot find referenced item\") if the field is no field of the set's own and the entry a path.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "added",
+       "type": "DEFAULT",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-upd",
+           "name": "added update",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-meta-tenantid",
+   "about": "An entry for a set no level has, with tenantId 'parity-mt-b', no other field, and a policy with an ALLOW rule on UPDATE under it. Import 200 and update after true if the field makes the entry an addition; 400 (\"Cannot find referenced item\") if the field is no field of the set's own and the entry a path.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "added",
+       "tenantId": "parity-mt-b",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-upd",
+           "name": "added update",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-meta-externalid",
+   "about": "An entry for a set no level has, with externalId 'parity-r29structure-meta', no other field, and a policy with an ALLOW rule on UPDATE under it. Import 200 and update after true if the field makes the entry an addition; 400 (\"Cannot find referenced item\") if the field is no field of the set's own and the entry a path.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "added",
+       "externalId": "parity-r29structure-meta",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-upd",
+           "name": "added update",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-tenant-rule",
+   "about": "The update rule is replaced to allow by an entry with tenantId parity-mt-b, another tenant than the import's. Update after: true if tenantId changes nothing, false if the entry is skipped; import 400 if refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "tenantId": "parity-mt-b"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-tenant-policy",
+   "about": "The same replace under a policy entry with tenantId parity-mt-b. Update after: true if tenantId changes nothing, false if the policy entry with its children is skipped.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "tenantId": "parity-mt-b",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-tenant-set",
+   "about": "The same replace under a set entry with tenantId parity-mt-b.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "tenantId": "parity-mt-b",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-validate-algorithm",
+   "about": "Replaces the set's combiningAlgorithm with PARITY_OTHER, a value the upload of a set refuses. Import 400 if the import checks the effective sets as an upload; 200 if it checks less than an upload does (then read after: the unknown algorithm decides).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "combiningAlgorithm": "PARITY_OTHER"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-invalid-level-other",
+   "about": "The import names level PARITY_OTHER and replaces the update rule to allow. Import 400 if an unknown level is refused; update after true if it is read as the default level.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "PARITY_OTHER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-level-omitted",
+   "about": "The import names no level and replaces the update rule to allow. Import 200 and update after true if the level defaults to CUSTOMER; 400 if the parameter is required.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "omitLevel": true
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-delete-recursive-omitted",
+   "about": "CUSTOMER renames the set (a field of its own) and replaces the update rule to allow; then the set's customization is deleted with no recursive parameter. Update after the delete: true if the delete removed only the set entry's own data and left its children's customizations, false if it removed the whole tree.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-import",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "name": "renamed set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-delete",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after-delete",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "delete": {
+      "key": "set"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-delete-recursive-false",
+   "about": "CUSTOMER renames the set (a field of its own) and replaces the update rule to allow; then the set's customization is deleted with recursive=false. Update after the delete: true if the delete removed only the set entry's own data and left its children's customizations, false if it removed the whole tree.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-import",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "name": "renamed set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-delete",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after-delete",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "delete": {
+      "key": "set",
+      "recursive": false
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-delete-recursive-true",
+   "about": "CUSTOMER renames the set (a field of its own) and replaces the update rule to allow; then the set's customization is deleted with recursive=true. Update after the delete: true if the delete removed only the set entry's own data and left its children's customizations, false if it removed the whole tree.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-import",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "name": "renamed set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-delete",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after-delete",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "delete": {
+      "key": "set",
+      "recursive": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-delete-level-omitted",
+   "about": "CUSTOMER replaces the update rule to allow; the delete names no level and recursive=true. Delete 200 and update after false if a delete without level removes every level's; 400 and true if the level is required.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-import",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-delete",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "omitLevel": true,
+     "delete": {
+      "key": "set",
+      "recursive": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-delete-level-other",
+   "about": "CUSTOMER replaces the update rule to allow; the delete names level PARITY_OTHER and recursive=true. Delete 400 and update after true if an unknown level is refused; 200 and false if it is read as no level (every level).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r29"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "requests": [
+      {
+       "name": "update-after-import",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update replaced",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "PARITY_OTHER",
+     "requests": [
+      {
+       "name": "update-after-delete",
+       "resource": {
+        "id": "r29"
+       },
+       "operation": "UPDATE"
+      }
+     ],
+     "delete": {
+      "key": "set",
+      "recursive": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-custom-fields-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -45,6 +45,11 @@ type AcceptedDivergence struct {
 	Reason string
 	// Decision names where the decision is written down in full.
 	Decision string
+	// AllowsMore marks a decision that also covers an answer allowing what
+	// the golden denies. Only part A of the export-fed profile
+	// (acceptedLegacyDifference) reads it; every other comparison rejects
+	// such an answer whatever the entry says.
+	AllowsMore bool
 }
 
 // acceptedDivergences is keyed by "<row id>|<subCase>".
@@ -66,6 +71,35 @@ var acceptedDivergences = map[string]AcceptedDivergence{
 	key(PSUITE_ROW_7_CHECK_RESOURCE_V2, "general-pip-dict/allow"): {
 		Reason:   "Same dict-alias resolution as row 2, on the v2 response shape.",
 		Decision: "docs/parity/general-pip-dict-divergences.md",
+	},
+}
+
+// acceptedExportDivergences is keyed by the difference class the
+// specification's export bundle gives a golden of the export-fed profile
+// (TestExportFedAgent): set-type, conversion, tenant, pip-kind, pull-failure.
+// A class is accepted, not a case, because one decision about the conversion
+// explains every golden of the class. Such a golden still runs and passes only
+// when the agent answers exactly as the bundle predicts for it, so an agent that
+// answers a third way still fails.
+//
+// Every entry needs a decision document, as acceptedDivergences does. An
+// answer that allows what the golden denies (grantsMore) is accepted only
+// where the entry sets AllowsMore: a wrong allow is an agent defect until its
+// own decision says otherwise. Part A of the profile also keys this map by
+// the classes it derives from the exports legacy held (legacyClass), such as
+// undeclared-pip, which the bundle never gives.
+var acceptedExportDivergences = map[string]AcceptedDivergence{
+	"set-type": {
+		Reason: "The agent evaluates the simplified model only: it skips every policy set whose type is not " +
+			"SIMPLIFIED, so a decision that rests on a regular policy set differs from legacy.",
+		Decision: "docs/parity/export-fed-agent-divergences.md",
+	},
+	"undeclared-pip": {
+		Reason: "The agent takes a subject attribute with no declared PIP as an unknown value of its own " +
+			"operand only, and evaluates the rest of the condition; legacy fails the whole rule, so a " +
+			"condition such as subject.x == 'v' OR resource.a == 'y' allows in the agent and denies in legacy.",
+		Decision:   "docs/parity/export-fed-agent-divergences.md",
+		AllowsMore: true,
 	},
 }
 

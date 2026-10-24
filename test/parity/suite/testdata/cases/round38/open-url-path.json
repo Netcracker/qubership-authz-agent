@@ -1,0 +1,350 @@
+{
+ "about": "Whether a path after a builtin of the subject changes what the url of a GENERAL PIP takes. The goldens so far take ${subject.id} in a url and refuse every other builtin (serviceAccount in round 36, the other eight in round 37); no golden puts a path after the name. Each case ends the url in ${subject.X.x}, X one builtin. The upload is refused (400) if the list of names is matched on the whole placeholder, and accepted for subject.id.x if it is matched on the part before the first dot.",
+ "resourceTypePrefix": "PARITY_SUITE_R38U_",
+ "pins": {
+  "/api/v1/pip/r38open-url-id-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-id-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-id-path-00000000-0000-0000-0000-000000000101": {
+   "statusCode": 200,
+   "body": [
+    "u"
+   ]
+  },
+  "/api/v1/pip/r38open-url-name-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-name-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-name-path-parity-reader": {
+   "statusCode": 200,
+   "body": [
+    "u"
+   ]
+  },
+  "/api/v1/pip/r38open-url-roles-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-roles-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-roles-path-[ROLE_PARITY_READER]": {
+   "statusCode": 200,
+   "body": [
+    "u"
+   ]
+  },
+  "/api/v1/pip/r38open-url-type-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-type-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-type-path-USER": {
+   "statusCode": 200,
+   "body": [
+    "u"
+   ]
+  },
+  "/api/v1/pip/r38open-url-scopes-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-scopes-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-service-account-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-service-account-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-permissions-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-permissions-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-entitled-resources-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-entitled-resources-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-permission-scope-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-permission-scope-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  },
+  "/api/v1/pip/r38open-url-is-m2m-path-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r38open-url-is-m2m-path-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "r38open-url-id-path": {
+   "name": "subject.parityR38UrlIdPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-id-path-${subject.id.x}",
+   "requestAttributes": {
+    "case": "r38open-url-id-path"
+   }
+  },
+  "r38open-url-name-path": {
+   "name": "subject.parityR38UrlNamePath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-name-path-${subject.name.x}",
+   "requestAttributes": {
+    "case": "r38open-url-name-path"
+   }
+  },
+  "r38open-url-roles-path": {
+   "name": "subject.parityR38UrlRolesPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-roles-path-${subject.roles.x}",
+   "requestAttributes": {
+    "case": "r38open-url-roles-path"
+   }
+  },
+  "r38open-url-type-path": {
+   "name": "subject.parityR38UrlTypePath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-type-path-${subject.type.x}",
+   "requestAttributes": {
+    "case": "r38open-url-type-path"
+   }
+  },
+  "r38open-url-scopes-path": {
+   "name": "subject.parityR38UrlScopesPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-scopes-path-${subject.scopes.x}",
+   "requestAttributes": {
+    "case": "r38open-url-scopes-path"
+   }
+  },
+  "r38open-url-service-account-path": {
+   "name": "subject.parityR38UrlServiceAccountPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-service-account-path-${subject.serviceAccount.x}",
+   "requestAttributes": {
+    "case": "r38open-url-service-account-path"
+   }
+  },
+  "r38open-url-permissions-path": {
+   "name": "subject.parityR38UrlPermissionsPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-permissions-path-${subject.permissions.x}",
+   "requestAttributes": {
+    "case": "r38open-url-permissions-path"
+   }
+  },
+  "r38open-url-entitled-resources-path": {
+   "name": "subject.parityR38UrlEntitledResourcesPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-entitled-resources-path-${subject.entitledResources.x}",
+   "requestAttributes": {
+    "case": "r38open-url-entitled-resources-path"
+   }
+  },
+  "r38open-url-permission-scope-path": {
+   "name": "subject.parityR38UrlPermissionScopePath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-permission-scope-path-${subject.permissionScope.x}",
+   "requestAttributes": {
+    "case": "r38open-url-permission-scope-path"
+   }
+  },
+  "r38open-url-is-m2m-path": {
+   "name": "subject.parityR38UrlIsM2MPath",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r38open-url-is-m2m-path-${subject.isM2M.x}",
+   "requestAttributes": {
+    "case": "r38open-url-is-m2m-path"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r38openurlpath-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r38",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r38open-url-id-path",
+   "pips": [
+    "r38open-url-id-path"
+   ],
+   "about": "The url ends in r38open-url-id-path-${subject.id.x}, a path after the builtin id. The upload is refused (400) if the url list is matched on the whole placeholder, and accepted if it is matched on the part before the first dot, since a url takes subject.id. If it is accepted, the route r38open-url-id-path-null answers v, so a = n is true when the placeholder becomes the text null; the route r38open-url-id-path- answers w, so a = n is false and a = y true when it becomes empty; the route r38open-url-id-path-00000000-0000-0000-0000-000000000101 answers u, so a = n is false and a = y true when the path is dropped and the builtin's value stays; a placeholder left as written fails the call, so both are false. pipCalls of a = n counts the calls to the -null route, pipCalls of a = y the calls to the route r38open-url-id-path-00000000-0000-0000-0000-000000000101, which tells the last readings apart.",
+   "condition": "subject.parityR38UrlIdPath == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r38",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r38open-url-id-path-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r38",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r38open-url-id-path-00000000-0000-0000-0000-000000000101"
+    }
+   ]
+  },
+  {
+   "id": "r38openurlpath-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r38",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1445 @@
+{
+ "about": "A GENERAL PIP that answers 500 on the right of == and != beside each special state on the left: null in the resource and in subject.serviceAccount, a null body, an absent header, an empty list, an empty selection, an absent key and an index past the end. In round 20, c20-000282 read the PIP on the right of null and failed the decision. Each comparison stands in the OR probe of an ALLOW rule, asked with resource.a 'y', and of a DENY rule, asked with resource.a 'n': a failed decision is false in both, an ended rule false and true, a false comparison true and true, a true one true and false.",
+ "resourceTypePrefix": "PARITY_SUITE_R21R_",
+ "pins": {
+  "/api/v1/pip/r21-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 21 case"
+   }
+  },
+  "/api/v1/pip/r21-null-body": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR21Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r21-failing",
+   "requestAttributes": {
+    "case": "r21-failing"
+   }
+  },
+  "null-body": {
+   "name": "subject.parityR21NullBody",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r21-null-body",
+   "requestAttributes": {
+    "case": "r21-null-body"
+   }
+  },
+  "no-header": {
+   "name": "subject.parityR21NoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r21-absent",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "e21-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-attribute-equals-in-an-allow-rule",
+   "about": "resource.n is null; subject.parityR21Failing answers 500. The condition is `resource.n == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.n == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "n": null,
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-attribute-equals-in-a-deny-rule",
+   "about": "resource.n is null; subject.parityR21Failing answers 500. The condition is `resource.n == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "n": null,
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-attribute-not-equals-in-an-allow-rule",
+   "about": "resource.n is null; subject.parityR21Failing answers 500. The condition is `resource.n != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.n != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "n": null,
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-attribute-not-equals-in-a-deny-rule",
+   "about": "resource.n is null; subject.parityR21Failing answers 500. The condition is `resource.n != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.n != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "n": null,
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-service-account-equals-in-an-allow-rule",
+   "about": "subject.serviceAccount is null; subject.parityR21Failing answers 500. The condition is `subject.serviceAccount == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.serviceAccount == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-service-account-equals-in-a-deny-rule",
+   "about": "subject.serviceAccount is null; subject.parityR21Failing answers 500. The condition is `subject.serviceAccount == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.serviceAccount == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-service-account-not-equals-in-an-allow-rule",
+   "about": "subject.serviceAccount is null; subject.parityR21Failing answers 500. The condition is `subject.serviceAccount != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.serviceAccount != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-service-account-not-equals-in-a-deny-rule",
+   "about": "subject.serviceAccount is null; subject.parityR21Failing answers 500. The condition is `subject.serviceAccount != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.serviceAccount != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-body-equals-in-an-allow-rule",
+   "about": "subject.parityR21NullBody is a null body; subject.parityR21Failing answers 500. The condition is `subject.parityR21NullBody == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21NullBody == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-body-equals-in-a-deny-rule",
+   "about": "subject.parityR21NullBody is a null body; subject.parityR21Failing answers 500. The condition is `subject.parityR21NullBody == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21NullBody == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-body-not-equals-in-an-allow-rule",
+   "about": "subject.parityR21NullBody is a null body; subject.parityR21Failing answers 500. The condition is `subject.parityR21NullBody != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21NullBody != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-null-body-not-equals-in-a-deny-rule",
+   "about": "subject.parityR21NullBody is a null body; subject.parityR21Failing answers 500. The condition is `subject.parityR21NullBody != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21NullBody != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-header-equals-in-an-allow-rule",
+   "about": "subject.parityR21NoHeader is a header the request does not send; subject.parityR21Failing answers 500. The condition is `subject.parityR21NoHeader == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21NoHeader == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-header-equals-in-a-deny-rule",
+   "about": "subject.parityR21NoHeader is a header the request does not send; subject.parityR21Failing answers 500. The condition is `subject.parityR21NoHeader == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21NoHeader == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-header-not-equals-in-an-allow-rule",
+   "about": "subject.parityR21NoHeader is a header the request does not send; subject.parityR21Failing answers 500. The condition is `subject.parityR21NoHeader != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR21NoHeader != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-header-not-equals-in-a-deny-rule",
+   "about": "subject.parityR21NoHeader is a header the request does not send; subject.parityR21Failing answers 500. The condition is `subject.parityR21NoHeader != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR21NoHeader != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-list-equals-in-an-allow-rule",
+   "about": "resource.l is an empty list; subject.parityR21Failing answers 500. The condition is `resource.l == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.l == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "l": [],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-list-equals-in-a-deny-rule",
+   "about": "resource.l is an empty list; subject.parityR21Failing answers 500. The condition is `resource.l == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "l": [],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-list-not-equals-in-an-allow-rule",
+   "about": "resource.l is an empty list; subject.parityR21Failing answers 500. The condition is `resource.l != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.l != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "l": [],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-list-not-equals-in-a-deny-rule",
+   "about": "resource.l is an empty list; subject.parityR21Failing answers 500. The condition is `resource.l != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "l": [],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-selection-equals-in-an-allow-rule",
+   "about": "resource.items[*].x is a selection that finds nothing; subject.parityR21Failing answers 500. The condition is `resource.items[*].x == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.items[*].x == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [
+       {
+        "k": "v"
+       }
+      ],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-selection-equals-in-a-deny-rule",
+   "about": "resource.items[*].x is a selection that finds nothing; subject.parityR21Failing answers 500. The condition is `resource.items[*].x == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "k": "v"
+       }
+      ],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-selection-not-equals-in-an-allow-rule",
+   "about": "resource.items[*].x is a selection that finds nothing; subject.parityR21Failing answers 500. The condition is `resource.items[*].x != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.items[*].x != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "items": [
+       {
+        "k": "v"
+       }
+      ],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-empty-selection-not-equals-in-a-deny-rule",
+   "about": "resource.items[*].x is a selection that finds nothing; subject.parityR21Failing answers 500. The condition is `resource.items[*].x != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.items[*].x != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "items": [
+       {
+        "k": "v"
+       }
+      ],
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-key-equals-in-an-allow-rule",
+   "about": "resource.missing is an absent key; subject.parityR21Failing answers 500. The condition is `resource.missing == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.missing == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-key-equals-in-a-deny-rule",
+   "about": "resource.missing is an absent key; subject.parityR21Failing answers 500. The condition is `resource.missing == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.missing == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-key-not-equals-in-an-allow-rule",
+   "about": "resource.missing is an absent key; subject.parityR21Failing answers 500. The condition is `resource.missing != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.missing != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-absent-key-not-equals-in-a-deny-rule",
+   "about": "resource.missing is an absent key; subject.parityR21Failing answers 500. The condition is `resource.missing != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.missing != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-index-past-the-end-equals-in-an-allow-rule",
+   "about": "resource.o.l[2] is an index past the end of the list; subject.parityR21Failing answers 500. The condition is `resource.o.l[2] == subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.o.l[2] == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "o": {
+       "l": [
+        "v"
+       ]
+      },
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-index-past-the-end-equals-in-a-deny-rule",
+   "about": "resource.o.l[2] is an index past the end of the list; subject.parityR21Failing answers 500. The condition is `resource.o.l[2] == subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.l[2] == subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "l": [
+        "v"
+       ]
+      },
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-index-past-the-end-not-equals-in-an-allow-rule",
+   "about": "resource.o.l[2] is an index past the end of the list; subject.parityR21Failing answers 500. The condition is `resource.o.l[2] != subject.parityR21Failing OR resource.a == 'y'` in the ALLOW rule of a DENY_UNLESS_PERMIT set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.o.l[2] != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "o": {
+       "l": [
+        "v"
+       ]
+      },
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-index-past-the-end-not-equals-in-a-deny-rule",
+   "about": "resource.o.l[2] is an index past the end of the list; subject.parityR21Failing answers 500. The condition is `resource.o.l[2] != subject.parityR21Failing OR resource.a == 'y'` in the DENY rule of a PERMIT_UNLESS_DENY set and policy.",
+   "pips": [
+    "failing",
+    "null-body",
+    "no-header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.o.l[2] != subject.parityR21Failing OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "o": {
+       "l": [
+        "v"
+       ]
+      },
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "e21-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  }
+ ]
+}
