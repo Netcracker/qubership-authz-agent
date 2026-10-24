@@ -66,7 +66,6 @@ type parser struct {
 	text    string
 	s       string
 	i       int
-	lastLit string
 	iterVar string
 }
 
@@ -362,6 +361,7 @@ func (p *parser) atom() (Atom, error) {
 		}
 		return p.compare(op, left, right)
 	}
+	start := p.i
 	right, err := p.operand()
 	if err != nil {
 		return nil, err
@@ -374,7 +374,7 @@ func (p *parser) atom() (Atom, error) {
 	}
 	if op.TakesList() {
 		if lit, ok := right.(Literal); ok {
-			right, err = p.list(lit)
+			right, err = p.list(lit, start)
 			if err != nil {
 				return nil, err
 			}
@@ -421,10 +421,9 @@ func (p *parser) pattern() (Operand, error) {
 }
 
 // list reads the rest of a list whose first literal, first, has just been
-// read.
-func (p *parser) list(first Literal) (List, error) {
+// read from position start.
+func (p *parser) list(first Literal, start int) (List, error) {
 	items := []Literal{first}
-	start := p.i - len(p.lastLit)
 	for listMoreRE.MatchString(p.rest()) {
 		p.i = strings.Index(p.s[p.i:], ",") + p.i + 1
 		for strings.HasPrefix(p.rest(), " ") {
@@ -457,7 +456,6 @@ func (p *parser) literal() (Operand, error) {
 	rest := p.rest()
 	if m := stringLitRE.FindStringSubmatch(rest); m != nil {
 		p.i += len(m[0])
-		p.lastLit = m[0]
 		return String{Value: m[1]}, nil
 	}
 	if strings.HasPrefix(rest, `"`) {
@@ -465,7 +463,6 @@ func (p *parser) literal() (Operand, error) {
 	}
 	if m := numberLitRE.FindString(rest); m != "" && endsToken(rest[len(m):]) {
 		p.i += len(m)
-		p.lastLit = m
 		return Number{Text: m}, nil
 	}
 	if numberStartRE.MatchString(rest) {
@@ -519,6 +516,7 @@ func (p *parser) operand() (Operand, error) {
 		return nil, p.fail("operand: a step after a subject attribute")
 	}
 	p.i += len(path)
+	written := path
 	if strings.HasSuffix(path, ".") && !strings.HasSuffix(path, "..") {
 		path = strings.TrimRight(path, ".")
 	}
@@ -529,15 +527,15 @@ func (p *parser) operand() (Operand, error) {
 	case path == "resourceType":
 		return ResourceType{}, nil
 	case path == "resource" || strings.HasPrefix(path, "resource.") || strings.HasPrefix(path, "resource["):
-		return p.resource(path[len("resource"):], path), nil
+		return p.resource(path[len("resource"):], written), nil
 	case strings.HasPrefix(path, "subject.") && strings.Contains(path, "["):
-		return p.resource("."+path, path), nil
+		return p.resource("."+path, written), nil
 	case strings.HasPrefix(path, "subject."):
 		return p.subject(path[len("subject."):]), nil
 	case path == "subject":
 		return nil, p.fail("bare subject")
 	}
-	return p.resource("."+path, path), nil
+	return p.resource("."+path, written), nil
 }
 
 // continuesPath reports whether rest, the text after the word resource,

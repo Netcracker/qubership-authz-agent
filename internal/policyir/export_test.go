@@ -116,9 +116,14 @@ set "s3" name="" domain="" algorithm=absent
 // simplifiedSet is a set in the shape the PAP writes for the simplified
 // policies of one resource type, with policies the JSON of its policies.
 func simplifiedSet(tenant, resourceType, policies string) string {
+	return simplifiedSetWithTarget(tenant, "resourceType == '"+resourceType+"'", policies)
+}
+
+// simplifiedSetWithTarget is [simplifiedSet] with the set target target.
+func simplifiedSetWithTarget(tenant, target, policies string) string {
 	return `{"type": "SIMPLIFIED", "tenantId": "` + tenant + `", "domain": "D", "component": "C",
 		"status": "ACTIVE", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "policySetId": "s",
-		"target": "resourceType == '` + resourceType + `'", "policySets": [], "policies": ` + policies + `}`
+		"target": "` + target + `", "policySets": [], "policies": ` + policies + `}`
 }
 
 // A simplified policy of operation ALL keeps its condition and its predicates,
@@ -148,26 +153,40 @@ func TestFromRegularKeepsTheConditionOfOperationAll(t *testing.T) {
 func TestFromRegularReadsASimplifiedSetOfAnotherShapeAsARegularSet(t *testing.T) {
 	t.Parallel()
 
+	const readPolicy = `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "operation == 'READ'",
+		"rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`
 	cases := []struct {
-		name     string
-		policies string
+		name      string
+		setTarget string
+		policies  string
 	}{
-		{"roles in the policy target", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		{"a set target spelled with EQUALS", "resourceType EQUALS 'R'", readPolicy},
+		{"a policy target of operation ALL", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "operation == 'ALL'", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
+		{"a policy target spelled with EQUALS", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "operation EQUALS 'READ'", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
+		{"roles joined with a comma and a space", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"target": "operation == 'READ'", "rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A', 'B'"}]}]`},
+		{"roles in the policy target", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"target": "subject.roles CONTAINS ANY 'A'", "rules": [{"effect": "ALLOW", "target": "true"}]}]`},
-		{"a DENY rule", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
+		{"a DENY rule", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT", "target": "true",
 			"rules": [{"effect": "DENY", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
-		{"another policy algorithm", `[{"combiningAlgorithm": "DENY_OVERRIDES", "target": "true",
+		{"another policy algorithm", "", `[{"combiningAlgorithm": "DENY_OVERRIDES", "target": "true",
 			"rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
-		{"a policy target of two operations", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		{"a policy target of two operations", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"target": "operation == 'READ' OR operation == 'LIST'",
 			"rules": [{"effect": "ALLOW", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
-		{"a rule with the querydsl field of a regular rule", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		{"a rule with the querydsl field of a regular rule", "", `[{"combiningAlgorithm": "DENY_UNLESS_PERMIT",
 			"target": "true", "rules": [{"effect": "ALLOW", "predicate": "q", "target": "subject.roles CONTAINS ANY 'A'"}]}]`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tr := tree(t, fromRegular(t, `[`+simplifiedSet("t", "R", tc.policies)+`]`, `[]`), "t")
+			setTarget := tc.setTarget
+			if setTarget == "" {
+				setTarget = "resourceType == 'R'"
+			}
+			tr := tree(t, fromRegular(t, `[`+simplifiedSetWithTarget("t", setTarget, tc.policies)+`]`, `[]`), "t")
 			if len(tr.Simplified) != 0 || len(tr.Sets) != 1 {
 				t.Errorf("simplified groups %d, sets %d, want 0 and 1; dump:\n%s", len(tr.Simplified), len(tr.Sets), tr.Dump())
 			}

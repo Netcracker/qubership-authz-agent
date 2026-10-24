@@ -51,8 +51,10 @@ type Export struct {
 // target operation == 'O', or true for ALL; and, for each simplified policy of
 // that operation, an ALLOW rule with the target
 // subject.roles CONTAINS ANY 'r1','r2', its condition, and its predicates,
-// with no status, no customPredicate, and no predicate field. A SIMPLIFIED set
-// of any other shape is read as a regular set. A
+// with no status, no customPredicate, and no predicate field. Each target is
+// the exact text the PAP writes, so a policy target operation == 'ALL' or
+// operation EQUALS 'O' is another shape. A SIMPLIFIED set of any other shape is
+// read as a regular set. A
 // PIP without a pipType is GENERAL, and when a tenant declares one name twice
 // the first declaration counts.
 func FromRegular(policySets, pips []byte) (*Export, error) {
@@ -365,7 +367,7 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 		return nil, false
 	}
 	rt, ok := onlyEquality(*s.Target, ResourceType{})
-	if !ok {
+	if !ok || *s.Target != resourceTypeTarget(rt) {
 		return nil, false
 	}
 	g := &SimplifiedGroup{Domain: s.Domain, ResourceType: rt}
@@ -378,7 +380,7 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 		}
 		op := "ALL"
 		if *p.Target != "true" {
-			if op, ok = onlyEquality(*p.Target, Operation{}); !ok {
+			if op, ok = onlyEquality(*p.Target, Operation{}); !ok || *p.Target != operationTarget(op) {
 				return nil, false
 			}
 		}
@@ -389,7 +391,7 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 				return nil, false
 			}
 			roles, ok := rolesOf(*r.Target)
-			if !ok {
+			if !ok || *r.Target != rolesTarget(roles) {
 				return nil, false
 			}
 			preds, _ := predicates(r, r.QueryDSLPredicate)
@@ -400,6 +402,27 @@ func simplifiedGroup(s *exportSet) (*SimplifiedGroup, bool) {
 		}
 	}
 	return g, true
+}
+
+// resourceTypeTarget is the set target the PAP writes for the simplified
+// policies of resource type rt, "ALL" included.
+func resourceTypeTarget(rt string) string {
+	return "resourceType == '" + rt + "'"
+}
+
+// operationTarget is the policy target the PAP writes for the simplified
+// policies of operation op. For ALL it is true, never operation == 'ALL'.
+func operationTarget(op string) string {
+	if op == "ALL" {
+		return "true"
+	}
+	return "operation == '" + op + "'"
+}
+
+// rolesTarget is the rule target the PAP writes for a simplified policy of
+// roles.
+func rolesTarget(roles []string) string {
+	return "subject.roles CONTAINS ANY '" + strings.Join(roles, "','") + "'"
 }
 
 // onlyEquality returns the string s in text when text is exactly left == 's'.

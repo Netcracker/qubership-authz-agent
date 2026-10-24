@@ -76,6 +76,37 @@ func TestParseCondition(t *testing.T) {
 	}
 }
 
+// The raw token of a list runs from its first item to its last as written,
+// whatever the kind of the items and whatever literal precedes the list. A
+// list of booleans used to get a raw token that started where the previous
+// string or number literal would have ended: ",false" for IN true,false. A
+// list of strings after a number is the control: its raw token was right.
+func TestParseConditionKeepsTheListTokenAsWritten(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		text string
+		want string
+	}{
+		{"resource.x IN true,false", `resource.x IN [true, false] raw="true,false"`},
+		{"resource.a == 'xy' AND resource.x IN FALSE, true",
+			`resource.a EQ "xy" AND resource.x IN [false, true] raw="FALSE, true"`},
+		{"resource.a == 10 AND resource.x IN 'p','q'", `resource.a EQ 10 AND resource.x IN ["p", "q"] raw="'p','q'"`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.text, func(t *testing.T) {
+			t.Parallel()
+			c, err := ParseCondition(tc.text, PlaceRuleCondition, "")
+			if err != nil {
+				t.Fatalf("ParseCondition(%q): %v", tc.text, err)
+			}
+			if got := FormatCondition(c); got != tc.want {
+				t.Errorf("ParseCondition(%q) = %s, want %s", tc.text, got, tc.want)
+			}
+		})
+	}
+}
+
 func TestParseConditionRefuses(t *testing.T) {
 	t.Parallel()
 
@@ -132,6 +163,7 @@ func TestParseConditionMarksAPathOutsideTheJSONPathSubset(t *testing.T) {
 	}{
 		{"resource.a[*] == 1", `resource.a[*] EQ 1`},
 		{"resource.x/y == 1", `unsupported(jsonpath "resource.x/y") EQ 1`},
+		{"resource.x/y[ 0 ]. == 1", `unsupported(jsonpath "resource.x/y[ 0 ].") EQ 1`},
 		{"resource.a['b','c'] == 1", `unsupported(jsonpath "resource.a['b','c']") EQ 1`},
 		{"resource.a[?(@.k ~ 'v')] == 1", `unsupported(jsonpath "resource.a[?(@.k ~ 'v')]") EQ 1`},
 		{"resource.o[?(@.n=~/(?=u)/)].n == 1", `unsupported(jsonpath "resource.o[?(@.n=~/(?=u)/)].n") EQ 1`},
