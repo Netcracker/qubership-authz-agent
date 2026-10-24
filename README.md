@@ -59,13 +59,20 @@ docker build -t authz-agent:local        -f build/authz-agent/Dockerfile .
 docker build -t authz-policy-admin:local -f build/authz-policy-admin/Dockerfile .
 ```
 
-CI builds both via `.github/docker-dev-config.json` and publishes them as
-`ghcr.io/netcracker/qubership-authz-agent` and
-`ghcr.io/netcracker/qubership-authz-policy-admin`, named as the platform names
-its images: `qubership-` plus the service. A release is cut by hand with the
+The images are named as the platform names its images: `qubership-` plus the
+service, as in `ghcr.io/netcracker/qubership-authz-agent` and
+`ghcr.io/netcracker/qubership-authz-policy-admin`. On every push to `main` or an
+`lts/**` branch, and on every pull request from a branch of this repository, CI
+builds the five components of `.github/docker-dev-config.json` (the two
+services, the test stand's images, and the transfer image) and pushes them to
+ghcr.io; a pull request from a fork builds none of them. A release is cut by hand with the
 Docker Images Release workflow (`.github/workflows/docker-release.yaml`), which
-tags the commit, builds the two images `.qubership/docker.cfg` lists, and
+tags the commit, builds the images `.qubership/docker.cfg` lists, and
 publishes the GitHub release with notes composed from the merged pull requests.
+Besides the two services, the release publishes the test stand's images,
+`qubership-authz-pip-stub` and `qubership-authz-parity-suite`, and
+`qubership-authz-agent-transfer`, which carries the Helm charts; see
+[helm-templates/authz-test-stand](helm-templates/authz-test-stand/README.md).
 
 ## Testing
 

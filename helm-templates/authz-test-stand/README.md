@@ -30,16 +30,43 @@ users of `test/parity/suite/testdata/realm/` under `files/realms/parity/`, and t
 a rule file on fails with ``no realm files under files/realms/<realms>/: run `make test-stand-files` …`` or
 ``no file files/pip-stub/<file>: run `make test-stand-files` …``.
 
-## Run the suite
+## Install from the transfer image
 
-Run the suite, then print its log. `helm test --logs` prints the logs of test Pods only, and the suite is a Job:
-Helm 4.3 and later print nothing for it, and earlier releases, Helm 3 included, fail with
-`unable to get pod logs`. The Job is named by `suite.name`.
+The release publishes the image `ghcr.io/netcracker/qubership-authz-agent-transfer` with the three charts of this
+repository under `/charts/`, and this chart's `files/` already generated. The images the chart runs,
+`qubership-authz-pip-stub` and `qubership-authz-parity-suite`, are published under the same version; the tenant-manager
+emulator is not published.
 
-```bash
-helm test authz-test-stand --timeout 15m
-kubectl logs job/parity-suite
-```
+1. Copy the charts out of the image:
+
+   ```bash
+   docker create --name authz-charts ghcr.io/netcracker/qubership-authz-agent-transfer:<version> true
+   docker cp authz-charts:/charts ./charts
+   docker rm authz-charts
+   ```
+
+2. Install the stand with a values file of your own. Start from
+   [`test/k8s/parity/test-stand-values.yaml`](../../test/k8s/parity/test-stand-values.yaml) and change what is
+   specific to kind:
+
+   - delete `TAG`, `IMAGE_PULL_POLICY`, `pipStub.imageRepository`, and `suite.imageRepository`, so the chart pulls
+     the published images and `--set TAG` picks their version;
+   - change the addresses in `suite.env` to the services of your stand;
+   - turn `idp.enabled` off where the stand has its own Keycloak with the parity realms, and `clientCredentials.enabled`
+     off where the platform provisions the client-credentials Secret.
+
+   ```bash
+   helm upgrade --install authz-test-stand ./charts/authz-test-stand --set TAG=<version> -f my-test-stand-values.yaml
+   ```
+
+3. Run the suite, then print its log. `helm test --logs` prints the logs of test Pods only, and the suite is a Job:
+   Helm 4.3 and later print nothing for it, and earlier releases, Helm 3 included, fail with
+   `unable to get pod logs`. The Job is named by `suite.name`.
+
+   ```bash
+   helm test authz-test-stand --timeout 15m
+   kubectl logs job/parity-suite
+   ```
 
 `helm test` exits non-zero when the suite fails, and deletes the Job of the previous run before it starts a new one. It
 waits no longer than `--timeout`. Three limits bound a run, each no lower than the one before: `-test.timeout` in

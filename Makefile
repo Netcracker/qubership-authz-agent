@@ -109,7 +109,8 @@ e2e-images:
 
 # The realm and stub files the test-stand chart reads from files/: the realms
 # of test/k8s/authn/ and test/k8s/parity/idp-seed/, the users of
-# test/parity/suite/testdata/realm/, and the pip-stub rule files.
+# test/parity/suite/testdata/realm/, and the pip-stub rule files. The transfer
+# image generates the same files in the same Dockerfile stage.
 test-stand-files:
 	rm -rf $(TEST_STAND_CHART)/files
 	docker build --target chart-files --output type=local,dest=$(TEST_STAND_CHART)/files -f build/authz-agent-transfer/Dockerfile .

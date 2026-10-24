@@ -3,7 +3,8 @@
 # test/k8s/test-stand-values.yaml and test/k8s/parity/test-stand-values.yaml.
 #
 # The realm and stub files under files/ are generated, not kept in git: run
-# `make test-stand-files` before installing the chart from a checkout.
+# `make test-stand-files` before installing the chart from a checkout. The
+# chart in the transfer image, qubership-authz-agent-transfer, carries them already.
 
 # TAG is the release version of the images this repository builds: pip-stub,
 # tenant-manager, and the suite image (authz-parity-suite, or the runtime suite
