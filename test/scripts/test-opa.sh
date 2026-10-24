@@ -17,19 +17,17 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-OPA_BIN="${OPA_BIN:-${ROOT_DIR}/test/tools/opa/opa}"
+OPA_BIN="${OPA_BIN:-opa}"
 # policies/ is the single source of truth for both Rego policies and their
 # _test.rego suites. fixtures/ and test-data/ live there too.
 POLICY_DIR="${POLICY_DIR:-policies}"
 
-if [[ ! -x "${OPA_BIN}" ]]; then
+if ! command -v "${OPA_BIN}" >/dev/null 2>&1; then
   cat >&2 <<EOF
-error: OPA binary not found or not executable at ${OPA_BIN}
+error: OPA binary not found: ${OPA_BIN}
 
-Install local OPA binary first:
-  test/scripts/install-opa.sh
-
-Or provide a custom binary path:
+Run mise install to put the OPA CLI that mise.toml pins on PATH,
+or set OPA_BIN to the binary:
   OPA_BIN=/path/to/opa test/scripts/test-opa.sh
 EOF
   exit 1

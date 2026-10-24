@@ -169,7 +169,7 @@ go test -v -count=1 ./...    # no -tags integration
 OPA / Rego contract tests, no cluster needed:
 
 ```bash
-test/scripts/install-opa.sh    # installs opa into test/tools/opa/
+mise install                   # puts the opa version mise.toml pins on PATH
 test/scripts/test-opa.sh
 ```
 

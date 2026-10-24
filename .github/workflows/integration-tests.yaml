@@ -55,8 +55,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Installs the OPA CLI at the version mise.toml pins, and only that tool.
       - name: Install OPA
-        run: bash test/scripts/install-opa.sh
+        uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550 # v5.2.2
+        with:
+          version: 2026.10.17
+          install_args: aqua:open-policy-agent/opa
 
       - name: Run policy tests
         run: bash test/scripts/test-opa.sh

@@ -142,6 +142,5 @@ tests/svt/profiler/<scenario>/profile-real-token.sh
 tests/svt/profiler/<scenario>/profile-trace.sh
 ```
 
-By default the scripts use the repository-local binary at `test/tools/opa/opa`, matching
-`test/scripts/test-opa.sh`. If that binary is missing they fall back to `opa` from `PATH`.
-Override with `OPA_BIN=/path/to/opa` if needed.
+The scripts run `opa` from `PATH`, as `test/scripts/test-opa.sh` does; `mise install` puts the version
+`mise.toml` pins there. Override with `OPA_BIN=/path/to/opa` if needed.

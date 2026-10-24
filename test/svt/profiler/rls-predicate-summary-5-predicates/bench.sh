@@ -17,17 +17,11 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${DIR}/../../../.." && pwd)"
-OPA_BIN="${OPA_BIN:-${ROOT_DIR}/test/tools/opa/opa}"
+OPA_BIN="${OPA_BIN:-opa}"
 
-if [[ ! -x "${OPA_BIN}" ]]; then
-  if command -v opa >/dev/null 2>&1; then
-    OPA_BIN="$(command -v opa)"
-  else
-    echo "error: OPA binary not found. Expected ${ROOT_DIR}/test/tools/opa/opa or opa in PATH." >&2
-    echo "Install it with: ${ROOT_DIR}/test/scripts/install-opa.sh" >&2
-    exit 1
-  fi
+if ! command -v "${OPA_BIN}" >/dev/null 2>&1; then
+  echo "error: OPA binary not found: ${OPA_BIN}. Run mise install, or set OPA_BIN." >&2
+  exit 1
 fi
 
 exec "${OPA_BIN}" bench --format pretty --count 5 \
