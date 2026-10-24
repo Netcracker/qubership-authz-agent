@@ -80,6 +80,7 @@ PARITY_AC_BASE_URL ?= http://authz-agent:8080
 E2E_AUTHN := test/k8s/authn
 E2E_IMAGES := authz-agent authz-policy-admin pip-stub tenant-manager \
               authz-runtime-suite authz-parity-suite
+TEST_STAND_CHART := helm-templates/authz-test-stand
 
 e2e: e2e-cluster e2e-images e2e-harness e2e-install e2e-suite
 
@@ -95,6 +96,13 @@ e2e-images:
 	docker build -t local/authz-runtime-suite:ci       -f test/integration/testify/Dockerfile .
 	docker build -t local/authz-parity-suite:ci        -f test/parity/suite/Dockerfile test/parity/suite
 	kind load docker-image --name $(KIND_CLUSTER) $(addprefix local/,$(addsuffix :ci,$(E2E_IMAGES)))
+
+# The realm and stub files the test-stand chart reads from files/: the realms
+# of test/k8s/authn/ and test/k8s/parity/idp-seed/, the users of
+# test/parity/suite/testdata/realm/, and the pip-stub rule files.
+test-stand-files:
+	rm -rf $(TEST_STAND_CHART)/files
+	docker build --target chart-files --output type=local,dest=$(TEST_STAND_CHART)/files -f build/authz-agent-transfer/Dockerfile .
 
 # Keycloak with the repository realm imports, the two stubs, the tenant-manager
 # emulator, and the M2M client-credentials Secret the chart expects the
@@ -195,4 +203,4 @@ parity-logs:
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls e2e e2e-cluster e2e-images e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway jayway-suite-calls e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs

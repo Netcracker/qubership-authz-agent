@@ -1,0 +1,118 @@
+# The test stand of the authz-agent suites. Every part is off by default; a
+# stand turns on the parts it needs.
+#
+# The realm and stub files under files/ are generated, not kept in git: run
+# `make test-stand-files` before installing the chart from a checkout.
+
+# TAG is the release version of the images this repository builds: pip-stub,
+# tenant-manager, and the suite image (authz-parity-suite, or the runtime suite
+# on kind). IMAGE_PULL_POLICY applies to the same images; Keycloak has its own
+# image and pull policy under idp.
+TAG: ''
+IMAGE_PULL_POLICY: IfNotPresent
+
+# Keycloak in dev mode, with the realms of files/realms/<realms>/ imported
+# at every start. The Service name is part of the issuer, so it has to match
+# the issuer the agent and the suites expect.
+idp:
+  enabled: false
+  name: idp
+  image: quay.io/keycloak/keycloak:26.3.5@sha256:357829ec7c4693397533035092ad13b0644bcc95ded311f33a3738c4d9e9bdba
+  imagePullPolicy: IfNotPresent
+  # The directory under files/realms/ whose realm files the Pod imports: e2e
+  # or parity.
+  realms: parity
+  # The issuer base. Keycloak derives the issuer and the JWKS URI of the
+  # discovery document from it. Empty: http://<name>:8080/auth, the Service
+  # this chart creates.
+  hostname: ''
+  resources:
+    requests:
+      cpu: 500m
+      memory: 768Mi
+      # The dev-mode H2 database lives on the container filesystem.
+      ephemeral-storage: 512Mi
+    limits:
+      memory: 1536Mi
+      ephemeral-storage: 1Gi
+
+# Instances of the pip-stub image, one Deployment and one Service each, keyed
+# by the Service name. `port` is the container and Service port. `config`
+# names a rule file under files/pip-stub/ that the stub loads at start; a
+# changed rule file restarts the instance at the next upgrade.
+pipStub:
+  imageRepository: ghcr.io/netcracker/qubership-authz-pip-stub
+  instances: {}
+  # pip-mock:
+  #   port: 8090
+  #   config: requestargs.responses.yaml
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+      ephemeral-storage: 64Mi
+    limits:
+      memory: 64Mi
+      ephemeral-storage: 128Mi
+
+# The tenant-manager emulator of test/integration/tenantmanager/, which maps a
+# tenant name to the identifier its Keycloak realm is named by. The release
+# does not publish its image, so a stand that turns it on names one.
+tenantManager:
+  enabled: false
+  name: tenant-manager
+  imageRepository: ''
+  # Tenant name to realm identifier. A name left out gets a 404, as an
+  # unregistered tenant does.
+  tenants: {}
+  #  default: 6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b
+  resources:
+    requests:
+      cpu: 50m
+      memory: 32Mi
+      ephemeral-storage: 64Mi
+    limits:
+      memory: 64Mi
+      ephemeral-storage: 128Mi
+
+# The Secret the authz-agent chart reads the M2M client credentials from. The
+# platform provisions it on a real stand.
+clientCredentials:
+  enabled: false
+  secretName: authz-agent-client-credentials
+  name: authz-agent
+  username: ''
+  password: ''
+
+# The suite Job, a `helm test` hook: `helm test <release>` runs it once the
+# stand and the charts under test are up.
+suite:
+  enabled: false
+  name: parity-suite
+  imageRepository: ghcr.io/netcracker/qubership-authz-parity-suite
+  args:
+    - ./parity.test
+    - -test.v
+    - -test.timeout
+    - 600s
+    - -test.run
+    - ^TestParitySuite$
+  # Seconds the Job may run. Keep it no lower than -test.timeout in args, and
+  # no higher than the `helm test --timeout` (E2E_SUITE_TIMEOUT or
+  # PARITY_SUITE_TIMEOUT on kind, 15m).
+  activeDeadlineSeconds: 900
+  # Plain variables, by name.
+  env: {}
+  # Variables read from a Secret key, by name: {secret: <name>, key: <key>}.
+  secretEnv: {}
+  # A ServiceAccount of the Job's name, granted no rules. The Job does not
+  # mount its token either way.
+  serviceAccount: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 64Mi
+      ephemeral-storage: 64Mi
+    limits:
+      memory: 256Mi
+      ephemeral-storage: 256Mi
