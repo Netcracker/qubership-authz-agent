@@ -19,7 +19,7 @@
 # Build context is the repository root:
 #   docker build -t authz-agent-transfer -f build/authz-agent-transfer/Dockerfile .
 
-FROM --platform=$BUILDPLATFORM ghcr.io/jqlang/jq:1.8.1@sha256:4f34c6d23f4b1372ac789752cc955dc67c2ae177eb1b5860b75cdc5091ce6f91 AS jq
+FROM --platform=$BUILDPLATFORM ghcr.io/jqlang/jq:1.8.2@sha256:b9c68867e5766576263a222e91db3de422d802069c7af70440e667a95344e486 AS jq
 
 FROM --platform=$BUILDPLATFORM alpine:3.22@sha256:2e0b81d60597f449baa56dc25d355367869d2dca4cd57e866f1e2b52af3eb55f AS generate
 # A failed find, sort, or cat in the user-file pipeline below fails the build
