@@ -19,7 +19,7 @@ IMAGE_PULL_POLICY: IfNotPresent
 idp:
   enabled: false
   name: idp
-  image: quay.io/keycloak/keycloak:26.3.5@sha256:357829ec7c4693397533035092ad13b0644bcc95ded311f33a3738c4d9e9bdba
+  image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
   imagePullPolicy: IfNotPresent
   # The directory under files/realms/ whose realm files the Pod imports: e2e
   # or parity.
