@@ -1,0 +1,140 @@
+{
+ "about": "Which of the forms the simplified-policy upload refused are refused in a rule of a regular set as well. On access-control 5.13 the simplified upload refused all four: subject.isM2M (g8a-subject-is-m2m, which 6.1.6 accepts as a whole condition), an undeclared subject attribute (x19-undeclared-subject-attribute), operation as an operand (o1-operation-operand), although operation stands in every rule target, and subject.permissions.PARITY (pm2-mapping-pip-suffixed-reference). Nothing records the same four forms through the policy-set upload, which has a validator of its own. Each case records the upload status and, for an accepted set, one READ. The reader is an end user, carries no declared attribute of the name parityUnknown, and holds no permission from a PIP this domain declares, so the READ of an accepted set records what the form evaluates to for a subject it does not describe. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "rule-condition-subject-is-m2m",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "subject.isM2M == true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "reg-load-subject-is-m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rule-condition-undeclared-subject-attribute",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityUnknown == 'x'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "reg-load-undeclared-subject-attribute"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rule-condition-operation-in-a-condition",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "operation == 'READ'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "reg-load-operation-in-a-condition"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rule-condition-suffixed-permissions",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "subject.permissions.PARITY CONTAINS 'parity_permission'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "reg-load-suffixed-permissions"
+     }
+    }
+   ]
+  }
+ ]
+}

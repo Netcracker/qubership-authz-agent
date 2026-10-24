@@ -1,0 +1,81 @@
+{
+ "about": "What IS NOT NULL answers over a resource attribute that is an empty array. IS NULL over it is true (es-empty-collection-is-null), which leaves IS NOT NULL either its negation or false, as over an empty header; neither is recorded. The attribute is asked alone and through the probe and its control, empty and holding one value; the one value, list-of-one, is the control that IS NOT NULL holds over a collection. The agent's condition parser accepts the condition.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ec-is-not-null-over-an-empty-array-alone",
+   "condition": "resource.list IS NOT NULL",
+   "requests": [
+    {
+     "name": "list-empty",
+     "resource": {
+      "id": "r10-empty",
+      "list": [],
+      "a": "y"
+     }
+    },
+    {
+     "name": "list-of-one",
+     "resource": {
+      "id": "r10-empty",
+      "list": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ec-is-not-null-over-an-empty-array",
+   "condition": "resource.list IS NOT NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "list-empty",
+     "resource": {
+      "id": "r10-empty",
+      "list": [],
+      "a": "y"
+     }
+    },
+    {
+     "name": "list-of-one",
+     "resource": {
+      "id": "r10-empty",
+      "list": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ec-is-not-null-over-an-empty-array-control",
+   "resourceType": "PARITY_SUITE_R10_EC_IS_NOT_NULL_OVER_AN_EMPTY_ARRAY_CTL",
+   "condition": "resource.a == 'y' OR resource.list IS NOT NULL",
+   "requests": [
+    {
+     "name": "list-empty",
+     "resource": {
+      "id": "r10-empty",
+      "list": [],
+      "a": "y"
+     }
+    },
+    {
+     "name": "list-of-one",
+     "resource": {
+      "id": "r10-empty",
+      "list": [
+       "v"
+      ],
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

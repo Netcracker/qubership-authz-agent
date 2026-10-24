@@ -1,0 +1,40 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//go:build integration
+
+package paritysuite
+
+// Round 35 asks inputs that no golden has sent so far: resource paths that
+// apply a jsonPath function or a filter to a value it does not fit, PIP
+// values at their edges, uploads of PIP declarations that lack their header
+// or claim key, placeholders in requestAttributes, and check/filter
+// placeholders and customPredicate logic that no golden has rendered.
+// Its cases are data under testdata/cases/round35, and each case's about
+// field says what it asks. Each function runs one file, so that a recording
+// run can be filtered to it and record it on a stand of its own.
+
+// TestRound35GapsFilterCases runs round35/gaps-filter.json.
+func (s *ParitySuite) TestRound35GapsFilterCases() { s.runCaseFile("round35/gaps-filter.json") }
+
+// TestRound35GapsJsonpathCases runs round35/gaps-jsonpath.json.
+func (s *ParitySuite) TestRound35GapsJsonpathCases() { s.runCaseFile("round35/gaps-jsonpath.json") }
+
+// TestRound35GapsPipsCases runs round35/gaps-pips.json.
+func (s *ParitySuite) TestRound35GapsPipsCases() { s.runCaseFile("round35/gaps-pips.json") }
+
+// TestRound35GapsRequestAttributesCases runs round35/gaps-request-attributes.json.
+func (s *ParitySuite) TestRound35GapsRequestAttributesCases() {
+	s.runCaseFile("round35/gaps-request-attributes.json")
+}

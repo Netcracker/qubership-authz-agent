@@ -27,9 +27,20 @@ var embeddedSmokeFixtures embed.FS
 //go:embed testdata/fixtures/smoke/*.json testdata/fixtures/policies/suite/*.json testdata/fixtures/policies/regular/*.json
 var embeddedMainFixtures embed.FS
 
+// The tenant packs are seeded only by the tenant-scoped cases, once per tenant,
+// into the same domain name.
+//
+//go:embed testdata/fixtures/tenants/a/*.json
+var embeddedTenantAFixtures embed.FS
+
+//go:embed testdata/fixtures/tenants/b/*.json
+var embeddedTenantBFixtures embed.FS
+
 var (
-	smokeFixtureFS fs.FS = mustSubFS(embeddedSmokeFixtures, "testdata/fixtures/smoke")
-	mainFixtureFS  fs.FS = mustSubFS(embeddedMainFixtures, "testdata/fixtures")
+	smokeFixtureFS   fs.FS = mustSubFS(embeddedSmokeFixtures, "testdata/fixtures/smoke")
+	mainFixtureFS    fs.FS = mustSubFS(embeddedMainFixtures, "testdata/fixtures")
+	tenantAFixtureFS fs.FS = mustSubFS(embeddedTenantAFixtures, "testdata/fixtures/tenants/a")
+	tenantBFixtureFS fs.FS = mustSubFS(embeddedTenantBFixtures, "testdata/fixtures/tenants/b")
 )
 
 func mustSubFS(root embed.FS, subdir string) fs.FS {

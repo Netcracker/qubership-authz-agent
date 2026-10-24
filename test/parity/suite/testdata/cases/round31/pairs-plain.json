@@ -1,0 +1,502 @@
+{
+ "about": "Configurations whose pairs of a replace or a disable round 30 reached only under a top-level set the customization does not see, now under top-level sets uploaded ACTIVE or without a status. The file pins no scope service, and no set iterates over the permission scope. Each case's about lists the pairs of configuration dimensions it reaches first, as dimension=value: ep the endpoint; tenant how the request names it; kind simplified or regular; eff the rule's effect; palg and salg the algorithm of its policy and of the set holding it; depth the set's depth; status the first status other than ACTIVE above it; iter and ialg the iterate pass and its algorithm; dial, syn, ph the predicate's fields, shape and placeholders; cond the condition; srules, spol, stop the other rules of the policy, the other children of the set, the other top-level nodes; cust the customization step: replace, disable, or add. The cases r31pairs-plain-control-first and r31pairs-plain-control-last are controls: a DENY rule over an attribute that does not hold, true.",
+ "resourceTypePrefix": "PARITY_SUITE_R29P_",
+ "pins": {
+  "/api/v1/pip/r29-pairs-gen": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  }
+ },
+ "pips": {
+  "gen": {
+   "name": "subject.parityR29PairsGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen",
+   "requestAttributes": {
+    "case": "r29-pairs-gen"
+   }
+  },
+  "hdr": {
+   "name": "subject.parityR29PairsHdr",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-pairs",
+   "cacheable": false
+  },
+  "map": {
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  "tok": {
+   "name": "subject.parityR29PairsTok",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r31pairs-plain-001-s",
+   "policy": {
+    "customPredicate": {
+     "params": {
+      "p0": "subject.parityR29PairsNope"
+     },
+     "predicate": "[{\"value\":${p0},\"property\":\"fa\",\"operator\":\"in\"}]"
+    }
+   },
+   "condition": "resource.fa == 'zz-undeclared'",
+   "requests": [
+    {
+     "name": "q",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "filter": true,
+     "operation": "READ",
+     "tenantId": ""
+    }
+   ],
+   "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_001",
+   "about": "A simplified policy in a domain of its own over the resource type of r31pairs-plain-001, which stays loaded while that case runs, so that its requests meet a simplified policy beside its sets; its own request reads it alone first.",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "tok"
+   ]
+  },
+  {
+   "id": "r31pairs-plain-002-s",
+   "policy": {
+    "mongodbPredicate": "{ \"fa\": ${subject.parityR29PairsNope} }"
+   },
+   "condition": "resource.fa == 'zz-undeclared'",
+   "requests": [
+    {
+     "name": "q",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "filter": true,
+     "operation": "READ",
+     "tenantId": ""
+    }
+   ],
+   "domain": "PARITY_R31_PAIRS_R31PAIRS_PLAIN_002",
+   "about": "A simplified policy in a domain of its own over the resource type of r31pairs-plain-002, which stays loaded while that case runs, so that its requests meet a simplified policy beside its sets; its own request reads it alone first."
+  },
+  {
+   "id": "r31pairs-plain-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     },
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31pairs-plain-001",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == 'PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "s0p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "true",
+         "effect": "NOT_APPLICABLE",
+         "condition": "true"
+        },
+        {
+         "key": "r2",
+         "target": "true",
+         "effect": "USE_FILTER_CONDITION",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p0": "subject.parityR29PairsTok"
+           },
+           "predicate": "[{\"value\":${p0},\"property\":\"f2a\",\"operator\":\"in\"}]"
+          }
+         },
+         "condition": "resource.f2a == subject.parityR29PairsTok"
+        },
+        {
+         "key": "r3",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "resource.nr3 == 'w'"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0n1",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "status": "DRAFT",
+       "policies": [
+        {
+         "key": "s0n1p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "r4",
+           "target": "true",
+           "effect": "NOT_APPLICABLE",
+           "predicates": {
+            "rsqlPredicate": "f4a=in=(${subject.parityR29PairsGen})",
+            "sqlPredicate": "f4a IN (${subject.parityR29PairsGen})",
+            "predicate": "${resourceType}.f4a.in(${subject.parityR29PairsGen})",
+            "mongodbPredicate": "{ \"f4a\": { \"$in\": ${subject.parityR29PairsGen} } }"
+           },
+           "condition": "true"
+          },
+          {
+           "key": "r5",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "f5a=in=(${subject.parityR29PairsHdr})",
+            "sqlPredicate": "f5a IN (${subject.parityR29PairsHdr})",
+            "predicate": "${resourceType}.f5a.in(${subject.parityR29PairsHdr})",
+            "mongodbPredicate": "{ \"f5a\": { \"$in\": ${subject.parityR29PairsHdr} } }"
+           },
+           "condition": "resource.f5a IN subject.parityR29PairsHdr"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s0n1p1",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "r6",
+           "target": "true",
+           "effect": "NOT_APPLICABLE",
+           "predicates": {
+            "rsqlPredicate": "f6a==${subject.parityR29PairsTok}",
+            "sqlPredicate": "f6a=${subject.parityR29PairsTok}",
+            "predicate": "${resourceType}.f6a.eq(${subject.parityR29PairsTok})",
+            "mongodbPredicate": "{ \"f6a\": ${subject.parityR29PairsTok} }"
+           },
+           "condition": "true"
+          },
+          {
+           "key": "r7",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "f7a=in=(${subject.roles})",
+            "sqlPredicate": "f7a IN (${subject.roles})",
+            "predicate": "${resourceType}.f7a.in(${subject.roles})",
+            "mongodbPredicate": "{ \"f7a\": { \"$in\": ${subject.roles} } }"
+           },
+           "condition": "true"
+          },
+          {
+           "key": "r8",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "sqlPredicate": "f8a IN (${subject.roles})"
+           },
+           "condition": "true"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        },
+        {
+         "key": "s0n1p2",
+         "target": "true",
+         "rules": [
+          {
+           "key": "r9",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "mongodbPredicate": "{ \"f9a\": { \"$in\": ${subject.permissions} } }"
+           },
+           "condition": "resource.f9a IN subject.permissions"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == 'PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "s1p0",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r10",
+         "target": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"$and\": [ { \"$or\": [ { \"f10a\": { \"$in\": ${subject.roles} } }, { \"f10b\": \"v1\" } ] }, { \"f10c\": \"v2\" } ] }"
+         },
+         "condition": "resource.f10a IN subject.roles AND resource.f10c == 'v2' OR resource.f10b == 'v1' AND resource.f10c == 'v2'"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "q",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "filter": true,
+     "operation": "READ",
+     "type": "PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S"
+    }
+   ],
+   "customize": [
+    {
+     "name": "cust",
+     "level": "PROJECT",
+     "sets": [
+      {
+       "key": "s0",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "qc",
+       "headers": {
+        "x-parity-r29-pairs": "h1,h2"
+       },
+       "filter": true,
+       "operation": "READ",
+       "tenantId": "",
+       "type": "PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S"
+      }
+     ]
+    }
+   ],
+   "about": "5 pairs no golden reached: cust=disable × srules=both; ep=filter × cust=disable; ph=TOKEN × srules=nopred; salg=DOV × cust=disable; syn=atom × cust=disable"
+  },
+  {
+   "id": "r31pairs-plain-002",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == 'PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "s0p0",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "true"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "r2",
+         "target": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "((${resourceType}.f2a.in(${subject.parityR29PairsHdr})).or(${resourceType}.f2b.eq(\"v1\"))).and(${resourceType}.f2c.eq(\"v2\"))"
+         },
+         "condition": "resource.f2a IN subject.parityR29PairsHdr AND resource.f2c == 'v2' OR resource.f2b == 'v1' AND resource.f2c == 'v2'"
+        },
+        {
+         "key": "r3",
+         "target": "true",
+         "effect": "NOT_APPLICABLE",
+         "predicates": {
+          "rsqlPredicate": "f3a=in=(${subject.roles})",
+          "sqlPredicate": "f3a IN (${subject.roles})",
+          "predicate": "${resourceType}.f3a.in(${subject.roles})",
+          "mongodbPredicate": "{ \"f3a\": { \"$in\": ${subject.roles} } }"
+         },
+         "condition": "resource.f3a IN subject.roles"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ]
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == 'PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "s1p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "r4",
+         "target": "true",
+         "effect": "USE_FILTER_CONDITION",
+         "condition": "resource.nr4 == 'w'"
+        },
+        {
+         "key": "r5",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "resource.nr5 == 'w'"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "q",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "filter": true,
+     "operation": "READ",
+     "tenantId": "",
+     "type": "PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S"
+    }
+   ],
+   "customize": [
+    {
+     "name": "cust",
+     "level": "PROJECT",
+     "sets": [
+      {
+       "key": "s0",
+       "policies": [
+        {
+         "key": "s0p0",
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "qc",
+       "headers": {
+        "x-parity-r29-pairs": "h1,h2"
+       },
+       "filter": true,
+       "operation": "READ",
+       "type": "PARITY_SUITE_R29P_R31PAIRS_PLAIN_002_S"
+      }
+     ]
+    }
+   ],
+   "about": "1 pair no golden reached: cust=replace × stop=both"
+  },
+  {
+   "id": "r31pairs-plain-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r19"
+     },
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     }
+    }
+   ]
+  }
+ ]
+}

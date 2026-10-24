@@ -1,0 +1,568 @@
+{
+ "about": "Customizations round 29 left between two readings. First, an import at level PARITY_OTHER, which round 29 found applied, between two CUSTOMER imports of the same rule: read as CUSTOMER, it replaces the first CUSTOMER import and the second replaces it; read as PROJECT, CUSTOMER decides both times; as a level of its own after CUSTOMER, it decides from its import on. Second, a replace of a top-level set whose status is DRAFT: round 29 saw a replace of such a set taken, with its status kept when the entry omits it (r29pairs-none-006); here the entry names status ACTIVE, with every other field of the set, so read after is true if the replace sets the status and false if the set stays DRAFT. Third, a customization that adds a top-level set holding a set or a rule that is not ACTIVE. Round 29 saw two such imports refused; each nested both a DRAFT and an INACTIVE set one level under the added set. Here: a nested DRAFT set alone, an INACTIVE set two levels down, and an INACTIVE rule. The update rule of the added set allows; update after true if the import applies, false with the import's 400.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r30open-customization-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-level-other-between-customer",
+   "about": "The update rule allows. CUSTOMER replaces it to deny; PARITY_OTHER to allow; CUSTOMER again to deny. Update after each: CUSTOMER reading false, true, false; PROJECT false, false, false; a level of its own after CUSTOMER false, true, true.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r30"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "customer",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update denied",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "update-after-customer",
+       "resource": {
+        "id": "r30"
+       },
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "other",
+     "level": "PARITY_OTHER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update allowed",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "update-after-other",
+       "resource": {
+        "id": "r30"
+       },
+       "operation": "UPDATE"
+      }
+     ]
+    },
+    {
+     "name": "customer-again",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "upd",
+           "name": "update denied again",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "update-after-customer-again",
+       "resource": {
+        "id": "r30"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after-customer-again",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-replace-draft-to-active",
+   "about": "The set is DRAFT, so read before is false. The import replaces it with status ACTIVE and the same name, target and algorithm.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "status": "DRAFT"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r30"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "name": "set made active",
+       "status": "ACTIVE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == '{{resourceType}}'"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-added-draft-nested",
+   "about": "The added set holds a nested DRAFT set with the policy.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r30"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "added",
+       "name": "added set",
+       "status": "ACTIVE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == '{{resourceType}}'",
+       "sets": [
+        {
+         "key": "added-draft",
+         "name": "added draft",
+         "status": "DRAFT",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "target": "true",
+         "policies": [
+          {
+           "key": "added-reader",
+           "name": "added reader",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "algorithm": "DENY_UNLESS_PERMIT",
+           "rules": [
+            {
+             "key": "added-upd",
+             "name": "added update",
+             "target": "operation == 'UPDATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r30"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-added-inactive-two-levels-down",
+   "about": "The added set holds an ACTIVE nested set with the policy and, under it, an INACTIVE set.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r30"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "added",
+       "name": "added set",
+       "status": "ACTIVE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == '{{resourceType}}'",
+       "sets": [
+        {
+         "key": "added-mid",
+         "name": "added middle",
+         "status": "ACTIVE",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "target": "true",
+         "policies": [
+          {
+           "key": "added-reader",
+           "name": "added reader",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "algorithm": "DENY_UNLESS_PERMIT",
+           "rules": [
+            {
+             "key": "added-upd",
+             "name": "added update",
+             "target": "operation == 'UPDATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "sets": [
+          {
+           "key": "added-deep",
+           "name": "added deep",
+           "status": "INACTIVE",
+           "algorithm": "DENY_UNLESS_PERMIT",
+           "target": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r30"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-added-inactive-rule",
+   "about": "The added set's policy holds, beside the update rule, a rule with status INACTIVE.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update-before",
+     "resource": {
+      "id": "r30"
+     },
+     "operation": "UPDATE"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "added",
+       "name": "added set",
+       "status": "ACTIVE",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == '{{resourceType}}'",
+       "policies": [
+        {
+         "key": "added-reader",
+         "name": "added reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "added-upd",
+           "name": "added update",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "added-off",
+           "name": "added off",
+           "target": "operation == 'DELETE'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "status": "INACTIVE"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "update-after",
+       "resource": {
+        "id": "r30"
+       },
+       "operation": "UPDATE"
+      },
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r30"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r30open-customization-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

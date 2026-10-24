@@ -1,0 +1,204 @@
+{
+ "about": "What a condition answers when the attribute on the right of an operator is an absent header, an absent claim, or a GENERAL PIP that answered 500. a1 records an absent resource key on the right as false alone, which does not tell a false leaf from an ended rule, and no earlier case puts a PIP there. The agent's condition parser accepts every condition here. Each goes through a probe and its control: the probe is true when the right operand is a value the operator is false over, and false when it ends the rule or, for the failed PIP, the whole answer. The failed PIP is read by the probe alone, and the probe fails unless pip-mock received a call to it.",
+ "resourceTypePrefix": "PARITY_SUITE_R9_",
+ "pins": {
+  "/api/v1/pip/r9-right-failed": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity right-operand case"
+   }
+  }
+ },
+ "pips": {
+  "noheader": {
+   "name": "subject.parityR9NoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-no-such-header",
+   "cacheable": false
+  },
+  "noclaim": {
+   "name": "subject.parityR9NoClaim",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parity_r9_no_such_claim",
+   "cacheable": false
+  },
+  "failed": {
+   "name": "subject.parityR9RightFailed",
+   "url": "http://pip-mock:8090/api/v1/pip/r9-right-failed",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_R9_RIGHT"
+   },
+   "cacheable": false
+  },
+  "home": {
+   "name": "subject.parityR9HomeIds",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-home-ids",
+   "cacheable": false
+  },
+  "delegated": {
+   "name": "subject.parityR9DelegatedIds",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-delegated-ids",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "ro-in-an-absent-header",
+   "condition": "resource.x IN subject.parityR9NoHeader OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-right",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-in-an-absent-header-control",
+   "resourceType": "PARITY_SUITE_R9_RO_IN_AN_ABSENT_HEADER_CTL",
+   "condition": "resource.a == 'y' OR resource.x IN subject.parityR9NoHeader",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-right",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-equals-an-absent-claim",
+   "condition": "resource.x == subject.parityR9NoClaim OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-right",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-equals-an-absent-claim-control",
+   "resourceType": "PARITY_SUITE_R9_RO_EQUALS_AN_ABSENT_CLAIM_CTL",
+   "condition": "resource.a == 'y' OR resource.x == subject.parityR9NoClaim",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-right",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-in-a-failed-pip",
+   "condition": "resource.x IN subject.parityR9RightFailed OR resource.a == 'y'",
+   "pips": [
+    "failed"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/r9-right-failed"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-right",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-in-a-failed-pip-control",
+   "resourceType": "PARITY_SUITE_R9_RO_IN_A_FAILED_PIP_CTL",
+   "condition": "resource.a == 'y' OR resource.x IN subject.parityR9RightFailed",
+   "pips": [
+    "failed"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-right",
+      "a": "y",
+      "x": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ro-in-either-header",
+   "about": "The one condition of the product policies in reach whose OR could depend on how the right operand of IN resolves. With only the second header sent, the first IN reads an absent header, and the answer is true when that IN is false and OR goes on. only-home-holds-the-id is the control, true whatever the second IN does, and neither-header-holds-the-id the negative control.",
+   "condition": "resource.customerId IN subject.parityR9HomeIds OR resource.customerId IN subject.parityR9DelegatedIds",
+   "pips": [
+    "home",
+    "delegated"
+   ],
+   "requests": [
+    {
+     "name": "only-delegated-holds-the-id",
+     "headers": {
+      "x-parity-r9-delegated-ids": "c1"
+     },
+     "resource": {
+      "id": "r9-right",
+      "customerId": "c1"
+     }
+    },
+    {
+     "name": "only-home-holds-the-id",
+     "headers": {
+      "x-parity-r9-home-ids": "c1"
+     },
+     "resource": {
+      "id": "r9-right",
+      "customerId": "c1"
+     }
+    },
+    {
+     "name": "neither-header-holds-the-id",
+     "headers": {
+      "x-parity-r9-home-ids": "c2",
+      "x-parity-r9-delegated-ids": "c3"
+     },
+     "resource": {
+      "id": "r9-right",
+      "customerId": "c1"
+     }
+    }
+   ]
+  }
+ ]
+}

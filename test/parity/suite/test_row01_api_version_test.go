@@ -22,9 +22,8 @@ import (
 )
 
 // TestRow01ApiVersion drives parity-contract row 1 (GET /api-version, PSUITE-1-m2m).
-// Unauthenticated per SpringApiVersionService.java:36-61 — the probe runs
-// before interceptor selection, so no Authorization / Incoming-Token header
-// is sent. Golden asserts the integer byte shape from D-V item 11.
+// The endpoint answers without authentication, so no Authorization or
+// Incoming-Token header is sent. Golden asserts the integer byte shape from D-V item 11.
 func (s *ParitySuite) TestRow01ApiVersion() {
 	ctx := context.Background()
 
