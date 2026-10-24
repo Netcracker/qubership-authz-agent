@@ -20,6 +20,10 @@ pipStub:
       config: requestargs.responses.yaml
     entitlements-mock:
       port: 8080
+    # The User Management API, which access-control asks for the user of a
+    # request with userId; authz-agent does not call it, the suite pins it.
+    user-management-mock:
+      port: 8080
 
 # The parity-m2m client of the cloud-common realm in idp-seed/.
 clientCredentials:
@@ -31,6 +35,21 @@ suite:
   enabled: true
   name: parity-suite
   imageRepository: local/authz-parity-suite
+  # On the authz-agent profile each simplified case waits
+  # PARITY_PULL_SETTLE_SECONDS (2 s) for the agent's pull: the 4846 such cases
+  # of testdata/cases take about 2.7 h, emptying their domains and their pauses
+  # about 10 min, and the Go functions about 25 min more.
+  # 5 h leaves a margin for a slower runner; the Job deadline is 15 min longer,
+  # so that the test binary's own timeout fires first and prints the running
+  # tests.
+  args:
+    - ./parity.test
+    - -test.v
+    - -test.timeout
+    - 18000s
+    - -test.run
+    - ^TestParitySuite$
+  activeDeadlineSeconds: 18900
   env:
     PARITY_PROFILE: authz-agent
     # The chart's Service, which fronts the agent Pod. `make parity-harness`
@@ -40,3 +59,4 @@ suite:
     PARITY_AUTHZ_POLICY_ADMIN_BASE_URL: http://authz-policy-admin:18090
     PARITY_PIP_MOCK_CONTROL_URL: http://pip-mock:8090
     PARITY_EA_MOCK_CONTROL_URL: http://entitlements-mock:8080
+    PARITY_UM_MOCK_CONTROL_URL: http://user-management-mock:8080

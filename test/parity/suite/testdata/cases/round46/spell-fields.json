@@ -1,0 +1,152 @@
+{
+ "about": "The four-state matrix of upload fields: a rule, its policy or its set carries one field absent, null, \"\", blank, with whitespace of a class at its ends, in another JSON type or as a list of one, in the ALLOW form of the observation wrapper whose condition is true. Each case is paired with the reference case of the file, the same tree with every field as documented: a refused upload, a rule that no longer applies or a changed decision is the answer.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_SPELL_FIELDS_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "sp46-fields-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp46-fields-ref-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.m == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "m": "y",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp46-fields-set-status-edge-vt-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.m == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "status": "\u000bACTIVE\u000b"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "m": "y",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp46-fields-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

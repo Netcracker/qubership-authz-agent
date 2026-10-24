@@ -1,0 +1,257 @@
+{
+ "about": "Rules for iterate nodes over two grants, regions r1 and r2: a node whose passes all deny, and the order of the passes, asked one set deeper. The scope service answers every case of this file with the same two grants.",
+ "resourceTypePrefix": "PARITY_SUITE_R23T_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/r23-s53-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 23 case"
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "cachePeriod": 1,
+   "cacheable": false,
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090"
+  },
+  "parityr23s53failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR23S53Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r23-s53-failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-s53-failing"
+  }
+ },
+ "cases": [
+  {
+   "id": "s23-second-carrier-scope-two-grants-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-062-one-set-deeper",
+   "about": "Seconds the golden regular/t16-17/filter. Pins what an iterate node whose passes all deny gives in the filter, here one set deeper.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s0",
+         "target": "true",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "PERMIT_OVERRIDES"
+         },
+         "policies": [
+          {
+           "key": "s0-s0-p0",
+           "target": "true",
+           "rules": []
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-063-one-set-deeper",
+   "about": "Seconds the golden regular/t16-04/ry. Pins the order of the iterate passes, here one set deeper.",
+   "pips": [
+    "parityr23s53failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-p0-r0",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r1' AND resource.a == 'y'",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-p0-r1",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r2' AND resource.a == 'n'",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-p0-r2",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r2' AND resource.a == 'y' AND subject.parityR23S53Failing == 'v'",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-p0-r3",
+           "target": "true",
+           "condition": "subject.permissionScope.region CONTAINS 'r1' AND resource.a == 'n' AND subject.parityR23S53Failing == 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "a": "y",
+      "b": "y",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-second-carrier-scope-two-grants-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

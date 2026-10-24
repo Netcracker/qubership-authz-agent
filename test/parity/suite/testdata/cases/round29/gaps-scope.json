@@ -1,0 +1,166 @@
+{
+ "about": "The scope service answers the reader with one grant whose region values are the plain strings r1 and r2, not objects with an id. The expected reading takes them as the values; the alternative is 500, as for a body the parser cannot read.",
+ "resourceTypePrefix": "PARITY_SUITE_R29C_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           "r1",
+           "r2"
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "r29gaps-scope-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-scope-plain-string-values",
+   "about": "An iterate set whose rule reads the region of the grant. True for a-n if plain strings are the values; 500 if the scope body cannot be read.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-scope-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

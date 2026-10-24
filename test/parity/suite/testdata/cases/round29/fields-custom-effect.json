@@ -1,0 +1,408 @@
+{
+ "about": "A customization that replaces an ALLOW rule's effect with DENY, NOT_APPLICABLE, USE_FILTER_CONDITION, or text no effect has. The expected reading takes every effect but ALLOW and DENY as DENY, in an uploaded rule and in a customized one alike. The rule sits alone under PERMIT_UNLESS_DENY with rsqlPredicate p==1: read after is false if the new effect denies, true if the rule no longer applies or allows; the filter tells a deny term (the negated predicate), no term, and an allow term.",
+ "resourceTypePrefix": "PARITY_SUITE_R29FD_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29fields-custom-effect-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29fields-custom-effect-deny",
+   "about": "A CUSTOMER customization replaces the rule with effect DENY, every other field as uploaded.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "read",
+           "name": "customized read",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY",
+           "rsqlPredicate": "p==1"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29fields-custom-effect-not-applicable",
+   "about": "A CUSTOMER customization replaces the rule with effect NOT_APPLICABLE, every other field as uploaded.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "read",
+           "name": "customized read",
+           "target": "true",
+           "condition": "true",
+           "effect": "NOT_APPLICABLE",
+           "rsqlPredicate": "p==1"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29fields-custom-effect-use-filter-condition",
+   "about": "A CUSTOMER customization replaces the rule with effect USE_FILTER_CONDITION, every other field as uploaded.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "read",
+           "name": "customized read",
+           "target": "true",
+           "condition": "true",
+           "effect": "USE_FILTER_CONDITION",
+           "rsqlPredicate": "p==1"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29fields-custom-effect-unknown",
+   "about": "A CUSTOMER customization replaces the rule with effect PARITY_JUNK, every other field as uploaded.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p==1"
+         }
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "policies": [
+        {
+         "key": "reader",
+         "rules": [
+          {
+           "key": "read",
+           "name": "customized read",
+           "target": "true",
+           "condition": "true",
+           "effect": "PARITY_JUNK",
+           "rsqlPredicate": "p==1"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r29"
+       }
+      },
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r29fields-custom-effect-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "status": "ACTIVE"
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

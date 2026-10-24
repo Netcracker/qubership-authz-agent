@@ -1,0 +1,495 @@
+{
+ "about": "PIP declarations in forms real configurations use and no golden sends, with synthetic names: no pipType, and the older shapes that carry only a url and some of requestAttributes, jsonPath, headers, httpMethod, type, or a beanName and no url; a url placeholder that names neither the subject nor the resource; ${operation} in requestAttributes. Each case reads the PIP in `<PIP> == 'v' OR resource.a == 'y'`, and pipCalls records the call: route r32gaps-corpus answers v. Read as GENERAL, an upload is 200 and a = n true; an upload is 400 if a PIP needs a pipType, and both requests are false if the PIP fails when read.",
+ "resourceTypePrefix": "PARITY_SUITE_R32G_",
+ "pins": {
+  "/api/v1/pip/r32gaps-corpus": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r32gaps-corpus-json": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/r32gaps-corpus-null": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r32gaps-corpus-": {
+   "statusCode": 200,
+   "body": [
+    "w"
+   ]
+  }
+ },
+ "pips": {
+  "url-only": {
+   "name": "subject.parityR32UrlOnly",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus"
+  },
+  "untyped": {
+   "name": "subject.parityR32Untyped",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus",
+   "requestAttributes": {
+    "case": "r32gaps-untyped"
+   }
+  },
+  "json-path": {
+   "name": "subject.parityR32JsonPath",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus-json",
+   "jsonPath": "$.k"
+  },
+  "headers": {
+   "name": "subject.parityR32Headers",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus",
+   "headers": "X-Parity-R32-Fwd"
+  },
+  "get": {
+   "name": "subject.parityR32Get",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus",
+   "httpMethod": "GET"
+  },
+  "bean": {
+   "name": "subject.parityR32Bean",
+   "beanName": "parityR32Bean"
+  },
+  "type-regular": {
+   "name": "subject.parityR32Regular",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus",
+   "type": "REGULAR"
+  },
+  "type-uuid": {
+   "name": "subject.parityR32Uuid",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus",
+   "type": "UUID"
+  },
+  "type-json": {
+   "name": "subject.parityR32Json",
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus-json",
+   "type": "JSON",
+   "jsonPath": "$.k"
+  },
+  "other": {
+   "name": "subject.parityR32Other",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus-${PARITY_R32_DEPLOY_VALUE}",
+   "requestAttributes": {
+    "case": "r32gaps-corpus-"
+   }
+  },
+  "operation": {
+   "name": "subject.parityR32Op",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r32gaps-corpus",
+   "requestAttributes": {
+    "case": "r32gaps-operation",
+    "op": "${operation}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r32gaps-corpus-pips-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-url-only",
+   "pips": [
+    "url-only"
+   ],
+   "about": "The PIP declares name and url only.",
+   "condition": "subject.parityR32UrlOnly == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-untyped",
+   "pips": [
+    "untyped"
+   ],
+   "about": "The PIP declares url, httpMethod POST, cacheable and requestAttributes, but no pipType.",
+   "condition": "subject.parityR32Untyped == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-json-path",
+   "pips": [
+    "json-path"
+   ],
+   "about": "The PIP declares url and jsonPath $.k only; its route answers {\"k\": \"v\"}. a = n is true if jsonPath applies without type JSON, false if the body is read whole, as the specification reads it.",
+   "condition": "subject.parityR32JsonPath == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus-json"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-headers",
+   "pips": [
+    "headers"
+   ],
+   "about": "The PIP declares url and headers X-Parity-R32-Fwd only; the request sends X-Parity-R32-Fwd: f, and pipHeaders records whether the call carried it.",
+   "condition": "subject.parityR32Headers == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R32-Fwd": "f"
+     },
+     "pipHeaders": [
+      "x-parity-r32-fwd"
+     ],
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R32-Fwd": "f"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-get",
+   "pips": [
+    "get"
+   ],
+   "about": "The PIP declares url and httpMethod GET only.",
+   "condition": "subject.parityR32Get == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-bean",
+   "pips": [
+    "bean"
+   ],
+   "about": "The PIP declares a beanName and no url: no call can reach pip-mock, so a = n is false unless the bean answers v.",
+   "condition": "subject.parityR32Bean == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-type-regular",
+   "pips": [
+    "type-regular"
+   ],
+   "about": "The PIP declares url and type REGULAR only.",
+   "condition": "subject.parityR32Regular == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-type-uuid",
+   "pips": [
+    "type-uuid"
+   ],
+   "about": "The PIP declares url and type UUID only.",
+   "condition": "subject.parityR32Uuid == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-type-json",
+   "pips": [
+    "type-json"
+   ],
+   "about": "The PIP declares url, type JSON and jsonPath $.k only; its route answers {\"k\": \"v\"}.",
+   "condition": "subject.parityR32Json == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus-json"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-pip-untyped-in-a-predicate",
+   "pips": [
+    "untyped"
+   ],
+   "about": "The PIP without pipType fills an rsql predicate f=in=(${subject.parityR32Untyped}) of an ALLOW rule. The filter is USE_FILTER_CONDITION with f in (v) if the PIP is read as GENERAL.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-f",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f=in=(${subject.parityR32Untyped})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-url-other-placeholder",
+   "pips": [
+    "other"
+   ],
+   "about": "The url ends in r32gaps-corpus-${PARITY_R32_DEPLOY_VALUE}, a placeholder that names neither the subject nor the resource, as a deployment would fill it in. Route r32gaps-corpus-null answers v, r32gaps-corpus- answers w: a = n is true if the placeholder becomes the text null, false if it becomes empty text, and both requests are false if the call fails. pipCalls counts the calls to the -null route.",
+   "condition": "subject.parityR32Other == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus-null"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-request-attribute-operation",
+   "pips": [
+    "operation"
+   ],
+   "about": "The PIP's requestAttributes hold op: ${operation}. pipCalls records what op carried: the request's operation READ, or null.",
+   "condition": "subject.parityR32Op == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r32gaps-corpus"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-corpus-pips-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

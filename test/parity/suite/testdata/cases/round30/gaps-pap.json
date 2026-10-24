@@ -1,0 +1,182 @@
+{
+ "about": "Uploads round 29 did not send: a GENERAL PIP with beanName and no url; a rule without ruleId (the rule's omitFields drops the member); a simplified policy without id. The load golden is the answer; a read follows each accepted upload.",
+ "resourceTypePrefix": "PARITY_SUITE_R30G_",
+ "pins": {},
+ "pips": {
+  "bean": {
+   "name": "subject.parityR30Bean",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "beanName": "parityR30Bean",
+   "requestAttributes": {
+    "case": "r30gaps-bean"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r30gaps-pap-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-general-bean-name",
+   "pips": [
+    "bean"
+   ],
+   "about": "The GENERAL PIP names beanName parityR30Bean and no url; the condition does not read it. Upload 200 if beanName stands for url, 400 if url is required.",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-policy-without-id",
+   "policyOmit": [
+    "id"
+   ],
+   "about": "The simplified policy has no id. Upload 200 if the PAP makes one, 400 if it is required.",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-rule-without-rule-id",
+   "about": "The set's one rule has no ruleId. Upload 200 if the PAP makes one, 400 if it is required.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW",
+         "omitFields": [
+          "ruleId"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-pap-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

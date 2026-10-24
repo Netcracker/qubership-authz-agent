@@ -1,0 +1,177 @@
+{
+ "about": "Which declaration of a name that two domains declare makes a condition one the tenant holds: another domain declares the name as a TOKEN, then the case's domain declares it as a GENERAL with a whole ${subject.isM2M}. The PAP refuses a TOKEN or HEADER whose name another domain declares (r29r28-dual-token-here, r29pap-header-name-in-another-domain-bad); no golden uploads a GENERAL over another domain's TOKEN.",
+ "resourceTypePrefix": "PARITY_SUITE_R41HPT_",
+ "pins": {
+  "/api/v1/pip/r41open-m2m-held-pip-twin": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR41HeldPipTwin",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-twin",
+   "requestAttributes": {
+    "case": "r41open-m2m-held-pip-twin",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "token": {
+   "name": "subject.parityR41HeldPipTwin",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r41open-m2m-held-pip-twin-elsewhere",
+   "domain": "PARITY_R41_OTHER",
+   "pips": [
+    "token"
+   ],
+   "condition": "resource.c == 'n'",
+   "about": "Domain PARITY_R41_OTHER declares subject.parityR41HeldPipTwin as a TOKEN over preferred_username (parity-reader), with a simplified policy for READ whose condition holds. True.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r41openm2mheldpiptwin-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r41open-m2m-held-pip-twin",
+   "pips": [
+    "held"
+   ],
+   "about": "The case's domain declares subject.parityR41HeldPipTwin as a GENERAL with a whole ${subject.isM2M} in requestAttributes; domain PARITY_R41_OTHER declares it as a TOKEN. An ACTIVE top-level set's only rule allows on resource.a == 'y' OR subject.parityR41HeldPipTwin == 'v'. If the PAP refuses the declaration, the case ends at its domain golden. If it takes it: read-a-n reads the name, false through the TOKEN (parity-reader); read-other and the last control answer true if the tenant holds the TOKEN declaration, and every request answers 400 if it holds the GENERAL one.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR41HeldPipTwin == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r41",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-twin"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r41",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-twin"
+    },
+    {
+     "name": "read-other",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R41HPT_R41OPENM2MHELDPIPTWIN_CONTROL_FIRST"
+    }
+   ]
+  },
+  {
+   "id": "r41openm2mheldpiptwin-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

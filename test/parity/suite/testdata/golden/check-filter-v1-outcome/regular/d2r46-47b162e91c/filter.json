@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R16_D2SF2_138.n.lt(5)",
+    "mongodbFilterCondition": "{ { \"n\": { \"$lt\": 5 } } }",
+    "rsqlFilterCondition": "n=lt=5,p2==2",
+    "sqlFilterCondition": "n \u003c 5",
+    "customFilterCondition": null
+  }
+}

@@ -1,0 +1,253 @@
+{
+ "about": "The cases of round 20 context-one-grant.json whose answer changed from stand to stand: a DENY rule probe beside an ALLOW rule true, where probe fails the decision when it is evaluated and is skipped once allow has permitted. Each request is classed by the call log of the GENERAL PIP that probe reads, so its golden is filed under -when-the-pip-was-read or -when-the-pip-was-skipped. The order is chosen per case, so a request needs recording on several stands before both classes show.",
+ "resourceTypePrefix": "PARITY_SUITE_R21P_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         },
+         {
+          "key": "tag",
+          "values": []
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/c20-005911-l": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/c20-007506-r": {
+   "statusCode": 200,
+   "body": [
+    {
+     "k": "v"
+    }
+   ]
+  }
+ },
+ "pips": {
+  "c20-007506-generalR": {
+   "name": "subject.parityCxGR",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-007506-r",
+   "requestAttributes": {
+    "case": "c20-007506-r"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "c20-003891-tokenR": {
+   "name": "subject.parityCxTR",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-017356-headerL": {
+   "name": "subject.parityCxHL",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-l",
+   "cacheable": false
+  },
+  "c20-005060-headerR": {
+   "name": "subject.parityCxHR",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-cx-r",
+   "cacheable": false
+  },
+  "c20-005911-generalL": {
+   "name": "subject.parityCxGL",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/c20-005911-l",
+   "requestAttributes": {
+    "case": "c20-005911-l"
+   }
+  },
+  "c20-000501-tokenL": {
+   "name": "subject.parityCxTL",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parityNoSuchClaim",
+   "cacheable": false
+  },
+  "c20-003592-mapping": {
+   "name": "subject.permissions.parityCx",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "PARITY_PERM_V"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o21-order-one-grant-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  },
+  {
+   "id": "o21-c20-007506",
+   "pips": [
+    "c20-007506-generalR",
+    "scope",
+    "c20-003891-tokenR",
+    "c20-017356-headerL",
+    "c20-005060-headerR",
+    "c20-005911-generalL",
+    "c20-000501-tokenL",
+    "c20-003592-mapping"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.roles NOT CONTAINS subject.parityCxGR OR resource.a == 'y'",
+         "effect": "DENY"
+        },
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "cx",
+      "a": "n"
+     },
+     "classifyBy": "/api/v1/pip/c20-007506-r"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "cx",
+      "a": "y"
+     },
+     "classifyBy": "/api/v1/pip/c20-007506-r"
+    }
+   ],
+   "about": "1 pair of context dimensions no golden reached, among them lk=subj.roles, rs=ERROR. Round 20 left its goldens out: the decision changed between stands. Classed by /api/v1/pip/c20-007506-r."
+  },
+  {
+   "id": "o21-order-one-grant-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r21"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,490 @@
+{
+ "about": "PAP rules that exactly one earlier golden pins: syntax forms the PAP refuses, written in a regular rule where the goldens had a simplified policy; a permission scope in a simplified policy; FILTERED declarations with only a resource type or only the suffix; GENERAL headers as an object; one rule key in two policies of an upload. Most uploads here are refused, and the load golden is the answer.",
+ "resourceTypePrefix": "PARITY_SUITE_R23P_",
+ "pins": {
+  "/api/v1/pip/r23-filtered-resource-type-only-read": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r23-filtered-suffix-only-read": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r23-headers": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r23-headers-read": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "parityr23fdtyperead": {
+   "name": "subject.parityR23FdTypeRead",
+   "pipType": "FILTERED",
+   "resourceType": "PARITY_SUITE_R23P_FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r23-filtered-resource-type-only-read",
+   "requestAttributes": {
+    "case": "r23-filtered-resource-type-only-read"
+   }
+  },
+  "parityr23fdsuffixread-filtered": {
+   "name": "subject.parityR23FdSuffixRead.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r23-filtered-suffix-only-read",
+   "requestAttributes": {
+    "case": "r23-filtered-suffix-only-read"
+   }
+  },
+  "parityr23headers": {
+   "name": "subject.parityR23Headers",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "headers": {
+    "X-B": "w"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r23-headers",
+   "requestAttributes": {
+    "case": "r23-headers"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "s23-second-carrier-pap-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-048-pap-same-rule-key-other-predicates",
+   "about": "Pins what the PAP answers for one rule key in two policies of an upload.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "s23-049-deny-rule",
+   "about": "Seconds the golden condition-syntax/g5-standalone-not. Pins that the PAP refuses the form \"standalone NOT\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "NOT resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-050-deny-rule",
+   "about": "Seconds the golden condition-syntax/g6a-doubled-space. Pins that the PAP refuses the form \"double space\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.a == 'y'  AND resource.c == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-051-deny-rule",
+   "about": "Seconds the golden isolated/md12-brace-placeholder. Pins that the PAP refuses the form \"placeholder in MATCH pattern\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.uri MATCH /v1/{id}/items",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-052-deny-rule",
+   "about": "Seconds the golden isolated/ps-attribute-in-a-list. Pins that the PAP refuses the form \"list element\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IN 'a', resource.y",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-053-deny-rule",
+   "about": "Seconds the golden isolated/vt6-in-a-list-of-mixed-types. Pins that the PAP refuses the form \"mixed-type list\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IN 'a', 5, TRUE",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-054-deny-rule",
+   "about": "Seconds the golden isolated/x25-double-quoted-string. Pins that the PAP refuses the form \"double-quoted string\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x == \"v\"",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-055-deny-rule",
+   "about": "Seconds the golden isolated/x6-match-quoted-wildcard. Pins that the PAP refuses the form \"quoted MATCH pattern\", here in a DENY rule of a regular set under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x MATCH 'ab*'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-056-pap-filtered-resource-type-only-read-equals",
+   "about": "Pins that the PAP accepts a FILTERED PIP declared with a resource type only.",
+   "condition": "subject.parityR23FdTypeRead == 'v'",
+   "pips": [
+    "parityr23fdtyperead"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-057-pap-filtered-suffix-only-read-filtered-name",
+   "about": "Pins that the PAP refuses a FILTERED PIP declared with the .filtered suffix only.",
+   "condition": "subject.parityR23FdSuffixRead.filtered == 'v'",
+   "pips": [
+    "parityr23fdsuffixread-filtered"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-058-pap-scope-in-simplified-or",
+   "about": "Pins that the PAP refuses a permission scope read in a simplified policy.",
+   "condition": "resource.a == 'y' OR subject.permissionScope.region IS NULL",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y",
+      "x": "/abc/",
+      "c": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-059-pap-headers-object-general",
+   "about": "Pins that the PAP refuses GENERAL PIP headers given as an object.",
+   "pips": [
+    "parityr23headers"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-second-carrier-pap-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,441 @@
+{
+ "about": "Every operand pair of IS NULL, IS NOT NULL, IS EMPTY, IS NOT EMPTY the PAP may accept that no earlier golden evaluated. Each condition is <pair> OR resource.a == 'y': true-value sends a = 'n' and values under which the comparison should hold, false-value sends a = 'y' and values under which it should not.",
+ "resourceTypePrefix": "PARITY_SUITE_R15_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "mapping": {
+   "name": "subject.permissions.PARITY_R15",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R15_READ",
+      "PARITY_R15_WRITE"
+     ]
+    }
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "p15-is-empty-res-nested--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": []
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": [
+        "v",
+        "w"
+       ]
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x IS EMPTY OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-empty-ent--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.entitledResources.of('PARITY_R15_ENT').as('Owner') IS NOT EMPTY OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-empty-res-nested--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": [
+        "v",
+        "w"
+       ]
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": []
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x IS NOT EMPTY OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-empty-subj-permissionscope--",
+   "pips": [
+    "scope"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "true",
+         "condition": "subject.permissionScope.region IS NOT EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ]
+  },
+  {
+   "id": "p15-is-not-empty-subj-permissions--",
+   "pips": [
+    "mapping"
+   ],
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "subject.permissions IS NOT EMPTY OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-null-lit-bool--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true IS NOT NULL OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-null-lit-num--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 IS NOT NULL OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-null-operation--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation IS NOT NULL OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-is-not-null-res-nested--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": "v"
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": []
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x IS NOT NULL OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-not-null-resourcetype--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "resourceType IS NOT NULL OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-null-lit-bool--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "true IS NULL OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-null-lit-num--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "condition": "5 IS NULL OR resource.a == 'y'"
+  },
+  {
+   "id": "p15-is-null-operation--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n"
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "decide",
+         "target": "operation IS NULL OR resource.a == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p15-is-null-res-nested--",
+   "requests": [
+    {
+     "name": "true-value",
+     "resource": {
+      "id": "r15",
+      "a": "n",
+      "o": {
+       "x": []
+      }
+     }
+    },
+    {
+     "name": "false-value",
+     "resource": {
+      "id": "r15",
+      "a": "y",
+      "o": {
+       "x": "v"
+      }
+     }
+    }
+   ],
+   "condition": "resource.o.x IS NULL OR resource.a == 'y'"
+  }
+ ]
+}

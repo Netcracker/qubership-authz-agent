@@ -1,0 +1,230 @@
+{
+ "about": "What a form that is always false alone does to the rest of its condition and to the rules beside it. Four forms are recorded as accepted by the PAP and false for a value they describe: resource['x'] == 'v' (j7-bracket-path), resource.x != null (x26-null-literal/attribute-present), MATCH against a pattern taken from an attribute (a2-match-attribute-pattern) and MATCH against a /.../ regex literal (x34-regex-literal). Alone, a leaf that is false and a rule that was ended look the same, and the two readings differ for every policy that has an OR, a DENY rule, or a second ALLOW rule beside the form. subject allowed 'READ' on resource (u7-has-access) is recorded false too, on a policy whose condition refers to the policy's own decision; access-operator.json sends it beside a policy for the operation it names. The df cases put each form through a probe and its control: a true probe means the form is a false leaf and OR went on to resource.a == 'y'; a false probe means the form ended the rule the way an absent key does (s10-absent-or-true); a false control means the fixture is broken. The two cases with sets ask the same of the levels above the condition, run on the legacy profile only, and each sends a request where nothing depends on the form as its control.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "df1-bracket-path",
+   "resourceType": "PARITY_SUITE_DEAD_DF1",
+   "condition": "resource['x'] == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df1-bracket-path-control",
+   "resourceType": "PARITY_SUITE_DEAD_DF1_CTL",
+   "condition": "resource.a == 'y' OR resource['x'] == 'v'",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df2-null-literal",
+   "resourceType": "PARITY_SUITE_DEAD_DF2",
+   "condition": "resource.x != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df2-null-literal-control",
+   "resourceType": "PARITY_SUITE_DEAD_DF2_CTL",
+   "condition": "resource.a == 'y' OR resource.x != null",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df3-match-against-an-attribute",
+   "resourceType": "PARITY_SUITE_DEAD_DF3",
+   "condition": "resource.x MATCH resource.p OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df3-match-against-an-attribute-control",
+   "resourceType": "PARITY_SUITE_DEAD_DF3_CTL",
+   "condition": "resource.a == 'y' OR resource.x MATCH resource.p",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df4-match-against-a-regex-literal",
+   "resourceType": "PARITY_SUITE_DEAD_DF4",
+   "condition": "resource.x MATCH /ab.*/ OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "df4-match-against-a-regex-literal-control",
+   "resourceType": "PARITY_SUITE_DEAD_DF4_CTL",
+   "condition": "resource.a == 'y' OR resource.x MATCH /ab.*/",
+   "requests": [
+    {
+     "name": "form-is-false-and-the-right-operand-true",
+     "resource": {
+      "id": "dead-form",
+      "a": "y",
+      "x": "abc",
+      "p": "ab*"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dead-form-in-a-deny-rule",
+   "about": "A DENY rule whose condition is a dead form OR a true operand, under the algorithm that permits what no rule denied: it denies when the form is a false leaf and does not apply when the form ends the rule. form-beside-a-true-operand is the question; nothing-denies is the control that the set permits by default.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-deny",
+         "target": "operation == 'READ'",
+         "condition": "resource.x != null OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "form-beside-a-true-operand",
+     "resource": {
+      "id": "reg-dead-deny",
+      "x": "abc",
+      "a": "y"
+     }
+    },
+    {
+     "name": "nothing-denies",
+     "resource": {
+      "id": "reg-dead-deny",
+      "x": "abc",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "dead-form-beside-an-allowing-rule",
+   "about": "An ALLOW rule whose condition is a dead form, beside an ALLOW rule that applies. The rule holding the form is expected to leave the neighbor alone, the way approve-failed-allow-beside-allow records for an absent key. the-neighbor-allows is the question; the-neighbor-does-not is the control that the set denies when no rule allows.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-allow-dead-form",
+         "target": "operation == 'READ'",
+         "condition": "resource.x != null",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "read-allow",
+         "target": "operation == 'READ'",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "the-neighbor-allows",
+     "resource": {
+      "id": "reg-dead-allow",
+      "x": "abc",
+      "a": "y"
+     }
+    },
+    {
+     "name": "the-neighbor-does-not",
+     "resource": {
+      "id": "reg-dead-allow",
+      "x": "abc",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

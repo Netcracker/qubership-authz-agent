@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_SUBJECT_NAME.a.eq(parity-reader)",
+    "mongodbFilterCondition": "{ { \"a\": parity-reader } }",
+    "rsqlFilterCondition": "a==parity-reader",
+    "sqlFilterCondition": "a=parity-reader",
+    "customFilterCondition": {
+      "logic": {
+        "path": "60839c58-b428-adf6-f84c-a023c1bf8812"
+      },
+      "data": {
+        "60839c58-b428-adf6-f84c-a023c1bf8812": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": "parity-reader"
+          }
+        }
+      }
+    }
+  }
+}

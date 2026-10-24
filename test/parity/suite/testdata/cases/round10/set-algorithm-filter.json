@@ -1,0 +1,565 @@
+{
+ "about": "What the algorithm of a set does to the predicates of its policies in check/filter. Every recorded case of a predicate reaching a filter under a set puts the set under DENY_UNLESS_PERMIT (deny-predicates-under-*, deny-in-one-policy-beside-a-predicate-in-another), except deny-overrides-set-*, where the set denies through a policy with no rule on the operation and no predicate is left to shape. A PERMIT_UNLESS_DENY policy drops the ALLOW predicates of its rules (deny-predicates-under-permit-unless-deny), and a PERMIT_UNLESS_DENY iterate node keeps them (scope-filter/*/filter-custom-permit-unless-deny); what a PERMIT_UNLESS_DENY set does with the ALLOW predicate of a policy is recorded nowhere. Under each of the four set algorithms, -over-an-allow-predicate holds one DENY_UNLESS_PERMIT policy with an ALLOW on LIST carrying allowed==1, -over-a-deny-predicate holds one DENY_OVERRIDES policy with a DENY on LIST carrying blocked==1, and -over-allow-and-deny-predicates holds both. The sets under DENY_UNLESS_PERMIT are the controls, the set algorithm every recorded predicate was seen under. check/resource on LIST records the decision the filter has to follow. The agent's converter accepts every set here.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "set-algorithm-deny-unless-permit-over-an-allow-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-deny-unless-permit-over-a-deny-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-deny-unless-permit-over-allow-and-deny-predicates",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-permit-unless-deny-over-an-allow-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-permit-unless-deny-over-a-deny-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-permit-unless-deny-over-allow-and-deny-predicates",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-deny-overrides-over-an-allow-predicate",
+   "about": "Under DENY_OVERRIDES this repeats deny-overrides-set-with-the-predicate-policy-alone, whose filter is allowed==1, and has to record the same answer.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-deny-overrides-over-a-deny-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-deny-overrides-over-allow-and-deny-predicates",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-permit-overrides-over-an-allow-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-permit-overrides-over-a-deny-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "set-algorithm-permit-overrides-over-allow-and-deny-predicates",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  }
+ ]
+}
