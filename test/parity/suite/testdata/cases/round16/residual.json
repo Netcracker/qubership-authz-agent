@@ -1,0 +1,1672 @@
+{
+ "about": "What coverage-guided generation of conditions still reached after the other round 16 files: the null literal on the right of a nested path, a JSON Path, a literal, subject.id and subject.roles, which no earlier case paired with it, and a wildcard selection of decimal numbers under CONTAINS.",
+ "resourceTypePrefix": "PARITY_SUITE_R16_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r16-residual-001",
+   "condition": "resource.items[*].x CONTAINS resource.o.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "o": {
+       "y": 5.0
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "o": {
+       "y": 5.0
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-002",
+   "condition": "resource.items[*].x IS NOT SUBSET resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "5.0"
+       }
+      ],
+      "y": 5.0,
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "5.0"
+       }
+      ],
+      "y": 5.0,
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-003",
+   "condition": "resource.items[*].x NOT CONTAINS resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "y": 5.0,
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": 5.0
+       }
+      ],
+      "y": 5.0,
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-004",
+   "condition": "resource.items[*].x CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-005",
+   "condition": "resource.o.x CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-006",
+   "condition": "subject.roles CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-007",
+   "condition": "resource.items[0].x CONTAINS ANY null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-008",
+   "condition": "resource.o.x CONTAINS ANY null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-009",
+   "condition": "subject.roles CONTAINS ANY null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-010",
+   "condition": "FALSE == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-011",
+   "condition": "5.0 == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-012",
+   "condition": "'v' == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-013",
+   "condition": "resource.items[0].x == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-014",
+   "condition": "resource.o.x == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-015",
+   "condition": "subject.id == null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-016",
+   "condition": "true >= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-017",
+   "condition": "5.5 >= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-018",
+   "condition": "'v' >= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-019",
+   "condition": "resource.items[*].x >= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-020",
+   "condition": "resource.o.x >= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-021",
+   "condition": "subject.id >= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-022",
+   "condition": "FALSE > null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-023",
+   "condition": "6 > null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-024",
+   "condition": "'v' > null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-025",
+   "condition": "resource.items[0].x > null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-026",
+   "condition": "resource.o.x > null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-027",
+   "condition": "subject.id > null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-028",
+   "condition": "true IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-029",
+   "condition": "-5 IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-030",
+   "condition": "'v' IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-031",
+   "condition": "resource.items[0].x IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-032",
+   "condition": "resource.o.x IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-033",
+   "condition": "subject.id IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-034",
+   "condition": "resource.items[0].x IS NOT SUBSET null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-035",
+   "condition": "resource.o.x IS NOT SUBSET null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-036",
+   "condition": "subject.roles IS NOT SUBSET 'v', 'w' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-037",
+   "condition": "subject.roles IS NOT SUBSET null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-038",
+   "condition": "resource.items[0].x IS SUBSET null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-039",
+   "condition": "resource.o.x IS SUBSET null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-040",
+   "condition": "subject.roles IS SUBSET null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-041",
+   "condition": "FALSE <= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-042",
+   "condition": "-5 <= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-043",
+   "condition": "'v' <= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-044",
+   "condition": "resource.items[*].x <= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-045",
+   "condition": "resource.o.x <= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-046",
+   "condition": "subject.id <= null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-047",
+   "condition": "FALSE < null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-048",
+   "condition": "5 < null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-049",
+   "condition": "'v' < null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-050",
+   "condition": "resource.items[0].x < null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-051",
+   "condition": "resource.o.x < null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-052",
+   "condition": "subject.id < null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-053",
+   "condition": "FALSE != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-054",
+   "condition": "0 != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-055",
+   "condition": "'v' != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-056",
+   "condition": "resource.items[0].x != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-057",
+   "condition": "resource.o.x != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-058",
+   "condition": "subject.id != null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-059",
+   "condition": "resource.items[*].x NOT CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-060",
+   "condition": "resource.o.x NOT CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-061",
+   "condition": "subject.roles NOT CONTAINS null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-062",
+   "condition": "resource.items[*].x NOT CONTAINS ANY null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-063",
+   "condition": "resource.o.x NOT CONTAINS ANY null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-064",
+   "condition": "subject.roles NOT CONTAINS ANY null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-065",
+   "condition": "FALSE NOT IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-066",
+   "condition": "-5 NOT IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-067",
+   "condition": "'v' NOT IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-068",
+   "condition": "resource.items[0].x NOT IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "items": [
+       {
+        "x": "v"
+       }
+      ],
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-069",
+   "condition": "resource.o.x NOT IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "x": "v"
+      },
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r16-residual-070",
+   "condition": "subject.id NOT IN null OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "id": "r16",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

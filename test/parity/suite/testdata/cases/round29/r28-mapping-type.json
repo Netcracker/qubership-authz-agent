@@ -1,0 +1,118 @@
+{
+ "about": "${subject.permissions} in a filter predicate when the MAPPING PIP that grants the permissions has no type UUID. Round 28 saw the values wrapped in $uuid in mongodb with a MAPPING declared with type UUID; whether the type decides was not asked. One case declares the MAPPING with type REGULAR, the next without a type.",
+ "resourceTypePrefix": "PARITY_SUITE_R29T_",
+ "pins": {},
+ "pips": {
+  "regular": {
+   "name": "subject.permissions.PARITY_R29_TYPE",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r29_p1",
+      "parity_r29_p2"
+     ]
+    }
+   },
+   "type": "REGULAR"
+  },
+  "untyped": {
+   "name": "subject.permissions.PARITY_R29_TYPE",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r29_p1",
+      "parity_r29_p2"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-mapping-type-regular",
+   "about": "The MAPPING PIP has type REGULAR.",
+   "pips": [
+    "regular"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.permissions})",
+          "sqlPredicate": "a IN (${subject.permissions})",
+          "predicate": "${resourceType}.a.in(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.permissions} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29r28-mapping-type-none",
+   "about": "The MAPPING PIP has no type.",
+   "pips": [
+    "untyped"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.permissions})",
+          "sqlPredicate": "a IN (${subject.permissions})",
+          "predicate": "${resourceType}.a.in(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.permissions} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

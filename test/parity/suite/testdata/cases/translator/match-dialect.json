@@ -1,0 +1,310 @@
+{
+ "about": "Which wildcard dialect MATCH speaks on a path. The agent's own condition parser accepts every pattern here and hands it on as a string, and four answers are recorded for the operator: x5-match-unquoted-wildcard has ab* matching abc, not matching xabc and not matching ABC, so MATCH is anchored and case-sensitive; a2-match-attribute-pattern has a pattern taken from an attribute answering false; and x34-regex-literal has /ab.*/ answering false even for a value the regex describes. Nothing before these cases says what a metacharacter does to a path separator. Every case sends a URI the pattern should select and a URI it should not, so a pattern access-control accepts and never evaluates shows as a column of false answers rather than as a dialect. md7-pattern-without-a-metacharacter is the control for the whole file: its pattern carries no metacharacter, so a false answer on uri-equal means the attribute path or the operand order is wrong and no other answer in the file means anything. The cases listed in duplicates.tsv are left out: a kept case exercises exactly what each of them does.",
+ "resourceTypePrefix": "PARITY_SUITE_MATCH_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "md1-star-between-segments",
+   "resourceType": "PARITY_SUITE_MATCH_MD1",
+   "about": "One star between two separators: whether it stands for exactly one segment, for any number of them, or for any run of characters including the separator.",
+   "condition": "resource.uri MATCH /v1/*/items",
+   "requests": [
+    {
+     "name": "one-segment-in-between",
+     "resource": {
+      "id": "match-md1",
+      "uri": "/v1/a/items"
+     }
+    },
+    {
+     "name": "two-segments-in-between",
+     "resource": {
+      "id": "match-md1",
+      "uri": "/v1/a/b/items"
+     }
+    },
+    {
+     "name": "no-segment-in-between",
+     "resource": {
+      "id": "match-md1",
+      "uri": "/v1/items"
+     }
+    },
+    {
+     "name": "last-segment-differs",
+     "resource": {
+      "id": "match-md1",
+      "uri": "/v1/a/other"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md3-double-star-between-segments",
+   "resourceType": "PARITY_SUITE_MATCH_MD3",
+   "about": "A double star that is not the last element of the pattern.",
+   "condition": "resource.uri MATCH /v1/**/items",
+   "requests": [
+    {
+     "name": "one-segment-in-between",
+     "resource": {
+      "id": "match-md3",
+      "uri": "/v1/a/items"
+     }
+    },
+    {
+     "name": "two-segments-in-between",
+     "resource": {
+      "id": "match-md3",
+      "uri": "/v1/a/b/items"
+     }
+    },
+    {
+     "name": "no-segment-in-between",
+     "resource": {
+      "id": "match-md3",
+      "uri": "/v1/items"
+     }
+    },
+    {
+     "name": "last-segment-differs",
+     "resource": {
+      "id": "match-md3",
+      "uri": "/v1/a/other"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md5-question-mark",
+   "resourceType": "PARITY_SUITE_MATCH_MD5",
+   "about": "The single-character wildcard, on one character, two, and none.",
+   "condition": "resource.uri MATCH /v1/item?",
+   "requests": [
+    {
+     "name": "one-character",
+     "resource": {
+      "id": "match-md5",
+      "uri": "/v1/items"
+     }
+    },
+    {
+     "name": "two-characters",
+     "resource": {
+      "id": "match-md5",
+      "uri": "/v1/itemss"
+     }
+    },
+    {
+     "name": "no-character",
+     "resource": {
+      "id": "match-md5",
+      "uri": "/v1/item"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md7-pattern-without-a-metacharacter",
+   "resourceType": "PARITY_SUITE_MATCH_MD7",
+   "about": "A pattern with no metacharacter at all: the control for the file, and the case that decides whether such a pattern is equality. The four other requests ask what equality would have to ignore: a separator at the end of the URI, a query string, a longer path, and a prefix.",
+   "condition": "resource.uri MATCH /v1/items",
+   "requests": [
+    {
+     "name": "uri-equal",
+     "resource": {
+      "id": "match-md7",
+      "uri": "/v1/items"
+     }
+    },
+    {
+     "name": "uri-with-a-trailing-separator",
+     "resource": {
+      "id": "match-md7",
+      "uri": "/v1/items/"
+     }
+    },
+    {
+     "name": "uri-with-a-query-string",
+     "resource": {
+      "id": "match-md7",
+      "uri": "/v1/items?x=1"
+     }
+    },
+    {
+     "name": "uri-with-a-longer-path",
+     "resource": {
+      "id": "match-md7",
+      "uri": "/v1/items/1"
+     }
+    },
+    {
+     "name": "uri-with-a-prefix",
+     "resource": {
+      "id": "match-md7",
+      "uri": "/api/v1/items"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md11-uppercase-in-the-pattern",
+   "resourceType": "PARITY_SUITE_MATCH_MD11",
+   "about": "Case on a path. x5 records ab* against ABC as false, which settles the direction where the pattern is lower-case; this case asks the other direction.",
+   "condition": "resource.uri MATCH /V1/Items",
+   "requests": [
+    {
+     "name": "uri-in-the-same-case",
+     "resource": {
+      "id": "match-md11",
+      "uri": "/V1/Items"
+     }
+    },
+    {
+     "name": "uri-in-lower-case",
+     "resource": {
+      "id": "match-md11",
+      "uri": "/v1/items"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md12-brace-placeholder",
+   "resourceType": "PARITY_SUITE_MATCH_MD12",
+   "about": "A brace placeholder, the spelling a path template uses: whether MATCH reads it as a wildcard or as four literal characters.",
+   "condition": "resource.uri MATCH /v1/{id}/items",
+   "requests": [
+    {
+     "name": "a-segment-in-place-of-the-placeholder",
+     "resource": {
+      "id": "match-md12",
+      "uri": "/v1/42/items"
+     }
+    },
+    {
+     "name": "the-braces-themselves",
+     "resource": {
+      "id": "match-md12",
+      "uri": "/v1/{id}/items"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md13-parentheses",
+   "resourceType": "PARITY_SUITE_MATCH_MD13",
+   "about": "A pair of parentheses as a metacharacter, one or more characters within a segment, or as the two literal characters.",
+   "condition": "resource.uri MATCH /v1/()/items",
+   "requests": [
+    {
+     "name": "one-character-segment",
+     "resource": {
+      "id": "match-md13",
+      "uri": "/v1/a/items"
+     }
+    },
+    {
+     "name": "longer-segment",
+     "resource": {
+      "id": "match-md13",
+      "uri": "/v1/abc/items"
+     }
+    },
+    {
+     "name": "empty-segment",
+     "resource": {
+      "id": "match-md13",
+      "uri": "/v1//items"
+     }
+    },
+    {
+     "name": "two-segments",
+     "resource": {
+      "id": "match-md13",
+      "uri": "/v1/a/b/items"
+     }
+    },
+    {
+     "name": "the-parentheses-themselves",
+     "resource": {
+      "id": "match-md13",
+      "uri": "/v1/()/items"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md14-star-over-characters-outside-a-uri",
+   "resourceType": "PARITY_SUITE_MATCH_MD14",
+   "about": "Which characters a star covers within a segment: the dot is the control, and the others sit outside every class of URI characters a matcher may pick.",
+   "condition": "resource.uri MATCH /v1/*",
+   "requests": [
+    {
+     "name": "dot",
+     "resource": {
+      "id": "match-md14",
+      "uri": "/v1/a.b"
+     }
+    },
+    {
+     "name": "space",
+     "resource": {
+      "id": "match-md14",
+      "uri": "/v1/a b"
+     }
+    },
+    {
+     "name": "angle-bracket",
+     "resource": {
+      "id": "match-md14",
+      "uri": "/v1/a<b"
+     }
+    },
+    {
+     "name": "non-ascii-letters",
+     "resource": {
+      "id": "match-md14",
+      "uri": "/v1/яблоко"
+     }
+    },
+    {
+     "name": "double-quote",
+     "resource": {
+      "id": "match-md14",
+      "uri": "/v1/a\"b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "md15-two-question-marks",
+   "resourceType": "PARITY_SUITE_MATCH_MD15",
+   "condition": "resource.uri MATCH /v1/??",
+   "requests": [
+    {
+     "name": "two-characters",
+     "resource": {
+      "id": "match-md15",
+      "uri": "/v1/ab"
+     }
+    },
+    {
+     "name": "one-character",
+     "resource": {
+      "id": "match-md15",
+      "uri": "/v1/a"
+     }
+    },
+    {
+     "name": "three-characters",
+     "resource": {
+      "id": "match-md15",
+      "uri": "/v1/abc"
+     }
+    }
+   ]
+  }
+ ]
+}

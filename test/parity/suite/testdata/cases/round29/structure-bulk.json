@@ -1,0 +1,671 @@
+{
+ "about": "POST /access/v1/check/resource/bulk/operations (case field bulkOperations, round 29) and /check/resource/bulk (case field bulk) with and without userId. The golden of a bulk request is its status and the allowed ids, sorted; of a bulk operations request its status and, per operation, the allowed ids, sorted. The expected answer for an operation that no item allows is an empty list. The on-behalf cases repeat the check/resource cases of structure-on-behalf.json with bulk requests: no authorization set, then one that authorizes the M2M client, then one that authorizes the reader.",
+ "resourceTypePrefix": "PARITY_SUITE_R29ST_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29structure-bulk-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29structure-bulkops-per-operation",
+   "about": "A set lets the reader READ anything and UPDATE when resource.b == 'v' OR resource.a == 'y'. Three items: a = y with READ, UPDATE, DELETE; a = n with READ, UPDATE; an item of another type with READ. Expected: READ [i-a-n, i-a-y], UPDATE [i-a-y], DELETE [] (the key is absent if the service omits an operation no item allows); the M2M client and an anonymous request: every list empty.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "upd",
+         "target": "operation == 'UPDATE'",
+         "condition": "resource.b == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "operations",
+     "bulkOperations": [
+      {
+       "id": "i-a-y",
+       "operations": [
+        "READ",
+        "UPDATE",
+        "DELETE"
+       ],
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-a-n",
+       "operations": [
+        "READ",
+        "UPDATE"
+       ],
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-other-type",
+       "operations": [
+        "READ"
+       ],
+       "type": "{{resourceType}}_OTHER",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ]
+    },
+    {
+     "name": "operations-m2m",
+     "bulkOperations": [
+      {
+       "id": "i-a-y",
+       "operations": [
+        "READ",
+        "UPDATE",
+        "DELETE"
+       ],
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-a-n",
+       "operations": [
+        "READ",
+        "UPDATE"
+       ],
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-other-type",
+       "operations": [
+        "READ"
+       ],
+       "type": "{{resourceType}}_OTHER",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "subject": "m2m"
+    },
+    {
+     "name": "operations-anonymous",
+     "bulkOperations": [
+      {
+       "id": "i-a-y",
+       "operations": [
+        "READ",
+        "UPDATE",
+        "DELETE"
+       ],
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-a-n",
+       "operations": [
+        "READ",
+        "UPDATE"
+       ],
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-other-type",
+       "operations": [
+        "READ"
+       ],
+       "type": "{{resourceType}}_OTHER",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "i-a-y",
+       "operation": "UPDATE",
+       "resource": {
+        "id": "r29",
+        "a": "y",
+        "b": "n"
+       }
+      },
+      {
+       "id": "i-a-n",
+       "operation": "UPDATE",
+       "resource": {
+        "id": "r29",
+        "a": "n",
+        "b": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "update-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n",
+      "b": "n"
+     },
+     "operation": "UPDATE"
+    },
+    {
+     "name": "update-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y",
+      "b": "n"
+     },
+     "operation": "UPDATE"
+    }
+   ]
+  },
+  {
+   "id": "r29structure-bulk-on-behalf-without-authorization",
+   "about": "No set answers VIEW_AS_ANOTHER_USER; READ is allowed to anyone. With userId: [i1] if bulk ignores userId, [] if the caller must be authorized as for check/resource, 400 if refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-as-the-reader",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "bulk-as-an-unknown-user",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-0000000000fe"
+    },
+    {
+     "name": "m2m-bulk-as-the-reader",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    },
+    {
+     "name": "operations-as-the-reader",
+     "bulkOperations": [
+      {
+       "id": "i1",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "m2m-operations-as-the-reader",
+     "bulkOperations": [
+      {
+       "id": "i1",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "r29structure-bulk-on-behalf-m2m-authorized",
+   "about": "A set allows VIEW_AS_ANOTHER_USER to the M2M client only: the M2M requests with userId pass the authorization, the reader's do not.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "authorization",
+     "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "view-as",
+       "target": "subject.roles CONTAINS 'ROLE_M2M'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "view",
+         "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-as-the-reader",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "bulk-as-an-unknown-user",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-0000000000fe"
+    },
+    {
+     "name": "m2m-bulk-as-the-reader",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    },
+    {
+     "name": "operations-as-the-reader",
+     "bulkOperations": [
+      {
+       "id": "i1",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "m2m-operations-as-the-reader",
+     "bulkOperations": [
+      {
+       "id": "i1",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "r29structure-bulk-on-behalf-reader-authorized",
+   "about": "A set allows VIEW_AS_ANOTHER_USER to the reader too: every request with userId passes the authorization, then the user lookup decides ([i1], 500, or []).",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read",
+         "target": "operation == 'READ'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "authorization",
+     "target": "resourceType == 'OnBehalfOfUserAuthorization'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "view-as",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "view",
+         "target": "operation == 'VIEW_AS_ANOTHER_USER'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-as-the-reader",
+     "resource": {
+      "id": "r29"
+     },
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ]
+    },
+    {
+     "name": "bulk-as-the-reader",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "bulk-as-an-unknown-user",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-0000000000fe"
+    },
+    {
+     "name": "m2m-bulk-as-the-reader",
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    },
+    {
+     "name": "operations-as-the-reader",
+     "bulkOperations": [
+      {
+       "id": "i1",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101"
+    },
+    {
+     "name": "m2m-operations-as-the-reader",
+     "bulkOperations": [
+      {
+       "id": "i1",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r29"
+       }
+      }
+     ],
+     "userId": "00000000-0000-0000-0000-000000000101",
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "r29structure-bulk-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r29",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

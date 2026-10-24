@@ -1,0 +1,276 @@
+{
+ "about": "customPredicate parameters that read the resource, which a check/filter request does not carry: resource.owner, resource, and resourceType, beside subject.id and x as the controls (a19-custom-param-0, -1).",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {},
+ "pips": {
+  "cp-own": {
+   "name": "subject.permissions.parityR29Cp",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_CP"
+     ]
+    }
+   }
+  },
+  "cp-other": {
+   "name": "subject.permissions.parityR29CpOther",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_CQ"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-custom-param-resource-owner",
+   "about": "customPredicate parameter 'resource.owner'",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "resource.owner"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-custom-param-resource",
+   "about": "customPredicate parameter 'resource'",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "resource"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-custom-param-resource-type",
+   "about": "customPredicate parameter 'resourceType'",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "resourceType"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-custom-param-subject-id",
+   "about": "customPredicate parameter 'subject.id'",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "subject.id"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-custom-param-x",
+   "about": "customPredicate parameter 'x'",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "params": {
+            "p": "x"
+           },
+           "predicate": "[{\"value\":${p},\"property\":\"a\",\"operator\":\"in\"}]"
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-mapping-own-name-placeholder",
+   "pips": [
+    "cp-own",
+    "cp-other"
+   ],
+   "about": "rsqlPredicate over ${subject.permissions.parityR29Cp}",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.permissions.parityR29Cp})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  }
+ ]
+}

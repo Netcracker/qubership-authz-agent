@@ -1,0 +1,160 @@
+{
+ "about": "A list inside a list compared with a list inside a list. A list holding ['v'] on both sides: the element ['v'] equals ['v'] if lists compare by their text, and matches nothing if a list never equals another element. Each comparison is `<comparison> OR resource.a == 'y'`, asked with resource.a 'n' and 'y'.",
+ "resourceTypePrefix": "PARITY_SUITE_R26H_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "h26-nested-list-contains-any",
+   "about": "`resource.x CONTAINS ANY resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. resource.x and resource.y are both [[\"v\"]].",
+   "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "y": [
+       [
+        "v"
+       ]
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "y": [
+       [
+        "v"
+       ]
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "h26-nested-list-not-contains-any",
+   "about": "`resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'`, asked with resource.a 'n' and 'y'. resource.x and resource.y are both [[\"v\"]].",
+   "condition": "resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "y": [
+       [
+        "v"
+       ]
+      ],
+      "id": "r26",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": [
+       [
+        "v"
+       ]
+      ],
+      "y": [
+       [
+        "v"
+       ]
+      ],
+      "id": "r26",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "h26-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  },
+  {
+   "id": "h26-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r26"
+     }
+    }
+   ]
+  }
+ ]
+}

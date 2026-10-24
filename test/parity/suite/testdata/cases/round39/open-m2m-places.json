@@ -1,0 +1,315 @@
+{
+ "about": "Whether a check fails with 400 on a condition it reaches but decides before it reads a GENERAL whose requestAttributes carry a whole ${subject.isM2M}, in places other than the condition of a simplified policy. Each condition is resource.a == 'y' OR subject.X == 'v', and the request sends a = y, so the first operand decides and the GENERAL is not read. Round 38 (r38open-m2m-not-read) answered 400 for the same condition in a simplified policy. pipCalls records whether the GENERAL was called.",
+ "resourceTypePrefix": "PARITY_SUITE_R39P_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/r39open-m2m-rule-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-nested-rule-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-iterate-rule-condition": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "r39open-m2m-rule-condition": {
+   "name": "subject.parityR39M2mRuleCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-rule-condition",
+   "requestAttributes": {
+    "case": "r39open-m2m-rule-condition",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-nested-rule-condition": {
+   "name": "subject.parityR39M2mNestedRuleCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-nested-rule-condition",
+   "requestAttributes": {
+    "case": "r39open-m2m-nested-rule-condition",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-iterate-rule-condition": {
+   "name": "subject.parityR39M2mIterateRuleCondition",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-iterate-rule-condition",
+   "requestAttributes": {
+    "case": "r39open-m2m-iterate-rule-condition",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r39openm2mplaces-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-rule-condition",
+   "pips": [
+    "r39open-m2m-iterate-rule-condition",
+    "r39open-m2m-nested-rule-condition",
+    "r39open-m2m-rule-condition",
+    "scope"
+   ],
+   "about": "A top-level set whose only rule allows on resource.a == 'y' OR subject.parityR39M2mRuleCondition == 'v', with a = y. 400 if a rule condition of a set fails before evaluation, as the condition of a simplified policy does; true if it fails only when it reads the GENERAL.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR39M2mRuleCondition == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r39",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r39open-m2m-rule-condition"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-nested-rule-condition",
+   "pips": [
+    "r39open-m2m-iterate-rule-condition",
+    "r39open-m2m-nested-rule-condition",
+    "r39open-m2m-rule-condition",
+    "scope"
+   ],
+   "about": "The same rule, resource.a == 'y' OR subject.parityR39M2mNestedRuleCondition == 'v' with a = y, as the only rule of a set nested in a top-level set that has no policies of its own. 400 if a rule condition of a nested set fails before evaluation; true if it fails only when it reads the GENERAL.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "inner",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "resource.a == 'y' OR subject.parityR39M2mNestedRuleCondition == 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r39",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r39open-m2m-nested-rule-condition"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-iterate-rule-condition",
+   "pips": [
+    "r39open-m2m-iterate-rule-condition",
+    "r39open-m2m-nested-rule-condition",
+    "r39open-m2m-rule-condition",
+    "scope"
+   ],
+   "about": "The same rule, resource.a == 'y' OR subject.parityR39M2mIterateRuleCondition == 'v' with a = y, as the only rule of a set that iterates over subject.permissionScope (DENY_UNLESS_PERMIT, two grants). 400 if a rule condition of an iterate pass fails before evaluation; true if it fails only when it reads the GENERAL.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR39M2mIterateRuleCondition == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r39",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r39open-m2m-iterate-rule-condition"
+    }
+   ]
+  },
+  {
+   "id": "r39openm2mplaces-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

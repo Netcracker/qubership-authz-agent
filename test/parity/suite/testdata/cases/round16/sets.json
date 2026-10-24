@@ -1,0 +1,2287 @@
+{
+ "about": "Trees of policy sets, combining algorithms, iterate, and check/filter. Each case asks a combination no recorded golden covers, or tells apart readings of a rule that the goldens leave open. The reader has two grants, regions r1 and r2; subject.parityR16Failing answers 500. Request ry sends {a: y, b: y}, rn sends {a: n} without b, and filter is check/filter for LIST.",
+ "resourceTypePrefix": "PARITY_SUITE_R16_",
+ "pins": {
+  "/api/v1/pip/r16-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 16 case"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR16Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r16-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR16Failing"
+   },
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "t16-01",
+   "about": "Answers whether any of these holds, which no golden rules out: a set without an algorithm combines as DENY_OVERRIDES; a set without an algorithm combines as PERMIT_UNLESS_DENY; filter: an iterate node whose passes all do not apply does not apply; filter: an iterating set nested in a pass reuses the outer grant. First golden for: filter: a DENY_UNLESS_PERMIT iterate node gives ALLOW; filter: a PERMIT_UNLESS_DENY iterate node gives ALLOW; filter: a DENY_UNLESS_PERMIT iterate pass gives ALLOW (an ALLOW absorbs a predicate, the ALLOW comes from a nested set).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "false",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "PERMIT_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-02",
+   "about": "Answers whether any of these holds, which no golden rules out: a failed pass of a PERMIT_UNLESS_DENY iterate node counts as not applicable; a failed PIP in an iterate pass under a DENY_OVERRIDES set counts as not applicable; a failed PIP in an iterate pass under a PERMIT_UNLESS_DENY set counts as not applicable; filter: a rule target over the resource drops that rule only, not its policy. First golden for: filter: a PERMIT_UNLESS_DENY iterate pass gives ALLOW; filter: a DENY_OVERRIDES policy with a rule target over the resource gives NA; filter: top-level answers ALLOW/USE_FILTER_CONDITION give ALLOW; a DENY_UNLESS_PERMIT iterate node that fails; a PERMIT_UNLESS_DENY iterate node inside another iterate pass that fails; and more.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "resource.b == 'y'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "s1-p1",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s1-p1-r0",
+         "target": "false",
+         "condition": "true",
+         "effect": "DENY"
+        },
+        {
+         "key": "s1-p1-r1",
+         "target": "resource.b == 'y'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "resource.b == 'y'",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s1-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s1-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s1-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "sets": [],
+         "algorithm": "DENY_OVERRIDES",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "PERMIT_UNLESS_DENY"
+         }
+        }
+       ]
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-03",
+   "about": "Answers whether any of these holds, which no golden rules out: filter: an ALLOW pass absorbs a predicate of another pass only where a set's ALLOW would. First golden for: filter: a PERMIT_UNLESS_DENY iterate node gives ALLOW (an ALLOW absorbs a predicate); filter: a DENY_OVERRIDES iterate pass gives ALLOW; filter: a DENY_OVERRIDES iterate pass gives USE_FILTER_CONDITION (an ALLOW does not lift the predicate); filter: a PERMIT_OVERRIDES policy with no applicable rule gives NA.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "false",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "PERMIT_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       }
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-04",
+   "about": "Whether iterate passes run in the order of the grants. Two grants, r1 then r2; request ry permits in the r1 pass and reads the failing PIP in the r2 pass, request rn the other way round. If the stand keeps one order per node, the answers are false/false (every pass read) or true/true (the permitting pass first); true/false means passes run in grant order and stop at a permit, false/true the reverse order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1' AND resource.a == 'y'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r2' AND resource.a == 'n'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r2",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r2' AND resource.a == 'y' AND subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "s0-p0-r3",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1' AND resource.a == 'n' AND subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-05",
+   "about": "Answers whether any of these holds, which no golden rules out: a failed pass of a DENY_OVERRIDES iterate node counts as not applicable; a policy target under iterate is read without the grant. First golden for: a DENY_OVERRIDES iterate node that fails; a DENY_UNLESS_PERMIT iterate node inside another iterate pass that permits; a failed PIP in the condition of a DENY rule inside an iterate pass; a set target that is false inside an iterate pass.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "false",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       }
+      },
+      {
+       "key": "s0-s1",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-06",
+   "about": "Answers whether any of these holds, which no golden rules out: a set without an algorithm combines as PERMIT_OVERRIDES. First golden for: filter: a DENY_OVERRIDES iterate node gives DENY (an ALLOW does not lift the predicate); filter: a DENY_UNLESS_PERMIT iterate pass gives ALLOW.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-07",
+   "about": "Answers whether any of these holds, which no golden rules out: filter: an unrestricted DENY of a top-level set wins over the predicates of the others. First golden for: filter: top-level answers USE_FILTER_CONDITION and DENY give USE_FILTER_CONDITION.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": []
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-08",
+   "about": "Answers whether any of these holds, which no golden rules out: an iterating set nested in a pass reuses the outer grant instead of iterating again. First golden for: a PERMIT_UNLESS_DENY iterate node inside another iterate pass that permits.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "false",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "PERMIT_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-09",
+   "about": "Answers whether any of these holds, which no golden rules out: a policy without rules does not apply, whatever its algorithm says about none. First golden for: a DENY_OVERRIDES iterate node inside another iterate pass that permits.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [],
+         "algorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-10",
+   "about": "Answers whether any of these holds, which no golden rules out: filter: under DENY_OVERRIDES an unrestricted ALLOW keeps the ALLOW predicates. First golden for: filter: a DENY_OVERRIDES policy with an ALLOW predicate and an unrestricted ALLOW gives ALLOW.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p2==2"
+         }
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-11",
+   "about": "Answers whether any of these holds, which no golden rules out: filter: a policy target under iterate is read without the grant. First golden for: filter: a PERMIT_OVERRIDES iterate node gives USE_FILTER_CONDITION (a DENY does not win, a child brings several groups).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "q==3",
+            "mongodbPredicate": "{\"q\": 3}"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-12",
+   "about": "Answers whether any of these holds, which no golden rules out: a failed pass of a PERMIT_OVERRIDES iterate node counts as not applicable. First golden for: a PERMIT_OVERRIDES iterate node that fails.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-13",
+   "about": "Answers whether any of these holds, which no golden rules out: a failed PIP below a PERMIT_OVERRIDES set counts as not applicable.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-14",
+   "about": "Answers whether any of these holds, which no golden rules out: a failed PIP in an iterate pass under a PERMIT_OVERRIDES set counts as not applicable.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-15",
+   "about": "Answers whether any of these holds, which no golden rules out: a set without children does not apply, whatever its algorithm says about none.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-16",
+   "about": "Answers whether any of these holds, which no golden rules out: filter: an unrestricted DENY rule makes a PERMIT_OVERRIDES policy DENY.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-17",
+   "about": "Answers whether any of these holds, which no golden rules out: filter: an iterate node whose passes all deny denies.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY"
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-18",
+   "about": "First golden for: filter: a DENY_OVERRIDES iterate pass gives DENY; filter: a DENY_OVERRIDES iterate pass gives NA; a DENY_OVERRIDES iterate node that fails or denies by order; a DENY_OVERRIDES iterate node inside another iterate pass that fails; a DENY_OVERRIDES iterate node inside another iterate pass that fails or denies by order; and more.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "subject.permissionScope.region CONTAINS 'r1'",
+         "rules": []
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "operation == 'READ'",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "resource.b == 'y'",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "subject.permissionScope.region CONTAINS 'r1'",
+             "effect": "ALLOW"
+            }
+           ]
+          },
+          {
+           "key": "s0-s0-s0-p1",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p1-r0",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW"
+            },
+            {
+             "key": "s0-s0-s0-p1-r1",
+             "target": "subject.permissionScope.region CONTAINS 'r1'",
+             "condition": "true",
+             "effect": "DENY"
+            }
+           ],
+           "algorithm": "PERMIT_UNLESS_DENY"
+          }
+         ],
+         "sets": [],
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       }
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s1-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s1-s0-p0",
+           "target": "true",
+           "rules": []
+          }
+         ],
+         "sets": [],
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "PERMIT_UNLESS_DENY"
+         }
+        },
+        {
+         "key": "s0-s1-s1",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s1-s1-p0",
+           "target": "resource.b == 'y'",
+           "rules": []
+          },
+          {
+           "key": "s0-s1-s1-p1",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s1-s1-p1-r0",
+             "target": "true",
+             "condition": "resource.b == 'y'",
+             "effect": "DENY"
+            }
+           ]
+          }
+         ],
+         "sets": []
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-19",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES iterate pass gives DENY; filter: a PERMIT_OVERRIDES iterate pass gives NA; filter: a DENY_OVERRIDES policy with a DENY predicate and an unrestricted DENY gives DENY; a PERMIT_OVERRIDES iterate node that fails or denies by order; a PERMIT_OVERRIDES iterate node inside another iterate pass that fails or denies by order; and more.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": []
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        },
+        {
+         "key": "s1-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "resource.b == 'y'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "DENY"
+          }
+         ]
+        },
+        {
+         "key": "s1-s0-p1",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    },
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-20",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES iterate node gives ALLOW; filter: a DENY_UNLESS_PERMIT set gives ALLOW (a DENY does not win); filter: a DENY_UNLESS_PERMIT iterate pass gives ALLOW (a DENY does not win); a PERMIT_OVERRIDES iterate node inside another iterate pass that permits.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [],
+         "algorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": []
+          },
+          {
+           "key": "s0-s0-s0-p1",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p1-r0",
+             "target": "subject.permissionScope.region CONTAINS 'r1'",
+             "condition": "true",
+             "effect": "DENY"
+            }
+           ],
+           "algorithm": "PERMIT_UNLESS_DENY"
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-21",
+   "about": "First golden for: filter: a DENY_OVERRIDES iterate node gives ALLOW (an ALLOW absorbs a predicate); filter: a PERMIT_OVERRIDES iterate pass gives ALLOW (an ALLOW absorbs a predicate); filter: a PERMIT_OVERRIDES iterate pass gives USE_FILTER_CONDITION; filter: a DENY_OVERRIDES policy with an unrestricted ALLOW gives ALLOW.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "DENY_OVERRIDES"
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-22",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES policy with a rule target over the resource gives NA; a PERMIT_UNLESS_DENY iterate node that fails or denies by order; a PERMIT_UNLESS_DENY iterate node inside another iterate pass that fails or denies by order; a top-level set that fails when the failing PIP is read and denies when it is not.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR16Failing == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ],
+     "sets": []
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "resource.a == 'y'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "algorithm": "PERMIT_OVERRIDES"
+        },
+        {
+         "key": "s1-s0-p1",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": [],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "s1-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s1-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s1-s1-p0-r0",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "subject.parityR16Failing == 'v'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_UNLESS_DENY"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-23",
+   "about": "First golden for: a DENY_UNLESS_PERMIT iterate node that fails or denies by order; a DENY_UNLESS_PERMIT iterate node inside another iterate pass that fails or permits by order.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": []
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p0-r0",
+             "target": "true",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          },
+          {
+           "key": "s0-s0-s0-p1",
+           "target": "true",
+           "rules": [
+            {
+             "key": "s0-s0-s0-p1-r0",
+             "target": "true",
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16",
+      "a": "y",
+      "b": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "t16-24",
+   "about": "First golden for: filter: a DENY_OVERRIDES iterate node gives ALLOW; filter: a PERMIT_OVERRIDES iterate pass gives ALLOW.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-25",
+   "about": "First golden for: filter: a DENY_UNLESS_PERMIT iterate node gives USE_FILTER_CONDITION (a child brings several groups); filter: a PERMIT_UNLESS_DENY iterate pass gives USE_FILTER_CONDITION (a child brings several groups).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p1==1"
+           }
+          }
+         ]
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-26",
+   "about": "First golden for: filter: a PERMIT_UNLESS_DENY iterate node gives USE_FILTER_CONDITION (a child brings several groups); filter: a DENY_OVERRIDES iterate pass gives USE_FILTER_CONDITION (a child brings several groups).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "mongodbPredicate": "{\"m\": 1}"
+           }
+          }
+         ]
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p1==1"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-27",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES iterate node gives USE_FILTER_CONDITION (a child brings several groups); filter: a DENY_UNLESS_PERMIT iterate pass gives USE_FILTER_CONDITION (a DENY does not win, a child brings several groups).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "p1==1"
+           }
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        },
+        {
+         "key": "s0-s0-p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p1-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-28",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES iterate node gives ALLOW (an ALLOW absorbs a predicate); filter: a PERMIT_OVERRIDES iterate node gives ALLOW (a DENY does not win); filter: a PERMIT_UNLESS_DENY iterate pass gives DENY (an ALLOW does not lift the predicate).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": []
+        }
+       ],
+       "sets": []
+      },
+      {
+       "key": "s0-s1",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s1-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s1-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s1-p0-r1",
+           "target": "subject.permissionScope.region CONTAINS 'r1'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-29",
+   "about": "First golden for: filter: top-level answers USE_FILTER_CONDITION, several groups, and DENY give USE_FILTER_CONDITION; a DENY_OVERRIDES iterate node inside another iterate pass that denies; a DENY_UNLESS_PERMIT iterate node inside another iterate pass that denies.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s0-s0",
+         "target": "true",
+         "policies": [
+          {
+           "key": "s0-s0-s0-p0",
+           "target": "true",
+           "rules": []
+          }
+         ],
+         "sets": [],
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "algorithm": "DENY_OVERRIDES"
+         }
+        }
+       ],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       }
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s1-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "p1==1"
+         }
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s1-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s1-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s1-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "mongodbPredicate": "{\"m\": 1}"
+           }
+          }
+         ]
+        }
+       ],
+       "sets": []
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-30",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES iterate node gives NA; a PERMIT_OVERRIDES iterate node that does not apply.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [],
+     "algorithm": "DENY_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "rn",
+     "resource": {
+      "id": "r16",
+      "a": "n"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-31",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES set gives DENY; filter: a PERMIT_UNLESS_DENY policy with an ALLOW predicate and a DENY predicate and an unrestricted DENY gives DENY.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "mongodbPredicate": "{\"m\": 1}"
+           }
+          },
+          {
+           "key": "s0-s0-p0-r2",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          }
+         ],
+         "algorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "sets": []
+      }
+     ],
+     "algorithm": "PERMIT_OVERRIDES"
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-32",
+   "about": "First golden for: filter: a PERMIT_OVERRIDES iterate pass gives ALLOW (an ALLOW absorbs a predicate, a DENY does not win); filter: a PERMIT_OVERRIDES iterate pass gives USE_FILTER_CONDITION (a DENY does not win).",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "subject.permissionScope.region CONTAINS 'r1'",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      },
+      {
+       "key": "s0-p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p1-r0",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3",
+          "mongodbPredicate": "{\"q\": 3}"
+         }
+        }
+       ]
+      },
+      {
+       "key": "s0-p2",
+       "target": "true",
+       "rules": []
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "t16-33",
+   "about": "First golden for: filter: a DENY_OVERRIDES iterate node gives NA; filter: a DENY_OVERRIDES policy with an ALLOW predicate and an unrestricted ALLOW and an unrestricted DENY gives DENY.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-s0",
+       "target": "true",
+       "policies": [
+        {
+         "key": "s0-s0-p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "s0-s0-p0-r0",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          },
+          {
+           "key": "s0-s0-p0-r1",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "p2==2"
+           }
+          },
+          {
+           "key": "s0-s0-p0-r2",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ],
+       "sets": [],
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "PERMIT_OVERRIDES"
+       }
+      }
+     ],
+     "algorithm": "DENY_OVERRIDES",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

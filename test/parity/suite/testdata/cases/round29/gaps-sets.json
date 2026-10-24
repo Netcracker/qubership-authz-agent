@@ -1,0 +1,418 @@
+{
+ "about": "Requests and nodes whose default reading no golden checked: an anonymous request that also carries the reader's end-user token, a user of the realm with no roles, a policy and a nested set whose target is JSON null (sent through the fields object, which the runner copies over the node's wire form), and check/filter with an empty operation parameter.",
+ "resourceTypePrefix": "PARITY_SUITE_R29S_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29gaps-filter-with-an-empty-operation",
+   "about": "A simplified policy for READ without a condition. check/filter with operation= (empty): ALLOW if an empty operation means READ, DENY if it is an operation no policy names; operation READ is the control.",
+   "requests": [
+    {
+     "name": "filter-empty",
+     "filter": true,
+     "emptyOperation": true
+    },
+    {
+     "name": "filter-read",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-sets-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-anonymous-with-an-end-user-token-user",
+   "about": "Authorization-Type: anonymous beside the reader's Incoming-Token. subject.type == 'USER' is true for a-n if the subject is the end user.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-anonymous-with-an-end-user-token-anonymous",
+   "about": "Authorization-Type: anonymous beside the reader's Incoming-Token. subject.type == 'ANONYMOUS' is true for a-n if the subject is anonymous.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.type == 'ANONYMOUS' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-user-without-roles",
+   "about": "parity-anon-baseline has no realm role of the suite. True for a-n if its roles read as an empty collection; the rule ends if they read as absent. A token that carries Keycloak's default roles answers false too.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     },
+     "subject": "user:parity-anon-baseline"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     },
+     "subject": "user:parity-anon-baseline"
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-null-policy-target-allow",
+   "about": "One ALLOW rule under a policy whose target is JSON null, everything under DENY_UNLESS_PERMIT. True if a null target applies like true, the opposite if the node does not apply, 400 if the upload is refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "fields": {
+        "target": null
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-null-policy-target-deny",
+   "about": "One DENY rule under a policy whose target is JSON null, everything under PERMIT_UNLESS_DENY. False if a null target applies like true, the opposite if the node does not apply, 400 if the upload is refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "fields": {
+        "target": null
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-null-nested-set-target-allow",
+   "about": "One ALLOW rule under a nested set whose target is JSON null, everything under DENY_UNLESS_PERMIT. True if a null target applies like true, the opposite if the node does not apply, 400 if the upload is refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "r",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "fields": {
+        "target": null
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-null-nested-set-target-deny",
+   "about": "One DENY rule under a nested set whose target is JSON null, everything under PERMIT_UNLESS_DENY. False if a null target applies like true, the opposite if the node does not apply, 400 if the upload is refused.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "r",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ],
+       "fields": {
+        "target": null
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29gaps-sets-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

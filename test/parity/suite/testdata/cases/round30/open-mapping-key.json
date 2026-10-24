@@ -1,0 +1,277 @@
+{
+ "about": "A MAPPING PIP keyed on subject.parityR30Key, which domain PARITY_R30_OTHER declares first as a TOKEN over preferred_username and then again as a GENERAL PIP whose route fails with 500. Round 29 asked the ALLOW form (r29r28-key-general-redeclared, false for a = n and a = y), which a failed decision and an absent subject.permissions answer alike. This file asks the DENY twin under PERMIT_UNLESS_DENY: false for both when the decision fails, true for both when subject.permissions is absent and the rule ends, and true for a = n only when the failed key only drops its own permissions.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {
+  "/api/v1/pip/r30open-redeclared": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 30 case"
+   }
+  }
+ },
+ "pips": {
+  "key-token": {
+   "name": "subject.parityR30Key",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username",
+   "cacheable": false
+  },
+  "key-general": {
+   "name": "subject.parityR30Key",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r30open-redeclared",
+   "requestAttributes": {
+    "case": "r30open-redeclared"
+   }
+  },
+  "key-mapping": {
+   "name": "subject.permissions.PARITY_R30_KEY",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.parityR30Key": {
+     "parity-reader": [
+      "PARITY_R30_FROM_TOKEN"
+     ],
+     "g": [
+      "PARITY_R30_FROM_GENERAL"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r30open-mapping-key-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-key-token-elsewhere",
+   "about": "Domain PARITY_R30_OTHER declares subject.parityR30Key as a TOKEN.",
+   "domain": "PARITY_R30_OTHER",
+   "pips": [
+    "key-token"
+   ],
+   "condition": "subject.parityR30Key == 'parity-reader' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-key-mapping-loaded",
+   "about": "The suite's domain declares a MAPPING keyed on subject.parityR30Key; it reads the TOKEN, so the reader holds PARITY_R30_FROM_TOKEN (a = n true).",
+   "pips": [
+    "key-mapping"
+   ],
+   "condition": "subject.permissions CONTAINS 'PARITY_R30_FROM_TOKEN' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-key-general-redeclared",
+   "about": "Domain PARITY_R30_OTHER declares subject.parityR30Key again, as a GENERAL PIP whose route fails.",
+   "domain": "PARITY_R30_OTHER",
+   "pips": [
+    "key-general"
+   ],
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-key-deny-twin",
+   "about": "A DENY rule over the key's permission under PERMIT_UNLESS_DENY, asked after the GENERAL declaration. False and false: the failed key fails the decision; true and true: subject.permissions is absent and the rule ends; true and false: the key gives nothing and the rule reads a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R30_FROM_TOKEN' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-key-allow-twin",
+   "about": "The ALLOW form of the same rule, as round 29 asked it: false and false for a failed decision and for an ended rule, false and true when the key gives nothing.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.permissions CONTAINS 'PARITY_R30_FROM_TOKEN' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-mapping-key-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

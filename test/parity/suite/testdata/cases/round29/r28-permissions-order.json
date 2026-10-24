@@ -1,0 +1,140 @@
+{
+ "about": "The order of subject.permissions in a filter predicate when the subject has 12 and 13 permissions. Round 28 showed the order of a Java HashSet with three names. A HashSet built by adding the names one by one has 16 buckets up to 12 names and 32 from 13; one built from a collection has 32 buckets already at 12 names. The names are chosen so that the orders differ.",
+ "resourceTypePrefix": "PARITY_SUITE_R29O_",
+ "pins": {},
+ "pips": {
+  "m12": {
+   "name": "subject.permissions.PARITY_R29_ORDER",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r29_q8_00",
+      "parity_r29_q8_01",
+      "parity_r29_q8_02",
+      "parity_r29_q8_03",
+      "parity_r29_q8_04",
+      "parity_r29_q8_05",
+      "parity_r29_q8_06",
+      "parity_r29_q8_07",
+      "parity_r29_q8_08",
+      "parity_r29_q8_09",
+      "parity_r29_q8_10",
+      "parity_r29_q8_11"
+     ]
+    }
+   },
+   "type": "UUID"
+  },
+  "m13": {
+   "name": "subject.permissions.PARITY_R29_ORDER",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r29_q8_00",
+      "parity_r29_q8_01",
+      "parity_r29_q8_02",
+      "parity_r29_q8_03",
+      "parity_r29_q8_04",
+      "parity_r29_q8_05",
+      "parity_r29_q8_06",
+      "parity_r29_q8_07",
+      "parity_r29_q8_08",
+      "parity_r29_q8_09",
+      "parity_r29_q8_10",
+      "parity_r29_q8_11",
+      "parity_r29_q8_12"
+     ]
+    }
+   },
+   "type": "UUID"
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-permissions-twelve",
+   "about": "The MAPPING grants 12 permissions.",
+   "pips": [
+    "m12"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.permissions})",
+          "sqlPredicate": "a IN (${subject.permissions})",
+          "predicate": "${resourceType}.a.in(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.permissions} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29r28-permissions-thirteen",
+   "about": "The MAPPING grants 13 permissions.",
+   "pips": [
+    "m13"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.permissions})",
+          "sqlPredicate": "a IN (${subject.permissions})",
+          "predicate": "${resourceType}.a.in(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.permissions} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

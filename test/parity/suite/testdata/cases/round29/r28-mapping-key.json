@@ -1,0 +1,84 @@
+{
+ "about": "A MAPPING PIP whose key is the name of another MAPPING PIP, subject.permissions.PARITY_R29_A. Round 28 saw the PAP refuse a key over subject.permissions itself; a key over one MAPPING PIP's name was not asked. The load golden is the answer; if the upload is accepted, the READs show whether the key grants.",
+ "resourceTypePrefix": "PARITY_SUITE_R29Y_",
+ "pins": {},
+ "pips": {
+  "a": {
+   "name": "subject.permissions.PARITY_R29_A",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R29_FROM_A"
+     ]
+    }
+   },
+   "type": "UUID"
+  },
+  "b": {
+   "name": "subject.permissions.PARITY_R29_B",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.permissions.PARITY_R29_A": {
+     "PARITY_R29_FROM_A": [
+      "PARITY_R29_FROM_B"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-mapping-key-over-mapping",
+   "about": "PIP B maps the permission PARITY_R29_FROM_A, which PIP A grants, to PARITY_R29_FROM_B.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R29_FROM_B' OR resource.a == 'y'",
+   "pips": [
+    "a",
+    "b"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-mapping-key-control",
+   "about": "Control: PIP A alone; its permission is granted.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R29_FROM_A' OR resource.a == 'y'",
+   "pips": [
+    "a"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}

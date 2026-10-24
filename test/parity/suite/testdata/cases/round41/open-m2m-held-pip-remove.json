@@ -1,0 +1,205 @@
+{
+ "about": "Which GENERAL declaration makes a condition one the tenant holds: a CUSTOMER PIP customization takes a whole ${subject.isM2M} out of the requestAttributes of a GENERAL that an uploaded condition names, and is then deleted.",
+ "resourceTypePrefix": "PARITY_SUITE_R41HPR_",
+ "pins": {
+  "/api/v1/pip/r41open-m2m-held-pip-remove": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR41HeldPipRemove",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-remove",
+   "requestAttributes": {
+    "case": "r41open-m2m-held-pip-remove",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r41openm2mheldpipremove-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r41open-m2m-held-pip-remove",
+   "pips": [
+    "held"
+   ],
+   "about": "An ACTIVE top-level set whose only rule allows on resource.a == 'y' OR subject.parityR41HeldPipRemove == 'v'; the case declares that GENERAL with a whole ${subject.isM2M} in requestAttributes, so before-* answer 400. A CUSTOMER PIP customization then replaces the declaration with one without it, and the second step deletes the customization. customized-* answer true if the tenant reads the declaration the PIP customizations make, 400 if it still reads the uploaded one. deleted-* and the last control answer 400 once the uploaded declaration is back.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR41HeldPipRemove == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-read-a-y",
+     "resource": {
+      "id": "r41",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-remove"
+    },
+    {
+     "name": "before-read-other",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R41HPR_R41OPENM2MHELDPIPREMOVE_CONTROL_FIRST"
+    }
+   ],
+   "customize": [
+    {
+     "name": "replace",
+     "level": "CUSTOMER",
+     "pips": [
+      {
+       "name": "subject.parityR41HeldPipRemove",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r41open-m2m-held-pip-remove",
+       "requestAttributes": {
+        "case": "r41open-m2m-held-pip-remove"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "customized-read-a-y",
+       "resource": {
+        "id": "r41",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-remove"
+      },
+      {
+       "name": "customized-read-other",
+       "resource": {
+        "id": "r41",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R41HPR_R41OPENM2MHELDPIPREMOVE_CONTROL_FIRST"
+      }
+     ]
+    },
+    {
+     "name": "delete",
+     "level": "CUSTOMER",
+     "delete": {
+      "pip": "subject.parityR41HeldPipRemove"
+     },
+     "requests": [
+      {
+       "name": "deleted-read-a-y",
+       "resource": {
+        "id": "r41",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r41open-m2m-held-pip-remove"
+      },
+      {
+       "name": "deleted-read-other",
+       "resource": {
+        "id": "r41",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R41HPR_R41OPENM2MHELDPIPREMOVE_CONTROL_FIRST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r41openm2mheldpipremove-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r41",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

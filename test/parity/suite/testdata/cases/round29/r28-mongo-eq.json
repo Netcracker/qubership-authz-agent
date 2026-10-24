@@ -1,0 +1,84 @@
+{
+ "about": "A DENY rule whose mongodb predicate holds $eq, under DENY_OVERRIDES and PERMIT_UNLESS_DENY. Round 28 showed that one pass over the template turns $ne into $eq; whether $eq turns into $ne was not asked. The rsql, sql and querydsl predicates are the same comparison, as controls.",
+ "resourceTypePrefix": "PARITY_SUITE_R29M_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29r28-mongo-eq-deny-overrides",
+   "about": "The DENY rule under DENY_OVERRIDES.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==v",
+          "sqlPredicate": "a='v'",
+          "predicate": "${resourceType}.a.eq(\"v\")",
+          "mongodbPredicate": "{ \"a\": { \"$eq\": \"v\" } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29r28-mongo-eq-permit-unless-deny",
+   "about": "The DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a==v",
+          "sqlPredicate": "a='v'",
+          "predicate": "${resourceType}.a.eq(\"v\")",
+          "mongodbPredicate": "{ \"a\": { \"$eq\": \"v\" } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

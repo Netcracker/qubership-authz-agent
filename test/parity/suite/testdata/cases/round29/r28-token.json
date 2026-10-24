@@ -1,0 +1,72 @@
+{
+ "about": "A TOKEN PIP whose claim is not a path: a leading space, and a trailing dot. The expected reading takes such a claim as absent; the alternative is a failed PIP. `subject.<pip> == 'x' OR resource.a == 'y'`: a-y true when the claim is absent, false when the PIP fails the decision.",
+ "resourceTypePrefix": "PARITY_SUITE_R29K_",
+ "pins": {},
+ "pips": {
+  "space": {
+   "name": "subject.parityR29ClaimSpace",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": " preferred_username",
+   "cacheable": false
+  },
+  "dot": {
+   "name": "subject.parityR29ClaimDot",
+   "pipType": "TOKEN",
+   "type": "REGULAR",
+   "claim": "preferred_username.",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r29r28-token-claim-leading-space",
+   "about": "The claim is \" preferred_username\".",
+   "condition": "subject.parityR29ClaimSpace == 'x' OR resource.a == 'y'",
+   "pips": [
+    "space"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29r28-token-claim-trailing-dot",
+   "about": "The claim is \"preferred_username.\".",
+   "condition": "subject.parityR29ClaimDot == 'x' OR resource.a == 'y'",
+   "pips": [
+    "space",
+    "dot"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "a": "n",
+      "id": "r29"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "a": "y",
+      "id": "r29"
+     }
+    }
+   ]
+  }
+ ]
+}
