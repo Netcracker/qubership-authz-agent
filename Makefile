@@ -161,7 +161,7 @@ parity: e2e-cluster e2e-images parity-harness parity-install parity-suite
 # client-credentials Secret for the parity-m2m client of the cloud-common realm.
 parity-harness:
 	kubectl --context kind-$(KIND_CLUSTER) create namespace $(PARITY_NAMESPACE) --dry-run=client -o yaml | kubectl --context kind-$(KIND_CLUSTER) apply -f -
-	$(PARITY_KUBECTL) create configmap parity-realms --from-file=$(PARITY_SEED)/cloud-common-realm.json --from-file=$(PARITY_SEED)/parity-realm.json --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
+	$(PARITY_KUBECTL) create configmap parity-realms --from-file=$(PARITY_SEED)/cloud-common-realm.json --from-file=$(PARITY_SEED)/parity-realm.json --from-file=$(PARITY_SEED)/parity-mt-b-realm.json --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
 	$(PARITY_KUBECTL) create configmap pip-mock-config --from-file=test/integration/pipstub/config/requestargs.responses.yaml --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
 	$(PARITY_KUBECTL) create secret generic authz-agent-client-credentials --from-literal=username=parity-m2m '--from-literal=password=ParityM2MSecret1!@#' --from-literal=name=authz-agent --dry-run=client -o yaml | $(PARITY_KUBECTL) apply -f -
 	$(PARITY_KUBECTL) apply -f test/k8s/parity/keycloak.yaml -f test/k8s/parity/pip-mock.yaml -f test/k8s/parity/entitlements-mock.yaml

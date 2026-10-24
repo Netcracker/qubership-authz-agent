@@ -4,6 +4,12 @@ These realm files are imported by the `idp` Deployment in [keycloak.yaml](../key
 with Keycloak's `--import-realm`; `make parity-harness` packs them into the `parity-realms`
 ConfigMap.
 
+The realms also give the stand two tenants: `parity-realm.json` holds `mt-a` and `mt-a-admin`
+with `ROLE_MT_READER` and `ROLE_MT_ADMIN`, the users of tenant A, and `parity-mt-b-realm.json` is
+the realm of tenant B, `parity-mt-b`, with `mt-b`, `mt-b-admin` and the `parity-end-user` client.
+The client `parity-m2m-tenant-b` carries tenant B's identifier, `parity-mt-b`, in its `tenant-id`
+claim.
+
 ## Why the notes live here and not in the JSON
 
 Each entry below used to be a `_comment` key inside the realm JSON. The
