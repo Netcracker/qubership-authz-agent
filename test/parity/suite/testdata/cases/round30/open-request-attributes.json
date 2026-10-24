@@ -1,0 +1,140 @@
+{
+ "about": "requestAttributes of a GENERAL PIP that name a FILTERED PIP: x = ${subject.parityR30RaSource.filtered}. Round 29 found the PAP refusing a GENERAL and a MAPPING source; a FILTERED one was not asked. The load golden says whether the PAP takes it; pipCalls records the requestAttributes pip-mock received: \"s\", the FILTERED PIP's value, or null.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {
+  "/api/v1/pip/r30open-ra": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r30open-ra-source": {
+   "statusCode": 200,
+   "body": [
+    "s"
+   ]
+  }
+ },
+ "pips": {
+  "source": {
+   "name": "subject.parityR30RaSource.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r30open-ra-source",
+   "requestAttributes": {
+    "case": "r30open-ra-source"
+   },
+   "resourceType": "PARITY_R30_FILTERED"
+  },
+  "reader": {
+   "name": "subject.parityR30Ra",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r30open-ra",
+   "requestAttributes": {
+    "case": "r30open-ra",
+    "x": "${subject.parityR30RaSource.filtered}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r30open-request-attributes-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-ra-filtered",
+   "about": "requestAttributes x = ${subject.parityR30RaSource.filtered}.",
+   "pips": [
+    "source",
+    "reader"
+   ],
+   "condition": "subject.parityR30Ra == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r30open-ra"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-request-attributes-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

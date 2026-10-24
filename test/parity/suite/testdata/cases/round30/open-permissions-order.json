@@ -1,0 +1,156 @@
+{
+ "about": "The order of subject.permissions in a filter predicate for 24 permissions. Round 29 asked 12 and 13 plain names, whose order the suite's comparison of filter texts does not see: it sorts the elements of every list. One name here holds a double quote, which leaves the quotes of the list unpaired, so the position of that name decides where the comparison splits the text. A HashSet grown one name at a time has 32 buckets at 24 names, one sized from the collection 64, one that never grows 16; the names are chosen so that the three orders differ.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {},
+ "pips": {
+  "m": {
+   "name": "subject.permissions.PARITY_R30_ORDER",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_r30_q0_00",
+      "parity_r30_q0_01",
+      "parity_r30_q0_02",
+      "parity_r30_q0_03",
+      "parity_r30_q0_04",
+      "parity_r30_q0_05",
+      "parity_r30_q0_06",
+      "parity_r30_q0_07",
+      "parity_r30_q0_08",
+      "parity_r30_q0_09",
+      "parity_r30_q0_10",
+      "parity_r30_q0_11",
+      "parity_r30_q0_12",
+      "parity_r30_q0_13",
+      "parity_r30_q0_14",
+      "parity_r30_q0_15",
+      "parity_r30_q0_16",
+      "parity_r30_q0_17",
+      "parity_r30_q0_18",
+      "parity_r30_q0_19",
+      "parity_r30_q0_20",
+      "parity_r30_q0_21",
+      "parity_r30_q0_22",
+      "parity_r30_q0_\"x"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r30open-permissions-order-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-permissions-twenty-four",
+   "about": "The MAPPING grants 24 permissions, one of them with a double quote.",
+   "pips": [
+    "m"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a=in=(${subject.permissions})",
+          "sqlPredicate": "a IN (${subject.permissions})",
+          "predicate": "${resourceType}.a.in(${subject.permissions})",
+          "mongodbPredicate": "{ \"a\": { \"$in\": ${subject.permissions} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r30open-permissions-order-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

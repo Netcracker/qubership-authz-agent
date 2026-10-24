@@ -1,0 +1,174 @@
+{
+ "about": "Whether a set that a CUSTOMER customization disables still holds a condition that names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}.",
+ "resourceTypePrefix": "PARITY_SUITE_R40DSE_",
+ "pins": {
+  "/api/v1/pip/r40open-m2m-held-custom-disable-set": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR40HeldDisableSet",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-custom-disable-set",
+   "requestAttributes": {
+    "case": "r40open-m2m-held-custom-disable-set",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r40openm2mheldcustomdisableset-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r40open-m2m-held-custom-disable-set",
+   "pips": [
+    "held"
+   ],
+   "about": "An ACTIVE top-level set whose only rule allows on resource.a == 'y' OR subject.parityR40HeldDisableSet == 'v'; before the customization every request answers 400. A CUSTOMER customization then disables the set. after-read-a-y and after-read-other answer 400 if the tenant holds the uploaded sets; false and true if it holds the sets the customizations make. The runner deletes the customization after the case, so the last control answers 400 under both readings.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.parityR40HeldDisableSet == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "before-read-a-y",
+     "resource": {
+      "id": "r40",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-disable-set"
+    },
+    {
+     "name": "before-read-other",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R40DSE_R40OPENM2MHELDCUSTOMDISABLESET_CONTROL_FIRST"
+    }
+   ],
+   "customize": [
+    {
+     "name": "disable",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "status": "INACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "after-read-a-y",
+       "resource": {
+        "id": "r40",
+        "a": "y"
+       },
+       "pipCalls": "/api/v1/pip/r40open-m2m-held-custom-disable-set"
+      },
+      {
+       "name": "after-read-other",
+       "resource": {
+        "id": "r40",
+        "c": "n"
+       },
+       "type": "PARITY_SUITE_R40DSE_R40OPENM2MHELDCUSTOMDISABLESET_CONTROL_FIRST"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r40openm2mheldcustomdisableset-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -29,12 +29,14 @@ package paritysuite
 //  3. Path matching is strictly literal against r.URL.Path
 //     (pipstub/main.go:110). No wildcards / regex / templates. The
 //     PinEntitlementsV3ForUser helper resolves the per-user literal path
-//     once per pin call.
+//     once per pin call. The one exception is the path DefaultRoute, whose
+//     answer serves every path that has no route of its own.
 //
-// The same control surface is reused for the entitlements-mock service.
-// Two PipController instances are therefore instantiated at SetupSuite time:
-// one bound to Config.PipMockControlURL for pip-mock, one bound to
-// Config.EAMockControlURL for entitlements-mock.
+// The same control surface is reused for the entitlements-mock service and
+// for user-management-mock. Three PipController instances are therefore
+// instantiated at SetupSuite time: one bound to Config.PipMockControlURL for
+// pip-mock, one bound to Config.EAMockControlURL for entitlements-mock, and
+// one bound to Config.UMMockControlURL for user-management-mock.
 
 import (
 	"bytes"
@@ -45,6 +47,11 @@ import (
 	"strings"
 	"sync"
 )
+
+// DefaultRoute is the path PinRoute takes to pin the answer pipstub gives to
+// every request whose path has no route of its own. ResetPinnedRoutes resets
+// it to 404 like any other pinned path.
+const DefaultRoute = "*"
 
 // PipStubResponse mirrors pipstub's pipResponse struct verbatim.
 // pipstub accepts body as an arbitrary JSON value (Go any), so every scalar /
@@ -70,12 +77,15 @@ type pipStubRoute struct {
 // for case-insensitive matching — look them up in lowercase (e.g.
 // `call.Headers["x-request-id"]`, not `"X-Request-Id"`).
 type PipStubCall struct {
-	Path    string              `json:"path"`
-	Method  string              `json:"method"`
-	Query   map[string][]string `json:"query,omitempty"`
-	Headers map[string]string   `json:"headers,omitempty"`
-	BodyRaw string              `json:"bodyRaw,omitempty"`
-	Body    any                 `json:"body,omitempty"`
+	Path string `json:"path"`
+	// RequestURI is the request target as the stub received it, with the path
+	// and the query still encoded as the caller wrote them.
+	RequestURI string              `json:"requestUri"`
+	Method     string              `json:"method"`
+	Query      map[string][]string `json:"query,omitempty"`
+	Headers    map[string]string   `json:"headers,omitempty"`
+	BodyRaw    string              `json:"bodyRaw,omitempty"`
+	Body       any                 `json:"body,omitempty"`
 }
 
 // PipController wraps the /pip-stub/configure + /pip-stub/reset control
@@ -130,7 +140,7 @@ func (pc *PipController) PinEntitlementsV3ForUser(ctx context.Context, userID st
 
 // PinEntitlementsV3PerDefinition pins the per-(resourceType,name) lookup path
 // legacy AC calls when the EA cache has a definition hit but no resource-id
-// entry. See EntitlementsPipServiceImpl.java:170-201.
+// entry.
 func (pc *PipController) PinEntitlementsV3PerDefinition(ctx context.Context, userID, resourceType, name string, resp PipStubResponse) error {
 	if userID == "" || resourceType == "" || name == "" {
 		return fmt.Errorf("paritysuite: PinEntitlementsV3PerDefinition requires all of userID/resourceType/name")
@@ -176,6 +186,19 @@ func (pc *PipController) GetCalls(ctx context.Context) ([]PipStubCall, error) {
 		return nil, fmt.Errorf("decode pipstub calls: %w", err)
 	}
 	return calls, nil
+}
+
+// pinnedPathContains reports whether a path pinned since the last
+// ResetPinnedRoutes contains part.
+func (pc *PipController) pinnedPathContains(part string) bool {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+	for path := range pc.pinnedPaths {
+		if strings.Contains(path, part) {
+			return true
+		}
+	}
+	return false
 }
 
 // ResetPinnedRoutes re-issues /pip-stub/configure with a 404-fallback

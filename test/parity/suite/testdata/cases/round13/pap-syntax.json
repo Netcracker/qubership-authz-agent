@@ -1,0 +1,38 @@
+{
+ "about": "Whether the PAP accepts a condition with a literal left over after a complete comparison, and a list whose second element is an attribute rather than a literal. No golden records either form. Each upload is recorded with its status, and an accepted one also with the answer to READ.",
+ "resourceTypePrefix": "PARITY_SUITE_R13_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "ps-trailing-literal",
+   "condition": "resource.a == 'y' 'z'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r13-syntax",
+      "a": "y",
+      "x": "a",
+      "y": "b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ps-attribute-in-a-list",
+   "condition": "resource.x IN 'a', resource.y",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r13-syntax",
+      "a": "y",
+      "x": "a",
+      "y": "b"
+     }
+    }
+   ]
+  }
+ ]
+}

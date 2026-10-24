@@ -1,0 +1,635 @@
+{
+ "about": "check/filter over predicates whose placeholders or customPredicate no golden rendered. Each case asks one filter; its about names the readings.",
+ "resourceTypePrefix": "PARITY_SUITE_R35G_",
+ "pins": {
+  "/api/v1/pip/r35gaps-object": {
+   "statusCode": 200,
+   "body": {
+    "o": {
+     "k": "v"
+    }
+   }
+  },
+  "/api/v1/pip/r35gaps-number": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r35gaps-fraction": {
+   "statusCode": 200,
+   "body": {
+    "value": [
+     5.5
+    ]
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "object": {
+   "name": "subject.parityR35Object",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-object",
+   "requestAttributes": {
+    "case": "r35gaps-object"
+   },
+   "type": "JSON",
+   "jsonPath": "$.o"
+  },
+  "number": {
+   "name": "subject.parityR35Number",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-number",
+   "requestAttributes": {
+    "case": "r35gaps-number"
+   }
+  },
+  "fraction": {
+   "name": "subject.parityR35Fraction",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r35gaps-fraction",
+   "requestAttributes": {
+    "case": "r35gaps-fraction"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "roles": {
+   "name": "subject.parityR35Roles",
+   "pipType": "TOKEN",
+   "claim": "realm_access.roles",
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "r35gaps-filter-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-object-placeholder",
+   "pips": [
+    "object"
+   ],
+   "about": "rsqlPredicate f1=in=(${subject.parityR35Object}), and the PIP's jsonPath $.o selects the object {\"k\": \"v\"}. The filter keeps the placeholder as written if an object is not a value; DENY if it fails the filter.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f1=in=(${subject.parityR35Object})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-token-list-placeholder",
+   "pips": [
+    "roles",
+    "object"
+   ],
+   "about": "rsqlPredicate f2=in=(${subject.parityR35Roles}), a TOKEN PIP over realm_access.roles, asked by parity-multi-role, whose token holds two roles. The filter lists both roles if a claim list is a list of values; one value, the list's text, if it is not.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f2=in=(${subject.parityR35Roles})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST",
+     "subject": "user:parity-multi-role"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-scope-key-the-grant-lacks",
+   "pips": [
+    "scope",
+    "object",
+    "roles"
+   ],
+   "about": "One grant, whose only key is region, and an iterating set whose predicate reads ${subject.permissionScope.category}. DENY if a key the grant lacks fails the filter, as a scope placeholder outside iterate does; the predicate with an empty value if it is no value.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f3=in=(${subject.permissionScope.category})"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-untyped-number-body",
+   "pips": [
+    "number",
+    "object",
+    "roles",
+    "scope"
+   ],
+   "about": "A GENERAL PIP without type whose body is the number 5, in rsqlPredicate f4=in=(${subject.parityR35Number}) and mongodbPredicate { \"f4\": { \"$in\": ${subject.parityR35Number} } }. The filter renders 5 (mongodb as $uuid, the PIP having no type) if a number body is a value here; DENY if it fails the filter, as it fails a check.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f4=in=(${subject.parityR35Number})",
+          "mongodbPredicate": "{ \"f4\": { \"$in\": ${subject.parityR35Number} } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-resource-placeholder",
+   "pips": [],
+   "about": "rsqlPredicate f5==${resource.id}: a check/filter request has no resource. DENY if a placeholder that names neither the subject nor resourceType fails the filter; the placeholder as written if it is left alone.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f5==${resource.id}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-custom-one-part",
+   "about": "One policy with two ALLOW rules: one with rsqlPredicate f6==v alone, one with a customPredicate alone. customFilterCondition's logic is the custom rule's path alone if an OR with one custom part collapses to it; the OR with that one part if it does not.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-rsql",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f6==v"
+         }
+        },
+        {
+         "key": "allow-custom",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f6\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.roles"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-custom-two-groups",
+   "about": "Two policies under DENY_UNLESS_PERMIT: one with two ALLOW rules with a customPredicate each, one with one. customFilterCondition's logic is an OR of an OR of two paths and a path if the groups keep their structure; one OR of the three paths if they flatten.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "two",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f7a\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.roles"
+           }
+          }
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f7b\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.roles"
+           }
+          }
+         }
+        }
+       ]
+      },
+      {
+       "key": "one",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-c",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f7c\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.roles"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-custom-fraction-parameter",
+   "pips": [
+    "fraction",
+    "object",
+    "roles",
+    "scope",
+    "number"
+   ],
+   "about": "A customPredicate whose parameter reads ${subject.parityR35Fraction}, a list holding 5.5. The parameter is the number 5.5 if a fraction stays a number; the text \"5.5\" if it does not.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.parityR35Fraction"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-custom-boolean-parameter",
+   "about": "A customPredicate whose parameter p is the boolean true, not a text. The parameter is null if the value binds as a text that names no source; DENY if the filter fails on it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f9\",\"operator\":\"in\"}]",
+           "params": {
+            "p": true
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-custom-null-parameter",
+   "about": "A customPredicate whose parameter p is null, not a text. The parameter is null if the value binds as a text that names no source; DENY if the filter fails on it.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f9\",\"operator\":\"in\"}]",
+           "params": {
+            "p": null
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r35gaps-filter-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r35",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

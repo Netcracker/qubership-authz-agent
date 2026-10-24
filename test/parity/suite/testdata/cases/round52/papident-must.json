@@ -1,0 +1,758 @@
+{
+ "about": "Round 52 (must): which object an identity names in the PAP. Each case writes two objects of one identity (in one write, in two writes, through two operations, in two spellings) and reads back and decides what was kept; its twin writes the same with distinct identities. Each case runs in a tenant of its own, writes to a domain and an externalId of its own and empties them last; a control writes and reads back first and last. Every step that decides is followed by both raw reads of the v3 export, policySets and pips. They were added after the round was recorded, so that the export-fed profile can compare most decisions with legacy.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p52i-control-must-first",
+   "about": "control: a declaration written and read back, as pap-read/two-domain-mapping read one",
+   "resourceType": "PARITY_SUITE_P52_ID_901",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_901"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_901"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P52I901_A",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P52I_901": [
+          "parity_p52i_901_a"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_901"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_901"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-901"
+  },
+  {
+   "id": "p52i-pip-custom-delete-escaped-percent",
+   "about": "DELETE of a PIP customization naming the PIP with its last letter written %41",
+   "resourceType": "PARITY_SUITE_P52_ID_079",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_079"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_079"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP52I079A",
+       "pipType": "HEADER",
+       "header": "x-parity-p52i-079-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P52_ID_079"
+     },
+     "observe": [
+      "status",
+      "decide:w2-read",
+      "decide:w2-update",
+      "decide:w2-create"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p52i-pip-custom-delete-escaped-percent read",
+       "resourceType": "PARITY_SUITE_P52_ID_079",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "09c3b443-f318-5a41-fb7c-f369241316e8",
+       "condition": "subject.parityP52I079A CONTAINS 'r'"
+      },
+      {
+       "component": "PARITY",
+       "reason": "p52i-pip-custom-delete-escaped-percent update",
+       "resourceType": "PARITY_SUITE_P52_ID_079",
+       "operation": "UPDATE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "075b99d8-c98f-20f5-baa4-a6dd1a86d390",
+       "condition": "subject.parityP52I079A CONTAINS 'u'"
+      },
+      {
+       "component": "PARITY",
+       "reason": "p52i-pip-custom-delete-escaped-percent create",
+       "resourceType": "PARITY_SUITE_P52_ID_079",
+       "operation": "CREATE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "d99d73ff-d951-c8b2-85d7-7be2dada8e69",
+       "condition": "subject.parityP52I079A CONTAINS 'c'"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-read",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "READ",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      },
+      {
+       "name": "w2-update",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "UPDATE",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      },
+      {
+       "name": "w2-create",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "CREATE",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "customize-pips",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w3-read",
+      "decide:w3-update",
+      "decide:w3-create"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP52I079A",
+       "pipType": "HEADER",
+       "header": "x-parity-p52i-079-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ],
+     "requests": [
+      {
+       "name": "w3-read",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "READ",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      },
+      {
+       "name": "w3-update",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "UPDATE",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      },
+      {
+       "name": "w3-create",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "CREATE",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "delete-pip-customization",
+     "args": {
+      "name": "subject.parityP52I079%41",
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w4-read",
+      "decide:w4-update",
+      "decide:w4-create"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "name": "w4-read",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "READ",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      },
+      {
+       "name": "w4-update",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "UPDATE",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      },
+      {
+       "name": "w4-create",
+       "type": "PARITY_SUITE_P52_ID_079",
+       "operation": "CREATE",
+       "headers": {
+        "x-parity-p52i-079-a": "r",
+        "x-parity-p52i-079-b": "u",
+        "x-parity-p52i-079-c": "c"
+       }
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-pip-customization",
+     "args": {
+      "name": "subject.parityP52I079A",
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P52_ID_079"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup-pips",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_079"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-079"
+  },
+  {
+   "id": "p52i-pip-custom-delete-escaped-d",
+   "about": "DELETE of a PIP customization naming the PIP",
+   "resourceType": "PARITY_SUITE_P52_ID_080",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_080"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_080"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP52I080A",
+       "pipType": "HEADER",
+       "header": "x-parity-p52i-080-a",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P52_ID_080"
+     },
+     "observe": [
+      "status",
+      "decide:w2-read",
+      "decide:w2-update",
+      "decide:w2-create"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "p52i-pip-custom-delete-escaped-d read",
+       "resourceType": "PARITY_SUITE_P52_ID_080",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "21622bb5-fc0a-9b00-2d8a-712d8552fad6",
+       "condition": "subject.parityP52I080A CONTAINS 'r'"
+      },
+      {
+       "component": "PARITY",
+       "reason": "p52i-pip-custom-delete-escaped-d update",
+       "resourceType": "PARITY_SUITE_P52_ID_080",
+       "operation": "UPDATE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "e1f1cd75-c101-844d-878a-78d6fea16bc1",
+       "condition": "subject.parityP52I080A CONTAINS 'u'"
+      },
+      {
+       "component": "PARITY",
+       "reason": "p52i-pip-custom-delete-escaped-d create",
+       "resourceType": "PARITY_SUITE_P52_ID_080",
+       "operation": "CREATE",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "19071d8d-b65f-5ad4-ce4f-53f832f2921d",
+       "condition": "subject.parityP52I080A CONTAINS 'c'"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-read",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "READ",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      },
+      {
+       "name": "w2-update",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "UPDATE",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      },
+      {
+       "name": "w2-create",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "CREATE",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "customize-pips",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w3-read",
+      "decide:w3-update",
+      "decide:w3-create"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP52I080A",
+       "pipType": "HEADER",
+       "header": "x-parity-p52i-080-b",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false
+      }
+     ],
+     "requests": [
+      {
+       "name": "w3-read",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "READ",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      },
+      {
+       "name": "w3-update",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "UPDATE",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      },
+      {
+       "name": "w3-create",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "CREATE",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w4",
+     "op": "delete-pip-customization",
+     "args": {
+      "name": "subject.parityP52I080A",
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w4-read",
+      "decide:w4-update",
+      "decide:w4-create"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "name": "w4-read",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "READ",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      },
+      {
+       "name": "w4-update",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "UPDATE",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      },
+      {
+       "name": "w4-create",
+       "type": "PARITY_SUITE_P52_ID_080",
+       "operation": "CREATE",
+       "headers": {
+        "x-parity-p52i-080-a": "r",
+        "x-parity-p52i-080-b": "u",
+        "x-parity-p52i-080-c": "c"
+       }
+      }
+     ]
+    },
+    {
+     "name": "w4-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w4-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-pip-customization",
+     "args": {
+      "name": "subject.parityP52I080A",
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-policies",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_P52_ID_080"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup-pips",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_080"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-080"
+  },
+  {
+   "id": "p52i-control-must-last",
+   "about": "control: a declaration written and read back, as pap-read/two-domain-mapping read one",
+   "resourceType": "PARITY_SUITE_P52_ID_951",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_951"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_951"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P52I951_A",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P52I_951": [
+          "parity_p52i_951_a"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_951"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_951"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-951"
+  }
+ ]
+}

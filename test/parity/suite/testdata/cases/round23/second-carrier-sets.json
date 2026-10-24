@@ -1,0 +1,363 @@
+{
+ "about": "Decision rules that exactly one earlier golden pins: a rule, policy, or set target that cannot be evaluated makes its node not applicable (the goldens read a failing entitlements service; here a null element of a list fails the target), a permission scope read in a set target outside iterate, and a policy operation in lower case. Each case's about names the rule it pins.",
+ "resourceTypePrefix": "PARITY_SUITE_R23S_",
+ "pins": {},
+ "pips": {
+  "scope": {
+   "cachePeriod": 1,
+   "cacheable": false,
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090"
+  }
+ },
+ "cases": [
+  {
+   "id": "s23-second-carrier-sets-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-064-null-element-contains-deny-policy-target",
+   "about": "Pins that a target which cannot be evaluated makes its node not applicable; the goldens that pin it read a failing entitlements service, and here a null list element fails the target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.l CONTAINS 'v'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       null
+      ],
+      "a": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-065-null-element-contains-deny-set-target",
+   "about": "Pins that a target which cannot be evaluated makes its node not applicable; the goldens that pin it read a failing entitlements service, and here a null list element fails the target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.l CONTAINS 'v'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       null
+      ],
+      "a": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-066-one-set-deeper",
+   "about": "Seconds the golden regular/r14-scope-outside-iterate-in-a-set-target-deny/read. Pins that a permission scope read in a set target outside iterate makes the set not applicable, here one set deeper.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0-in",
+       "target": "true",
+       "policies": [],
+       "sets": [
+        {
+         "key": "s0-s0",
+         "target": "subject.permissionScope.region IS EMPTY",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "policies": [
+          {
+           "key": "s0-s0-p0",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "s0-s0-p0-r0",
+             "target": "true",
+             "condition": "true",
+             "effect": "DENY"
+            }
+           ],
+           "algorithm": "PERMIT_UNLESS_DENY"
+          }
+         ],
+         "sets": []
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-067-null-element-contains-deny-rule-target",
+   "about": "Pins that a target which cannot be evaluated makes its node not applicable; the goldens that pin it read a failing entitlements service, and here a null list element fails the target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "resource.l CONTAINS 'v'",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       null
+      ],
+      "a": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-068-null-element-contains-allow-policy-target",
+   "about": "Pins that a target which cannot be evaluated makes its node not applicable; the goldens that pin it read a failing entitlements service, and here a null list element fails the target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.l CONTAINS 'v'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       null
+      ],
+      "a": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-069-null-element-contains-allow-set-target",
+   "about": "Pins that a target which cannot be evaluated makes its node not applicable; the goldens that pin it read a failing entitlements service, and here a null list element fails the target.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.l CONTAINS 'v'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "allow",
+           "target": "true",
+           "condition": "resource.a == 'zz'",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "l": [
+       null
+      ],
+      "a": "n",
+      "id": "r23"
+     }
+    }
+   ]
+  },
+  {
+   "id": "s23-070-policy-operation-lower-case",
+   "about": "Pins that a policy operation is compared without regard to case.",
+   "condition": "resource.a == 'y'",
+   "operation": "update",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y",
+      "id": "r23"
+     },
+     "operation": "UPDATE"
+    }
+   ]
+  },
+  {
+   "id": "s23-second-carrier-sets-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r23",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

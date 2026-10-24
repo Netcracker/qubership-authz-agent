@@ -13,21 +13,18 @@
 // limitations under the License.
 
 // Package model holds the legacy access-control wire DTO structs the parity
-// suite asserts against. Each struct mirrors a legacy Java Jackson DTO
-// field-by-field; file-level comments cite the legacy source class.
+// suite asserts against. Each struct mirrors the JSON the legacy service
+// sends or accepts, field by field.
 package model
 
-// ApiVersionResponse mirrors the legacy server's
-// com.netcracker.security.authorization.abac.controller.apiversion.ApiVersionResponse.
-// The legacy server emits integer-typed major/minor/supportedMajors
-// (ApiVersionSpec.java:12-17); the Go struct uses int to preserve that
-// byte shape per D-V item 11 of the parity suite handover.
+// ApiVersionResponse is the body of GET /api-version. The legacy server emits
+// integer major, minor and supportedMajors; the Go struct uses int to preserve
+// that byte shape per D-V item 11.
 type ApiVersionResponse struct {
 	Specs []ApiVersionSpec `json:"specs"`
 }
 
-// ApiVersionSpec mirrors
-// com.netcracker.security.authorization.abac.controller.apiversion.ApiVersionSpec.
+// ApiVersionSpec is one entry of ApiVersionResponse.Specs.
 type ApiVersionSpec struct {
 	SpecRootUrl     string `json:"specRootUrl"`
 	Major           int    `json:"major"`

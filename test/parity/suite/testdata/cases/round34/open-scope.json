@@ -1,0 +1,324 @@
+{
+ "about": "subject.permissionScope read outside iterate on the right of a comparison whose left side is in a special state, as round 33's open-scope.json asked. Each case is the condition of the only DENY rule of a PERMIT_UNLESS_DENY policy in a PERMIT_UNLESS_DENY set, with no sibling rule, policy or set, so no order of evaluation takes part: true if the left side ends the rule before the scope is read, false if the scope read fails the decision. Round 33 found the scope read first under IN whatever the left side held (absent, null, the empty list, an index past the end), and the absent key first under CONTAINS ANY and IS SUBSET. These cases ask three more left states under IN, and NOT IN and NOT CONTAINS ANY with an absent key. The permission scope service answers 404, as in round 33. Every case declares the file's three PIPs.",
+ "resourceTypePrefix": "PARITY_SUITE_R34S_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 34 case"
+   }
+  },
+  "/api/v1/pip/r34open-null": {
+   "statusCode": 200,
+   "body": null
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "null": {
+   "name": "subject.parityR34Null",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r34open-null",
+   "requestAttributes": {
+    "case": "r34open-null"
+   }
+  },
+  "header": {
+   "name": "subject.parityR34Header",
+   "pipType": "HEADER",
+   "header": "x-parity-r34",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "r34open-scope-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34",
+      "c": "n"
+     }
+    }
+   ],
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ]
+  },
+  {
+   "id": "r34open-scope-empty-selection-in",
+   "about": "Under IN, the left side is a jsonPath filter that selects nothing: resource.l holds one item, whose k is a. True if the left side ends the rule first, false if the scope read fails the decision.",
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.l[?(@.k == 'z')].id IN subject.permissionScope.region",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34",
+      "l": [
+       {
+        "k": "a",
+        "id": "v"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34open-scope-null-body-in",
+   "about": "Under IN, the left side is a GENERAL PIP whose route answers the body null. True if the left side ends the rule first, false if the scope read fails the decision.",
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR34Null IN subject.permissionScope.region",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34open-scope-empty-header-in",
+   "about": "Under IN, the left side is a HEADER PIP whose header x-parity-r34 the request does not carry. True if the left side ends the rule first, false if the scope read fails the decision.",
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR34Header IN subject.permissionScope.region",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34open-scope-absent-key-not-in",
+   "about": "NOT IN; the resource holds no key x. Round 33 found the scope read first under IN and the absent key first under CONTAINS ANY and IS SUBSET. True if the left side ends the rule first, false if the scope read fails the decision.",
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT IN subject.permissionScope.region",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34open-scope-absent-key-not-contains-any",
+   "about": "NOT CONTAINS ANY; the resource holds no key x. Like CONTAINS ANY in round 33, the collection is on the left. True if the left side ends the rule first, false if the scope read fails the decision.",
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT CONTAINS ANY subject.permissionScope.region",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34open-scope-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34",
+      "c": "n"
+     }
+    }
+   ],
+   "pips": [
+    "scope",
+    "null",
+    "header"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1912 @@
+{
+ "about": "The readings round 16 left open. A permission scope read in an iterate pass condition: whether OR or the kind of the other operand makes the request fail with 400, and whether it fails before the operand is reached. A list on the right of == in an ALLOW rule condition, and in a policy and a set target. operation in a policy and a set target: under NOT IN, IN subject.roles, and on the right of subject.roles CONTAINS and NOT CONTAINS. keys() of JSON Path under an OR probe. Two nulls under each binary operator. A HEADER value of several items under ==, IS NULL, IN and < in a DENY rule, and a one-element GENERAL body [true] on the right of IS SUBSET. check/filter with a nested or a top-level set of two groups beside a sibling ALLOW that has no predicate. The reader has two scope grants, regions r1 and r2; subject.parityR17List is a HEADER PIP; subject.parityR17True answers [true].",
+ "resourceTypePrefix": "PARITY_SUITE_R17_",
+ "pins": {
+  "/api/v1/pip/r17-true": {
+   "statusCode": 200,
+   "body": [
+    true
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "header": {
+   "name": "subject.parityR17List",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r17-list",
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "true": {
+   "name": "subject.parityR17True",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r17-true",
+   "requestAttributes": {
+    "case": "r17-true"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "q17-scope-contains-a-path-or",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 10 condition that answered 200, with OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.region OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-contains-a-literal-or",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 13 condition that answered 200, with OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS 'r1' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-contains-a-nested-path",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 15 condition that answered 400, without OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.o.region",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-not-contains-a-literal",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 15 condition that answered 400, without OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.permissionScope.region NOT CONTAINS 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-contains-any-a-path",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 15 condition that answered 400, without OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS ANY resource.y",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-in-a-nested-path",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 15 condition that answered 400, without OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.o.region IN subject.permissionScope.region",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-contains-a-nested-path-and",
+   "about": "Asks whether a scope read fails the request: the operand kinds of a round 15 condition that answered 400, with AND and without OR.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.permissionScope.region CONTAINS resource.o.region AND resource.a == 'n'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-scope-after-a-true-operand-or",
+   "about": "Asks whether a scope read fails the request: OR with the scope read second: request a-y ends before the read, a-n reaches it.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y' OR subject.permissionScope.region CONTAINS resource.o.region",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "region": "r1",
+      "y": "r1",
+      "o": {
+       "region": "r1"
+      },
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-attribute-list-on-the-right-of-equals-in-an-allow-rule",
+   "about": "A DENY rule answered 400 in round 15; is an ALLOW rule the same.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.v == resource.l2",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "l2": [
+       "v",
+       "w"
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-on-the-right-of-equals-in-an-allow-rule",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.v == subject.parityR17List",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-attribute-list-on-the-right-of-equals-in-a-policy-target",
+   "about": "A list on the right of == in a policy target above a DENY rule: true when the policy does not apply, false when it applies, 400 when the request fails.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.v == resource.l2",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "l2": [
+       "v",
+       "w"
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-on-the-right-of-equals-in-a-policy-target",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "resource.v == subject.parityR17List",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-attribute-list-on-the-right-of-equals-in-a-set-target",
+   "about": "A list on the right of == in a set target above a DENY rule: true when the set does not apply, false when it applies, 400 when the request fails.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.v == resource.l2",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "l2": [
+       "v",
+       "w"
+      ],
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-on-the-right-of-equals-in-a-set-target",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.v == subject.parityR17List",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "v": "v",
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-not-in-in-a-policy-target",
+   "about": "operation in a policy target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "operation NOT IN 'LIST'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-in-roles-in-a-policy-target",
+   "about": "operation in a policy target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "operation IN subject.roles",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-roles-contain-in-a-policy-target",
+   "about": "operation in a policy target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS operation",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-roles-not-contain-in-a-policy-target",
+   "about": "operation in a policy target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles NOT CONTAINS operation",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-not-in-in-a-set-target",
+   "about": "operation in a set target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "operation NOT IN 'LIST'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-in-roles-in-a-set-target",
+   "about": "operation in a set target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "operation IN subject.roles",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-roles-contain-in-a-set-target",
+   "about": "operation in a set target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject.roles CONTAINS operation",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-operation-roles-not-contain-in-a-set-target",
+   "about": "operation in a set target above a DENY rule; in a rule target the same form answered 400 in round 15 or is its control.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "subject.roles NOT CONTAINS operation",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "deny",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-jsonpath-function-keys-or",
+   "about": "Whether keys() CONTAINS 'k' is a false comparison or ends the rule.",
+   "condition": "resource.o.keys() CONTAINS 'k' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": 1
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": 1
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-jsonpath-function-keys-is-null-or",
+   "condition": "resource.o.keys() IS NULL OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "o": {
+       "k": 1
+      },
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "o": {
+       "k": 1
+      },
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-eq",
+   "condition": "resource.x == resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-ne",
+   "condition": "resource.x != resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-lt",
+   "condition": "resource.x < resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-le",
+   "condition": "resource.x <= resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-gt",
+   "condition": "resource.x > resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-ge",
+   "condition": "resource.x >= resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-in",
+   "condition": "resource.x IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-in-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x IN resource.y",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-not-in",
+   "condition": "resource.x NOT IN resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-not-in-in-a-deny-rule",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.x NOT IN resource.y",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-contains",
+   "condition": "resource.x CONTAINS resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-not-contains",
+   "condition": "resource.x NOT CONTAINS resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-contains-any",
+   "condition": "resource.x CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-not-contains-any",
+   "condition": "resource.x NOT CONTAINS ANY resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-is-subset",
+   "condition": "resource.x IS SUBSET resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-null-on-both-sides-is-not-subset",
+   "condition": "resource.x IS NOT SUBSET resource.y OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "probe-a-n",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "probe-a-y",
+     "resource": {
+      "x": null,
+      "y": null,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-eq-in-a-deny-rule",
+   "about": "A HEADER value of several items under an operator that reads one value, in a DENY rule: true when the rule ends or the comparison is false, false when the comparison holds or the decision fails. The OR probes of round 16 show that == over such a value ends the rule, so false here means the decision fails.",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR17List == 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-is-null-in-a-deny-rule",
+   "about": "A HEADER value of several items under an operator that reads one value, in a DENY rule: true when the rule ends or the comparison is false, false when the comparison holds or the decision fails. The OR probes of round 16 show that == over such a value ends the rule, so false here means the decision fails.",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR17List IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-in-in-a-deny-rule",
+   "about": "A HEADER value of several items under an operator that reads one value, in a DENY rule: true when the rule ends or the comparison is false, false when the comparison holds or the decision fails. The OR probes of round 16 show that == over such a value ends the rule, so false here means the decision fails.",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR17List IN 'v', 'w'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-header-list-lt-in-a-deny-rule",
+   "about": "A HEADER value of several items under an operator that reads one value, in a DENY rule: true when the rule ends or the comparison is false, false when the comparison holds or the decision fails. The OR probes of round 16 show that == over such a value ends the rule, so false here means the decision fails.",
+   "pips": [
+    "header"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityR17List < 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r17"
+     },
+     "headers": {
+      "x-parity-r17-list": "v,w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-string-true-is-subset-of-a-true-body",
+   "about": "The string 'true' and, as the control, the boolean true on the left of IS SUBSET a body [true].",
+   "condition": "resource.s IS SUBSET subject.parityR17True OR resource.a == 'y'",
+   "pips": [
+    "true"
+   ],
+   "requests": [
+    {
+     "name": "string-a-n",
+     "resource": {
+      "s": "true",
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "string-a-y",
+     "resource": {
+      "s": "true",
+      "id": "r17",
+      "a": "y"
+     }
+    },
+    {
+     "name": "boolean-a-n",
+     "resource": {
+      "s": true,
+      "id": "r17",
+      "a": "n"
+     }
+    },
+    {
+     "name": "boolean-a-y",
+     "resource": {
+      "s": true,
+      "id": "r17",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q17-groups-of-a-nested-set-beside-an-allow",
+   "about": "A nested set of two groups beside a sibling ALLOW with no predicate; beside a sibling predicate it answered 400 in round 15.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allowed",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allowed-list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "a",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "a-list",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "a==1"
+           }
+          }
+         ]
+        },
+        {
+         "key": "b",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "b-list",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "b==2"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "q17-groups-of-a-top-level-set-beside-an-allow",
+   "sets": [
+    {
+     "key": "first",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "a",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "a-list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "b",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "b-list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "second",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allowed",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allowed-list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

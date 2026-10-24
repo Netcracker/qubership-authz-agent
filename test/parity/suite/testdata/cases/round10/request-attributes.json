@@ -1,0 +1,266 @@
+{
+ "about": "What a GENERAL PIP sends in the requestAttributes of its call when a value there is a placeholder. The documentation writes ${subject.<TOKEN or HEADER PIP>} there; every recorded GENERAL PIP sends literal values only, so what a placeholder over subject.roles, a resource attribute holding an object, and a resource attribute the request does not carry become is recorded nowhere, and neither is whether an unresolved one sends the call at all. The agent's PIP loader validates placeholders in requestAttributes and expands them when it calls the PIP. Each form is its own case: one GENERAL PIP whose requestAttributes hold {\"value\": <placeholder>}, answering {\"value\": \"v\"} at a route of its own, and a READ policy whose condition reads the PIP. Every request carries the resource {\"id\": \"r10-ra\", \"obj\": {\"k\": \"v\"}}. The decision and what pip-mock received over the case, its call count and the requestAttributes of the first call, are recorded. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {
+  "/api/v1/pip/r10-ra-literal": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r10-ra-token": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r10-ra-subject-roles": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r10-ra-resource-id": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r10-ra-resource-object": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/r10-ra-resource-missing": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  }
+ },
+ "pips": {
+  "department": {
+   "name": "subject.parityR10RaDepartment",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  },
+  "ra-literal": {
+   "name": "subject.parityR10RaGeneral",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-ra-literal",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "value": "lit"
+   }
+  },
+  "ra-token": {
+   "name": "subject.parityR10RaGeneral",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-ra-token",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "value": "${subject.parityR10RaDepartment}"
+   }
+  },
+  "ra-subject-roles": {
+   "name": "subject.parityR10RaGeneral",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-ra-subject-roles",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "value": "${subject.roles}"
+   }
+  },
+  "ra-resource-id": {
+   "name": "subject.parityR10RaGeneral",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-ra-resource-id",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "value": "${resource.id}"
+   }
+  },
+  "ra-resource-object": {
+   "name": "subject.parityR10RaGeneral",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-ra-resource-object",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "value": "${resource.obj}"
+   }
+  },
+  "ra-resource-missing": {
+   "name": "subject.parityR10RaGeneral",
+   "url": "http://pip-mock:8090/api/v1/pip/r10-ra-resource-missing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "type": "JSON",
+   "jsonPath": "$.value",
+   "cacheable": false,
+   "requestAttributes": {
+    "value": "${resource.missing}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "ra-literal",
+   "about": "The control whose answer is known: true after one call carrying {\"value\": \"lit\"}.",
+   "condition": "subject.parityR10RaGeneral == 'v'",
+   "pips": [
+    "department",
+    "ra-literal"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r10-ra",
+      "obj": {
+       "k": "v"
+      }
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1044"
+   },
+   "pipCalls": "/api/v1/pip/r10-ra-literal"
+  },
+  {
+   "id": "ra-token",
+   "about": "The form the documentation gives.",
+   "condition": "subject.parityR10RaGeneral == 'v'",
+   "pips": [
+    "department",
+    "ra-token"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r10-ra",
+      "obj": {
+       "k": "v"
+      }
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1044"
+   },
+   "pipCalls": "/api/v1/pip/r10-ra-token"
+  },
+  {
+   "id": "ra-subject-roles",
+   "condition": "subject.parityR10RaGeneral == 'v'",
+   "pips": [
+    "department",
+    "ra-subject-roles"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r10-ra",
+      "obj": {
+       "k": "v"
+      }
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1044"
+   },
+   "pipCalls": "/api/v1/pip/r10-ra-subject-roles"
+  },
+  {
+   "id": "ra-resource-id",
+   "about": "A resource attribute holding a string, the one the resource forms differ from.",
+   "condition": "subject.parityR10RaGeneral == 'v'",
+   "pips": [
+    "department",
+    "ra-resource-id"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r10-ra",
+      "obj": {
+       "k": "v"
+      }
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1044"
+   },
+   "pipCalls": "/api/v1/pip/r10-ra-resource-id"
+  },
+  {
+   "id": "ra-resource-object",
+   "condition": "subject.parityR10RaGeneral == 'v'",
+   "pips": [
+    "department",
+    "ra-resource-object"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r10-ra",
+      "obj": {
+       "k": "v"
+      }
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1044"
+   },
+   "pipCalls": "/api/v1/pip/r10-ra-resource-object"
+  },
+  {
+   "id": "ra-resource-missing",
+   "condition": "subject.parityR10RaGeneral == 'v'",
+   "pips": [
+    "department",
+    "ra-resource-missing"
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r10-ra",
+      "obj": {
+       "k": "v"
+      }
+     }
+    }
+   ],
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f1044"
+   },
+   "pipCalls": "/api/v1/pip/r10-ra-resource-missing"
+  }
+ ]
+}

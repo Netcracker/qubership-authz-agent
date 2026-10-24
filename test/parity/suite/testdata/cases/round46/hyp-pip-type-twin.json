@@ -1,0 +1,149 @@
+{
+ "about": "A GENERAL PIP declared with its type as documented, and a rule that reads it: the twin of the file whose PIP type is in lower case. Control cases first and last.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_HYP_PIP_TYPE_TWIN_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityhypgenlower": {
+   "name": "subject.parityHypGenLower",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/hyp-gen-lower"
+  }
+ },
+ "cases": [
+  {
+   "id": "hy46-pip-type-twin-control-first",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "hy46-enum-pip-type-general-documented",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityHypGenLower == 'y' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     },
+     "pins": {
+      "/api/v1/pip/hyp-gen-lower": {
+       "statusCode": 200,
+       "body": [
+        "y"
+       ]
+      }
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityhypgenlower"
+   ]
+  },
+  {
+   "id": "hy46-pip-type-twin-control-last",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

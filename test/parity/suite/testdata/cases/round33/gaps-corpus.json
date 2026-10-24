@@ -1,0 +1,272 @@
+{
+ "about": "Forms real configurations use and no golden sends, with synthetic names: a placeholder in a condition, FILTERED 'OP' after a PIP on the right of IN, a double space after OR, a field key with a trailing space, and rules placed directly in a set rather than in a policy. Each probe is `<form> OR resource.a == 'y'` with a = n and a = y, unless its about says otherwise.",
+ "resourceTypePrefix": "PARITY_SUITE_R33G_",
+ "pins": {
+  "/api/v1/pip/r33gaps-filtered": {
+   "statusCode": 200,
+   "body": [
+    "r33"
+   ]
+  }
+ },
+ "pips": {
+  "filtered": {
+   "name": "subject.parityR33Ids.filtered",
+   "pipType": "FILTERED",
+   "resourceType": "{{resourceType}}",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r33gaps-filtered"
+  }
+ },
+ "cases": [
+  {
+   "id": "r33gaps-corpus-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-placeholder-in-a-condition",
+   "about": "The condition holds ${x} where a list literal would stand: `subject.roles CONTAINS ANY ${x}`. Upload 400 if the condition language has no placeholder; if it is taken, the reads show what ${x} became.",
+   "condition": "subject.roles CONTAINS ANY ${x} OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-filtered-on-the-right-of-in",
+   "pips": [
+    "filtered"
+   ],
+   "about": "The FILTERED PIP subject.parityR33Ids.filtered, declared with the case's resource type, stands on the right of IN with the suffix FILTERED 'READ': `resource.id IN subject.parityR33Ids FILTERED 'READ'`. Its route answers [\"r33\"], the resource's id. Upload 400 if the suffix may not follow a PIP on the right; if it is taken, a = n is true when the suffix reads the FILTERED PIP.",
+   "condition": "resource.id IN subject.parityR33Ids FILTERED 'READ' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-double-space-after-or",
+   "about": "Two spaces after OR: `resource.b == 'y' OR  resource.a == 'y'`. g6a-doubled-space refused two spaces before AND; upload 400 here too if a double space breaks the text wherever it stands.",
+   "condition": "resource.b == 'y' OR  resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-key-with-a-trailing-space-simplified",
+   "about": "The simplified policy has no condition key, and a key \"condition \" with a trailing space holding `resource.a == 'y'`. a = n true if the key is not the condition and the policy has none (an absent condition is true); false if the key is read as the condition; 400 if the upload refuses the key.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "condition ": "resource.a == 'y'"
+   },
+   "policyOmit": [
+    "condition"
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-key-with-a-trailing-space-rule",
+   "about": "As r33gaps-key-with-a-trailing-space-simplified, in the ALLOW rule of a set: no condition key, and \"condition \" holding `resource.a == 'y'`.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "fields": {
+          "condition ": "resource.a == 'y'"
+         },
+         "omitFields": [
+          "condition"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-rules-directly-in-a-set",
+   "about": "The set holds no policy and a rules list with one unconditional ALLOW rule, as the older forms of configurations do. Both requests false if rules outside a policy take no part; true if they act as a policy of the set; 400 if the upload refuses them.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "fields": {
+      "rules": [
+       {
+        "ruleId": "00000000-0000-0000-0000-0000003300a1",
+        "effect": "ALLOW",
+        "target": "true",
+        "condition": "true"
+       }
+      ]
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-corpus-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

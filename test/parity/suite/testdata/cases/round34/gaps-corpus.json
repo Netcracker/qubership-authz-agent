@@ -1,0 +1,284 @@
+{
+ "about": "Forms that real configurations use and no golden sends, with synthetic names: a simplified policy with the key fields null, a MAPPING declaration with a role name as a stray top-level key, GENERAL declarations with the key tenantId and with the keys id and domain, and a GENERAL url whose path holds {{x}}. Each probe reads with a = n and a = y: a condition `<form> OR resource.a == 'y'`, or, where the form is a key of the policy, the condition `resource.a == 'y'`.",
+ "resourceTypePrefix": "PARITY_SUITE_R34G_",
+ "pins": {
+  "/api/v1/pip/r34gaps-v": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r34gaps-{{x}}": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "mapping": {
+   "name": "subject.permissions.parityR34",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R34_MAPPED"
+     ]
+    }
+   },
+   "ROLE_PARITY_READER": [
+    "PARITY_R34_STRAY"
+   ]
+  },
+  "other-tenant": {
+   "name": "subject.parityR34Tenant",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r34gaps-v",
+   "requestAttributes": {
+    "case": "r34gaps-tenant"
+   },
+   "tenantId": "parity-r34-other-tenant"
+  },
+  "id-and-domain": {
+   "name": "subject.parityR34IdDomain",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r34gaps-v",
+   "requestAttributes": {
+    "case": "r34gaps-id-domain"
+   },
+   "id": "00000000-0000-0000-0000-0000003400d1",
+   "domain": "PARITY_R34_OTHER_DOMAIN"
+  },
+  "braces": {
+   "name": "subject.parityR34Braces",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r34gaps-{{x}}",
+   "requestAttributes": {
+    "case": "r34gaps-braces"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r34gaps-corpus-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-simplified-fields-null",
+   "about": "The simplified policy carries \"fields\": null, a key the documentation lists for obligations, not for simplified policies. a = n false and a = y true if the key is ignored; upload 400 if it is refused.",
+   "condition": "resource.a == 'y'",
+   "policy": {
+    "fields": null
+   },
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r34",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r34",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-mapping-stray-role-key-control",
+   "pips": [
+    "mapping"
+   ],
+   "about": "Positive control of r34gaps-mapping-stray-role-key: the same declaration, and the condition reads the permission customMapping gives ROLE_PARITY_READER. a = n true.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R34_MAPPED' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r34",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r34",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-mapping-stray-role-key",
+   "pips": [
+    "mapping"
+   ],
+   "about": "The MAPPING declaration holds, beside customMapping, a top-level key ROLE_PARITY_READER whose value is [\"PARITY_R34_STRAY\"]. a = n false if the key is ignored; true if it maps the role as a customMapping entry would; upload 400 if it is refused.",
+   "condition": "subject.permissions CONTAINS 'PARITY_R34_STRAY' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r34",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r34",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-pip-with-another-tenant-id",
+   "pips": [
+    "other-tenant"
+   ],
+   "about": "The GENERAL declaration carries tenantId parity-r34-other-tenant, not the tenant of the upload; its route answers [\"v\"]. a = n true if the key is ignored, as a set's tenantId is (r29fields-tenant-*); false, or 400 on every check, if the PIP goes to that tenant and the policy reads a PIP its tenant does not declare; upload 400 if it is refused.",
+   "condition": "subject.parityR34Tenant == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r34",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r34",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-pip-with-an-id-and-a-domain",
+   "pips": [
+    "id-and-domain"
+   ],
+   "about": "The GENERAL declaration carries an id and domain PARITY_R34_OTHER_DOMAIN, neither of which the documentation lists for a PIP; its route answers [\"v\"]. a = n true if both are ignored; upload 400 if either is refused.",
+   "condition": "subject.parityR34IdDomain == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r34",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r34",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-url-with-double-braces",
+   "pips": [
+    "braces"
+   ],
+   "about": "The GENERAL url's path ends in r34gaps-{{x}}, as a deployment template left unrendered would, without spaces; the route with that path answers [\"v\"]. Both requests false if the HTTP client refuses the braces and the PIP fails without a call; a = n true if the call carries them to the route. pipCalls records the call, if any.",
+   "condition": "subject.parityR34Braces == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r34",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r34gaps-{{x}}"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r34",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r34gaps-corpus-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r34",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
