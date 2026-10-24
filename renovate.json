@@ -36,6 +36,11 @@
       "matchDepNames": ["helm"],
       "matchCurrentVersion": "/^v?4\\./",
       "allowedVersions": "/^v?4\\./"
+    },
+    {
+      "description": "The OPA CLI in mise.toml runs the Rego tests, so it stays at the version of the OPA library that go.mod pins: one pull request updates both, and the tests run on the evaluator the agent embeds.",
+      "matchDepNames": ["github.com/open-policy-agent/opa", "aqua:open-policy-agent/opa"],
+      "groupName": "OPA"
     }
   ]
 }

@@ -82,7 +82,7 @@ verified from a clean clone on public images.
 ### Prerequisites
 
 - Go 1.24+
-- [OPA CLI](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (for Rego tests; also installable via `bash test/scripts/install-opa.sh`)
+- [OPA CLI](https://www.openpolicyagent.org/docs/latest/#1-download-opa) (for Rego tests; `mise install` installs the version `mise.toml` pins)
 - Docker, `kind`, and `kubectl` (for the integration and parity suites, which run on kind)
 - Docker Compose (for the load suite only)
 - `helm` 3.19 or later, or 4.x (for the chart render test, and to install the test stand and run the suites on kind); see
