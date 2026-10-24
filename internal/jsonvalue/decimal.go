@@ -15,6 +15,7 @@
 package jsonvalue
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"unicode"
@@ -38,8 +39,25 @@ const maxExponent = 1 << 60
 // is a Unicode decimal digit in the Basic Multilingual Plane: Java tests each
 // UTF-16 char, so a digit outside it is refused. Spaces, underscores, NaN, and
 // Infinity are refused. An exponent up to ±2^60 is accepted, where BigDecimal
-// accepts only the int range.
+// accepts only a scale in the int range; [ParseBigDecimal] refuses the rest as
+// BigDecimal does.
 func ParseDecimal(s string) (Decimal, bool) {
+	d, _, ok := parseDecimal(s)
+	return d, ok
+}
+
+// ParseBigDecimal reads s as [ParseDecimal] does, and refuses a number whose
+// scale, the count of digits after the point less the exponent, is outside the
+// int range, such as 1.1e-2147483647 or 1e2147483649: Java's
+// new BigDecimal(String) throws NumberFormatException for it.
+func ParseBigDecimal(s string) (Decimal, bool) {
+	d, scale, ok := parseDecimal(s)
+	return d, ok && scale >= math.MinInt32 && scale <= math.MaxInt32
+}
+
+// parseDecimal returns the number s holds and its scale as BigDecimal counts
+// it.
+func parseDecimal(s string) (Decimal, int64, bool) {
 	var d Decimal
 	rs := []rune(s)
 	i := 0
@@ -63,7 +81,7 @@ func ParseDecimal(s string) (Decimal, bool) {
 		}
 	}
 	if intDigits+fracDigits == 0 {
-		return Decimal{}, false
+		return Decimal{}, 0, false
 	}
 	var exp int64
 	if i < len(rs) && (rs[i] == 'e' || rs[i] == 'E') {
@@ -77,22 +95,22 @@ func ParseDecimal(s string) (Decimal, bool) {
 		for i < len(rs) && isDigit(rs[i]) {
 			d := int64(digitValue(rs[i]) - '0')
 			if exp > (maxExponent-d)/10 {
-				return Decimal{}, false
+				return Decimal{}, 0, false
 			}
 			exp = exp*10 + d
 			i++
 		}
 		if i == start {
-			return Decimal{}, false
+			return Decimal{}, 0, false
 		}
 		if expNeg {
 			exp = -exp
 		}
 	}
 	if i != len(rs) {
-		return Decimal{}, false
+		return Decimal{}, 0, false
 	}
-	return newDecimal(d.neg, string(digits), exp-int64(fracDigits)), true
+	return newDecimal(d.neg, string(digits), exp-int64(fracDigits)), int64(fracDigits) - exp, true
 }
 
 // newDecimal normalizes coef × 10^exp: it strips leading zeros, moves trailing

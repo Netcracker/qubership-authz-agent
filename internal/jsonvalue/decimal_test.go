@@ -77,6 +77,35 @@ func TestParseDecimal_AcceptsTheLargestExponent(t *testing.T) {
 	}
 }
 
+// The scale, the digits after the point less the exponent, is taken at both
+// ends of Java's int range and one past each.
+func TestParseBigDecimal_RefusesAScaleOutsideTheIntRange(t *testing.T) {
+	tests := []struct {
+		in   string
+		want bool
+	}{
+		{"1e-2147483647", true},
+		{"1.1e-2147483646", true},
+		{"1.1e-2147483647", false},
+		{"1e2147483648", true},
+		{"1e2147483649", false},
+		{"10.0e2147483649", true},
+		{"10.0e2147483650", false},
+		{"0.0e-2147483648", false},
+		{"1e1152921504606846976", false},
+		{"12.50", true},
+		{"1_0", false},
+	}
+	for _, tt := range tests {
+		if _, ok := ParseBigDecimal(tt.in); ok != tt.want {
+			t.Errorf("ParseBigDecimal(%q) accepted = %v, want %v", tt.in, ok, tt.want)
+		}
+		if _, ok := ParseDecimal(tt.in); tt.want && !ok {
+			t.Errorf("ParseDecimal(%q) refused what ParseBigDecimal accepts", tt.in)
+		}
+	}
+}
+
 func TestDecimal_StringIsAJSONNumberWithoutTrailingZeros(t *testing.T) {
 	tests := []struct {
 		in, want string
