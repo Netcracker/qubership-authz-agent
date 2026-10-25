@@ -26,15 +26,14 @@ import (
 // simplifiedPolicy mirrors internal/simplifiedpolicies.Policy (only the
 // fields the stub uses for v3 export conversion).
 type simplifiedPolicy struct {
-	Component         string `json:"component"`
-	ResourceType      string `json:"resourceType"`
-	Operation         string `json:"operation"`
-	Condition         any    `json:"condition,omitempty"`
-	RSQLPredicate     string `json:"rsqlPredicate,omitempty"`
-	SQLPredicate      string `json:"sqlPredicate,omitempty"`
-	MongoDBPredicate  string `json:"mongodbPredicate,omitempty"`
-	QueryDSLPredicate string `json:"querydslPredicate,omitempty"`
-	Roles             []any  `json:"roles,omitempty"`
+	Component        string `json:"component"`
+	ResourceType     string `json:"resourceType"`
+	Operation        string `json:"operation"`
+	Condition        any    `json:"condition,omitempty"`
+	RSQLPredicate    string `json:"rsqlPredicate,omitempty"`
+	SQLPredicate     string `json:"sqlPredicate,omitempty"`
+	MongoDBPredicate string `json:"mongodbPredicate,omitempty"`
+	Roles            []any  `json:"roles,omitempty"`
 }
 
 // simplifiedPIP mirrors internal/pips.SimplifiedPIP (fields used by
@@ -104,15 +103,14 @@ type v3Policy struct {
 }
 
 type v3Rule struct {
-	RuleID            string  `json:"ruleId"`
-	Name              string  `json:"name"`
-	Target            string  `json:"target"`
-	Condition         *string `json:"condition"`
-	Effect            string  `json:"effect"`
-	RSQLPredicate     string  `json:"rsqlPredicate,omitempty"`
-	SQLPredicate      string  `json:"sqlPredicate,omitempty"`
-	MongoDBPredicate  string  `json:"mongodbPredicate,omitempty"`
-	QueryDSLPredicate string  `json:"querydslPredicate,omitempty"`
+	RuleID           string  `json:"ruleId"`
+	Name             string  `json:"name"`
+	Target           string  `json:"target"`
+	Condition        *string `json:"condition"`
+	Effect           string  `json:"effect"`
+	RSQLPredicate    string  `json:"rsqlPredicate,omitempty"`
+	SQLPredicate     string  `json:"sqlPredicate,omitempty"`
+	MongoDBPredicate string  `json:"mongodbPredicate,omitempty"`
 }
 
 type v3PIPsResponse struct {
@@ -157,12 +155,11 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 	type psKey struct{ domain, resourceType string }
 	type pKey struct{ roles string }
 	type ruleVal struct {
-		operation         string
-		condition         string
-		rsqlPredicate     string
-		sqlPredicate      string
-		mongodbPredicate  string
-		querydslPredicate string
+		operation        string
+		condition        string
+		rsqlPredicate    string
+		sqlPredicate     string
+		mongodbPredicate string
 	}
 
 	// Collect in insertion order.
@@ -177,12 +174,11 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 		}
 		rk := pKey{roles: rolesKey(p.Roles)}
 		psMap[pk][rk] = append(psMap[pk][rk], ruleVal{
-			operation:         p.Operation,
-			condition:         conditionString(p.Condition),
-			rsqlPredicate:     p.RSQLPredicate,
-			sqlPredicate:      p.SQLPredicate,
-			mongodbPredicate:  p.MongoDBPredicate,
-			querydslPredicate: p.QueryDSLPredicate,
+			operation:        p.Operation,
+			condition:        conditionString(p.Condition),
+			rsqlPredicate:    p.RSQLPredicate,
+			sqlPredicate:     p.SQLPredicate,
+			mongodbPredicate: p.MongoDBPredicate,
 		})
 	}
 
@@ -209,15 +205,14 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 					condPtr = &c
 				}
 				v3Rules = append(v3Rules, v3Rule{
-					RuleID:            fmt.Sprintf("rule-%d-%d", pi, ri),
-					Name:              fmt.Sprintf("rule-%s-%s", rule.operation, rule.condition),
-					Target:            target,
-					Condition:         condPtr,
-					Effect:            "ALLOW",
-					RSQLPredicate:     rule.rsqlPredicate,
-					SQLPredicate:      rule.sqlPredicate,
-					MongoDBPredicate:  rule.mongodbPredicate,
-					QueryDSLPredicate: rule.querydslPredicate,
+					RuleID:           fmt.Sprintf("rule-%d-%d", pi, ri),
+					Name:             fmt.Sprintf("rule-%s-%s", rule.operation, rule.condition),
+					Target:           target,
+					Condition:        condPtr,
+					Effect:           "ALLOW",
+					RSQLPredicate:    rule.rsqlPredicate,
+					SQLPredicate:     rule.sqlPredicate,
+					MongoDBPredicate: rule.mongodbPredicate,
 				})
 			}
 			policyTarget := rolesTarget(prk.roles)
