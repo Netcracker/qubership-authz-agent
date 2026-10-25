@@ -429,7 +429,7 @@ const (
 func javaPattern(pattern string, fold bool) (string, error) {
 	rs := []rune(pattern)
 	var b strings.Builder
-	var names []string
+	names := map[string]bool{}
 	for i := 0; i < len(rs); i++ {
 		r := rs[i]
 		switch {
@@ -479,10 +479,10 @@ func javaPattern(pattern string, fold bool) (string, error) {
 			}
 			if rs[i+2] == '<' {
 				name := string(rs[i+3 : end])
-				if slices.Contains(names, name) {
+				if names[name] {
 					return "", fmt.Errorf("group name %s twice in %q", name, pattern)
 				}
-				names = append(names, name)
+				names[name] = true
 			}
 			b.WriteString(string(rs[i : end+1]))
 			i = end
