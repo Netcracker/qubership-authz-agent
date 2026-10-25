@@ -16,6 +16,7 @@ package jsonpath
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -531,6 +532,32 @@ func TestJavaPattern_RefusesAnIntersectionOfClasses(t *testing.T) {
 	if got, err := javaPattern(`[a-c&&b]`, false); err == nil {
 		t.Errorf("javaPattern([a-c&&b]) = %q, want an error", got)
 	}
+}
+
+// namedGroups returns the groups (?<g0>x)(?<g1>x)... named g0 to g(n-1),
+// followed by extra.
+func namedGroups(n int, extra string) string {
+	var b strings.Builder
+	for i := range n {
+		fmt.Fprintf(&b, "(?<g%d>x)", i)
+	}
+	return b.String() + extra
+}
+
+// A group name is refused where any earlier group of the pattern holds it,
+// however many groups stand between the two.
+func TestJavaPattern_GroupNames(t *testing.T) {
+	t.Run("a thousand distinct names are accepted", func(t *testing.T) {
+		pattern := namedGroups(1000, "")
+		if got, err := javaPattern(pattern, false); err != nil || got != pattern {
+			t.Errorf("javaPattern(namedGroups(1000, \"\")) = %.40q..., %v; want the pattern unchanged", got, err)
+		}
+	})
+	t.Run("the first name used again after a thousand groups is refused", func(t *testing.T) {
+		if got, err := javaPattern(namedGroups(1000, "(?<g0>y)"), false); err == nil {
+			t.Errorf("javaPattern(namedGroups(1000, \"(?<g0>y)\")) = %.40q..., want an error", got)
+		}
+	})
 }
 
 // A path that starts with ['key'] never reaches Jayway, so a null document
