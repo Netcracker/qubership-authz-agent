@@ -319,8 +319,8 @@ rls_result(index, resource_ref, resource, req, ols_decision, rls_ctx) := {
   raw_typed := object.get(rls_ctx.rlsDecision, "typed_predicates", {})
   typed_predicates := {k: _substitute_predicate_for_type(k, v, enriched_subject) |
     some k
-    v := raw_typed[k]
-    v != ""
+    raw_typed[k] != ""
+    v := _substitute_resource_type(k, raw_typed[k], resource_ref.resourceType)
     enriched_subject := rls_ctx.enrichedSubject
   }
 } else := {
@@ -341,6 +341,16 @@ rls_result(index, resource_ref, resource, req, ols_decision, rls_ctx) := {
   sub_scope := object.union(req.subject, _request_pip_base)
   deny_extras := _deny_resolution_extras(resource_ref.resourceTypeKey, resource_ref.operationKey, resource, sub_scope, rls_ctx.enrichedSubject)
   rls_reason := _build_rls_deny_reason(display_roles, deny_extras)
+}
+
+# In rsql, querydsl, mongodb, and sql predicates, ${resourceType} renders as
+# the resource type of the request, spelled as the request spells it and
+# without quotes. It is replaced before the ${subject.*} placeholders, as
+# legacy does in querydsl. Legacy has no such placeholder in custom predicates.
+_substitute_resource_type("custom", pred_str, _) := pred_str
+
+_substitute_resource_type(ptype, pred_str, resource_type) := replace(pred_str, "${resourceType}", resource_type) if {
+  ptype != "custom"
 }
 
 # Type-aware predicate substitution dispatcher.

@@ -402,3 +402,47 @@ test_canonical_result_shape_is_always_rls_ignored_plus_results if {
 	object.get(result, "filterCondition", null) == null
 	object.get(result, "rsqlFilterCondition", null) == null
 }
+
+# ── ${resourceType}: the request's resource type, in each dialect ──
+# Legacy replaces ${resourceType} with the resource type the request names.
+# The request spells it "Item" while the policy key is "ITEM", so a predicate
+# that renders "ITEM" took the policy key instead.
+
+_rendered_predicate(ptype, template) := pred if {
+	policies := {
+		"ols": {"ITEM": {"READ": ["ROLE_VIEWER"]}},
+		"rls": {"ITEM": {"READ": {"ROLE_VIEWER": [
+			{"condition": true, "predicates": [{"predicate": template, "type": ptype}]},
+		]}}},
+	}
+
+	result := data.authorize with input as {
+		"resources": [{"resourceType": "Item", "operation": "READ"}],
+		"subject": sprintf("Bearer %v", [valid_token]),
+		"ignoreRls": false,
+	}
+		with data.authn as authn
+		with data.policies as policies
+
+	pred := _predicate_of_type(result.results[0].predicates, ptype)
+}
+
+test_resource_type_in_querydsl_renders_with_subject_id if {
+	_rendered_predicate("querydsl", `${resourceType}.ownerId.eq("${subject.id}")`) == `Item.ownerId.eq("user-allow")`
+}
+
+test_resource_type_in_querydsl_without_subject_placeholder if {
+	_rendered_predicate("querydsl", `${resourceType}.status.eq("PUBLIC")`) == `Item.status.eq("PUBLIC")`
+}
+
+test_resource_type_in_rsql if {
+	_rendered_predicate("rsql", "type==${resourceType}") == "type==Item"
+}
+
+test_resource_type_in_mongodb if {
+	_rendered_predicate("mongodb", `{ "type": "${resourceType}" }`) == `{ "type": "Item" }`
+}
+
+test_resource_type_in_sql if {
+	_rendered_predicate("sql", "type='${resourceType}'") == "type='Item'"
+}
