@@ -17,6 +17,7 @@ package jsonpath
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -564,4 +565,141 @@ func TestJavaPattern_GroupNames(t *testing.T) {
 // does not change its kind.
 func TestSelect_LeadingBracketKeyOverANullDocument(t *testing.T) {
 	checkSelect(t, []selectCase{{"bracket key first over null", `null`, `['a']`, KindBracket, ``}})
+}
+
+// nestedKeys returns {"key":{"key":...1...}} with depth objects.
+func nestedKeys(depth int) string {
+	return strings.Repeat(`{"key":`, depth) + "1" + strings.Repeat("}", depth)
+}
+
+// inLists returns inner wrapped in depth lists of one element.
+func inLists(inner string, depth int) string {
+	return strings.Repeat("[", depth) + inner + strings.Repeat("]", depth)
+}
+
+// joined returns n copies of item, separated by commas.
+func joined(item string, n int) string {
+	return strings.TrimSuffix(strings.Repeat(item+",", n), ",")
+}
+
+// binaryTree returns a tree of objects depth levels deep, each with an id and,
+// above the last level, a list of two children.
+func binaryTree(depth int) string {
+	if depth == 1 {
+		return `{"id":"leaf"}`
+	}
+	child := binaryTree(depth - 1)
+	return `{"id":"node","children":[` + child + "," + child + "]}"
+}
+
+// twice12 is a path of twelve [0,0] steps, which selects the innermost value
+// of inLists(v, 12) 4096 times.
+var twice12 = strings.Repeat("[0,0]", 12)
+
+// A path whose work outgrows its document stops with KindTooLarge, whether a
+// step visits nested parts of the document or repeats the values an earlier
+// step selected. A selection as large as the document, made of parts that do
+// not overlap, is still selected. ..key over objects nested 9000 deep used to
+// select every subtree, and writing the selection's record took tens of
+// seconds.
+func TestSelect_StopsAPathWhoseWorkOutgrowsTheDocument(t *testing.T) {
+	numbers := "[" + joined("1", 10000) + "]"
+	objects := `{"items":[` + joined(`{"a":1,"b":2,"c":3,"d":4,"name":"n"}`, 3000) + "]}"
+	tests := []struct {
+		name, doc, path string
+		kind            Kind
+		count           int
+	}{
+		{"..key over objects nested 30 deep", nestedKeys(30), "..key", KindMany, 30},
+		{"..key over a list of 5000 objects", "[" + joined(`{"key":1}`, 5000) + "]", "..key", KindMany, 5000},
+		{"four filters over 3000 objects", objects, ".items[?(@.a)][?(@.b)][?(@.c)][?(@.d)]", KindMany, 3000},
+		{"sum() of a list selected once", inLists(numbers, 12), strings.Repeat("[0]", 12) + ".sum()", KindOne, 0},
+		{"..children over a binary tree 7 levels deep", binaryTree(7), "..children", KindMany, 63},
+		{"..children[*].id over a binary tree 12 levels deep", binaryTree(12), "..children[*].id", KindMany, 4094},
+		{"..children over a binary tree 8 levels deep", binaryTree(8), "..children", KindTooLarge, 0},
+		{"..key over objects nested 9000 deep", nestedKeys(9000), "..key", KindTooLarge, 0},
+		{"..key..key..key over objects nested 200 deep", nestedKeys(200), "..key..key..key", KindTooLarge, 0},
+		{"..key..absent over objects nested 3000 deep", nestedKeys(3000), "..key..absent", KindTooLarge, 0},
+		{"[0,0] forty times over lists nested 40 deep", inLists("1", 40), strings.Repeat("[0,0]", 40), KindTooLarge, 0},
+		{"a filter over a long member selected 4096 times", inLists(`{"s":"`+strings.Repeat("x", 10000)+`"}`, 12),
+			twice12 + "[?(@.s =~ /y/)]", KindTooLarge, 0},
+		{"sum() of a list selected 4096 times", inLists(numbers, 12), twice12 + ".sum()", KindTooLarge, 0},
+		{"sum() of a long number selected 4096 times", inLists("["+strings.Repeat("1", 100000)+"]", 12),
+			twice12 + ".sum()", KindTooLarge, 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := jsonvalue.Decode([]byte(tt.doc))
+			if err != nil {
+				t.Fatalf("Decode: %v", err)
+			}
+			p, err := Compile(tt.path)
+			if err != nil {
+				t.Fatalf("Compile(%s): %v", tt.path, err)
+			}
+			r := p.Select(root)
+			count := 0
+			if list, ok := r.Value.([]jsonvalue.Value); ok {
+				count = len(list)
+			}
+			if r.Kind != tt.kind || count != tt.count {
+				t.Errorf("Select(%.40s) = %s of %d values, want %s of %d", tt.path, r.Kind, count, tt.kind, tt.count)
+			}
+		})
+	}
+}
+
+// [*] and a slice stop before they copy the members of a value that an
+// earlier step selected 4096 times, not after.
+func TestSelect_StopsBeforeCopyingARepeatedValue(t *testing.T) {
+	tests := []struct {
+		name, leaf, last string
+	}{
+		{"[*] over a list", "[" + joined("1", 10000) + "]", "[*]"},
+		{"a slice of a list", "[" + joined("1", 10000) + "]", "[0:]"},
+		{"[*] over an object", "{" + memberList(10000) + "}", "[*]"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root, err := jsonvalue.Decode([]byte(inLists(tt.leaf, 12)))
+			if err != nil {
+				t.Fatalf("Decode: %v", err)
+			}
+			p, err := Compile(twice12 + tt.last)
+			if err != nil {
+				t.Fatalf("Compile: %v", err)
+			}
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			r := p.Select(root)
+			runtime.ReadMemStats(&after)
+			const maxAlloc = 64 << 20
+			if alloc := after.TotalAlloc - before.TotalAlloc; r.Kind != KindTooLarge || alloc > maxAlloc {
+				t.Errorf("Select of twelve [0,0] then %s = %s after allocating %d bytes, want %s within %d bytes",
+					tt.last, r.Kind, alloc, KindTooLarge, maxAlloc)
+			}
+		})
+	}
+}
+
+// memberList returns the members "m0":1 to "m<n-1>":1 of an object.
+func memberList(n int) string {
+	members := make([]string, n)
+	for i := range members {
+		members[i] = `"m` + strconv.Itoa(i) + `":1`
+	}
+	return strings.Join(members, ",")
+}
+
+// weight stops reading a value once its size exceeds the limit.
+func TestWeight_StopsAtTheLimit(t *testing.T) {
+	for _, doc := range []string{nestedKeys(9000), inLists("1", 9000)} {
+		root, err := jsonvalue.Decode([]byte(doc))
+		if err != nil {
+			t.Fatalf("Decode: %v", err)
+		}
+		if got := weight(root, 10); got <= 10 || got > 100 {
+			t.Errorf("weight(%.20s..., 10) = %d, want above 10 and at most 100", doc, got)
+		}
+	}
 }

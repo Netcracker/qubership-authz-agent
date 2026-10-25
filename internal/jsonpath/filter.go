@@ -59,7 +59,11 @@ func member(e jsonvalue.Value, key string) jsonvalue.Value {
 
 // parseFilter compiles the text between [?( and )]. It splits on || and then
 // on && wherever they stand, inside a quoted string too.
-func parseFilter(expr string) (predicate, error) {
+//
+// parseFilter adds to reads the key of each member of the element that the
+// filter reads, and "" where it reads the element itself, once for each
+// operand that reads it; a nested filter reads only within that member.
+func parseFilter(expr string, reads *[]string) (predicate, error) {
 	expr = strings.TrimFunc(expr, isSpace)
 	for _, sep := range []string{"||", "&&"} {
 		parts := strings.Split(expr, sep)
@@ -68,7 +72,7 @@ func parseFilter(expr string) (predicate, error) {
 		}
 		preds := make([]predicate, len(parts))
 		for i, part := range parts {
-			p, err := parseFilter(part)
+			p, err := parseFilter(part, reads)
 			if err != nil {
 				return nil, err
 			}
@@ -83,20 +87,29 @@ func parseFilter(expr string) (predicate, error) {
 			return !slices.ContainsFunc(preds, func(p predicate) bool { return !p(e) })
 		}, nil
 	}
+	addRead := func(key string) {
+		*reads = append(*reads, key)
+	}
 	if m := listOpRE.FindStringSubmatch(expr); m != nil {
+		addRead(m[1])
 		return listFilter(m[1], m[2], quotedRE.FindAllStringSubmatch(m[3], -1))
 	}
 	if m := sizeRE.FindStringSubmatch(expr); m != nil {
+		addRead(m[1])
 		return sizeFilter(m[1], m[2], m[3])
 	}
 	if m := regexOpRE.FindStringSubmatch(expr); m != nil {
+		addRead(m[1])
 		return regexFilter(m[1], m[2], m[3] == "i")
 	}
 	if m := compareRE.FindStringSubmatch(expr); m != nil {
+		addRead(m[1])
 		return compareFilter(m[1], m[2], m[3], m[4])
 	}
 	if m := nestedRE.FindStringSubmatch(expr); m != nil {
-		inner, err := parseFilter(m[2])
+		addRead(m[1])
+		var innerReads []string
+		inner, err := parseFilter(m[2], &innerReads)
 		if err != nil {
 			return nil, err
 		}
@@ -104,6 +117,7 @@ func parseFilter(expr string) (predicate, error) {
 	}
 	if m := existsRE.FindStringSubmatch(expr); m != nil {
 		key := m[1]
+		addRead(key)
 		return func(e jsonvalue.Value) bool {
 			_, absent := member(e, key).(missing)
 			return !absent

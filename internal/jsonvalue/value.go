@@ -136,6 +136,21 @@ func decodeValue(dec *json.Decoder) (Value, error) {
 // key, not in the order of the document the value was parsed from. FromAST
 // returns an error for a set, which JSON does not have.
 func FromAST(v ast.Value) (Value, error) {
+	return FromASTKnown(v, nil)
+}
+
+// FromASTKnown converts an OPA value as [FromAST] does, except that an object
+// or a list for which known returns true, at any depth, converts to the value
+// known returns. known may be nil.
+func FromASTKnown(v ast.Value, known func(ast.Value) (Value, bool)) (Value, error) {
+	if known != nil {
+		switch v.(type) {
+		case *ast.Array, ast.Object:
+			if j, ok := known(v); ok {
+				return j, nil
+			}
+		}
+	}
 	switch x := v.(type) {
 	case ast.Null:
 		return nil, nil
@@ -148,7 +163,7 @@ func FromAST(v ast.Value) (Value, error) {
 	case *ast.Array:
 		list := make([]Value, 0, x.Len())
 		for i := range x.Len() {
-			e, err := FromAST(x.Elem(i).Value)
+			e, err := FromASTKnown(x.Elem(i).Value, known)
 			if err != nil {
 				return nil, err
 			}
@@ -162,7 +177,7 @@ func FromAST(v ast.Value) (Value, error) {
 			if !ok {
 				return nil, fmt.Errorf("jsonvalue: object key %v is not a string", k)
 			}
-			e, err := FromAST(x.Get(k).Value)
+			e, err := FromASTKnown(x.Get(k).Value, known)
 			if err != nil {
 				return nil, err
 			}
