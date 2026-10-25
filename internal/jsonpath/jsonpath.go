@@ -26,6 +26,11 @@
 // an error that wraps [ErrUnsupported], so a policy that holds such a path can
 // be refused before it runs.
 //
+// Where a path would visit or select parts of a document many times over,
+// such as ..key over {"key":{"key":...}}, [Path.Select] stops with
+// [KindTooLarge] instead of the selection Jayway gives, so that its time stays
+// linear in the size of the document.
+//
 // A path here has no leading $: it starts with the first step, as in
 // .items[*].name or [0].id. The caller strips the $ of a PIP declaration and
 // reads a leading ['key'] as .key where the policy language does.
@@ -76,6 +81,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -106,6 +112,16 @@ const (
 	// KindBracket is a path that starts with ['key'], which a resource path
 	// reads differently from a PIP path.
 	KindBracket Kind = "bracket"
+	// KindTooLarge stopped a path whose work outgrew its document. The
+	// selection counts a value once for each selected value that holds it, so
+	// a path that selects nested values reaches the limit within a few
+	// levels: ..children over a binary tree 8 levels deep, a document of
+	// 5 KB, or ..key over {"key":{"key":...}} nested 50 deep, a document of
+	// 401 bytes. Jayway selects such values; the package refuses them, so that
+	// a document cannot make a path take time quadratic in its size. A path
+	// that ends in a scalar member of the nested values, such as
+	// ..children[*].id, stays within the limit.
+	KindTooLarge Kind = "toolarge"
 )
 
 // Result is what a path selected. Value is the value for [KindOne], a
@@ -141,6 +157,9 @@ type step struct {
 	list   []int  // stepIndexList
 	lo, hi *int   // stepSlice
 	filter predicate
+	// reads holds the keys of the members a filter reads, "" for the
+	// element itself.
+	reads []string
 }
 
 // word is the class of characters a key holds besides its punctuation:
@@ -215,8 +234,10 @@ func parseStep(t string, pos int) (step, error) {
 	case t == "[*]":
 		return step{kind: stepStar}, nil
 	case strings.HasPrefix(t, "[?(") && strings.HasSuffix(t, ")]"):
-		f, err := parseFilter(t[3 : len(t)-2])
-		return step{kind: stepFilter, filter: f}, err
+		var reads []string
+		f, err := parseFilter(t[3:len(t)-2], &reads)
+		slices.Sort(reads)
+		return step{kind: stepFilter, filter: f, reads: slices.Compact(reads)}, err
 	case indexListRE.MatchString(t):
 		var list []int
 		for part := range strings.SplitSeq(t[1:len(t)-1], ",") {
@@ -267,7 +288,10 @@ func parseInt(s string) (int, error) {
 }
 
 // Select applies the path to doc. The selected values are parts of doc, not
-// copies.
+// copies. Select gives [KindTooLarge] once its work exceeds a fixed multiple
+// of the size of doc: each value a step visits, each member a filter reads,
+// and the size of the final selection, counting a value as often as a step
+// reaches it.
 func (p *Path) Select(doc jsonvalue.Value) Result {
 	if doc == nil && (len(p.steps) == 0 || p.steps[0].kind != stepRootBracket) {
 		// Jayway refuses a null document. A path that starts with ['key']
@@ -276,17 +300,27 @@ func (p *Path) Select(doc jsonvalue.Value) Result {
 	}
 	many := false
 	cur := []jsonvalue.Value{doc}
+	b := budget{doc: doc}
+	tooLarge := Result{Kind: KindTooLarge}
 	for pos, s := range p.steps {
 		var next []jsonvalue.Value
 		switch s.kind {
 		case stepFunction:
+			for _, v := range cur {
+				if !b.charge(functionInput(v)) {
+					return tooLarge
+				}
+			}
 			return function(s.key, cur, many)
 		case stepRootBracket:
 			return Result{Kind: KindBracket}
 		case stepDeep:
 			many = true
 			for _, v := range cur {
-				next = walk(v, s.key, next)
+				var ok bool
+				if next, ok = walk(v, s.key, next, &b); !ok {
+					return tooLarge
+				}
 			}
 		case stepKey:
 			for _, v := range cur {
@@ -314,8 +348,14 @@ func (p *Path) Select(doc jsonvalue.Value) Result {
 			for _, v := range cur {
 				switch x := v.(type) {
 				case []jsonvalue.Value:
+					if !b.charge(len(x)) {
+						return tooLarge
+					}
 					next = append(next, x...)
 				case *jsonvalue.Object:
+					if !b.charge(x.Len()) {
+						return tooLarge
+					}
 					next = appendMembers(next, x)
 				}
 			}
@@ -335,6 +375,11 @@ func (p *Path) Select(doc jsonvalue.Value) Result {
 					}
 				}
 				for _, e := range tested {
+					for _, key := range s.reads {
+						if !b.chargeWeight(member(e, key)) {
+							return tooLarge
+						}
+					}
 					if s.filter(e) {
 						next = append(next, e)
 					}
@@ -350,6 +395,15 @@ func (p *Path) Select(doc jsonvalue.Value) Result {
 			many = true
 			for _, v := range cur {
 				list, ok := v.([]jsonvalue.Value)
+				// An index list selects at most one element per index; a
+				// slice, at most the whole list.
+				appended := len(list)
+				if s.kind == stepIndexList {
+					appended = len(s.list)
+				}
+				if ok && !b.charge(appended) {
+					return tooLarge
+				}
 				switch {
 				case !ok:
 				case s.kind == stepIndexList:
@@ -379,6 +433,11 @@ func (p *Path) Select(doc jsonvalue.Value) Result {
 		cur = next
 	}
 	if many {
+		for _, v := range cur {
+			if !b.chargeWeight(v) {
+				return tooLarge
+			}
+		}
 		if cur == nil {
 			cur = []jsonvalue.Value{}
 		}
@@ -397,23 +456,32 @@ func appendMembers(next []jsonvalue.Value, obj *jsonvalue.Object) []jsonvalue.Va
 
 // walk appends to out every member named key under v and returns the
 // extended slice. An object gives its own member first and then the members
-// inside each of its values, in document order.
-func walk(v jsonvalue.Value, key string, out []jsonvalue.Value) []jsonvalue.Value {
+// inside each of its values, in document order. walk charges b one unit for
+// each value it visits and reports false once b is spent.
+func walk(v jsonvalue.Value, key string, out []jsonvalue.Value, b *budget) ([]jsonvalue.Value, bool) {
+	if !b.charge(1) {
+		return out, false
+	}
+	var ok bool
 	switch x := v.(type) {
 	case *jsonvalue.Object:
-		if m, ok := x.Get(key); ok {
+		if m, found := x.Get(key); found {
 			out = append(out, m)
 		}
 		for _, k := range x.Keys() {
 			m, _ := x.Get(k)
-			out = walk(m, key, out)
+			if out, ok = walk(m, key, out, b); !ok {
+				return out, false
+			}
 		}
 	case []jsonvalue.Value:
 		for _, e := range x {
-			out = walk(e, key, out)
+			if out, ok = walk(e, key, out, b); !ok {
+				return out, false
+			}
 		}
 	}
-	return out
+	return out, true
 }
 
 // slice returns the elements of list from lo up to but not including hi. A
