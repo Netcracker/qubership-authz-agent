@@ -55,7 +55,7 @@ func TestBigDecimalText_PrintsAsJavaBigDecimalToString(t *testing.T) {
 }
 
 func TestBigDecimalText_RefusesWhatBigDecimalRefuses(t *testing.T) {
-	for _, s := range []string{"", "NaN", "1_0", " 5", "0x10"} {
+	for _, s := range []string{"", "NaN", "1_0", " 5", "0x10", "1.1e-2147483647"} {
 		if got, ok := BigDecimalText(s); ok {
 			t.Errorf("BigDecimalText(%q) = %q, want a refusal", s, got)
 		}
