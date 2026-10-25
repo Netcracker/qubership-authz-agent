@@ -207,9 +207,11 @@ func compareMagnitude(d, e Decimal) int {
 }
 
 // Short reports whether d has at most 15 significant digits and the exponent
-// of its first digit is from -307 to 307. A float64 holds such a number
-// closely enough that two short Decimals order the same way as their float64
-// values.
+// of its first digit is from -307 to 307. OPA's own comparison orders two
+// such numbers correctly: it compares them exactly, and where it compares two
+// fractions that end in zeros as float64 values instead, a float64 holds each
+// closely enough to keep their order. OPA reads a number with a far larger exponent as 0, or
+// spends milliseconds reading it.
 func (d Decimal) Short() bool {
 	if d.IsZero() {
 		return true
