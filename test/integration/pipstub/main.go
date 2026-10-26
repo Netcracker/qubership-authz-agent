@@ -36,6 +36,11 @@
 // any other route. No request path is *, so it never shadows a real route.
 // A stub nobody configures with it answers an unrouted request 404, as it did
 // before the default route existed.
+//
+// GET /pip-stub/calls returns the recorded requests, oldest first: the latest
+// maxCalls of them since the last /pip-stub/reset. Its Pip-Stub-Calls-Dropped
+// header counts the older requests that are no longer in the list.
+// /pip-stub/health answers 200 and serves the readiness probe.
 package main
 
 import (
@@ -82,6 +87,52 @@ type callRecord struct {
 	Body       any                 `json:"body,omitempty"`
 }
 
+// maxCalls bounds how many requests the call journal keeps between resets.
+// The stub answers polling clients for days between test runs, and an
+// unbounded journal grows until the container exceeds its memory limit. With
+// requests that carry a bearer token, a full journal takes about 3 MB of heap
+// and its /pip-stub/calls response about 2.5 MB, well inside the 64Mi a stub
+// gets by default.
+const maxCalls = 2000
+
+// callsDroppedHeader carries, on the /pip-stub/calls response, how many
+// requests the journal dropped since the last reset. A non-zero value means
+// the returned list lacks the oldest calls.
+const callsDroppedHeader = "Pip-Stub-Calls-Dropped"
+
+// callJournal keeps the latest limit requests in arrival order. Once full, each
+// new request replaces the oldest one and increments dropped.
+type callJournal struct {
+	limit   int
+	records []callRecord
+	oldest  int // index of the oldest record once records holds limit of them
+	dropped int
+}
+
+func newCallJournal(limit int) *callJournal {
+	return &callJournal{limit: limit}
+}
+
+func (j *callJournal) add(rec callRecord) {
+	if len(j.records) < j.limit {
+		j.records = append(j.records, rec)
+		return
+	}
+	if j.dropped == 0 {
+		log.Printf("call journal is full at %d records; dropping the oldest calls until /pip-stub/reset", j.limit)
+	}
+	j.records[j.oldest] = rec
+	j.oldest = (j.oldest + 1) % j.limit
+	j.dropped++
+}
+
+// snapshot returns a copy of the kept records, oldest first.
+func (j *callJournal) snapshot() []callRecord {
+	out := make([]callRecord, 0, len(j.records))
+	out = append(out, j.records[j.oldest:]...)
+	return append(out, j.records[:j.oldest]...)
+}
+
 // ── Static rule engine model (YAML) ──────────────────────────────────────────
 
 type stubConfig struct {
@@ -125,7 +176,7 @@ const defaultRoute = "*"
 
 var (
 	routes      map[string]*pipRoute
-	calls       []callRecord
+	calls       *callJournal
 	counters    map[string]int // legacy per-path response index
 	rules       []stubRule
 	ruleCounter map[string]int // per-rule respondSequence index
@@ -138,7 +189,7 @@ func main() {
 	configPath := envOr("PIP_STUB_CONFIG", "")
 
 	routes = make(map[string]*pipRoute)
-	calls = make([]callRecord, 0)
+	calls = newCallJournal(maxCalls)
 	counters = make(map[string]int)
 	ruleCounter = make(map[string]int)
 	compiledRe = make(map[string]*regexp.Regexp)
@@ -149,6 +200,7 @@ func main() {
 
 	loadDefaultRoutes()
 
+	http.HandleFunc("/pip-stub/health", handleHealth)
 	http.HandleFunc("/pip-stub/calls", handleCalls)
 	http.HandleFunc("/pip-stub/reset", handleReset)
 	http.HandleFunc("/pip-stub/configure", handleConfigure)
@@ -220,7 +272,7 @@ func handlePIP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	mu.Lock()
-	calls = append(calls, rec)
+	calls.add(rec)
 
 	// 1. Rule engine (first fully-matching rule wins).
 	if resp, ok := matchRule(rec); ok {
@@ -361,20 +413,27 @@ func writeRespond(w http.ResponseWriter, resp stubRespond, rec callRecord) {
 	}
 }
 
-// ── Control surface (unchanged) ──────────────────────────────────────────────
+// ── Control surface ──────────────────────────────────────────────
+
+// handleHealth answers the readiness probe without touching the call journal,
+// whose size the probe interval would otherwise multiply into encoding work.
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
 
 func handleCalls(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
-	snapshot := make([]callRecord, len(calls))
-	copy(snapshot, calls)
+	snapshot := calls.snapshot()
+	dropped := calls.dropped
 	mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(callsDroppedHeader, strconv.Itoa(dropped))
 	_ = json.NewEncoder(w).Encode(snapshot)
 }
 
 func handleReset(w http.ResponseWriter, r *http.Request) {
 	mu.Lock()
-	calls = make([]callRecord, 0)
+	calls = newCallJournal(calls.limit)
 	counters = make(map[string]int)
 	ruleCounter = make(map[string]int)
 	mu.Unlock()

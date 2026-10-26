@@ -26,7 +26,7 @@ import (
 
 func resetState() {
 	routes = map[string]*pipRoute{}
-	calls = []callRecord{}
+	calls = newCallJournal(maxCalls)
 	counters = map[string]int{}
 	rules = nil
 	ruleCounter = map[string]int{}
@@ -127,8 +127,8 @@ func TestHandlePIP_EchoRule(t *testing.T) {
 		t.Fatalf("echo body payload mismatch: %v", echoed["body"])
 	}
 	// the call was captured with full request content
-	if len(calls) != 1 || calls[0].BodyRaw != `{"k":"v"}` || calls[0].Headers["x-trace-id"] != "t-1" {
-		t.Fatalf("call capture mismatch: %+v", calls)
+	if got := calls.snapshot(); len(got) != 1 || got[0].BodyRaw != `{"k":"v"}` || got[0].Headers["x-trace-id"] != "t-1" {
+		t.Fatalf("call capture mismatch: %+v", got)
 	}
 }
 
@@ -276,11 +276,77 @@ func TestHandlePIP_DefaultRouteServesItsSequenceAcrossPaths(t *testing.T) {
 func TestHandlePIP_RecordsTheRequestTargetAsSent(t *testing.T) {
 	resetState()
 	serve(http.MethodGet, "/users/a%2Fb%20c%3F?x=1")
-	if len(calls) != 1 {
-		t.Fatalf("recorded %d calls, want 1", len(calls))
+	recorded := calls.snapshot()
+	if len(recorded) != 1 {
+		t.Fatalf("recorded %d calls, want 1", len(recorded))
 	}
-	got := calls[0]
+	got := recorded[0]
 	if got.RequestURI != "/users/a%2Fb%20c%3F?x=1" || got.Path != "/users/a/b c?" {
 		t.Errorf("requestUri %q, path %q, want %q and %q", got.RequestURI, got.Path, "/users/a%2Fb%20c%3F?x=1", "/users/a/b c?")
+	}
+}
+
+// getCalls returns the paths that GET /pip-stub/calls lists and its
+// Pip-Stub-Calls-Dropped header.
+func getCalls(t *testing.T) (paths []string, dropped string) {
+	t.Helper()
+	rr := httptest.NewRecorder()
+	handleCalls(rr, httptest.NewRequest(http.MethodGet, "/pip-stub/calls", nil))
+	var recorded []callRecord
+	if err := json.Unmarshal(rr.Body.Bytes(), &recorded); err != nil {
+		t.Fatalf("decode /pip-stub/calls: %v", err)
+	}
+	for _, c := range recorded {
+		paths = append(paths, c.Path)
+	}
+	return paths, rr.Header().Get(callsDroppedHeader)
+}
+
+// The journal keeps the latest requests up to its limit, oldest first, and
+// the calls response counts the requests it dropped, so a caller can tell a
+// complete list from a truncated one.
+func TestHandleCalls_KeepsTheLatestCallsUpToTheLimit(t *testing.T) {
+	cases := []struct {
+		name        string
+		sent        []string
+		wantPaths   []string
+		wantDropped string
+	}{
+		{"a journal at its limit keeps every call", []string{"/a", "/b", "/c"}, []string{"/a", "/b", "/c"}, "0"},
+		{"a journal past its limit keeps the latest calls", []string{"/a", "/b", "/c", "/d", "/e"},
+			[]string{"/c", "/d", "/e"}, "2"},
+		{"a journal past twice its limit keeps the latest calls in order", []string{"/a", "/b", "/c", "/d", "/e", "/f", "/g"},
+			[]string{"/e", "/f", "/g"}, "4"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resetState()
+			calls = newCallJournal(3)
+			for _, path := range tc.sent {
+				serve(http.MethodGet, path)
+			}
+			paths, dropped := getCalls(t)
+			if !reflect.DeepEqual(paths, tc.wantPaths) || dropped != tc.wantDropped {
+				t.Errorf("calls after %v = %v dropped %s, want %v dropped %s",
+					tc.sent, paths, dropped, tc.wantPaths, tc.wantDropped)
+			}
+		})
+	}
+}
+
+// A reset empties a full journal and its dropped count, and keeps the limit.
+func TestHandleReset_EmptiesAFullJournal(t *testing.T) {
+	resetState()
+	calls = newCallJournal(2)
+	for _, path := range []string{"/a", "/b", "/c", "/d", "/e"} {
+		serve(http.MethodGet, path)
+	}
+	handleReset(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/pip-stub/reset", nil))
+	for _, path := range []string{"/x", "/y", "/z"} {
+		serve(http.MethodGet, path)
+	}
+	paths, dropped := getCalls(t)
+	if want := []string{"/y", "/z"}; !reflect.DeepEqual(paths, want) || dropped != "1" {
+		t.Errorf("calls after reset and /x, /y, /z = %v dropped %s, want %v dropped 1", paths, dropped, want)
 	}
 }
