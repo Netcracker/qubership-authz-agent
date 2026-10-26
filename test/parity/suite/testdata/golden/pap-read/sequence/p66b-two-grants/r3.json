@@ -1,0 +1,29 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "read": {
+        "whitelist": {
+          "fields": [
+            "f1",
+            "f2",
+            "f3"
+          ],
+          "fullAccess": false
+        }
+      },
+      "resourceType": "PARITY_SUITE_P66B_TWO_GRANTS",
+      "role": "ROLE_PARITY_READER",
+      "tenantId": "parity-p66b-two-grants",
+      "write": {
+        "whitelist": {
+          "fields": [],
+          "fullAccess": false
+        }
+      }
+    }
+  ],
+  "keptTenants": [
+    "parity-p66b-two-grants"
+  ]
+}
