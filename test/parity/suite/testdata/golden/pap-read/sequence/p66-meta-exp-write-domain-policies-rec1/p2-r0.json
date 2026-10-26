@@ -1,0 +1,43 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY_P66_META_045",
+        "name": "PARITY_P66_META_045_PARITY_PARITY_SUITE_P66_META_045_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_P66_META_045_PARITY_PARITY_SUITE_P66_META_045_READ_Policy",
+            "policyId": "22b26b48-4db9-c6c0-f3e4-408b5d816d04",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "rp44-136",
+                "rsqlPredicate": "fa==v0",
+                "ruleId": "8e50d654-8768-21dd-cbe9-44f5d583a11c",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66-meta-exp-write-domain-policies-rec1"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "parity-p66-meta-exp-write-domain-policies-rec1"
+          }
+        ],
+        "policySetId": "5ff95b89-49dd-b7bc-62e5-40520606f7eb",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66_META_045'",
+        "tenantId": "parity-p66-meta-exp-write-domain-policies-rec1",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p66-meta-exp-write-domain-policies-rec1"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "description": "parity p66g first",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66g-second-import-null-over-stored s reader",
+            "policyId": "34e15b48-304d-a0f5-7b79-1e2a6180cdb2",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66g-second-import-null-over-stored s rule",
+                "ruleId": "70f988bd-2b1c-8957-7d60-34a2a8ce3295",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66g-second-import-null-over-stored"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66g-second-import-null-over-stored"
+          }
+        ],
+        "policySetId": "bcb56bf9-f1e1-94c3-af6f-d36fa4c20e3b",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "true",
+        "tenantId": "parity-p66g-second-import-null-over-stored",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

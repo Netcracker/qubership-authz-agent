@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66-meta-exp-change-set-status s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66-meta-exp-change-set-status s reader",
+            "policyId": "aefb6f08-570a-eef2-e65c-418f3bd491df",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66-meta-exp-change-set-status s rule",
+                "ruleId": "66642b1d-c8d0-2703-54b4-0939378c05c5",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66-meta-exp-change-set-status"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66-meta-exp-change-set-status"
+          }
+        ],
+        "policySetId": "35472537-9f12-23da-d8bc-81e1bee0569a",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66_META_021'",
+        "tenantId": "parity-p66-meta-exp-change-set-status",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66-meta-exp-change-set-status u",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66-meta-exp-change-set-status u reader",
+            "policyId": "a25ab299-6fdc-1ee0-ae39-bbbcadc1f8e5",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66-meta-exp-change-set-status u rule",
+                "ruleId": "2716915c-d7c3-f4f5-2525-4c675c2a972d",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "parity-p66-meta-exp-change-set-status"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66-meta-exp-change-set-status"
+          }
+        ],
+        "policySetId": "6bd9bd43-8f2b-2540-a081-e880d08ce377",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66_META_021'",
+        "tenantId": "parity-p66-meta-exp-change-set-status",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p66-meta-exp-change-set-status"
+  ]
+}
