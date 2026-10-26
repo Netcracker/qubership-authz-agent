@@ -1,0 +1,42 @@
+{
+  "v18g-server-error-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "v18g-server-error-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "v18g-server-error-do": {
+    "check-filter-v1-outcome/regular/filter": {"status":500,"result":{"calculationResult":""}},
+    "check-resource-v1-outcome/regular/check-list-in-region-r1": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/check-list-in-region-r2": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/check-list-in-region-r1": {"calls":1,"requestAttributes":null}
+  },
+  "v18g-server-error-dup": {
+    "check-filter-v1-outcome/regular/filter": {"status":500,"result":{"calculationResult":""}},
+    "check-resource-v1-outcome/regular/check-list-in-region-r1": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/check-list-in-region-r2": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/check-list-in-region-r1": {"calls":1,"requestAttributes":null}
+  },
+  "v18g-server-error-po": {
+    "check-filter-v1-outcome/regular/filter": {"status":500,"result":{"calculationResult":""}},
+    "check-resource-v1-outcome/regular/check-list-in-region-r1": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/check-list-in-region-r2": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/check-list-in-region-r1": {"calls":1,"requestAttributes":null}
+  },
+  "v18g-server-error-pud": {
+    "check-filter-v1-outcome/regular/filter": {"status":500,"result":{"calculationResult":""}},
+    "check-resource-v1-outcome/regular/check-list-in-region-r1": {"status":500,"decision":false},
+    "check-resource-v1-outcome/regular/check-list-in-region-r2": {"status":500,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200},
+    "pip-call/regular/check-list-in-region-r1": {"calls":1,"requestAttributes":null}
+  }
+}
