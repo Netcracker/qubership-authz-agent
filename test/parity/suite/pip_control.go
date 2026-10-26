@@ -167,7 +167,9 @@ func (pc *PipController) ResetCalls(ctx context.Context) error {
 	return nil
 }
 
-// GetCalls returns pipstub's observed call log.
+// GetCalls returns pipstub's observed call log. It returns an error when the
+// stub's journal dropped calls since the last reset, because a count or a
+// first call taken from a truncated log is wrong.
 func (pc *PipController) GetCalls(ctx context.Context) ([]PipStubCall, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pc.baseURL+"/pip-stub/calls", nil)
 	if err != nil {
@@ -180,6 +182,11 @@ func (pc *PipController) GetCalls(ctx context.Context) ([]PipStubCall, error) {
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("pipstub calls failed: status=%d", resp.StatusCode)
+	}
+	if dropped := resp.Header.Get("Pip-Stub-Calls-Dropped"); dropped != "" && dropped != "0" {
+		return nil, fmt.Errorf("pipstub at %s dropped %s calls since the last reset, so its call log is incomplete; "+
+			"reset the stub closer to the request the test checks, or raise maxCalls in test/integration/pipstub/main.go",
+			pc.baseURL, dropped)
 	}
 	var calls []PipStubCall
 	if err := json.NewDecoder(resp.Body).Decode(&calls); err != nil {

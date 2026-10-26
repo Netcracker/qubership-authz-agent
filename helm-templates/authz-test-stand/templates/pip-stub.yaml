@@ -56,7 +56,7 @@ spec:
               containerPort: {{ $port }}
           readinessProbe:
             httpGet:
-              path: /pip-stub/calls
+              path: /pip-stub/health
               port: http
             periodSeconds: 2
           securityContext:
