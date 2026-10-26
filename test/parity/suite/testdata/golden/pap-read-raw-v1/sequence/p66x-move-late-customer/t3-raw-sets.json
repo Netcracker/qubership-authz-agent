@@ -1,0 +1,162 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-late-customer",
+        "name": "p66x-move-late-customer own",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-late-customer own reader",
+            "policyId": "d7bb5fb6-984b-0b5a-c8fe-1905c42c036f",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-late-customer own rule",
+                "ruleId": "7b99c973-1b2d-692d-b6e0-977ca2840d45",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-move-late-customer"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-late-customer"
+          }
+        ],
+        "policySetId": "23ae8dc3-294e-121c-6b28-8e6f34da74f1",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-move-late-customer",
+            "name": "p66x-move-late-customer own-c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-late-customer own-c reader",
+                "policyId": "b1b4c587-4a41-a4af-cba0-dc40bd398669",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-late-customer own-c rule",
+                    "ruleId": "baa61640-311d-ef92-e3c4-0e8e5ee4e5d6",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'CREATE'",
+                    "tenantId": "parity-p66x-move-late-customer"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-late-customer"
+              }
+            ],
+            "policySetId": "ce19a089-1e84-ea6c-6bce-cfa487f314aa",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_LATE_CUSTOMER'",
+            "tenantId": "parity-p66x-move-late-customer",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_LATE_CUSTOMER'",
+        "tenantId": "parity-p66x-move-late-customer",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-late-customer-o",
+        "name": "p66x-move-late-customer o",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-late-customer o reader",
+            "policyId": "bd713c99-60d0-32e2-e53d-8c0bb5a2f7a5",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-late-customer o rule",
+                "ruleId": "b2d29ace-5653-d83a-49c0-9b4316f3c22b",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-move-late-customer"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-late-customer"
+          }
+        ],
+        "policySetId": "596e88a6-2628-6bb2-f2f1-5f6f0cf7e375",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_LATE_CUSTOMER'",
+        "tenantId": "parity-p66x-move-late-customer",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66x-move-late-customer s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-late-customer s reader",
+            "policyId": "c9911e6f-3cb3-f415-1620-4b3dc2124b0c",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-late-customer s rule",
+                "ruleId": "b833a12f-5f3f-64e4-37e5-b542f39536f9",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-move-late-customer-holder"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-late-customer"
+          }
+        ],
+        "policySetId": "23ae8dc3-294e-121c-6b28-8e6f34da74f1",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-late-customer c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-move-late-customer c reader",
+                "policyId": "fde31438-1fb5-c948-c0f4-b3a44832b8cb",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-move-late-customer c rule",
+                    "ruleId": "cd72ef00-13c2-f505-a4e4-a19738e3dc91",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'LIST'",
+                    "tenantId": "parity-p66x-move-late-customer"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-move-late-customer"
+              }
+            ],
+            "policySetId": "ce19a089-1e84-ea6c-6bce-cfa487f314aa",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_LATE_CUSTOMER'",
+            "tenantId": "parity-p66x-move-late-customer",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_LATE_CUSTOMER'",
+        "tenantId": "parity-p66x-move-late-customer",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

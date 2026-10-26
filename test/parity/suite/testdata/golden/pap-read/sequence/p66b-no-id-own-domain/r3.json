@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "body": [
+    {
+      "read": {
+        "whitelist": {
+          "fields": [
+            "f1"
+          ],
+          "fullAccess": false
+        }
+      },
+      "resourceType": "PARITY_SUITE_P66B_NO_ID_OWN_DOMAIN",
+      "role": "ROLE_PARITY_READER",
+      "tenantId": "parity-p66b-no-id-own-domain",
+      "write": {
+        "whitelist": {
+          "fields": [],
+          "fullAccess": false
+        }
+      }
+    }
+  ],
+  "keptTenants": [
+    "parity-p66b-no-id-own-domain"
+  ]
+}

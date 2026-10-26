@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66q-uuid-depth-read-raw",
+        "name": "p66q-uuid-depth-read-raw s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66q-uuid-depth-read-raw s reader",
+            "policyId": "b2818ba9-afd0-248a-91a3-65d7f4f61672",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66q-uuid-depth-read-raw s rule",
+                "ruleId": "97746f2d-8d63-75f4-e04e-325319101a23",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66q-uuid-depth-read-raw"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66q-uuid-depth-read-raw"
+          }
+        ],
+        "policySetId": "08c5de16-fe08-085c-5749-b910778ddd63",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66q-uuid-depth-read-raw",
+            "name": "p66q-uuid-depth-read-raw c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66q-uuid-depth-read-raw c reader",
+                "policyId": "e9dd2a00-a7a2-7b84-6161-8c1eafe8824f",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66q-uuid-depth-read-raw c rule",
+                    "ruleId": "956a8123-a231-6155-3258-6d7301df0977",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'LIST'",
+                    "tenantId": "parity-p66q-uuid-depth-read-raw"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66q-uuid-depth-read-raw"
+              }
+            ],
+            "policySetId": "dd3e2b90-d93a-891a-bd8c-2c616a0551bf",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66Q_UUID_DEPTH_READ_RAW'",
+            "tenantId": "parity-p66q-uuid-depth-read-raw",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66Q_UUID_DEPTH_READ_RAW'",
+        "tenantId": "parity-p66q-uuid-depth-read-raw",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

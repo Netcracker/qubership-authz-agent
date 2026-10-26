@@ -1,0 +1,67 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-move-back-holder",
+        "name": "p66x-move-back s",
+        "policies": [],
+        "policySetId": "2a303145-9d62-3e8e-8155-2284507aa61d",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_BACK'",
+        "tenantId": "parity-p66x-move-back-holder",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "name": "p66x-move-back own",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-back own reader",
+            "policyId": "2fb0f58e-6f41-a3f6-cf40-60e0bd44e94f",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-back own rule",
+                "ruleId": "9db1cb4d-0a94-e079-811c-1c690d157372",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-move-back"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-back-holder"
+          },
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-move-back s reader",
+            "policyId": "886269c6-7a9f-aacb-a299-388a5c659dd5",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-move-back s rule",
+                "ruleId": "627b1d0b-1846-0590-97fd-999fdcc88642",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "parity-p66x-move-back-holder"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-move-back-holder"
+          }
+        ],
+        "policySetId": "2a303145-9d62-3e8e-8155-2284507aa61d",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_MOVE_BACK'",
+        "tenantId": "parity-p66x-move-back-holder",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}
