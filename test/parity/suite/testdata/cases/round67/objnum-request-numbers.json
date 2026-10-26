@@ -1,0 +1,477 @@
+{
+ "about": "A fraction of the request under <, >, >= and ==, where reading it as the Double Jackson makes of it changes the answer: a value just above 0.3, numbers below the double range on either side of 0, and 1e7, whose Double prints as 1.0E7. Each comparison is asked as an ALLOW rule beside OR resource.a == 'y' and as a DENY rule under PERMIT_UNLESS_DENY. Controls first and last must answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_RELNUM_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "on67-rel-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-gt-near",
+   "about": "0.300000000000000010 > 0.3: true by the exact value, false as the Double 0.3. ALLOW form: the comparison OR resource.a == 'y'.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x > 0.3 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 0.300000000000000010
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": 0.300000000000000010
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-gt-near-deny",
+   "about": "0.300000000000000010 > 0.3: true by the exact value, false as the Double 0.3. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x > 0.3",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 0.300000000000000010
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-gt-underflow",
+   "about": "1e-400 > 0: true by the exact value, false as the Double 0.0. ALLOW form: the comparison OR resource.a == 'y'.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x > 0 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 1e-400
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": 1e-400
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-gt-underflow-deny",
+   "about": "1e-400 > 0: true by the exact value, false as the Double 0.0. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x > 0",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 1e-400
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-lt-underflow",
+   "about": "-1e-400 < 0: true by the exact value, false as the Double -0.0. ALLOW form: the comparison OR resource.a == 'y'.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x < 0 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": -1e-400
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": -1e-400
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-lt-underflow-deny",
+   "about": "-1e-400 < 0: true by the exact value, false as the Double -0.0. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x < 0",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": -1e-400
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-ge-exponent",
+   "about": "1e7 >= 10000000: true either way, the Double prints as 1.0E7 and reads back as a BigDecimal. ALLOW form: the comparison OR resource.a == 'y'.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x >= 10000000 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 1e7
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": 1e7
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-ge-exponent-deny",
+   "about": "1e7 >= 10000000: true either way, the Double prints as 1.0E7 and reads back as a BigDecimal. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x >= 10000000",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 1e7
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-eq-near",
+   "about": "0.300000000000000010 == 0.3: true either way, the control of the near value. ALLOW form: the comparison OR resource.a == 'y'.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == 0.3 OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 0.300000000000000010
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": 0.300000000000000010
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-eq-near-deny",
+   "about": "0.300000000000000010 == 0.3: true either way, the control of the near value. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == 0.3",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 0.300000000000000010
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-rel-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

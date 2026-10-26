@@ -1,0 +1,392 @@
+{
+ "about": "Spellings of one value on the data side: a resource attribute, the body of a GENERAL PIP (subject.paritySpellGen, pinned per request) and a header value (subject.paritySpellHdr, X-Parity-Spell) carry 5 or 'v' as a JSON number, a JSON string, a number inside a string, a list of one, or with whitespace of each class at an end; each paired with the plain value or with its own text.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_SPELL_DATA_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityspellgen": {
+   "name": "subject.paritySpellGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/spell-gen"
+  }
+ },
+ "cases": [
+  {
+   "id": "sp67-data-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-data-ref-12-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IS NOT NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-data-resource-more-object-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IS NOT NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": {
+       "k": "v"
+      },
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-data-ref-13-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.paritySpellGen IS NOT NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityspellgen"
+   ]
+  },
+  {
+   "id": "sp67-data-general-more-list-one-nested-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.paritySpellGen IS NOT NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        [
+         "v"
+        ]
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityspellgen"
+   ]
+  },
+  {
+   "id": "sp67-data-general-more-list-one-nested-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.paritySpellGen IS NOT NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        [
+         "v"
+        ]
+       ]
+      }
+     },
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityspellgen"
+   ]
+  },
+  {
+   "id": "sp67-data-general-more-object-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.paritySpellGen IS NOT NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        {
+         "k": "v"
+        }
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityspellgen"
+   ]
+  },
+  {
+   "id": "sp67-data-general-more-object-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.paritySpellGen IS NOT NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        {
+         "k": "v"
+        }
+       ]
+      }
+     },
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityspellgen"
+   ]
+  },
+  {
+   "id": "sp67-data-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}
