@@ -1,0 +1,294 @@
+{
+ "about": "A PIP name spelled nested (subject.parityS6.x) at each place of a condition, each paired with the plain name subject.paritySix in the same place; both are GENERAL PIPs on one route, pinned per request to the value that makes the plain name's condition true. The file declares only these two names: if the PAP refuses the spelled name, the refused domain upload is the answer for the whole file.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_SPELL_PIP-NESTED_",
+ "pins": {},
+ "pips": {
+  "obs-subject-paritys6-x": {
+   "name": "subject.parityS6.x",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/spell-gen"
+  },
+  "obs-subject-paritysix": {
+   "name": "subject.paritySix",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/spell-gen"
+  }
+ },
+ "cases": [
+  {
+   "id": "sp67-pip-nested-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-pip-nested-ref-cao-rmo1-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY subject.paritySix OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritys6-x",
+    "obs-subject-paritysix"
+   ]
+  },
+  {
+   "id": "sp67-pip-nested-ref-gtlto-so1-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x > subject.paritySix OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        5
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "x": 6,
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritys6-x",
+    "obs-subject-paritysix"
+   ]
+  },
+  {
+   "id": "sp67-pip-nested-cao-rmo1-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l CONTAINS ANY subject.parityS6.x OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritys6-x",
+    "obs-subject-paritysix"
+   ]
+  },
+  {
+   "id": "sp67-pip-nested-gtlto-so1-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x > subject.parityS6.x OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/spell-gen": {
+       "statusCode": 200,
+       "body": [
+        5
+       ]
+      }
+     },
+     "name": "a-n",
+     "resource": {
+      "x": 6,
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-paritys6-x",
+    "obs-subject-paritysix"
+   ]
+  },
+  {
+   "id": "sp67-pip-nested-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

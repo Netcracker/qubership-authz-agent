@@ -1,0 +1,362 @@
+{
+ "about": "A policy with status INACTIVE beside an active one in a plain set, asked through check/filter and check/resource in one case: the filter may leave the INACTIVE policy out while the check reads no policy status. A twin with both policies active shows that the second policy reaches the filter. A sequence case in a tenant of its own assigns an empty mapping to a role. Controls first and last must answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_OPEN_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "op67-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op67-inactive-policy-allow",
+   "about": "An active policy whose ALLOW rule carries fa==1 beside an INACTIVE policy whose ALLOW rule carries fb==2, under PERMIT_OVERRIDES: does the filter read the INACTIVE policy?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "second",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fb==2",
+          "sqlPredicate": "fb=2",
+          "predicate": "${resourceType}.fb.eq(2)",
+          "mongodbPredicate": "{ \"fb\": 2 }"
+         }
+        }
+       ],
+       "fields": {
+        "status": "INACTIVE"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op67-inactive-policy-deny",
+   "about": "An active policy whose ALLOW rule carries fa==1 beside an INACTIVE policy whose DENY rule has no predicate, under DENY_OVERRIDES: does the filter read the INACTIVE policy?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "second",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ],
+       "fields": {
+        "status": "INACTIVE"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op67-active-policy-twin",
+   "about": "The first case with both policies active: the filter must read both predicates.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "second",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-b",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fb==2",
+          "sqlPredicate": "fb=2",
+          "predicate": "${resourceType}.fb.eq(2)",
+          "mongodbPredicate": "{ \"fb\": 2 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op67-assign-mapping-empty",
+   "about": "An assignment to ROLE_PARITY_READER at level custom whose mapping is []: the role gets no permission, decided before and after, and its permissions read back.",
+   "resourceType": "PARITY_SUITE_OP67_ASSIGN_MAPPING_EMPTY",
+   "tenant": "parity-op67-assign-mapping-empty",
+   "steps": [
+    {
+     "name": "declare-the-domain",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_OP67_ASSIGN_MAPPING_EMPTY"
+     },
+     "body": [],
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "write-the-policy",
+     "op": "write-domain-policies",
+     "args": {
+      "domain": "PARITY_OP67_ASSIGN_MAPPING_EMPTY"
+     },
+     "body": [
+      {
+       "component": "PARITY",
+       "reason": "op67-assign-mapping-empty",
+       "resourceType": "PARITY_SUITE_OP67_ASSIGN_MAPPING_EMPTY",
+       "operation": "READ",
+       "roles": [
+        "ROLE_PARITY_READER"
+       ],
+       "applicableForFrontend": false,
+       "id": "ba3fd8ec-e369-d7cb-5a44-f7630efaee8c",
+       "condition": "subject.permissions CONTAINS 'parity_r58_assigned'"
+      }
+     ],
+     "observe": [
+      "status",
+      "decide:before"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "type": "PARITY_SUITE_OP67_ASSIGN_MAPPING_EMPTY",
+       "operation": "READ",
+       "resource": {
+        "id": "r58"
+       },
+       "name": "before"
+      }
+     ]
+    },
+    {
+     "name": "assign",
+     "op": "assign-permissions",
+     "args": {},
+     "body": {
+      "role": "ROLE_PARITY_READER",
+      "level": "custom",
+      "mapping": []
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:after"
+     ],
+     "onRefusal": "continue",
+     "requests": [
+      {
+       "type": "PARITY_SUITE_OP67_ASSIGN_MAPPING_EMPTY",
+       "operation": "READ",
+       "resource": {
+        "id": "r58"
+       },
+       "name": "after"
+      }
+     ]
+    },
+    {
+     "name": "read",
+     "op": "read-permissions",
+     "args": {
+      "role": "ROLE_PARITY_READER",
+      "level": "custom"
+     },
+     "observe": [
+      "read:read-permissions"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "op67-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
