@@ -1,0 +1,762 @@
+{
+ "about": "Two objects of resource attributes compared under == and under !=: one number spelled two ways (1 and 1.0, 1.0 and 1.00, 1e2 and 100.0), a number against the string of its text, a string in two cases, and an object inside a list. The == case and its != twin together tell equal, not equal and a failed comparison apart. A positive control compares an object with itself. Controls first and last must answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_OBJNUM_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "on67-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-self",
+   "about": "Positive control: an object equals itself, {\"x\": 1.0} == {\"x\": 1.0}.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.p",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-int-double-eq",
+   "about": "An integer against a Double: {\"x\": 1} and {\"x\": 1.0}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1
+      },
+      "q": {
+       "x": 1.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-int-double-ne",
+   "about": "An integer against a Double: {\"x\": 1} and {\"x\": 1.0}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1
+      },
+      "q": {
+       "x": 1.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-double-scale-eq",
+   "about": "Two spellings of one Double: {\"x\": 1.0} and {\"x\": 1.00}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1.0
+      },
+      "q": {
+       "x": 1.00
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-double-scale-ne",
+   "about": "Two spellings of one Double: {\"x\": 1.0} and {\"x\": 1.00}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1.0
+      },
+      "q": {
+       "x": 1.00
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-exponent-eq",
+   "about": "An exponent against a fraction: {\"x\": 1e2} and {\"x\": 100.0}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1e2
+      },
+      "q": {
+       "x": 100.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-exponent-ne",
+   "about": "An exponent against a fraction: {\"x\": 1e2} and {\"x\": 100.0}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1e2
+      },
+      "q": {
+       "x": 100.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-number-text-eq",
+   "about": "A number against the string of its text: {\"x\": 1} and {\"x\": \"1\"}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1
+      },
+      "q": {
+       "x": "1"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-number-text-ne",
+   "about": "A number against the string of its text: {\"x\": 1} and {\"x\": \"1\"}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1
+      },
+      "q": {
+       "x": "1"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-string-case-eq",
+   "about": "A string in two cases: {\"x\": \"X\"} and {\"x\": \"x\"}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": "X"
+      },
+      "q": {
+       "x": "x"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-string-case-ne",
+   "about": "A string in two cases: {\"x\": \"X\"} and {\"x\": \"x\"}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": "X"
+      },
+      "q": {
+       "x": "x"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-list-number-text-eq",
+   "about": "A number against its text inside an object inside a list: [{\"x\": 1}] and [{\"x\": \"1\"}], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       {
+        "x": 1
+       }
+      ],
+      "q": [
+       {
+        "x": "1"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-list-number-text-ne",
+   "about": "A number against its text inside an object inside a list: [{\"x\": 1}] and [{\"x\": \"1\"}], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       {
+        "x": 1
+       }
+      ],
+      "q": [
+       {
+        "x": "1"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-signed-zero-eq",
+   "about": "Two zeros: {\"k\": 0.0} and {\"k\": -0.0}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "k": 0.0
+      },
+      "q": {
+       "k": -0.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-signed-zero-ne",
+   "about": "Two zeros: {\"k\": 0.0} and {\"k\": -0.0}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "k": 0.0
+      },
+      "q": {
+       "k": -0.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-list-int-double-eq",
+   "about": "An integer and a Double inside a list: [1] and [1.0], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       1
+      ],
+      "q": [
+       1.0
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-list-int-double-ne",
+   "about": "An integer and a Double inside a list: [1] and [1.0], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       1
+      ],
+      "q": [
+       1.0
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "on67-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

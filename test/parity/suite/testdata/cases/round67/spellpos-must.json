@@ -1,0 +1,1913 @@
+{
+ "about": "Spellings of one value at the other places of a condition: a number, a quoted string, a list or an attribute path on the left of ==, on either side of >, in IN, CONTAINS, CONTAINS ANY and IS SUBSET, and before IS NULL. Every probe is one side of an opposite pair: the same place holds the plain spelling in the other case, and the resource holds the value the token spells. The files are cut in the order the probes were chosen: must first.",
+ "resourceTypePrefix": "PARITY_SUITE_R67_SPELLPOS_MUST_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "sp67-must-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-ref-io-mo1-attr-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN resource.x OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-ref-io-so0-str-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-ref-mo-emlo0-attr-t1-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "l": [
+       "v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-ref-no-so0-str-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-index-space-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN resource.l[ 0 ] OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-jsonpath-symbol-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN resource.x:y OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x:y": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-digit-segment-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN resource.0x OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "0x": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-underscore-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN resource.x_y OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x_y": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-bool-word-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN True OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "True": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-index-other-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN resource.l[-1] OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "w",
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-mo1-attr-wildcard-char-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x IN v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "v*": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-comma-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v,w' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v,w"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-bracket-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v[0]' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v[0]"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-double-quote-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v\"w' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v\"w"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-backslash-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v\\w' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v\\w"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-wildcard-char-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v*' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v*"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-placeholder-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'${v}' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "${v}"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-case-mapping-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'straße' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "straße"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-non-ascii-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'vé' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "vé"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-number-padded-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' 5' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       " 5"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-number-other-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'+5' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "+5"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-bool-text-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'TRUE' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "TRUE"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-long-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-blank-space-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' ' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       " "
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-inner-space-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v w' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v w"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-blank-tab-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'\t' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "\t"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-edge-tab-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'\tv' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "\tv"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-inner-tab-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v\tw' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v\tw"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-blank-lf-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'\n' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "\n"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-edge-lf-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'\nv' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "\nv"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-inner-lf-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v\nw' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v\nw"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-blank-nbsp-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' ' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       " "
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-edge-nbsp-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' v' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       " v"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-io-so0-str-inner-nbsp-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v w' IN resource.l OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v w"
+      ],
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-index-space-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l[ 0 ] MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-jsonpath-symbol-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x:y MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x:y": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-digit-segment-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.0x MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "0x": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-underscore-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x_y MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x_y": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-digit-in-name-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x1 MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x1": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-bool-word-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "True MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "True": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-index-other-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.l[-1] MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "l": [
+       "w",
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-mo-emlo0-attr-wildcard-char-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "v* MATCH v* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "v*": "v",
+      "l": [
+       "v"
+      ],
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-no-so0-str-backslash-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'v\\w' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-no-so0-str-jsonpath-char-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'$.v' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-no-so0-str-number-padded-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' 5' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-no-so0-str-blank-space-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' ' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-no-so0-str-blank-lf-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "'\n' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-positions-no-so0-str-blank-nbsp-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "' ' IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sp67-must-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}
