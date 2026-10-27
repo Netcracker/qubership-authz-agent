@@ -59,6 +59,7 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 }
 
 // The two providers share their id, so the mark alone decides the result.
+// Admit passes every token, so Verify returns the marked one too.
 func TestToken_KubernetesReportsTheMarkOfTheVerifyingProvider(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -71,7 +72,9 @@ func TestToken_KubernetesReportsTheMarkOfTheVerifyingProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", &tt.provider)
-			v, _ := newVerifier(newFakeKeys(s))
+			v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error {
+				return nil
+			}})
 			tok := mustVerify(t, v, s.sign(t, claimsAt(start, nil)))
 			if got := tok.Kubernetes(); got != tt.want {
 				t.Errorf("Kubernetes() = %t, want %t", got, tt.want)
@@ -762,5 +765,28 @@ func TestVerify_RunsNoAdmitForARefusedToken(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Errorf("Admit calls = %d, want 0", calls)
+	}
+}
+
+// Without Admit nothing checks the namespace of a Kubernetes token, so
+// Verify refuses it. The unmarked provider shares its id and is the control.
+func TestVerify_RefusesAKubernetesTokenWithoutAdmit(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider keys.Provider
+		want     Code
+	}{
+		{"marked provider", keys.Provider{ID: "kubernetes", Kubernetes: true}, CodeNamespaceNotAllowed},
+		{"unmarked provider", keys.Provider{ID: "kubernetes"}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", &tt.provider)
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(s.sign(t, claimsAt(start, nil)))
+			if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
 	}
 }
