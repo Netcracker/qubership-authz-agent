@@ -68,8 +68,9 @@ jayway-suite-calls:
 
 # mutation-diff: mutate the Go functions that HEAD changes since its merge base
 # with origin/main, or with MUTATION_BASE when set, and list every mutant on a
-# changed line that no test kills. Exits 1 when one survives. See "Mutation
-# testing of a change" in README.md.
+# changed line that no test kills. Fails when one survives, and when the run
+# does not complete; the script's own exit status tells the two apart. See
+# "Mutation testing of a change" in README.md.
 mutation-diff:
 	bash test/scripts/mutation-diff.sh $(MUTATION_BASE)
 

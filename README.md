@@ -125,11 +125,15 @@ whole. The tests of the changed packages have to pass on `HEAD`, or the run stop
 tests of its package once, in a temporary worktree, so the run takes that time multiplied by the number of mutants: a
 branch that changes seven functions in `internal/token` takes about two minutes.
 
-The target exits 1 when a mutant on a changed line survives and prints each one as a diff. The tests pass with that
+The target fails when a mutant on a changed line survives and prints each one as a diff. The tests pass with that
 change, so they would also pass if the line broke the same way: add or strengthen a test, or, when the mutant changes
 nothing a caller can observe, say in the pull request why it is equivalent. The log and the results stay in
-`test/artifacts/mutation/`. `test/scripts/mutation-diff.sh` lists the environment variables that set the go-mutesting
-command, the test timeout, and the output directory.
+`test/artifacts/mutation/`.
+
+`make` exits 2 whenever the target fails, so its exit status does not tell a survivor from a run that did not
+complete. `test/scripts/mutation-diff.sh [base]`, which the target runs, does: it exits 1 when a mutant on a changed
+line survives and 2 when the run did not complete. Its header lists the environment variables that set the
+go-mutesting command, the test timeout, and the output directory.
 
 ### jsonPath against Jayway
 

@@ -266,7 +266,8 @@ fi
 echo
 echo "Mutants: ${total}. Killed: $((killed + timed_out))${timeouts}. Survived: ${survived}. Did not compile: ${not_compiled}."
 
-# A survivor counts as on a changed line when any line it mutates is one.
+# A survivor counts as on a changed line when any line in any hunk of its diff
+# is one, and it is named by the first such line, or by its first hunk.
 awk -F '\t' '
   NR == FNR {
     if ($3 == "changed") {
@@ -275,13 +276,19 @@ awk -F '\t' '
     next
   }
   $1 == "survived" {
-    on = 0
-    for (i = 0; i < $4; i++) {
-      if (($2 "\t" ($3 + i)) in changed) {
-        on = 1
+    hunks = split($3, ranges, ",")
+    on = ""
+    for (h = 1; h <= hunks && on == ""; h++) {
+      split(ranges[h], r, "+")
+      for (i = 0; i < r[2]; i++) {
+        if (($2 "\t" (r[1] + i)) in changed) {
+          on = r[1] + i
+          break
+        }
       }
     }
-    print (on ? "on" : "off") "\t" $2 ":" $3 "\t" $5
+    split(ranges[1], first, "+")
+    print (on != "" ? "on" : "off") "\t" $2 ":" (on != "" ? on : first[1]) "\t" $4
   }' "${work}/changed-lines" "${OUT_DIR}/results.tsv" >"${work}/survivors"
 
 on_changed="$(awk -F '\t' '$1 == "on" { n++ } END { print n + 0 }' "${work}/survivors")"

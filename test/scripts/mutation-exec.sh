@@ -21,9 +21,11 @@
 #
 # The mutant replaces the source file while the package tests run, and the
 # file is restored on every exit. Each mutant appends one line to
-# MUTATION_RESULTS: the verdict, the file, the first line the mutant changes,
-# the number of lines it changes, and, for a survivor, the file in
-# MUTATION_DIFFS that holds its diff.
+# MUTATION_RESULTS: the verdict, the file, the lines the mutant changes, and,
+# for a survivor, the file in MUTATION_DIFFS that holds its diff. The lines
+# are one start+count range per hunk of the diff, separated by commas, such
+# as 12+3,40+1: go-mutesting prints the mutated file with go/printer, which
+# can add a hunk of its own, such as a blank line after a changed block.
 #
 # The exit status follows go-mutesting: 0 when a test fails (killed), 1 when
 # every test passes (survived), 2 when the mutant does not compile (skipped).
@@ -50,31 +52,33 @@ cp "${MUTATE_CHANGED}" "${original}"
 output="$(go test -count=1 -failfast -timeout "${MUTATE_TIMEOUT}s" "${MUTATE_PACKAGE}" 2>&1)"
 status=$?
 
-# The old-side range of the first hunk: "@@ -12,3 +12,1 @@" gives 12 and 3.
-range="$(diff -U0 "${original}.orig" "${MUTATE_CHANGED}" | grep -m1 '^@@' | awk '{print substr($2, 2)}')"
-line="${range%%,*}"
-count=1
-if [[ "${range}" == *,* ]]; then
-  count="${range#*,}"
-fi
-if [[ "${count}" -eq 0 ]]; then
-  count=1
-fi
+# The old-side range of every hunk: "@@ -12,3 +12,1 @@" gives 12+3. A hunk
+# that only inserts lines, "@@ -12,0 ...", counts as line 12.
+ranges="$(diff -U0 "${original}.orig" "${MUTATE_CHANGED}" | awk '
+  /^@@/ {
+    n = split(substr($2, 2), r, ",")
+    count = (n > 1) ? r[2] + 0 : 1
+    if (count == 0) {
+      count = 1
+    }
+    printf "%s%d+%d", separator, r[1], count
+    separator = ","
+  }')"
 
 if [[ "${status}" -eq 0 ]]; then
   index="$(($(wc -l <"${MUTATION_RESULTS}" 2>/dev/null || echo 0) + 1))"
   diff_file="${MUTATION_DIFFS}/${index}.diff"
   diff -U1 "${original}.orig" "${MUTATE_CHANGED}" | tail -n +3 >"${diff_file}"
-  printf 'survived\t%s\t%s\t%s\t%s\n' "${original}" "${line}" "${count}" "${diff_file}" >>"${MUTATION_RESULTS}"
+  printf 'survived\t%s\t%s\t%s\n' "${original}" "${ranges}" "${diff_file}" >>"${MUTATION_RESULTS}"
   exit 1
 fi
 if grep -qE '\[build failed\]|\[setup failed\]' <<<"${output}"; then
-  printf 'not-compiled\t%s\t%s\t%s\t-\n' "${original}" "${line}" "${count}" >>"${MUTATION_RESULTS}"
+  printf 'not-compiled\t%s\t%s\t-\n' "${original}" "${ranges}" >>"${MUTATION_RESULTS}"
   exit 2
 fi
 verdict=killed
 if grep -q 'panic: test timed out' <<<"${output}"; then
   verdict=timed-out
 fi
-printf '%s\t%s\t%s\t%s\t-\n' "${verdict}" "${original}" "${line}" "${count}" >>"${MUTATION_RESULTS}"
+printf '%s\t%s\t%s\t-\n' "${verdict}" "${original}" "${ranges}" >>"${MUTATION_RESULTS}"
 exit 0
