@@ -108,6 +108,29 @@ cd test/integration/pipstub && go test -count=1 ./...
 cd test/integration/tenantmanager && go test -count=1 ./...
 ```
 
+### Mutation testing of a change
+
+`make mutation-diff` mutates the Go functions your branch changes and lists every mutant on a changed line that no
+test kills. Run it before you open a pull request. It compares `HEAD` with its merge base with `origin/main`, so commit
+the change first; `MUTATION_BASE` names another branch or commit to take the merge base with:
+
+```sh
+make mutation-diff
+make mutation-diff MUTATION_BASE=<commit>
+```
+
+The target runs [go-mutesting](https://github.com/avito-tech/go-mutesting) with `go run`, so it needs only Go. It
+mutates the root module and leaves `test/`, `_test.go` files, and generated files alone; a renamed file is mutated
+whole. The tests of the changed packages have to pass on `HEAD`, or the run stops. Each mutant builds and runs the
+tests of its package once, in a temporary worktree, so the run takes that time multiplied by the number of mutants: a
+branch that changes seven functions in `internal/token` takes about two minutes.
+
+The target exits 1 when a mutant on a changed line survives and prints each one as a diff. The tests pass with that
+change, so they would also pass if the line broke the same way: add or strengthen a test, or, when the mutant changes
+nothing a caller can observe, say in the pull request why it is equivalent. The log and the results stay in
+`test/artifacts/mutation/`. `test/scripts/mutation-diff.sh` lists the environment variables that set the go-mutesting
+command, the test timeout, and the output directory.
+
 ### jsonPath against Jayway
 
 `internal/jsonpath` is compared with Jayway JsonPath 2.9.0, one of the versions legacy access-control evaluates jsonPath

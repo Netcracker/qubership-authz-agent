@@ -66,6 +66,13 @@ jayway-suite-calls:
 	    -PrecorderOut="$(abspath $(JAYWAY_SUITE_CALLS))" \
 	    :json-path:test :json-path-assert:test
 
+# mutation-diff: mutate the Go functions that HEAD changes since its merge base
+# with origin/main, or with MUTATION_BASE when set, and list every mutant on a
+# changed line that no test kills. Exits 1 when one survives. See "Mutation
+# testing of a change" in README.md.
+mutation-diff:
+	bash test/scripts/mutation-diff.sh $(MUTATION_BASE)
+
 # ── kind end-to-end ──────────────────────────────────────────────────────────
 # Install the chart on a kind cluster and run the runtime suite against it.
 # `make e2e` runs every step; CI calls the same targets one by one. See
@@ -272,4 +279,4 @@ parity-logs:
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 	-$(PARITY_KUBECTL) exec deploy/pip-mock -- wget -qO- http://authz-agent:8080/internal/v1/decision-logs > $(E2E_ARTIFACTS)/parity/decision-logs.jsonl
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
