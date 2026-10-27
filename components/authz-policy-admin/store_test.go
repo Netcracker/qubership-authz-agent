@@ -404,10 +404,10 @@ func TestInvalidDomainIsRejected(t *testing.T) {
 }
 
 // A PIP upload is refused whole with 400 when a name is not "subject."
-// followed by an alias without whitespace, because the agent's pull skips such
-// a PIP. The valid PIP beside the bad one is refused with it, the domain keeps
-// the PIPs it held, and the error names the bad PIP by its zero-based index and
-// quotes its name.
+// followed by an alias with no space, tab, or line break, because the agent's
+// pull skips such a PIP. The valid PIP beside the bad one is refused with it,
+// the domain keeps the PIPs it held, and the error names the bad PIP by its
+// zero-based index and quotes its name.
 func TestPIPUploadWithANameTheAgentCannotReadIsRefused(t *testing.T) {
 	for _, tc := range []struct{ condition, name string }{
 		{"shorter than the prefix", "sub.x"},

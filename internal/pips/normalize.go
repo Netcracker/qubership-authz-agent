@@ -18,7 +18,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"unicode"
 )
 
 func Normalize(input []byte) (*PIPDocument, *UploadSummary, error) {
@@ -36,11 +35,12 @@ func Normalize(input []byte) (*PIPDocument, *UploadSummary, error) {
 
 // AliasOf returns the alias a condition reads the PIP named name by: the part
 // of name after "subject.". It reports false when name does not start with
-// "subject.", or when the alias is empty or holds whitespace, because a
-// condition separates words at whitespace and reads no such alias.
+// "subject.", or when the alias is empty or holds a space, a tab, or a line
+// break, because a condition ends a word at those characters and reads no such
+// alias.
 func AliasOf(name string) (string, bool) {
 	alias, ok := strings.CutPrefix(name, "subject.")
-	if !ok || alias == "" || strings.ContainsFunc(alias, unicode.IsSpace) {
+	if !ok || alias == "" || strings.ContainsAny(alias, " \t\r\n") {
 		return "", false
 	}
 	return alias, true
@@ -70,7 +70,7 @@ func NormalizeItems(items []SimplifiedPIP) (*PIPDocument, *UploadSummary, error)
 		pipType := resolvePipType(item)
 		alias, ok := AliasOf(item.Name)
 		if !ok {
-			return nil, nil, fmt.Errorf("pip %d: name must be 'subject.' followed by an alias without whitespace (got %q)", idx, item.Name)
+			return nil, nil, fmt.Errorf("pip %d: name must be 'subject.' followed by an alias with no space, tab, or line break (got %q)", idx, item.Name)
 		}
 
 		normalized.ByName[item.Name] = NormalizedEntry{

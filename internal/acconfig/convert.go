@@ -93,8 +93,8 @@ func ConvertPolicySets(raw []byte, logger Logger) ([]simplifiedpolicies.Policy, 
 // to a slice of pips.SimplifiedPIP, silently skipping types that the agent does
 // not handle (FILTERED, PERMISSION_SCOPE, MAPPING, ENTITLEMENT, and GENERAL
 // with beanName). A PIP of a supported type whose name is not "subject."
-// followed by an alias without whitespace is skipped with a warning, and the
-// rest of the list is kept.
+// followed by an alias with no space, tab, or line break is skipped with a
+// warning, and the rest of the list is kept.
 func ConvertPIPs(raw []byte, logger Logger) ([]pips.SimplifiedPIP, error) {
 	var resp V3PIPsResponse
 	if err := json.Unmarshal(raw, &resp); err != nil {
@@ -424,7 +424,7 @@ func convertPIPs(v3pips []PIPV3, logger Logger) []pips.SimplifiedPIP {
 			continue
 		}
 		if _, ok := pips.AliasOf(sp.Name); !ok {
-			logger.Warnf(`acconfig: pip %q (domain=%s): name is not "subject." followed by an alias without whitespace, so no condition can read it — pip skipped`,
+			logger.Warnf(`acconfig: pip %q (domain=%s): name is not "subject." followed by an alias with no space, tab, or line break, so no condition can read it — pip skipped`,
 				sp.Name, sp.Domain)
 			continue
 		}

@@ -16,9 +16,12 @@ package pips
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
+
+	"authz-agent/internal/simplifiedpolicies"
 )
 
 func TestNormalizeMixedPIPs(t *testing.T) {
@@ -89,6 +92,26 @@ func TestNormalizeRejectsUnsupported(t *testing.T) {
 	_, _, err := Normalize([]byte(input))
 	if err == nil {
 		t.Fatal("expected error for FILTERED pip")
+	}
+}
+
+// AliasOf accepts an alias exactly when a condition reads subject.<alias> as
+// one path: the condition parser ends a word at a space, a tab, or a line
+// break, and keeps any other character, a no-break space included, inside it.
+func TestAliasOfAgreesWithTheConditionParser(t *testing.T) {
+	t.Parallel()
+	for _, sep := range []string{" ", "\t", "\r", "\n", "\u00a0", "\f", "\v", "\u2003", "\u3000"} {
+		alias := "a" + sep + "b"
+		_, accepted := AliasOf("subject." + alias)
+		parsed, err := simplifiedpolicies.ParseCondition("subject." + alias + " == 'v'")
+		onePath := err == nil && fmt.Sprint(parsed["args"]) == fmt.Sprint([]any{
+			map[string]any{"ref": map[string]any{"path": []any{alias}, "scope": "subject"}},
+			map[string]any{"const": "v"},
+		})
+		if accepted != onePath {
+			t.Errorf("AliasOf(%q) ok = %v, but the condition parser reads it as one path: %v (parsed %v, err %v)",
+				"subject."+alias, accepted, onePath, parsed, err)
+		}
 	}
 }
 

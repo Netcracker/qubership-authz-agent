@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"unicode"
 )
 
 // maxBodyBytes caps an upload.
@@ -126,7 +125,7 @@ func (s *server) handlePutDomainPIPs(w http.ResponseWriter, r *http.Request) {
 	for idx, item := range items {
 		if !validPIPName(item.Name) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf(
-				"pip %d: name must be 'subject.' followed by an alias without whitespace (got %q), because a condition reads a PIP by that alias; the PIPs of domain %q are unchanged",
+				"pip %d: name must be 'subject.' followed by an alias with no space, tab, or line break (got %q), because a condition reads a PIP by that alias; the PIPs of domain %q are unchanged",
 				idx, item.Name, domain)})
 			return
 		}
@@ -200,13 +199,13 @@ func methodNotAllowed(allow string) http.HandlerFunc {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 // validPIPName reports whether name is "subject." followed by a non-empty
-// alias without whitespace. The agent's conditions read a PIP by that alias
-// and separate words at whitespace, and the agent's pull skips a PIP named
-// any other way. It copies internal/pips.AliasOf, which this binary does not
-// link; TestValidPIPNameAgreesWithAliasOf compares the two.
+// alias with no space, tab, or line break. The agent's conditions read a PIP
+// by that alias and end a word at those characters, and the agent's pull skips
+// a PIP named any other way. It copies internal/pips.AliasOf, which this binary
+// does not link; TestValidPIPNameAgreesWithAliasOf compares the two.
 func validPIPName(name string) bool {
 	alias, ok := strings.CutPrefix(name, "subject.")
-	return ok && alias != "" && !strings.ContainsFunc(alias, unicode.IsSpace)
+	return ok && alias != "" && !strings.ContainsAny(alias, " \t\r\n")
 }
 
 // pathDomain extracts and validates `{domainName}`. The value ends up in a file
