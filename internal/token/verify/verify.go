@@ -91,7 +91,8 @@ const (
 	// provider's audiences, or is neither a string nor an array of strings.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
-	// service does not accept, or one that names no namespace.
+	// service does not accept, one that names no namespace, and one that a
+	// [Verifier] without [Options.Admit] verified.
 	CodeNamespaceNotAllowed Code = "TOKEN_NAMESPACE_NOT_ALLOWED"
 )
 
@@ -224,7 +225,9 @@ type Options struct {
 	// verified now or taken from the cache, and the *Error it returns
 	// refuses the token. It holds the checks whose answer can change while
 	// a token stays cached, such as the namespaces a Kubernetes token may
-	// come from.
+	// come from. Without Admit, Verify refuses every token for which
+	// [Token.Kubernetes] reports true, so a Kubernetes token never passes
+	// without a namespace check.
 	Admit func(*Token) *Error
 
 	// now is the clock the claims are checked against.
@@ -282,7 +285,8 @@ func New(source KeyFinder, opts Options) *Verifier {
 // A token verified earlier that has not expired is served from the cache,
 // as the *Token the earlier call returned, while [KeyFinder.Lookup] returns
 // the same key for its issuer and kid. [Options.Admit] then runs on the token
-// either way.
+// either way; without it, a Kubernetes token is refused with
+// [CodeNamespaceNotAllowed].
 func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
@@ -293,10 +297,14 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 			return nil, err
 		}
 	}
-	if v.opts.Admit != nil {
-		if err := v.opts.Admit(tok); err != nil {
-			return nil, err
+	if v.opts.Admit == nil {
+		if tok.Kubernetes() {
+			return nil, fail(CodeNamespaceNotAllowed, "provider %q is a Kubernetes provider and the verifier checks no namespace", tok.ProviderID())
 		}
+		return tok, nil
+	}
+	if err := v.opts.Admit(tok); err != nil {
+		return nil, err
 	}
 	return tok, nil
 }
