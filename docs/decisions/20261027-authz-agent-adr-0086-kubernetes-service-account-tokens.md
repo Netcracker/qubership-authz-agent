@@ -74,6 +74,8 @@ installation.
 - The chart takes `M2M_AUTH_MODE` with the values `legacy`, `hybrid`, and `k8s`, `legacy` by default, and lists the
   provider in the modes `hybrid` and `k8s`. In `legacy` a Kubernetes token is refused, as in the other services of the
   installation.
+- At start the agent warns about a provider that is not marked `kubernetes` but has the id `kubernetes` or an address
+  on `kubernetes.default.svc` or `kubernetes.default.svc.cluster.local`, since its tokens would get no namespace check.
 
 ### The namespaces
 
@@ -85,12 +87,16 @@ installation.
 - The agent reads the file again every 20 seconds, and the check runs on a verified token taken from the cache too. A
   namespace that leaves the topology is refused once the kubelet has updated the mounted file and the next read has
   run, with no restart.
+- A verifier without the namespace check refuses every Kubernetes token, so wiring that leaves the check out refuses
+  the tokens instead of admitting them.
 - A refused token gets the code `TOKEN_NAMESPACE_NOT_ALLOWED`.
 
 ### Justification
 
-The audience limits the accepted tokens to those issued for the M2M calls of the platform. Without it, every token the
-API server issues would be accepted, the default token of every Pod among them.
+The namespace check is what limits who gets in. The audience keeps out the tokens that the API server issues for
+other purposes, the default token of every Pod among them, but it does not limit who holds an accepted token: anyone
+who can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason a
+Kubernetes token never passes without the namespace check.
 
 The signature cannot tell the services of one installation from those of another, because the API server signs both
 with the same keys. The topology file is the platform's own description of the installation, kept in every namespace,
@@ -101,8 +107,8 @@ the JWKS under the issuer's address, which a Pod need not reach.
 
 The mark decides which tokens are Kubernetes tokens, and neither the provider id nor the `kubernetes.io` claim does. The
 id of this provider is a label the operator picks, and the claim is whatever the signer puts in the token, while the
-mark follows the key that verified the token. The `sub` of the token is not checked separately: the audience and the
-API server's key already admit only service account tokens.
+mark follows the key that verified the token. The `sub` of the token is not checked separately: the API server's key
+signs only service account tokens.
 
 Alternatives considered:
 
@@ -125,6 +131,7 @@ Positive:
 
 Negative:
 
+- Anyone who can create a Pod in a namespace of the installation can get a token the agent accepts.
 - A service of the installation that receives a `netcracker` token can present it to the agent, since every M2M call
   between the services shares that audience.
 - A token stays accepted until its `exp` after its Pod or service account is deleted, because the agent does not ask
