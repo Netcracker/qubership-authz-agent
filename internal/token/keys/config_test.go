@@ -42,8 +42,28 @@ func TestParseConfig_ReadsBothAddressForms(t *testing.T) {
 	}
 }
 
-// Every document puts a valid provider first and breaks one rule in the
-// second, so an error that names providers[1] blames the entry at fault.
+// The two providers differ in the mark, the id, and the host alone, and the
+// unmarked one is the one named kubernetes, so a mark taken from the id
+// fails the test.
+func TestParseConfig_ReadsTheKubernetesMark(t *testing.T) {
+	doc := `{"providers": [
+		{"id": "k8s", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
+		 "audiences": ["netcracker"], "kubernetes": true},
+		{"id": "kubernetes", "jwksUri": "https://idp.example/openid/v1/jwks", "audiences": ["netcracker"]}
+	]}`
+	want := Config{Providers: []Provider{
+		{ID: "k8s", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", Audiences: []string{"netcracker"}, Kubernetes: true},
+		{ID: "kubernetes", JWKSURI: "https://idp.example/openid/v1/jwks", Audiences: []string{"netcracker"}},
+	}}
+	got, err := ParseConfig([]byte(doc))
+	if err != nil {
+		t.Fatalf("ParseConfig() error = %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("ParseConfig() = %+v, want %+v", got, want)
+	}
+}
+
 func TestParseConfig_AcceptsAnIDOfLettersDigitsDotsUnderscoresAndHyphens(t *testing.T) {
 	doc := `{"providers": [{"id": "Cloud_common.v2-x", "issuer": "https://idp.example/realms/a"}]}`
 	if _, err := ParseConfig([]byte(doc)); err != nil {
@@ -51,6 +71,8 @@ func TestParseConfig_AcceptsAnIDOfLettersDigitsDotsUnderscoresAndHyphens(t *test
 	}
 }
 
+// Every document puts a valid provider first and breaks one rule in the
+// second, so an error that names providers[1] blames the entry at fault.
 func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -63,6 +85,8 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"both issuer and jwksUri", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "jwksUri": "https://idp.example/realms/b/certs"}},
 		{"tokenFile with issuer", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "tokenFile": "/var/run/token"}},
 		{"allowMissingAud without audiences", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "allowMissingAud": true}},
+		{"kubernetes without audiences", map[string]any{"id": "b", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "kubernetes": true}},
+		{"kubernetes with allowMissingAud", map[string]any{"id": "b", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "kubernetes": true, "audiences": []string{"netcracker"}, "allowMissingAud": true}},
 		{"empty audience", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "audiences": []string{""}}},
 		{"issuer that is not http", map[string]any{"id": "b", "issuer": "ftp://idp.example/realms/b"}},
 		{"issuer without a host", map[string]any{"id": "b", "issuer": "https:///realms/b"}},

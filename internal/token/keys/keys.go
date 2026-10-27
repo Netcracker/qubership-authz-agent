@@ -14,8 +14,8 @@
 
 // Package keys holds the signing keys of the trusted identity providers and
 // finds the key a token's kid names. A provider is any OIDC provider: the
-// package reads its JWKS, through discovery or directly, and knows nothing
-// else about it.
+// package reads its JWKS, through discovery or directly, the same way for
+// every provider.
 //
 // [ReadConfig] reads the trusted providers file. [Load] fetches every
 // provider's keys and fails unless all of them arrive. [Set.Lookup] finds a

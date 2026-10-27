@@ -58,6 +58,28 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	}
 }
 
+// The two providers share their id, so the mark alone decides the result.
+func TestToken_KubernetesReportsTheMarkOfTheVerifyingProvider(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider keys.Provider
+		want     bool
+	}{
+		{"marked provider", keys.Provider{ID: "kubernetes", Kubernetes: true}, true},
+		{"unmarked provider", keys.Provider{ID: "kubernetes"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", &tt.provider)
+			v, _ := newVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, nil)))
+			if got := tok.Kubernetes(); got != tt.want {
+				t.Errorf("Kubernetes() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
 // verifyPayload verifies a token of payload, signed by a key of a provider
 // that lists no audiences, at start.
 func verifyPayload(t *testing.T, payload string) *Token {

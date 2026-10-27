@@ -62,6 +62,14 @@ type Provider struct {
 	// read on every request, so a rotated token takes effect without a
 	// restart.
 	TokenFile string `json:"tokenFile,omitempty"`
+	// Kubernetes marks the provider as the service account token issuer of
+	// a Kubernetes API server, and
+	// [authz-agent/internal/token/verify.Token.Kubernetes] reports the mark
+	// on every token its keys verify. It requires Audiences, because every
+	// Pod's default token is issued for the API server itself, and refuses
+	// AllowMissingAud, so a Kubernetes token is accepted only when it names
+	// an audience the service accepts.
+	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
 // validProviderID is the accepted shape of [Provider.ID].
@@ -133,6 +141,10 @@ func (p Provider) validate() error {
 		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token is sent only to a jwksUri the configuration names", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
+	case p.Kubernetes && len(p.Audiences) == 0:
+		return fmt.Errorf("provider %q sets kubernetes without audiences; every Pod's default token is issued for the API server, so list the audience this service accepts", p.ID)
+	case p.Kubernetes && p.AllowMissingAud:
+		return fmt.Errorf("provider %q sets both kubernetes and allowMissingAud; a Kubernetes token has to name an audience this service accepts", p.ID)
 	}
 	for _, aud := range p.Audiences {
 		if aud == "" {

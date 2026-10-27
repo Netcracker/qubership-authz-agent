@@ -15,9 +15,10 @@
 // Package namespaces decides which Kubernetes namespaces a service account
 // token may come from. The allowed namespaces are the origin and the peer
 // namespace of the composite baseline and of every satellite in the
-// topology file. [Allowlist.Admit] applies them to the tokens of chosen
-// providers as [verify.Options.Admit], and [Allowlist.Run] keeps them
-// current.
+// topology file. [Allowlist.Admit] applies them, as [verify.Options.Admit],
+// to the tokens of the providers marked
+// [authz-agent/internal/token/keys.Provider.Kubernetes], and [Allowlist.Run]
+// keeps them current.
 package namespaces
 
 import (
@@ -25,7 +26,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -119,28 +119,26 @@ func (a *Allowlist) reload() {
 	a.allowed.Store(&allowed)
 }
 
-// Admit returns a check for [verify.Options.Admit] that refuses a token
-// signed by one of providers, named by provider id, unless its
-// kubernetes.io.namespace claim names an allowed namespace. A token of any
-// other provider passes. The refusal carries
-// [verify.CodeNamespaceNotAllowed].
-func (a *Allowlist) Admit(providers ...string) func(*verify.Token) *verify.Error {
-	return func(tok *verify.Token) *verify.Error {
-		if !slices.Contains(providers, tok.ProviderID()) {
-			return nil
-		}
-		namespace, ok := namespaceOf(tok)
-		if !ok {
-			return &verify.Error{Code: verify.CodeNamespaceNotAllowed, Detail: "token names no kubernetes.io namespace"}
-		}
-		if !a.Allows(namespace) {
-			return &verify.Error{
-				Code:   verify.CodeNamespaceNotAllowed,
-				Detail: fmt.Sprintf("namespace %.64q is not an allowed namespace", namespace),
-			}
-		}
+// Admit refuses a token for which [verify.Token.Kubernetes] reports true
+// unless its kubernetes.io.namespace claim names an allowed namespace, and
+// passes any other token. The refusal carries
+// [verify.CodeNamespaceNotAllowed]. Admit is meant to be set as
+// [verify.Options.Admit].
+func (a *Allowlist) Admit(tok *verify.Token) *verify.Error {
+	if !tok.Kubernetes() {
 		return nil
 	}
+	namespace, ok := namespaceOf(tok)
+	if !ok {
+		return &verify.Error{Code: verify.CodeNamespaceNotAllowed, Detail: "token names no kubernetes.io namespace"}
+	}
+	if !a.Allows(namespace) {
+		return &verify.Error{
+			Code:   verify.CodeNamespaceNotAllowed,
+			Detail: fmt.Sprintf("namespace %.64q is not an allowed namespace", namespace),
+		}
+	}
+	return nil
 }
 
 // namespaceOf returns the namespace member of the kubernetes.io claim of

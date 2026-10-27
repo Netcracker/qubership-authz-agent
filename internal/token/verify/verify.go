@@ -109,6 +109,7 @@ type Token struct {
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
+	kubernetes bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -166,6 +167,10 @@ func (t *Token) Standard() Standard {
 
 // ProviderID returns the id of the provider whose key verified the token.
 func (t *Token) ProviderID() string { return t.providerID }
+
+// Kubernetes reports whether the provider whose key verified the token is
+// marked [keys.Provider.Kubernetes].
+func (t *Token) Kubernetes() bool { return t.kubernetes }
 
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
@@ -306,6 +311,7 @@ func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*
 		claims:     claims,
 		standard:   standardOf(claims),
 		providerID: key.Provider.ID,
+		kubernetes: key.Provider.Kubernetes,
 		keyID:      kid,
 		issuer:     stringClaim(claims, "iss"),
 		expiry:     expiry,
