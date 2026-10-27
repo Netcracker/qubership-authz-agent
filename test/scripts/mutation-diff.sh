@@ -101,6 +101,7 @@ files=()
 while IFS= read -r file; do
   case "${file}" in
     test/* | *_test.go | */testdata/*) continue ;;
+    *) ;;
   esac
   # The generated-code marker may stand anywhere before the package clause.
   header="$(git show "HEAD:${file}" | sed -n '1,/^package /p')"
@@ -245,7 +246,8 @@ EOF
 fi
 
 count() {
-  awk -F '\t' -v verdict="$1" '$1 == verdict { n++ } END { print n + 0 }' "${OUT_DIR}/results.tsv"
+  local verdict="$1"
+  awk -F '\t' -v verdict="${verdict}" '$1 == verdict { n++ } END { print n + 0 }' "${OUT_DIR}/results.tsv"
 }
 killed="$(count killed)"
 timed_out="$(count timed-out)"
