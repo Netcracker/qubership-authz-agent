@@ -67,12 +67,18 @@ func (s *ParitySuite) mustAnonymousTokenBundle() TokenBundle {
 // the isolated domain makes the PAP refuse every check request on the stand
 // with 400, so a test that uploads sets and empties the domain when it ends has
 // to delete the sets first; cleanups run last registered first, so this one is
-// registered after the domain's.
+// registered after the domain's. The cleanup takes its token when it runs: a
+// token taken at registration can expire while a long test runs, and the PAP
+// would refuse the deletes with 401.
 func (s *ParitySuite) deletePolicySetsOnCleanup(cfg Config, externalIDs ...string) {
 	s.T().Helper()
 	ctx := context.Background()
-	m2m := s.mustM2MToken()
 	s.T().Cleanup(func() {
+		m2m, err := s.tokens.M2MToken()
+		if err != nil {
+			s.T().Logf("delete the policy sets of %v: %v", externalIDs, err)
+			return
+		}
 		for _, externalID := range externalIDs {
 			status, _, err := HelperDeletePolicySetsByExternalID(ctx, cfg, m2m, externalID)
 			if err != nil {

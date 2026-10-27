@@ -64,6 +64,11 @@ func (s *ParitySuite) TestLoadSimplifiedPoliciesConditionSyntax() {
 			status, _, err := HelperPutSimplifiedPolicies(ctx, s.cfg, m2m, loadCaseDomain, []any{policy})
 			s.Require().NoError(err)
 			s.T().Cleanup(func() {
+				m2m, err := s.tokens.M2MToken()
+				if err != nil {
+					s.T().Logf("empty domain %s: %v", loadCaseDomain, err)
+					return
+				}
 				status, raw, err := HelperPutSimplifiedPolicies(ctx, s.cfg, m2m, loadCaseDomain, []any{})
 				if err != nil || status < 200 || status >= 300 {
 					s.T().Logf("empty domain %s: status=%d body=%s err=%v", loadCaseDomain, status, raw, err)

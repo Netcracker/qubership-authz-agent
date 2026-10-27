@@ -124,10 +124,16 @@ func (s *ParitySuite) runCustomizationCase(tc regularCase, customization []any, 
 	ctx := context.Background()
 	m2m := s.mustM2MToken()
 	// The cleanups run after the suite has handed s.T() back to its parent, so
-	// they report through the test they were registered in.
+	// they report through the test they were registered in. They take their
+	// token when they run, as one taken here can expire before the test ends.
 	t := s.T()
 	deleteCustomization := func() {
-		status, body, err := HelperDeleteSetCustomization(ctx, s.cfg, m2m, customizationLevel, setID)
+		token, err := s.tokens.M2MToken()
+		if err != nil {
+			t.Logf("delete the %s customization of set %s: %v", customizationLevel, setID, err)
+			return
+		}
+		status, body, err := HelperDeleteSetCustomization(ctx, s.cfg, token, customizationLevel, setID)
 		t.Logf("delete the %s customization of set %s: status %d, %v, %s", customizationLevel, setID, status, err, body)
 	}
 	// A customization a failed run left behind would make the answers recorded
@@ -143,7 +149,14 @@ func (s *ParitySuite) runCustomizationCase(tc regularCase, customization []any, 
 	// Cleanups run last registered first: the customization is deleted, the sets
 	// of the externalId are deleted, the set is deleted by its id if it is still
 	// listed, and then the PIPs go.
-	t.Cleanup(func() { s.requireSetDeleted(t, m2m, tc.resourceType, setID) })
+	t.Cleanup(func() {
+		token, err := s.tokens.M2MToken()
+		if err != nil {
+			t.Errorf("delete policy set %s: %v", setID, err)
+			return
+		}
+		s.requireSetDeleted(t, token, tc.resourceType, setID)
+	})
 	s.deletePolicySetsOnCleanup(s.cfg, tc.uploads[0].externalID)
 	t.Cleanup(deleteCustomization)
 
