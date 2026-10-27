@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 )
 
 // Config is the trusted providers file: a JSON object whose providers array
@@ -174,4 +175,25 @@ func checkHTTPURL(raw string) error {
 		return fmt.Errorf("%q has no host", raw)
 	}
 	return nil
+}
+
+// kubernetesHosts are the in-cluster names of the Kubernetes API server.
+var kubernetesHosts = map[string]bool{
+	"kubernetes.default.svc":               true,
+	"kubernetes.default.svc.cluster.local": true,
+}
+
+// looksLikeKubernetes reports whether p is named kubernetes or names an
+// in-cluster address of the Kubernetes API server, whether or not it sets
+// [Provider.Kubernetes].
+func (p Provider) looksLikeKubernetes() bool {
+	if p.ID == "kubernetes" {
+		return true
+	}
+	for _, raw := range []string{p.JWKSURI, p.Issuer} {
+		if u, err := url.Parse(raw); err == nil && kubernetesHosts[strings.ToLower(u.Hostname())] {
+			return true
+		}
+	}
+	return false
 }
