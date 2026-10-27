@@ -19,7 +19,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
+	"unicode"
 )
 
 // maxBodyBytes caps an upload.
@@ -121,6 +123,14 @@ func (s *server) handlePutDomainPIPs(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
+	for idx, item := range items {
+		if !validPIPName(item.Name) {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf(
+				"pip %d: name must be 'subject.' followed by an alias without whitespace (got %q), because a condition reads a PIP by that alias; the PIPs of domain %q are unchanged",
+				idx, item.Name, domain)})
+			return
+		}
+	}
 	if err := s.st.SetDomainPIPs(domain, items, raw); err != nil {
 		logger.Errorf("PIP upload for domain %q rejected: %v", domain, err)
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
@@ -188,6 +198,16 @@ func methodNotAllowed(allow string) http.HandlerFunc {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// validPIPName reports whether name is "subject." followed by a non-empty
+// alias without whitespace. The agent's conditions read a PIP by that alias
+// and separate words at whitespace, and the agent's pull skips a PIP named
+// any other way. It copies internal/pips.AliasOf, which this binary does not
+// link; TestValidPIPNameAgreesWithAliasOf compares the two.
+func validPIPName(name string) bool {
+	alias, ok := strings.CutPrefix(name, "subject.")
+	return ok && alias != "" && !strings.ContainsFunc(alias, unicode.IsSpace)
+}
 
 // pathDomain extracts and validates `{domainName}`. The value ends up in a file
 // name, so anything outside the allowed character set is refused instead of

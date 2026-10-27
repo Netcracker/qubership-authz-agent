@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"authz-agent/internal/acconfig"
+	"authz-agent/internal/pips"
 	"authz-agent/internal/simplifiedpolicies"
 )
 
@@ -84,6 +85,21 @@ func TestPIPRoundTripThroughProductionConverter(t *testing.T) {
 	for i, want := range input {
 		if got[i].Name != want.Name {
 			t.Errorf("PIP %d: name %q, want %q", i, got[i].Name, want.Name)
+		}
+	}
+}
+
+// validPIPName copies pips.AliasOf, because the stub does not link the agent's
+// packages. A name the stub accepts and the agent's pull skips gets 200 and
+// then does nothing, so the two have to accept the same names.
+func TestValidPIPNameAgreesWithAliasOf(t *testing.T) {
+	for _, name := range []string{
+		"subject.x", "subject.tenant", "subject.a.b", "sub.x", "tenant", "Subject.x", "subject.", "",
+		" subject.x", "subject.x ", "subject.a\tb", "subject.a b",
+	} {
+		_, want := pips.AliasOf(name)
+		if got := validPIPName(name); got != want {
+			t.Errorf("validPIPName(%q) = %v, want %v as pips.AliasOf reports", name, got, want)
 		}
 	}
 }
