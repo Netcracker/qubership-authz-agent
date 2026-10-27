@@ -112,11 +112,12 @@ cd test/integration/tenantmanager && go test -count=1 ./...
 
 `make mutation-diff` mutates the Go functions your branch changes and lists every mutant on a changed line that no
 test kills. Run it before you open a pull request. It compares `HEAD` with its merge base with `origin/main`, so commit
-the change first; `MUTATION_BASE` names another branch or commit to take the merge base with:
+the change and fetch `origin` first. For a pull request that targets another branch, `MUTATION_BASE` names that
+branch, or any commit, to take the merge base with:
 
 ```sh
 make mutation-diff
-make mutation-diff MUTATION_BASE=<commit>
+make mutation-diff MUTATION_BASE=origin/<target-branch>
 ```
 
 The target runs [go-mutesting](https://github.com/avito-tech/go-mutesting) with `go run`, so it needs only Go. It

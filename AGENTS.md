@@ -6,7 +6,11 @@ The Rego in `policies/` interprets simplified policies at run time and is mainte
 
 Tests: Go `testing` as engine and assertions in the root module, `test/integration/pipstub`, and `test/integration/tenantmanager` (no testify, no go-cmp); `test/integration/testify` is on testify, and `test/parity/suite` is on testify with go-cmp for its comparisons. Mutation: go-mutesting, through `make mutation-diff`.
 
-Before you open a pull request that changes Go code outside `test/`, commit the change and run `make mutation-diff`. It lists every mutant on a line the branch changed that no test kills, and fails when there is one. For each survivor:
+Before you open a pull request that changes Go code outside `test/`, commit the change, run `git fetch origin`, and run `make mutation-diff`. It lists every mutant on a line the branch changed that no test kills, and fails when there is one.
+
+The base of the diff is the merge base of `HEAD` and `origin/main`. When the pull request targets another branch, pass that branch as the base: `make mutation-diff MUTATION_BASE=origin/<target-branch>`. `MUTATION_BASE` takes any branch, tag, or commit, and the run uses its merge base with `HEAD`, so passing the target branch is enough even after it has moved on.
+
+For each survivor:
 
 - If it changes behavior the code promises, add or strengthen a test through the unit's interface, not a test that pins the mutated line.
 - If it changes nothing a caller can observe, it is equivalent: say why in the pull request description.
