@@ -121,6 +121,7 @@ type Token struct {
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
+	kubernetes bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -181,6 +182,10 @@ func (t *Token) Standard() Standard {
 // of a Keycloak. A realm name is the token's text, so a caller that logs the id
 // quotes it.
 func (t *Token) ProviderID() string { return t.providerID }
+
+// Kubernetes reports whether the provider whose key verified the token is
+// marked [keys.Provider.Kubernetes].
+func (t *Token) Kubernetes() bool { return t.kubernetes }
 
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
@@ -334,6 +339,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 		claims:     claims,
 		standard:   standardOf(claims),
 		providerID: key.Source.ID(),
+		kubernetes: key.Source.Kubernetes(),
 		keyID:      key.ID,
 		issuer:     query.Issuer,
 		expiry:     expiry,
