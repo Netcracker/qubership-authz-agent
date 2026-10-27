@@ -25,6 +25,12 @@ import (
 
 // simplifiedPolicy mirrors internal/simplifiedpolicies.Policy (only the
 // fields the stub uses for v3 export conversion).
+//
+// Predicate is not a field of an access-control simplified policy: it is the
+// querydsl template that access-control keeps in the predicate field of a v3
+// rule. The stub accepts it here and writes it to the v3 rule unchanged, so a
+// test can deliver a querydsl predicate without a regular policy set, which
+// the stub has no endpoint for.
 type simplifiedPolicy struct {
 	Component        string `json:"component"`
 	ResourceType     string `json:"resourceType"`
@@ -33,6 +39,7 @@ type simplifiedPolicy struct {
 	RSQLPredicate    string `json:"rsqlPredicate,omitempty"`
 	SQLPredicate     string `json:"sqlPredicate,omitempty"`
 	MongoDBPredicate string `json:"mongodbPredicate,omitempty"`
+	Predicate        string `json:"predicate,omitempty"`
 	Roles            []any  `json:"roles,omitempty"`
 }
 
@@ -111,6 +118,7 @@ type v3Rule struct {
 	RSQLPredicate    string  `json:"rsqlPredicate,omitempty"`
 	SQLPredicate     string  `json:"sqlPredicate,omitempty"`
 	MongoDBPredicate string  `json:"mongodbPredicate,omitempty"`
+	Predicate        string  `json:"predicate,omitempty"`
 }
 
 type v3PIPsResponse struct {
@@ -160,6 +168,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 		rsqlPredicate    string
 		sqlPredicate     string
 		mongodbPredicate string
+		predicate        string
 	}
 
 	// Collect in insertion order.
@@ -179,6 +188,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 			rsqlPredicate:    p.RSQLPredicate,
 			sqlPredicate:     p.SQLPredicate,
 			mongodbPredicate: p.MongoDBPredicate,
+			predicate:        p.Predicate,
 		})
 	}
 
@@ -213,6 +223,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 					RSQLPredicate:    rule.rsqlPredicate,
 					SQLPredicate:     rule.sqlPredicate,
 					MongoDBPredicate: rule.mongodbPredicate,
+					Predicate:        rule.predicate,
 				})
 			}
 			policyTarget := rolesTarget(prk.roles)

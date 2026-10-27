@@ -41,6 +41,7 @@ func TestV3RoundTripThroughProductionConverter(t *testing.T) {
 		{Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_ADMIN"}},
 		{Component: "billing", ResourceType: "Invoice", Operation: "UPDATE", Roles: []any{"ROLE_ADMIN"}, Condition: "subject.tenantId == resource.tenantId"},
 		{Component: "billing", ResourceType: "Invoice", Operation: "READ", Roles: []any{"ROLE_USER"}, RSQLPredicate: "ownerId==${subject.id}"},
+		{Component: "billing", ResourceType: "Invoice", Operation: "LIST", Roles: []any{"ROLE_USER"}, Predicate: `Invoice.ownerId.eq("${subject.id}")`},
 	}
 
 	raw, err := json.Marshal(v3PolicySetsResponse{Hash: "deadbeef", PolicySets: toV3PolicySets(input)})
@@ -94,6 +95,7 @@ func containsPolicy(got []simplifiedpolicies.Policy, want simplifiedPolicy) bool
 			g.ResourceType == want.ResourceType &&
 			g.Operation == want.Operation &&
 			g.RSQLPredicate == want.RSQLPredicate &&
+			g.QueryDSLPredicate == want.Predicate &&
 			conditionString(g.Condition) == conditionString(want.Condition) &&
 			rolesKey(g.Roles) == rolesKey(want.Roles) {
 			return true
