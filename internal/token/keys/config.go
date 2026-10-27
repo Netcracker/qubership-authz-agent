@@ -78,11 +78,14 @@ type Provider struct {
 	// CAFile is a PEM bundle that replaces the system roots for HTTPS
 	// requests to this provider.
 	CAFile string `json:"caFile,omitempty"`
-	// TokenFile holds a bearer token sent with every JWKS request to this
-	// provider. It requires JWKSURI, and no request follows a redirect, so
-	// the token goes only to the address the configuration names. It is
-	// read on every request, so a rotated token takes effect without a
-	// restart.
+	// TokenFile holds a bearer token sent with every request for the keys of
+	// this provider. It requires JWKSURI, unless the provider reads its keys
+	// from the API server of its own cluster through discovery: an https
+	// Issuer on an in-cluster name of the API server, and a CAFile. Such a
+	// server names the jwks_uri the token goes to, and a fetch fails when
+	// that address is not https. No request follows a redirect, so the token
+	// goes to no other address. It is read on every request, so a rotated
+	// token takes effect without a restart.
 	TokenFile string `json:"tokenFile,omitempty"`
 	// Kubernetes marks the provider as the service account token issuer of
 	// a Kubernetes API server, and
@@ -93,7 +96,9 @@ type Provider struct {
 	// namespace is not an allowed one. The mark requires Audiences, because
 	// every Pod's default token is issued for the API server itself, and
 	// refuses AllowMissingAud, so a Kubernetes token is accepted only when it
-	// names an audience the service accepts.
+	// names an audience the service accepts. A provider with the id
+	// kubernetes, or with an address on an in-cluster name of the API server,
+	// has to set the mark.
 	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
@@ -182,14 +187,16 @@ func (p Provider) validate() error {
 		return fmt.Errorf("id %q has a character other than a letter, a digit, '.', '_', or '-'", p.ID)
 	case p.Issuer == "":
 		return fmt.Errorf("provider %q has no issuer", p.ID)
-	case p.TokenFile != "" && p.JWKSURI == "":
-		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token is sent only to a jwksUri the configuration names", p.ID)
+	case p.TokenFile != "" && p.JWKSURI == "" && !p.readsTheClusterAPIServer():
+		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token goes through discovery only to an https issuer on an in-cluster name of the Kubernetes API server, with its CA in caFile, so set jwksUri, or fix issuer and caFile", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
 	case p.Kubernetes && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets kubernetes without audiences; every Pod's default token is issued for the API server, so list the audience this service accepts", p.ID)
 	case p.Kubernetes && p.AllowMissingAud:
 		return fmt.Errorf("provider %q sets both kubernetes and allowMissingAud; a Kubernetes token has to name an audience this service accepts", p.ID)
+	case !p.Kubernetes && p.looksLikeKubernetes():
+		return fmt.Errorf("provider %q looks like a Kubernetes API server by its id or an address but does not set \"kubernetes\": true, so the token of any Pod of the cluster would pass with no namespace check; set it on this provider, or give the provider another id if it is not the API server", p.ID)
 	}
 	for _, aud := range p.Audiences {
 		if aud == "" {
@@ -255,3 +262,31 @@ func IssuerOfTokenFile(path string) (string, error) {
 	return issuer, nil
 }
 
+// kubernetesHosts are the in-cluster names of the Kubernetes API server.
+var kubernetesHosts = map[string]bool{
+	"kubernetes.default.svc":               true,
+	"kubernetes.default.svc.cluster.local": true,
+}
+
+// looksLikeKubernetes reports whether p is named kubernetes or names an
+// in-cluster address of the Kubernetes API server, whether or not it sets
+// [Provider.Kubernetes].
+func (p Provider) looksLikeKubernetes() bool {
+	if p.ID == "kubernetes" {
+		return true
+	}
+	for _, raw := range []string{p.JWKSURI, p.Issuer} {
+		if u, err := url.Parse(raw); err == nil && kubernetesHosts[strings.ToLower(u.Hostname())] {
+			return true
+		}
+	}
+	return false
+}
+
+// readsTheClusterAPIServer reports whether the keys of p come from the API
+// server of its own cluster: an https issuer on an in-cluster name, and a CA
+// of its own in place of the system roots.
+func (p Provider) readsTheClusterAPIServer() bool {
+	u, err := url.Parse(p.Issuer)
+	return err == nil && u.Scheme == "https" && kubernetesHosts[strings.ToLower(u.Hostname())] && p.CAFile != ""
+}
