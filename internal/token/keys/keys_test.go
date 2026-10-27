@@ -64,6 +64,42 @@ func TestRefresh_JWKSURISkipsDiscovery(t *testing.T) {
 	}
 }
 
+// New fetches nothing, so every warning comes from the configuration. Each
+// warned provider has a control that differs from it in the id, the host, or
+// the mark alone.
+func TestNew_WarnsAboutAnUnmarkedProviderThatLooksLikeKubernetes(t *testing.T) {
+	const (
+		elsewhere = "https://idp.example"
+		apiServer = "https://kubernetes.default.svc/openid/v1/jwks"
+	)
+	tests := []struct {
+		name     string
+		provider Provider
+		warned   bool
+	}{
+		{"unmarked provider named kubernetes", Provider{ID: "kubernetes", Issuer: elsewhere}, true},
+		{"unmarked provider elsewhere", Provider{ID: "k8s", Issuer: elsewhere}, false},
+		{"unmarked provider at kubernetes.default.svc", Provider{ID: "k8s", Issuer: elsewhere, JWKSURI: apiServer}, true},
+		{"unmarked provider at the full in-cluster name with a port", Provider{ID: "k8s", Issuer: elsewhere,
+			JWKSURI: "https://KUBERNETES.default.svc.cluster.local:443/openid/v1/jwks"}, true},
+		{"unmarked issuer at kubernetes.default.svc", Provider{ID: "k8s", Issuer: "https://kubernetes.default.svc"}, true},
+		{"marked provider at kubernetes.default.svc", Provider{ID: "k8s", Issuer: elsewhere, JWKSURI: apiServer,
+			Audiences: []string{"netcracker"}, Kubernetes: true}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &warnRecorder{}
+			opts := testOptions()
+			opts.Log = log
+			mustNew(t, Config{Providers: []Provider{tt.provider}}, opts)
+			warned := log.count("looks like a Kubernetes API server") > 0
+			if warned != tt.warned {
+				t.Errorf("New(%+v) warned = %t, want %t; warnings: %q", tt.provider, warned, tt.warned, log.warnings)
+			}
+		})
+	}
+}
+
 // Each case comes first in a JWKS whose next key is usable, so a provider
 // that loaded nothing, or stopped at the skipped key, fails the control
 // instead of passing the case.
