@@ -12,6 +12,8 @@ permissions:
 jobs:
   pr-auto-assign:
     name: "Auto-assign Reviewers to PR #${{ github.event.pull_request.number }}"
+    # Renovate pull requests stay unassigned.
+    if: github.event.pull_request.user.login != 'renovate[bot]'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
