@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 func Normalize(input []byte) (*PIPDocument, *UploadSummary, error) {
@@ -33,6 +34,20 @@ func Normalize(input []byte) (*PIPDocument, *UploadSummary, error) {
 	return NormalizeItems(items)
 }
 
+// AliasOf returns the alias a condition reads the PIP named name by: the part
+// of name after "subject.". It reports false when name does not start with
+// "subject.", or when the alias is empty or holds whitespace, because a
+// condition separates words at whitespace and reads no such alias.
+func AliasOf(name string) (string, bool) {
+	alias, ok := strings.CutPrefix(name, "subject.")
+	if !ok || alias == "" || strings.ContainsFunc(alias, unicode.IsSpace) {
+		return "", false
+	}
+	return alias, true
+}
+
+// NormalizeItems builds the normalized PIP document from items. It returns an
+// error for an item whose name has no alias by [AliasOf].
 func NormalizeItems(items []SimplifiedPIP) (*PIPDocument, *UploadSummary, error) {
 	normalized := NormalizedPIPs{
 		ByName:   make(map[string]NormalizedEntry, len(items)),
@@ -51,9 +66,12 @@ func NormalizeItems(items []SimplifiedPIP) (*PIPDocument, *UploadSummary, error)
 
 	summary := &UploadSummary{Total: len(items)}
 
-	for _, item := range items {
+	for idx, item := range items {
 		pipType := resolvePipType(item)
-		alias := item.Name[len("subject."):]
+		alias, ok := AliasOf(item.Name)
+		if !ok {
+			return nil, nil, fmt.Errorf("pip %d: name must be 'subject.' followed by an alias without whitespace (got %q)", idx, item.Name)
+		}
 
 		normalized.ByName[item.Name] = NormalizedEntry{
 			Name:    item.Name,

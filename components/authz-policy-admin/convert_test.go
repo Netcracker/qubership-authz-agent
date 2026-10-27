@@ -65,8 +65,8 @@ func TestV3RoundTripThroughProductionConverter(t *testing.T) {
 
 func TestPIPRoundTripThroughProductionConverter(t *testing.T) {
 	input := []simplifiedPIP{
-		{Name: "tenant", PipType: "TOKEN", Claim: "tenant_id", Domain: "billing"},
-		{Name: "org-header", PipType: "HEADER", Header: "X-Org-Id"},
+		{Name: "subject.tenant", PipType: "TOKEN", Claim: "tenant_id", Domain: "billing"},
+		{Name: "subject.org", PipType: "HEADER", Header: "X-Org-Id"},
 	}
 
 	raw, err := json.Marshal(v3PIPsResponse{Hash: "deadbeef", PIPs: toV3PIPs(input)})

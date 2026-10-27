@@ -163,6 +163,12 @@ func (r *recorder) updates() []string {
 // the last request and the number of requests.
 func source(t *testing.T, status int) (*httptest.Server, *string, *int) {
 	t.Helper()
+	return sourceServing(t, status, pipsResponse)
+}
+
+// sourceServing is source with pipsBody as the body of the PIPs response.
+func sourceServing(t *testing.T, status int, pipsBody string) (*httptest.Server, *string, *int) {
+	t.Helper()
 	var authorization string
 	var requests int
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +182,7 @@ func source(t *testing.T, status int) (*httptest.Server, *string, *int) {
 		case "/access/v3/config/policySets":
 			_, _ = w.Write([]byte(policySets))
 		case "/access/v3/config/pips":
-			_, _ = w.Write([]byte(pipsResponse))
+			_, _ = w.Write([]byte(pipsBody))
 		default:
 			http.NotFound(w, r)
 		}
@@ -274,6 +280,25 @@ func TestPullOnce_KeepsTheDocumentsOnFailure(t *testing.T) {
 				t.Errorf("after the failure: %d policies, %d pips, status %+v; want nothing stored and not loaded", st.count("policies"), st.count("pips"), p.Status())
 			}
 		})
+	}
+}
+
+// TestPullOnce_LoadsThePIPsBesideOneWithANameShorterThanSubject: a PIP named
+// sub.x is left out and the pull stores the PIP beside it. Such a name used to
+// panic the pull with a slice bounds out of range, which stopped the agent.
+func TestPullOnce_LoadsThePIPsBesideOneWithANameShorterThanSubject(t *testing.T) {
+	srv, _, _ := sourceServing(t, http.StatusOK, `{"pips": [
+    {"name": "subject.azp", "pipType": "TOKEN", "claim": "azp", "domain": "TestDomain", "tenantId": "default"},
+    {"name": "sub.x", "pipType": "TOKEN", "claim": "azp", "domain": "TestDomain", "tenantId": "default"}
+  ]}`)
+	st := &store{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, st, nil, quiet{})
+	if err := p.PullOnce(context.Background()); err != nil {
+		t.Fatalf("PullOnce() = %v", err)
+	}
+	byName, _ := st.last(t, "pips")["byName"].(map[string]any)
+	if _, ok := byName["subject.azp"]; !ok || len(byName) != 1 {
+		t.Errorf("data.pips.byName = %v, want subject.azp alone", byName)
 	}
 }
 

@@ -16,6 +16,7 @@ package pips
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -88,6 +89,30 @@ func TestNormalizeRejectsUnsupported(t *testing.T) {
 	_, _, err := Normalize([]byte(input))
 	if err == nil {
 		t.Fatal("expected error for FILTERED pip")
+	}
+}
+
+// NormalizeItems takes the alias from the part of the name after "subject.",
+// so a name without that prefix, with nothing after it, or with whitespace in
+// the alias is refused with an error that quotes the name. A name shorter than the prefix used to panic with
+// a slice bounds out of range.
+func TestNormalizeItemsRefusesANameThatIsNotSubjectAndAnAlias(t *testing.T) {
+	t.Parallel()
+	for _, tc := range []struct{ condition, name string }{
+		{"shorter than the prefix", "sub.x"},
+		{"empty", ""},
+		{"prefix after a space", " subject.x"},
+		{"prefix alone", "subject."},
+		{"alias with a trailing space", "subject.x "},
+	} {
+		t.Run(tc.condition, func(t *testing.T) {
+			t.Parallel()
+			items := []SimplifiedPIP{{Name: tc.name, PipType: PipTypeToken, Claim: "sub"}}
+			_, _, err := NormalizeItems(items)
+			if err == nil || !strings.Contains(err.Error(), strconv.Quote(tc.name)) {
+				t.Errorf("NormalizeItems(%q) error = %v, want an error that quotes the name", tc.name, err)
+			}
+		})
 	}
 }
 
