@@ -45,6 +45,28 @@ func TestParseConfig_ReadsKeycloakAndProviders(t *testing.T) {
 	}
 }
 
+// The two providers differ in the mark, the id, and the host alone, and the
+// unmarked one is the one named kubernetes, so a mark taken from the id
+// fails the test.
+func TestParseConfig_ReadsTheKubernetesMark(t *testing.T) {
+	doc := `{"providers": [
+		{"id": "k8s", "issuer": "https://kubernetes.default.svc", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
+		 "audiences": ["netcracker"], "kubernetes": true},
+		{"id": "kubernetes", "issuer": "https://idp.example", "jwksUri": "https://idp.example/openid/v1/jwks", "audiences": ["netcracker"]}
+	]}`
+	want := Config{Providers: []Provider{
+		{ID: "k8s", Issuer: "https://kubernetes.default.svc", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", Audiences: []string{"netcracker"}, Kubernetes: true},
+		{ID: "kubernetes", Issuer: "https://idp.example", JWKSURI: "https://idp.example/openid/v1/jwks", Audiences: []string{"netcracker"}},
+	}}
+	got, err := ParseConfig([]byte(doc))
+	if err != nil {
+		t.Fatalf("ParseConfig() error = %v", err)
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("ParseConfig() = %+v, want %+v", got, want)
+	}
+}
+
 func TestParseConfig_AcceptsAKeycloakWithoutProviders(t *testing.T) {
 	doc := `{"keycloak": {"url": "https://kc.example"}}`
 	if _, err := ParseConfig([]byte(doc)); err != nil {
@@ -96,6 +118,8 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"duplicate issuer", map[string]any{"id": "b", "issuer": "https://idp.example/realms/a"}},
 		{"tokenFile without jwksUri", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "tokenFile": "/var/run/token"}},
 		{"allowMissingAud without audiences", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "allowMissingAud": true}},
+		{"kubernetes without audiences", map[string]any{"id": "b", "issuer": "https://kubernetes.default.svc", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "kubernetes": true}},
+		{"kubernetes with allowMissingAud", map[string]any{"id": "b", "issuer": "https://kubernetes.default.svc", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks", "kubernetes": true, "audiences": []string{"netcracker"}, "allowMissingAud": true}},
 		{"empty audience", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "audiences": []string{""}}},
 		{"issuer that is not http", map[string]any{"id": "b", "issuer": "ftp://idp.example/realms/b"}},
 		{"issuer without a host", map[string]any{"id": "b", "issuer": "https:///realms/b"}},
