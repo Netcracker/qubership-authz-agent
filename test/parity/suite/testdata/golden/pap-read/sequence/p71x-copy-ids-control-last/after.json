@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p71x-copy-ids-control-last",
+        "name": "p71x-copy-ids-control-last s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71x-copy-ids-control-last s reader",
+            "policyId": "f2bb4b49-900c-de6b-cfe7-64b70a4be289",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71x-copy-ids-control-last s rule",
+                "ruleId": "81fa93cf-43d6-0e7a-ab75-e9f0379df098",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71x-copy-ids-control-last"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71x-copy-ids-control-last"
+          }
+        ],
+        "policySetId": "a584c515-acfe-fff4-8c59-2fc4e8322742",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71X_COPY_IDS_CONTROL_LAST'",
+        "tenantId": "parity-p71x-copy-ids-control-last",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71x-copy-ids-control-last"
+  ]
+}
