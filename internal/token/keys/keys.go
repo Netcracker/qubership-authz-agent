@@ -19,10 +19,14 @@
 //
 // [ReadConfig] reads the trusted providers file. [Load] fetches every
 // provider's keys and fails unless all of them arrive. [Set.Lookup] finds a
-// key by kid. [Set.Run] reloads the keys on a fixed interval, so a key a
-// provider rotates in is found after the next reload or a restart. A reload
-// that fails for a provider keeps the keys already loaded for it; a reload
-// that finds no usable signing key in the provider's JWKS removes them.
+// key by kid among the keys loaded. [Set.LookupOrReload] reloads the keys
+// first when none has the kid, at most once a minute, so a key a provider
+// rotates in is found by the first token that names it rather than at the
+// next scheduled reload. [Set.Run] reloads the keys on a fixed interval,
+// which also drops the keys a provider no longer publishes.
+// A reload that fails for a provider keeps the keys already loaded for it;
+// a reload that finds no usable signing key in the provider's JWKS removes
+// them.
 package keys
 
 import (
@@ -51,6 +55,11 @@ const (
 	maxRetryDelay          = 10 * time.Second
 )
 
+// unknownKIDReloadInterval is the shortest time between the starts of two
+// reloads that [Set.LookupOrReload] starts. It bounds what a stream of
+// invented kids costs: one reload of every provider a minute.
+const unknownKIDReloadInterval = time.Minute
+
 // Logger receives the diagnostics.
 type Logger interface {
 	Infof(format string, args ...any)
@@ -73,6 +82,8 @@ type Options struct {
 	// firstRetryDelay is the pause after the first failed attempt in Load;
 	// each later pause doubles, up to maxRetryDelay.
 	firstRetryDelay time.Duration
+	// now is the clock that spaces the reloads LookupOrReload starts.
+	now func() time.Time
 }
 
 func (o Options) withDefaults() Options {
@@ -90,6 +101,9 @@ func (o Options) withDefaults() Options {
 	}
 	if o.firstRetryDelay <= 0 {
 		o.firstRetryDelay = defaultFirstRetryDelay
+	}
+	if o.now == nil {
+		o.now = time.Now
 	}
 	return o
 }
@@ -150,6 +164,8 @@ type Set struct {
 
 	// reloading serializes Refresh.
 	reloading sync.Mutex
+	// onDemand runs the reloads of LookupOrReload.
+	onDemand onDemand
 }
 
 // snapshot is one consistent generation of the keys; a reload replaces it
@@ -172,6 +188,15 @@ func Load(ctx context.Context, cfg Config, opts Options) (*Set, error) {
 	}
 	opts = opts.withDefaults()
 	s := &Set{opts: opts}
+	s.onDemand = onDemand{
+		reload: func(ctx context.Context) {
+			if err := s.Refresh(ctx); err != nil {
+				opts.Log.Warnf("trusted providers: reload for an unknown kid: %v", err)
+			}
+		},
+		interval: unknownKIDReloadInterval,
+		now:      opts.now,
+	}
 	for _, p := range cfg.Providers {
 		f, err := newFetcher(&p, opts.HTTPTimeout, opts.Log)
 		if err != nil {
@@ -254,6 +279,23 @@ func (s *Set) newSnapshot(byProvider map[string][]Key) (*snapshot, error) {
 func (s *Set) Lookup(kid string) (Key, bool) {
 	k, ok := s.current.Load().byKID[kid]
 	return k, ok
+}
+
+// LookupOrReload returns the key published under kid. When no loaded key
+// has that kid, it reloads the keys of every provider as [Set.Refresh]
+// does, waits until the reload ends or ctx ends, and looks again among the
+// keys loaded by then. Callers that ask while such a reload runs wait for
+// that reload rather than start another. Such reloads start at most once a
+// minute: when none runs and the last started less than a minute ago, the
+// kid is looked up among the keys already loaded and no request is sent. A
+// reload that fails keeps the failed providers' previous keys and logs a
+// warning, and a reload goes on after ctx ends.
+func (s *Set) LookupOrReload(ctx context.Context, kid string) (Key, bool) {
+	if k, ok := s.Lookup(kid); ok {
+		return k, true
+	}
+	s.onDemand.wait(ctx)
+	return s.Lookup(kid)
 }
 
 // Refresh fetches the keys of every provider once and replaces the loaded
