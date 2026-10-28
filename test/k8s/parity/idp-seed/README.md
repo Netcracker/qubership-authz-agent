@@ -54,6 +54,11 @@ this file, word for word. Do not put `_comment` back into the JSON.
   and `tier` user-attribute mappers emit JWT claims that TOKEN-PIP parity fixtures read
   via `subject.<alias>`.
 
+- **`parity-m2m-no-audience`** — Configured like `parity-m2m` except that it has no protocol mappers, so its tokens
+  carry no `netcracker` audience. `TestCallerUserTokenCases` mints `parity-reader`'s token through it by password grant
+  to ask whether a check route reads the audience of the token in `Authorization`. The other clients that case uses,
+  `parity-m2m` and `parity-m2m-tenant-*`, all add the audience, so this client is the one that varies it.
+
 - **was at line 107** — Fixed UUID for golden stability: the rsqlFilterCondition golden contains this subject.id, so a non-deterministic Keycloak-generated UUID would break the 'second run shows zero diff' stability gate across down -v + up -d cycles.
 
 - **was at line 124** — Reviewer user for AGG rows that need two distinct single-role subjects on the same (resourceType, operation) locator. Department=compliance / tier=silver so SUB block fixtures can pin a distinct scalar rendering per user.
