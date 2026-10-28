@@ -17,6 +17,7 @@ package m2m
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -32,11 +33,16 @@ import (
 type store struct {
 	mu     sync.Mutex
 	tokens []string
+	// err, when set, is what Put returns, and the token is not recorded.
+	err error
 }
 
 func (s *store) Put(_ context.Context, path []string, value any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.err != nil {
+		return s.err
+	}
 	if !reflect.DeepEqual(path, []string{"m2m"}) {
 		return fmt.Errorf("unexpected path %v", path)
 	}
@@ -168,6 +174,89 @@ func TestClientCredentials_RetriesAfterAFailure(t *testing.T) {
 	}
 }
 
+// TestFetchAndPublish_AFailedFetchKeepsTheCurrentToken: a fetch the
+// provider refuses returns its error and publishes nothing, so the token
+// published before it stays in data.m2m and in Token.
+func TestFetchAndPublish_AFailedFetchKeepsTheCurrentToken(t *testing.T) {
+	var fetches int
+	idp := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		fetches++
+		if fetches > 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		_, _ = w.Write([]byte(`{"access_token":"tok1","expires_in":300}`))
+	}))
+	defer idp.Close()
+	st := &store{}
+	src := New(Config{TokenURL: idp.URL, ClientIDFile: writeFile(t, "id", "a"), ClientSecretFile: writeFile(t, "secret", "b")}, st, quiet{})
+	if _, err := src.fetchAndPublish(context.Background()); err != nil {
+		t.Fatalf("fetchAndPublish() of the first token: error = %v", err)
+	}
+
+	if _, err := src.fetchAndPublish(context.Background()); err == nil || !strings.Contains(err.Error(), "HTTP 500") {
+		t.Errorf("fetchAndPublish() with the provider answering 500: error = %v, want one naming HTTP 500", err)
+	}
+	if got := src.Token(); got != "tok1" {
+		t.Errorf("Token() = %q, want tok1", got)
+	}
+	if got := st.published(); !reflect.DeepEqual(got, []string{"tok1"}) {
+		t.Errorf("published %v, want [tok1]", got)
+	}
+}
+
+// TestFetchAndPublish_AFailedPublishIsAnError: a token the store refuses is
+// reported as an error, and Token stays empty.
+func TestFetchAndPublish_AFailedPublishIsAnError(t *testing.T) {
+	idp := tokenEndpoint(t, http.StatusOK, `{"access_token":"tok1","expires_in":300}`)
+	refused := errors.New("store unavailable")
+	src := New(Config{TokenURL: idp.URL, ClientIDFile: writeFile(t, "id", "a"), ClientSecretFile: writeFile(t, "secret", "b")}, &store{err: refused}, quiet{})
+
+	if _, err := src.fetchAndPublish(context.Background()); !errors.Is(err, refused) {
+		t.Errorf("fetchAndPublish() error = %v, want %v", err, refused)
+	}
+	if got := src.Token(); got != "" {
+		t.Errorf("Token() = %q, want none", got)
+	}
+}
+
+// TestFetchAndPublish_AnUnreadableClientFilePostsNoGrant: a client id or
+// client secret file that cannot be read is an error, and the token
+// endpoint receives no request.
+func TestFetchAndPublish_AnUnreadableClientFilePostsNoGrant(t *testing.T) {
+	tests := []struct {
+		name    string
+		missing func(cfg *Config, path string)
+	}{
+		{"client id file missing", func(cfg *Config, path string) { cfg.ClientIDFile = path }},
+		{"client secret file missing", func(cfg *Config, path string) { cfg.ClientSecretFile = path }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var fetches int
+			idp := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				fetches++
+				_, _ = w.Write([]byte(`{"access_token":"tok1","expires_in":300}`))
+			}))
+			defer idp.Close()
+			cfg := Config{TokenURL: idp.URL, ClientIDFile: writeFile(t, "id", "a"), ClientSecretFile: writeFile(t, "secret", "b")}
+			tt.missing(&cfg, filepath.Join(t.TempDir(), "missing"))
+			st := &store{}
+			src := New(cfg, st, quiet{})
+
+			if _, err := src.fetchAndPublish(context.Background()); !errors.Is(err, os.ErrNotExist) {
+				t.Errorf("fetchAndPublish() error = %v, want %v", err, os.ErrNotExist)
+			}
+			if fetches != 0 {
+				t.Errorf("requests at the token endpoint = %d, want 0", fetches)
+			}
+			if got := st.published(); len(got) != 0 {
+				t.Errorf("published %v, want nothing", got)
+			}
+		})
+	}
+}
+
 func TestRenewal(t *testing.T) {
 	cases := []struct {
 		name                  string
@@ -275,7 +364,8 @@ func TestFetchToken_ReadsTheLifetimeFromExp(t *testing.T) {
 }
 
 // TestFile_PublishesEachChange: the file's content is published when it
-// appears and whenever it changes, and not otherwise.
+// appears and whenever it changes, and not otherwise. A file emptied after
+// that keeps the current token.
 func TestFile_PublishesEachChange(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "token")
 	st := &store{}
@@ -296,9 +386,15 @@ func TestFile_PublishesEachChange(t *testing.T) {
 		t.Fatal(err)
 	}
 	waitFor(t, "the changed token", func() bool { return src.Token() == "b" })
+	if err := os.WriteFile(file, []byte("\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	time.Sleep(60 * time.Millisecond)
 	if got := st.published(); !reflect.DeepEqual(got, []string{"a", "b"}) {
 		t.Errorf("published %v, want [a b], once per change", got)
+	}
+	if got := src.Token(); got != "b" {
+		t.Errorf("Token() after the file was emptied = %q, want b", got)
 	}
 	select {
 	case <-src.Ready():
