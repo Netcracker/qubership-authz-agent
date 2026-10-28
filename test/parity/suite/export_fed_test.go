@@ -72,6 +72,10 @@ func TestDecisionOutcome_BuildsTheGoldenShapeOfEachRow(t *testing.T) {
 		{"a refused filter has no result", PSUITE_ROW_6_CHECK_FILTER_V1_OUTCOME, 500, "boom", &model.FilterOutcome{Status: 500}},
 		{"a plain bulk keeps the wire order", PSUITE_ROW_3_CHECK_RESOURCE_BULK_V1, 200, `["b","a"]`, &ids},
 		{"plain bulk operations keep the wire order", PSUITE_ROW_4_CHECK_RESOURCE_BULK_OPERATIONS_V1, 200, `{"READ":["b","a"]}`, &byOp},
+		{"an allowed v2 check", PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, 200, `{"decision":true}`, &model.CheckResourceV2Outcome{Status: 200, Decision: true}},
+		{"a refused v2 check denies", PSUITE_ROW_7_CHECK_RESOURCE_V2_OUTCOME, 400, `{"message":"x"}`, &model.CheckResourceV2Outcome{Status: 400}},
+		{"v2 bulk operations ids are sorted", PSUITE_ROW_8_CHECK_RESOURCE_BULK_OPERATIONS_V2_OUTCOME, 200, `{"decision":{"READ":["b","a"]}}`, &model.CheckResourceBulkOperationsV2Outcome{Status: 200, Decision: &map[string][]string{"READ": {"a", "b"}}}},
+		{"a v2 filter carries its result", PSUITE_ROW_10_CHECK_FILTER_V2_OUTCOME, 200, `{"calculationResult":"ALLOW"}`, &model.FilterV2Outcome{Status: 200, Result: model.OldFilterEvaluationResult{CalculationResult: "ALLOW"}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -579,6 +583,12 @@ func TestGrantsMore_TakesTheAnswerThatAllowsMoreThanEveryVariant(t *testing.T) {
 	filter := func(r string) *model.FilterOutcome {
 		return &model.FilterOutcome{Status: 200, Result: model.OldFilterEvaluationResult{CalculationResult: r}}
 	}
+	opsV2Outcome := func(m map[string][]string) *model.CheckResourceBulkOperationsV2Outcome {
+		return &model.CheckResourceBulkOperationsV2Outcome{Status: 200, Decision: &m}
+	}
+	filterV2 := func(r string) *model.FilterV2Outcome {
+		return &model.FilterV2Outcome{Status: 200, Result: model.OldFilterEvaluationResult{CalculationResult: r}}
+	}
 	cases := []struct {
 		name   string
 		actual any
@@ -609,6 +619,15 @@ func TestGrantsMore_TakesTheAnswerThatAllowsMoreThanEveryVariant(t *testing.T) {
 		{"an id where legacy refuses", ids("a"), []any{&model.CheckResourceBulkOutcome{Status: 400}}, true},
 		{"no operation where legacy refuses", opsOutcome(map[string][]string{}), []any{&model.CheckResourceBulkOperationsOutcome{Status: 400}}, false},
 		{"an operation where legacy refuses", opsOutcome(map[string][]string{"READ": {"a"}}), []any{&model.CheckResourceBulkOperationsOutcome{Status: 400}}, true},
+		{"a v2 outcome allow where legacy denies", &model.CheckResourceV2Outcome{Status: 200, Decision: true}, []any{&model.CheckResourceV2Outcome{Status: 200}}, true},
+		{"a v2 outcome deny where legacy allows", &model.CheckResourceV2Outcome{Status: 200}, []any{&model.CheckResourceV2Outcome{Status: 200, Decision: true}}, false},
+		{"a v2 outcome allow where legacy refuses", &model.CheckResourceV2Outcome{Status: 200, Decision: true}, []any{&model.CheckResourceV2Outcome{Status: 400}}, true},
+		{"a v2 outcome operation on an id legacy leaves out", opsV2Outcome(map[string][]string{"READ": {"a", "b"}}), []any{opsV2Outcome(map[string][]string{"READ": {"a"}})}, true},
+		{"fewer v2 outcome operations", opsV2Outcome(map[string][]string{"READ": {"a"}}), []any{opsV2Outcome(map[string][]string{"READ": {"a", "b"}})}, false},
+		{"a v2 outcome operation where legacy refuses", opsV2Outcome(map[string][]string{"READ": {"a"}}), []any{&model.CheckResourceBulkOperationsV2Outcome{Status: 400}}, true},
+		{"a v2 outcome ALLOW where legacy filters", filterV2("ALLOW"), []any{filterV2("USE_FILTER_CONDITION")}, true},
+		{"a v2 outcome filter where legacy allows", filterV2("USE_FILTER_CONDITION"), []any{filterV2("ALLOW")}, false},
+		{"a v2 outcome filter where legacy refuses", filterV2("USE_FILTER_CONDITION"), []any{&model.FilterV2Outcome{Status: 400}}, true},
 	}
 	for _, tc := range cases {
 		if got := grantsMore(tc.actual, tc.wants); got != tc.want {
