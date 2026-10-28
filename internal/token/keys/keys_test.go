@@ -58,8 +58,9 @@ func TestLoad_JWKSURISkipsDiscovery(t *testing.T) {
 	}
 }
 
-// Each case shares its JWKS with a usable key, so a provider that loaded
-// nothing at all fails the control instead of passing the case.
+// Each case comes first in a JWKS whose next key is usable, so a provider
+// that loaded nothing, or stopped at the skipped key, fails the control
+// instead of passing the case.
 func TestLoad_SkipsAKeyThatCannotSignAnAcceptedToken(t *testing.T) {
 	tests := []struct {
 		name string
@@ -77,7 +78,7 @@ func TestLoad_SkipsAKeyThatCannotSignAnAcceptedToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			idp := newIdP(t, ecJWK(t, "control", nil), tt.key)
+			idp := newIdP(t, tt.key, ecJWK(t, "control", nil))
 			set := mustLoad(t, testOptions(), issuer("realm", idp))
 			if _, ok := set.Lookup("case"); ok {
 				t.Errorf("Lookup(%q) found a key, want it skipped", "case")
@@ -186,11 +187,16 @@ func TestLoad_FailsForAProviderWhoseKeysCannotBeRead(t *testing.T) {
 	}
 }
 
+// k2 is listed after the repeated key, so a load that stops at the repeat
+// fails on k2.
 func TestLoad_TheSameKeyListedTwiceLoadsOnce(t *testing.T) {
 	key := ecJWK(t, "k1", nil)
-	set := mustLoad(t, testOptions(), issuer("realm", newIdP(t, key, key)))
+	set := mustLoad(t, testOptions(), issuer("realm", newIdP(t, key, key, ecJWK(t, "k2", nil))))
 	if _, ok := set.Lookup("k1"); !ok {
 		t.Errorf("Lookup(%q) found nothing, want the key listed twice", "k1")
+	}
+	if _, ok := set.Lookup("k2"); !ok {
+		t.Errorf("Lookup(%q) found nothing, want the key listed after the repeat", "k2")
 	}
 }
 
@@ -437,6 +443,37 @@ func TestRefresh_AProviderThatFailsKeepsItsKeys(t *testing.T) {
 		if _, ok := set.Lookup(kid); ok != want {
 			t.Errorf("Lookup(%q) found = %t, want %t", kid, ok, want)
 		}
+	}
+}
+
+// Provider a fails in each of the two ways Refresh tells apart: a failed
+// fetch and a JWKS without a usable key. Provider b is listed after a in the
+// configuration.
+func TestRefresh_AProviderListedAfterAFailingOneTakesItsNewKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		fail func(t *testing.T, idp *fakeIdP)
+	}{
+		{"fetch fails", func(t *testing.T, idp *fakeIdP) { idp.setStatus(http.StatusServiceUnavailable) }},
+		{"JWKS holds no usable key", func(t *testing.T, idp *fakeIdP) {
+			idp.publish(ecJWK(t, "enc", map[string]any{"use": "enc"}))
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := newIdP(t, ecJWK(t, "a-old", nil))
+			b := newIdP(t, ecJWK(t, "b-old", nil))
+			set := mustLoad(t, testOptions(), issuer("a", a), issuer("b", b))
+			tt.fail(t, a)
+			b.publish(ecJWK(t, "b-new", nil))
+
+			_ = set.Refresh(context.Background())
+			for kid, want := range map[string]bool{"b-new": true, "b-old": false} {
+				if _, ok := set.Lookup(kid); ok != want {
+					t.Errorf("Lookup(%q) found = %t, want %t", kid, ok, want)
+				}
+			}
+		})
 	}
 }
 

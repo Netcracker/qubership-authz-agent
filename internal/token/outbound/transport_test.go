@@ -419,3 +419,53 @@ func TestTransport_ReportsA401ToARequestThatCarriedTheToken(t *testing.T) {
 		})
 	}
 }
+
+// roundTripFunc adapts a function to [http.RoundTripper].
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+// For a request that carried the token and got no response, RoundTrip
+// returns the error of the base transport, and Unauthorized does not run.
+func TestTransport_ReturnsTheErrorOfARequestThatCarriedTheToken(t *testing.T) {
+	refused := errors.New("connection refused")
+	base := roundTripFunc(func(*http.Request) (*http.Response, error) { return nil, refused })
+	var reports int
+	rt := NewTransport(base, staticToken("tok-1"), TransportOptions{
+		Authorize:    func(*url.URL) bool { return true },
+		Unauthorized: func() { reports++ },
+	})
+	req, err := http.NewRequest(http.MethodGet, "http://pip.invalid/pip", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := rt.RoundTrip(req)
+	if !errors.Is(err, refused) {
+		t.Errorf("RoundTrip() error = %v, want %v", err, refused)
+	}
+	if resp != nil {
+		t.Errorf("RoundTrip() response = %v, want nil", resp)
+	}
+	if reports != 0 {
+		t.Errorf("Unauthorized calls = %d, want 0", reports)
+	}
+}
+
+func TestTransport_ReturnsA401WhenUnauthorizedIsNil(t *testing.T) {
+	target := newRecorder(t, func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusUnauthorized) })
+	rt := NewTransport(http.DefaultTransport, staticToken("tok-1"), TransportOptions{Authorize: func(*url.URL) bool { return true }})
+	req, err := http.NewRequest(http.MethodGet, target.srv.URL+"/pip", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := rt.RoundTrip(req)
+	if err != nil {
+		t.Fatalf("RoundTrip() error = %v", err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("RoundTrip() status = %d, want %d", resp.StatusCode, http.StatusUnauthorized)
+	}
+}
