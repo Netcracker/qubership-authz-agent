@@ -52,8 +52,9 @@ cd "${ROOT_DIR}"
 # change its colors, prefixes, or paths are overridden for every git command
 # the script and mutago run. The entries go after any the caller exported.
 git_config_override() {
+  local key="$1" value="$2"
   local index="${GIT_CONFIG_COUNT:-0}"
-  export "GIT_CONFIG_KEY_${index}=$1" "GIT_CONFIG_VALUE_${index}=$2"
+  export "GIT_CONFIG_KEY_${index}=${key}" "GIT_CONFIG_VALUE_${index}=${value}"
   export GIT_CONFIG_COUNT=$((index + 1))
 }
 git_config_override color.diff false
