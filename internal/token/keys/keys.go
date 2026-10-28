@@ -41,7 +41,7 @@ import (
 const (
 	DefaultHTTPTimeout     = 5 * time.Second
 	DefaultStartupTimeout  = time.Minute
-	DefaultRefreshInterval = 24 * time.Hour
+	DefaultRefreshInterval = time.Hour
 )
 
 // The pauses between two attempts in Load start at defaultFirstRetryDelay
