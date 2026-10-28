@@ -490,7 +490,11 @@ func TestRun_HoldsAFailedBatchUntilTheNextTick(t *testing.T) {
 
 	logs.Log(Event{DecisionID: "d1"})
 	logs.Log(Event{DecisionID: "d2"})
-	<-posted
+	select {
+	case <-posted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the upload of d1 and d2 has not reached the collector five seconds after they were logged")
+	}
 	for i := range 18 {
 		logs.Log(Event{DecisionID: fmt.Sprintf("q%d", i)})
 	}
@@ -617,11 +621,16 @@ func TestRun_ShutdownDoesNotUploadPerQueuedDecisionWhenTheCollectorIsHealthy(t *
 			Timeout:       time.Second,
 		}, nil)
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		go logs.Run(ctx)
 		logs.Log(Event{DecisionID: "d1"})
 		logs.Log(Event{DecisionID: "d2"})
 
-		<-reached
+		select {
+		case <-reached:
+		case <-time.After(5 * time.Second):
+			t.Fatal("the upload of d1 and d2 has not reached the collector five seconds after they were logged")
+		}
 		for i := range 20 {
 			logs.Log(Event{DecisionID: fmt.Sprintf("q%d", i)})
 		}
