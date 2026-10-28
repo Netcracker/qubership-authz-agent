@@ -248,8 +248,11 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 		// whole response body, up to 1 MiB, when the response names no error.
 		return "", 0, fmt.Errorf("POST %s: HTTP %d%s", w.cfg.TokenURL, refused.Response.StatusCode, oauthError(refused))
 	case errors.As(err, &unsent):
-		// The error of http.Client.Do names the method and the URL already.
-		return "", 0, err
+		// The text follows url.Error with the cause cut. net/http parses the
+		// Location header of a redirect before CheckRedirect stops it, quotes
+		// an unparsable header twice, and by default accepts response headers
+		// up to 10 MiB.
+		return "", 0, fmt.Errorf("%s %q: %s", unsent.Op, unsent.URL, quoted(unsent.Err.Error(), 200))
 	case err != nil:
 		// x/oauth2 repeats an expires_in it rejects in its parse error, and
 		// that value can be as long as the body, up to 1 MiB.
@@ -291,11 +294,16 @@ func oauthError(e *oauth2.RetrieveError) string {
 
 // quoted quotes s, cut to its first limit runes with "..." after the cut.
 func quoted(s string, limit int) string {
-	runes := []rune(s)
-	if len(runes) <= limit {
-		return strconv.Quote(s)
+	// s can run to tens of megabytes, and []rune(s) would take four bytes
+	// for each of them.
+	n := 0
+	for i := range s {
+		if n == limit {
+			return strconv.Quote(s[:i]) + "..."
+		}
+		n++
 	}
-	return strconv.Quote(string(runes[:limit])) + "..."
+	return strconv.Quote(s)
 }
 
 // fromSeconds converts a count of seconds to a Duration. A count of more

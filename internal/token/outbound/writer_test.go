@@ -37,12 +37,15 @@ import (
 // requests. It answers the first failures requests with 503 and every later
 // one with status and body, all of them as application/json: net/http
 // would sniff a JSON body as text/plain, which x/oauth2 reads as a form.
+// A location that is not empty goes out as the Location header of the
+// answers with status and body.
 type tokenEndpoint struct {
 	srv *httptest.Server
 
 	mu       sync.Mutex
 	status   int
 	body     string
+	location string
 	failures int
 	lastPath string
 	lastForm url.Values
@@ -66,6 +69,9 @@ func newTokenEndpoint(t *testing.T, body string) *tokenEndpoint {
 			e.failures--
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
+		}
+		if e.location != "" {
+			w.Header().Set("Location", e.location)
 		}
 		w.WriteHeader(e.status)
 		_, _ = w.Write([]byte(e.body))
@@ -187,6 +193,8 @@ func TestWriter_ReportsTheErrorTheProviderNames(t *testing.T) {
 			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"`},
 		{"description of 201 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 200) + `x"}`,
 			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"...`},
+		{"description of 201 two-byte runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("é", 200) + `x"}`,
+			`HTTP 401, error "invalid_request": "` + strings.Repeat("é", 200) + `"...`},
 		{"JSON that is not an OAuth error", `{"message": "Unauthorized"}`, `HTTP 401`},
 		{"body that is not JSON", `<html>Unauthorized</html>`, `HTTP 401`},
 	}
@@ -209,10 +217,28 @@ func TestWriter_CutsAParseErrorTo200Runes(t *testing.T) {
 	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": `+strings.Repeat("7", 4096)+`}`)
 	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
 	_, err := w.Refresh(context.Background())
+	checkCutAfter(t, err, "POST "+w.cfg.TokenURL+": ")
+}
+
+// net/http parses the Location header of a redirect before CheckRedirect
+// stops it, and the error for a header it cannot parse quotes the header
+// twice.
+func TestWriter_CutsTheCauseOfAFailedRequestTo200Runes(t *testing.T) {
+	e := newTokenEndpoint(t, "")
+	e.status = http.StatusFound
+	e.location = "/%zz" + strings.Repeat("7", 4096)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	_, err := w.Refresh(context.Background())
+	checkCutAfter(t, err, `Post "`+w.cfg.TokenURL+`": `)
+}
+
+// checkCutAfter fails t unless err is prefix followed by a quoted text of
+// 200 runes and "...".
+func checkCutAfter(t *testing.T, err error, prefix string) {
+	t.Helper()
 	if err == nil {
 		t.Fatal("Refresh() error = nil, want an error")
 	}
-	prefix := "POST " + w.cfg.TokenURL + ": "
 	text, named := strings.CutPrefix(err.Error(), prefix)
 	text, cut := strings.CutSuffix(text, "...")
 	if !named || !cut {
