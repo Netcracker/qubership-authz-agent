@@ -279,6 +279,33 @@ func TestVerify_RefusesAHeaderThatNamesNoUsableKey(t *testing.T) {
 	}
 }
 
+// The token's exp plus the 30 s leeway falls 1 s after start, and the reload
+// that brings its key takes the time in the row.
+func TestVerify_ChecksExpAtTheTimeTheReloadEnds(t *testing.T) {
+	tests := []struct {
+		name   string
+		reload time.Duration
+		want   Code
+	}{
+		{"reload that ends before exp", 0, ""},
+		{"reload that ends after exp", 2 * time.Second, CodeExpired},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "rotated", &keys.Provider{ID: "realm"})
+			source := newFakeKeys()
+			source.onReload = []keys.Key{s.key}
+			v, c := newVerifier(source)
+			source.reloading = func() { c.advance(tt.reload) }
+			raw := s.sign(t, claimsAt(start, map[string]any{"exp": start.Add(-29 * time.Second).Unix()}))
+			_, err := v.Verify(t.Context(), raw)
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
 // The source holds no key under the token's kid until the reload that the
 // unknown kid starts, and the reload brings the key only to a caller whose
 // context lasts until it ends.
