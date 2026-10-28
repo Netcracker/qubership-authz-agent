@@ -695,7 +695,7 @@ func bulkItems(items []any, rt string) []any {
 
 // sentHeaders returns the headers a request sent with tokens and opts
 // carries, keyed by lower-case name, as buildRequest sets them: the tokens,
-// then the headers of opts that the thin client passes through, which replace
+// then the headers of opts that filterCustomHeaders keeps, which replace
 // a token header of the same name.
 func sentHeaders(tokens TokenBundle, opts PerCallOptions) map[string]string {
 	req, err := buildRequest(context.Background(), http.MethodPost, "http://parity.invalid/", nil, tokens, opts)
