@@ -32,17 +32,18 @@ import (
 // tail is almost always a bug, not latency.
 var defaultHTTPClient = &http.Client{Timeout: 30 * time.Second}
 
-// prohibitedHeaders are the headers the legacy thin client refuses to pass
-// through from a caller. Per D-V item 5 the Go helper strips these
-// case-insensitively from any caller-supplied headers map before setting them
-// on the outgoing request.
+// prohibitedHeaders are the lowercase names of the headers that
+// filterCustomHeaders drops from a caller's header map: the request takes
+// Authorization from its TokenBundle and Tenant from
+// PerCallOptions.TenantHeader.
 var prohibitedHeaders = map[string]struct{}{
 	"authorization": {},
 	"tenant":        {},
 }
 
 // PerCallOptions carries the optional query/header parameters a wire helper
-// supports. CustomHeaders maps to the thin client's filterHeaders pathway.
+// supports. CustomHeaders are sent on the request without the entries that
+// filterCustomHeaders drops.
 type PerCallOptions struct {
 	// UserID is the userId query parameter, which asks for the decision on
 	// behalf of that user. It is sent when non-nil, and a pointer to "" sends
@@ -51,22 +52,21 @@ type PerCallOptions struct {
 	CustomHeaders map[string]string
 
 	// TenantID replaces Config.TenantID in the tenant_id query parameter when
-	// non-nil. A pointer to "" sends tenant_id with an empty value, which is
-	// what the thin client sends when it has no tenant.
+	// non-nil. A pointer to "" sends tenant_id with an empty value.
 	TenantID *string
-	// OmitTenantID sends no tenant_id parameter at all, which the thin client
-	// never does; it takes precedence over TenantID.
+	// OmitTenantID sends no tenant_id parameter at all, and takes precedence
+	// over TenantID.
 	OmitTenantID bool
-	// TenantHeader, when non-empty, is sent as the Tenant header. The thin
-	// client strips that header from CustomHeaders, so it has its own field.
+	// TenantHeader, when non-empty, is sent as the Tenant header.
+	// filterCustomHeaders drops a Tenant entry of CustomHeaders, so the header
+	// has a field of its own.
 	TenantHeader string
 }
 
-// buildQuery constructs the canonical parity query string for v1 and v2
-// helpers. tenant_id (D-V item 6) is present unless opts.OmitTenantID is set,
-// userId (D-V item 7) is optional, and extra is appended in insertion order for
-// per-endpoint params like resourceType, operation, and obligations (D-V items
-// 9, 14).
+// buildQuery returns the query string of a v1 or v2 request: tenant_id unless
+// opts.OmitTenantID is set, userId when opts.UserID is set, and the parameters
+// of extra, such as resourceType, operation, and obligations. The parameters
+// are sorted by name.
 func buildQuery(cfg Config, opts PerCallOptions, extra url.Values) string {
 	v := url.Values{}
 	switch {
@@ -87,8 +87,9 @@ func buildQuery(cfg Config, opts PerCallOptions, extra url.Values) string {
 	return v.Encode()
 }
 
-// filterCustomHeaders drops the prohibited entries from a caller-supplied
-// header map, as the legacy thin client does.
+// filterCustomHeaders returns in without its Authorization and Tenant entries,
+// whose names it matches case-insensitively and with surrounding spaces
+// trimmed. It returns nil for an empty map.
 func filterCustomHeaders(in map[string]string) map[string]string {
 	if len(in) == 0 {
 		return nil

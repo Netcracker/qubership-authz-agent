@@ -71,7 +71,7 @@ func TestBuildQuery_UserID(t *testing.T) {
 }
 
 // The Tenant header travels only through TenantHeader: the same name in
-// CustomHeaders is stripped, as the thin client strips it.
+// CustomHeaders is dropped.
 func TestBuildRequest_TenantHeader(t *testing.T) {
 	t.Parallel()
 	cases := []struct {
