@@ -43,11 +43,17 @@ The other classes are not accepted; they are defects of the conversion:
 - `tenant` produces wrong allows: a simplified policy of one tenant allows a request in another. In part A a
   decision also gets this class when its request names a tenant and an element of the export belongs to another one,
   as with the export's tenant spelled in another case or with a space: the agent does not read the tenant of the
-  request.
+  request. Filed as [issue #83](https://github.com/Netcracker/qubership-authz-agent/issues/83).
 - `pull-failure` contradicts the converter's own rule that one bad element must not cost the agent every other
   policy: one value of an unexpected JSON type, or one condition the agent's parser refuses, fails the whole pull.
+  Filed as [issue #85](https://github.com/Netcracker/qubership-authz-agent/issues/85); the panic on a PIP name
+  shorter than `subject.` is [issue #86](https://github.com/Netcracker/qubership-authz-agent/issues/86).
 - `conversion` drops data the legacy decision reads, and produces wrong allows: a policy of every operation with a
-  condition becomes an unconditional grant of its roles. `pip-kind` drops PIPs the legacy decision reads.
+  condition becomes an unconditional grant of its roles
+  ([issue #89](https://github.com/Netcracker/qubership-authz-agent/issues/89)). `pip-kind` drops PIPs the legacy
+  decision reads: `MAPPING` in [issue #87](https://github.com/Netcracker/qubership-authz-agent/issues/87), and
+  `FILTERED`, `PERMISSION_SCOPE`, and `GENERAL` with a `beanName` in
+  [issue #88](https://github.com/Netcracker/qubership-authz-agent/issues/88).
 
 ## Consequences
 
