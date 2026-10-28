@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p71x-lifecycle-control-last",
+        "name": "p71x-lifecycle-control-last s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71x-lifecycle-control-last s reader",
+            "policyId": "9c5e2829-33ae-6f60-afa8-2c6ca8a8ab3b",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71x-lifecycle-control-last s rule",
+                "ruleId": "2295a0a0-8a5b-631f-5d56-dd9491306f86",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71x-lifecycle-control-last"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71x-lifecycle-control-last"
+          }
+        ],
+        "policySetId": "2144ee8e-a617-e74c-74f2-ab97b2acc32f",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71X_LIFECYCLE_CONTROL_LAST'",
+        "tenantId": "parity-p71x-lifecycle-control-last",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71x-lifecycle-control-last"
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p71l-from-draft-deactivate",
+        "name": "p71l-from-draft-deactivate s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p71l-from-draft-deactivate s reader",
+            "policyId": "52e1efc4-d23c-80fe-5caa-327bf7a5d71c",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p71l-from-draft-deactivate s rule",
+                "ruleId": "cb30b009-46be-4358-a339-3fc177196c2e",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p71l-from-draft-deactivate"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p71l-from-draft-deactivate"
+          }
+        ],
+        "policySetId": "77913819-4041-74b4-ca0b-f2c8e04b64dd",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P71L_FROM_DRAFT_DEACTIVATE'",
+        "tenantId": "parity-p71l-from-draft-deactivate",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p71l-from-draft-deactivate"
+  ]
+}
