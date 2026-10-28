@@ -512,6 +512,7 @@ func TestRun_ShutdownDoesNotRetryPerQueuedDecision(t *testing.T) {
 	shutdown := func(t *testing.T) int {
 		t.Helper()
 		hung := make(chan struct{})
+		release := sync.OnceFunc(func() { close(hung) })
 		reached := make(chan struct{})
 		var mu sync.Mutex
 		var uploads int
@@ -521,33 +522,45 @@ func TestRun_ShutdownDoesNotRetryPerQueuedDecision(t *testing.T) {
 			uploads++
 			mu.Unlock()
 			once.Do(func() { close(reached) })
+			// The collector refuses every upload with a 503 once the handler is
+			// released, so each upload fails after it has reached the handler.
 			<-hung
+			w.WriteHeader(http.StatusServiceUnavailable)
 		}))
 		// The handler is released before the server is closed, which waits
 		// for the requests still in it.
 		defer srv.Close()
-		defer close(hung)
+		defer release()
 
 		// An hour, so no tick can fire and every upload after the first one
-		// comes from the queue.
+		// comes from the queue. Timeout keeps its ten-second default, because
+		// it bounds the dial and the send as well, and a short one can expire
+		// before a loaded machine sends the request.
 		logs := New(Config{
 			URL:           srv.URL,
 			MaxBatch:      2,
 			FlushInterval: time.Hour,
-			Timeout:       50 * time.Millisecond,
 		}, nil)
 		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		go logs.Run(ctx)
 		logs.Log(Event{DecisionID: "d1"})
 		logs.Log(Event{DecisionID: "d2"})
 
 		// The upload is on the wire and the loop is inside it, so these wait
 		// in the queue and the shutdown finds them there.
-		<-reached
+		select {
+		case <-reached:
+		case <-time.After(5 * time.Second):
+			t.Fatal("the upload of d1 and d2 has not reached the collector five seconds after they were logged")
+		}
 		for i := range 10 {
 			logs.Log(Event{DecisionID: fmt.Sprintf("q%d", i)})
 		}
 		cancel()
+		// The first upload fails only after the shutdown, so the loop returns
+		// from it to find ctx.Done() and the queue both ready.
+		release()
 		done := make(chan struct{})
 		go func() {
 			logs.Wait()
