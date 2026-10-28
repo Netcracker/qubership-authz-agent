@@ -1,0 +1,421 @@
+{
+ "about": "Round 69, review of authz-agent PR #147: a filter predicate that reads ${resourceType} and beside it ${resourceTypes} or ${resourcetype}, one dialect per case. Does the unknown placeholder fail the filter in every dialect, stay as written, or (another case of the name) read the resource type? Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_RTSUB_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "rt69-unk-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-plural-querydsl",
+   "about": "A querydsl predicate ${resourceType}.t.eq(\"${resourceTypes}\"): ${resourceType} beside ${resourceTypes}, which names neither the subject nor resourceType. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.t.eq(\"${resourceTypes}\")"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-plural-rsql",
+   "about": "A rsql predicate t==${resourceType};u==${resourceTypes}: ${resourceType} beside ${resourceTypes}, which names neither the subject nor resourceType. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType};u==${resourceTypes}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-plural-sql",
+   "about": "A sql predicate t='${resourceType}' AND u='${resourceTypes}': ${resourceType} beside ${resourceTypes}, which names neither the subject nor resourceType. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "sqlPredicate": "t='${resourceType}' AND u='${resourceTypes}'"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-plural-mongodb",
+   "about": "A mongodb predicate { \"t\": \"${resourceType}\", \"u\": \"${resourceTypes}\" }: ${resourceType} beside ${resourceTypes}, which names neither the subject nor resourceType. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"t\": \"${resourceType}\", \"u\": \"${resourceTypes}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-lower-querydsl",
+   "about": "A querydsl predicate ${resourceType}.t.eq(\"${resourcetype}\"): ${resourceType} beside ${resourcetype}, which names neither the subject nor resourceType in that case. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone; the request type in its place if placeholder names compare ignoring case.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "predicate": "${resourceType}.t.eq(\"${resourcetype}\")"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-lower-rsql",
+   "about": "A rsql predicate t==${resourceType};u==${resourcetype}: ${resourceType} beside ${resourcetype}, which names neither the subject nor resourceType in that case. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone; the request type in its place if placeholder names compare ignoring case.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "t==${resourceType};u==${resourcetype}"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-lower-sql",
+   "about": "A sql predicate t='${resourceType}' AND u='${resourcetype}': ${resourceType} beside ${resourcetype}, which names neither the subject nor resourceType in that case. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone; the request type in its place if placeholder names compare ignoring case.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "sqlPredicate": "t='${resourceType}' AND u='${resourcetype}'"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-lower-mongodb",
+   "about": "A mongodb predicate { \"t\": \"${resourceType}\", \"u\": \"${resourcetype}\" }: ${resourceType} beside ${resourcetype}, which names neither the subject nor resourceType in that case. DENY if the unknown placeholder fails the filter, as in rsql (r35gaps-filter-resource-placeholder); the placeholder as written if this dialect leaves it alone; the request type in its place if placeholder names compare ignoring case.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"t\": \"${resourceType}\", \"u\": \"${resourcetype}\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "check",
+     "operation": "READ",
+     "resource": {
+      "id": "r69"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "rt69-unk-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

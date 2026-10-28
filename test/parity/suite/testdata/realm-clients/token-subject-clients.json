@@ -15,6 +15,22 @@
   "protocolMappers": []
  },
  {
+  "clientId": "parity-ts-service",
+  "enabled": true,
+  "protocol": "openid-connect",
+  "publicClient": false,
+  "serviceAccountsEnabled": true,
+  "standardFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "secret": "ParityTokenSubjectSecret1!@#",
+  "defaultClientScopes": [
+   "web-origins",
+   "profile"
+  ],
+  "optionalClientScopes": [],
+  "protocolMappers": []
+ },
+ {
   "clientId": "parity-ts-arrays",
   "enabled": true,
   "protocol": "openid-connect",

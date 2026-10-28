@@ -1,0 +1,135 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {},
+ "pips": {
+  "other-role": {
+   "name": "subject.permissions.PARITY_OTHER",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_OTHER": [
+      "parity_other_permission"
+     ]
+    }
+   }
+  },
+  "the-role": {
+   "name": "subject.permissions.PARITY_LIST",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  },
+  "one": {
+   "name": "subject.permissions.PARITY_LIST_ONE",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  },
+  "two-other": {
+   "name": "subject.permissions.PARITY_LIST_TWO",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_other_permission"
+     ]
+    }
+   }
+  },
+  "two-same": {
+   "name": "subject.permissions.PARITY_LIST_TWO",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "parity_permission"
+     ]
+    }
+   }
+  },
+  "empty": {
+   "name": "subject.permissions.PARITY_LIST_EMPTY",
+   "type": "UUID",
+   "pipType": "MAPPING",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": []
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-permission-list-mapping-for-another-role",
+   "pips": [
+    "other-role"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "perms=in=(${subject.permissions})",
+          "sqlPredicate": "perms IN (${subject.permissions})"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "perms": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  }
+ ]
+}

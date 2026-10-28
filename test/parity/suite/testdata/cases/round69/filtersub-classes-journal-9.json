@@ -1,0 +1,328 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/pip/sub-String": {
+   "statusCode": 200,
+   "body": {
+    "value": "v"
+   }
+  },
+  "/api/v1/pip/sub-Number": {
+   "statusCode": 200,
+   "body": {
+    "value": 1000
+   }
+  },
+  "/api/v1/pip/sub-Boolean": {
+   "statusCode": 200,
+   "body": {
+    "value": true
+   }
+  },
+  "/api/v1/pip/sub-List": {
+   "statusCode": 200,
+   "body": [
+    "a",
+    "b"
+   ]
+  },
+  "/api/v1/pip/sub-SingleElementList": {
+   "statusCode": 200,
+   "body": [
+    "a"
+   ]
+  },
+  "/api/v1/pip/sub-EmptyList": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/sub-Null": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/sub-Object": {
+   "statusCode": 200,
+   "body": {
+    "k": "v"
+   }
+  },
+  "/api/v1/pip/sub-SpecialChars": {
+   "statusCode": 200,
+   "body": {
+    "value": "red,blue;green('q')\"x\""
+   }
+  },
+  "/api/v1/pip/sub-Failed": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity substitution case"
+   }
+  }
+ },
+ "pips": {
+  "token-scalar": {
+   "name": "subject.paritySubToken",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "defaultValue": "none",
+   "cacheable": false
+  },
+  "header-scalar": {
+   "name": "subject.paritySubHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-sub-header",
+   "defaultValue": "none",
+   "cacheable": false
+  },
+  "general-string": {
+   "name": "subject.paritySubString",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-String",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "general-number": {
+   "name": "subject.paritySubNumber",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-Number",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "general-boolean": {
+   "name": "subject.paritySubBoolean",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-Boolean",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "general-list": {
+   "name": "subject.paritySubList",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-List",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false
+  },
+  "general-single-element-list": {
+   "name": "subject.paritySubSingleElementList",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-SingleElementList",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false
+  },
+  "general-empty-list": {
+   "name": "subject.paritySubEmptyList",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-EmptyList",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false
+  },
+  "general-null": {
+   "name": "subject.paritySubNull",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-Null",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false
+  },
+  "general-object": {
+   "name": "subject.paritySubObject",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-Object",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false
+  },
+  "general-special-chars": {
+   "name": "subject.paritySubSpecialChars",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-SpecialChars",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false,
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "general-failed": {
+   "name": "subject.paritySubFailed",
+   "url": "http://pip-mock:8090/api/v1/pip/sub-Failed",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_SUB"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-substitution-general-null",
+   "pips": [
+    "general-null"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/sub-Null"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.paritySubNull}",
+          "sqlPredicate": "a=${subject.paritySubNull}",
+          "mongodbPredicate": "{ \"a\": ${subject.paritySubNull} }",
+          "predicate": "${resourceType}.a.eq(${subject.paritySubNull})",
+          "customPredicate": {
+           "predicate": "a:${p}",
+           "params": {
+            "p": "subject.paritySubNull"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "${subject.paritySubNull}"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "a": "zz"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-substitution-general-special-chars",
+   "pips": [
+    "general-null",
+    "general-special-chars"
+   ],
+   "readsRoutes": [
+    "/api/v1/pip/sub-SpecialChars"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.paritySubSpecialChars}",
+          "sqlPredicate": "a=${subject.paritySubSpecialChars}",
+          "mongodbPredicate": "{ \"a\": ${subject.paritySubSpecialChars} }",
+          "predicate": "${resourceType}.a.eq(${subject.paritySubSpecialChars})",
+          "customPredicate": {
+           "predicate": "a:${p}",
+           "params": {
+            "p": "subject.paritySubSpecialChars"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": ""
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "a": "red,blue;green('q')"
+     }
+    }
+   ]
+  }
+ ]
+}
