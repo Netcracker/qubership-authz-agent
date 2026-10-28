@@ -1,0 +1,380 @@
+{
+ "about": "Round 70: subject.x-y and subject.1x, names no PIP can have, over resources that hold the path subject.<name> or not. No PIP is declared. Each case runs in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o70-subject-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O70_SUBJECT_CONTROL_FIRST",
+   "tenant": "parity-o70-subject-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-subject-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "529f5fd6-31c2-171a-9540-90abed7c950d",
+       "name": "o70-subject-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_SUBJECT_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "0e0c4ad8-fa8e-701a-27ca-0bb32c9fa4c3",
+         "name": "o70-subject-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "02b01e2a-4c2c-e3e9-1333-c34cd14b8cbd",
+           "name": "o70-subject-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r70",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-subject-dash",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.x-y == 'v' OR resource.a == 'y'`, no PIP declared, over a resource with subject.x-y = v (true for a path from the resource); with subject.x-y = w (false for the path, true for a = y); with no subject member (the path is absent: false or the end of the condition), each with a = n and a = y. A read of a PIP named subject.x-y answers alike over every resource.",
+   "resourceType": "PARITY_SUITE_O70_SUBJECT_DASH",
+   "tenant": "parity-o70-subject-dash",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-subject-dash"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:match-a-n",
+      "decide:match-a-y",
+      "decide:other-a-n",
+      "decide:other-a-y",
+      "decide:absent-a-n",
+      "decide:absent-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f646808d-bef2-21f9-7d3e-1c01377ac27f",
+       "name": "o70-subject-dash set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_SUBJECT_DASH'",
+       "policies": [
+        {
+         "policyId": "a337626b-c1b9-a218-efc0-f359b3d873f6",
+         "name": "o70-subject-dash reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "fc287f2e-754c-aaef-5bde-3f4bbc0878c3",
+           "name": "o70-subject-dash probe",
+           "target": "true",
+           "condition": "subject.x-y == 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "match-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n",
+        "subject": {
+         "x-y": "v"
+        }
+       }
+      },
+      {
+       "name": "match-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y",
+        "subject": {
+         "x-y": "v"
+        }
+       }
+      },
+      {
+       "name": "other-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n",
+        "subject": {
+         "x-y": "w"
+        }
+       }
+      },
+      {
+       "name": "other-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y",
+        "subject": {
+         "x-y": "w"
+        }
+       }
+      },
+      {
+       "name": "absent-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n"
+       }
+      },
+      {
+       "name": "absent-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-subject-digit",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.1x == 'v' OR resource.a == 'y'`, no PIP declared, over a resource with subject.1x = w (false for the path, true for a = y); with no subject member (the path is absent: false or the end of the condition), each with a = n and a = y. A read of a PIP named subject.1x answers alike over every resource.",
+   "resourceType": "PARITY_SUITE_O70_SUBJECT_DIGIT",
+   "tenant": "parity-o70-subject-digit",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-subject-digit"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:other-a-n",
+      "decide:other-a-y",
+      "decide:absent-a-n",
+      "decide:absent-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a3d26259-262e-7464-124f-dafd8f8f180e",
+       "name": "o70-subject-digit set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_SUBJECT_DIGIT'",
+       "policies": [
+        {
+         "policyId": "9c7ef67f-e13a-4c30-b5bd-ad8f11f3ef4a",
+         "name": "o70-subject-digit reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4271bfb4-2e09-ddc2-5388-48b278ec08a4",
+           "name": "o70-subject-digit probe",
+           "target": "true",
+           "condition": "subject.1x == 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "other-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n",
+        "subject": {
+         "1x": "w"
+        }
+       }
+      },
+      {
+       "name": "other-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y",
+        "subject": {
+         "1x": "w"
+        }
+       }
+      },
+      {
+       "name": "absent-a-n",
+       "resource": {
+        "id": "r70",
+        "a": "n"
+       }
+      },
+      {
+       "name": "absent-a-y",
+       "resource": {
+        "id": "r70",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o70-subject-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O70_SUBJECT_CONTROL_LAST",
+   "tenant": "parity-o70-subject-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o70-subject-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "33d54506-c0c9-5d7c-1d95-22d979cf3800",
+       "name": "o70-subject-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O70_SUBJECT_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "c30a7c32-301a-b57e-c580-ce284f687df8",
+         "name": "o70-subject-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "49deda5a-d168-8d11-bbc4-7b252e75954b",
+           "name": "o70-subject-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r70",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}
