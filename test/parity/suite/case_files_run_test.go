@@ -17,7 +17,9 @@
 package paritysuite
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"maps"
 	"net/http"
@@ -325,4 +327,23 @@ func TestCaseFileCases_CarryTheUserManagementFields(t *testing.T) {
 			t.Errorf("%s request: userManagement %v, userManagementCalls %v, want %v and true", name, req.userManagement, req.userManagementCalls, requestPins)
 		}
 	}
+}
+
+// readsPermissionScope reports whether f declares a PERMISSION_SCOPE PIP or
+// pins a permission scope route, anywhere in its PIPs, pins or steps.
+func readsPermissionScope(f caseFile) bool {
+	raw, err := json.Marshal(f)
+	return err != nil || bytes.Contains(raw, []byte(`"PERMISSION_SCOPE"`)) || bytes.Contains(raw, []byte("/permission-scope/"))
+}
+
+// stepMarkers returns the markers a read observation of st narrows its body
+// by: Markers, the case id, the resource type, and every string argument.
+func stepMarkers(caseID, rt string, st stepSpec) []string {
+	markers := append([]string{caseID, rt}, st.Markers...)
+	for _, name := range slices.Sorted(maps.Keys(st.Args)) {
+		if s, ok := st.Args[name].(string); ok {
+			markers = append(markers, resourceTypeReplacer(rt).Replace(s))
+		}
+	}
+	return markers
 }
