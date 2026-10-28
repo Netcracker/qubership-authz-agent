@@ -36,25 +36,25 @@ func TestCanonicalFilterDialects_TermOrderDoesNotReachTheComparison(t *testing.T
 	}{
 		{
 			name:         "rsql terms of an AND and of a bracketed OR",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
 			recorded:     "(b==2,a==1);c!=3;d!=4",
 			permuted:     "d!=4;(a==1,b==2);c!=3",
 		},
 		{
 			name:         "rsql bracketed groups of four sources",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
 			recorded:     "(regular1==1),(simplified1==1,simplified2==2),(regular2==2)",
 			permuted:     "(simplified2==2,simplified1==1),(regular2==2),(regular1==1)",
 		},
 		{
 			name:         "sql terms under NOT and in a bracketed OR",
-			canonicalize: func(s string) string { return canonicalInfix(s, sqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, sqlDialect) },
 			recorded:     "(b=2 OR a=1) AND NOT (c=3) AND NOT (d=4)",
 			permuted:     "NOT (d=4) AND (a=1 OR b=2) AND NOT (c=3)",
 		},
 		{
 			name:         "mongodb elements of $and and of a nested $or",
-			canonicalize: func(s string) string { return canonicalInfix(s, mongodbSeparators) },
+			canonicalize: infixCanon(mongodbSeparators),
 			recorded:     `{ "$and": [ { "$or": [ {{ "b": 2 }}, {{ "a": 1 }} ] }, {{ "c": 3 }}, {{ "d": 4 }} ] }`,
 			permuted:     `{ "$and": [ {{ "d": 4 }}, { "$or": [ {{ "a": 1 }}, {{ "b": 2 }} ] }, {{ "c": 3 }} ] }`,
 		},
@@ -66,7 +66,7 @@ func TestCanonicalFilterDialects_TermOrderDoesNotReachTheComparison(t *testing.T
 		},
 		{
 			name:         "sql IN list elements",
-			canonicalize: func(s string) string { return canonicalInfix(s, sqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, sqlDialect) },
 			recorded:     "perms IN ('parity_other_permission', 'parity_permission') AND a=1",
 			permuted:     "a=1 AND perms IN ('parity_permission', 'parity_other_permission')",
 		},
@@ -77,8 +77,26 @@ func TestCanonicalFilterDialects_TermOrderDoesNotReachTheComparison(t *testing.T
 			permuted:     `(T.x.eq(1)).and(T.id.in("a", "b"))`,
 		},
 		{
+			name:         "mongodb values of $in and of an array nested in them",
+			canonicalize: infixCanon(mongodbSeparators),
+			recorded:     `{ "f": { "$in": [ [ { "$uuid": "h1" }, { "$uuid": "h2" } ], [ "R" ] ] } }`,
+			permuted:     `{ "f": { "$in": [ [ "R" ], [ { "$uuid": "h2" }, { "$uuid": "h1" } ] ] } }`,
+		},
+		{
+			name:         "mongodb list of values substituted for a field",
+			canonicalize: infixCanon(mongodbSeparators),
+			recorded:     `{ { "a": [ { "$uuid": "b" }, { "$uuid": "a" } ] } }`,
+			permuted:     `{ { "a": [ { "$uuid": "a" }, { "$uuid": "b" } ] } }`,
+		},
+		{
+			name:         "method chain list of values substituted into eq",
+			canonicalize: canonicalMethodChain,
+			recorded:     `(T.a.eq("b", "a")).or(T.x.eq(1))`,
+			permuted:     `(T.x.eq(1)).or(T.a.eq("a", "b"))`,
+		},
+		{
 			name:         "rsql in-clause elements",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
 			recorded:     `id=in=("row10-dict-1", "row10-dict-2");amount=le="1000"`,
 			permuted:     `amount=le="1000";id=in=("row10-dict-2", "row10-dict-1")`,
 		},
@@ -104,7 +122,7 @@ func TestCanonicalFilterDialects_GroupingStaysApart(t *testing.T) {
 	}{
 		{
 			name:         "rsql OR inside the AND against AND inside the OR",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
 			left:         "(a==1,b==2);c==3",
 			right:        "a==1,(b==2;c==3)",
 		},
@@ -122,7 +140,7 @@ func TestCanonicalFilterDialects_GroupingStaysApart(t *testing.T) {
 		},
 		{
 			name:         "rsql quoted separator is not a term boundary",
-			canonicalize: func(s string) string { return canonicalInfix(s, rsqlSeparators) },
+			canonicalize: func(s string) string { return canonicalInfix(s, rsqlDialect) },
 			left:         `name=="b,a";x==1`,
 			right:        `name=="a,b";x==1`,
 		},
@@ -134,6 +152,61 @@ func TestCanonicalFilterDialects_GroupingStaysApart(t *testing.T) {
 				t.Errorf("canonical(%q) = canonical(%q) = %q, want them apart", tc.left, tc.right, got)
 			}
 		})
+	}
+}
+
+// The arguments of an SQL function and the bounds of an RSQL range keep their
+// order, so two answers that pass them in another order stay apart. The terms
+// of the operator around such a group are still sorted.
+func TestCanonicalFilterDialects_ArgumentOrderStaysApart(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name         string
+		canonicalize func(string) string
+		left, right  string
+	}{
+		{
+			name:         "sql arguments of COALESCE",
+			canonicalize: infixCanon(sqlDialect),
+			left:         "COALESCE(owner, delegate) = 'u' AND a=1",
+			right:        "a=1 AND COALESCE(delegate, owner) = 'u'",
+		},
+		{
+			name:         "sql arguments of SUBSTRING",
+			canonicalize: infixCanon(sqlDialect),
+			left:         "SUBSTRING(name, 1, 3) = 'abc'",
+			right:        "SUBSTRING(name, 3, 1) = 'abc'",
+		},
+		{
+			name:         "rsql bounds of between",
+			canonicalize: infixCanon(rsqlDialect),
+			left:         "age=between=(18,65);a==1",
+			right:        "a==1;age=between=(65,18)",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := tc.canonicalize(tc.left); got == tc.canonicalize(tc.right) {
+				t.Errorf("canonical(%q) = canonical(%q) = %q, want them apart", tc.left, tc.right, got)
+			}
+		})
+	}
+}
+
+// Two integers that a float64 cannot tell apart stay apart in a
+// customFilterCondition, while the operands of an OR node and the values of a
+// params list are still sorted.
+func TestCanonicalJSON_KeepsTheDigitsOfANumber(t *testing.T) {
+	t.Parallel()
+	left := `{"logic":{"op":"OR","apply":[{"path":"p1"},{"path":"p2"}]},"params":{"p":["a","b"],"n":9007199254740992}}`
+	right := `{"logic":{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]},"params":{"p":["b","a"],"n":9007199254740993}}`
+	control := `{"logic":{"op":"OR","apply":[{"path":"p2"},{"path":"p1"}]},"params":{"p":["b","a"],"n":9007199254740992}}`
+	if got := canonicalJSON(json.RawMessage(left)); string(got) == string(canonicalJSON(json.RawMessage(right))) {
+		t.Errorf("canonicalJSON(%s) = canonicalJSON(%s) = %s, want them apart", left, right, got)
+	}
+	if got, want := string(canonicalJSON(json.RawMessage(control))), string(canonicalJSON(json.RawMessage(left))); got != want {
+		t.Errorf("canonicalJSON(%s) = %s, want canonicalJSON(%s) = %s", control, got, left, want)
 	}
 }
 
