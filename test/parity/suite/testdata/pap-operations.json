@@ -97,6 +97,24 @@
        "parity-unknown"
       ]
      }
+    },
+    "patch": {
+     "method": "PATCH",
+     "path": "/access/v1/policySets/{id}/{transition}",
+     "query": [],
+     "tier": "variant",
+     "golden": "pap-status-v1",
+     "args": {
+      "transition": [
+       "activate",
+       "deactivate",
+       "draft",
+       "archive",
+       "DEACTIVATE",
+       "Deactivate",
+       "parity-unknown"
+      ]
+     }
     }
    }
   },
