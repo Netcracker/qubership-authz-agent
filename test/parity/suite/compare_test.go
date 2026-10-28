@@ -15,7 +15,9 @@
 package paritysuite
 
 import (
+	"encoding/json"
 	"errors"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -217,5 +219,34 @@ func TestNormalizeRsqlInElements_HandlesMultipleInClauses(t *testing.T) {
 	want := `id=in=("a", "b");tag=in=("x", "y", "z")`
 	if got != want {
 		t.Fatalf("multi-in normalization mismatch\nwant: %s\ngot:  %s", want, got)
+	}
+}
+
+// Every golden under testdata/golden is one JSON document. The repository's
+// JSON linter skips testdata, whose files hold Unicode spaces on purpose, so
+// a golden that does not parse fails here rather than only in the run that
+// compares with it.
+func TestGoldenFilesAreJSON(t *testing.T) {
+	t.Parallel()
+	count := 0
+	err := filepath.WalkDir("testdata/golden", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || filepath.Ext(path) != ".json" {
+			return err
+		}
+		count++
+		raw, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if !json.Valid(raw) {
+			t.Errorf("%s is not valid JSON", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("walk testdata/golden: %v", err)
+	}
+	if count == 0 {
+		t.Fatal("found no golden under testdata/golden")
 	}
 }
