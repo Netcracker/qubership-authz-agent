@@ -1,0 +1,435 @@
+{
+ "about": "Round 71: the reach gaps left as round 71 candidates, one case each in a tenant of its own: a second import of a customization whose rule entry sends a field null over the stored one, and an import of PIPs that declares one name in two domains.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p71x-gaps-control-first",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P71X_GAPS_CONTROL_FIRST",
+   "tenant": "parity-p71x-gaps-control-first",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-gaps-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "4bc5ea4d-f7e6-8b86-dfe8-f914cb736187",
+       "name": "p71x-gaps-control-first s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_GAPS_CONTROL_FIRST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "405dedd5-4fd2-0c04-e0d2-b52dc84ce3a8",
+         "name": "p71x-gaps-control-first s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "c222fca7-1414-0501-df4e-6057ae586a47",
+           "name": "p71x-gaps-control-first s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_GAPS_CONTROL_FIRST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71x-gaps-control-first",
+      "PARITY_SUITE_P71X_GAPS_CONTROL_FIRST"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p71g-rule-null-over-stored",
+   "about": "Two imports of a set customization at CUSTOMER: the first gives the rule a name and moves it to READ, the second sends the rule's name null over it; the export read back and the decision.",
+   "resourceType": "PARITY_SUITE_P71G_RULE_NULL_OVER_STORED",
+   "tenant": "parity-p71g-rule-null-over-stored",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71g-rule-null-over-stored"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "18fade08-a6f1-4b25-bb11-b04ea1654231",
+       "name": "p71g-rule-null-over-stored s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71G_RULE_NULL_OVER_STORED'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "053516cf-f890-1fbe-0adb-19a0d792d0b1",
+         "name": "p71g-rule-null-over-stored s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "e643d087-b661-8f7a-8ef6-0ed3594585e2",
+           "name": "p71g-rule-null-over-stored s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ]
+    },
+    {
+     "name": "w2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w2-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "18fade08-a6f1-4b25-bb11-b04ea1654231",
+       "policies": [
+        {
+         "policyId": "053516cf-f890-1fbe-0adb-19a0d792d0b1",
+         "rules": [
+          {
+           "ruleId": "e643d087-b661-8f7a-8ef6-0ed3594585e2",
+           "name": "p71g-rule-null-over-stored first rule name",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "w2-read",
+       "type": "PARITY_SUITE_P71G_RULE_NULL_OVER_STORED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:w3-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "18fade08-a6f1-4b25-bb11-b04ea1654231",
+       "policies": [
+        {
+         "policyId": "053516cf-f890-1fbe-0adb-19a0d792d0b1",
+         "rules": [
+          {
+           "ruleId": "e643d087-b661-8f7a-8ef6-0ed3594585e2",
+           "name": null,
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "w3-read",
+       "type": "PARITY_SUITE_P71G_RULE_NULL_OVER_STORED",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "w3-export",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71g-rule-null-over-stored",
+      "PARITY_SUITE_P71G_RULE_NULL_OVER_STORED"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "18fade08-a6f1-4b25-bb11-b04ea1654231",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "18fade08-a6f1-4b25-bb11-b04ea1654231"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    }
+   ]
+  },
+  {
+   "id": "p71g-import-pips-two-domains",
+   "about": "An import of the PIP export declaring one name in two domains, a HEADER in one and a GENERAL in the other, each valid in its own domain (round 65 sent one name and one pipType in two domains, refused as duplicates): refused against the whole import or stored in both.",
+   "resourceType": "PARITY_SUITE_P71G_IMPORT_PIPS_TWO_DOMAINS",
+   "tenant": "parity-p71g-import-pips-two-domains",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "import-pips",
+     "args": {},
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP71gTwice",
+       "pipType": "HEADER",
+       "header": "x-parity-p71g",
+       "defaultValue": "none",
+       "type": "REGULAR",
+       "cacheable": false,
+       "domain": "PARITY_P71G_ONE"
+      },
+      {
+       "name": "subject.parityP71gTwice",
+       "pipType": "GENERAL",
+       "url": "http://pip-mock:8090",
+       "type": "REGULAR",
+       "cacheable": false,
+       "requestAttributes": {
+        "u": "${subject.id}"
+       },
+       "domain": "PARITY_P71G_TWO"
+      }
+     ]
+    },
+    {
+     "name": "r1",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read:read-config-pips"
+     ],
+     "markers": [
+      "subject.parityP71gTwice"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P71G_ONE"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    },
+    {
+     "name": "cleanup-2",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P71G_TWO"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ]
+  },
+  {
+   "id": "p71x-gaps-control-last",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P71X_GAPS_CONTROL_LAST",
+   "tenant": "parity-p71x-gaps-control-last",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-gaps-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "29a51217-873d-64ea-a475-c2221258237c",
+       "name": "p71x-gaps-control-last s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_GAPS_CONTROL_LAST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "4ccecf12-91d0-a117-ef8f-15ab81f5f233",
+         "name": "p71x-gaps-control-last s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "1358a774-13ca-7a69-e57a-b309f38e3254",
+           "name": "p71x-gaps-control-last s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_GAPS_CONTROL_LAST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71x-gaps-control-last",
+      "PARITY_SUITE_P71X_GAPS_CONTROL_LAST"
+     ]
+    }
+   ]
+  }
+ ]
+}
