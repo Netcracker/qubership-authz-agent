@@ -13,13 +13,15 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 ## 1. What these tests are
 
 - Orchestrator: the `e2e-*` targets in the [Makefile](../Makefile). `make e2e` runs them in order.
-- The harness under [test/k8s/](../test/k8s/): Keycloak with the realm imports from `test/k8s/authn/`, the `pip-stub`
-  the uploaded PIP definitions call, a second stub instance as `entitlements-mock`, the `tenant-manager` emulator that
-  names the identifier of a tenant realm, and chart values that point the agent at them.
+- The harness: the test-stand chart in `helm-templates/authz-test-stand`, installed with
+  [test/k8s/test-stand-values.yaml](../test/k8s/test-stand-values.yaml). It runs Keycloak, which imports the realms of
+  `test/k8s/authn/` at start, the `pip-stub` the uploaded PIP definitions call, a second stub instance as
+  `entitlements-mock`, and the `tenant-manager` emulator that names the identifier of a tenant realm. Chart values
+  under [test/k8s/](../test/k8s/) point the agent at them.
 - The agent under test comes from the Helm chart in `helm-templates/authz-agent`, installed with `test/k8s/values.yaml`;
   its policy source, the `authz-policy-admin` stub, from `helm-templates/authz-policy-admin` with
   `test/k8s/policy-admin-values.yaml`.
-- The suite runs as the Job in `test/k8s/runtime-suite-job.yaml`, built from `test/integration/testify/Dockerfile`.
+- The suite runs as the Job of the test stand, a `helm test` hook, built from `test/integration/testify/Dockerfile`.
   Every target is a Service name, so no port has to leave the cluster.
 - The step catalog (source of truth) is [test/readme.md](../test/readme.md) plus `test/integration/testify/catalog.go`;
   dedicated validation tests enforce that the two stay in sync.
@@ -30,11 +32,14 @@ executed as a Job inside that cluster. CI runs the same Makefile targets
 
 | Tool | Why | Check |
 | --- | --- | --- |
-| **Docker** | builds the images and runs the kind node | `docker info` |
+| **Docker** 23.0 or later, where BuildKit is the default builder | builds the images, writes the test-stand files with `docker build --output`, and runs the kind node | `docker info` |
 | **kind** | the cluster | `kind version` |
-| **kubectl** | applies the harness, streams the Job log | `kubectl version --client` |
-| **helm** | installs the chart | `helm version` |
+| **kubectl** | streams the Job log, restarts Deployments | `kubectl version --client` |
+| **helm** 3.19 or later, or 4.x | installs the charts, runs the suite Job | `helm version` |
 | **Go 1.24+** (the version `test/integration/testify/go.mod` declares) | the structural tests and `go vet`; the suite itself is compiled inside its image | `go version` |
+
+The targets use no tool feature newer than these versions; `kubectl` and `kind` may be any version that supports the
+cluster.
 
 You do **not** need a local OPA binary for the runtime tests (the agent carries the engine). It is only needed for the
 Rego contract tests (section 7).
@@ -99,9 +104,9 @@ Step by step, in the order `make e2e` runs them:
 | --- | --- |
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
 | `e2e-images` | Builds the images above and loads them into the cluster |
-| `e2e-harness` | Namespace, realm ConfigMap, client-credentials Secret, Keycloak, the stubs, and the tenant-manager emulator; waits until they are Ready |
+| `e2e-harness` | Generates the realm files (`make test-stand-files`), then installs the test-stand chart: Keycloak, the stubs, the tenant-manager emulator, and the client-credentials Secret; waits until they are Ready. The suite Job is a `helm test` hook, which `e2e-suite` runs |
 | `e2e-install` | `helm upgrade --install` of the stub chart with its dev resource profile and `test/k8s/policy-admin-values.yaml`, then of the agent chart with its dev resource profile and `test/k8s/values.yaml`, each with `--wait` |
-| `e2e-suite` | Applies the Job and its RBAC, streams its log, and fails if the Job did not complete |
+| `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete |
 
 Each step prints a `STEP PASS/FAIL <name> <ms>` line. The Job sets `FULL_RUNTIME_SUITE=true`, so the run ends with the
 two catalog coverage checks. Expected: `--- PASS: TestRuntimeSuite` with 19 groups.
@@ -121,26 +126,25 @@ make e2e-down     # delete the cluster
 - Changed product code: `make e2e-images e2e-restart e2e-suite`. The images are rebuilt under the same tags, and a
   running Pod keeps the old content until it is restarted; `e2e-restart` restarts every Deployment that runs a local
   image and waits until it is Ready again. Without it the suite tests the previous build.
-- Changed chart values: `make e2e-install e2e-suite`.
-- Re-running `e2e-harness` on its own replaces the Keycloak Pod, and a dev-mode Keycloak mints new realm keys on every
-  start. Restart the agent afterwards so its JWKS bootstrap picks the new keys up, or the suite fails at
-  `setup.wait_for_agent`:
+- Changed values of the agent or authz-policy-admin chart: `make e2e-install e2e-suite`.
+- Changed test-stand values (`test/k8s/test-stand-values.yaml`), the suite's env and args included: `make e2e-harness
+  e2e-suite`. `e2e-suite` runs the Job as the release last installed it.
+- Changed a realm file: `make e2e-harness e2e-suite`. The harness replaces the Keycloak Pod, and a dev-mode Keycloak
+  mints new realm keys on every start, so the harness also restarts the agent, whose JWKS bootstrap holds the old keys,
+  and waits until it is Ready.
+- Another agent URL: `make e2e-suite E2E_BASE_URL=<url>` (`PARITY_AC_BASE_URL` for `parity-suite`) writes the URL into
+  the installed test-stand release, together with any realm edit not yet applied, and runs the suite against it. The URL
+  stays in the release for later runs until `make e2e-harness` restores the default.
+
+- A subset: set `RUNTIME_SUITE_RUN` (a `-test.run` regular expression) on the test-stand release, with
+  `FULL_RUNTIME_SUITE` set to `false` so the coverage checks do not fail on a filtered run, then run `make e2e-suite`:
 
   ```bash
-  kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent
+  helm --kube-context kind-authz-e2e -n authz-e2e upgrade authz-test-stand helm-templates/authz-test-stand \
+    --reuse-values --set suite.env.RUNTIME_SUITE_RUN='^TestRuntimeSuite$/^TestCheckResource$' --set-string suite.env.FULL_RUNTIME_SUITE=false
   ```
 
-- Changed realm imports under `test/k8s/authn/`: re-run `e2e-harness`, which updates the ConfigMap, then restart
-  Keycloak, which imports realms only at start, and the agent after it:
-
-  ```bash
-  kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/keycloak
-  kubectl --context kind-authz-e2e -n authz-e2e rollout status deploy/keycloak --timeout=10m
-  kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent
-  ```
-
-- A subset: edit `RUNTIME_SUITE_RUN` in `test/k8s/runtime-suite-job.yaml` (a `-test.run` regular expression) and set
-  `FULL_RUNTIME_SUITE` to `false` there, so the coverage checks do not fail on a filtered run. Do not commit that change.
+  `make e2e-harness` restores the values of `test/k8s/test-stand-values.yaml`.
 - Poking at the stack from the host, for example with the Postman collection in `test/`:
 
   ```bash
@@ -165,7 +169,7 @@ go test -v -count=1 ./...    # no -tags integration
 OPA / Rego contract tests, no cluster needed:
 
 ```bash
-test/scripts/install-opa.sh    # installs opa into test/tools/opa/
+mise install                   # puts the opa version mise.toml pins on PATH
 test/scripts/test-opa.sh
 ```
 
@@ -186,8 +190,10 @@ The minimum CI gate for compatibility-sensitive changes is listed in [test/readm
 | --- | --- |
 | `go test` → `[build failed]` | `GOROOT` points at a different toolchain than `go` on `PATH`. Unset it or fix your profile (section 2). |
 | `make e2e-cluster` fails | Docker is not running, or your user cannot reach `docker.sock` (section 2). |
-| The Job Pod stays `Pending` or reports `ErrImageNeverPull` | The images are not in the cluster; run `make e2e-images`. |
-| `make e2e-harness` times out at `rollout status deploy/keycloak` on the first run | The node is still pulling Keycloak. Check `kubectl -n authz-e2e get pods`, then rerun `make e2e-harness`. |
-| `setup.wait_for_agent` fails after a harness rerun | Keycloak has new realm keys; restart the agent (section 6). |
+| `make e2e-suite` prints `The runtime-suite container did not start within 180 seconds:`, or `make parity-suite` the same for `parity-suite`, and a Pod in `ErrImageNeverPull` | The images are not in the cluster; run `make e2e-images`. On a slow node whose container does start, raise `SUITE_START_SECONDS` (180). |
+| `make e2e-harness` or `make parity-harness` fails with `exists and cannot be imported into the current release: invalid ownership metadata` | The cluster still holds the harness objects an older `make e2e` or `make parity` created with `kubectl apply`. Run `make e2e-down` once, then rerun `make e2e` or `make parity`. |
+| `make e2e-harness` or `make parity-harness` runs out of its 10-minute wait | Check `kubectl -n authz-e2e get pods` (or `-n authz-parity`). A stub or tenant-manager Pod in `ErrImageNeverPull`: the images are not in the cluster, run `make e2e-images`. Keycloak still starting on the first run: the node is still pulling it, rerun the harness target. |
+| `setup.wait_for_agent` fails after Keycloak restarted outside `make e2e-harness` | Keycloak has new realm keys and the agent holds the old ones: `kubectl --context kind-authz-e2e -n authz-e2e rollout restart deploy/authz-agent` (namespace `authz-parity` for the parity stand). |
+| A long suite stops at 10 minutes with `panic: test timed out after 10m0s`, or `make e2e-suite` or `make parity-suite` fails after 15 minutes while the Job still runs | Three limits bound a suite run: `-test.timeout` in `suite.args` (600s), `suite.activeDeadlineSeconds` of the Job (900), and the `helm test` wait, `E2E_SUITE_TIMEOUT` or `PARITY_SUITE_TIMEOUT` (15m). Raise them together, each no lower than the one before: the first two in the stand's values file, which `make e2e-harness` or `make parity-harness` applies, and the third on the suite target, for example `make parity-suite PARITY_SUITE_TIMEOUT=5h30m`. |
 | Need logs after a run | `make e2e-logs`, then look under `test/artifacts/kind/`. |
 | Cluster left behind | `make e2e-down`. |

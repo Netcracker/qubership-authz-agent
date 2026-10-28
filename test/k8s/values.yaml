@@ -26,7 +26,8 @@ AUTHZ_IDP_REALMS:
   - default
   - unregistered
 
-# The tenant-manager emulator of the harness (test/k8s/tenant-manager.yaml).
+# The tenant-manager emulator of the test stand (tenantManager in
+# test-stand-values.yaml).
 AUTHZ_TENANT_MANAGER_URL: http://tenant-manager:8080
 
 # The suite uploads policies and PIPs through the authz-policy-admin stub,

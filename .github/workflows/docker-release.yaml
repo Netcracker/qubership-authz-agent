@@ -1,5 +1,7 @@
 ---
-# Release of the two Docker images, the agent and authz-policy-admin. Forked
+# Release of the Docker images .qubership/docker.cfg lists: the agent,
+# authz-policy-admin, the test stand's pip-stub and parity suite, and the
+# transfer image with the Helm charts. Forked
 # from the organisation's template,
 # https://github.com/Netcracker/.github/blob/main/workflow-templates/docker-release.yaml,
 # with the dry-run input and the tag cleanup on failure this repository had
@@ -7,7 +9,7 @@
 #
 # Triggered by hand with the release version. The jobs check that the tag is
 # free, read the component list from .qubership/docker.cfg, create the tag,
-# build and publish both images from it, and publish the GitHub release,
+# build and publish every image from it, and publish the GitHub release,
 # whose notes netcracker/release-drafter composes from the merged pull
 # requests per .github/release-drafter-config.yml. A failed build deletes the
 # tag again, so the next attempt starts clean. With dry-run the tag is not

@@ -3,14 +3,21 @@
 #
 # Everything the Build workflow (go-build.yaml) does not cover:
 #   rego                 Rego policy tests with the OPA CLI
-#   chart                helm lint plus the chart-render assertions
+#   chart                helm lint of the three charts and the chart-render
+#                        assertions, on Helm 3 and on Helm 4; hadolint over the
+#                        Dockerfiles, kubeconform over the rendered charts, and
+#                        trivy config over the rendered product charts
 #   integration-compile  go vet with -tags integration, so a broken integration
 #                        test file fails here instead of after a cluster boot
-#   kind-e2e             the Helm chart installed on a kind cluster and the
-#                        runtime suite run against it (Makefile e2e-* targets,
-#                        see test/k8s/README.md)
-#   kind-parity          the chart on kind again, in its own namespace, with the
-#                        parity replay suite against it (Makefile parity-* targets)
+#   jsonpath-jayway      internal/jsonpath against Jayway JsonPath on the JVM,
+#                        over the package's cases, the json-path-comparison
+#                        queries, and the calls Jayway's own tests make
+#                        (Makefile jayway-suite-calls, test-jayway)
+#   kind-e2e             the test stand and the two charts installed on a kind
+#                        cluster with Helm 4, and the runtime suite run against
+#                        them (Makefile e2e-* targets, see test/k8s/README.md)
+#   kind-parity          the same on kind with Helm 3, in its own namespace,
+#                        with the parity replay suite (Makefile parity-* targets)
 #   ci-gate              one status check for branch protection
 #
 # No paths filter on purpose: ci-gate is meant to be a required check, and a
@@ -48,8 +55,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Installs the OPA CLI at the version mise.toml pins, and only that tool.
       - name: Install OPA
-        run: bash test/scripts/install-opa.sh
+        uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
+        with:
+          version: 2026.10.20
+          install_args: aqua:open-policy-agent/opa
 
       - name: Run policy tests
         run: bash test/scripts/test-opa.sh
@@ -66,18 +77,43 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Helm
+      # The test-stand chart reads generated realm and stub files; without
+      # them its templates fail, so lint renders it after the files exist.
+      - name: Generate the test-stand files
+        run: make test-stand-files
+
+      # The charts support Helm 3.19 or later and Helm 4, so both lint and
+      # render them. renovate.json keeps the Helm 3 pin on the latest 3.19.x
+      # and the Helm 4 pin on the latest 4.x. lint-images-and-charts.sh holds
+      # the list of charts and values files.
+      - name: Set up Helm 3
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.19.5
+
+      - name: Lint and render the charts with Helm 3
+        run: |
+          bash test/scripts/lint-images-and-charts.sh --lint-only
+          bash test/scripts/test-chart-render.sh
+
+      - name: Set up Helm 4
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v4.3.1
 
-      - name: Lint the charts
+      - name: Lint and render the charts with Helm 4
         run: |
-          helm lint helm-templates/authz-agent -f helm-templates/authz-agent/resource-profiles/dev.yaml -f test/k8s/values.yaml
-          helm lint helm-templates/authz-policy-admin -f helm-templates/authz-policy-admin/resource-profiles/dev.yaml -f test/k8s/policy-admin-values.yaml
+          bash test/scripts/lint-images-and-charts.sh --lint-only
+          bash test/scripts/test-chart-render.sh
 
-      - name: Render assertions
-        run: bash test/scripts/test-chart-render.sh
+      # Installs hadolint, kubeconform, and trivy at the versions mise.toml pins.
+      - name: Install hadolint, kubeconform, and trivy
+        uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
+        with:
+          version: 2026.10.20
+
+      - name: Lint the Dockerfiles and the rendered charts
+        run: bash test/scripts/lint-images-and-charts.sh
 
   integration-compile:
     name: Vet tagged suites
@@ -106,6 +142,66 @@ jobs:
       - name: Vet the parity suite
         working-directory: test/parity/suite
         run: go vet -tags integration ./...
+
+  jsonpath-jayway:
+    name: jsonPath against Jayway
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The queries are under GPL-3.0, so the job reads them from their own
+      # repository, pinned to one commit, and this repository holds none of them.
+      - name: Checkout json-path-comparison
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: cburgmer/json-path-comparison
+          ref: e090dae440ac22a5da2a33a74ea65c351124fe97
+          path: json-path-comparison
+          persist-credentials: false
+
+      # The tag of the json-path version in internal/jsonpath/testdata/jayway/pom.xml.
+      - name: Checkout JsonPath
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: json-path/JsonPath
+          ref: af7e516c69df680a6584fca7180ef082eb67c96c # json-path-2.9.0
+          path: JsonPath
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      # Java 17 runs the Gradle 7.4.2 of JsonPath; 21, the last one listed,
+      # is the default for the rest.
+      - name: Set up Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+          cache: maven
+          cache-dependency-path: |
+            internal/jsonpath/testdata/jayway/pom.xml
+            internal/jsonpath/testdata/jayway/recorder/pom.xml
+
+      - name: Record the calls of Jayway's tests
+        run: |
+          JAVA_HOME="$JAVA_HOME_17_X64" make jayway-suite-calls \
+            JAYWAY_SRC_DIR="$GITHUB_WORKSPACE/JsonPath" JAYWAY_SUITE_CALLS="$RUNNER_TEMP/jayway-suite-calls"
+
+      - name: Compare with Jayway
+        run: |
+          make test-jayway JSONPATH_COMPARISON_DIR="$GITHUB_WORKSPACE/json-path-comparison" \
+            JAYWAY_SUITE_CALLS="$RUNNER_TEMP/jayway-suite-calls"
 
   kind-e2e:
     name: Kind end-to-end
@@ -167,10 +263,12 @@ jobs:
         with:
           persist-credentials: false
 
+      # Helm 3 here and Helm 4 in kind-e2e, so helm test and the suite
+      # targets run on both majors.
       - name: Set up Helm
         uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
-          version: v4.3.1
+          version: v3.19.5
 
       - name: Create kind cluster
         uses: helm/kind-action@1544676c07bb3570fcb70166beaa07c4528fd4aa # v1.15.1
@@ -206,7 +304,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions: {}
-    needs: [rego, chart, integration-compile, kind-e2e, kind-parity]
+    needs: [rego, chart, integration-compile, jsonpath-jayway, kind-e2e, kind-parity]
     if: always()
     steps:
       - name: Check job results

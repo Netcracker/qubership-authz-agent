@@ -80,9 +80,7 @@ rules, and 503 with the reason and its details until then. `GET /ready`, on the 
 On a kind cluster:
 
 ```bash
-make e2e-images
-make e2e-install   # the chart
-make e2e-suite     # the runtime suite against it
+make e2e           # cluster, images, test stand, charts, runtime suite
 make parity        # the parity replay in its own namespace
 ```
 

@@ -21,7 +21,8 @@ without access to the original service.
 
 ## Prerequisites
 
-1. **Docker**, **kind**, **kubectl**, and **helm** on the host.
+1. **Docker**, **kind**, **kubectl**, and **helm** on the host, in the versions
+   [docs/local-integration-tests.md](../../docs/local-integration-tests.md#2-prerequisites) names.
 2. **Go 1.24+** to run the suite module's own unit tests (`cd test/parity/suite && go test ./...`).
 
 ## Run the replay suite
@@ -36,9 +37,9 @@ the suite image built from [`suite/Dockerfile`](suite/Dockerfile)), then:
 
 | Target | What it does |
 | --- | --- |
-| `parity-harness` | Namespace `authz-parity`; Keycloak as `idp` in dev mode with the two realm imports; `pip-mock` with the request-args rule set; `entitlements-mock`; the M2M client-credentials Secret |
+| `parity-harness` | The test-stand chart with [`test/k8s/parity/test-stand-values.yaml`](../k8s/parity/test-stand-values.yaml) in namespace `authz-parity`: Keycloak as `idp` in dev mode with the parity realms; `pip-mock` with the request-args rule set; `entitlements-mock`; the M2M client-credentials Secret |
 | `parity-install` | `helm upgrade --install` of the stub chart with its dev resource profile and [`test/k8s/parity/policy-admin-values.yaml`](../k8s/parity/policy-admin-values.yaml), then of the agent chart with its dev resource profile and [`test/k8s/parity/values.yaml`](../k8s/parity/values.yaml) |
-| `parity-suite` | The Job from [`test/k8s/parity/parity-suite-job.yaml`](../k8s/parity/parity-suite-job.yaml); its log is streamed |
+| `parity-suite` | The suite Job of the test-stand release, run by `helm test`; its log is streamed |
 
 Expected result: 135/135 cases green against authz-agent. CI runs the same targets (job `Parity on kind` in
 `.github/workflows/integration-tests.yaml`).
@@ -52,7 +53,8 @@ the host. To look at the stack from the host, port-forward, for example
 After a change to the suite, `make e2e-images parity-suite` rebuilds the images and reruns the Job; the harness and
 the chart stay. After a change to the product, run `make e2e-images parity-restart parity-suite`: the images keep their
 tags, so the running Pods have to be restarted to pick the new build up. `make parity-install parity-suite` picks up
-changed chart values.
+changed values of the agent and authz-policy-admin charts; changed test-stand values, the suite's env and args
+included, take `make parity-harness parity-suite`.
 
 ### Teardown
 
@@ -63,17 +65,21 @@ make e2e-down                                                     # the whole cl
 
 ## Identity provider
 
-The `idp` Deployment runs the public Keycloak image (`quay.io/keycloak/keycloak`, the version the goldens were
-captured against). The two realm import files
-([`cloud-common-realm.json`](../k8s/parity/idp-seed/cloud-common-realm.json) and
-[`parity-realm.json`](../k8s/parity/idp-seed/parity-realm.json)) use only built-in Keycloak protocol mappers and
-require no custom SPI extensions. The suite calls the standard OIDC token endpoint
-(`/auth/realms/parity/protocol/openid-connect/token`) for `client_credentials` and `password` grants; no custom
-Keycloak REST APIs are involved.
+The `idp` Deployment runs the public Keycloak image (`quay.io/keycloak/keycloak`, the version the goldens were captured
+against) and imports the realms of [`cloud-common-realm.json`](../k8s/parity/idp-seed/cloud-common-realm.json),
+[`parity-realm.json`](../k8s/parity/idp-seed/parity-realm.json), and
+[`parity-mt-b-realm.json`](../k8s/parity/idp-seed/parity-mt-b-realm.json) at every start. The `parity` realm it imports
+also holds the users of [`suite/testdata/realm/`](suite/testdata/realm/README.md), so the cases that need those users
+run on the kind harness. `make test-stand-files` adds them and gives them the first name, last
+name, and email they have on the stand the goldens were recorded on: their files declare none, and Keycloak refuses a
+password grant to such a user with `Account is not fully set up`. The realm files use only built-in Keycloak protocol
+mappers and require no custom SPI extensions. The suite calls the standard OIDC token endpoint
+(`/auth/realms/parity/protocol/openid-connect/token`) for `client_credentials` and `password` grants; no custom Keycloak
+REST APIs are involved.
 
-`KC_HTTP_RELATIVE_PATH=/auth` is set so the realm is reachable at `/auth/realms/parity/...` (Keycloak dropped the
-`/auth` prefix in v17; the parity fixtures carry that prefix throughout, so it is restored via config). It prefixes the
-management endpoints too, which is why the probes hit `/auth/health/ready`.
+The chart sets `KC_HTTP_RELATIVE_PATH=/auth` so the realm is reachable at `/auth/realms/parity/...` (Keycloak dropped
+the `/auth` prefix in v17; the parity fixtures carry that prefix throughout, so it is restored via config). It prefixes
+the management endpoints too, which is why the probes hit `/auth/health/ready`.
 
 ## Goldens, accepted divergences, and the divergence backlog
 

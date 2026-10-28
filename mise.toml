@@ -1,0 +1,13 @@
+# Tools for local checks and CI. Run `mise install` to put them on PATH;
+# Renovate updates the versions.
+[tools]
+# Linters that test/scripts/lint-images-and-charts.sh runs, for make lint and
+# for the Chart lint and render CI job.
+"aqua:hadolint/hadolint" = "2.15.1"
+"aqua:yannh/kubeconform" = "0.8.0"
+"aqua:aquasecurity/trivy" = "0.76.1"
+# OPA CLI for test/scripts/test-opa.sh and the test/svt/profiler scripts. It
+# stays at the github.com/open-policy-agent/opa version in go.mod, so the Rego
+# tests run on the evaluator the agent embeds; renovate.json updates both in one
+# pull request.
+"aqua:open-policy-agent/opa" = "1.21.4"

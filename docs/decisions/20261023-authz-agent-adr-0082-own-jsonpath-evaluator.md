@@ -82,11 +82,23 @@ library as a runtime dependency.
 
 - The package parses the path and evaluates it over the agent's value model, which keeps every number as its exact
   decimal text and keeps the order of object members.
-- The release supports the subset listed in the Context. A path outside it fails to compile with an unsupported-path
-  error, so the policy that holds it is refused before it runs.
+- The package answers as Jayway does, over a document whose numbers are exact, wherever the answer is Jayway's own. It
+  departs from Jayway where the legacy service reads Jayway's answer in its own way, and where Jayway 2.9.0 has a bug:
+  there the package gives the answer Jayway means to give, and the agent deliberately differs from legacy. The Neutral
+  consequences list the first, the Negative ones the second.
+- The release supports the subset listed in the Context, plus the forms of real configurations: `$.[*]` and any other
+  bracket step after a dot, a key with a hyphen, an index written after a dot, and `null` as a filter literal. A path
+  outside the subset fails to compile with an unsupported-path error, so the policy that holds it is refused before
+  it runs. So does a path Jayway refuses to compile, such as `[:]` or an index beyond the `int` range, and a regular
+  expression Go cannot match the way `java.util.regex` does.
 - Each further Jayway form is added as its own change, with cases that run against Jayway.
-- A differential test runs the package and Jayway JsonPath on the JVM over the same inputs. The test needs a JVM and the
-  Jayway jars only on the machine that runs it. It is not part of the default `go test ./...`.
+- A differential test runs the package and Jayway JsonPath 2.9.0 on the JVM over the same inputs: the package's own
+  cases, the queries of json-path-comparison, and the paths and documents that Jayway's own tests read, recorded by a
+  Java agent while those tests run. Jackson reads each document for Jayway with every number that has a
+  fraction or an exponent as a `BigDecimal`: a golden for a number beyond the `double` range shows that legacy hands
+  Jayway exact numbers, and a document json-smart reads makes Jayway throw there instead. The test runs in CI as its own
+  job and locally as `make test-jayway`, and is not part of the default `go test ./...`. Each answer that differs from
+  Jayway's is listed in the test with what Jayway does, and the test fails on a difference that is not listed.
 
 ### Justification
 
@@ -106,7 +118,7 @@ Alternatives considered:
 
 - **Use `github.com/ohler55/ojg/jp` and wrap it.** It is the most active candidate, it has no dependencies, and it
   exposes the parsed path. Rejected for the reasons above: the wrapper would contain the whole filter language, and the
-  library would still reject `$.[*]`, a key with a hyphen, and `/i`.
+  library would still reject a key with a hyphen and `/i`.
 - **Use `github.com/theory/jsonpath`.** It implements RFC 9535 strictly. Rejected: legacy follows Jayway, and the two
   dialects differ in the filter syntax and in what a filter over an object selects.
 - **Fork a library and change its filter.** Rejected: the fork would carry the same amount of our code, inside a
@@ -125,15 +137,43 @@ Positive:
 
 Negative:
 
-- We maintain a parser and an evaluator, about 900 lines of Go plus tests, and we own their bugs.
-- Regular expressions run on Go's RE2 engine, not on `java.util.regex`. A pattern that uses lookaround or a
-  backreference is reported as unsupported, not evaluated differently.
-- The differential test needs a JVM and the Jayway jars. The json-path-comparison queries are under GPL-3.0, so the
-  test reads them from a local checkout and is skipped without one. They are not copied into this repository.
+- We maintain a parser and an evaluator, about 1200 lines of Go plus tests, and we own their bugs.
+- Regular expressions run on Go's RE2 engine, not on `java.util.regex`. The package rewrites a pattern into Go's syntax
+  with the same matches: ASCII `\d`, `\w`, and `\s`, a `.` that stops at every line terminator, and a flag `i` that
+  folds ASCII letters only. A pattern it cannot rewrite, such as one with lookaround, a backreference, `\b`, or `\p`,
+  is reported as unsupported, not evaluated differently.
+- The differential test needs a JVM, Maven to resolve the Jayway jars, a checkout of json-path-comparison, and a
+  checkout of Jayway JsonPath at the tested tag, whose Gradle build runs on Java 17. The queries are under GPL-3.0, so
+  CI checks them out from their own repository at a pinned commit, and they are not copied into this repository. CI
+  records the calls of Jayway's tests in the same job, so the repository holds no copy of them either.
+- The package does not repeat these bugs of Jayway 2.9.0, so the agent differs from legacy there. The differential test
+  lists each case and fails once Jayway agrees with the package.
+
+  | Input | Jayway 2.9.0 | The package |
+  | --- | --- | --- |
+  | `.max()` of numbers that are all zero or negative, `.min()` of an infinity | `4.9E-324` and `1.7976931348623157E308`: `max()` starts at `Double.MIN_VALUE`, `min()` at `Double.MAX_VALUE` ([json-path/JsonPath#942](https://github.com/json-path/JsonPath/issues/942)) | the largest or smallest number |
+  | a slice `[a:b]` with a negative bound | a negative `a` wraps around the list, `[-4:1]` over five elements selects four of them and the first; a negative `b` is not counted from the end ([json-path/JsonPath#1076](https://github.com/json-path/JsonPath/issues/1076), [json-path/JsonPath#1081](https://github.com/json-path/JsonPath/pull/1081)) | a negative bound counts from the end, and a bound beyond the list stops at its edge |
+  | `.last()` of a one-element list | an exception | the element |
+  | `.first()` of an empty list after `[*]` over an object, `.last()` of an empty list after `[*]` | an exception, where `.first()` of an empty list element is dropped | the value is dropped |
+  | `empty` over an object | `ClassCastException` | true where the object has no member |
+  | `=~` over a missing member, `null`, or an object | matches it as empty text | no match |
+  | a string in a document list under `subsetof`, `anyof`, `noneof`, or `=~` | a string that compiles as a path or parses as JSON becomes a path or JSON node, any other loses one pair of quotes and is unescaped; an object in the list throws | the string as it is; an object equals nothing and matches nothing |
+  | a nested filter `[?(@.t[?(...)])]` | true where `t` is any list or object, as it tests only that the path exists | true where the inner filter selects an element of the list `t`, or holds for the object `t` |
+  | an item of an `in`, `nin`, `subsetof`, `anyof`, or `noneof` list | unescaped twice, stripped of one pair of double quotes, and read as a path or JSON where it compiles or parses as one | unescaped once, as the literal of `==` is |
 
 Neutral:
 
-- In four places, the behavior the agent's tests describe differs from plain Jayway, and no golden confirms either
-  side yet: `.length()` of a string (Jayway returns `null`), `\d`, `\w`, and `\s` in a regular expression (Java matches
-  ASCII only by default), an index too large for an `int` (Jayway rejects the path), and a document number outside the
-  `double` range in a filter. Goldens for these decide what the package does; the choice of evaluator does not.
+- The package departs from Jayway where the legacy service reads Jayway's answer in its own way. The differential test
+  reads an exception as a path that selects nothing and lists the other difference.
+
+  | Input | Jayway 2.9.0 | The package |
+  | --- | --- | --- |
+  | a path Jayway throws on while it reads it, such as a filter over a number, `.min()` over a list with no number, or a `null` document | an exception | nothing, as legacy ends the rule there as it does for a path Jayway does not find; goldens record it for `.first()` of an object and `.min()` over strings |
+  | `.keys()` of an object | the set of keys | the text of the set, `[a, b]`, which a golden records |
+
+- Where no golden records an answer, the package answers as Jayway does. That covers, among others, `.length()` of a
+  string (`null`), `\d`, `\w`, `\s`, and the flag `i` over characters outside ASCII, `.` against `\r`, `in` with a
+  number (compared by value), `<` between booleans (false), a filter or `[*]` after a step that selects several
+  objects, `.keys()` of a scalar (`null`), and a function after a step that selects several values (computed for each
+  value).
+- `.sum()` and `.avg()` add from first to last, as Jayway does, so `[0.1, 0.2, 0.3]` sums to `0.6000000000000001`.
