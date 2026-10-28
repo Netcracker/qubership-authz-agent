@@ -66,11 +66,11 @@ jayway-suite-calls:
 	    -PrecorderOut="$(abspath $(JAYWAY_SUITE_CALLS))" \
 	    :json-path:test :json-path-assert:test
 
-# mutation-diff: mutate the Go functions that HEAD changes since its merge base
-# with origin/main, or with MUTATION_BASE when set, and list every mutant on a
-# changed line that no test kills. Fails when one survives, and when the run
-# does not complete; the script's own exit status tells the two apart. See
-# "Mutation testing of a change" in README.md.
+# mutation-diff: run mutago on the Go lines that the working tree changes since
+# the merge base of HEAD and origin/main, or MUTATION_BASE when set, and list
+# every mutant on them that no test kills. Fails when one survives, and when
+# the run does not complete; the script's own exit status tells the two apart.
+# See "Mutation testing of a change" in README.md.
 mutation-diff:
 	bash test/scripts/mutation-diff.sh $(MUTATION_BASE)
 
