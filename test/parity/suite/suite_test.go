@@ -18,6 +18,7 @@ package paritysuite
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -138,4 +139,17 @@ func (s *ParitySuite) TearDownTest() {
 			s.T().Logf("user-management-mock reset warning: %v", err)
 		}
 	}
+}
+
+// pinnedPathContains reports whether a path pinned since the last
+// ResetPinnedRoutes contains part.
+func (pc *PipController) pinnedPathContains(part string) bool {
+	pc.mu.Lock()
+	defer pc.mu.Unlock()
+	for path := range pc.pinnedPaths {
+		if strings.Contains(path, part) {
+			return true
+		}
+	}
+	return false
 }

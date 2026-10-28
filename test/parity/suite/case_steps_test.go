@@ -261,18 +261,6 @@ func readCall(op string, args map[string]any, rt string) (papCall, error) {
 	return bindingCall(b, args, rt)
 }
 
-// stepMarkers returns the markers a read observation of st narrows its body
-// by: Markers, the case id, the resource type, and every string argument.
-func stepMarkers(caseID, rt string, st stepSpec) []string {
-	markers := append([]string{caseID, rt}, st.Markers...)
-	for _, name := range slices.Sorted(maps.Keys(st.Args)) {
-		if s, ok := st.Args[name].(string); ok {
-			markers = append(markers, resourceTypeReplacer(rt).Replace(s))
-		}
-	}
-	return markers
-}
-
 // narrowStepRead turns the answer to a step's read into its golden shape:
 // narrowPAPRead of the body, with hash and lastModificationTimestamp removed
 // from an object body first, and the distinct tenantId values of the narrowed
