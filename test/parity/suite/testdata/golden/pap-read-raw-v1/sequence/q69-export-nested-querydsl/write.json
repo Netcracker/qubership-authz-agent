@@ -1,0 +1,40 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "component": "PARITY",
+        "domain": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL",
+        "name": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_PARITY_PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_PolicySet",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_PARITY_PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_READ_Policy",
+            "policyId": "2ee730e8-f44a-91f0-7949-16137322b741",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "mongodbPredicate": "\"a\":{\"$eq\":\"r69\"}",
+                "name": "r69 q69-export-nested-querydsl",
+                "ruleId": "e730e8f4-4a91-f079-4916-137322b74132",
+                "ruleType": "DEFAULT",
+                "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-export-nested-querydsl"
+              }
+            ],
+            "target": "operation == 'READ'",
+            "tenantId": "parity-q69-export-nested-querydsl"
+          }
+        ],
+        "policySetId": "bb2ee730-e8f4-4a91-f079-4916137322b7",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL'",
+        "tenantId": "parity-q69-export-nested-querydsl",
+        "type": "SIMPLIFIED"
+      }
+    ]
+  }
+}
