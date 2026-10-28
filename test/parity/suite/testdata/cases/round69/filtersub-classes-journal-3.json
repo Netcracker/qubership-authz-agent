@@ -1,0 +1,247 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/pip/r29-pairs-gen": {
+   "body": [
+    "x",
+    "y"
+   ],
+   "statusCode": 200
+  }
+ },
+ "pips": {
+  "gen": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR29PairsGen",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r29-pairs-gen"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen"
+  },
+  "hdr": {
+   "cacheable": false,
+   "header": "x-parity-r29-pairs",
+   "name": "subject.parityR29PairsHdr",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "map": {
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   },
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID"
+  },
+  "tok": {
+   "cacheable": false,
+   "claim": "department",
+   "name": "subject.parityR29PairsTok",
+   "pipType": "TOKEN",
+   "type": "UUID"
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "condition": "resource.g == 'w'",
+   "domain": "PARITY_R29_PAIRS_R29PAIRS_PLAIN_001",
+   "id": "fs69-c-d2r46-88a321f61d-ctx0",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "tok"
+   ],
+   "requests": [
+    {
+     "bulk": [
+      {
+       "id": "i1",
+       "operation": "READ",
+       "resource": {
+        "a": "y",
+        "id": "i1"
+       }
+      },
+      {
+       "id": "i2",
+       "operation": "READ",
+       "resource": {
+        "a": "n",
+        "id": "i2"
+       }
+      }
+     ],
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "q",
+     "tenantId": ""
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R29P_R29PAIRS_PLAIN_001_S"
+  },
+  {
+   "about": "Question: the rsql filter selects {\"f17a\": \"zz\", \"f17b\": \"zz\", \"f17c\": \"zz\", \"f19a\": \"ROLE_PARITY_READER\", \"f19b\": \"v1\"}, which the check denies; the answer depends on whether the filter wraps a predicate that joins with , in parentheses. Configuration: set absent |   set absent |     set DENY_OVERRIDES |       policy DENY_OVERRIDES: DENY[rsql] f17a==${resourceType};f17b==v1,f17c==v2; DENY[several] f19a=in=(${subject.permissions}),f19b==v1",
+   "id": "fs69-c-d2r46-88a321f61d",
+   "requests": [
+    {
+     "filter": true,
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "filter",
+     "operation": "READ"
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz",
+      "f19a": "h2",
+      "f19b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "f17b": "zz",
+      "f19a": "ROLE_PARITY_READER",
+      "f19b": "v1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "f17c": "v2",
+      "f19a": "h2",
+      "f19b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "f17c": "v2",
+      "f19a": "00000000-0000-0000-0000-000000000101"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "f17b": "zz",
+      "f19a": "r1",
+      "f19b": "v1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-6",
+     "operation": "READ",
+     "resource": {
+      "f17c": "zz",
+      "f19a": "h2",
+      "f19b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-7",
+     "operation": "READ",
+     "resource": {
+      "f17a": "PARITY_SUITE_R29P_R29PAIRS_Q_003",
+      "f17c": "zz",
+      "f19a": "h1",
+      "f19b": "v1"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0n2",
+       "omitStatus": true,
+       "policies": [],
+       "sets": [
+        {
+         "algorithm": "DENY_OVERRIDES",
+         "key": "s0n2n2",
+         "omitStatus": true,
+         "policies": [
+          {
+           "algorithm": "DENY_OVERRIDES",
+           "key": "s0n2n2p2",
+           "rules": [
+            {
+             "condition": "resource.f17a == '{{resourceType}}' AND resource.f17b == 'v1' OR resource.f17c == 'v2'",
+             "effect": "DENY",
+             "key": "r17",
+             "predicates": {
+              "rsqlPredicate": "f17a==${resourceType};f17b==v1,f17c==v2"
+             },
+             "target": "true"
+            },
+            {
+             "condition": "resource.f19a IN subject.permissions OR resource.f19b == 'v1'",
+             "effect": "DENY",
+             "key": "r19",
+             "predicates": {
+              "mongodbPredicate": "{ \"$or\": [ { \"f19a\": { \"$in\": ${subject.permissions} } }, { \"f19b\": \"v1\" } ] }",
+              "predicate": "(${resourceType}.f19a.in(${subject.permissions})).or(${resourceType}.f19b.eq(\"v1\"))",
+              "rsqlPredicate": "f19a=in=(${subject.permissions}),f19b==v1",
+              "sqlPredicate": "f19a IN (${subject.permissions}) OR f19b='v1'"
+             },
+             "target": "true"
+            }
+           ],
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'"
+          }
+         ],
+         "target": "true"
+        }
+       ],
+       "target": "true"
+      }
+     ],
+     "target": "resourceType == '{{resourceType}}'"
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R29P_R29PAIRS_Q_003"
+  }
+ ]
+}

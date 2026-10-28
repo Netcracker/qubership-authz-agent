@@ -35,10 +35,10 @@ COPY test/k8s/parity/idp-seed/cloud-common-realm.json test/k8s/parity/idp-seed/p
 COPY test/parity/suite/testdata/realm/ users/
 COPY test/parity/suite/testdata/realm-clients/ clients/
 COPY test/integration/pipstub/config/ pip-stub/
-# The user files under testdata/realm/, if any, hold no first name, last name, or email,
+# Most users under testdata/realm/ declare no first name, last name, or email,
 # and Keycloak 26 refuses a password grant to such a user with "Account is not
-# fully set up". The profile function fills them in with the values these users
-# have on the stand the goldens were recorded on, for example Parity,
+# fully set up". The profile function fills in the ones a user leaves out with
+# the values these users have on the stand the goldens were recorded on, for example Parity,
 # R29LevelM2M, and parity-r29-level-m2m@example.test, so the tokens carry the
 # same claims as the ones the goldens were recorded with. The clients under
 # testdata/realm-clients/ are added to the realm as they are. The build fails

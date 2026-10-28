@@ -1,0 +1,236 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   }
+  },
+  "/api/v1/pip/obs-failed": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity observation wrapper"
+   }
+  },
+  "/api/v1/pip/r16-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 16 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR16Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r16-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR16Failing"
+   },
+   "cacheable": false
+  },
+  "obs-subject-parityobsfailed": {
+   "name": "subject.parityObsFailed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/obs-failed",
+   "requestAttributes": {
+    "case": "obs-failed"
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "fs69-c-mt44-138-t20",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        },
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "resource.obsMark == 'y' OR subject.parityR16Failing == 'v'",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "b": "y"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "b": "zz",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "b": "zz",
+      "obsMark": "zz"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "b": "y",
+      "obsMark": "y"
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "LIST",
+     "resource": {
+      "b": "y",
+      "obsMark": "zz"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-mt44-138-t13",
+   "pips": [
+    "failing",
+    "obs-subject-parityobsfailed",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "policies": [
+      {
+       "key": "s0-p0",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r0",
+         "target": "resource.b == 'y'",
+         "condition": "subject.permissionScope.region CONTAINS 'r1'",
+         "effect": "DENY"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "wrap13",
+       "target": "true",
+       "rules": [
+        {
+         "key": "s0-p0-r1",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "sets": [],
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "b": "y"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "b": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,629 @@
+{
+ "about": "Round 69: how check/filter parenthesises a negated DENY predicate whose rsql text holds a comma, quoted, escaped or not; what the filter reads of an INACTIVE policy; and which nested sets a set of type SIMPLIFIED, uploaded or customized so, lets take part. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_OPEN_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "op69-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-parens-deny-and",
+   "about": "A DENY_OVERRIDES policy with an ALLOW rule whose predicate is fa==1 and two DENY rules whose predicates are fb==2;fc==3 and fd==4, in every dialect: the filter joins the negated DENY predicates to the ALLOW side. Its rsql negation fb!=2,fc!=3 is an OR inside an AND: is it parenthesised, or joined as written so that the AND binds fc!=3 alone?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        },
+        {
+         "key": "deny-first",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fb==2;fc==3",
+          "sqlPredicate": "fb=2 AND fc=3",
+          "predicate": "${resourceType}.fb.eq(2).and(${resourceType}.fc.eq(3))",
+          "mongodbPredicate": "{ \"fb\": 2, \"fc\": 3 }"
+         }
+        },
+        {
+         "key": "deny-second",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fd==4",
+          "sqlPredicate": "fd=4",
+          "predicate": "${resourceType}.fd.eq(4)",
+          "mongodbPredicate": "{ \"fd\": 4 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-parens-deny-quoted",
+   "about": "A DENY_OVERRIDES policy with an ALLOW rule whose predicate is fa==1 and two DENY rules whose predicates are fq=='x;y' and fd==4, in every dialect: the filter joins the negated DENY predicates to the ALLOW side. Its rsql negation fq!='x,y' holds a comma only inside the quotes: is it parenthesised as a join?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        },
+        {
+         "key": "deny-first",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fq=='x;y'",
+          "sqlPredicate": "fq='x;y'",
+          "predicate": "${resourceType}.fq.eq(\"x;y\")",
+          "mongodbPredicate": "{ \"fq\": \"x;y\" }"
+         }
+        },
+        {
+         "key": "deny-second",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fd==4",
+          "sqlPredicate": "fd=4",
+          "predicate": "${resourceType}.fd.eq(4)",
+          "mongodbPredicate": "{ \"fd\": 4 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-parens-deny-escaped",
+   "about": "A DENY_OVERRIDES policy with an ALLOW rule whose predicate is fa==1 and two DENY rules whose predicates are fq=='x\\';y' and fd==4, in every dialect: the filter joins the negated DENY predicates to the ALLOW side. Its rsql negation fq!='x\\',y' holds a comma after an escaped quote: is it parenthesised, and does the escaped quote end the quoted text?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        },
+        {
+         "key": "deny-first",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fq=='x\\';y'",
+          "sqlPredicate": "fq='x'';y'",
+          "predicate": "${resourceType}.fq.eq(\"x';y\")",
+          "mongodbPredicate": "{ \"fq\": \"x';y\" }"
+         }
+        },
+        {
+         "key": "deny-second",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fd==4",
+          "sqlPredicate": "fd=4",
+          "predicate": "${resourceType}.fd.eq(4)",
+          "mongodbPredicate": "{ \"fd\": 4 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-inactive-deny-pred",
+   "about": "An active policy whose ALLOW rule carries fa==1 beside an INACTIVE DENY_OVERRIDES policy whose DENY rule carries the predicate fd==4, under DENY_OVERRIDES: does the filter read the INACTIVE policy's DENY predicate?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "inactive",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fd==4",
+          "sqlPredicate": "fd=4",
+          "predicate": "${resourceType}.fd.eq(4)",
+          "mongodbPredicate": "{ \"fd\": 4 }"
+         }
+        }
+       ],
+       "fields": {
+        "status": "INACTIVE"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-inactive-allow-holds",
+   "about": "An active policy whose ALLOW rule carries fa==1 beside an INACTIVE policy whose ALLOW rule holds and has no predicate, under PERMIT_OVERRIDES: does the filter allow through the INACTIVE policy, or answer fa==1?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "active",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "inactive",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-all",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ],
+       "fields": {
+        "status": "INACTIVE"
+       }
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-simplified-nested-active",
+   "about": "A set of type SIMPLIFIED whose own policy does not permit (its rule needs resource.c == 'zz') and whose nested ACTIVE set permits READ: does the nested set take part in the check and the filter?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "own-allow",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "nested-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "type": "SIMPLIFIED"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-simplified-nested-draft",
+   "about": "A set of type SIMPLIFIED whose own policy does not permit (its rule needs resource.c == 'zz') and whose nested DRAFT set permits READ: does the nested set take part in the check and the filter?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "own-allow",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "nested-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "fields": {
+        "status": "DRAFT"
+       }
+      }
+     ],
+     "fields": {
+      "type": "SIMPLIFIED"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-simplified-by-customization",
+   "about": "A set without a type whose own policy does not permit and whose nested ACTIVE set permits READ, asked before and after a CUSTOMER customization that gives the set the type SIMPLIFIED: does a type set by a customization drop the nested set as an uploaded one does?",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "own",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "own-allow",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "nested-allow",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter-before",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "read-before",
+     "resource": {
+      "id": "r33"
+     }
+    }
+   ],
+   "customize": [
+    {
+     "name": "import",
+     "level": "CUSTOMER",
+     "sets": [
+      {
+       "key": "set",
+       "type": "SIMPLIFIED"
+      }
+     ],
+     "requests": [
+      {
+       "name": "filter-after",
+       "filter": true,
+       "operation": "READ"
+      },
+      {
+       "name": "read-after",
+       "resource": {
+        "id": "r33"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "op69-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
