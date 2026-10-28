@@ -13,18 +13,18 @@ kichasov
 
 #### Participants and approvers
 
-The project architect, who settled the audience at a meeting on 2026-10-16 and the provider and the namespace list in
-a questionnaire returned on 2026-10-27. The Netcracker/qubership-authz-agent maintainers (kichasov). Assumption: the
-approvers' GitHub accounts are added when this record is reviewed.
+The project architect, who settled the audience at a meeting on 2026-10-16, the provider and the namespace list in a
+questionnaire returned on 2026-10-27, and a topology file without `composite` at a meeting on 2026-10-28. The
+Netcracker/qubership-authz-agent maintainers (kichasov). Assumption: the approvers' GitHub accounts are added when this
+record is reviewed.
 
 #### Related ADRs
 
 - [authz-agent-ADR-0084: Verify tokens in Go before OPA and pass the policies the verified identity](20261027-authz-agent-adr-0084-verify-tokens-in-go.md):
   the namespace check of this record runs in the Go verifier that record introduces, and a Kubernetes token counts as
   M2M there.
-- [authz-agent-ADR-0085: Take the tenant of a decision from the request and check the caller against it](20261027-authz-agent-adr-0085-tenant-from-the-request.md):
-  the request names the tenant for a Kubernetes token as for any other, and a Kubernetes token passes the caller check
-  as an M2M token.
+- [authz-agent-ADR-0085: Take the tenant of a decision from the request and check the user token against it](20261027-authz-agent-adr-0085-tenant-from-the-request.md):
+  the request names the tenant for a Kubernetes token as for any other.
 
 ## Context
 
@@ -85,8 +85,8 @@ installation.
 - A Kubernetes token is accepted only from a namespace of the installation: the origin and the peer of the baseline and
   of every satellite in `/etc/topology/data`, the `data` key of the ConfigMap `topology`.
 - The namespace is the `namespace` member of the `kubernetes.io` claim. A token without it is refused.
-- The chart mounts the ConfigMap with `optional: true`. While the file is missing or cannot be parsed, only the
-  namespace the agent runs in is allowed.
+- The chart mounts the ConfigMap with `optional: true`. While the file is missing, cannot be parsed, or has no
+  `composite`, only the namespace the agent runs in is allowed.
 - The agent reads the file again every 20 seconds, and the check runs on a verified token taken from the cache too. A
   namespace that leaves the topology is refused once the kubelet has updated the mounted file and the next read has
   run, with no restart.
@@ -153,6 +153,5 @@ Neutral:
 - `M2M_AUTH_MODE` takes the place of `KUBERNETES_M2M_ENABLED`, which today chooses only the agent's own token. How the
   agent gets its own token in each mode is outside this record; in `hybrid` it stays a Keycloak token, as the architect
   decided.
-- Open point, decided as above until answered: what a topology file without `composite` allows. Today it allows no
-  namespace, the agent's own included, so every Kubernetes token is refused in such a namespace; the architect has been
-  asked whether such a file occurs.
+- `internal/token/namespaces` allows the agent's own namespace for a topology file without `composite`, where today
+  it allows none.
