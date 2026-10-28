@@ -15,7 +15,11 @@
 package paritysuite
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -26,9 +30,16 @@ import (
 // in an order that differs from one run to the next, at every level of the
 // expression: the terms of one OR, the terms of one AND, and the bracketed groups
 // of nested sets and of simplified policies. The functions here rewrite each
-// filter dialect into a form in which the terms of every operator are sorted, so
-// that two answers that differ in that order alone compare equal. The form is
-// for comparison only; the golden on disk keeps the text the stand answered.
+// filter dialect into a form in which the terms of every operator and the
+// elements of every list are sorted, so that two answers that differ in that
+// order alone compare equal. A list here is also a list of values the stand
+// substitutes from a PIP answer, which it writes as an IN list, as the
+// arguments of an eq call, or as a comma-separated tail of a comparison. The
+// arguments of an SQL function and of an RSQL comparison other than =in= and
+// =out= keep their order: they come from a predicate text the policy sets,
+// which the stand copies as written, and there the order carries meaning. The
+// form is for comparison only; the golden on disk keeps the text the stand
+// answered.
 //
 // The canonical text is not the dialect's own syntax: separators are rejoined
 // without the stand's spacing, and a chain of method calls is written back in
@@ -55,8 +66,8 @@ func normalizeFilterOrder(v any) any {
 		clone := *typed
 		clone.FilterCondition = clone.FilterCondition.Map(canonicalMethodChain)
 		clone.MongodbFilterCondition = clone.MongodbFilterCondition.Map(infixCanon(mongodbSeparators))
-		clone.RsqlFilterCondition = clone.RsqlFilterCondition.Map(infixCanon(rsqlSeparators))
-		clone.SqlFilterCondition = clone.SqlFilterCondition.Map(infixCanon(sqlSeparators))
+		clone.RsqlFilterCondition = clone.RsqlFilterCondition.Map(infixCanon(rsqlDialect))
+		clone.SqlFilterCondition = clone.SqlFilterCondition.Map(infixCanon(sqlDialect))
 		clone.CustomFilterCondition = canonicalJSON(clone.CustomFilterCondition)
 		return &clone
 	default:
@@ -67,51 +78,112 @@ func normalizeFilterOrder(v any) any {
 func normalizeOldFilterResultOrder(r *model.OldFilterEvaluationResult) {
 	r.FilterCondition = r.FilterCondition.Map(canonicalMethodChain)
 	r.MongodbFilterCondition = r.MongodbFilterCondition.Map(infixCanon(mongodbSeparators))
-	r.RsqlFilterCondition = r.RsqlFilterCondition.Map(infixCanon(rsqlSeparators))
-	r.SqlFilterCondition = r.SqlFilterCondition.Map(infixCanon(sqlSeparators))
+	r.RsqlFilterCondition = r.RsqlFilterCondition.Map(infixCanon(rsqlDialect))
+	r.SqlFilterCondition = r.SqlFilterCondition.Map(infixCanon(sqlDialect))
 	r.CustomFilterCondition = canonicalJSON(r.CustomFilterCondition)
 }
 
-// The separators of the infix dialects, from the loosest-binding operator to the
-// tightest: the split at one level of brackets is tried in this order, and the
-// first separator that splits decides the terms of that level. The comma of the
-// SQL dialect is the one inside an IN list, whose elements the stand permutes as
-// it does the terms of an operator.
+// An infixDialect is what canonicalInfix needs to know of one infix filter
+// dialect: the separators of its operators, from the loosest-binding to the
+// tightest, and which bracket groups hold arguments whose order carries
+// meaning. At each bracket level the text is split at the first operator that
+// occurs outside brackets and quotes, and that operator decides the terms of
+// the level.
+type infixDialect struct {
+	operators []string
+	// orderedArguments reports whether the bracket group that opens at the end
+	// of prefix holds arguments that keep their order. The comma-separated
+	// elements of any other group are sorted.
+	orderedArguments func(prefix string) bool
+}
+
 var (
-	rsqlSeparators    = []string{",", ";"}
-	sqlSeparators     = []string{" OR ", " AND ", ","}
-	mongodbSeparators = []string{","}
+	// rsqlBracketedComparison matches the text before the bracketed operand of
+	// an RSQL comparison, and captures the name of the comparison.
+	rsqlBracketedComparison = regexp.MustCompile(`=([A-Za-z]*)=\($`)
+	// sqlFunctionCall matches the text before the arguments of an SQL function,
+	// a name followed by the bracket with no space, and captures the name.
+	sqlFunctionCall = regexp.MustCompile(`([A-Za-z_][A-Za-z0-9_]*)\($`)
+
+	// The comma of RSQL is its OR. A bracketed operand of =in= or =out= is a
+	// set of values; that of any other comparison, such as =between=, keeps
+	// its order.
+	rsqlDialect = infixDialect{
+		operators: []string{",", ";"},
+		orderedArguments: func(prefix string) bool {
+			m := rsqlBracketedComparison.FindStringSubmatch(prefix)
+			return m != nil && m[1] != "in" && m[1] != "out"
+		},
+	}
+	// The comma of SQL separates the elements of an IN list, and of a list of
+	// values the stand substitutes after a comparison, as in a='a', 'b'.
+	sqlDialect = infixDialect{
+		operators: []string{" OR ", " AND ", ","},
+		orderedArguments: func(prefix string) bool {
+			m := sqlFunctionCall.FindStringSubmatch(prefix)
+			if m == nil {
+				return false
+			}
+			switch strings.ToUpper(m[1]) {
+			case "IN", "NOT", "AND", "OR":
+				return false
+			}
+			return true
+		},
+	}
+	// mongodbSeparators split the members of an object and the elements of an
+	// array of a mongodbFilterCondition.
+	mongodbSeparators = infixDialect{
+		operators:        []string{","},
+		orderedArguments: func(string) bool { return false },
+	}
 	// methodArgumentSeparators split the arguments of one call in the method
 	// chain dialect, such as the elements of an in list.
 	methodArgumentSeparators = []string{","}
 )
 
 // canonicalInfix sorts the terms of every operator in an infix expression. At
-// each bracket level the text is split at the first separator of seps that
-// occurs outside brackets and quotes; the parts are canonicalized in turn,
-// trimmed, sorted, and rejoined with that separator. A level that no separator
-// splits keeps its text, with every bracketed group inside it canonicalized.
-func canonicalInfix(expr string, seps []string) string {
-	for _, sep := range seps {
+// each bracket level the text is split at the first operator of d that occurs
+// outside brackets and quotes; the parts are canonicalized in turn, trimmed,
+// sorted, and rejoined with that operator. A level that no operator splits
+// keeps its text, with every bracketed group inside it canonicalized; the
+// comma-separated arguments of a group for which d.orderedArguments holds are
+// canonicalized and kept in their order.
+func canonicalInfix(expr string, d infixDialect) string {
+	for _, sep := range d.operators {
 		parts := splitOutsideBrackets(expr, sep)
 		if len(parts) < 2 {
 			continue
 		}
-		for i := range parts {
-			parts[i] = canonicalInfix(strings.TrimSpace(parts[i]), seps)
-		}
-		sort.Strings(parts)
-		return strings.Join(parts, sep)
+		return joinTerms(parts, sep, true, func(part string) string { return canonicalInfix(part, d) })
 	}
-	return rewriteBracketGroups(expr, func(inner string) string {
-		return canonicalInfix(strings.TrimSpace(inner), seps)
+	return rewriteBracketGroups(expr, func(prefix, inner string) string {
+		if d.orderedArguments(prefix) {
+			return joinTerms(splitOutsideBrackets(inner, ","), ",", false, func(part string) string { return canonicalInfix(part, d) })
+		}
+		return canonicalInfix(strings.TrimSpace(inner), d)
 	})
 }
 
-// infixCanon returns canonicalInfix with the separators seps, the form
+// infixCanon returns canonicalInfix for the dialect d, the form
 // [model.FilterText.Map] applies to a dialect's text.
-func infixCanon(seps []string) func(string) string {
-	return func(expr string) string { return canonicalInfix(expr, seps) }
+func infixCanon(d infixDialect) func(string) string {
+	return func(expr string) string { return canonicalInfix(expr, d) }
+}
+
+// joinTerms trims every part, rewrites it with canonicalize unless that is nil,
+// sorts the parts when sorted is set, and joins them with sep.
+func joinTerms(parts []string, sep string, sorted bool, canonicalize func(string) string) string {
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+		if canonicalize != nil {
+			parts[i] = canonicalize(parts[i])
+		}
+	}
+	if sorted {
+		sort.Strings(parts)
+	}
+	return strings.Join(parts, sep)
 }
 
 // canonicalMethodChain sorts the operands of a chain of .and( ) or .or( ) calls,
@@ -122,13 +194,15 @@ func infixCanon(seps []string) func(string) string {
 // every call in the chain is the same method the operands are sorted, and a
 // chain that mixes the two keeps its order; either way the chain is written
 // back with its methods. Text with no such call keeps its text, with every
-// bracketed group inside it canonicalized; a group holding a comma list, the
-// arguments of an in call, has its elements sorted.
+// bracketed group inside it canonicalized and the arguments of every call
+// sorted: the stand writes a list of values as the arguments of an in or an eq
+// call.
 func canonicalMethodChain(expr string) string {
 	operands, methods := splitMethodChain(expr)
 	if len(operands) < 2 {
-		return rewriteBracketGroups(expr, func(inner string) string {
-			return canonicalInfix(strings.TrimSpace(inner), methodArgumentSeparators)
+		return rewriteBracketGroups(expr, func(_, inner string) string {
+			parts := splitOutsideBrackets(inner, methodArgumentSeparators[0])
+			return joinTerms(parts, methodArgumentSeparators[0], len(parts) > 1, canonicalMethodChain)
 		})
 	}
 	for i := range operands {
@@ -261,8 +335,10 @@ func splitOutsideBrackets(expr, sep string) []string {
 
 // rewriteBracketGroups replaces the text inside every outermost bracket group of
 // expr, ( ), [ ], or { }, with rewrite of that text, and keeps everything outside
-// the groups as it is. Brackets inside quotes do not open a group.
-func rewriteBracketGroups(expr string, rewrite func(string) string) string {
+// the groups as it is. Brackets inside quotes do not open a group. Beside the
+// text, rewrite gets the prefix of expr up to and including the opening bracket,
+// which tells what the group is: the arguments of a call, an IN list, an array.
+func rewriteBracketGroups(expr string, rewrite func(prefix, inner string) string) string {
 	var out strings.Builder
 	depth := 0
 	var quote byte
@@ -285,7 +361,7 @@ func rewriteBracketGroups(expr string, rewrite func(string) string) string {
 		case c == ')' || c == ']' || c == '}':
 			depth--
 			if depth == 0 {
-				out.WriteString(rewrite(expr[start:i]))
+				out.WriteString(rewrite(expr[:start], expr[start:i]))
 				start = i
 			}
 		}
@@ -297,15 +373,22 @@ func rewriteBracketGroups(expr string, rewrite func(string) string) string {
 // canonicalJSON rewrites a customFilterCondition into compact JSON with every
 // array sorted by the JSON text of its elements, at every depth. The golden is
 // written with indentation and the stand answers compact, so the two never
-// compare equal as bytes; and the apply array of a logic node lists its
-// operands in the same unstable order as the text dialects. Text that is not
-// JSON, and a null or absent value, are returned as they are.
+// compare equal as bytes; the apply array of a logic node lists its operands in
+// the same unstable order as the text dialects, and a params array holds a
+// list of values from a PIP answer. A number keeps its digits rather than
+// becoming a float64. Text that is not one JSON value, and a null or absent
+// value, are returned as they are.
 func canonicalJSON(raw json.RawMessage) json.RawMessage {
 	if len(raw) == 0 {
 		return raw
 	}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
 	var v any
-	if err := json.Unmarshal(raw, &v); err != nil || v == nil {
+	if err := decoder.Decode(&v); err != nil || v == nil {
+		return raw
+	}
+	if _, err := decoder.Token(); !errors.Is(err, io.EOF) {
 		return raw
 	}
 	compact, err := json.Marshal(sortJSONArrays(v))
