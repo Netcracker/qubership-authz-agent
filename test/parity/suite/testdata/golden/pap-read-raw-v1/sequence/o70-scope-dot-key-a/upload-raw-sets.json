@@ -1,0 +1,42 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o70-scope-dot-key-a",
+        "iterate": {
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+          "foreach": "subject.permissionScope"
+        },
+        "name": "o70-scope-dot-key-a set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o70-scope-dot-key-a reader",
+            "policyId": "614aa2a8-4442-1b2e-93a5-687d1621bd53",
+            "rules": [
+              {
+                "condition": "subject.permissionScope.a. CONTAINS 'v' OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o70-scope-dot-key-a probe",
+                "ruleId": "d3561933-27d8-cb63-4146-618b8d3b9a21",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o70-scope-dot-key-a"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o70-scope-dot-key-a"
+          }
+        ],
+        "policySetId": "f8cd1adf-a519-e873-9402-180466ed987e",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O70_SCOPE_DOT_KEY_A'",
+        "tenantId": "parity-o70-scope-dot-key-a",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}
