@@ -274,6 +274,19 @@
       ]
     },
     {
+      "clientId": "parity-m2m-no-audience",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "secret": "ParityM2MNoAudienceSecret1!@#",
+      "defaultClientScopes": ["basic", "web-origins", "profile", "roles", "email"],
+      "optionalClientScopes": [],
+      "protocolMappers": []
+    },
+    {
       "clientId": "parity-end-user-tenant-a",
       "enabled": true,
       "protocol": "openid-connect",
@@ -359,6 +372,12 @@
       "username": "service-account-parity-m2m-tenant-empty",
       "enabled": true,
       "serviceAccountClientId": "parity-m2m-tenant-empty",
+      "realmRoles": ["ROLE_samples-repository", "ROLE_M2M"]
+    },
+    {
+      "username": "service-account-parity-m2m-no-audience",
+      "enabled": true,
+      "serviceAccountClientId": "parity-m2m-no-audience",
       "realmRoles": ["ROLE_samples-repository", "ROLE_M2M"]
     },
     {
