@@ -83,23 +83,8 @@ var tenantClaimPolicy = map[string]any{
 // The cases live in their own test function so that a recording run can be
 // filtered to them and leave every golden already committed alone.
 func (s *ParitySuite) TestInterpreterTenantClaimCases() {
-	ctx := context.Background()
-	stand := s.cfg.Tenants
-	twoTenants := stand.Configured() && !isAuthzAgentProfile(s.cfg.Profile)
-	tenantA := s.cfg.TenantID
-	if twoTenants {
-		tenantA = stand.A.ID
-	}
-
-	s.T().Cleanup(func() {
-		if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
-			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
-		}
-	})
-	status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, []any{tenantClaimPolicy})
-	s.Require().NoError(err, "upload of the tenant-claim policy into %s", isolatedCaseDomain)
-	s.Require().GreaterOrEqual(status, http.StatusOK, "upload of the tenant-claim policy into %s", isolatedCaseDomain)
-	s.Require().Less(status, http.StatusMultipleChoices, "upload of the tenant-claim policy into %s", isolatedCaseDomain)
+	stand, twoTenants, tenantA := s.tenantClaimStand()
+	s.uploadIsolatedCasePolicy("tenant-claim", tenantClaimPolicy)
 
 	// claimed mints a token and checks that it carries the claim with the given
 	// value, or no claim when present is false.
@@ -111,17 +96,9 @@ func (s *ParitySuite) TestInterpreterTenantClaimCases() {
 	}
 	claimA := TokenBundle{M2M: claimed(s.cfg.TenantClaim.M2MTenantA, true, tenantA)}
 	claimUnknown := TokenBundle{M2M: claimed(s.cfg.TenantClaim.M2MTenantUnknown, true, unknownTenantID)}
-	// A mapper with an empty value may add no claim at all; that is a property
-	// of the identity provider, not of access-control, so tc6 skips rather than
-	// records a claimless answer under its name.
 	emptyToken, err := s.tokens.M2MTokenFor(s.cfg.TenantClaim.M2MTenantEmpty)
 	s.Require().NoError(err, "M2M token from client %s", s.cfg.TenantClaim.M2MTenantEmpty.ID)
-	emptyClaimSkip := ""
-	if got, has := s.decodeJWTClaims(emptyToken, s.cfg.TenantClaim.M2MTenantEmpty.ID)[tenantClaimName]; !has {
-		emptyClaimSkip = "the token of " + s.cfg.TenantClaim.M2MTenantEmpty.ID + " carries no " + tenantClaimName + " claim: the identity provider drops an empty hardcoded claim"
-	} else {
-		s.Require().Equal("", got, "%s claim in the token of %s", tenantClaimName, s.cfg.TenantClaim.M2MTenantEmpty.ID)
-	}
+	emptyClaimSkip := s.emptyClaimSkip(emptyToken, s.cfg.TenantClaim.M2MTenantEmpty.ID)
 	claimEmpty := TokenBundle{M2M: emptyToken}
 	noClaim := TokenBundle{M2M: s.mustM2MToken()}
 	s.requireTenantClaim(noClaim.M2M, s.cfg.M2MClientID, false, "")
@@ -171,6 +148,50 @@ func (s *ParitySuite) TestInterpreterTenantClaimCases() {
 			)
 		})
 	}
+}
+
+// tenantClaimStand returns the tenants the tenant-claim cases address: the
+// stand's two tenants, whether both can be asked, and tenant A's identifier,
+// which is TenantID where tenant B cannot be asked.
+func (s *ParitySuite) tenantClaimStand() (stand TenantStand, twoTenants bool, tenantA string) {
+	stand = s.cfg.Tenants
+	twoTenants = stand.Configured() && !isAuthzAgentProfile(s.cfg.Profile)
+	tenantA = s.cfg.TenantID
+	if twoTenants {
+		tenantA = stand.A.ID
+	}
+	return stand, twoTenants, tenantA
+}
+
+// uploadIsolatedCasePolicy makes policy the only content of PARITY_ISOLATED in
+// tenant A, and empties the domain when the test ends.
+func (s *ParitySuite) uploadIsolatedCasePolicy(what string, policy map[string]any) {
+	s.T().Helper()
+	ctx := context.Background()
+	s.T().Cleanup(func() {
+		if _, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, nil); err != nil {
+			s.T().Logf("empty domain %s: %v", isolatedCaseDomain, err)
+		}
+	})
+	status, err := UploadIsolatedPolicies(ctx, s.cfg, s.tokens, isolatedCaseDomain, nil, []any{policy})
+	s.Require().NoError(err, "upload of the %s policy into %s", what, isolatedCaseDomain)
+	s.Require().GreaterOrEqual(status, http.StatusOK, "upload of the %s policy into %s", what, isolatedCaseDomain)
+	s.Require().Less(status, http.StatusMultipleChoices, "upload of the %s policy into %s", what, isolatedCaseDomain)
+}
+
+// emptyClaimSkip returns the reason to skip a case that needs an empty
+// tenant-id claim, or "" when the token carries one. A mapper with an empty
+// value may add no claim at all; that is a property of the identity provider,
+// not of access-control, so the case skips rather than records a claimless
+// answer under its name.
+func (s *ParitySuite) emptyClaimSkip(token, clientID string) string {
+	s.T().Helper()
+	got, has := s.decodeJWTClaims(token, clientID)[tenantClaimName]
+	if !has {
+		return "the token of " + clientID + " carries no " + tenantClaimName + " claim: the identity provider drops an empty hardcoded claim"
+	}
+	s.Require().Equal("", got, "%s claim in the token of %s", tenantClaimName, clientID)
+	return ""
 }
 
 // requireTenantClaim fails the test when the access token's tenant-id claim is

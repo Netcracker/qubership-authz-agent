@@ -97,6 +97,11 @@ type Config struct {
 	// tenant-id claim, for the cases that record what the claim does to a
 	// decision.
 	TenantClaim TenantClaimClients
+	// NoAudience is the client of the parity realm that is configured like
+	// parity-m2m except that it adds no "netcracker" audience to its tokens,
+	// for the case that asks whether a check route reads the audience of the
+	// token in Authorization. PARITY_NO_AUDIENCE_CLIENT_{ID,SECRET} override it.
+	NoAudience ClientCredentials
 	// TokenSubject holds the clients of
 	// testdata/realm-clients/token-subject-clients.json by client id, for the
 	// cases whose token lacks a claim or carries an array in place of a
@@ -205,7 +210,11 @@ func LoadConfig() Config {
 		Profile:             profile,
 		Tenants:             loadTenantStand(),
 		TenantClaim:         loadTenantClaimClients(),
-		TokenSubject:        loadTokenSubjectClients(),
+		NoAudience: ClientCredentials{
+			ID:     envOr("PARITY_NO_AUDIENCE_CLIENT_ID", "parity-m2m-no-audience"),
+			Secret: envOr("PARITY_NO_AUDIENCE_CLIENT_SECRET", "ParityM2MNoAudienceSecret1!@#"),
+		},
+		TokenSubject: loadTokenSubjectClients(),
 	}
 }
 
