@@ -24,14 +24,17 @@ import (
 )
 
 type Policy struct {
-	Component         string `json:"component"`
-	ResourceType      string `json:"resourceType"`
-	Operation         string `json:"operation"`
-	Condition         any    `json:"condition"`
-	RSQLPredicate     string `json:"rsqlPredicate"`
-	SQLPredicate      string `json:"sqlPredicate"`
-	MongoDBPredicate  string `json:"mongodbPredicate"`
-	QueryDSLPredicate string `json:"querydslPredicate"`
+	Component        string `json:"component"`
+	ResourceType     string `json:"resourceType"`
+	Operation        string `json:"operation"`
+	Condition        any    `json:"condition"`
+	RSQLPredicate    string `json:"rsqlPredicate"`
+	SQLPredicate     string `json:"sqlPredicate"`
+	MongoDBPredicate string `json:"mongodbPredicate"`
+	// QueryDSLPredicate is the querydsl predicate of a regular rule, read from
+	// its predicate field by acconfig. A simplified policy has no querydsl
+	// field, so decoding a simplified policy leaves it empty.
+	QueryDSLPredicate string `json:"-"`
 	Roles             []any  `json:"roles"`
 }
 

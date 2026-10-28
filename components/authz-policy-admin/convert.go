@@ -25,16 +25,22 @@ import (
 
 // simplifiedPolicy mirrors internal/simplifiedpolicies.Policy (only the
 // fields the stub uses for v3 export conversion).
+//
+// Predicate is not a field of an access-control simplified policy: it is the
+// querydsl template that access-control keeps in the predicate field of a v3
+// rule. The stub accepts it here and writes it to the v3 rule unchanged, so a
+// test can deliver a querydsl predicate without a regular policy set, which
+// the stub has no endpoint for.
 type simplifiedPolicy struct {
-	Component         string `json:"component"`
-	ResourceType      string `json:"resourceType"`
-	Operation         string `json:"operation"`
-	Condition         any    `json:"condition,omitempty"`
-	RSQLPredicate     string `json:"rsqlPredicate,omitempty"`
-	SQLPredicate      string `json:"sqlPredicate,omitempty"`
-	MongoDBPredicate  string `json:"mongodbPredicate,omitempty"`
-	QueryDSLPredicate string `json:"querydslPredicate,omitempty"`
-	Roles             []any  `json:"roles,omitempty"`
+	Component        string `json:"component"`
+	ResourceType     string `json:"resourceType"`
+	Operation        string `json:"operation"`
+	Condition        any    `json:"condition,omitempty"`
+	RSQLPredicate    string `json:"rsqlPredicate,omitempty"`
+	SQLPredicate     string `json:"sqlPredicate,omitempty"`
+	MongoDBPredicate string `json:"mongodbPredicate,omitempty"`
+	Predicate        string `json:"predicate,omitempty"`
+	Roles            []any  `json:"roles,omitempty"`
 }
 
 // simplifiedPIP mirrors internal/pips.SimplifiedPIP (fields used by
@@ -104,15 +110,15 @@ type v3Policy struct {
 }
 
 type v3Rule struct {
-	RuleID            string  `json:"ruleId"`
-	Name              string  `json:"name"`
-	Target            string  `json:"target"`
-	Condition         *string `json:"condition"`
-	Effect            string  `json:"effect"`
-	RSQLPredicate     string  `json:"rsqlPredicate,omitempty"`
-	SQLPredicate      string  `json:"sqlPredicate,omitempty"`
-	MongoDBPredicate  string  `json:"mongodbPredicate,omitempty"`
-	QueryDSLPredicate string  `json:"querydslPredicate,omitempty"`
+	RuleID           string  `json:"ruleId"`
+	Name             string  `json:"name"`
+	Target           string  `json:"target"`
+	Condition        *string `json:"condition"`
+	Effect           string  `json:"effect"`
+	RSQLPredicate    string  `json:"rsqlPredicate,omitempty"`
+	SQLPredicate     string  `json:"sqlPredicate,omitempty"`
+	MongoDBPredicate string  `json:"mongodbPredicate,omitempty"`
+	Predicate        string  `json:"predicate,omitempty"`
 }
 
 type v3PIPsResponse struct {
@@ -157,12 +163,12 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 	type psKey struct{ domain, resourceType string }
 	type pKey struct{ roles string }
 	type ruleVal struct {
-		operation         string
-		condition         string
-		rsqlPredicate     string
-		sqlPredicate      string
-		mongodbPredicate  string
-		querydslPredicate string
+		operation        string
+		condition        string
+		rsqlPredicate    string
+		sqlPredicate     string
+		mongodbPredicate string
+		predicate        string
 	}
 
 	// Collect in insertion order.
@@ -177,12 +183,12 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 		}
 		rk := pKey{roles: rolesKey(p.Roles)}
 		psMap[pk][rk] = append(psMap[pk][rk], ruleVal{
-			operation:         p.Operation,
-			condition:         conditionString(p.Condition),
-			rsqlPredicate:     p.RSQLPredicate,
-			sqlPredicate:      p.SQLPredicate,
-			mongodbPredicate:  p.MongoDBPredicate,
-			querydslPredicate: p.QueryDSLPredicate,
+			operation:        p.Operation,
+			condition:        conditionString(p.Condition),
+			rsqlPredicate:    p.RSQLPredicate,
+			sqlPredicate:     p.SQLPredicate,
+			mongodbPredicate: p.MongoDBPredicate,
+			predicate:        p.Predicate,
 		})
 	}
 
@@ -209,15 +215,15 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 					condPtr = &c
 				}
 				v3Rules = append(v3Rules, v3Rule{
-					RuleID:            fmt.Sprintf("rule-%d-%d", pi, ri),
-					Name:              fmt.Sprintf("rule-%s-%s", rule.operation, rule.condition),
-					Target:            target,
-					Condition:         condPtr,
-					Effect:            "ALLOW",
-					RSQLPredicate:     rule.rsqlPredicate,
-					SQLPredicate:      rule.sqlPredicate,
-					MongoDBPredicate:  rule.mongodbPredicate,
-					QueryDSLPredicate: rule.querydslPredicate,
+					RuleID:           fmt.Sprintf("rule-%d-%d", pi, ri),
+					Name:             fmt.Sprintf("rule-%s-%s", rule.operation, rule.condition),
+					Target:           target,
+					Condition:        condPtr,
+					Effect:           "ALLOW",
+					RSQLPredicate:    rule.rsqlPredicate,
+					SQLPredicate:     rule.sqlPredicate,
+					MongoDBPredicate: rule.mongodbPredicate,
+					Predicate:        rule.predicate,
 				})
 			}
 			policyTarget := rolesTarget(prk.roles)
