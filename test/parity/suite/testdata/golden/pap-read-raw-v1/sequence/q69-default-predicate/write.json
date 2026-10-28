@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-q69-default-predicate",
+        "name": "q69-default-predicate set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "q69-default-predicate policy",
+            "policyId": "6d4aa506-2dad-99f8-12dc-a67023e4ce94",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "q69-default-predicate rule",
+                "predicate": "PARITY_SUITE_Q69_DEFAULT_PREDICATE.a.eq(\"r69\")",
+                "ruleId": "dd1e0018-ee88-7b67-edd0-95481959c449",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-q69-default-predicate"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-q69-default-predicate"
+          }
+        ],
+        "policySetId": "47c5b1e7-d5c2-f979-8abe-5a311d2905d8",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_PREDICATE'",
+        "tenantId": "parity-q69-default-predicate",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

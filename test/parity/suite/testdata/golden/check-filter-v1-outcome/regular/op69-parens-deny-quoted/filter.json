@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R69_OPEN_OP69_PARENS_DENY_QUOTED.fa.eq(1)).and((PARITY_SUITE_R69_OPEN_OP69_PARENS_DENY_QUOTED.fd.eq(4)).not()).and((PARITY_SUITE_R69_OPEN_OP69_PARENS_DENY_QUOTED.fq.eq(\"x;y\")).not())",
+    "mongodbFilterCondition": "{ \"$and\": [ { { \"fa\": 1 } }, {{ \"fd\": 4 }}, {{ \"fq\": \"x;y\" }} ] }",
+    "rsqlFilterCondition": "(fa==1);fd!=4;fq!='x,y'",
+    "sqlFilterCondition": "(fa=1) AND NOT (fd=4) AND NOT (fq='x;y')",
+    "customFilterCondition": null
+  }
+}
