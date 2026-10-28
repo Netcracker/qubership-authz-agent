@@ -16,8 +16,6 @@ package engine
 
 import (
 	"context"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/open-policy-agent/opa/v1/topdown/builtins"
@@ -36,9 +34,9 @@ roles := data.policies.roles
 when := time.now_ns()
 `
 
-func newTestEngine(t *testing.T, dataDirs ...string) *Engine {
+func newTestEngine(t *testing.T) *Engine {
 	t.Helper()
-	e, err := New(Options{Modules: map[string]string{"t.rego": testModule}, DataDirs: dataDirs, Ignore: []string{"..*"}})
+	e, err := New(Options{Modules: map[string]string{"t.rego": testModule}})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -99,42 +97,6 @@ func TestNDBuiltinCache_RecordsTimeNow(t *testing.T) {
 	}
 	if _, ok := ndbc["time.now_ns"]; !ok {
 		t.Fatalf("nd_builtin_cache lacks time.now_ns: %v", ndbc)
-	}
-}
-
-// TestNew_DataDirsSeedTheStore: JSON files under a data directory land at the
-// path of their directory, and names matching Ignore are skipped, like the
-// `..data` entries of a ConfigMap mount.
-func TestNew_DataDirsSeedTheStore(t *testing.T) {
-	dir := t.TempDir()
-	if err := os.MkdirAll(filepath.Join(dir, "authn"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "policies.json"), []byte(`{"policies": {"roles": ["r"]}}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "authn", "jwks.json"), []byte(`{"jwksByKid": {"k": {}}}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(dir, "..data"), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "..data", "stale.json"), []byte(`{"stale": true}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "ignored.rego"), []byte("package ignored\n"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	e := newTestEngine(t, dir)
-	ctx := context.Background()
-	if v, ok, _ := e.Eval(ctx, []string{"t", "roles"}, nil, nil); !ok || len(v.([]any)) != 1 {
-		t.Fatalf("roles from the data dir: %v ok=%v", v, ok)
-	}
-	if _, ok, _ := e.Eval(ctx, []string{"authn", "jwksByKid", "k"}, nil, nil); !ok {
-		t.Fatal("authn/jwks.json did not land under data.authn")
-	}
-	if _, ok, _ := e.Eval(ctx, []string{"stale"}, nil, nil); ok {
-		t.Fatal("..data must be ignored")
 	}
 }
 

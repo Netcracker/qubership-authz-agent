@@ -15,21 +15,16 @@
 // Package pull keeps data.policies and data.pips, the documents the
 // decision policies read, in step with their source: the v3 configuration
 // API of the policy source, fetched every interval and converted to the
-// simplified model, or a mounted directory that carries the simplified
-// model itself. [Puller.Status] reports the first successful load, which
+// simplified model. [Puller.Status] reports the first successful load, which
 // readiness waits for, and the counts of the last conversion.
 package pull
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -45,28 +40,19 @@ import (
 const (
 	DefaultInterval    = 30 * time.Second
 	DefaultHTTPTimeout = 30 * time.Second
-	DefaultMountDir    = "/etc/authz/policies"
 	// tokenWait bounds how long the first pull waits for the m2m token.
 	tokenWait = 15 * time.Second
-	// MountPoliciesFile and MountPIPsFile are the files of the mount
-	// directory: JSON arrays of simplified policies and PIPs.
-	MountPoliciesFile = "policies.json"
-	MountPIPsFile     = "pips.json"
 )
 
-// Config selects the source. MountDir, when it exists, wins over
-// SourceURL. A zero Interval disables the pull and the mount alike, and so
-// does an empty SourceURL without a mount; the status then reports the
-// policies as loaded, so that readiness does not wait for a load that
-// never comes.
+// Config selects the source. A zero Interval or an empty SourceURL
+// disables the pull; the status then reports the policies as loaded, so
+// that readiness does not wait for a load that never comes.
 type Config struct {
 	// SourceURL is the base URL of the policy source, whose
 	// /access/v3/config/policySets and /access/v3/config/pips are fetched.
 	SourceURL string
-	// Interval is the pull period, and the poll period of the mount.
+	// Interval is the pull period.
 	Interval time.Duration
-	// MountDir is the directory that carries policies.json and pips.json.
-	MountDir string
 	// HTTPTimeout bounds one fetch from the source.
 	HTTPTimeout time.Duration
 	// Entitlements is the entitlements PIP pinned by the deployment; nil
@@ -131,7 +117,6 @@ type Puller struct {
 	status         Status
 	firstSuccess   time.Time
 	lastConversion *Conversion
-	appliedHashes  [2]string
 }
 
 // New returns a puller for cfg; an HTTPTimeout that is zero or negative
@@ -159,15 +144,10 @@ func (p *Puller) Status() Status {
 	return p.status
 }
 
-// Run loads the documents until ctx ends: from the mount directory when
-// it exists, else from the source every interval, starting with an
-// immediate load. A failed load keeps the previous documents and is retried
-// on the next tick.
+// Run loads the documents from the source every interval until ctx ends,
+// starting with an immediate load. A failed load keeps the previous
+// documents and is retried on the next tick.
 func (p *Puller) Run(ctx context.Context) {
-	if p.mounted() {
-		p.runMount(ctx)
-		return
-	}
 	if strings.TrimSpace(p.cfg.SourceURL) == "" {
 		p.log.Infof("policies: pull disabled, no source URL")
 		p.disabled("pull disabled: source URL empty")
@@ -212,45 +192,6 @@ func (p *Puller) waitForToken(ctx context.Context) {
 	case <-ctx.Done():
 	case <-time.After(tokenWait):
 		p.log.Warnf("policies: no m2m token after %s, pulling without one", tokenWait)
-	}
-}
-
-func (p *Puller) mounted() bool {
-	if p.cfg.MountDir == "" {
-		return false
-	}
-	info, err := os.Stat(p.cfg.MountDir)
-	return err == nil && info.IsDir()
-}
-
-func (p *Puller) runMount(ctx context.Context) {
-	if p.cfg.Interval == 0 {
-		p.log.Infof("policies: mount %s, watch disabled", p.cfg.MountDir)
-		p.disabled("mount watcher disabled: interval is 0")
-		return
-	}
-	p.log.Infof("policies: loading from mount %s every %s", p.cfg.MountDir, p.cfg.Interval)
-	p.applyMount(ctx)
-	ticker := time.NewTicker(p.cfg.Interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			p.applyMount(ctx)
-		}
-	}
-}
-
-func (p *Puller) applyMount(ctx context.Context) {
-	changed, err := p.ApplyMount(ctx)
-	switch {
-	case err != nil:
-		p.log.Warnf("policies: mount reload failed, keeping the previous documents: %v", err)
-	case changed:
-		p.log.Infof("policies: loaded from mount %s", p.cfg.MountDir)
-		p.loaded()
 	}
 }
 
@@ -310,42 +251,6 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	}
 	report("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
 	return nil
-}
-
-// ApplyMount loads the mount's files when either changed since the last
-// load. It returns true when the documents were replaced.
-func (p *Puller) ApplyMount(ctx context.Context) (bool, error) {
-	policiesFile := filepath.Join(p.cfg.MountDir, MountPoliciesFile)
-	pipsFile := filepath.Join(p.cfg.MountDir, MountPIPsFile)
-	policiesRaw, policiesHash, err := readHashed(policiesFile)
-	if err != nil {
-		return false, err
-	}
-	pipsRaw, pipsHash, err := readHashed(pipsFile)
-	if err != nil {
-		return false, err
-	}
-	p.mu.Lock()
-	unchanged := p.appliedHashes == [2]string{policiesHash, pipsHash}
-	p.mu.Unlock()
-	if unchanged {
-		return false, nil
-	}
-	policies, err := simplifiedpolicies.Normalize(policiesRaw)
-	if err != nil {
-		return false, fmt.Errorf("normalize policies from mount: %w", err)
-	}
-	pipDoc, _, err := pips.Normalize(pipsRaw)
-	if err != nil {
-		return false, fmt.Errorf("normalize pips from mount: %w", err)
-	}
-	if err := p.load(ctx, policies, pipDoc); err != nil {
-		return false, err
-	}
-	p.mu.Lock()
-	p.appliedHashes = [2]string{policiesHash, pipsHash}
-	p.mu.Unlock()
-	return true, nil
 }
 
 // load completes the PIP document with the pinned entitlements and the
@@ -428,13 +333,4 @@ func roundTrip(v any) (any, error) {
 		return nil, err
 	}
 	return out, nil
-}
-
-func readHashed(path string) ([]byte, string, error) {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return nil, "", fmt.Errorf("read %s: %w", path, err)
-	}
-	sum := sha256.Sum256(raw)
-	return raw, hex.EncodeToString(sum[:]), nil
 }

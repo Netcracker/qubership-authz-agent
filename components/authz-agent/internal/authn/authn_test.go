@@ -91,16 +91,17 @@ type quiet struct{}
 func (quiet) Infof(string, ...any) {}
 func (quiet) Warnf(string, ...any) {}
 
-// idp serves OIDC discovery and a JWKS for the realms it knows: k1 as the
-// signing key of realm a, an encryption key and a key without a kid that
-// no index may carry, and realm b with k2.
+// idp serves OIDC discovery and a JWKS for the realms it knows: realm a
+// with its signing key k1, and realm b with k2. Realm a also lists a key
+// without a kid and an encryption key, which no index may carry. Both come
+// before k1, so an index that stops at either of them loses k1.
 func idp(t *testing.T) *httptest.Server {
 	t.Helper()
 	keys := map[string][]map[string]any{
 		"a": {
-			{"kid": "k1", "kty": "RSA", "alg": "RS256", "use": "sig", "n": "n1", "e": "AQAB"},
-			{"kid": "enc1", "kty": "RSA", "use": "enc", "n": "n2", "e": "AQAB"},
 			{"kty": "RSA", "n": "n3", "e": "AQAB"},
+			{"kid": "enc1", "kty": "RSA", "use": "enc", "n": "n2", "e": "AQAB"},
+			{"kid": "k1", "kty": "RSA", "alg": "RS256", "use": "sig", "n": "n1", "e": "AQAB"},
 		},
 		"b": {{"kid": "k2", "kty": "EC", "alg": "ES256", "crv": "P-256"}},
 	}
@@ -210,6 +211,44 @@ func TestBootstrap_AFailedProviderKeepsTheOthers(t *testing.T) {
 	}
 	if down := status.Providers[0]; down.ID != "down" || down.Result != "failure" || !strings.Contains(down.FailureReason, "unable to fetch OIDC discovery document") {
 		t.Errorf("the result of down = %+v, want a failure with the discovery reason", down)
+	}
+	if kids := keysOf(st.last(t).JwksByKid); !reflect.DeepEqual(kids, []string{"k1"}) {
+		t.Errorf("jwksByKid kids = %v, want [k1]", kids)
+	}
+}
+
+// TestBootstrap_AJWKSWithoutAUsableKeyFailsItsProvider: a provider whose
+// JWKS lists no key, or only keys the index leaves out (here an encryption
+// key and a key without a kid), is recorded as a failure whose reason says
+// the JWKS has no usable signing key. Provider a is the control and
+// bootstraps beside them.
+func TestBootstrap_AJWKSWithoutAUsableKeyFailsItsProvider(t *testing.T) {
+	srv := idp(t)
+	dir := t.TempDir()
+	emptyFile := filepath.Join(dir, "empty.json")
+	if err := os.WriteFile(emptyFile, []byte(`{"keys":[]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	unusableFile := filepath.Join(dir, "unusable.json")
+	if err := os.WriteFile(unusableFile, []byte(`{"keys":[
+		{"kid":"enc2","kty":"RSA","use":"enc","n":"n4","e":"AQAB"},
+		{"kty":"EC","alg":"ES256","crv":"P-256"}]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	file := providersFile(t, fmt.Sprintf(`{"providers":[
+		{"id":"empty","jwksUri":"file://%s"},
+		{"id":"unusable","jwksUri":"file://%s"},
+		{"id":"a","issuer":"%s/realms/a"}]}`, emptyFile, unusableFile, srv.URL))
+	m, st := newManager(t, file, false, "")
+
+	status := m.Bootstrap(context.Background())
+	if status.SuccessCount != 1 || status.FailureCount != 2 {
+		t.Errorf("Bootstrap() counts = %+v, want 1 success and 2 failures", status)
+	}
+	for i, id := range []string{"empty", "unusable"} {
+		if got := status.Providers[i]; got.ID != id || got.Result != "failure" || !strings.Contains(got.FailureReason, "no usable signing key") {
+			t.Errorf("the result of %s = %+v, want a failure with the no-usable-signing-key reason", id, got)
+		}
 	}
 	if kids := keysOf(st.last(t).JwksByKid); !reflect.DeepEqual(kids, []string{"k1"}) {
 		t.Errorf("jwksByKid kids = %v, want [k1]", kids)
