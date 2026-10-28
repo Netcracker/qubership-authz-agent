@@ -517,6 +517,42 @@ func TestRefresh_AProviderBesideAFailingOneTakesItsNewKeys(t *testing.T) {
 	}
 }
 
+// A 3xx whose Location header does not parse fails in http.Client.Do, with a
+// text that repeats the header twice: 70 runes and the header's runes twice.
+// The error keeps the method and the URL as url.Error prints them and quotes
+// that text whole up to 200 runes, and its first 200 runes with "..." after
+// them when it is longer: for the longest header, the 33 runes of `failed to
+// parse Location header "` and the first 167 of the header. The whole text
+// used to reach the log, more than 8 KB for a 4 KB header.
+func TestRefresh_QuotesTheErrorOfAMalformedRedirect(t *testing.T) {
+	tests := []struct {
+		name, location, wantText string
+	}{
+		{"header of 65 runes, a text of exactly 200", "/%zz" + strings.Repeat("a", 61),
+			`"failed to parse Location header \"/%zz` + strings.Repeat("a", 61) + `\": parse \"/%zz` + strings.Repeat("a", 61) + `\": invalid URL escape \"%zz\""`},
+		{"header of 66 runes, a text of 202", "/%zz" + strings.Repeat("a", 62),
+			`"failed to parse Location header \"/%zz` + strings.Repeat("a", 62) + `\": parse \"/%zz` + strings.Repeat("a", 62) + `\": invalid URL escape \"%z"...`},
+		{"header of 2048 two-byte runes", "/%zz" + strings.Repeat("é", 2048), `"failed to parse Location header \"/%zz` + strings.Repeat("é", 163) + `"...`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "old", nil))
+			provider := singleOf(IdentityProviderID, idp)
+			set := mustLoad(t, testOptions(), provider)
+			idp.redirect(tt.location)
+
+			err := set.Refresh(context.Background())
+			want := `provider "identity-provider" keeps its previous keys after a failed load: Get "` + idp.srv.URL + `/jwks": ` + tt.wantText
+			if err == nil || err.Error() != want {
+				t.Errorf("Refresh() error = %v, want %s", err, want)
+			}
+			if !loaded(set, provider, "old") {
+				t.Errorf("Lookup(%q) found nothing, want the key loaded before the redirect", "old")
+			}
+		})
+	}
+}
+
 // A JWKS that parses and holds no usable signing key removes the provider's
 // keys. A JWKS whose keys member is missing, null, or not an array is a failed
 // load, and the old key stays.
