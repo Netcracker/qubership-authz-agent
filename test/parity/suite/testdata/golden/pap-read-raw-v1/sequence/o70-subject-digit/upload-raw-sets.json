@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-o70-subject-digit",
+        "name": "o70-subject-digit set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "o70-subject-digit reader",
+            "policyId": "9c7ef67f-e13a-4c30-b5bd-ad8f11f3ef4a",
+            "rules": [
+              {
+                "condition": "subject.1x == 'v' OR resource.a == 'y'",
+                "effect": "ALLOW",
+                "name": "o70-subject-digit probe",
+                "ruleId": "4271bfb4-2e09-ddc2-5388-48b278ec08a4",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-o70-subject-digit"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-o70-subject-digit"
+          }
+        ],
+        "policySetId": "a3d26259-262e-7464-124f-dafd8f8f180e",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_O70_SUBJECT_DIGIT'",
+        "tenantId": "parity-o70-subject-digit",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}
