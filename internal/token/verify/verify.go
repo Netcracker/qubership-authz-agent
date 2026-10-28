@@ -26,6 +26,7 @@ package verify
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -114,7 +115,7 @@ type Token struct {
 	expiry     time.Time
 
 	// key is the key that verified the token. A cached Token is returned
-	// only while the [KeyFinder] returns this key for keyID.
+	// only while [KeyFinder.Lookup] returns this key for keyID.
 	key jwk.Key
 }
 
@@ -180,8 +181,12 @@ func (t *Token) Expiry() time.Time { return t.expiry }
 // KeyFinder finds a signing key by kid; [*keys.Set] implements it.
 type KeyFinder interface {
 	// Lookup returns the key published under kid from the keys already
-	// loaded.
+	// loaded, without waiting.
 	Lookup(kid string) (keys.Key, bool)
+	// LookupOrReload returns the key published under kid. When no loaded
+	// key has that kid, it may reload the keys first; it returns once the
+	// reload ends or ctx ends, from the keys loaded by then.
+	LookupOrReload(ctx context.Context, kid string) (keys.Key, bool)
 }
 
 // Defaults of [Options].
@@ -249,16 +254,23 @@ func New(source KeyFinder, opts Options) *Verifier {
 // verifies, so a forged token is refused with [CodeSignatureInvalid]
 // whatever its claims say.
 //
+// When no loaded key has the kid, Verify waits for the reload that
+// [KeyFinder.LookupOrReload] may start, until the reload ends or ctx ends.
+// When ctx ends first, the kid is looked up among the keys loaded by then,
+// and a token whose kid is still unknown is refused with [CodeKIDUnknown],
+// not with ctx.Err().
+//
 // A token verified earlier that has not expired is served from the cache,
-// as the *Token the earlier call returned, while the [KeyFinder] returns the
-// same key for its kid. [Options.Admit] then runs on the token either way.
-func (v *Verifier) Verify(raw string) (*Token, error) {
+// as the *Token the earlier call returned, while [KeyFinder.Lookup] returns
+// the same key for its kid. [Options.Admit] then runs on the token either
+// way.
+func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
 	tok := v.cached(digest, now)
 	if tok == nil {
 		var err error
-		if tok, err = v.check(raw, digest, now); err != nil {
+		if tok, err = v.check(ctx, raw, digest, now); err != nil {
 			return nil, err
 		}
 	}
@@ -272,12 +284,12 @@ func (v *Verifier) Verify(raw string) (*Token, error) {
 
 // check verifies raw, whose SHA-256 digest is digest, at now and caches the
 // token it returns.
-func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*Token, error) {
+func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte, now time.Time) (*Token, error) {
 	alg, kid, err := readHeader(raw)
 	if err != nil {
 		return nil, err
 	}
-	key, ok := v.keys.Lookup(kid)
+	key, ok := v.keys.LookupOrReload(ctx, kid)
 	if !ok {
 		return nil, fail(CodeKIDUnknown, "kid %s is published by no trusted provider", short(kid))
 	}

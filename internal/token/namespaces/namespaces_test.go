@@ -248,6 +248,8 @@ type oneKey struct{ key keys.Key }
 
 func (o oneKey) Lookup(kid string) (keys.Key, bool) { return o.key, kid == o.key.ID }
 
+func (o oneKey) LookupOrReload(_ context.Context, kid string) (keys.Key, bool) { return o.Lookup(kid) }
+
 // verifierFor returns a Verifier that trusts one EC key of provider and runs
 // admit, and a function that signs a token with that key whose claims are an
 // unexpired iat and exp plus fields.
@@ -314,7 +316,7 @@ func TestAllowlist_AdmitChecksTheTokensOfTheNamedProviders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v, sign := verifierFor(t, tt.provider, a.Admit("kubernetes"))
-			_, err := v.Verify(sign(tt.claims))
+			_, err := v.Verify(t.Context(), sign(tt.claims))
 			var got verify.Code
 			var refused *verify.Error
 			if errors.As(err, &refused) {
