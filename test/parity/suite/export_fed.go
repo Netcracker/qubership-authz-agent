@@ -282,6 +282,12 @@ func decisionOutcome(id ParityEndpointID, status int, body []byte) (any, error) 
 			t.Decision = &byOp
 		}
 		return t, nil
+	case *model.CheckResourceV2Outcome:
+		return checkV2Outcome(status, body, nil), nil
+	case *model.CheckResourceBulkOperationsV2Outcome:
+		return bulkOperationsV2Outcome(status, body, nil)
+	case *model.FilterV2Outcome:
+		return filterV2Outcome(status, body, nil), nil
 	case *bool:
 		// A plain row records a 200 answer; a refusal is not a denial.
 		if !ok {
@@ -698,6 +704,9 @@ func grants(actual, want any) bool {
 	case *model.CheckResourceOutcome:
 		w, _ := want.(*model.CheckResourceOutcome)
 		return a.Status == http.StatusOK && a.Decision && (w == nil || w.Status != http.StatusOK || !w.Decision)
+	case *model.CheckResourceV2Outcome:
+		w, _ := want.(*model.CheckResourceV2Outcome)
+		return a.Status == http.StatusOK && a.Decision && (w == nil || w.Status != http.StatusOK || !w.Decision)
 	case *[]string:
 		w, _ := want.(*[]string)
 		return w != nil && !subset(*a, *w)
@@ -721,11 +730,23 @@ func grants(actual, want any) bool {
 			allowed = *w.Decision
 		}
 		return a.Decision != nil && !opsSubset(*a.Decision, allowed)
+	case *model.CheckResourceBulkOperationsV2Outcome:
+		var allowed map[string][]string
+		if w, _ := want.(*model.CheckResourceBulkOperationsV2Outcome); w != nil && w.Decision != nil {
+			allowed = *w.Decision
+		}
+		return a.Decision != nil && !opsSubset(*a.Decision, allowed)
 	case *model.CheckResourcesResponse:
 		w, _ := want.(*model.CheckResourcesResponse)
 		return w != nil && !opsSubset(a.Decision, w.Decision)
 	case *model.FilterOutcome:
 		w, _ := want.(*model.FilterOutcome)
+		if w == nil || w.Status != http.StatusOK {
+			return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > 0
+		}
+		return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > filterRank(w.Result.CalculationResult)
+	case *model.FilterV2Outcome:
+		w, _ := want.(*model.FilterV2Outcome)
 		if w == nil || w.Status != http.StatusOK {
 			return a.Status == http.StatusOK && filterRank(a.Result.CalculationResult) > 0
 		}
