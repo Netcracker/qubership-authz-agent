@@ -1,0 +1,59 @@
+{
+  "ol69-match-infinity": {
+    "check-resource-v1-outcome/regular/a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-match-infinity-deny": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-double-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-double-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-member-java-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-member-java-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-member-json-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-member-json-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-order-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-order-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-repeats-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-text-repeats-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

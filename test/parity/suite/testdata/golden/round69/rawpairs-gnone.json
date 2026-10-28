@@ -1,0 +1,38 @@
+{
+  "rp69-007": {
+    "check-resource-bulk-operations-v1-outcome/regular/q1": {"status":400,"message":{"message":"The request 'operations' cannot be empty"}},
+    "check-resource-bulk-v1-outcome/regular/q2": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/regular/q0": {"status":400,"decision":false,"message":{"message":"The request 'operation' cannot be empty"}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp69-008": {
+    "check-filter-v1-outcome/regular/q1": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-bulk-operations-v1-outcome/regular/q2": {"status":200,"decision":{"UPDATE":[]}},
+    "check-resource-bulk-v1-outcome/regular/q0": {"status":200,"allowed":[]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp69-gnone-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp69-gnone-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

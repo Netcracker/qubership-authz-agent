@@ -1,0 +1,220 @@
+{
+  "t69-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "t69-control-last": {
+    "check-resource-v1-outcome/regular/read": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "t69-index-spaces": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-index-spaces-right": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-match-scope-dot-matches": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-match-scope-dot-short": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-match-subject-bracket": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-path-trailing-dot": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-path-trailing-dot-key": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-path-trailing-dot-right": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-scope-bare-iterate": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-scope-bare-outside": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-scope-bracket-key": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-scope-dot-key": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-scope-dot-path": {
+    "check-resource-v1-outcome/regular/read-a-n": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "check-resource-v1-outcome/regular/read-a-y": {
+      "status": 400,
+      "decision": false,
+      "message": {
+        "message": "Unsupported type=PERMISSION_SCOPE for pip=subject.permissionScope"
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "t69-subject-attribute": {
+    "check-resource-v1-outcome/regular/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

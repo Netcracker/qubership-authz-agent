@@ -1,0 +1,20 @@
+{
+  "rp69-head-filtered-condition": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp69-heads-control-first": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  },
+  "rp69-heads-control-last": {
+    "check-resource-v1-outcome/regular/rn": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/ry": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200},
+    "load-simplified-policies-v1/regular/declare-the-domain": {"status":200}
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "ol69-case-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-case-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-list-object-scalar-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-list-object-scalar-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-list-of-lists-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-list-of-lists-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-list-number-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-list-number-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-list-order-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-list-order-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-object-scalar-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-object-scalar-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-text-number-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-member-text-number-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-number-text-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-number-text-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-object-scalar-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-object-scalar-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-order-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-order-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-repeats-eq": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-repeats-ne": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ol69-self": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,556 @@
+{
+  "q69-control-first": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-control-first",
+            "name": "q69-control-first set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-control-first policy",
+                "policyId": "6ccc7d5d-390e-ae49-8d28-3166b1927c6d",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-control-first rule",
+                    "ruleId": "f9e60868-e88b-5142-efc8-dda058df2cc7",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-q69-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-control-first"
+              }
+            ],
+            "policySetId": "1e120518-58cc-b922-4b2f-45ebb7c02bf7",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_CONTROL_FIRST'",
+            "tenantId": "parity-q69-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-control-last": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-control-last",
+            "name": "q69-control-last set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-control-last policy",
+                "policyId": "b8987cde-8c57-4fe4-5361-e8f819db111c",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-control-last rule",
+                    "ruleId": "3c870b78-808b-8962-cd25-b3ac620d63c6",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-q69-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-control-last"
+              }
+            ],
+            "policySetId": "657f225d-ea63-8b94-b48e-5cd57080fb54",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_CONTROL_LAST'",
+            "tenantId": "parity-q69-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-default-predicate": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "PARITY_SUITE_Q69_DEFAULT_PREDICATE.a.eq(\"r69\")",
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-default-predicate",
+            "name": "q69-default-predicate set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-default-predicate policy",
+                "policyId": "6d4aa506-2dad-99f8-12dc-a67023e4ce94",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-default-predicate rule",
+                    "predicate": "PARITY_SUITE_Q69_DEFAULT_PREDICATE.a.eq(\"r69\")",
+                    "ruleId": "dd1e0018-ee88-7b67-edd0-95481959c449",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-q69-default-predicate"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-default-predicate"
+              }
+            ],
+            "policySetId": "47c5b1e7-d5c2-f979-8abe-5a311d2905d8",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_PREDICATE'",
+            "tenantId": "parity-q69-default-predicate",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-default-querydsl": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-default-querydsl",
+            "name": "q69-default-querydsl set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-default-querydsl policy",
+                "policyId": "45def9f2-a281-b63c-e94a-6efd85813058",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-default-querydsl rule",
+                    "ruleId": "40820308-8f39-c6ca-65b8-03962a550879",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-q69-default-querydsl"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-default-querydsl"
+              }
+            ],
+            "policySetId": "6dc128fb-7130-8a3f-76df-d1381fc8ae82",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_QUERYDSL'",
+            "tenantId": "parity-q69-default-querydsl",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-default-querydsl-operation-all": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-default-querydsl-operation-all",
+            "name": "q69-default-querydsl-operation-all set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-default-querydsl-operation-all policy",
+                "policyId": "4a0e0f4b-c467-5abf-d0df-affd7a833fe6",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-default-querydsl-operation-all rule",
+                    "ruleId": "3686c47f-ea3b-2844-7a12-7bfba62ed8df",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-q69-default-querydsl-operation-all"
+                  }
+                ],
+                "target": "operation == 'ALL'",
+                "tenantId": "parity-q69-default-querydsl-operation-all"
+              }
+            ],
+            "policySetId": "dc77ccf2-50db-1259-c364-17c6905af84f",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_DEFAULT_QUERYDSL_OPERATION_ALL'",
+            "tenantId": "parity-q69-default-querydsl-operation-all",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-export-nested-and-top-querydsl": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"a\":{\"$eq\":\"r69\"} }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL",
+            "name": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL_PARITY_PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL_PARITY_PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL_READ_Policy",
+                "policyId": "8cfa37d9-5c0b-e3ad-ac61-eba2882207dc",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "mongodbPredicate": "\"a\":{\"$eq\":\"r69\"}",
+                    "name": "r69 q69-export-nested-and-top-querydsl",
+                    "ruleId": "fa37d95c-0be3-adac-61eb-a2882207dc97",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-q69-export-nested-and-top-querydsl"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-q69-export-nested-and-top-querydsl"
+              }
+            ],
+            "policySetId": "bf8cfa37-d95c-0be3-adac-61eba2882207",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_EXPORT_NESTED_AND_TOP_QUERYDSL'",
+            "tenantId": "parity-q69-export-nested-and-top-querydsl",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-export-nested-querydsl": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"a\":{\"$eq\":\"r69\"} }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-simplified-policies-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "component": "PARITY",
+            "domain": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL",
+            "name": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_PARITY_PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_PolicySet",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_PARITY_PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL_READ_Policy",
+                "policyId": "2ee730e8-f44a-91f0-7949-16137322b741",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "mongodbPredicate": "\"a\":{\"$eq\":\"r69\"}",
+                    "name": "r69 q69-export-nested-querydsl",
+                    "ruleId": "e730e8f4-4a91-f079-4916-137322b74132",
+                    "ruleType": "DEFAULT",
+                    "target": "subject.roles CONTAINS ANY 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-q69-export-nested-querydsl"
+                  }
+                ],
+                "target": "operation == 'READ'",
+                "tenantId": "parity-q69-export-nested-querydsl"
+              }
+            ],
+            "policySetId": "bb2ee730-e8f4-4a91-f079-4916137322b7",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_EXPORT_NESTED_QUERYDSL'",
+            "tenantId": "parity-q69-export-nested-querydsl",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-simplified-querydsl": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-simplified-querydsl",
+            "name": "q69-simplified-querydsl set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-simplified-querydsl policy",
+                "policyId": "f685c9d9-2367-fd87-ba9a-517c98fa944f",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-simplified-querydsl rule",
+                    "ruleId": "049859db-37ae-abfc-47d3-05e9d2bd2d05",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-q69-simplified-querydsl"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-simplified-querydsl"
+              }
+            ],
+            "policySetId": "e1a71151-8d16-1027-dfbb-af4d386c5b72",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL'",
+            "tenantId": "parity-q69-simplified-querydsl",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-simplified-querydsl-beside-rsql": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": "a==r69",
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-simplified-querydsl-beside-rsql",
+            "name": "q69-simplified-querydsl-beside-rsql set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-simplified-querydsl-beside-rsql policy",
+                "policyId": "66300d25-00d2-4883-80e4-ccb4a75e1789",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-simplified-querydsl-beside-rsql rule",
+                    "rsqlPredicate": "a==r69",
+                    "ruleId": "b68f4a65-0e63-c431-68fb-f1a73e471603",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'READ'",
+                    "tenantId": "parity-q69-simplified-querydsl-beside-rsql"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-q69-simplified-querydsl-beside-rsql"
+              }
+            ],
+            "policySetId": "1e74ea36-11ca-2cfa-2739-df3b013b8dc8",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_BESIDE_RSQL'",
+            "tenantId": "parity-q69-simplified-querydsl-beside-rsql",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  },
+  "q69-simplified-querydsl-operation-all": {
+    "check-filter-v1-outcome/sequence/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/sequence/check": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/write": {"status":200},
+    "pap-error-v1/sequence/write": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/write": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-q69-simplified-querydsl-operation-all",
+            "name": "q69-simplified-querydsl-operation-all set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "q69-simplified-querydsl-operation-all policy",
+                "policyId": "0205e706-5a8d-bcdc-3015-b42e2aeba2b2",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "q69-simplified-querydsl-operation-all rule",
+                    "ruleId": "df803f01-dc69-486a-438d-69d1e56a3866",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-q69-simplified-querydsl-operation-all"
+                  }
+                ],
+                "target": "operation == 'ALL'",
+                "tenantId": "parity-q69-simplified-querydsl-operation-all"
+              }
+            ],
+            "policySetId": "8a2f2bd7-537d-bb23-c312-50c48e33f203",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_Q69_SIMPLIFIED_QUERYDSL_OPERATION_ALL'",
+            "tenantId": "parity-q69-simplified-querydsl-operation-all",
+            "type": "SIMPLIFIED"
+          }
+        ]
+      }
+    },
+    "pap-read-raw-v1/sequence/write-raw-pips": {"status":200,"body":{"pips":[]}}
+  }
+}

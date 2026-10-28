@@ -1,0 +1,71 @@
+{
+  "ts69-bare-service": {
+    "check-resource-v1-outcome/regular/scopes-contain-openid-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/scopes-contain-openid-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/scopes-contain-openid-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/scopes-is-empty-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/scopes-is-empty-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/scopes-is-empty-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-m2m": {
+    "check-resource-v1-outcome/regular/service-account-is-null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-null-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account-is-preferred-username-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account-is-preferred-username-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-preferred-username-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-many": {
+    "check-resource-v1-outcome/regular/name-in-preferred-username-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-in-preferred-username-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-in-preferred-username-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-one": {
+    "check-resource-v1-outcome/regular/name-in-preferred-username-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-in-preferred-username-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-in-preferred-username-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-scalar-roles": {
+    "check-resource-v1-outcome/regular/roles-contain-reader-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-contain-reader-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-contain-reader-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-scalar-roles-many": {
+    "check-resource-v1-outcome/regular/roles-contain-reader-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-contain-reader-a-y": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-contain-reader-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts69-service": {
+    "check-resource-v1-outcome/regular/service-account-is-client-id-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account-is-client-id-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-client-id-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-null-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-null-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account-is-preferred-username-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/service-account-is-preferred-username-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/service-account-is-preferred-username-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

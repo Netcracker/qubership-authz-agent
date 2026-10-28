@@ -1,0 +1,130 @@
+{
+  "rt69-unk-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-lower-mongodb": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-lower-querydsl": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-lower-rsql": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-lower-sql": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-plural-mongodb": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-plural-querydsl": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-plural-rsql": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "rt69-unk-plural-sql": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/check": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

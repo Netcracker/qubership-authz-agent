@@ -1,0 +1,266 @@
+{
+  "fs69-allow-pred-subject-false-allow-pred-dov-dov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+        "rsqlFilterCondition": "q==1,p==1",
+        "sqlFilterCondition": "q=1 OR p=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dov-dup": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"p\": 1 }}, {{ \"q\": 1 }} ] }",
+        "rsqlFilterCondition": "p==1,q==1",
+        "sqlFilterCondition": "p=1 OR q=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dov-pov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+        "rsqlFilterCondition": "q==1,p==1",
+        "sqlFilterCondition": "q=1 OR p=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dov-pud": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"p\": 1 }}, {{ \"q\": 1 }} ] }",
+        "rsqlFilterCondition": "p==1,q==1",
+        "sqlFilterCondition": "p=1 OR q=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dup-dov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+        "rsqlFilterCondition": "q==1,p==1",
+        "sqlFilterCondition": "q=1 OR p=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dup-dup": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"p\": 1 }}, {{ \"q\": 1 }} ] }",
+        "rsqlFilterCondition": "p==1,q==1",
+        "sqlFilterCondition": "p=1 OR q=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dup-pov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+        "rsqlFilterCondition": "q==1,p==1",
+        "sqlFilterCondition": "q=1 OR p=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-dup-pud": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"p\": 1 }}, {{ \"q\": 1 }} ] }",
+        "rsqlFilterCondition": "p==1,q==1",
+        "sqlFilterCondition": "p=1 OR q=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pov-dov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+        "rsqlFilterCondition": "q==1,p==1",
+        "sqlFilterCondition": "q=1 OR p=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pov-dup": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"q\": 1 }}, {{ \"p\": 1 }} ] }",
+        "rsqlFilterCondition": "q==1,p==1",
+        "sqlFilterCondition": "q=1 OR p=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pov-pov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"p\": 1 }}, {{ \"q\": 1 }} ] }",
+        "rsqlFilterCondition": "p==1,q==1",
+        "sqlFilterCondition": "p=1 OR q=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pov-pud": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"p\": 1 }}, {{ \"q\": 1 }} ] }",
+        "rsqlFilterCondition": "p==1,q==1",
+        "sqlFilterCondition": "p=1 OR q=1",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pud-dov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pud-dup": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pud-pov": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-allow-pred-subject-false-allow-pred-pud-pud": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "fs69-c-r29pairs-plain-001-s": {
+    "load-simplified-policies-v1/isolated": {"status":409,"message":""}
+  },
+  "fs69-c-r29pairs-q-002": {
+    "check-filter-v1-outcome/regular/filter": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": "(fa='v0' OR fb='v1') AND NOT (fc='v2')",
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-c-r31pairs-plain-001": {
+    "check-filter-v1-outcome/regular/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": "((PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S.f6a.eq(\"finance\")).not()).and((PARITY_SUITE_R29P_R31PAIRS_PLAIN_001_S.f7a.in(\"ROLE_PARITY_READER\")).not())",
+        "mongodbFilterCondition": "{ \"$or\": [ {{ \"f6a\": [ { \"$uuid\": \"finance\" } ] }}, {{ \"f7a\": { \"$nin\": [ \"ROLE_PARITY_READER\" ] } }},{ { \"$and\": [ { \"$or\": [ { \"f10a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f10b\": \"v1\" } ] }, { \"f10c\": \"v2\" } ] } } ] }",
+        "rsqlFilterCondition": "f6a!=\"finance\";f7a=out=(\"ROLE_PARITY_READER\")",
+        "sqlFilterCondition": "NOT (f6a='finance') AND NOT (f7a IN ('ROLE_PARITY_READER')) AND NOT (f8a IN ('ROLE_PARITY_READER'))",
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/qc": {
+      "status": 200,
+      "result": {
+        "calculationResult": "USE_FILTER_CONDITION",
+        "filterCondition": null,
+        "mongodbFilterCondition": "{ { \"$and\": [ { \"$or\": [ { \"f10a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } }, { \"f10b\": \"v1\" } ] }, { \"f10c\": \"v2\" } ] } }",
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-resource-v1-outcome/regular/row-1": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-2": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-3": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/row-4": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/row-5": {"status":200,"decision":true},
+    "import-customization-v1/regular/cust": {"status":200},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "fs69-c-r31pairs-plain-001-s": {
+    "check-filter-v1-outcome/isolated/q": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-simplified-policies-v1/isolated": {"status":200}
+  }
+}
