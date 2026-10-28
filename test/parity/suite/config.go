@@ -164,6 +164,7 @@ const tokenSubjectSecret = "ParityTokenSubjectSecret1!@#"
 // fails when the file and this table differ.
 var tokenSubjectClients = map[string]bool{
 	"parity-ts-bare":         true,
+	"parity-ts-service":      true,
 	"parity-ts-arrays":       false,
 	"parity-ts-scalar-roles": false,
 }
