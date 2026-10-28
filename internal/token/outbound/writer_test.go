@@ -24,10 +24,12 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 // tokenEndpoint is a fake token endpoint. It records the path, the form,
@@ -179,9 +181,11 @@ func TestWriter_ReportsTheErrorTheProviderNames(t *testing.T) {
 		{"error without a description", `{"error": "invalid_client"}`, `HTTP 401, error "invalid_client"`},
 		{"description with a line break", `{"error": "invalid_request", "error_description": "line one\nline two"}`,
 			`HTTP 401, error "invalid_request": "line one\nline two"`},
-		{"error of 65 runes", `{"error": "` + strings.Repeat("e", 65) + `"}`,
+		{"error of 65 runes", `{"error": "` + strings.Repeat("e", 64) + `x"}`,
 			`HTTP 401, error "` + strings.Repeat("e", 64) + `"...`},
-		{"description of 201 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 201) + `"}`,
+		{"description of 200 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 200) + `"}`,
+			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"`},
+		{"description of 201 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 200) + `x"}`,
 			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"...`},
 		{"JSON that is not an OAuth error", `{"message": "Unauthorized"}`, `HTTP 401`},
 		{"body that is not JSON", `<html>Unauthorized</html>`, `HTTP 401`},
@@ -196,6 +200,30 @@ func TestWriter_ReportsTheErrorTheProviderNames(t *testing.T) {
 				t.Errorf("Refresh() error = %v, want one that ends with %s", err, tt.want)
 			}
 		})
+	}
+}
+
+// An expires_in of 4096 digits makes x/oauth2 repeat every digit in its parse
+// error.
+func TestWriter_CutsAParseErrorTo200Runes(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": `+strings.Repeat("7", 4096)+`}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	_, err := w.Refresh(context.Background())
+	if err == nil {
+		t.Fatal("Refresh() error = nil, want an error")
+	}
+	prefix := "POST " + w.cfg.TokenURL + ": "
+	text, named := strings.CutPrefix(err.Error(), prefix)
+	text, cut := strings.CutSuffix(text, "...")
+	if !named || !cut {
+		t.Fatalf("Refresh() error = %.300q, want %q, a quoted text, and \"...\"", err, prefix)
+	}
+	unquoted, uerr := strconv.Unquote(text)
+	if uerr != nil {
+		t.Fatalf("Refresh() error = %.300q, want a quoted text after %q: %v", err, prefix, uerr)
+	}
+	if got := utf8.RuneCountInString(unquoted); got != 200 {
+		t.Errorf("Refresh() error quotes %d runes, want 200", got)
 	}
 }
 
@@ -279,6 +307,7 @@ func TestWriter_AFailedRefreshKeepsThePreviousToken(t *testing.T) {
 		{"body that is not JSON", http.StatusOK, `<html></html>`},
 		{"no access_token", http.StatusOK, `{"expires_in": 300}`},
 		{"expires_in that is not a plain integer", http.StatusOK, `{"access_token": "tok-1", "expires_in": 3600.5}`},
+		{"expires_in of 4096 digits", http.StatusOK, `{"access_token": "tok-1", "expires_in": ` + strings.Repeat("7", 4096) + `}`},
 		{"error member in a 200 response", http.StatusOK, `{"access_token": "tok-1", "expires_in": 300, "error": "invalid_client"}`},
 		{"neither expires_in nor a JWT", http.StatusOK, `{"access_token": "opaque"}`},
 		{"JWT without exp", http.StatusOK, `{"access_token": "` + unsignedJWT(t, map[string]any{"sub": "authz-agent"}) + `"}`},

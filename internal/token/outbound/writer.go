@@ -251,7 +251,9 @@ func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (st
 		// The error of http.Client.Do names the method and the URL already.
 		return "", 0, err
 	case err != nil:
-		return "", 0, fmt.Errorf("POST %s: %w", w.cfg.TokenURL, err)
+		// x/oauth2 repeats an expires_in it rejects in its parse error, and
+		// that value can be as long as the body, up to 1 MiB.
+		return "", 0, fmt.Errorf("POST %s: %s", w.cfg.TokenURL, quoted(err.Error(), 200))
 	}
 	// Token sets Expiry from expires_in, a count of whole seconds, as the
 	// response arrives, and leaves it zero when the response has none;
