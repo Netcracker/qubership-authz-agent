@@ -25,6 +25,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -315,6 +316,22 @@ func waitFor(t *testing.T, what string, cond func() bool) {
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
+}
+
+// warnRecorder is a Logger that keeps the warnings.
+type warnRecorder struct {
+	mu       sync.Mutex
+	warnings []string
+}
+
+func (r *warnRecorder) Infof(string, ...any) {
+	// Informational messages are not recorded.
+}
+
+func (r *warnRecorder) Warnf(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
 }
 
 // containsAll reports whether s contains every one of parts.

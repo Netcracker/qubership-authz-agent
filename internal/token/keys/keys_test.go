@@ -24,7 +24,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -547,4 +549,112 @@ func TestRun_ReloadsOnTheInterval(t *testing.T) {
 	waitFor(t, "Run to load the new key", func() bool { _, ok := set.Lookup("new"); return ok })
 	cancel()
 	<-done
+}
+
+// The provider publishes key-2 after Load, as a rotation does; key-1 is the
+// control that Load already loaded.
+func TestSet_LookupOrReloadReloadsForAKIDNoLoadedKeyHas(t *testing.T) {
+	tests := []struct {
+		name        string
+		kid         string
+		discoveries int
+	}{
+		{"kid loaded by Load", "key-1", 1},
+		{"kid published after Load", "key-2", 2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "key-1", nil))
+			set := mustLoad(t, testOptions(), issuer("realm", idp))
+			idp.publish(ecJWK(t, "key-1", nil), ecJWK(t, "key-2", nil))
+			if _, ok := set.LookupOrReload(t.Context(), tt.kid); !ok {
+				t.Errorf("LookupOrReload(%q) found = false, want true", tt.kid)
+			}
+			if got := idp.discoveries(); got != tt.discoveries {
+				t.Errorf("discovery requests after LookupOrReload(%q) = %d, want %d", tt.kid, got, tt.discoveries)
+			}
+		})
+	}
+}
+
+// The provider publishes key-2 after the first reload, within the minute in
+// which no other reload starts. The discovery requests count the reloads
+// after Load's.
+func TestSet_LookupOrReloadReloadsAtMostOnceAMinute(t *testing.T) {
+	idp := newIdP(t, ecJWK(t, "key-1", nil))
+	first := time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC)
+	now := first
+	opts := testOptions()
+	opts.now = func() time.Time { return now }
+	set := mustLoad(t, opts, issuer("realm", idp))
+	lookup := func(at time.Duration, kid string, wantFound bool, wantDiscoveries int) {
+		t.Helper()
+		now = first.Add(at)
+		_, found := set.LookupOrReload(t.Context(), kid)
+		if got := idp.discoveries(); found != wantFound || got != wantDiscoveries {
+			t.Errorf("%s after the first reload, LookupOrReload(%q) found = %t with %d discovery requests, want %t with %d",
+				at, kid, found, got, wantFound, wantDiscoveries)
+		}
+	}
+	lookup(0, "unknown", false, 2)
+	idp.publish(ecJWK(t, "key-1", nil), ecJWK(t, "key-2", nil))
+	lookup(59*time.Second, "key-2", false, 2)
+	lookup(60*time.Second, "key-2", true, 3)
+}
+
+// The JWKS response is held, so the reload the call starts is still running
+// when the call returns.
+func TestSet_LookupOrReloadStopsWaitingWhenItsContextEnds(t *testing.T) {
+	idp := newIdP(t, ecJWK(t, "key-1", nil))
+	set := mustLoad(t, testOptions(), issuer("realm", idp))
+	idp.publish(ecJWK(t, "key-1", nil), ecJWK(t, "key-2", nil))
+	gate := make(chan struct{})
+	idp.setGate(gate)
+	release := sync.OnceFunc(func() { close(gate) })
+	t.Cleanup(release)
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	returned := make(chan bool, 1)
+	go func() {
+		_, found := set.LookupOrReload(ctx, "key-2")
+		returned <- found
+	}()
+	select {
+	case found := <-returned:
+		if found {
+			t.Errorf("LookupOrReload(%q) with an ended context found = true while the reload was held, want false", "key-2")
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatalf("LookupOrReload(%q) with an ended context did not return within 5 s while the reload was held", "key-2")
+	}
+	release()
+	waitFor(t, "the reload to load key-2", func() bool { _, ok := set.Lookup("key-2"); return ok })
+}
+
+func TestSet_LookupOrReloadWarnsWhenTheReloadFails(t *testing.T) {
+	tests := []struct {
+		name   string
+		status int
+		warned bool
+	}{
+		{"provider that answers 503", http.StatusServiceUnavailable, true},
+		{"provider that answers", 0, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "key-1", nil))
+			log := &warnRecorder{}
+			opts := testOptions()
+			opts.Log = log
+			set := mustLoad(t, opts, issuer("realm", idp))
+			idp.setStatus(tt.status)
+			set.LookupOrReload(t.Context(), "unknown")
+			warned := slices.ContainsFunc(log.warnings, func(w string) bool {
+				return containsAll(w, "reload for an unknown kid", `provider "realm"`)
+			})
+			if warned != tt.warned {
+				t.Errorf("warned = %t, want %t; warnings: %q", warned, tt.warned, log.warnings)
+			}
+		})
+	}
 }
