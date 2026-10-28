@@ -46,6 +46,9 @@ type fakeKeys struct {
 	// them when it is asked for a kid it does not hold and its context has
 	// not ended, as a reload the caller waits for would.
 	onReload []keys.Key
+	// reloading, when set, runs during that reload; a test moves the clock
+	// in it by the time the reload takes.
+	reloading func()
 }
 
 func newFakeKeys(signers ...*signer) *fakeKeys {
@@ -67,6 +70,9 @@ func (f *fakeKeys) LookupOrReload(ctx context.Context, kid string) (keys.Key, bo
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if _, ok := f.byKID[kid]; !ok && ctx.Err() == nil {
+		if f.reloading != nil {
+			f.reloading()
+		}
 		for _, k := range f.onReload {
 			f.byKID[k.ID] = k
 		}

@@ -270,7 +270,7 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	tok := v.cached(digest, now)
 	if tok == nil {
 		var err error
-		if tok, err = v.check(ctx, raw, digest, now); err != nil {
+		if tok, err = v.check(ctx, raw, digest); err != nil {
 			return nil, err
 		}
 	}
@@ -282,9 +282,10 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	return tok, nil
 }
 
-// check verifies raw, whose SHA-256 digest is digest, at now and caches the
-// token it returns.
-func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte, now time.Time) (*Token, error) {
+// check verifies raw, whose SHA-256 digest is digest, and caches the token
+// it returns. It reads the clock for exp, nbf, and iat after the key is
+// found, because finding the key can wait for a reload.
+func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte) (*Token, error) {
 	alg, kid, err := readHeader(raw)
 	if err != nil {
 		return nil, err
@@ -308,7 +309,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err := checkAudience(claims, key.Provider); err != nil {
 		return nil, err
 	}
-	expiry, err := checkTimes(claims, now, v.opts.Leeway)
+	expiry, err := checkTimes(claims, v.opts.now(), v.opts.Leeway)
 	if err != nil {
 		return nil, err
 	}
