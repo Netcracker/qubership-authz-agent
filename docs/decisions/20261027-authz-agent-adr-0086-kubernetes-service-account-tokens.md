@@ -22,8 +22,9 @@ approvers' GitHub accounts are added when this record is reviewed.
 - [authz-agent-ADR-0084: Verify tokens in Go before OPA and pass the policies the verified identity](20261027-authz-agent-adr-0084-verify-tokens-in-go.md):
   the namespace check of this record runs in the Go verifier that record introduces, and a Kubernetes token counts as
   M2M there.
-- [authz-agent-ADR-0085: Compute the tenant in Go from the verifying provider](20261027-authz-agent-adr-0085-tenant-from-the-verifying-provider.md):
-  a Kubernetes token takes its tenant from the `Tenant` header.
+- [authz-agent-ADR-0085: Take the tenant of a decision from the request and check the caller against it](20261027-authz-agent-adr-0085-tenant-from-the-request.md):
+  the request names the tenant for a Kubernetes token as for any other, and a Kubernetes token passes the caller check
+  as an M2M token.
 
 ## Context
 
@@ -69,6 +70,8 @@ installation.
 - Every token that a key of a provider marked `kubernetes` verifies is a Kubernetes token. Such a provider lists
   `audiences` and does not set `allowMissingAud`.
 - The agent reads the JWKS at that address with the token and the CA of the file, and needs no RBAC binding.
+- The chart takes the JWKS address from a setting whose default is `https://kubernetes.default.svc/openid/v1/jwks`, so
+  a cluster where that address is unreachable from inside, or that publishes its keys elsewhere, sets its own.
 - The chart mounts, at those two paths, a projected token issued for the API server and the CA bundle of the ConfigMap
   `kube-root-ca.crt`, since the Pod does not mount the default service account token.
 - The chart takes `M2M_AUTH_MODE` with the values `legacy`, `hybrid`, and `k8s`, `legacy` by default, and lists the
@@ -148,7 +151,8 @@ Neutral:
   both change with the wiring of ADR-0084.
 - The API server's keys are reloaded on the schedule that ADR-0084 sets for every provider.
 - `M2M_AUTH_MODE` takes the place of `KUBERNETES_M2M_ENABLED`, which today chooses only the agent's own token. How the
-  agent gets its own token in each mode is outside this record.
+  agent gets its own token in each mode is outside this record; in `hybrid` it stays a Keycloak token, as the architect
+  decided.
 - Open point, decided as above until answered: what a topology file without `composite` allows. Today it allows no
   namespace, the agent's own included, so every Kubernetes token is refused in such a namespace; the architect has been
   asked whether such a file occurs.
