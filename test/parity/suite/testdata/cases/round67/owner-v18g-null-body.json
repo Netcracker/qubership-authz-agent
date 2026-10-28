@@ -1,0 +1,332 @@
+{
+ "about": "the permission scope service answers 200 with the JSON null, for the whole file. An iterating PERMIT_UNLESS_DENY set under each node algorithm, with check/resource in two regions and check/filter. A subject with no assignments answers as the 404 goldens of this set do (scope-set-algorithm/scope-service-not-found); a scope the stand cannot read answers 500. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R67G_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "v18g-null-body-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "v18g-null-body-dup",
+   "about": "The permission scope service answers 200 with the JSON null. A PERMIT_UNLESS_DENY set iterates over subject.permissionScope with node algorithm DENY_UNLESS_PERMIT; its policy allows LIST in the region of each assignment, with rsqlPredicate region=in=(...). check/resource LIST in regions r1 and r2, the calls of the scope route before the first check, and check/filter LIST.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_UNLESS_PERMIT"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r1"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "v18g-null-body-pud",
+   "about": "The permission scope service answers 200 with the JSON null. A PERMIT_UNLESS_DENY set iterates over subject.permissionScope with node algorithm PERMIT_UNLESS_DENY; its policy allows LIST in the region of each assignment, with rsqlPredicate region=in=(...). check/resource LIST in regions r1 and r2, the calls of the scope route before the first check, and check/filter LIST.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_UNLESS_DENY"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r1"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "v18g-null-body-do",
+   "about": "The permission scope service answers 200 with the JSON null. A PERMIT_UNLESS_DENY set iterates over subject.permissionScope with node algorithm DENY_OVERRIDES; its policy allows LIST in the region of each assignment, with rsqlPredicate region=in=(...). check/resource LIST in regions r1 and r2, the calls of the scope route before the first check, and check/filter LIST.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "DENY_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r1"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "v18g-null-body-po",
+   "about": "The permission scope service answers 200 with the JSON null. A PERMIT_UNLESS_DENY set iterates over subject.permissionScope with node algorithm PERMIT_OVERRIDES; its policy allows LIST in the region of each assignment, with rsqlPredicate region=in=(...). check/resource LIST in regions r1 and r2, the calls of the scope route before the first check, and check/filter LIST.",
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "scoped",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "region-granted",
+         "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+         "condition": "subject.permissionScope.region CONTAINS resource.region",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+         }
+        }
+       ]
+      }
+     ],
+     "iterate": {
+      "foreach": "subject.permissionScope",
+      "algorithm": "PERMIT_OVERRIDES"
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r1"
+     },
+     "pipCalls": "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies"
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r67",
+      "region": "r2"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "v18g-null-body-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

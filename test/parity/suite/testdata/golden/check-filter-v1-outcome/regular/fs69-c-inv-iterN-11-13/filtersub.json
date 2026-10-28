@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(((PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f4a.eq(\"v0\")).not()).or((PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f4a.eq(\"v0\")).not())).or((((PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f5a.eq(\"v0\")).and(PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f5b.eq(\"v1\"))).or(PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f5c.eq(\"v2\"))).or(((PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f5a.eq(\"v0\")).and(PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f5b.eq(\"v1\"))).or(PARITY_SUITE_FS69_FS69_C_INV_ITERN_11_13.f5c.eq(\"v2\"))))",
+    "mongodbFilterCondition": null,
+    "rsqlFilterCondition": "((f3a=in=(\"h1\", \"h2\")),(f3a=in=(\"h1\", \"h2\"))),((f6a=in=(\"h1\", \"h2\")),(f6a=in=(\"h1\", \"h2\")))",
+    "sqlFilterCondition": null,
+    "customFilterCondition": null
+  }
+}

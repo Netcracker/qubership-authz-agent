@@ -1,0 +1,107 @@
+{
+ "about": "check/filter over a DENY_OVERRIDES policy: an ALLOW rule with the rsql predicate a==1,b==2 and a DENY rule with c==3. a==1,b==2;c!=3 if the predicate joins as written, (a==1,b==2);c!=3 if it joins as a unit.",
+ "resourceTypePrefix": "PARITY_SUITE_R29D_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29doc-filter-or-inside-an-allow-predicate",
+   "about": "",
+   "pips": [],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "a",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1,b==2"
+         }
+        },
+        {
+         "key": "d",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "r29doc-filter-and-inside-an-allow-predicate-beside-another",
+   "about": "Two ALLOW predicates, one with ;.",
+   "pips": [],
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "a",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1;b==2"
+         }
+        },
+        {
+         "key": "b",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "c==3"
+         }
+        },
+        {
+         "key": "d",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "e==4"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1735 @@
+{
+ "about": "What each operator answers over a HEADER PIP whose header is absent and over a TOKEN PIP whose claim is absent, both with no defaultValue. Recorded before this file: for the header, !=, IS NULL and IS EMPTY all true (h1, h2, hl3/no-header); for the claim, == false, != true and IS NULL true (p1a-p1c). The header answers IS EMPTY true, which null does not, so the absent header may be an empty list; the two readings differ under NOT CONTAINS, NOT CONTAINS ANY and IS NOT EMPTY. Each operator is asked alone, where a true answer is the leaf's value and a false answer is a false leaf or an ended rule, and through a probe and its control, which tell the two apart. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R9_",
+ "pins": {},
+ "pips": {
+  "noheader": {
+   "name": "subject.parityR9NoHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-no-such-header",
+   "cacheable": false
+  },
+  "noclaim": {
+   "name": "subject.parityR9NoClaim",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "parity_r9_no_such_claim",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "es-absent-header-equals-alone",
+   "condition": "subject.parityR9NoHeader == 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-equals",
+   "condition": "subject.parityR9NoHeader == 'v' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-equals-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader == 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-equals-alone",
+   "condition": "subject.parityR9NoHeader != 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-equals",
+   "condition": "subject.parityR9NoHeader != 'v' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-equals-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_NOT_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader != 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-less-than-alone",
+   "condition": "subject.parityR9NoHeader < 5",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-less-than",
+   "condition": "subject.parityR9NoHeader < 5 OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-less-than-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_LESS_THAN_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader < 5",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-null-alone",
+   "condition": "subject.parityR9NoHeader IS NULL",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-null",
+   "condition": "subject.parityR9NoHeader IS NULL OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-null-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IS_NULL_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IS NULL",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-null-alone",
+   "condition": "subject.parityR9NoHeader IS NOT NULL",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-null",
+   "condition": "subject.parityR9NoHeader IS NOT NULL OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-null-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IS_NOT_NULL_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IS NOT NULL",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-empty-alone",
+   "condition": "subject.parityR9NoHeader IS EMPTY",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-empty",
+   "condition": "subject.parityR9NoHeader IS EMPTY OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-empty-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IS_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IS EMPTY",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-empty-alone",
+   "condition": "subject.parityR9NoHeader IS NOT EMPTY",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-empty",
+   "condition": "subject.parityR9NoHeader IS NOT EMPTY OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-empty-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IS_NOT_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IS NOT EMPTY",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-in-alone",
+   "condition": "subject.parityR9NoHeader IN 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-in",
+   "condition": "subject.parityR9NoHeader IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-in-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IN_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IN 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-in-alone",
+   "condition": "subject.parityR9NoHeader NOT IN 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-in",
+   "condition": "subject.parityR9NoHeader NOT IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-in-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_NOT_IN_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader NOT IN 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-contains-alone",
+   "condition": "subject.parityR9NoHeader CONTAINS 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-contains",
+   "condition": "subject.parityR9NoHeader CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-contains-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader CONTAINS 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-contains-alone",
+   "condition": "subject.parityR9NoHeader NOT CONTAINS 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-contains",
+   "condition": "subject.parityR9NoHeader NOT CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-contains-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_NOT_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader NOT CONTAINS 'v'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-match-alone",
+   "condition": "subject.parityR9NoHeader MATCH v*",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-match",
+   "condition": "subject.parityR9NoHeader MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-match-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_MATCH_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader MATCH v*",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-match-alone",
+   "condition": "subject.parityR9NoHeader NOT MATCH v*",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-match",
+   "condition": "subject.parityR9NoHeader NOT MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-match-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_NOT_MATCH_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader NOT MATCH v*",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-contains-any-alone",
+   "condition": "subject.parityR9NoHeader CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-contains-any",
+   "condition": "subject.parityR9NoHeader CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-contains-any-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_CONTAINS_ANY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-contains-any-alone",
+   "condition": "subject.parityR9NoHeader NOT CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-contains-any",
+   "condition": "subject.parityR9NoHeader NOT CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-not-contains-any-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_NOT_CONTAINS_ANY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader NOT CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-subset-alone",
+   "condition": "subject.parityR9NoHeader IS SUBSET 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-subset",
+   "condition": "subject.parityR9NoHeader IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-subset-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IS_SUBSET_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IS SUBSET 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-subset-alone",
+   "condition": "subject.parityR9NoHeader IS NOT SUBSET 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-subset",
+   "condition": "subject.parityR9NoHeader IS NOT SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-header-is-not-subset-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_HEADER_IS_NOT_SUBSET_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoHeader IS NOT SUBSET 'v', 'w'",
+   "pips": [
+    "noheader"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-equals-alone",
+   "condition": "subject.parityR9NoClaim == 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-equals",
+   "condition": "subject.parityR9NoClaim == 'v' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-equals-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim == 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-equals-alone",
+   "condition": "subject.parityR9NoClaim != 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-equals",
+   "condition": "subject.parityR9NoClaim != 'v' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-equals-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_NOT_EQUALS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim != 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-less-than-alone",
+   "condition": "subject.parityR9NoClaim < 5",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-less-than",
+   "condition": "subject.parityR9NoClaim < 5 OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-less-than-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_LESS_THAN_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim < 5",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-null-alone",
+   "condition": "subject.parityR9NoClaim IS NULL",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-null",
+   "condition": "subject.parityR9NoClaim IS NULL OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-null-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IS_NULL_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IS NULL",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-null-alone",
+   "condition": "subject.parityR9NoClaim IS NOT NULL",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-null",
+   "condition": "subject.parityR9NoClaim IS NOT NULL OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-null-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IS_NOT_NULL_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IS NOT NULL",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-empty-alone",
+   "condition": "subject.parityR9NoClaim IS EMPTY",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-empty",
+   "condition": "subject.parityR9NoClaim IS EMPTY OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-empty-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IS_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IS EMPTY",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-empty-alone",
+   "condition": "subject.parityR9NoClaim IS NOT EMPTY",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-empty",
+   "condition": "subject.parityR9NoClaim IS NOT EMPTY OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-empty-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IS_NOT_EMPTY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IS NOT EMPTY",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-in-alone",
+   "condition": "subject.parityR9NoClaim IN 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-in",
+   "condition": "subject.parityR9NoClaim IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-in-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IN_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IN 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-in-alone",
+   "condition": "subject.parityR9NoClaim NOT IN 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-in",
+   "condition": "subject.parityR9NoClaim NOT IN 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-in-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_NOT_IN_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim NOT IN 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-contains-alone",
+   "condition": "subject.parityR9NoClaim CONTAINS 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-contains",
+   "condition": "subject.parityR9NoClaim CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-contains-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim CONTAINS 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-contains-alone",
+   "condition": "subject.parityR9NoClaim NOT CONTAINS 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-contains",
+   "condition": "subject.parityR9NoClaim NOT CONTAINS 'v' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-contains-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_NOT_CONTAINS_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim NOT CONTAINS 'v'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-match-alone",
+   "condition": "subject.parityR9NoClaim MATCH v*",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-match",
+   "condition": "subject.parityR9NoClaim MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-match-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_MATCH_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim MATCH v*",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-match-alone",
+   "condition": "subject.parityR9NoClaim NOT MATCH v*",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-match",
+   "condition": "subject.parityR9NoClaim NOT MATCH v* OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-match-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_NOT_MATCH_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim NOT MATCH v*",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-contains-any-alone",
+   "condition": "subject.parityR9NoClaim CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-contains-any",
+   "condition": "subject.parityR9NoClaim CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-contains-any-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_CONTAINS_ANY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-contains-any-alone",
+   "condition": "subject.parityR9NoClaim NOT CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-contains-any",
+   "condition": "subject.parityR9NoClaim NOT CONTAINS ANY 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-not-contains-any-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_NOT_CONTAINS_ANY_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim NOT CONTAINS ANY 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-subset-alone",
+   "condition": "subject.parityR9NoClaim IS SUBSET 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-subset",
+   "condition": "subject.parityR9NoClaim IS SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-subset-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IS_SUBSET_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IS SUBSET 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-subset-alone",
+   "condition": "subject.parityR9NoClaim IS NOT SUBSET 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-subset",
+   "condition": "subject.parityR9NoClaim IS NOT SUBSET 'v', 'w' OR resource.a == 'y'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-absent-claim-is-not-subset-control",
+   "resourceType": "PARITY_SUITE_R9_ES_ABSENT_CLAIM_IS_NOT_SUBSET_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9NoClaim IS NOT SUBSET 'v', 'w'",
+   "pips": [
+    "noclaim"
+   ],
+   "requests": [
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r9-empty",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-empty-collection-is-null",
+   "resourceType": "PARITY_SUITE_R9_ES_EMPTY_COLLECTION",
+   "about": "IS NULL over an empty resource collection, the value an absent header may be read as. key-absent is the control, recorded true by s6a.",
+   "condition": "resource.x IS NULL",
+   "requests": [
+    {
+     "name": "empty-collection",
+     "resource": {
+      "id": "r9-empty",
+      "x": []
+     }
+    },
+    {
+     "name": "key-absent",
+     "resource": {
+      "id": "r9-empty"
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-empty-header-in-a-predicate",
+   "resourceType": "PARITY_SUITE_R9_ES_HEADER_PREDICATE",
+   "about": "The absent header rendered through an rsql placeholder of a simplified policy; header-sent is the control. p5 records an absent claim there as an empty string.",
+   "pips": [
+    "noheader"
+   ],
+   "operation": "LIST",
+   "policy": {
+    "rsqlPredicate": "a==${subject.parityR9NoHeader}"
+   },
+   "requests": [
+    {
+     "name": "no-header",
+     "filter": true
+    },
+    {
+     "name": "header-sent",
+     "filter": true,
+     "headers": {
+      "x-parity-r9-no-such-header": "h1"
+     }
+    }
+   ]
+  }
+ ]
+}

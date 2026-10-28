@@ -1,0 +1,948 @@
+{
+ "about": "What round 19 left open. A repeated predicate in two policies with distinct rule keys. subject allowed and subject denied over an operation whose decision fails (a GENERAL PIP answering 500), that no policy decides while the set's algorithm still applies, or that no set applies to; each in an ALLOW rule of a DENY_UNLESS_PERMIT set and policy and in a DENY rule of a PERMIT_UNLESS_DENY set and policy, so the effect and the algorithm change together. Empty and blank targets of a rule, a policy, and a set, and a blank rule condition.",
+ "resourceTypePrefix": "PARITY_SUITE_R20Q_",
+ "pins": {
+  "/api/v1/pip/r20-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 20 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR20Failing",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r20-failing",
+   "requestAttributes": {
+    "case": "r20-failing"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "q20-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-same-predicate-in-two-policies-with-distinct-keys",
+   "about": "Two policies, each with an ALLOW rule with rsqlPredicate q==3, under distinct rule keys.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p1",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        }
+       ]
+      },
+      {
+       "key": "p2",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r2",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q==3"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "q20-allowed-over-a-failing-decision-in-an-allow-rule",
+   "about": "subject allowed 'READ' on resource asked on UPDATE, where the READ decision fails: its only rule reads a GENERAL PIP answering 500. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'READ' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-allowed-over-a-failing-decision-in-a-deny-rule",
+   "about": "subject allowed 'READ' on resource asked on UPDATE, where the READ decision fails: its only rule reads a GENERAL PIP answering 500. The outer rule is a DENY rule of a PERMIT_UNLESS_DENY policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'READ' on resource",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-allowed-over-an-undecided-decision-in-an-allow-rule",
+   "about": "subject allowed 'DELETE' on resource asked on UPDATE, where the DELETE decision is made by no rule or policy, so the set's algorithm decides it by default. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'DELETE' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-allowed-over-an-undecided-decision-in-a-deny-rule",
+   "about": "subject allowed 'DELETE' on resource asked on UPDATE, where the DELETE decision is made by no rule or policy, so the set's algorithm decides it by default. The outer rule is a DENY rule of a PERMIT_UNLESS_DENY policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'DELETE' on resource",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-allowed-over-an-unapplied-decision-in-an-allow-rule",
+   "about": "subject allowed 'DELETE' on resource asked on UPDATE, where the DELETE decision has no set that applies: the set's target admits READ and UPDATE only. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND operation IN 'READ', 'UPDATE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'DELETE' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-allowed-over-an-unapplied-decision-in-a-deny-rule",
+   "about": "subject allowed 'DELETE' on resource asked on UPDATE, where the DELETE decision has no set that applies: the set's target admits READ and UPDATE only. The outer rule is a DENY rule of a PERMIT_UNLESS_DENY policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND operation IN 'READ', 'UPDATE'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject allowed 'DELETE' on resource",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-denied-over-a-failing-decision-in-an-allow-rule",
+   "about": "subject denied 'READ' on resource asked on UPDATE, where the READ decision fails: its only rule reads a GENERAL PIP answering 500. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject denied 'READ' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-denied-over-a-failing-decision-in-a-deny-rule",
+   "about": "subject denied 'READ' on resource asked on UPDATE, where the READ decision fails: its only rule reads a GENERAL PIP answering 500. The outer rule is a DENY rule of a PERMIT_UNLESS_DENY policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject denied 'READ' on resource",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-denied-over-an-undecided-decision-in-an-allow-rule",
+   "about": "subject denied 'DELETE' on resource asked on UPDATE, where the DELETE decision is made by no rule or policy, so the set's algorithm decides it by default. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject denied 'DELETE' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-denied-over-an-undecided-decision-in-a-deny-rule",
+   "about": "subject denied 'DELETE' on resource asked on UPDATE, where the DELETE decision is made by no rule or policy, so the set's algorithm decides it by default. The outer rule is a DENY rule of a PERMIT_UNLESS_DENY policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject denied 'DELETE' on resource",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-denied-over-an-unapplied-decision-in-an-allow-rule",
+   "about": "subject denied 'DELETE' on resource asked on UPDATE, where the DELETE decision has no set that applies: the set's target admits READ and UPDATE only. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND operation IN 'READ', 'UPDATE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject denied 'DELETE' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-denied-over-an-unapplied-decision-in-a-deny-rule",
+   "about": "subject denied 'DELETE' on resource asked on UPDATE, where the DELETE decision has no set that applies: the set's target admits READ and UPDATE only. The outer rule is a DENY rule of a PERMIT_UNLESS_DENY policy.",
+   "pips": [
+    "failing"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND operation IN 'READ', 'UPDATE'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "read-fails",
+         "target": "operation == 'READ'",
+         "condition": "subject.parityR20Failing == 'v'",
+         "effect": "ALLOW"
+        },
+        {
+         "key": "outer",
+         "target": "operation == 'UPDATE'",
+         "condition": "subject denied 'DELETE' on resource",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "operation": "UPDATE",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-control-after-the-nested-decisions",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-empty-rule-target",
+   "about": "A rule whose target is ''.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-empty-policy-target",
+   "about": "A policy whose target is ''.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-empty-set-target",
+   "about": "A set whose target is ''.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-blank-rule-condition",
+   "about": "A rule whose condition is ' '.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": " ",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-blank-rule-target",
+   "about": "A rule whose target is ' '.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": " ",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-blank-policy-target",
+   "about": "A policy whose target is ' '.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": " ",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-blank-set-target",
+   "about": "A set whose target is ' '.",
+   "sets": [
+    {
+     "key": "set",
+     "target": " ",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r20"
+     }
+    }
+   ]
+  },
+  {
+   "id": "q20-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "c": "n",
+      "id": "r20"
+     }
+    }
+   ]
+  }
+ ]
+}

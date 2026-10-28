@@ -1,0 +1,25 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_REG_SUBSTITUTION_GENERAL_SPECIAL_CHARS.a.eq(\"red,blue;green('q')\"x\"\")",
+    "mongodbFilterCondition": "{ { \"a\": [ \"red,blue;green('q')\"x\"\" ] } }",
+    "rsqlFilterCondition": "a==\"red,blue;green('q')\"x\"\"",
+    "sqlFilterCondition": "a='red,blue;green('q')\"x\"'",
+    "customFilterCondition": {
+      "logic": {
+        "path": "6a387f9f-6aa8-7a54-5290-ea8d42f65cb7"
+      },
+      "data": {
+        "6a387f9f-6aa8-7a54-5290-ea8d42f65cb7": {
+          "predicate": "a:${p}",
+          "params": {
+            "p": [
+              "red,blue;green('q')\"x\""
+            ]
+          }
+        }
+      }
+    }
+  }
+}

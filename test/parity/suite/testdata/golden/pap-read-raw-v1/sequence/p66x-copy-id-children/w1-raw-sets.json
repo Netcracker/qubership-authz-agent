@@ -1,0 +1,70 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-copy-id-children",
+        "name": "p66x-copy-id-children own",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-copy-id-children own reader",
+            "policyId": "a3457fa2-1cdf-ee18-ad00-70d4723790bb",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-copy-id-children own rule",
+                "ruleId": "ad48984b-2d6d-8fab-a4ba-506ca5121dc6",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'DELETE'",
+                "tenantId": "parity-p66x-copy-id-children"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-copy-id-children"
+          }
+        ],
+        "policySetId": "c138c339-b9c2-00fd-4f79-b1364a74b58e",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-p66x-copy-id-children",
+            "name": "p66x-copy-id-children own-c",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "p66x-copy-id-children own-c reader",
+                "policyId": "81e0cdb2-b5bc-3a4d-4bf9-9b0d4b20382d",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "name": "p66x-copy-id-children own-c rule",
+                    "ruleId": "e2243006-1db1-9dc3-7a87-9b606a5c1cb1",
+                    "ruleType": "DEFAULT",
+                    "target": "operation == 'CREATE'",
+                    "tenantId": "parity-p66x-copy-id-children"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p66x-copy-id-children"
+              }
+            ],
+            "policySetId": "c1eee5be-6c66-87f9-2ee6-a94cf9b168c6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+            "tenantId": "parity-p66x-copy-id-children",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+        "tenantId": "parity-p66x-copy-id-children",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

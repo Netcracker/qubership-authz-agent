@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_PUD_ROLES_OUT.a.notIn(\"ROLE_PARITY_READER\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$in\": [ \"ROLE_PARITY_READER\" ] } } }",
+    "rsqlFilterCondition": "a=in=(\"ROLE_PARITY_READER\")",
+    "sqlFilterCondition": "NOT (a NOT IN ('ROLE_PARITY_READER'))",
+    "customFilterCondition": null
+  }
+}

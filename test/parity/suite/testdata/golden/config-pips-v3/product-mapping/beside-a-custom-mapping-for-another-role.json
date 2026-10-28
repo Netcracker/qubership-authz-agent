@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "export": {
+    "pips": [
+      {
+        "cacheable": true,
+        "customMapping": {
+          "subject.roles": {
+            "ROLE_PARITY_OTHER": [
+              "parity_r10_custom_other"
+            ]
+          }
+        },
+        "name": "subject.permissions",
+        "pipType": "MAPPING",
+        "productMapping": {
+          "subject.roles": {
+            "ROLE_PARITY_READER": [
+              "parity_r10_product"
+            ]
+          }
+        },
+        "tenantId": "default",
+        "type": "UUID"
+      }
+    ]
+  }
+}

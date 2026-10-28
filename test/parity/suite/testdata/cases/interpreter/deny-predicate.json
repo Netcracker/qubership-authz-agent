@@ -1,0 +1,469 @@
+{
+ "about": "What check/filter carries for the predicates of DENY rules under each combining algorithm of the policy. filter-allow-and-deny-rules records, under DENY_UNLESS_PERMIT, a response that holds the ALLOW rule's predicate and not the DENY rule's. Whether the DENY predicates are left out under every algorithm, or enter the response in some negated form under the algorithms where a DENY decides, was recorded nowhere, and the answer is per dialect: an rsql, sql, mongodb, querydsl and custom predicate each have a negation of their own, or none. Each case is one regular set with one policy under one of the four accepted algorithms, holding two ALLOW rules and two DENY rules on LIST, every rule with all five predicate fields testing its own field against its own value, and one filter request. The set's own algorithm is DENY_UNLESS_PERMIT in every case, so a difference between the four responses is the policy algorithm's. deny-predicates-under-deny-overrides-without-custom-predicate repeats the DENY_OVERRIDES case with the four string predicates alone, since no upload recorded before it carried a customPredicate and a refusal of that shape would otherwise look like a refusal of the DENY rules. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "deny-predicates-under-deny-unless-permit",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1",
+          "sqlPredicate": "a=1",
+          "mongodbPredicate": "{ \"a\": 1 }",
+          "predicate": "${resourceType}.a.eq(1)",
+          "customPredicate": {
+           "predicate": "a:1:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2",
+          "sqlPredicate": "b=2",
+          "mongodbPredicate": "{ \"b\": 2 }",
+          "predicate": "${resourceType}.b.eq(2)",
+          "customPredicate": {
+           "predicate": "b:2:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-c",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3",
+          "sqlPredicate": "c=3",
+          "mongodbPredicate": "{ \"c\": 3 }",
+          "predicate": "${resourceType}.c.eq(3)",
+          "customPredicate": {
+           "predicate": "c:3:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-d",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "d==4",
+          "sqlPredicate": "d=4",
+          "mongodbPredicate": "{ \"d\": 4 }",
+          "predicate": "${resourceType}.d.eq(4)",
+          "customPredicate": {
+           "predicate": "d:4:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "deny-predicates-under-permit-unless-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1",
+          "sqlPredicate": "a=1",
+          "mongodbPredicate": "{ \"a\": 1 }",
+          "predicate": "${resourceType}.a.eq(1)",
+          "customPredicate": {
+           "predicate": "a:1:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2",
+          "sqlPredicate": "b=2",
+          "mongodbPredicate": "{ \"b\": 2 }",
+          "predicate": "${resourceType}.b.eq(2)",
+          "customPredicate": {
+           "predicate": "b:2:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-c",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3",
+          "sqlPredicate": "c=3",
+          "mongodbPredicate": "{ \"c\": 3 }",
+          "predicate": "${resourceType}.c.eq(3)",
+          "customPredicate": {
+           "predicate": "c:3:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-d",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "d==4",
+          "sqlPredicate": "d=4",
+          "mongodbPredicate": "{ \"d\": 4 }",
+          "predicate": "${resourceType}.d.eq(4)",
+          "customPredicate": {
+           "predicate": "d:4:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "deny-predicates-under-deny-overrides",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1",
+          "sqlPredicate": "a=1",
+          "mongodbPredicate": "{ \"a\": 1 }",
+          "predicate": "${resourceType}.a.eq(1)",
+          "customPredicate": {
+           "predicate": "a:1:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2",
+          "sqlPredicate": "b=2",
+          "mongodbPredicate": "{ \"b\": 2 }",
+          "predicate": "${resourceType}.b.eq(2)",
+          "customPredicate": {
+           "predicate": "b:2:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-c",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3",
+          "sqlPredicate": "c=3",
+          "mongodbPredicate": "{ \"c\": 3 }",
+          "predicate": "${resourceType}.c.eq(3)",
+          "customPredicate": {
+           "predicate": "c:3:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-d",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "d==4",
+          "sqlPredicate": "d=4",
+          "mongodbPredicate": "{ \"d\": 4 }",
+          "predicate": "${resourceType}.d.eq(4)",
+          "customPredicate": {
+           "predicate": "d:4:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "deny-predicates-under-permit-overrides",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1",
+          "sqlPredicate": "a=1",
+          "mongodbPredicate": "{ \"a\": 1 }",
+          "predicate": "${resourceType}.a.eq(1)",
+          "customPredicate": {
+           "predicate": "a:1:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2",
+          "sqlPredicate": "b=2",
+          "mongodbPredicate": "{ \"b\": 2 }",
+          "predicate": "${resourceType}.b.eq(2)",
+          "customPredicate": {
+           "predicate": "b:2:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-c",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3",
+          "sqlPredicate": "c=3",
+          "mongodbPredicate": "{ \"c\": 3 }",
+          "predicate": "${resourceType}.c.eq(3)",
+          "customPredicate": {
+           "predicate": "c:3:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        },
+        {
+         "key": "deny-d",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "d==4",
+          "sqlPredicate": "d=4",
+          "mongodbPredicate": "{ \"d\": 4 }",
+          "predicate": "${resourceType}.d.eq(4)",
+          "customPredicate": {
+           "predicate": "d:4:${owner}",
+           "params": {
+            "owner": "subject.id"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "deny-predicates-under-deny-overrides-without-custom-predicate",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow-a",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==1",
+          "sqlPredicate": "a=1",
+          "mongodbPredicate": "{ \"a\": 1 }",
+          "predicate": "${resourceType}.a.eq(1)"
+         }
+        },
+        {
+         "key": "allow-b",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "b==2",
+          "sqlPredicate": "b=2",
+          "mongodbPredicate": "{ \"b\": 2 }",
+          "predicate": "${resourceType}.b.eq(2)"
+         }
+        },
+        {
+         "key": "deny-c",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "c==3",
+          "sqlPredicate": "c=3",
+          "mongodbPredicate": "{ \"c\": 3 }",
+          "predicate": "${resourceType}.c.eq(3)"
+         }
+        },
+        {
+         "key": "deny-d",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "d==4",
+          "sqlPredicate": "d=4",
+          "mongodbPredicate": "{ \"d\": 4 }",
+          "predicate": "${resourceType}.d.eq(4)"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

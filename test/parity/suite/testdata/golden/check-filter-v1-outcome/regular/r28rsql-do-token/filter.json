@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_TOKEN.a.eq(\"finance\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": [ { \"$uuid\": \"finance\" } ] } }",
+    "rsqlFilterCondition": "a!=\"finance\"",
+    "sqlFilterCondition": "NOT (a='finance')",
+    "customFilterCondition": null
+  }
+}

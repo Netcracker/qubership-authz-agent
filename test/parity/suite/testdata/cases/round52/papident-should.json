@@ -1,0 +1,264 @@
+{
+ "about": "Round 52 (should): which object an identity names in the PAP. Each case writes two objects of one identity (in one write, in two writes, through two operations, in two spellings) and reads back and decides what was kept; its twin writes the same with distinct identities. Each case runs in a tenant of its own, writes to a domain and an externalId of its own and empties them last; a control writes and reads back first and last.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p52i-control-should-first",
+   "about": "control: a declaration written and read back, as pap-read/two-domain-mapping read one",
+   "resourceType": "PARITY_SUITE_P52_ID_902",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_902"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_902"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P52I902_A",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P52I_902": [
+          "parity_p52i_902_a"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_902"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_902"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-902"
+  },
+  {
+   "id": "p52i-pip-name-twice-with-request-attribute-x",
+   "about": "one domain upload declaring one GENERAL twice whose requestAttributes carry a whole ${subject.id}",
+   "resourceType": "PARITY_SUITE_P52_ID_077",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_077"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_077"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP52I077A",
+       "pipType": "GENERAL",
+       "url": "http://pip-mock:8090",
+       "type": "REGULAR",
+       "cacheable": false,
+       "requestAttributes": {
+        "u": "${subject.id}"
+       }
+      },
+      {
+       "name": "subject.parityP52I077A",
+       "pipType": "GENERAL",
+       "url": "http://pip-mock:8090",
+       "type": "REGULAR",
+       "cacheable": false,
+       "requestAttributes": {
+        "u": "${subject.id}"
+       }
+      }
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_077"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-077"
+  },
+  {
+   "id": "p52i-pip-name-twice-with-request-attribute-d",
+   "about": "one domain upload declaring two GENERAL PIPs whose requestAttributes carry a whole ${subject.id}",
+   "resourceType": "PARITY_SUITE_P52_ID_078",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_078"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_078"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityP52I078A",
+       "pipType": "GENERAL",
+       "url": "http://pip-mock:8090",
+       "type": "REGULAR",
+       "cacheable": false,
+       "requestAttributes": {
+        "u": "${subject.id}"
+       }
+      },
+      {
+       "name": "subject.parityP52I078B",
+       "pipType": "GENERAL",
+       "url": "http://pip-mock:8090",
+       "type": "REGULAR",
+       "cacheable": false,
+       "requestAttributes": {
+        "u": "${subject.id}"
+       }
+      }
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_078"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-078"
+  },
+  {
+   "id": "p52i-control-should-last",
+   "about": "control: a declaration written and read back, as pap-read/two-domain-mapping read one",
+   "resourceType": "PARITY_SUITE_P52_ID_952",
+   "steps": [
+    {
+     "name": "before",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_952"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "w1",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_952"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissions.PARITY_P52I952_A",
+       "pipType": "MAPPING",
+       "cacheable": false,
+       "type": "UUID",
+       "customMapping": {
+        "subject.roles": {
+         "ROLE_PARITY_P52I_952": [
+          "parity_p52i_952_a"
+         ]
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_952"
+     },
+     "observe": [
+      "read-raw:read-domain-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_P52_ID_952"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": []
+    }
+   ],
+   "tenant": "parity-p52i-952"
+  }
+ ]
+}

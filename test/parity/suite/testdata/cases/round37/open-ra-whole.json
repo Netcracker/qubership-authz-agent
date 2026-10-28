@@ -1,0 +1,472 @@
+{
+ "about": "Which builtins of the subject a whole requestAttributes value takes, and what the call carries for each. Goldens take subject.roles there (ra-subject-roles, r36gaps-ra-no-roles) and refuse subject.permissions as an undeclared name (r36gaps-ra-empty-permissions); no golden sends another builtin as a whole value. Each case gives one builtin as the whole value of requestAttributes.x; the upload is refused (400) if that builtin reads as undeclared. pipCalls records what the call carried.",
+ "resourceTypePrefix": "PARITY_SUITE_R37W_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 37 case"
+   }
+  },
+  "/api/v1/pip/r37open-ra-id": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-name": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-type": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-scopes": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-service-account": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-entitled-resources": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-permission-scope": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-is-m2m": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r37open-ra-scope-declared": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "r37open-ra-id": {
+   "name": "subject.parityR37RaId",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-id",
+   "requestAttributes": {
+    "case": "r37open-ra-id",
+    "x": "${subject.id}"
+   }
+  },
+  "r37open-ra-name": {
+   "name": "subject.parityR37RaName",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-name",
+   "requestAttributes": {
+    "case": "r37open-ra-name",
+    "x": "${subject.name}"
+   }
+  },
+  "r37open-ra-type": {
+   "name": "subject.parityR37RaType",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-type",
+   "requestAttributes": {
+    "case": "r37open-ra-type",
+    "x": "${subject.type}"
+   }
+  },
+  "r37open-ra-scopes": {
+   "name": "subject.parityR37RaScopes",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-scopes",
+   "requestAttributes": {
+    "case": "r37open-ra-scopes",
+    "x": "${subject.scopes}"
+   }
+  },
+  "r37open-ra-service-account": {
+   "name": "subject.parityR37RaServiceAccount",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-service-account",
+   "requestAttributes": {
+    "case": "r37open-ra-service-account",
+    "x": "${subject.serviceAccount}"
+   }
+  },
+  "r37open-ra-entitled-resources": {
+   "name": "subject.parityR37RaEntitledResources",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-entitled-resources",
+   "requestAttributes": {
+    "case": "r37open-ra-entitled-resources",
+    "x": "${subject.entitledResources}"
+   }
+  },
+  "r37open-ra-permission-scope": {
+   "name": "subject.parityR37RaPermissionScope",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-permission-scope",
+   "requestAttributes": {
+    "case": "r37open-ra-permission-scope",
+    "x": "${subject.permissionScope}"
+   }
+  },
+  "r37open-ra-is-m2m": {
+   "name": "subject.parityR37RaIsM2M",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-is-m2m",
+   "requestAttributes": {
+    "case": "r37open-ra-is-m2m",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r37open-ra-scope-declared": {
+   "name": "subject.parityR37RaScopeDeclared",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r37open-ra-scope-declared",
+   "requestAttributes": {
+    "case": "r37open-ra-scope-declared",
+    "x": "${subject.permissionScope}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r37openrawhole-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r37",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-id",
+   "pips": [
+    "r37open-ra-id"
+   ],
+   "about": "requestAttributes.x is ${subject.id}. The upload is refused (400) if the check takes subject.id for an undeclared name, as it takes subject.permissions. Accepted, the call carries the reader's id.",
+   "condition": "subject.parityR37RaId == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-id"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-name",
+   "pips": [
+    "r37open-ra-name"
+   ],
+   "about": "requestAttributes.x is ${subject.name}. The upload is refused (400) if the check takes subject.name for an undeclared name, as it takes subject.permissions. Accepted, the call carries its username, parity-reader.",
+   "condition": "subject.parityR37RaName == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-name"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-type",
+   "pips": [
+    "r37open-ra-type"
+   ],
+   "about": "requestAttributes.x is ${subject.type}. The upload is refused (400) if the check takes subject.type for an undeclared name, as it takes subject.permissions. Accepted, the call carries USER.",
+   "condition": "subject.parityR37RaType == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-type"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-scopes",
+   "pips": [
+    "r37open-ra-scopes"
+   ],
+   "about": "requestAttributes.x is ${subject.scopes}. The upload is refused (400) if the check takes subject.scopes for an undeclared name, as it takes subject.permissions. Accepted, the call carries the list of its scopes; the text of the scope claim if the builtin is that claim.",
+   "condition": "subject.parityR37RaScopes == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-scopes"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-service-account",
+   "pips": [
+    "r37open-ra-service-account"
+   ],
+   "about": "requestAttributes.x is ${subject.serviceAccount}. The upload is refused (400) if the check takes subject.serviceAccount for an undeclared name, as it takes subject.permissions. Accepted, the call carries null, as a condition reads it; ${subject.serviceAccount} if a builtin without a value stays as written.",
+   "condition": "subject.parityR37RaServiceAccount == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-service-account"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-entitled-resources",
+   "pips": [
+    "r37open-ra-entitled-resources"
+   ],
+   "about": "requestAttributes.x is ${subject.entitledResources}. The upload is refused (400) if the check takes subject.entitledResources for an undeclared name, as it takes subject.permissions. Accepted, the call carries null; ${subject.entitledResources} if a builtin without a value stays as written.",
+   "condition": "subject.parityR37RaEntitledResources == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-entitled-resources"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-permission-scope",
+   "pips": [
+    "r37open-ra-permission-scope"
+   ],
+   "about": "requestAttributes.x is ${subject.permissionScope}. The upload is refused (400) if the check takes subject.permissionScope for an undeclared name, as it takes subject.permissions. Accepted, the call carries null: outside iterate there is no grant; no call, and both requests false, if a scope read outside iterate fails the PIP.",
+   "condition": "subject.parityR37RaPermissionScope == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-permission-scope"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-is-m2m",
+   "pips": [
+    "r37open-ra-is-m2m"
+   ],
+   "about": "requestAttributes.x is ${subject.isM2M}. The upload is refused (400) if the check takes subject.isM2M for an undeclared name, as it takes subject.permissions. Accepted, the call carries null; false if the builtin is a boolean for a user.",
+   "condition": "subject.parityR37RaIsM2M == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-is-m2m"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37open-ra-scope-declared",
+   "pips": [
+    "scope",
+    "r37open-ra-scope-declared"
+   ],
+   "about": "The upload declares the PERMISSION_SCOPE PIP subject.permissionScope, and requestAttributes.x is ${subject.permissionScope}. A whole value over a declared GENERAL, MAPPING or FILTERED is refused (r29pipfield-ra-general, -ra-mapping, r30open-ra-filtered), over HEADER and TOKEN taken; no golden has asked the scope. The upload is refused (400) if the check refuses the PERMISSION_SCOPE kind too.",
+   "condition": "subject.parityR37RaScopeDeclared == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r37",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r37open-ra-scope-declared"
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r37",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r37openrawhole-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r37",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

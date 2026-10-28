@@ -8,6 +8,8 @@
 
 # Parity suite: *.observed.json sidecar output from local runs (not evidence)
 *.observed.json
+# Parity suite: an export bundle TestExportFedAgent reads by default when run outside the image
+/test/parity/suite/testdata/export-bundle/
 
 # Go workspace sum database
 go.work.sum

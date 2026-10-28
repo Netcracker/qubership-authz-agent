@@ -1,0 +1,293 @@
+{
+ "about": "Condition texts in forms real configurations use and no golden sends: a path key that starts with @, the lowercase word matches with a quoted regular expression, and MATCH patterns that combine () with another () or with **, and ? beside *. Each comparison is `<comparison> OR resource.a == 'y'`.",
+ "resourceTypePrefix": "PARITY_SUITE_R32G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r32gaps-corpus-syntax-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-key-starting-with-at",
+   "about": "The key @k starts with @; round 19 recorded a key with @ inside it. Upload 200 and a = n true if the key is read; 400 if a key may not start with @.",
+   "condition": "resource.o.@k CONTAINS 'x' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "o": {
+       "@k": [
+        "x"
+       ]
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "o": {
+       "@k": [
+        "x"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-lowercase-matches",
+   "about": "The lowercase word matches with a regular expression in quotes. Upload 400 if only the operators of the condition language are taken.",
+   "condition": "resource.u matches '^x.*$' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "xy"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "xy"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-two-parens",
+   "about": "Two () segments over /a/x/y/b: true for a = n if each () takes one segment.",
+   "condition": "resource.u MATCH /a/()/()/b OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/a/x/y/b"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/a/x/y/b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-two-parens-one-segment",
+   "about": "Two () segments over /a/x/b, one segment short: false for a = n if each () takes a whole segment.",
+   "condition": "resource.u MATCH /a/()/()/b OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/a/x/b"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/a/x/b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-parens-inside-a-segment",
+   "about": "x() over the segment x alone: false for a = n if () takes at least one character, true if it may take none.",
+   "condition": "resource.u MATCH /a/x()/b OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/a/x/b"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/a/x/b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-parens-then-double-star",
+   "about": "() then ** over /a/x/y/z: true for a = n.",
+   "condition": "resource.u MATCH /a/()/** OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/a/x/y/z"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/a/x/y/z"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-parens-then-double-star-short",
+   "about": "() then ** over /a/x, which has no segment for **: true for a = n if /** may match nothing after the segment, false if the slash before ** is required.",
+   "condition": "resource.u MATCH /a/()/** OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/a/x"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/a/x"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-question-beside-star",
+   "about": "? beside the segment v and * later: true for a = n.",
+   "condition": "resource.u MATCH /v?/a/*/b OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/v1/a/x/b"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/v1/a/x/b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-match-question-beside-star-two",
+   "about": "? over the two characters 12: false for a = n if ? takes one character.",
+   "condition": "resource.u MATCH /v?/a/*/b OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r32",
+      "a": "n",
+      "u": "/v12/a/x/b"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r32",
+      "a": "y",
+      "u": "/v12/a/x/b"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r32gaps-corpus-syntax-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r32",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

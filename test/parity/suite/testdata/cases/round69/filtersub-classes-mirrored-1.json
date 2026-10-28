@@ -1,0 +1,372 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/pip/r29-pairs-gen": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  }
+ },
+ "pips": {
+  "gen": {
+   "name": "subject.parityR29PairsGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen",
+   "requestAttributes": {
+    "case": "r29-pairs-gen"
+   }
+  },
+  "map": {
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  "tok": {
+   "name": "subject.parityR29PairsTok",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-inv-plain-11-14",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "s0p0",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"f1a\": { \"$in\": ${subject.roles} } }"
+         },
+         "condition": "resource.f1a IN subject.roles"
+        },
+        {
+         "key": "r2",
+         "target": "true",
+         "effect": "DENY",
+         "predicates": {
+          "mongodbPredicate": "{ \"$and\": [ { \"$or\": [ { \"f2a\": { \"$in\": ${subject.parityR29PairsGen} } }, { \"f2b\": \"v1\" } ] }, { \"f2c\": \"v2\" } ] }"
+         },
+         "condition": "resource.f2a IN subject.parityR29PairsGen AND resource.f2c == 'v2' OR resource.f2b == 'v1' AND resource.f2c == 'v2'"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "s0p1",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r3",
+         "target": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"$or\": [ { \"$and\": [ { \"f3a\": ${subject.parityR29PairsTok} }, { \"f3b\": \"v1\" } ] }, { \"f3c\": \"v2\" } ] }"
+         },
+         "condition": "resource.f3a == subject.parityR29PairsTok AND resource.f3b == 'v1' OR resource.f3c == 'v2'"
+        },
+        {
+         "key": "r4",
+         "target": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "mongodbPredicate": "{ \"$and\": [ { \"$or\": [ { \"f4a\": { \"$in\": ${subject.roles} } }, { \"f4b\": \"v1\" } ] }, { \"f4c\": \"v2\" } ] }"
+         },
+         "condition": "resource.f4a IN subject.roles AND resource.f4c == 'v2' OR resource.f4b == 'v1' AND resource.f4c == 'v2'"
+        }
+       ],
+       "algorithm": "PERMIT_OVERRIDES"
+      }
+     ],
+     "sets": [
+      {
+       "key": "s0n2",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "omitStatus": true,
+       "policies": [
+        {
+         "key": "s0n2p1",
+         "target": "true",
+         "rules": [
+          {
+           "key": "r10",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "f10a=in=(${subject.permissions});f10b==v1",
+            "sqlPredicate": "f10a IN (${subject.permissions}) AND f10b='v1'",
+            "predicate": "(${resourceType}.f10a.in(${subject.permissions})).and(${resourceType}.f10b.eq(\"v1\"))",
+            "mongodbPredicate": "{ \"$and\": [ { \"f10a\": { \"$in\": ${subject.permissions} } }, { \"f10b\": \"v1\" } ] }"
+           },
+           "condition": "resource.f10a IN subject.permissions AND resource.f10b == 'v1'"
+          },
+          {
+           "key": "r11",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "f11a==${subject.id}",
+            "sqlPredicate": "f11a=${subject.id}",
+            "predicate": "${resourceType}.f11a.eq(${subject.id})",
+            "mongodbPredicate": "{ \"f11a\": ${subject.id} }"
+           },
+           "condition": "resource.f11a == subject.id"
+          },
+          {
+           "key": "r12",
+           "target": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "f12a==${resourceType};f12b==v1,f12c==v2"
+           },
+           "condition": "resource.f12a == '{{resourceType}}' AND resource.f12b == 'v1' OR resource.f12c == 'v2'"
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        },
+        {
+         "key": "s0n2p2",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "r13",
+           "target": "true",
+           "effect": "DENY",
+           "condition": "true"
+          },
+          {
+           "key": "r14",
+           "target": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "sqlPredicate": "f14a='v0'"
+           },
+           "condition": "resource.f14a == 'v0'"
+          },
+          {
+           "key": "r15",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "f15a=in=(${subject.parityR29PairsGen})"
+           },
+           "condition": "resource.f15a IN subject.parityR29PairsGen"
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "sets": [
+        {
+         "key": "s0n2n0",
+         "target": "true",
+         "status": "ARCHIVED",
+         "policies": [
+          {
+           "key": "s0n2n0p0",
+           "target": "true",
+           "rules": [
+            {
+             "key": "r5",
+             "target": "true",
+             "effect": "DENY",
+             "predicates": {
+              "sqlPredicate": "f5a IN (${subject.roles}) OR f5b='v1'"
+             },
+             "condition": "resource.f5a IN subject.roles OR resource.f5b == 'v1'"
+            },
+            {
+             "key": "r6",
+             "target": "true",
+             "effect": "DENY",
+             "predicates": {
+              "predicate": "${resourceType}.f6a.eq(${resourceType})"
+             },
+             "condition": "resource.f6a == '{{resourceType}}'"
+            },
+            {
+             "key": "r7",
+             "target": "true",
+             "effect": "ALLOW",
+             "condition": "resource.nr7 == 'w'"
+            }
+           ],
+           "algorithm": "DENY_OVERRIDES"
+          },
+          {
+           "key": "s0n2n0p1",
+           "target": "true",
+           "rules": [
+            {
+             "key": "r8",
+             "target": "true",
+             "effect": "DENY",
+             "condition": "true"
+            }
+           ],
+           "algorithm": "DENY_OVERRIDES"
+          },
+          {
+           "key": "s0n2n0p2",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "r9",
+             "target": "true",
+             "effect": "DENY",
+             "predicates": {
+              "mongodbPredicate": "{ \"$and\": [ { \"$or\": [ { \"f9a\": ${resourceType} }, { \"f9b\": \"v1\" } ] }, { \"f9c\": \"v2\" } ] }"
+             },
+             "condition": "resource.f9a == '{{resourceType}}' AND resource.f9c == 'v2' OR resource.f9b == 'v1' AND resource.f9c == 'v2'"
+            }
+           ],
+           "algorithm": "PERMIT_OVERRIDES"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filtersub",
+     "filter": true,
+     "operation": "READ",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "f12a": "zz",
+      "f12b": "zz",
+      "f12c": "zz",
+      "f14a": "v0",
+      "f3a": "p1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "f12a": "PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_14",
+      "f12b": "v1",
+      "f12c": "v2",
+      "f2a": "finance"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "f12b": "v1",
+      "f14a": "zz",
+      "f2c": "v2",
+      "f3a": "h2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "f12a": "zz",
+      "f14a": "v0",
+      "f2a": "ROLE_PARITY_READER",
+      "f2c": "zz",
+      "f3a": "ROLE_PARITY_READER"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "f12a": "zz",
+      "f2a": "ROLE_PARITY_READER",
+      "f2b": "v1",
+      "f2c": "v2",
+      "f3a": "h1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-6",
+     "operation": "READ",
+     "resource": {
+      "f12a": "zz",
+      "f2a": "finance",
+      "f2b": "zz",
+      "f2c": "v2",
+      "f3a": "finance"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-7",
+     "operation": "READ",
+     "resource": {
+      "f12a": "PARITY_SUITE_FS69_FS69_C_INV_PLAIN_11_14",
+      "f12b": "v1",
+      "f12c": "zz",
+      "f14a": "zz",
+      "f2b": "v1",
+      "f3a": "r1"
+     }
+    }
+   ],
+   "pips": [
+    "gen",
+    "map",
+    "tok"
+   ]
+  }
+ ]
+}

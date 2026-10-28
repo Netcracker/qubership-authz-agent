@@ -1,0 +1,81 @@
+{
+ "about": "Which of a top-level resourceType and a name ending in .filtered the PAP needs in a FILTERED declaration. config-export/declare-the-filtered-pip records a declaration with both, accepted, and h3-filtered-pip-plain-reference one with neither, refused together with a policy that reads it, so its refusal may be the condition's. Each declaration is uploaded alone, with a policy that reads nothing, over the case's own resource type, and its upload status is the whole answer, so the cases send no request. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone.",
+ "resourceTypePrefix": "PARITY_SUITE_R11_",
+ "pins": {},
+ "pips": {
+  "fd-both": {
+   "name": "subject.parityR11FdBoth.filtered",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-filtered",
+   "httpMethod": "POST",
+   "pipType": "FILTERED",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_R11_FD_BOTH"
+   },
+   "cacheable": false,
+   "resourceType": "PARITY_SUITE_R11_FD_BOTH"
+  },
+  "fd-resource-type-only": {
+   "name": "subject.parityR11FdTypeOnly",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-filtered",
+   "httpMethod": "POST",
+   "pipType": "FILTERED",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_R11_FD_RESOURCE_TYPE_ONLY"
+   },
+   "cacheable": false,
+   "resourceType": "PARITY_SUITE_R11_FD_RESOURCE_TYPE_ONLY"
+  },
+  "fd-suffix-only": {
+   "name": "subject.parityR11FdSuffixOnly.filtered",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-filtered",
+   "httpMethod": "POST",
+   "pipType": "FILTERED",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_R11_FD_SUFFIX_ONLY"
+   },
+   "cacheable": false
+  },
+  "fd-neither": {
+   "name": "subject.parityR11FdNeither",
+   "url": "http://pip-mock:8090/api/v1/pip/r11-filtered",
+   "httpMethod": "POST",
+   "pipType": "FILTERED",
+   "requestAttributes": {
+    "resourceType": "PARITY_SUITE_R11_FD_NEITHER"
+   },
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "fd-both",
+   "about": "The control that the upload is accepted.",
+   "pips": [
+    "fd-both"
+   ],
+   "requests": []
+  },
+  {
+   "id": "fd-resource-type-only",
+   "pips": [
+    "fd-resource-type-only"
+   ],
+   "requests": []
+  },
+  {
+   "id": "fd-suffix-only",
+   "pips": [
+    "fd-suffix-only"
+   ],
+   "requests": []
+  },
+  {
+   "id": "fd-neither",
+   "about": "Neither field, like h3's declaration, without h3's condition.",
+   "pips": [
+    "fd-neither"
+   ],
+   "requests": []
+  }
+ ]
+}

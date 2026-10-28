@@ -1,0 +1,284 @@
+{
+ "about": "Which request headers a GENERAL call carries. The request sends X-Parity-R29-A: va and not X-Parity-R29-B; pipHeaders records, for the call pip-mock received, the value of each named header, a token as whose it is and Tenant as whether it is the request's tenant_id.",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-fwd-two-one-sent": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-fwd-padded-names": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-fwd-reserved-names": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-fwd-incoming-token": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r29pipfield-fwd-none-declared": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "fwd-two-one-sent": {
+   "name": "subject.parityR29FwdTwoOneSent",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-fwd-two-one-sent",
+   "requestAttributes": {
+    "case": "r29pipfield-fwd-two-one-sent"
+   },
+   "headers": "X-Parity-R29-A,X-Parity-R29-B"
+  },
+  "fwd-padded-names": {
+   "name": "subject.parityR29FwdPaddedNames",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-fwd-padded-names",
+   "requestAttributes": {
+    "case": "r29pipfield-fwd-padded-names"
+   },
+   "headers": " x-parity-r29-a , x-parity-r29-b "
+  },
+  "fwd-reserved-names": {
+   "name": "subject.parityR29FwdReservedNames",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-fwd-reserved-names",
+   "requestAttributes": {
+    "case": "r29pipfield-fwd-reserved-names"
+   },
+   "headers": "Authorization,Tenant"
+  },
+  "fwd-incoming-token": {
+   "name": "subject.parityR29FwdIncomingToken",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-fwd-incoming-token",
+   "requestAttributes": {
+    "case": "r29pipfield-fwd-incoming-token"
+   },
+   "headers": "Incoming-Token"
+  },
+  "fwd-none-declared": {
+   "name": "subject.parityR29FwdNoneDeclared",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-fwd-none-declared",
+   "requestAttributes": {
+    "case": "r29pipfield-fwd-none-declared"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-fwd-two-one-sent",
+   "about": "GENERAL PIP with headers 'X-Parity-R29-A,X-Parity-R29-B'",
+   "condition": "subject.parityR29FwdTwoOneSent == 'v' OR resource.a == 'y'",
+   "pips": [
+    "fwd-two-one-sent"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-fwd-two-one-sent",
+     "pipHeaders": [
+      "x-parity-r29-a",
+      "x-parity-r29-b",
+      "authorization",
+      "tenant",
+      "incoming-token"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-fwd-padded-names",
+   "about": "GENERAL PIP with headers ' x-parity-r29-a , x-parity-r29-b '",
+   "condition": "subject.parityR29FwdPaddedNames == 'v' OR resource.a == 'y'",
+   "pips": [
+    "fwd-padded-names"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-fwd-padded-names",
+     "pipHeaders": [
+      "x-parity-r29-a",
+      "x-parity-r29-b",
+      "authorization",
+      "tenant",
+      "incoming-token"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-fwd-reserved-names",
+   "about": "GENERAL PIP with headers 'Authorization,Tenant'",
+   "condition": "subject.parityR29FwdReservedNames == 'v' OR resource.a == 'y'",
+   "pips": [
+    "fwd-reserved-names"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-fwd-reserved-names",
+     "pipHeaders": [
+      "x-parity-r29-a",
+      "x-parity-r29-b",
+      "authorization",
+      "tenant",
+      "incoming-token"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-fwd-incoming-token",
+   "about": "GENERAL PIP with headers 'Incoming-Token'",
+   "condition": "subject.parityR29FwdIncomingToken == 'v' OR resource.a == 'y'",
+   "pips": [
+    "fwd-incoming-token"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-fwd-incoming-token",
+     "pipHeaders": [
+      "x-parity-r29-a",
+      "x-parity-r29-b",
+      "authorization",
+      "tenant",
+      "incoming-token"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-fwd-none-declared",
+   "about": "GENERAL PIP with headers None",
+   "condition": "subject.parityR29FwdNoneDeclared == 'v' OR resource.a == 'y'",
+   "pips": [
+    "fwd-none-declared"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-fwd-none-declared",
+     "pipHeaders": [
+      "x-parity-r29-a",
+      "x-parity-r29-b",
+      "authorization",
+      "tenant",
+      "incoming-token"
+     ]
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "headers": {
+      "X-Parity-R29-A": "va"
+     }
+    }
+   ]
+  }
+ ]
+}

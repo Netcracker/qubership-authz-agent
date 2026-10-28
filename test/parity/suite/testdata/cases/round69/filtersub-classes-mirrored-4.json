@@ -1,0 +1,311 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         }
+        ]
+       },
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r2"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "hdr": {
+   "name": "subject.parityR29PairsHdr",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-pairs",
+   "cacheable": false
+  },
+  "map": {
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-inv-iterN-11-13",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s0n0",
+       "target": "true",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_UNLESS_PERMIT"
+       },
+       "policies": [
+        {
+         "key": "s0n0p0",
+         "target": "true",
+         "rules": [
+          {
+           "key": "r1",
+           "target": "true",
+           "effect": "DENY",
+           "condition": "true"
+          },
+          {
+           "key": "r2",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "rsqlPredicate": "f2a=in=(${subject.roles});f2b==v1,f2c==v2",
+            "sqlPredicate": "(f2a IN (${subject.roles}) AND f2b='v1') OR f2c='v2'",
+            "predicate": "((${resourceType}.f2a.in(${subject.roles})).and(${resourceType}.f2b.eq(\"v1\"))).or(${resourceType}.f2c.eq(\"v2\"))",
+            "mongodbPredicate": "{ \"$or\": [ { \"$and\": [ { \"f2a\": { \"$in\": ${subject.roles} } }, { \"f2b\": \"v1\" } ] }, { \"f2c\": \"v2\" } ] }"
+           },
+           "condition": "resource.f2a IN subject.roles AND resource.f2b == 'v1' OR resource.f2c == 'v2'"
+          }
+         ],
+         "algorithm": "DENY_UNLESS_PERMIT"
+        },
+        {
+         "key": "s0n0p1",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "r3",
+           "target": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "f3a=in=(${subject.parityR29PairsHdr})"
+           },
+           "condition": "resource.f3a IN subject.parityR29PairsHdr"
+          },
+          {
+           "key": "r4",
+           "target": "true",
+           "effect": "DENY",
+           "predicates": {
+            "predicate": "${resourceType}.f4a.eq(\"v0\")"
+           },
+           "condition": "resource.f4a == 'v0'"
+          }
+         ],
+         "algorithm": "DENY_OVERRIDES"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "s1",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [],
+     "sets": [
+      {
+       "key": "s1n0",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "s1n0p0",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "key": "r5",
+           "target": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "predicate": "((${resourceType}.f5a.eq(\"v0\")).and(${resourceType}.f5b.eq(\"v1\"))).or(${resourceType}.f5c.eq(\"v2\"))"
+           },
+           "condition": "resource.f5a == 'v0' AND resource.f5b == 'v1' OR resource.f5c == 'v2'"
+          },
+          {
+           "key": "r6",
+           "target": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "f6a=in=(${subject.parityR29PairsHdr})"
+           },
+           "condition": "resource.f6a IN subject.parityR29PairsHdr"
+          }
+         ]
+        }
+       ],
+       "sets": [
+        {
+         "key": "s1n0n1",
+         "target": "true",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "status": "DRAFT",
+         "policies": [
+          {
+           "key": "s1n0n1p0",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "r7",
+             "target": "true",
+             "effect": "DENY",
+             "predicates": {
+              "rsqlPredicate": "f7a=in=(${subject.permissions})",
+              "sqlPredicate": "f7a IN (${subject.permissions})",
+              "predicate": "${resourceType}.f7a.in(${subject.permissions})",
+              "mongodbPredicate": "{ \"f7a\": { \"$in\": ${subject.permissions} } }"
+             },
+             "condition": "resource.f7a IN subject.permissions"
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filtersub",
+     "filter": true,
+     "operation": "READ",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "f2a": "00000000-0000-0000-0000-000000000101",
+      "f3a": "h1",
+      "f4a": "v0",
+      "f5b": "zz",
+      "f5c": "v2",
+      "f6a": "p1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "f4a": "zz",
+      "f5a": "zz",
+      "f5b": "v1",
+      "f5c": "zz",
+      "f2a": "p1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "f3a": "r1",
+      "f4a": "v0",
+      "f5a": "zz",
+      "f5c": "v2",
+      "f6a": "ROLE_PARITY_READER",
+      "f2a": "00000000-0000-0000-0000-000000000101",
+      "f2b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "f3a": "p2",
+      "f5b": "v1",
+      "f5c": "v2",
+      "f2a": "h2",
+      "f2b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "f3a": "ROLE_PARITY_READER",
+      "f4a": "zz",
+      "f5a": "zz",
+      "f5b": "zz",
+      "f5c": "zz",
+      "f6a": "p1",
+      "f2b": "zz"
+     }
+    }
+   ],
+   "pips": [
+    "hdr",
+    "map",
+    "scope"
+   ]
+  }
+ ]
+}

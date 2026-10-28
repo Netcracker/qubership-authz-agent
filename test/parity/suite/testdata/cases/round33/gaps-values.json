@@ -1,0 +1,181 @@
+{
+ "about": "jsonPath filters that compare a value that is no scalar with a number, each as `<comparison> OR resource.a == 'y'`. Round 32 compared numbers, texts and booleans only.",
+ "resourceTypePrefix": "PARITY_SUITE_R33G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r33gaps-values-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-jp-filter-equals-over-null",
+   "about": "k is null. False for a = n if null equals no number; both false if the comparison fails the path.",
+   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": null
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-jp-filter-equals-over-a-list",
+   "about": "k is the list [5]. False for a = n if a list equals no number; true if the filter compares the list's items; both false if the comparison fails the path.",
+   "condition": "resource.l[?(@.k == 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": [
+         5
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": [
+         5
+        ]
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-jp-filter-not-equal-over-null",
+   "about": "k is null under !=. True for a = n if null differs from every number; both false if the comparison fails the path.",
+   "condition": "resource.l[?(@.k != 5)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": null
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r33gaps-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

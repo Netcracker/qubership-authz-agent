@@ -1,0 +1,462 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_OVERRIDES",
+        "name": "r30pairs-one-001 s0",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "r30pairs-one-001 s0p1",
+            "policyId": "7fc7b747-137e-b78f-8394-8abd7e1691cb",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "mongodbPredicate": "{ \"f4a\": { \"$in\": [ ${subject.parityR29PairsHdr}, ${subject.roles} ] } }",
+                "name": "r30pairs-one-001 r4",
+                "predicate": "${resourceType}.f4a.in(${subject.parityR29PairsHdr}, ${subject.roles})",
+                "rsqlPredicate": "f4a=in=(${subject.parityR29PairsHdr},${subject.roles})",
+                "ruleId": "187af9ce-1dc3-1003-be21-8e8937699093",
+                "ruleType": "DEFAULT",
+                "sqlPredicate": "f4a IN (${subject.parityR29PairsHdr}, ${subject.roles})",
+                "target": "true",
+                "tenantId": "parity-p47-o067"
+              },
+              {
+                "condition": "true",
+                "effect": "DENY",
+                "name": "r30pairs-one-001 r3",
+                "predicate": "${resourceType}.f3a.in(${subject.roles})",
+                "ruleId": "1961cb7b-41f8-f73b-c3de-54f69631fa44",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p47-o067"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p47-o067"
+          }
+        ],
+        "policySetId": "8147d988-7689-fb5d-97de-f2cfdd8ed043",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_OVERRIDES",
+            "iterate": {
+              "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+              "foreach": "subject.permissionScope"
+            },
+            "name": "r30pairs-one-001 s0n0",
+            "policies": [],
+            "policySetId": "4cdc8fb0-847a-2c71-4d8a-c84741c4bca5",
+            "policySets": [
+              {
+                "combiningAlgorithm": "DENY_OVERRIDES",
+                "name": "r30pairs-one-001 s0n0n0",
+                "policies": [
+                  {
+                    "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                    "name": "r30pairs-one-001 s0n0n0p0",
+                    "policyId": "d9747a46-e6ee-f182-a18a-8c81e04df3ac",
+                    "rules": [
+                      {
+                        "condition": "true",
+                        "effect": "DENY",
+                        "mongodbPredicate": "{ \"$and\": [ { \"$or\": [ { \"f1a\": { \"$in\": ${subject.permissions} } }, { \"f1b\": \"v1\" } ] }, { \"f1c\": \"v2\" } ] }",
+                        "name": "r30pairs-one-001 r1",
+                        "predicate": "((${resourceType}.f1a.in(${subject.permissions})).or(${resourceType}.f1b.eq(\"v1\"))).and(${resourceType}.f1c.eq(\"v2\"))",
+                        "rsqlPredicate": "(f1a=in=(${subject.permissions}),f1b==v1);f1c==v2",
+                        "ruleId": "5468e7ca-6248-675d-5652-1f16ab76f4a1",
+                        "ruleType": "DEFAULT",
+                        "sqlPredicate": "(f1a IN (${subject.permissions}) OR f1b='v1') AND f1c='v2'",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                    "name": "r30pairs-one-001 s0n0n0p1",
+                    "policyId": "33a57d3c-9935-fd8c-4449-4148a9403615",
+                    "rules": [
+                      {
+                        "condition": "true",
+                        "effect": "NOT_APPLICABLE",
+                        "name": "r30pairs-one-001 r2",
+                        "ruleId": "04244b87-7aa5-3329-3e19-245e421139db",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "policySetId": "dc28eb60-a630-dd56-40b1-d77805ccbefa",
+                "policySets": [],
+                "status": "ACTIVE",
+                "target": "true",
+                "tenantId": "parity-p47-o067",
+                "type": "DEFAULT"
+              }
+            ],
+            "status": "ARCHIVED",
+            "target": "true",
+            "tenantId": "parity-p47-o067",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_R29P_R30PAIRS_ONE_001'",
+        "tenantId": "parity-p47-o067",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "iterate": {
+          "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+          "foreach": "subject.permissionScope"
+        },
+        "policies": [],
+        "policySetId": "3fec702b-f1fe-c019-c5da-21e5b2df08e9",
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_OVERRIDES",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_OVERRIDES",
+                "policyId": "66642ac0-13c3-ae1c-ea78-c03806a8b353",
+                "rules": [
+                  {
+                    "condition": "resource.f21a IN subject.permissions",
+                    "effect": "DENY",
+                    "mongodbPredicate": "{ \"f21a\": { \"$in\": ${subject.permissions} } }",
+                    "predicate": "${resourceType}.f21a.in(${subject.permissions})",
+                    "rsqlPredicate": "f21a=in=(${subject.permissions})",
+                    "ruleId": "1fada4c8-8f4a-d921-e4b1-0b4d2149d299",
+                    "ruleType": "DEFAULT",
+                    "sqlPredicate": "f21a IN (${subject.permissions})",
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "condition": "true",
+                    "effect": "NOT_APPLICABLE",
+                    "predicate": "${resourceType}.f20a.eq(",
+                    "ruleId": "fa5cb969-6e4d-9b1a-61ec-31a8cf9a6350",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p47-o067"
+              }
+            ],
+            "policySetId": "5187aed9-7e32-7792-9d53-c6e2840a738f",
+            "policySets": [
+              {
+                "combiningAlgorithm": "PERMIT_OVERRIDES",
+                "policies": [
+                  {
+                    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                    "policyId": "777138ac-55d9-569c-c892-6b6df852047e",
+                    "rules": [
+                      {
+                        "condition": "resource.nr23 == 'w'",
+                        "effect": "NOT_APPLICABLE",
+                        "ruleId": "bd6e12c2-bc3a-bb3c-6ee5-a183e30d3482",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      },
+                      {
+                        "condition": "true",
+                        "effect": "ALLOW",
+                        "predicate": "${resourceType}.f24a.eq(",
+                        "ruleId": "5a31be10-0196-fa4a-495b-da50dfc074ca",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      },
+                      {
+                        "condition": "true",
+                        "effect": "DENY",
+                        "mongodbPredicate": "{ \"f22a\": ${subject.parityR29PairsNope} }",
+                        "predicate": "${resourceType}.f22a.eq(${subject.parityR29PairsNope})",
+                        "rsqlPredicate": "f22a==${subject.parityR29PairsNope}",
+                        "ruleId": "22d96d15-0cde-3fb5-285b-4d86fabb3c95",
+                        "ruleType": "DEFAULT",
+                        "sqlPredicate": "f22a=${subject.parityR29PairsNope}",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                    "policyId": "f4668c7e-399f-32df-25ef-3bed8491b598",
+                    "rules": [
+                      {
+                        "condition": "resource.f27a == subject.parityR29PairsTok",
+                        "customPredicate": {
+                          "params": {
+                            "p0": "subject.parityR29PairsTok"
+                          },
+                          "predicate": "[{\"value\":${p0},\"property\":\"f27a\",\"operator\":\"in\"}]"
+                        },
+                        "effect": "USE_FILTER_CONDITION",
+                        "ruleId": "832cee29-b532-d767-9c04-a6c4e994a334",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      },
+                      {
+                        "condition": "true",
+                        "customPredicate": {
+                          "params": {
+                            "p0": "subject.parityR29PairsNope"
+                          },
+                          "predicate": "[{\"value\":${p0},\"property\":\"f28a\",\"operator\":\"in\"}]"
+                        },
+                        "effect": "USE_FILTER_CONDITION",
+                        "ruleId": "f21430b0-1993-6b68-22c0-a307565e15b8",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                    "policyId": "476c9e74-e4b6-8349-7b26-7f6ad9104e3a",
+                    "rules": [
+                      {
+                        "condition": "resource.f26a IN subject.roles AND resource.f26b == 'v1'",
+                        "effect": "ALLOW",
+                        "ruleId": "a7ab40ff-2185-aded-676b-c8c46e3f7d14",
+                        "ruleType": "DEFAULT",
+                        "sqlPredicate": "f26a IN (${subject.roles}) AND f26b='v1'",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      },
+                      {
+                        "condition": "true",
+                        "effect": "USE_FILTER_CONDITION",
+                        "ruleId": "87c14be8-afb5-df31-b569-98ac1437ce0f",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "policySetId": "271a831c-67fa-6505-34f7-73041dd3d188",
+                "policySets": [],
+                "status": "ACTIVE",
+                "target": "true",
+                "tenantId": "parity-p47-o067",
+                "type": "DEFAULT"
+              }
+            ],
+            "status": "ACTIVE",
+            "target": "true",
+            "tenantId": "parity-p47-o067",
+            "type": "DEFAULT"
+          },
+          {
+            "combiningAlgorithm": "DENY_OVERRIDES",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "policyId": "1e010536-96c1-56f4-c1a3-424cb92229fb",
+                "rules": [
+                  {
+                    "condition": "resource.f17a == 'PARITY_SUITE_R29P_R30PAIRS_ONE_001' AND resource.f17b == 'v1'",
+                    "effect": "DENY",
+                    "predicate": "(${resourceType}.f17a.eq(${resourceType})).and(${resourceType}.f17b.eq(\"v1\"))",
+                    "ruleId": "65ff7489-e6d0-db4e-1ed9-1dbb0600cc67",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "condition": "true",
+                    "effect": "USE_FILTER_CONDITION",
+                    "predicate": "((${resourceType}.f18a.in(${subject.permissions})).or(${resourceType}.f18b.in(${subject.roles}))).and(${resourceType}.f18c.eq(\"v2\"))",
+                    "ruleId": "ca3bcd6c-c711-d474-13b7-d5ac3b07cc7a",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "target": "true",
+                "tenantId": "parity-p47-o067"
+              },
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "policyId": "9a09978b-ec6f-8881-da54-4d7d5cbfa4a3",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "USE_FILTER_CONDITION",
+                    "mongodbPredicate": "{ \"f19a\": { \"$in\": ${subject.permissions} } }",
+                    "predicate": "${resourceType}.f19a.in(${subject.permissions})",
+                    "rsqlPredicate": "f19a=in=(${subject.permissions})",
+                    "ruleId": "0d13ee7f-85af-189e-1666-95e7ba504e93",
+                    "ruleType": "DEFAULT",
+                    "sqlPredicate": "f19a IN (${subject.permissions})",
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p47-o067"
+              }
+            ],
+            "policySetId": "43582286-addb-d7d1-56a8-677bab719755",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "true",
+            "tenantId": "parity-p47-o067",
+            "type": "DEFAULT"
+          },
+          {
+            "combiningAlgorithm": "DENY_OVERRIDES",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "policyId": "b51f7b56-adf8-5a1a-eb30-2e844619af91",
+                "rules": [
+                  {
+                    "condition": "true",
+                    "effect": "ALLOW",
+                    "rsqlPredicate": "f29a==${subject.parityR29PairsNope}",
+                    "ruleId": "2cd3d79d-79fe-0124-56ba-77558b724462",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-p47-o067"
+              }
+            ],
+            "policySetId": "47997b0c-5dbb-ecc6-8dc9-070f295c136b",
+            "policySets": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "policies": [
+                  {
+                    "combiningAlgorithm": "PERMIT_OVERRIDES",
+                    "policyId": "fd5efe98-f060-25a7-1bed-f92c36a89ba2",
+                    "rules": [
+                      {
+                        "condition": "resource.nr30 == 'w'",
+                        "effect": "DENY",
+                        "ruleId": "b2aef462-391b-b1d8-b3c6-6f1e6830b46f",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                    "policyId": "a8dbf683-197b-2287-91ac-1216c5923d93",
+                    "rules": [
+                      {
+                        "condition": "true",
+                        "effect": "ALLOW",
+                        "predicate": "${resourceType}.f31a.eq(${subject.parityR29PairsTok})",
+                        "ruleId": "cbe1357b-f1c4-1cfd-7914-382496cc12a1",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o067"
+                  },
+                  {
+                    "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                    "policyId": "da9674dd-bd98-d228-8311-7d8e59cb6fd3",
+                    "rules": [
+                      {
+                        "condition": "true",
+                        "effect": "DENY",
+                        "predicate": "${resourceType}.f32a.eq(",
+                        "ruleId": "1700b9b1-8920-bd8f-4fe0-8c624a3c3883",
+                        "ruleType": "DEFAULT",
+                        "target": "true",
+                        "tenantId": "parity-p47-o067"
+                      }
+                    ],
+                    "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                    "tenantId": "parity-p47-o067"
+                  }
+                ],
+                "policySetId": "2f2c922f-2161-3efa-6d1a-c4a5efe21541",
+                "policySets": [],
+                "status": "ACTIVE",
+                "target": "true",
+                "tenantId": "parity-p47-o067",
+                "type": "DEFAULT"
+              }
+            ],
+            "status": "ACTIVE",
+            "target": "true",
+            "tenantId": "parity-p47-o067",
+            "type": "DEFAULT"
+          }
+        ],
+        "status": "ARCHIVED",
+        "target": "resourceType == 'PARITY_SUITE_R29P_R30PAIRS_ONE_001'",
+        "tenantId": "parity-p47-o067",
+        "type": "DEFAULT"
+      },
+      {
+        "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+        "name": "r30pairs-one-grant-control-first set",
+        "policies": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "name": "r30pairs-one-grant-control-first reader",
+            "policyId": "2284cfc5-6060-b521-7b8b-d7052678a276",
+            "rules": [
+              {
+                "condition": "resource.c == 'zz'",
+                "effect": "DENY",
+                "name": "r30pairs-one-grant-control-first deny",
+                "ruleId": "8d277592-d182-fdb4-7fc0-3bb2083960d0",
+                "ruleType": "DEFAULT",
+                "target": "true",
+                "tenantId": "parity-p47-o067"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p47-o067"
+          }
+        ],
+        "policySetId": "02e73bfa-4b6d-dcef-c2ae-097e13278ea2",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_R29P_R30PAIRS_ONE_GRANT_CONTROL_FIRST'",
+        "tenantId": "parity-p47-o067",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

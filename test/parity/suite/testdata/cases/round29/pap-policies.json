@@ -1,0 +1,332 @@
+{
+ "about": "Upload constraints on simplified policies that no earlier golden decides: required fields, the predicates object, predicates on a global policy, the MongoDB fragment, a non-UUID id, and field types. A valid policy is followed by one that breaks the constraint; the load golden of each is the answer. The file opens and closes with a control.",
+ "resourceTypePrefix": "PARITY_SUITE_R29P_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r29pap-policies-control-first",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  },
+  {
+   "id": "r29pap-policy-without-component-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-without-component-bad: the same upload within the constraint (policy without component)."
+  },
+  {
+   "policyOmit": [
+    "component"
+   ],
+   "id": "r29pap-policy-without-component-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy without component); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "id": "r29pap-policy-without-resourcetype-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-without-resourcetype-bad: the same upload within the constraint (policy without resourcetype)."
+  },
+  {
+   "policyOmit": [
+    "resourceType"
+   ],
+   "id": "r29pap-policy-without-resourcetype-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy without resourcetype); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "id": "r29pap-policy-without-operation-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-without-operation-bad: the same upload within the constraint (policy without operation)."
+  },
+  {
+   "policyOmit": [
+    "operation"
+   ],
+   "id": "r29pap-policy-without-operation-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy without operation); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "policy": {
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"v\"}"
+    }
+   },
+   "id": "r29pap-policy-predicates-empty-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-predicates-empty-bad: the same upload within the constraint (policy predicates empty)."
+  },
+  {
+   "policy": {
+    "predicates": {}
+   },
+   "id": "r29pap-policy-predicates-empty-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy predicates empty); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "policy": {
+    "component": "ALL",
+    "resourceType": "ALL",
+    "operation": "ALL"
+   },
+   "roles": [
+    "ROLE_PARITY_R29_NOBODY"
+   ],
+   "id": "r29pap-global-policy-with-predicates-ok",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-global-policy-with-predicates-bad: the same upload within the constraint (global policy with predicates)."
+  },
+  {
+   "policy": {
+    "component": "ALL",
+    "resourceType": "ALL",
+    "operation": "ALL",
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"v\"}"
+    }
+   },
+   "roles": [
+    "ROLE_PARITY_R29_NOBODY"
+   ],
+   "id": "r29pap-global-policy-with-predicates-bad",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (global policy with predicates); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "policy": {
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"v\"}"
+    }
+   },
+   "id": "r29pap-policy-mongodb-with-braces-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-mongodb-with-braces-bad: the same upload within the constraint (policy mongodb with braces)."
+  },
+  {
+   "policy": {
+    "predicates": {
+     "mongodbPredicate": "{\"a\":{\"$eq\":\"v\"}}"
+    }
+   },
+   "id": "r29pap-policy-mongodb-with-braces-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy mongodb with braces); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "policy": {
+    "id": "00000000-0000-0000-0000-0000000f2901"
+   },
+   "id": "r29pap-policy-id-not-uuid-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-id-not-uuid-bad: the same upload within the constraint (policy id not uuid)."
+  },
+  {
+   "policy": {
+    "id": "parity-r29-not-a-uuid"
+   },
+   "id": "r29pap-policy-id-not-uuid-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy id not uuid); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "policy": {
+    "applicableForFrontend": true
+   },
+   "id": "r29pap-policy-frontend-text-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-frontend-text-bad: the same upload within the constraint (policy frontend text)."
+  },
+  {
+   "policy": {
+    "applicableForFrontend": "yes"
+   },
+   "id": "r29pap-policy-frontend-text-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy frontend text); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "policy": {
+    "roles": [
+     "ROLE_PARITY_READER"
+    ]
+   },
+   "id": "r29pap-policy-roles-string-ok",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Valid twin of r29pap-policy-roles-string-bad: the same upload within the constraint (policy roles string)."
+  },
+  {
+   "policy": {
+    "roles": "ROLE_PARITY_READER"
+   },
+   "id": "r29pap-policy-roles-string-bad",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Breaks an upload constraint (policy roles string); the case before is its valid twin. The load golden is the answer."
+  },
+  {
+   "id": "r29pap-policies-control-last",
+   "condition": "resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "a": "y"
+     }
+    }
+   ],
+   "about": "Control: accepted, and the READ with a = 'y' is true unless the stand is broken."
+  }
+ ]
+}

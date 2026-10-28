@@ -1,0 +1,167 @@
+{
+ "about": "What MATCH /ab.*/ selects on values of the path form, and whether the word form LESS THAN OR EQUAL is accepted without TO. df4 records MATCH /ab.*/ against abc, which no path pattern selects, so what the form selects is recorded nowhere; LESS THAN OR EQUAL is recorded with TO only. The MATCH case is sent four values, alone and through the probe, whose control is true for a live policy. LESS THAN OR EQUAL is sent 5 and 6, and its upload status is an answer too; pp-less-than-or-equal-to, the form with TO, is the control. The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "pp-match-slash-pattern-alone",
+   "condition": "resource.x MATCH /ab.*/",
+   "requests": [
+    {
+     "name": "x-slash-ab-dot-c-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/ab.c/",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-slash-ab-dot-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/ab./",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-slash-abc-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/abc/",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-abc",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "abc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pp-match-slash-pattern",
+   "condition": "resource.x MATCH /ab.*/ OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "x-slash-ab-dot-c-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/ab.c/",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-slash-ab-dot-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/ab./",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-slash-abc-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/abc/",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-abc",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "abc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pp-match-slash-pattern-control",
+   "resourceType": "PARITY_SUITE_R10_PP_MATCH_SLASH_PATTERN_CTL",
+   "condition": "resource.a == 'y' OR resource.x MATCH /ab.*/",
+   "requests": [
+    {
+     "name": "x-slash-ab-dot-c-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/ab.c/",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-slash-ab-dot-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/ab./",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-slash-abc-slash",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "/abc/",
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-abc",
+     "resource": {
+      "id": "r10-pattern",
+      "x": "abc",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pp-less-than-or-equal-without-to",
+   "condition": "resource.x LESS THAN OR EQUAL 5",
+   "requests": [
+    {
+     "name": "x-5",
+     "resource": {
+      "id": "r10-pattern",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-6",
+     "resource": {
+      "id": "r10-pattern",
+      "x": 6,
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "pp-less-than-or-equal-to",
+   "condition": "resource.x LESS THAN OR EQUAL TO 5",
+   "requests": [
+    {
+     "name": "x-5",
+     "resource": {
+      "id": "r10-pattern",
+      "x": 5,
+      "a": "y"
+     }
+    },
+    {
+     "name": "x-6",
+     "resource": {
+      "id": "r10-pattern",
+      "x": 6,
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ]
+}

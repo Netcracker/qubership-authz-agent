@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "((PARITY_SUITE_R29P_R29PAIRS_Q_003.f19a.in(\"p1\", \"p2\")).or(PARITY_SUITE_R29P_R29PAIRS_Q_003.f19b.eq(\"v1\"))).not()",
+    "mongodbFilterCondition": "{ { \"$and\": [ { \"f19a\": { \"$nin\": [ { \"$uuid\": \"p1\" }, { \"$uuid\": \"p2\" } ] } }, { \"f19b\": \"v1\" } ] } }",
+    "rsqlFilterCondition": "f17a!=PARITY_SUITE_R29P_R29PAIRS_Q_003,f17b!=v1;f17c!=v2;f19a=out=(\"p1\", \"p2\");f19b!=v1",
+    "sqlFilterCondition": "NOT (f19a IN ('p1', 'p2') OR f19b='v1')",
+    "customFilterCondition": null
+  }
+}

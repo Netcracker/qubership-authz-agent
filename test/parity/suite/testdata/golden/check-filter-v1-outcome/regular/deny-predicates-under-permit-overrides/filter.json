@@ -1,0 +1,37 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_REG_DENY_PREDICATES_UNDER_PERMIT_OVERRIDES.b.eq(2)).or(PARITY_SUITE_REG_DENY_PREDICATES_UNDER_PERMIT_OVERRIDES.a.eq(1))",
+    "mongodbFilterCondition": "{ \"$or\": [ {{ \"b\": 2 }}, {{ \"a\": 1 }} ] }",
+    "rsqlFilterCondition": "b==2,a==1",
+    "sqlFilterCondition": "b=2 OR a=1",
+    "customFilterCondition": {
+      "logic": {
+        "op": "OR",
+        "apply": [
+          {
+            "path": "0683af56-3569-1b18-5cee-1a6ffd869f2f"
+          },
+          {
+            "path": "416deeeb-0ee7-15f8-010f-8582e58fd63c"
+          }
+        ]
+      },
+      "data": {
+        "416deeeb-0ee7-15f8-010f-8582e58fd63c": {
+          "predicate": "a:1:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        },
+        "0683af56-3569-1b18-5cee-1a6ffd869f2f": {
+          "predicate": "b:2:${owner}",
+          "params": {
+            "owner": "00000000-0000-0000-0000-000000000101"
+          }
+        }
+      }
+    }
+  }
+}

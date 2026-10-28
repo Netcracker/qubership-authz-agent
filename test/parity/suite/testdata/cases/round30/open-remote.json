@@ -1,0 +1,473 @@
+{
+ "about": "Remote PIPs for subjects round 29 did not ask. A FILTERED PIP, asked by parity-reader, the M2M token alone and an anonymous request (Authorization-Type: anonymous), where round 29 asked a GENERAL PIP: no call for the M2M token and the anonymous request if FILTERED is remote as GENERAL is. A GENERAL PIP asked by users whose level claim is partner and M2M (upper case), where round 29 asked m2m, external and internal. Needs the users of testdata/realm/round30-level-users.json in the parity realm. The DENY rule under PERMIT_UNLESS_DENY tells a failed decision (false) from an ended rule (true); pipCalls records whether pip-mock was called.",
+ "resourceTypePrefix": "PARITY_SUITE_R30O_",
+ "pins": {
+  "/api/v1/pip/r30open-remote": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r30open-remote-filtered": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "remote": {
+   "name": "subject.parityR30Remote",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r30open-remote",
+   "requestAttributes": {
+    "case": "r30open-remote"
+   }
+  },
+  "filtered": {
+   "name": "subject.parityR30Remote.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r30open-remote-filtered",
+   "requestAttributes": {
+    "case": "r30open-remote-filtered"
+   },
+   "resourceType": "PARITY_R30_FILTERED"
+  }
+ },
+ "cases": [
+  {
+   "id": "r30open-remote-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-remote-filtered-allow",
+   "about": "FILTERED PIP, allow form.",
+   "pips": [
+    "remote",
+    "filtered"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR30Remote.filtered == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote-filtered"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "pipCalls": "/api/v1/pip/r30open-remote-filtered"
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "anonymous-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote-filtered"
+    },
+    {
+     "name": "anonymous-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-remote-filtered-deny",
+   "about": "FILTERED PIP, deny form.",
+   "pips": [
+    "remote",
+    "filtered"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR30Remote.filtered == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote-filtered"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "pipCalls": "/api/v1/pip/r30open-remote-filtered"
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "anonymous-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote-filtered"
+    },
+    {
+     "name": "anonymous-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-remote-level-allow",
+   "about": "GENERAL PIP, allow form, users with a level claim.",
+   "pips": [
+    "remote",
+    "filtered"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR30Remote == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    },
+    {
+     "name": "level-partner-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote"
+    },
+    {
+     "name": "level-partner-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     }
+    },
+    {
+     "name": "level-upper-m2m-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote"
+    },
+    {
+     "name": "level-upper-m2m-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-remote-level-deny",
+   "about": "GENERAL PIP, deny form, users with a level claim.",
+   "pips": [
+    "remote",
+    "filtered"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR30Remote == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    },
+    {
+     "name": "level-partner-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote"
+    },
+    {
+     "name": "level-partner-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "user:parity-r30-level-partner",
+     "subjectClaims": {
+      "level": "partner"
+     }
+    },
+    {
+     "name": "level-upper-m2m-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     },
+     "pipCalls": "/api/v1/pip/r30open-remote"
+    },
+    {
+     "name": "level-upper-m2m-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     },
+     "subject": "user:parity-r30-level-upper",
+     "subjectClaims": {
+      "level": "M2M"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30open-remote-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

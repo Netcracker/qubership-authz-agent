@@ -1,0 +1,333 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "fs69-c-allow-pred-both-alone-dup-dup",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' AND resource.c == 'v'",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": 1,
+      "c": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "p": "zz",
+      "c": "v"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": "zz",
+      "c": "zz"
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "c": "v"
+     }
+    },
+    {
+     "name": "row-6",
+     "operation": "READ",
+     "resource": {
+      "p": 0,
+      "c": "v"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-deny-pred-none-true-allow-pred-dov-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "true",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        },
+        {
+         "key": "n",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "true",
+         "predicates": {
+          "rsqlPredicate": "q==1",
+          "sqlPredicate": "q=1",
+          "mongodbPredicate": "{ \"q\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": "zz",
+      "q": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": 1,
+      "q": 1
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "p": "zz",
+      "q": "zz"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0,
+      "q": 1
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "p": 2,
+      "q": 1
+     }
+    },
+    {
+     "name": "row-6",
+     "operation": "READ",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-deny-pred-none-false-alone-dov-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "p": 2
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-deny-nopred-both-allow-pred-dov-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "DENY",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' AND resource.c == 'v'"
+        },
+        {
+         "key": "n",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "true",
+         "predicates": {
+          "rsqlPredicate": "q==1",
+          "sqlPredicate": "q=1",
+          "mongodbPredicate": "{ \"q\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "c": "v",
+      "q": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "q": "zz",
+      "c": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "q": "zz",
+      "c": "v"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "c": "zz"
+     }
+    }
+   ]
+  }
+ ]
+}

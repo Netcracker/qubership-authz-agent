@@ -1,0 +1,56 @@
+{
+  "status": 200,
+  "export": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-customization",
+        "name": "customization set",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "customization reader",
+            "policyId": "2aba6218-e96c-c7c9-fd09-3dd542ec55fc",
+            "rules": [
+              {
+                "condition": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+                "effect": "ALLOW",
+                "name": "customization update-allow",
+                "ruleId": "0faaea42-cbe1-813a-4079-b4cf83ca631c",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'UPDATE'",
+                "tenantId": "default"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "customization probe-allow",
+                "ruleId": "879346cf-94c6-0112-8363-4bc472387a03",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'PROBE'",
+                "tenantId": "default"
+              },
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "customization read-allow",
+                "ruleId": "231485d8-a25e-30e7-4e49-6c0c6a1fd264",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "default"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "default"
+          }
+        ],
+        "policySetId": "e18609ec-eb2e-8d88-a39e-62ca22f39e02",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_REG_CUSTOMIZATION'",
+        "tenantId": "default",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-survivors-control-first",
+        "name": "p66x-survivors-control-first s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-survivors-control-first s reader",
+            "policyId": "ce0af2ca-ef3c-4de1-6e25-6eac42ab8a09",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-survivors-control-first s rule",
+                "ruleId": "265d4e82-8bd5-d69d-fd68-b5a56e7dbb79",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-survivors-control-first"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-survivors-control-first"
+          }
+        ],
+        "policySetId": "73a75c7a-f2e3-5f6a-67ed-dba7c23f6978",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_SURVIVORS_CONTROL_FIRST'",
+        "tenantId": "parity-p66x-survivors-control-first",
+        "type": "DEFAULT"
+      }
+    ]
+  }
+}

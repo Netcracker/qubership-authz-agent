@@ -1,0 +1,49 @@
+[
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_REGION",
+    "resourceType": "PARITY_MT_REGION",
+    "operation": "READ",
+    "condition": "resource.region == 'B'",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d002a"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_PIP",
+    "resourceType": "PARITY_MT_PIP",
+    "operation": "READ",
+    "condition": "resource.amount <= subject.mtLimit",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d002b"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_FILTER",
+    "resourceType": "PARITY_MT_FILTER",
+    "operation": "LIST",
+    "rsqlPredicate": "tenant==b",
+    "roles": [
+      "ROLE_MT_READER"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d002c"
+  },
+  {
+    "component": "PARITY",
+    "reason": "PARITY_MT_M2M",
+    "resourceType": "PARITY_MT_M2M",
+    "operation": "READ",
+    "roles": [
+      "ROLE_M2M"
+    ],
+    "applicableForFrontend": false,
+    "id": "00000000-0000-0000-0000-0000000d002d"
+  }
+]

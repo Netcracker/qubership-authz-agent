@@ -1,0 +1,234 @@
+{
+ "about": "What subject allowed and subject denied answer over a decision on another operation whose condition names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}, which fails that decision with 400. Round 20 found that a decision failing on a GENERAL answering 500 makes subject allowed false and subject denied true (q20-*-over-a-failing-decision-*).",
+ "resourceTypePrefix": "PARITY_SUITE_R39A_",
+ "pins": {
+  "/api/v1/pip/r39open-m2m-allowed-over-a-named-decision": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r39open-m2m-denied-over-a-named-decision": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "r39open-m2m-allowed-over-a-named-decision": {
+   "name": "subject.parityR39M2mAllowed",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-allowed-over-a-named-decision",
+   "requestAttributes": {
+    "case": "r39open-m2m-allowed-over-a-named-decision",
+    "x": "${subject.isM2M}"
+   }
+  },
+  "r39open-m2m-denied-over-a-named-decision": {
+   "name": "subject.parityR39M2mDenied",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-denied-over-a-named-decision",
+   "requestAttributes": {
+    "case": "r39open-m2m-denied-over-a-named-decision",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r39openm2maccess-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-allowed-over-a-named-decision",
+   "pips": [
+    "r39open-m2m-allowed-over-a-named-decision",
+    "r39open-m2m-denied-over-a-named-decision"
+   ],
+   "about": "subject allowed 'READ' on resource asked on UPDATE; the READ decision reaches the rule subject.parityR39M2mAllowed == 'v', which answers 400 on its own. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy in a top-level set whose target holds on UPDATE only; the READ rule is in a second top-level set whose target holds on READ only, so the UPDATE check does not reach it. 400 if the inner 400 fails the outer check; false if subject allowed reads it as a decision that fails, as it reads one that fails on a PIP answering 500.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'UPDATE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "outer",
+         "target": "true",
+         "condition": "subject allowed 'READ' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "read",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "read-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-names",
+         "target": "true",
+         "condition": "subject.parityR39M2mAllowed == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "resource": {
+      "id": "r39"
+     },
+     "operation": "UPDATE",
+     "pipCalls": "/api/v1/pip/r39open-m2m-allowed-over-a-named-decision"
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-denied-over-a-named-decision",
+   "pips": [
+    "r39open-m2m-allowed-over-a-named-decision",
+    "r39open-m2m-denied-over-a-named-decision"
+   ],
+   "about": "subject denied 'READ' on resource asked on UPDATE; the READ decision reaches the rule subject.parityR39M2mDenied == 'v', which answers 400 on its own. The outer rule is an ALLOW rule of a DENY_UNLESS_PERMIT policy in a top-level set whose target holds on UPDATE only; the READ rule is in a second top-level set whose target holds on READ only, so the UPDATE check does not reach it. 400 if the inner 400 fails the outer check; true if subject denied reads it as a decision that fails, as it reads one that fails on a PIP answering 500.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'UPDATE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "outer",
+         "target": "true",
+         "condition": "subject denied 'READ' on resource",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "read",
+     "target": "resourceType == '{{resourceType}}' AND operation == 'READ'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "read-reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "read-names",
+         "target": "true",
+         "condition": "subject.parityR39M2mDenied == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "update",
+     "resource": {
+      "id": "r39"
+     },
+     "operation": "UPDATE",
+     "pipCalls": "/api/v1/pip/r39open-m2m-denied-over-a-named-decision"
+    }
+   ]
+  },
+  {
+   "id": "r39openm2maccess-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
