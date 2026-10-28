@@ -1,0 +1,1041 @@
+{
+ "about": "Round 69: two resource attributes compared under == and under !=: lists in another order, with a repeat, of strings in two cases, of a number and its text, lists of lists, objects whose member is a list, an object or a number, and an object against a number. The == case and its != twin together tell equal, not equal and a failed comparison apart. A positive control compares a list with itself. Controls first and last must answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_OBJLIST_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ol69-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-self",
+   "about": "Positive control: a list equals itself, [\"a\", \"b\"] == [\"a\", \"b\"].",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.p",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       "a",
+       "b"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-order-eq",
+   "about": "Two lists in another order: [\"a\", \"b\"] and [\"b\", \"a\"], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       "a",
+       "b"
+      ],
+      "q": [
+       "b",
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-order-ne",
+   "about": "Two lists in another order: [\"a\", \"b\"] and [\"b\", \"a\"], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       "a",
+       "b"
+      ],
+      "q": [
+       "b",
+       "a"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-repeats-eq",
+   "about": "A list with a repeat and without: [1, 1] and [1], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       1,
+       1
+      ],
+      "q": [
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-repeats-ne",
+   "about": "A list with a repeat and without: [1, 1] and [1], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       1,
+       1
+      ],
+      "q": [
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-case-eq",
+   "about": "Two lists of a string in two cases: [\"X\"] and [\"x\"], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       "X"
+      ],
+      "q": [
+       "x"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-case-ne",
+   "about": "Two lists of a string in two cases: [\"X\"] and [\"x\"], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       "X"
+      ],
+      "q": [
+       "x"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-number-text-eq",
+   "about": "A list of a number and a list of its text: [1] and [\"1\"], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       1
+      ],
+      "q": [
+       "1"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-number-text-ne",
+   "about": "A list of a number and a list of its text: [1] and [\"1\"], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       1
+      ],
+      "q": [
+       "1"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-list-order-eq",
+   "about": "Two objects whose list member differs in order, beside equal members true and null: {\"t\": true, \"n\": null, \"k\": [\"a\", \"b\"]} and the same with [\"b\", \"a\"], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "t": true,
+       "n": null,
+       "k": [
+        "a",
+        "b"
+       ]
+      },
+      "q": {
+       "t": true,
+       "n": null,
+       "k": [
+        "b",
+        "a"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-list-order-ne",
+   "about": "Two objects whose list member differs in order, beside equal members true and null: {\"t\": true, \"n\": null, \"k\": [\"a\", \"b\"]} and the same with [\"b\", \"a\"], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "t": true,
+       "n": null,
+       "k": [
+        "a",
+        "b"
+       ]
+      },
+      "q": {
+       "t": true,
+       "n": null,
+       "k": [
+        "b",
+        "a"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-list-number-eq",
+   "about": "Two objects whose list member holds an integer and a Double: {\"k\": [1]} and {\"k\": [1.0]}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "k": [
+        1
+       ]
+      },
+      "q": {
+       "k": [
+        1.0
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-list-number-ne",
+   "about": "Two objects whose list member holds an integer and a Double: {\"k\": [1]} and {\"k\": [1.0]}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "k": [
+        1
+       ]
+      },
+      "q": {
+       "k": [
+        1.0
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-list-of-lists-eq",
+   "about": "Two lists of lists of an integer and a Double: [[1]] and [[1.0]], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       [
+        1
+       ]
+      ],
+      "q": [
+       [
+        1.0
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-list-of-lists-ne",
+   "about": "Two lists of lists of an integer and a Double: [[1]] and [[1.0]], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       [
+        1
+       ]
+      ],
+      "q": [
+       [
+        1.0
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-object-scalar-eq",
+   "about": "Two objects whose member is an object on one side and a number on the other: {\"k\": {\"x\": 1}} and {\"k\": 1}, compared both ways round, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q OR resource.q == resource.p",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "k": {
+        "x": 1
+       }
+      },
+      "q": {
+       "k": 1
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-object-scalar-ne",
+   "about": "Two objects whose member is an object on one side and a number on the other: {\"k\": {\"x\": 1}} and {\"k\": 1}, compared both ways round, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q AND resource.q != resource.p",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "k": {
+        "x": 1
+       }
+      },
+      "q": {
+       "k": 1
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-text-number-eq",
+   "about": "Two objects whose member is a text on the left and a number on the right: {\"x\": \"1\"} and {\"x\": 1}, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": "1"
+      },
+      "q": {
+       "x": 1
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-member-text-number-ne",
+   "about": "Two objects whose member is a text on the left and a number on the right: {\"x\": \"1\"} and {\"x\": 1}, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": "1"
+      },
+      "q": {
+       "x": 1
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-list-object-scalar-eq",
+   "about": "Two lists holding an object and a number in one place: [{\"x\": 1}] and [1], under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       {
+        "x": 1
+       }
+      ],
+      "q": [
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-list-object-scalar-ne",
+   "about": "Two lists holding an object and a number in one place: [{\"x\": 1}] and [1], under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": [
+       {
+        "x": 1
+       }
+      ],
+      "q": [
+       1
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-object-scalar-eq",
+   "about": "An object against a number that is no object: {\"x\": 1} and 1, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p == resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1
+      },
+      "q": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-object-scalar-ne",
+   "about": "An object against a number that is no object: {\"x\": 1} and 1, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.p != resource.q",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "p": {
+       "x": 1
+      },
+      "q": 1
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

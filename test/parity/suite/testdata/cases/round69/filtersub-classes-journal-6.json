@@ -1,0 +1,96 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/pip/r14-failing": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 14 case"
+   }
+  }
+ },
+ "pips": {
+  "failing": {
+   "name": "subject.parityR14Failing",
+   "url": "http://pip-mock:8090/api/v1/pip/r14-failing",
+   "httpMethod": "POST",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR14Failing"
+   },
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-r14-readable-in-a-set-target-deny",
+   "about": "The control: the target holds, so check/resource is false under DENY and true under ALLOW.",
+   "pips": [
+    "failing",
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.a == 'y'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "decides",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "PERMIT_UNLESS_DENY",
+         "rules": [
+          {
+           "key": "decide",
+           "target": "true",
+           "condition": "true",
+           "effect": "DENY"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "y"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "a": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  }
+ ]
+}

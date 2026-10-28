@@ -1,0 +1,398 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "fs69-c-set-algorithm-permit-unless-deny-over-allow-and-deny-predicates",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "allows",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "denies",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "list-deny-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "blocked==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "allowed": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "allowed": 1,
+      "blocked": "zz"
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": 1
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": 0
+     }
+    },
+    {
+     "name": "row-6",
+     "operation": "LIST",
+     "resource": {
+      "allowed": "zz",
+      "blocked": 2
+     }
+    },
+    {
+     "name": "row-7",
+     "operation": "LIST",
+     "resource": {
+      "allowed": 0,
+      "blocked": "zz"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-target-resource-is-null-without-predicate-alone",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-reads-the-resource",
+         "target": "operation == 'LIST' AND resource.x IS NULL",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "x": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-resource-is-null-without-predicate-alone",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-reads-the-resource",
+         "target": "operation == 'LIST'",
+         "condition": "resource.x IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "x": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-r28rsql-pud-op-gt-bare",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a=gt=5. The filter shows how each dialect negates it; tells apart: rsql negation tree.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=gt=5",
+          "sqlPredicate": "a>5",
+          "predicate": "${resourceType}.a.gt(5)",
+          "mongodbPredicate": "{ \"a\": { \"$gt\": 5 } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "a": 4
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "a": 5
+     }
+    },
+    {
+     "name": "row-5",
+     "operation": "LIST",
+     "resource": {
+      "a": 6
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-r28rsql-do-literal-a-eq-x-and-y",
+   "about": "A DENY rule under DENY_OVERRIDES with the predicate a=='x;y'. The filter shows how each dialect negates it; tells apart: rsql negation both joins.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a=='x;y'",
+          "sqlPredicate": "a='x;y'",
+          "predicate": "${resourceType}.a.eq(\"x;y\")",
+          "mongodbPredicate": "{ \"a\": \"x;y\" }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "x;y"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "a": "x,y"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {
+      "a": "zz"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-c-r28rsql-pud-op-le-alt-bare",
+   "about": "A DENY rule under PERMIT_UNLESS_DENY with the predicate a<=5. The filter shows how each dialect negates it; tells apart: rsql negation tree.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "rule",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "a<=5",
+          "sqlPredicate": "a<=5",
+          "predicate": "${resourceType}.a.loe(5)",
+          "mongodbPredicate": "{ \"a\": { \"$lte\": 5 } }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "row-1",
+     "operation": "LIST",
+     "resource": {
+      "a": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "LIST",
+     "resource": {
+      "a": 4
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "LIST",
+     "resource": {
+      "a": 6
+     }
+    },
+    {
+     "name": "row-4",
+     "operation": "LIST",
+     "resource": {}
+    }
+   ]
+  }
+ ]
+}

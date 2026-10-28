@@ -1,0 +1,220 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/pip/r29-pairs-gen": {
+   "statusCode": 200,
+   "body": [
+    "x",
+    "y"
+   ]
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 29 case"
+   }
+  }
+ },
+ "pips": {
+  "gen": {
+   "name": "subject.parityR29PairsGen",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29-pairs-gen",
+   "requestAttributes": {
+    "case": "r29-pairs-gen"
+   }
+  },
+  "hdr": {
+   "name": "subject.parityR29PairsHdr",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-pairs",
+   "cacheable": false
+  },
+  "map": {
+   "name": "subject.permissions.PARITY_R29_PAIRS",
+   "pipType": "MAPPING",
+   "type": "UUID",
+   "cacheable": false,
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "tok": {
+   "name": "subject.parityR29PairsTok",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "department",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-r30fix-pairs-q-003-r17",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "sets": [
+      {
+       "key": "s0n2",
+       "target": "true",
+       "omitStatus": true,
+       "sets": [
+        {
+         "key": "s0n2n2",
+         "target": "true",
+         "algorithm": "DENY_OVERRIDES",
+         "omitStatus": true,
+         "policies": [
+          {
+           "key": "s0n2n2p2",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "key": "r17",
+             "target": "true",
+             "effect": "DENY",
+             "predicates": {
+              "rsqlPredicate": "f17a==${resourceType};f17b==v1,f17c==v2"
+             },
+             "condition": "resource.f17a == '{{resourceType}}' AND resource.f17b == 'v1' OR resource.f17c == 'v2'"
+            }
+           ],
+           "algorithm": "DENY_OVERRIDES"
+          }
+         ]
+        }
+       ],
+       "policies": []
+      }
+     ],
+     "policies": []
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz",
+      "f17b": "zz",
+      "f17c": "v2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz",
+      "f17c": "v2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz",
+      "f17c": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "f17a": "PARITY_SUITE_FS69_FS69_C_R30FIX_PAIRS_Q_003_R17",
+      "f17b": "v1",
+      "f17c": "v2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-6",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz",
+      "f17b": "v1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-7",
+     "operation": "READ",
+     "resource": {
+      "f17a": "zz",
+      "f17b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-8",
+     "operation": "READ",
+     "resource": {
+      "f17a": "PARITY_SUITE_FS69_FS69_C_R30FIX_PAIRS_Q_003_R17",
+      "f17b": "zz",
+      "f17c": "zz"
+     }
+    }
+   ],
+   "about": "The sets of r29pairs-q-003 with its DENY rule r17 alone: the filter and a check of the resource the question named.",
+   "pips": [
+    "gen",
+    "hdr",
+    "map",
+    "scope",
+    "tok"
+   ]
+  }
+ ]
+}

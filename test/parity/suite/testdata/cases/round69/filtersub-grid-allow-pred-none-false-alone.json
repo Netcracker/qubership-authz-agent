@@ -1,0 +1,918 @@
+{
+ "about": "Round 69: the factor grid allow-pred-none-false-alone (effect, predicate, what the rule's condition reads, the neighbour) under each algorithm of the policy and of the set. Each case asks check/filter and check/resource of rows of the filter's resource type as the same subject, so that a row the filter selects and the check denies shows in a pair of goldens.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "fs69-allow-pred-none-false-alone-dup-dup",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dup-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dup-dov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dup-pud",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pov-dup",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pov-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pov-dov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pov-pud",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dov-dup",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dov-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dov-dov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": 1
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-dov-pud",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "p": "zz"
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {}
+    },
+    {
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "p": 0
+     }
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pud-dup",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pud-pov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pud-dov",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {}
+    }
+   ]
+  },
+  {
+   "id": "fs69-allow-pred-none-false-alone-pud-pud",
+   "sets": [
+    {
+     "key": "s",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "p",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "r",
+         "target": "true",
+         "effect": "ALLOW",
+         "condition": "false",
+         "predicates": {
+          "rsqlPredicate": "p==1",
+          "sqlPredicate": "p=1",
+          "mongodbPredicate": "{ \"p\": 1 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {}
+    }
+   ]
+  }
+ ]
+}
