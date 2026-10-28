@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER.t.eq(\"00000000-0000-0000-0000-000000000101\")",
+    "mongodbFilterCondition": "{ { \"t\": \"PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER\" } }",
+    "rsqlFilterCondition": "t==PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER",
+    "sqlFilterCondition": "t='PARITY_SUITE_R69_RTSUB_RT69_LOW_UPPER'",
+    "customFilterCondition": null
+  }
+}

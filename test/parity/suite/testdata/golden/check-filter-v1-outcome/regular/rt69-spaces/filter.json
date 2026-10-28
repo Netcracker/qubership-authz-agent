@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": " PARITY_SUITE_R69_RTSUB_RT69_SPACES .b.eq(\"00000000-0000-0000-0000-000000000101\")",
+    "mongodbFilterCondition": "{ { \"b\": \" PARITY_SUITE_R69_RTSUB_RT69_SPACES \" } }",
+    "rsqlFilterCondition": "b== PARITY_SUITE_R69_RTSUB_RT69_SPACES ",
+    "sqlFilterCondition": "b=' PARITY_SUITE_R69_RTSUB_RT69_SPACES '",
+    "customFilterCondition": null
+  }
+}
