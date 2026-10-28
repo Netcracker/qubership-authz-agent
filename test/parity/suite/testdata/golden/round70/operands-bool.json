@@ -1,0 +1,225 @@
+{
+  "o70-bool-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-o70-bool-control-first",
+            "name": "o70-bool-control-first set",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "o70-bool-control-first reader",
+                "policyId": "06d70396-b0bf-43f0-eef0-09150f92c1cc",
+                "rules": [
+                  {
+                    "condition": "resource.c == 'zz'",
+                    "effect": "DENY",
+                    "name": "o70-bool-control-first probe",
+                    "ruleId": "f5a8d56e-0386-b14a-06f5-550f97b70d02",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o70-bool-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o70-bool-control-first"
+              }
+            ],
+            "policySetId": "832ee574-6a3f-4c1f-594a-137e5aee269d",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O70_BOOL_CONTROL_FIRST'",
+            "tenantId": "parity-o70-bool-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o70-bool-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-o70-bool-control-last",
+            "name": "o70-bool-control-last set",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "o70-bool-control-last reader",
+                "policyId": "60e9ab93-4838-2f26-a8e5-5e45cfd0be63",
+                "rules": [
+                  {
+                    "condition": "resource.c == 'zz'",
+                    "effect": "DENY",
+                    "name": "o70-bool-control-last probe",
+                    "ruleId": "f97b9620-b980-8eb8-a80b-d09025336e80",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o70-bool-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o70-bool-control-last"
+              }
+            ],
+            "policySetId": "862b17d3-b6eb-21c9-dda8-d322a6296778",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O70_BOOL_CONTROL_LAST'",
+            "tenantId": "parity-o70-bool-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o70-bool-key-false": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o70-bool-key-false",
+            "name": "o70-bool-key-false set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o70-bool-key-false reader",
+                "policyId": "cedf57d3-0916-5da3-27bb-8a8167b0d610",
+                "rules": [
+                  {
+                    "condition": "resource.x IN true,false OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o70-bool-key-false probe",
+                    "ruleId": "91107abd-56bd-ae0c-46a4-2e8bba5a37e3",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o70-bool-key-false"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o70-bool-key-false"
+              }
+            ],
+            "policySetId": "9dccaf58-0ed3-7a9b-8626-4f3d41c61286",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O70_BOOL_KEY_FALSE'",
+            "tenantId": "parity-o70-bool-key-false",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o70-bool-key-true": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o70-bool-key-true",
+            "name": "o70-bool-key-true set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o70-bool-key-true reader",
+                "policyId": "92e95e08-d442-0385-6a0e-650f0b553fe9",
+                "rules": [
+                  {
+                    "condition": "resource.x IN true,false OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o70-bool-key-true probe",
+                    "ruleId": "7d13aeca-a066-93f8-383f-39225b63f0f9",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o70-bool-key-true"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o70-bool-key-true"
+              }
+            ],
+            "policySetId": "a7e11959-e6a9-6fa5-a8d6-b829579117e6",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O70_BOOL_KEY_TRUE'",
+            "tenantId": "parity-o70-bool-key-true",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o70-bool-no-key": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o70-bool-no-key",
+            "name": "o70-bool-no-key set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o70-bool-no-key reader",
+                "policyId": "59a35559-43fe-cdba-46fd-717e3793ce59",
+                "rules": [
+                  {
+                    "condition": "resource.x IN true,false OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o70-bool-no-key probe",
+                    "ruleId": "6bbae237-be7a-1856-21c1-1bbcca4aa266",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o70-bool-no-key"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o70-bool-no-key"
+              }
+            ],
+            "policySetId": "9662f0b9-65d2-6233-b5ec-8da6e8387cc5",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O70_BOOL_NO_KEY'",
+            "tenantId": "parity-o70-bool-no-key",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  }
+}
