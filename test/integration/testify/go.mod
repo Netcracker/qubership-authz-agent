@@ -3,7 +3,7 @@ module authz-agent/test/integration/testify
 go 1.26.8
 
 require (
-	github.com/getkin/kin-openapi v0.149.0
+	github.com/getkin/kin-openapi v0.151.0
 	github.com/stretchr/testify v1.12.1
 )
 
