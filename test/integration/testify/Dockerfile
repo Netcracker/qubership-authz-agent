@@ -19,7 +19,7 @@ COPY test/integration/testify/ ./
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
     go test -c -tags integration -o /out/runtime.test .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
+FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.9@sha256:ab860790e4ecce56f8df673495cd5745ce587fffa7d7eb210d6d098563ccb26d
 
 # Everything the image ships stays root-owned: the inputs world-readable, the
 # binary world-executable, so the runtime uid can run it but not change it.
