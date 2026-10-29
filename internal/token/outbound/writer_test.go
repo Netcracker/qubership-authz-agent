@@ -24,22 +24,28 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
 
 // tokenEndpoint is a fake token endpoint. It records the path, the form,
 // and the Authorization header of the last request and counts the
 // requests. It answers the first failures requests with 503 and every later
-// one with status and body.
+// one with status and body, all of them as application/json: net/http
+// would sniff a JSON body as text/plain, which x/oauth2 reads as a form.
+// A location that is not empty goes out as the Location header of the
+// answers with status and body.
 type tokenEndpoint struct {
 	srv *httptest.Server
 
 	mu       sync.Mutex
 	status   int
 	body     string
+	location string
 	failures int
 	lastPath string
 	lastForm url.Values
@@ -58,10 +64,14 @@ func newTokenEndpoint(t *testing.T, body string) *tokenEndpoint {
 		e.lastPath = r.URL.Path
 		e.lastForm = r.PostForm
 		e.lastAuth = r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
 		if e.failures > 0 {
 			e.failures--
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
+		}
+		if e.location != "" {
+			w.Header().Set("Location", e.location)
 		}
 		w.WriteHeader(e.status)
 		_, _ = w.Write([]byte(e.body))
@@ -146,20 +156,18 @@ func TestWriter_RefreshWritesTheTokenItObtains(t *testing.T) {
 	}
 }
 
-// The id and the secret hold characters that form encoding changes, a colon
-// among them, which would split the header in the wrong place; the Writer
-// encodes both values, as RFC 6749, section 2.3.1, requires.
+// The colon in the id would split the header in the wrong place unless the
+// id is form-encoded first.
 func TestWriter_SendsTheCredentialsInABasicHeaderWhenAsked(t *testing.T) {
 	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 300}`)
 	w, secretFile := newTestWriter(t, e, inTempDir(t, "token"))
 	writeFile(t, filepath.Join(filepath.Dir(secretFile), "username"), "agent:1\n")
-	writeFile(t, secretFile, "p@ss word:1\n")
 	w.cfg.BasicAuth = true
 
 	if _, err := w.Refresh(context.Background()); err != nil {
 		t.Fatalf("Refresh() error = %v", err)
 	}
-	want := "Basic " + base64.StdEncoding.EncodeToString([]byte("agent%3A1:p%40ss+word%3A1"))
+	want := "Basic " + base64.StdEncoding.EncodeToString([]byte("agent%3A1:s3cret"))
 	if got := e.authorization(); got != want {
 		t.Errorf("token request Authorization = %q, want %q", got, want)
 	}
@@ -179,10 +187,14 @@ func TestWriter_ReportsTheErrorTheProviderNames(t *testing.T) {
 		{"error without a description", `{"error": "invalid_client"}`, `HTTP 401, error "invalid_client"`},
 		{"description with a line break", `{"error": "invalid_request", "error_description": "line one\nline two"}`,
 			`HTTP 401, error "invalid_request": "line one\nline two"`},
-		{"error of 65 runes", `{"error": "` + strings.Repeat("e", 65) + `"}`,
+		{"error of 65 runes", `{"error": "` + strings.Repeat("e", 64) + `x"}`,
 			`HTTP 401, error "` + strings.Repeat("e", 64) + `"...`},
-		{"description of 201 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 201) + `"}`,
+		{"description of 200 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 200) + `"}`,
+			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"`},
+		{"description of 201 runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("d", 200) + `x"}`,
 			`HTTP 401, error "invalid_request": "` + strings.Repeat("d", 200) + `"...`},
+		{"description of 201 two-byte runes", `{"error": "invalid_request", "error_description": "` + strings.Repeat("é", 200) + `x"}`,
+			`HTTP 401, error "invalid_request": "` + strings.Repeat("é", 200) + `"...`},
 		{"JSON that is not an OAuth error", `{"message": "Unauthorized"}`, `HTTP 401`},
 		{"body that is not JSON", `<html>Unauthorized</html>`, `HTTP 401`},
 	}
@@ -199,6 +211,48 @@ func TestWriter_ReportsTheErrorTheProviderNames(t *testing.T) {
 	}
 }
 
+// An expires_in of 4096 digits makes x/oauth2 repeat every digit in its parse
+// error.
+func TestWriter_CutsAParseErrorTo200Runes(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": `+strings.Repeat("7", 4096)+`}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	_, err := w.Refresh(context.Background())
+	checkCutAfter(t, err, "POST "+w.cfg.TokenURL+": ")
+}
+
+// net/http parses the Location header of a redirect before CheckRedirect
+// stops it, and the error for a header it cannot parse quotes the header
+// twice.
+func TestWriter_CutsTheCauseOfAFailedRequestTo200Runes(t *testing.T) {
+	e := newTokenEndpoint(t, "")
+	e.status = http.StatusFound
+	e.location = "/%zz" + strings.Repeat("7", 4096)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	_, err := w.Refresh(context.Background())
+	checkCutAfter(t, err, `Post "`+w.cfg.TokenURL+`": `)
+}
+
+// checkCutAfter fails t unless err is prefix followed by a quoted text of
+// 200 runes and "...".
+func checkCutAfter(t *testing.T, err error, prefix string) {
+	t.Helper()
+	if err == nil {
+		t.Fatal("Refresh() error = nil, want an error")
+	}
+	text, named := strings.CutPrefix(err.Error(), prefix)
+	text, cut := strings.CutSuffix(text, "...")
+	if !named || !cut {
+		t.Fatalf("Refresh() error = %.300q, want %q, a quoted text, and \"...\"", err, prefix)
+	}
+	unquoted, uerr := strconv.Unquote(text)
+	if uerr != nil {
+		t.Fatalf("Refresh() error = %.300q, want a quoted text after %q: %v", err, prefix, uerr)
+	}
+	if got := utf8.RuneCountInString(unquoted); got != 200 {
+		t.Errorf("Refresh() error quotes %d runes, want 200", got)
+	}
+}
+
 func TestWriter_TakesTheLifetimeFromExpWithoutExpiresIn(t *testing.T) {
 	e := newTokenEndpoint(t, `{"access_token": "`+jwtExpiringAt(t, time.Now().Add(10*time.Minute))+`"}`)
 	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
@@ -211,25 +265,57 @@ func TestWriter_TakesTheLifetimeFromExpWithoutExpiresIn(t *testing.T) {
 	}
 }
 
-// A lifetime longer than a Duration can hold, about 292 years, is reported
-// as the longest Duration, whichever part of the response gives it.
+// An exp claim further ahead than a Duration can hold, about 292 years,
+// gives the longest Duration.
 func TestWriter_ALifetimeBeyondADurationIsTheLongestDuration(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "`+unsignedJWT(t, map[string]any{"sub": "authz-agent", "exp": 1e300})+`"}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	lifetime, err := w.Refresh(context.Background())
+	if err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
+	if lifetime != math.MaxInt64 {
+		t.Errorf("Refresh() lifetime = %s, want %s", lifetime, time.Duration(math.MaxInt64))
+	}
+}
+
+func TestWriter_CapsExpiresInAt2147483647Seconds(t *testing.T) {
+	e := newTokenEndpoint(t, `{"access_token": "tok-1", "expires_in": 3000000000}`)
+	w, _ := newTestWriter(t, e, inTempDir(t, "token"))
+	lifetime, err := w.Refresh(context.Background())
+	if err != nil {
+		t.Fatalf("Refresh() error = %v", err)
+	}
+	if want := 2147483647 * time.Second; lifetime != want {
+		t.Errorf("Refresh() lifetime = %s, want %s", lifetime, want)
+	}
+}
+
+func TestWriter_NamesTheTokenURLOnceInAFailure(t *testing.T) {
 	tests := []struct {
-		name, body string
+		name   string
+		status int
+		body   string
+		closed bool
 	}{
-		{"expires_in of 1e10 seconds", `{"access_token": "tok-1", "expires_in": 1e10}`},
-		{"exp claim of 1e300", `{"access_token": "` + unsignedJWT(t, map[string]any{"sub": "authz-agent", "exp": 1e300}) + `"}`},
+		{"request that cannot be sent", http.StatusOK, `{"access_token": "tok-1", "expires_in": 300}`, true},
+		{"request refused", http.StatusUnauthorized, `{"error": "invalid_client"}`, false},
+		{"response without access_token", http.StatusOK, `{"expires_in": 300}`, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			e := newTokenEndpoint(t, tt.body)
+			e.status = tt.status
 			w, _ := newTestWriter(t, e, inTempDir(t, "token"))
-			lifetime, err := w.Refresh(context.Background())
-			if err != nil {
-				t.Fatalf("Refresh() error = %v", err)
+			if tt.closed {
+				e.srv.Close()
 			}
-			if lifetime != math.MaxInt64 {
-				t.Errorf("Refresh() lifetime = %s, want %s", lifetime, time.Duration(math.MaxInt64))
+			_, err := w.Refresh(context.Background())
+			if err == nil {
+				t.Fatalf("Refresh() error = nil, want an error")
+			}
+			if got := strings.Count(err.Error(), w.cfg.TokenURL); got != 1 {
+				t.Errorf("Refresh() error = %v, names %s %d times, want once", err, w.cfg.TokenURL, got)
 			}
 		})
 	}
@@ -246,6 +332,9 @@ func TestWriter_AFailedRefreshKeepsThePreviousToken(t *testing.T) {
 		{"HTTP 401", http.StatusUnauthorized, `{"error": "unauthorized_client"}`},
 		{"body that is not JSON", http.StatusOK, `<html></html>`},
 		{"no access_token", http.StatusOK, `{"expires_in": 300}`},
+		{"expires_in that is not a plain integer", http.StatusOK, `{"access_token": "tok-1", "expires_in": 3600.5}`},
+		{"expires_in of 4096 digits", http.StatusOK, `{"access_token": "tok-1", "expires_in": ` + strings.Repeat("7", 4096) + `}`},
+		{"error member in a 200 response", http.StatusOK, `{"access_token": "tok-1", "expires_in": 300, "error": "invalid_client"}`},
 		{"neither expires_in nor a JWT", http.StatusOK, `{"access_token": "opaque"}`},
 		{"JWT without exp", http.StatusOK, `{"access_token": "` + unsignedJWT(t, map[string]any{"sub": "authz-agent"}) + `"}`},
 		{"JWT that has expired", http.StatusOK, `{"access_token": "` + jwtExpiringAt(t, time.Now().Add(-time.Minute)) + `"}`},

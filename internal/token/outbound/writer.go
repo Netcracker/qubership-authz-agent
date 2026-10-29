@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -30,6 +29,9 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/clientcredentials"
 )
 
 // DefaultHTTPTimeout is the timeout of the client a [Writer] sends its
@@ -47,10 +49,6 @@ const (
 // [Writer.Renew] starts, so a service that refuses every token costs at
 // most one token request per 30 seconds.
 const minRenewInterval = 30 * time.Second
-
-// maxTokenResponseBytes bounds the body of a token response, 1 MiB
-// (1048576 bytes).
-const maxTokenResponseBytes = 1 << 20
 
 // WriterConfig names the token endpoint, the client credentials, and the
 // file a [Writer] keeps the token in.
@@ -206,10 +204,11 @@ func renewal(lifetime time.Duration) time.Duration {
 }
 
 // Refresh requests one token and writes it to the file, and returns how long
-// the token lives. The lifetime is the response's expires_in, or the time
-// left until the token's exp claim when the response has none. A lifetime
-// longer than a Duration can hold, about 292 years, is returned as the
-// longest Duration. On an error the file keeps its previous content.
+// the token lives. The lifetime is the response's expires_in, at most
+// 2147483647 seconds (about 68 years), or the time left until the token's
+// exp claim when the response has none. An exp further ahead than a
+// Duration can hold, about 292 years, gives the longest Duration. On an
+// error the file keeps its previous content.
 func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 	w.requested.Store(w.now().UnixNano())
 	clientID, err := readSecret(w.cfg.ClientIDFile)
@@ -235,84 +234,76 @@ func (w *Writer) Refresh(ctx context.Context) (time.Duration, error) {
 }
 
 func (w *Writer) request(ctx context.Context, clientID, clientSecret string) (string, time.Duration, error) {
-	form := url.Values{"grant_type": {"client_credentials"}}
-	if !w.cfg.BasicAuth {
-		form.Set("client_id", clientID)
-		form.Set("client_secret", clientSecret)
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, w.cfg.TokenURL, strings.NewReader(form.Encode()))
-	if err != nil {
-		return "", 0, err
-	}
+	style := oauth2.AuthStyleInParams
 	if w.cfg.BasicAuth {
-		req.SetBasicAuth(url.QueryEscape(clientID), url.QueryEscape(clientSecret))
+		style = oauth2.AuthStyleInHeader
 	}
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("Accept", "application/json")
-	resp, err := w.cfg.Client.Do(req)
-	if err != nil {
-		return "", 0, err
+	grant := clientcredentials.Config{ClientID: clientID, ClientSecret: clientSecret, TokenURL: w.cfg.TokenURL, AuthStyle: style}
+	token, err := grant.Token(context.WithValue(ctx, oauth2.HTTPClient, w.cfg.Client))
+	var refused *oauth2.RetrieveError
+	var unsent *url.Error
+	switch {
+	case errors.As(err, &refused):
+		// The message is built from the fields: RetrieveError.Error holds the
+		// whole response body, up to 1 MiB, when the response names no error.
+		return "", 0, fmt.Errorf("POST %s: HTTP %d%s", w.cfg.TokenURL, refused.Response.StatusCode, oauthError(refused))
+	case errors.As(err, &unsent):
+		// The text follows url.Error with the cause cut. net/http parses the
+		// Location header of a redirect before CheckRedirect stops it, quotes
+		// an unparsable header twice, and by default accepts response headers
+		// up to 10 MiB.
+		return "", 0, fmt.Errorf("%s %q: %s", unsent.Op, unsent.URL, quoted(unsent.Err.Error(), 200))
+	case err != nil:
+		// x/oauth2 repeats an expires_in it rejects in its parse error, and
+		// that value can be as long as the body, up to 1 MiB.
+		return "", 0, fmt.Errorf("POST %s: %s", w.cfg.TokenURL, quoted(err.Error(), 200))
 	}
-	defer func() { _ = resp.Body.Close() }()
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxTokenResponseBytes))
-	if err != nil {
-		return "", 0, fmt.Errorf("POST %s: read body: %w", w.cfg.TokenURL, err)
+	// Token sets Expiry from expires_in, a count of whole seconds, as the
+	// response arrives, and leaves it zero when the response has none;
+	// rounding gives the count back.
+	if lifetime := time.Until(token.Expiry).Round(time.Second); lifetime > 0 {
+		return token.AccessToken, lifetime, nil
 	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return "", 0, fmt.Errorf("POST %s: HTTP %d%s", w.cfg.TokenURL, resp.StatusCode, oauthError(body))
-	}
-	var tr struct {
-		AccessToken string  `json:"access_token"`
-		ExpiresIn   float64 `json:"expires_in"`
-	}
-	if err := json.Unmarshal(body, &tr); err != nil {
-		return "", 0, fmt.Errorf("POST %s: token response: %w", w.cfg.TokenURL, err)
-	}
-	if tr.AccessToken == "" {
-		return "", 0, fmt.Errorf("POST %s: token response has no access_token", w.cfg.TokenURL)
-	}
-	if tr.ExpiresIn > 0 {
-		return tr.AccessToken, fromSeconds(tr.ExpiresIn), nil
-	}
-	exp, err := expiry(tr.AccessToken)
+	exp, err := expiry(token.AccessToken)
 	if err != nil {
 		return "", 0, fmt.Errorf("POST %s: token response has no expires_in, and %w", w.cfg.TokenURL, err)
 	}
 	left := exp - float64(time.Now().UnixNano())/float64(time.Second)
 	if left <= 0 {
-		expired := expiresAt(tr.AccessToken).UTC().Format(time.RFC3339)
+		expired := expiresAt(token.AccessToken).UTC().Format(time.RFC3339)
 		return "", 0, fmt.Errorf("POST %s: the token expired at %s", w.cfg.TokenURL, expired)
 	}
-	return tr.AccessToken, fromSeconds(left), nil
+	return token.AccessToken, fromSeconds(left), nil
 }
 
 // oauthError returns the error member of an OAuth error response (RFC 6749,
 // section 5.2) and its error_description, as text to append to an error
-// message, or "" when body is not such a response. The provider wrote both
+// message, or "" when the response names no error. The provider wrote both
 // values and the message goes into a log line, so each is quoted and cut:
 // the error to 64 runes, the description to 200.
-func oauthError(body []byte) string {
-	var e struct {
-		Error       string `json:"error"`
-		Description string `json:"error_description"`
-	}
-	if json.Unmarshal(body, &e) != nil || e.Error == "" {
+func oauthError(e *oauth2.RetrieveError) string {
+	if e.ErrorCode == "" {
 		return ""
 	}
-	text := ", error " + quoted(e.Error, 64)
-	if e.Description != "" {
-		text += ": " + quoted(e.Description, 200)
+	text := ", error " + quoted(e.ErrorCode, 64)
+	if e.ErrorDescription != "" {
+		text += ": " + quoted(e.ErrorDescription, 200)
 	}
 	return text
 }
 
 // quoted quotes s, cut to its first limit runes with "..." after the cut.
 func quoted(s string, limit int) string {
-	runes := []rune(s)
-	if len(runes) <= limit {
-		return strconv.Quote(s)
+	// s can run to tens of megabytes, and []rune(s) would take four bytes
+	// for each of them.
+	n := 0
+	for i := range s {
+		if n == limit {
+			return strconv.Quote(s[:i]) + "..."
+		}
+		n++
 	}
-	return strconv.Quote(string(runes[:limit])) + "..."
+	return strconv.Quote(s)
 }
 
 // fromSeconds converts a count of seconds to a Duration. A count of more
