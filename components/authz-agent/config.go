@@ -34,10 +34,6 @@ type config struct {
 	Addr string
 	// PublicAddr is the listen address of the surface the clients call.
 	PublicAddr string
-	// DataDirs seed the store at start, as `opa run <dir>` would.
-	DataDirs []string
-	// Ignore lists file name patterns skipped in DataDirs.
-	Ignore []string
 	// DecisionLogs configures the delivery: an empty URL disables the
 	// upload, and DecisionLogFile stores the decisions instead.
 	DecisionLogs decisionlog.Config
@@ -66,8 +62,6 @@ func loadConfig(get lookup) config {
 		NDBuiltinCache: boolean(get, "authz.nd.builtin.cache", true),
 		Addr:           get("authz.http.addr", "0.0.0.0:8181"),
 		PublicAddr:     get("authz.public.addr", "0.0.0.0:8080"),
-		DataDirs:       splitList(get("authz.data.dirs", "")),
-		Ignore:         splitList(get("authz.data.ignore", "")),
 		DecisionLogs: decisionlog.Config{
 			URL:     get("authz.decision.log.url", ""),
 			Headers: splitList(get("authz.decision.log.headers", "")),
@@ -85,7 +79,6 @@ func loadConfig(get lookup) config {
 		Pull: pull.Config{
 			SourceURL:   strings.TrimRight(get("authz.pap.client.source.url", ""), "/"),
 			Interval:    seconds(get, "authz.pap.client.pull.interval", pull.DefaultInterval),
-			MountDir:    get("authz.policy.mount.dir", pull.DefaultMountDir),
 			HTTPTimeout: pull.DefaultHTTPTimeout,
 		},
 		M2M: m2m.Config{

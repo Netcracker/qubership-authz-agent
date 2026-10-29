@@ -67,7 +67,7 @@ func main() {
 		logger.Errorf("policies: %v", err)
 		os.Exit(1)
 	}
-	eng, err := engine.New(engine.Options{Modules: modules, DataDirs: cfg.DataDirs, Ignore: cfg.Ignore})
+	eng, err := engine.New(engine.Options{Modules: modules})
 	if err != nil {
 		logger.Errorf("policy engine: %v", err)
 		os.Exit(1)
@@ -167,8 +167,8 @@ func serve(ctx context.Context, stop func(), logs *decisionlog.Logger, cfg confi
 		logger.Errorf("internal listener on %s: %v", cfg.Addr, err)
 		return true
 	}
-	logger.Infof("authz-agent: %d policy modules, data from %v, decision logs to %q, public surface on %s, internal surface on %s",
-		modules, cfg.DataDirs, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
+	logger.Infof("authz-agent: %d policy modules, decision logs to %q, public surface on %s, internal surface on %s",
+		modules, decisionLogTarget(cfg), cfg.PublicAddr, cfg.Addr)
 	return serveUntilShutdown(ctx, stop, logs, []surface{
 		{"public", public, publicSocket},
 		{"internal", internal, internalSocket},

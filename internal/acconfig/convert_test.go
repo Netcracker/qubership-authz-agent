@@ -15,6 +15,7 @@
 package acconfig
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -277,6 +278,63 @@ func TestConvertPolicySets_ConditionAndRSQLForwarded(t *testing.T) {
 	}
 	if p.RSQLPredicate != "active==true" {
 		t.Errorf("rsqlPredicate: want %q got %q", "active==true", p.RSQLPredicate)
+	}
+}
+
+// ruleWithPredicates is a v3 export of one SIMPLIFIED set whose one ALLOW
+// rule grants READ on RT to ROLE_A with no condition and carries
+// predicateFields, the JSON members that follow "effect".
+func ruleWithPredicates(predicateFields string) []byte {
+	return []byte(`{
+		"hash": "x",
+		"lastModificationTimestamp": "2025-01-01T00:00:00",
+		"policySets": [{
+			"policySetId": "ps1", "name": "Querydsl", "type": "SIMPLIFIED", "domain": "D", "status": "ACTIVE",
+			"target": "resourceType == 'RT'",
+			"policies": [{
+				"policyId": "p1", "target": "subject.roles CONTAINS 'ROLE_A'",
+				"rules": [{"ruleId": "r1", "target": "operation == 'READ'", "effect": "ALLOW", ` + predicateFields + `}]
+			}]
+		}]
+	}`)
+}
+
+// The querydsl predicate of a v3 rule is its predicate field, the one the
+// filter answers as filterCondition. querydslPredicate is no field of a v3
+// rule, so a rule that carries only that key has no predicate and allows
+// every row.
+func TestConvertPolicySets_QueryDSLPredicateIsReadFromPredicate(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name, fields, want string
+	}{
+		{"predicate is the querydsl predicate",
+			`"predicate": "RT.ownerId.eq(\"${subject.id}\")"`,
+			`[{"condition":true,"predicates":[{"placeholderKeys":["id"],"predicate":"RT.ownerId.eq(\"${subject.id}\")","type":"querydsl"}]}]`},
+		{"querydslPredicate is ignored",
+			`"querydslPredicate": "RT.ownerId.eq(\"${subject.id}\")"`,
+			`[{"condition":true,"predicates":[{"predicate":"true","type":"rsql"}]}]`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			policies, _, err := ConvertPolicySets(ruleWithPredicates(tc.fields), discardLogger())
+			if err != nil {
+				t.Fatalf("ConvertPolicySets: %v", err)
+			}
+			normalized, err := simplifiedpolicies.NormalizePolicies(policies)
+			if err != nil {
+				t.Fatalf("NormalizePolicies: %v", err)
+			}
+			rules := normalized["rls"].(map[string]any)["RT"].(map[string]any)["READ"].(map[string]any)["ROLE_A"]
+			got, err := json.Marshal(rules)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if string(got) != tc.want {
+				t.Errorf("rls.RT.READ.ROLE_A of a rule with %s = %s, want %s", tc.fields, got, tc.want)
+			}
+		})
 	}
 }
 

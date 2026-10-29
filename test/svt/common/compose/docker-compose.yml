@@ -1,6 +1,6 @@
 services:
   keycloak:
-    image: quay.io/keycloak/keycloak:26.0
+    image: quay.io/keycloak/keycloak:26.0@sha256:09a381c715ab0b111835b70f2905955274843a219c6f27efb348e4d9f4086858
     command: ["start-dev", "--import-realm", "--health-enabled=true"]
     ports:
       - "${SVT_KC_PORT:-25556}:8080"
@@ -84,7 +84,7 @@ services:
       - svt-common-decision-logs:/var/log/authz-agent/decisions
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: gcr.io/cadvisor/cadvisor:v0.49.1@sha256:3cde6faf0791ebf7b41d6f8ae7145466fed712ea6f252c935294d2608b1af388
     ports:
       - "${SVT_CADVISOR_PORT:-28888}:8080"
     volumes:
@@ -98,7 +98,7 @@ services:
       - /dev/kmsg
 
   prometheus:
-    image: prom/prometheus:v2.51.2
+    image: prom/prometheus:v2.55.1@sha256:2659f4c2ebb718e7695cb9b25ffa7d6be64db013daba13e05c875451cf51b0d3
     ports:
       - "${SVT_PROMETHEUS_PORT:-29090}:9090"
     command:
@@ -113,7 +113,7 @@ services:
       - cadvisor
 
   grafana:
-    image: grafana/grafana:10.4.2
+    image: grafana/grafana:10.4.19-security-01@sha256:5584505cb75be8cb14c19d7473a87e2675c68b34b546bc1923ef74300c337111
     ports:
       - "${SVT_GRAFANA_PORT:-23000}:3000"
     environment:
@@ -130,7 +130,7 @@ services:
       - prometheus
 
   jmeter:
-    image: justb4/jmeter:5.5
+    image: justb4/jmeter:5.5@sha256:088ac52b759a198a5afa5ae13d0a6306e9f2017d71ad140ff57427f6930406f7
     profiles: ["run"]
     volumes:
       - ../jmeter/data:/data:ro
@@ -143,7 +143,7 @@ services:
   # service above, because port 8181, the internal listener, is not published
   # to the host. See authz-agent-ADR-0056.
   jmeter-host:
-    image: justb4/jmeter:5.5
+    image: justb4/jmeter:5.5@sha256:088ac52b759a198a5afa5ae13d0a6306e9f2017d71ad140ff57427f6930406f7
     profiles: ["run"]
     network_mode: host
     volumes:
