@@ -1,0 +1,22 @@
+---
+codecov:
+  notify:
+    # Keep this count aligned with go-module-configs in go-build.yaml.
+    after_n_builds: 5
+
+coverage:
+  status:
+    # Sonar enforces the coverage gate; Codecov statuses report coverage only.
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+ignore:
+  - "test/**"
+
+fixes:
+  # The product module is named authz-agent; its sources are at the repository root.
+  - "authz-agent/::"

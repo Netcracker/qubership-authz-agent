@@ -2,7 +2,7 @@
 # Build workflow for qubership-authz-agent.
 #
 # Delegates to the shared Go build workflow in qubership-core-infra, which runs
-# go test, SonarQube analysis, and Docker image builds.
+# go test, SonarQube analysis, Codecov uploads, and Docker image builds.
 #
 # Module configuration note
 # -------------------------
@@ -50,9 +50,14 @@ jobs:
       contents: read
       pull-requests: write
       packages: write
-    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@ed95ad948025728db1e613a3e1a4e6a11186f541 # v2.6.2
+    # Test the Codecov integration from qubership-core-infra PR #464.
+    # Replace this revision with a released version before merging.
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@54ff8b2708495fc6ca1cbb29bcabe5e9ede22469
     with:
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+      codecov-upload: true
+      # Fail on upload errors while validating the integration.
+      codecov-fail-on-error: true
       # Explicit module list — see the comment at the top of this file for why
       # these entries exist rather than relying on auto-discovery.
       go-module-configs: |
@@ -63,10 +68,10 @@ jobs:
           {"dir": "test/integration/pipstub", "cover-packages": "./..."},
           {"dir": "test/integration/tenantmanager", "cover-packages": "./..."}
         ]
-    # The shared workflow declares exactly one secret; pass it explicitly
-    # instead of `secrets: inherit` (zizmor: secrets-inherit).
+    # Pass the secrets explicitly instead of `secrets: inherit` (zizmor: secrets-inherit).
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build-gate:
     name: Build gate
