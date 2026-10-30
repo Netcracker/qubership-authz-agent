@@ -113,12 +113,19 @@ func TestLoad_AcceptsEverySigningKeyType(t *testing.T) {
 	}
 }
 
-// OPA lowers both jwx floors to zero in every binary it is linked into, the
-// agent's among them, so the package has to refuse a weak key on its own.
+// The jwx floors are process-wide settings that any package can lower, so the
+// package has to refuse a weak key on its own. OPA, for one, lowers the jwx v3
+// floors to zero; the test lowers the v4 floors the package parses with.
 // The control key is 2048 bits with the exponent 65537.
 func TestLoad_SkipsAWeakRSAKeyWithTheJWXFloorsLowered(t *testing.T) {
-	jwk.Configure(jwk.WithMinRSAModulusBits(0), jwk.WithMinRSAPublicExponent(0))
-	t.Cleanup(func() { jwk.Configure(jwk.WithMinRSAModulusBits(2048), jwk.WithMinRSAPublicExponent(3)) })
+	if err := jwk.Settings(jwk.WithMinRSAModulusBits(0), jwk.WithMinRSAPublicExponent(0)); err != nil {
+		t.Fatalf("jwk.Settings: %v", err)
+	}
+	t.Cleanup(func() {
+		if err := jwk.Settings(jwk.WithMinRSAModulusBits(2048), jwk.WithMinRSAPublicExponent(3)); err != nil {
+			t.Errorf("jwk.Settings: %v", err)
+		}
+	})
 	control := rsaJWK(t, 2048, "control", nil)
 	tests := []struct {
 		name string

@@ -257,7 +257,7 @@ func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verif
 	if err != nil {
 		t.Fatal(err)
 	}
-	public, err := jwk.Import(&private.PublicKey)
+	public, err := jwk.Import[jwk.Key](&private.PublicKey)
 	if err != nil {
 		t.Fatal(err)
 	}
