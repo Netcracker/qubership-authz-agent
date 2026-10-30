@@ -2,7 +2,7 @@
 # Build workflow for qubership-authz-agent.
 #
 # Delegates to the shared Go build workflow in qubership-core-infra, which runs
-# go test, SonarQube analysis, and Docker image builds.
+# go test, SonarQube analysis, Codecov uploads, and Docker image builds.
 #
 # Module configuration note
 # -------------------------
@@ -50,9 +50,14 @@ jobs:
       contents: read
       pull-requests: write
       packages: write
-    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@ed95ad948025728db1e613a3e1a4e6a11186f541 # v2.6.2
+    uses: Netcracker/qubership-core-infra/.github/workflows/generic-go-build.yaml@91f0316488bc6ab88d060261caa1ebddd6706094 # v2.7.0
     with:
       sonar-project-key: ${{ vars.SONAR_PROJECT_KEY }}
+      # Uploads each module's coverage profile to Codecov from the test run that
+      # feeds Sonar; codecov.yml ignores test/**, so only the product module
+      # reaches the report.  codecov-fail-on-error keeps its default of false,
+      # so an upload that Codecov rejects fails neither this job nor Build gate.
+      codecov-upload: true
       # Explicit module list — see the comment at the top of this file for why
       # these entries exist rather than relying on auto-discovery.
       go-module-configs: |
@@ -63,10 +68,13 @@ jobs:
           {"dir": "test/integration/pipstub", "cover-packages": "./..."},
           {"dir": "test/integration/tenantmanager", "cover-packages": "./..."}
         ]
-    # The shared workflow declares exactly one secret; pass it explicitly
-    # instead of `secrets: inherit` (zizmor: secrets-inherit).
+    # The shared workflow declares SONAR_TOKEN and the optional CODECOV_TOKEN;
+    # pass them explicitly instead of `secrets: inherit` (zizmor: secrets-inherit).
+    # A pull request from a fork gets neither, and Codecov accepts its upload
+    # without a token because this repository is public.
     secrets:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build-gate:
     name: Build gate
