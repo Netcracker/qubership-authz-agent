@@ -28,7 +28,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v4/jwk"
 )
 
 func TestLoad_IndexesEveryProvidersKeysByKID(t *testing.T) {
