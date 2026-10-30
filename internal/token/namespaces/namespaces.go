@@ -15,9 +15,10 @@
 // Package namespaces decides which Kubernetes namespaces a service account
 // token may come from. The allowed namespaces are the origin and the peer
 // namespace of the composite baseline and of every satellite in the
-// topology file. [Allowlist.Admit] applies them to the tokens of chosen
-// providers as [verify.Options.Admit], and [Allowlist.Run] keeps them
-// current.
+// topology file, or the service's own namespace alone when the file names
+// no namespace of a composite or cannot be read or parsed.
+// [Allowlist.Admit] applies them to the tokens of chosen providers as
+// [verify.Options.Admit], and [Allowlist.Run] keeps them current.
 package namespaces
 
 import (
@@ -48,9 +49,10 @@ type Logger interface {
 type Options struct {
 	// TopologyFile is the JSON file that describes the composite topology.
 	TopologyFile string
-	// Namespace is the service's own namespace. It is the only namespace
-	// allowed while the topology file cannot be read or parsed; once the
-	// file parses, it is allowed only if the topology names it.
+	// Namespace is the service's own namespace. While the topology file
+	// cannot be read or parsed, or names no namespace of a composite, it is
+	// the only namespace allowed, and an empty Namespace allows none;
+	// otherwise it is allowed only if the topology names it.
 	Namespace string
 	// RefreshInterval is how often [Allowlist.Run] reads the file again.
 	RefreshInterval time.Duration
@@ -64,11 +66,11 @@ type Allowlist struct {
 	opts    Options
 	allowed atomic.Pointer[map[string]bool]
 
-	// reading serializes reads of the topology file and guards fallback.
+	// reading serializes reads of the topology file and guards failing.
 	reading sync.Mutex
-	// fallback is whether the last read fell back to Options.Namespace; the
-	// warning is logged when that starts, not on every read.
-	fallback bool
+	// failing is whether the last attempt could not read or parse the file;
+	// the warning is logged when failures start, not on every attempt.
+	failing bool
 }
 
 // New reads the topology file and returns an Allowlist of the namespaces it
@@ -172,26 +174,36 @@ type domain struct {
 }
 
 // load reads the allowed namespaces from the topology file. A file that
-// cannot be read or parsed allows the service's own namespace alone, or
-// none when Options.Namespace is empty; a file without a composite allows
-// none.
+// cannot be read or parsed, or names no namespace of a composite, allows
+// the service's own namespace alone, or none when Options.Namespace is
+// empty. Only a file that cannot be read or parsed is logged: a file that
+// parses describes the installation, whether or not it is part of a
+// composite.
 func (a *Allowlist) load() map[string]bool {
 	raw, err := os.ReadFile(a.opts.TopologyFile)
 	if err == nil {
 		var t topology
 		if err = json.Unmarshal(raw, &t); err == nil {
-			a.fallback = false
-			return t.namespaces()
+			a.failing = false
+			if allowed := t.namespaces(); len(allowed) > 0 {
+				return allowed
+			}
+			return a.ownNamespace()
 		}
 	}
-	if !a.fallback {
+	if !a.failing {
 		if a.opts.Namespace == "" {
 			a.opts.Log.Warnf("topology file %s: %v; allowing no namespace", a.opts.TopologyFile, err)
 		} else {
 			a.opts.Log.Warnf("topology file %s: %v; allowing namespace %q alone", a.opts.TopologyFile, err, a.opts.Namespace)
 		}
 	}
-	a.fallback = true
+	a.failing = true
+	return a.ownNamespace()
+}
+
+// ownNamespace allows Options.Namespace alone, or none when it is empty.
+func (a *Allowlist) ownNamespace() map[string]bool {
 	if a.opts.Namespace == "" {
 		return map[string]bool{}
 	}
