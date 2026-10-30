@@ -15,6 +15,7 @@
 package verify
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -41,6 +42,13 @@ var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 type fakeKeys struct {
 	mu    sync.Mutex
 	byKID map[string]keys.Key
+	// onReload holds the keys the next reload adds: LookupOrReload adds
+	// them when it is asked for a kid it does not hold and its context has
+	// not ended, as a reload the caller waits for would.
+	onReload []keys.Key
+	// reloading, when set, runs during that reload; a test moves the clock
+	// in it by the time the reload takes.
+	reloading func()
 }
 
 func newFakeKeys(signers ...*signer) *fakeKeys {
@@ -54,6 +62,22 @@ func newFakeKeys(signers ...*signer) *fakeKeys {
 func (f *fakeKeys) Lookup(kid string) (keys.Key, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	k, ok := f.byKID[kid]
+	return k, ok
+}
+
+func (f *fakeKeys) LookupOrReload(ctx context.Context, kid string) (keys.Key, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if _, ok := f.byKID[kid]; !ok && ctx.Err() == nil {
+		if f.reloading != nil {
+			f.reloading()
+		}
+		for _, k := range f.onReload {
+			f.byKID[k.ID] = k
+		}
+		f.onReload = nil
+	}
 	k, ok := f.byKID[kid]
 	return k, ok
 }
