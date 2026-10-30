@@ -91,7 +91,10 @@ func ConvertPolicySets(raw []byte, logger Logger) ([]simplifiedpolicies.Policy, 
 
 // ConvertPIPs parses a raw V3PIPsResponse JSON body and converts the PIP list
 // to a slice of pips.SimplifiedPIP, silently skipping types that the agent does
-// not handle (FILTERED, PERMISSION_SCOPE, MAPPING, and GENERAL with beanName).
+// not handle (FILTERED, PERMISSION_SCOPE, MAPPING, ENTITLEMENT, and GENERAL
+// with beanName). A PIP of a supported type whose name is not "subject."
+// followed by an alias with no space, tab, or line break is skipped with a
+// warning, and the rest of the list is kept.
 func ConvertPIPs(raw []byte, logger Logger) ([]pips.SimplifiedPIP, error) {
 	var resp V3PIPsResponse
 	if err := json.Unmarshal(raw, &resp); err != nil {
@@ -410,12 +413,19 @@ func rolesToAny(roles []string) []any {
 
 // convertPIPs converts the v3 PIP list, filtering out types the agent does not
 // support. Filtering is silent for the same reason DEFAULT policy sets are
-// silent: these types are normal data in access-control.
-func convertPIPs(v3pips []PIPV3, _ Logger) []pips.SimplifiedPIP {
+// silent: these types are normal data in access-control. A PIP of a supported
+// type whose name has no alias by [pips.AliasOf] is a defect of the source, so
+// it is skipped with a warning.
+func convertPIPs(v3pips []PIPV3, logger Logger) []pips.SimplifiedPIP {
 	result := make([]pips.SimplifiedPIP, 0, len(v3pips))
 	for _, p := range v3pips {
 		sp, ok := convertPIP(p)
 		if !ok {
+			continue
+		}
+		if _, ok := pips.AliasOf(sp.Name); !ok {
+			logger.Warnf(`acconfig: pip %q (domain=%s): name is not "subject." followed by an alias with no space, tab, or line break, so no condition can read it — pip skipped`,
+				sp.Name, sp.Domain)
 			continue
 		}
 		result = append(result, sp)

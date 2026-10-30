@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -477,6 +478,46 @@ func TestConvertPIPs_OutputIsNormalizable(t *testing.T) {
 	}
 	if _, _, err := pips.NormalizeItems(pipList); err != nil {
 		t.Fatalf("NormalizeItems failed on converter output: %v", err)
+	}
+}
+
+// A condition reads a PIP as subject.<alias>, so a PIP of a supported type
+// whose name is not "subject." followed by an alias with no space, tab, or
+// line break is dropped with a warning that names it, and the PIPs beside it
+// are kept, one with a no-break space in its alias included. A PIP of an unsupported type is
+// dropped without a warning whatever its name. A name shorter than "subject."
+// used to reach pips.NormalizeItems and stop the pull with a slice bounds out
+// of range panic.
+func TestConvertPIPs_SkipsAPIPWhoseNameIsNotSubjectAndAnAlias(t *testing.T) {
+	t.Parallel()
+	raw := []byte(`{"hash":"x","lastModificationTimestamp":"","pips":[` +
+		`{"name":"subject.kept","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"subject.tenant\u00a0id","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"sub.x","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"user.department","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"subject.","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"subject.x ","pipType":"TOKEN","claim":"sub"},` +
+		`{"name":"sub.y","pipType":"FILTERED"}` +
+		`]}`)
+	logger := &recordingLogger{}
+	got, err := ConvertPIPs(raw, logger)
+	if err != nil {
+		t.Fatalf("ConvertPIPs: %v", err)
+	}
+	if names := pipNames(got); !slices.Equal(names, []string{"subject.kept", "subject.tenant\u00a0id"}) {
+		t.Errorf("ConvertPIPs() PIPs = %q, want [subject.kept subject.tenant\u00a0id]", names)
+	}
+	if logger.Count() != 5 {
+		t.Errorf("ConvertPIPs() reported %d warnings, want one per skipped PIP of a supported type:\n%s", logger.Count(), logger)
+	}
+	for _, skipped := range []string{`"sub.x"`, `""`, `"user.department"`, `"subject."`, `"subject.x "`} {
+		if !strings.Contains(logger.String(), skipped) {
+			t.Errorf("no warning names the skipped PIP %s; warnings:\n%s", skipped, logger)
+		}
+	}
+	if strings.Contains(logger.String(), `"sub.y"`) {
+		t.Errorf("a warning names the FILTERED PIP \"sub.y\", which is skipped for its type; warnings:\n%s", logger)
 	}
 }
 
