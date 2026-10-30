@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strings"
 )
 
 // Config is the trusted providers file: a JSON object whose providers array
@@ -62,6 +63,14 @@ type Provider struct {
 	// read on every request, so a rotated token takes effect without a
 	// restart.
 	TokenFile string `json:"tokenFile,omitempty"`
+	// Kubernetes marks the provider as the service account token issuer of
+	// a Kubernetes API server, and
+	// [authz-agent/internal/token/verify.Token.Kubernetes] reports the mark
+	// on every token its keys verify. It requires Audiences, because every
+	// Pod's default token is issued for the API server itself, and refuses
+	// AllowMissingAud, so a Kubernetes token is accepted only when it names
+	// an audience the service accepts.
+	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
 // validProviderID is the accepted shape of [Provider.ID].
@@ -133,6 +142,10 @@ func (p Provider) validate() error {
 		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token is sent only to a jwksUri the configuration names", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
+	case p.Kubernetes && len(p.Audiences) == 0:
+		return fmt.Errorf("provider %q sets kubernetes without audiences; every Pod's default token is issued for the API server, so list the audience this service accepts", p.ID)
+	case p.Kubernetes && p.AllowMissingAud:
+		return fmt.Errorf("provider %q sets both kubernetes and allowMissingAud; a Kubernetes token has to name an audience this service accepts", p.ID)
 	}
 	for _, aud := range p.Audiences {
 		if aud == "" {
@@ -162,4 +175,25 @@ func checkHTTPURL(raw string) error {
 		return fmt.Errorf("%q has no host", raw)
 	}
 	return nil
+}
+
+// kubernetesHosts are the in-cluster names of the Kubernetes API server.
+var kubernetesHosts = map[string]bool{
+	"kubernetes.default.svc":               true,
+	"kubernetes.default.svc.cluster.local": true,
+}
+
+// looksLikeKubernetes reports whether p is named kubernetes or names an
+// in-cluster address of the Kubernetes API server, whether or not it sets
+// [Provider.Kubernetes].
+func (p Provider) looksLikeKubernetes() bool {
+	if p.ID == "kubernetes" {
+		return true
+	}
+	for _, raw := range []string{p.JWKSURI, p.Issuer} {
+		if u, err := url.Parse(raw); err == nil && kubernetesHosts[strings.ToLower(u.Hostname())] {
+			return true
+		}
+	}
+	return false
 }

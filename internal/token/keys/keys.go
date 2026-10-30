@@ -14,8 +14,8 @@
 
 // Package keys holds the signing keys of the trusted identity providers and
 // finds the key a token's kid names. A provider is any OIDC provider: the
-// package reads its JWKS, through discovery or directly, and knows nothing
-// else about it.
+// package reads its JWKS, through discovery or directly, the same way for
+// every provider.
 //
 // [ReadConfig] reads the trusted providers file. [Load] fetches every
 // provider's keys and fails unless all of them arrive. [Set.Lookup] finds a
@@ -166,11 +166,23 @@ type snapshot struct {
 // with an error that names every such provider and the last reason. It also
 // fails when cfg breaks [Config.Validate], when a caFile cannot be read, and
 // when two providers publish the same kid.
+//
+// Before it fetches anything, Load logs a warning for every provider that
+// does not set [Provider.Kubernetes] but has the id kubernetes or an address
+// on an in-cluster name of the Kubernetes API server, since its tokens would
+// get no namespace check.
 func Load(ctx context.Context, cfg Config, opts Options) (*Set, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 	opts = opts.withDefaults()
+	for _, p := range cfg.Providers {
+		if !p.Kubernetes && p.looksLikeKubernetes() {
+			opts.Log.Warnf("trusted providers: provider %q looks like a Kubernetes API server but does not set "+
+				"\"kubernetes\": true, so its tokens get no namespace check; set it on this provider in the trusted "+
+				"providers file if the provider is the API server", p.ID)
+		}
+	}
 	s := &Set{opts: opts}
 	for _, p := range cfg.Providers {
 		f, err := newFetcher(&p, opts.HTTPTimeout, opts.Log)

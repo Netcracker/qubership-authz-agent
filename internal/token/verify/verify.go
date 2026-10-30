@@ -81,7 +81,8 @@ const (
 	// provider's audiences, or is neither a string nor an array of strings.
 	CodeAudienceInvalid Code = "TOKEN_AUDIENCE_INVALID"
 	// CodeNamespaceNotAllowed marks a Kubernetes token from a namespace the
-	// service does not accept, or one that names no namespace.
+	// service does not accept, one that names no namespace, and one that a
+	// [Verifier] without [Options.Admit] verified.
 	CodeNamespaceNotAllowed Code = "TOKEN_NAMESPACE_NOT_ALLOWED"
 )
 
@@ -109,6 +110,7 @@ type Token struct {
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
+	kubernetes bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -167,6 +169,10 @@ func (t *Token) Standard() Standard {
 // ProviderID returns the id of the provider whose key verified the token.
 func (t *Token) ProviderID() string { return t.providerID }
 
+// Kubernetes reports whether the provider whose key verified the token is
+// marked [keys.Provider.Kubernetes].
+func (t *Token) Kubernetes() bool { return t.kubernetes }
+
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
 
@@ -202,7 +208,9 @@ type Options struct {
 	// verified now or taken from the cache, and the *Error it returns
 	// refuses the token. It holds the checks whose answer can change while
 	// a token stays cached, such as the namespaces a Kubernetes token may
-	// come from.
+	// come from. Without Admit, Verify refuses every token for which
+	// [Token.Kubernetes] reports true, so a Kubernetes token never passes
+	// without a namespace check.
 	Admit func(*Token) *Error
 
 	// now is the clock the claims are checked against.
@@ -251,7 +259,8 @@ func New(source KeyFinder, opts Options) *Verifier {
 //
 // A token verified earlier that has not expired is served from the cache,
 // as the *Token the earlier call returned, while the [KeyFinder] returns the
-// same key for its kid. [Options.Admit] then runs on the token either way.
+// same key for its kid. [Options.Admit] then runs on the token either way;
+// without it, a Kubernetes token is refused with [CodeNamespaceNotAllowed].
 func (v *Verifier) Verify(raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
@@ -262,10 +271,14 @@ func (v *Verifier) Verify(raw string) (*Token, error) {
 			return nil, err
 		}
 	}
-	if v.opts.Admit != nil {
-		if err := v.opts.Admit(tok); err != nil {
-			return nil, err
+	if v.opts.Admit == nil {
+		if tok.Kubernetes() {
+			return nil, fail(CodeNamespaceNotAllowed, "provider %q is a Kubernetes provider and the verifier checks no namespace", tok.ProviderID())
 		}
+		return tok, nil
+	}
+	if err := v.opts.Admit(tok); err != nil {
+		return nil, err
 	}
 	return tok, nil
 }
@@ -306,6 +319,7 @@ func (v *Verifier) check(raw string, digest [sha256.Size]byte, now time.Time) (*
 		claims:     claims,
 		standard:   standardOf(claims),
 		providerID: key.Provider.ID,
+		kubernetes: key.Provider.Kubernetes,
 		keyID:      kid,
 		issuer:     stringClaim(claims, "iss"),
 		expiry:     expiry,

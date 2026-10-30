@@ -20,11 +20,14 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -55,6 +58,59 @@ func TestLoad_JWKSURISkipsDiscovery(t *testing.T) {
 	}
 	if got := idp.discoveries(); got != 0 {
 		t.Errorf("discovery requests = %d, want 0", got)
+	}
+}
+
+// warnRecorder is a Logger that keeps the warnings.
+type warnRecorder struct {
+	mu       sync.Mutex
+	warnings []string
+}
+
+func (r *warnRecorder) Infof(string, ...any) {
+	// Informational messages are not recorded.
+}
+
+func (r *warnRecorder) Warnf(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
+}
+
+// Load runs on a canceled context and fetches nothing, since the warning
+// comes before any fetch. Each warned provider has a control that differs
+// from it in the id, the host, or the mark alone.
+func TestLoad_WarnsAboutAnUnmarkedProviderThatLooksLikeKubernetes(t *testing.T) {
+	const apiServer = "https://kubernetes.default.svc/openid/v1/jwks"
+	tests := []struct {
+		name     string
+		provider Provider
+		warned   bool
+	}{
+		{"unmarked provider named kubernetes", Provider{ID: "kubernetes", JWKSURI: "https://idp.example/jwks"}, true},
+		{"unmarked provider elsewhere", Provider{ID: "k8s", JWKSURI: "https://idp.example/jwks"}, false},
+		{"unmarked provider at kubernetes.default.svc", Provider{ID: "k8s", JWKSURI: apiServer}, true},
+		{"unmarked provider at the full in-cluster name with a port", Provider{ID: "k8s",
+			JWKSURI: "https://KUBERNETES.default.svc.cluster.local:443/openid/v1/jwks"}, true},
+		{"unmarked issuer at kubernetes.default.svc", Provider{ID: "k8s", Issuer: "https://kubernetes.default.svc"}, true},
+		{"marked provider at kubernetes.default.svc", Provider{ID: "k8s", JWKSURI: apiServer,
+			Audiences: []string{"netcracker"}, Kubernetes: true}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			log := &warnRecorder{}
+			opts := testOptions()
+			opts.Log = log
+			_, _ = Load(ctx, Config{Providers: []Provider{tt.provider}}, opts)
+			warned := slices.ContainsFunc(log.warnings, func(w string) bool {
+				return strings.Contains(w, "looks like a Kubernetes API server")
+			})
+			if warned != tt.warned {
+				t.Errorf("Load(%+v) warned = %t, want %t; warnings: %q", tt.provider, warned, tt.warned, log.warnings)
+			}
+		})
 	}
 }
 
