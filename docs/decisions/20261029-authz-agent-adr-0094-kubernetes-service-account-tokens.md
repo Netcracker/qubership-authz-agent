@@ -1,0 +1,158 @@
+# Accept Kubernetes service account tokens from the namespaces of the installation
+
+## Status
+
+Proposed
+
+<!-- markdownlint-disable-next-line MD001 -->
+#### Date
+
+#### Owner
+
+kichasov
+
+#### Participants and approvers
+
+The project architect, who settled the audience at a meeting on 2026-10-16, the provider and the namespace list in a
+questionnaire returned on 2026-10-27, and a topology file without `composite` at a meeting on 2026-10-28. The
+architect approves this record. The Netcracker/qubership-authz-agent maintainers (kichasov). Assumption: the
+approvers' GitHub accounts are added when this record is reviewed.
+
+#### Related ADRs
+
+- [authz-agent-ADR-0091: Verify tokens in Go against the keys of trusted providers](20261029-authz-agent-adr-0091-verify-tokens-in-go.md):
+  the providers file, the reloads of the keys, and the verifier in which the namespace check of this record runs.
+- [authz-agent-ADR-0092: Accept only service tokens in Authorization on the check routes](20261029-authz-agent-adr-0092-service-tokens-in-authorization.md):
+  the M2M modes, and a Kubernetes token as an M2M token.
+
+## Context
+
+Services of an installation call the agent with Kubernetes service account tokens as well as with Keycloak tokens. The
+API server of the cluster signs them, and the services request them with the audience `netcracker`, which every M2M
+call between the services of an installation uses. Every Pod can also hold a token that the API server issues for its
+own audience.
+
+The API server publishes its public keys at `https://kubernetes.default.svc/openid/v1/jwks`. Any service account of
+the cluster may read that address with a token issued for the API server, and the server's certificate is signed by
+the cluster CA from the ConfigMap `kube-root-ca.crt`. The agent's Pod sets `automountServiceAccountToken: false`. With
+`KUBERNETES_M2M_ENABLED`, which is off by default, it mounts a token for the audience `netcracker` for its own calls.
+
+ADR-0092 defines the M2M modes of `M2M_AUTH_MODE` and which tokens each accepts.
+
+One cluster hosts many installations, and the API server signs the tokens of all of them with the same keys. An
+installation is a composite: a baseline and its satellites, each a blue-green domain with an origin and a peer
+namespace. The platform creates the ConfigMap `topology` in every namespace, and its `data` key describes the
+composite in a stable format.
+
+PR #159 marks a trusted provider of `internal/token/keys` as a Kubernetes API server with `kubernetes: true`, and
+`internal/token/namespaces` reads the topology file. Neither is wired into the request path yet.
+
+## Decision
+
+We will accept a Kubernetes service account token in the M2M modes `hybrid` and `k8s`, and only when a key of the API
+server of the agent's own cluster verifies it, it names the audience `netcracker`, and its namespace belongs to the
+installation.
+
+### The provider
+
+- The trusted providers file lists the API server as one provider:
+
+  ```json
+  {"id": "kubernetes", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
+   "caFile": "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt",
+   "tokenFile": "/var/run/secrets/kubernetes.io/serviceaccount/token",
+   "audiences": ["netcracker"], "kubernetes": true}
+  ```
+
+- Every token that a key of a provider marked `kubernetes` verifies is a Kubernetes token. Such a provider lists
+  `audiences` and does not set `allowMissingAud`.
+- The agent reads the JWKS at that address with the token and the CA of the file, and needs no RBAC binding. The
+  token at `tokenFile`, issued for the API server, is used only to read the JWKS at `jwksUri`, and is never sent to a
+  PIP: PIP addresses come from the policy configuration, so whoever controls one would get the agent's access to the
+  API server.
+- The chart takes the JWKS address from a setting whose default is `https://kubernetes.default.svc/openid/v1/jwks`, so
+  a cluster where that address is unreachable from inside, or that publishes its keys elsewhere, sets its own.
+- The chart mounts, at those two paths, a projected token issued for the API server and the CA bundle of the ConfigMap
+  `kube-root-ca.crt`, since the Pod does not mount the default service account token.
+- The chart lists the provider in the modes `hybrid` and `k8s` and leaves it out in `legacy`, where a Kubernetes token
+  is refused with `TOKEN_KID_UNKNOWN` after the reload that its unknown `kid` triggers, as ADR-0092 states.
+- At start the agent warns about a provider that is not marked `kubernetes` but has the id `kubernetes` or an address
+  on `kubernetes.default.svc` or `kubernetes.default.svc.cluster.local`, since its tokens would get no namespace check.
+
+### The namespaces
+
+- A Kubernetes token is accepted only from a namespace of the installation: the origin and the peer of the baseline and
+  of every satellite in `/etc/topology/data`, the `data` key of the ConfigMap `topology`.
+- The namespace is the `namespace` member of the `kubernetes.io` claim. A token without it is refused.
+- The chart mounts the ConfigMap with `optional: true`. While the file is missing, cannot be parsed, or names no
+  namespace of a composite, only the namespace the agent runs in is allowed.
+- The agent reads the file again every 20 seconds, and the check runs on a verified token taken from the cache too. A
+  namespace that leaves the topology is refused once the kubelet has updated the mounted file and the next read has
+  run, with no restart.
+- A verifier without the namespace check refuses every Kubernetes token, so wiring that leaves the check out refuses
+  the tokens instead of admitting them.
+- A refused token gets the code `TOKEN_NAMESPACE_NOT_ALLOWED`.
+
+### Justification
+
+The namespace check is what limits who gets in. The audience keeps out the tokens that the API server issues for
+other purposes, the default token of every Pod among them, but it does not limit who holds an accepted token: anyone
+who can create a Pod can request a projected token for any audience, `netcracker` included. For the same reason a
+Kubernetes token never passes without the namespace check.
+
+The signature cannot tell the services of one installation from those of another, because the API server signs both
+with the same keys. The topology file is the platform's own description of the installation, kept in every namespace,
+so the agent needs no list of its own.
+
+The in-cluster address and the cluster CA are reachable from every Pod. The discovery document of the API server names
+the JWKS under the issuer's address, which a Pod need not reach.
+
+The mark decides which tokens are Kubernetes tokens, and neither the provider id nor the `kubernetes.io` claim does. The
+id of this provider is a label the operator picks, and the claim is whatever the signer puts in the token, while the
+mark follows the key that verified the token. The `sub` of the token is not checked separately: the API server's key
+signs only service account tokens.
+
+Alternatives considered:
+
+- **Ask the API server about every token with a TokenReview.** Rejected: it adds a call to the API server for every
+  new token and needs the `system:auth-delegator` role, while the JWKS is enough to verify a token locally.
+- **Accept every namespace while the topology file is missing.** Rejected: a missing ConfigMap would open the agent to
+  every installation of the cluster.
+- **Refuse to start without the topology file.** Rejected: a namespace without the ConfigMap could not run the agent at
+  all, not even for its own services.
+- **Find the JWKS through the API server's discovery document.** Rejected: the issuer's address it names need not be
+  reachable from a Pod.
+
+## Consequences
+
+Positive:
+
+- A token of another installation on the same cluster, a token issued for an audience other than `netcracker`, and a
+  token of another cluster are refused.
+- The agent calls the API server only to read its keys, not for every request, and needs no RBAC binding.
+
+Negative:
+
+- Anyone who can create a Pod in a namespace of the installation can get a token the agent accepts.
+- A service of the installation that receives a `netcracker` token can present it to the agent, since every M2M call
+  between the services shares that audience.
+- A token stays accepted until its `exp` after its Pod or service account is deleted, because the agent does not ask
+  the API server. How long that is depends on the lifetime the caller requested.
+- A namespace that joins the composite is accepted only after the kubelet updates the mounted file and the next read
+  runs.
+- In the default mode `legacy` every Kubernetes token is refused, after a reload of every provider at most once a
+  minute per Pod, so an installation whose services call the agent with Kubernetes tokens has to run in `hybrid` or
+  `k8s`.
+
+Neutral:
+
+- The chart renders the provider and mounts the ConfigMap, the token, and the CA. Its values schema and the parser in
+  `components/authz-agent/internal/authn` reject `kubernetes`, as they reject `caFile` and `tokenFile` of the new file;
+  both change with the wiring of ADR-0091.
+- `M2M_AUTH_MODE` takes the place of `KUBERNETES_M2M_ENABLED`, which today chooses only the agent's own token. How the
+  agent gets its own token is outside this record. Assumption: in `hybrid` it stays a Keycloak token; no record decides
+  it yet.
+- #175 changes `internal/token/namespaces` to allow the agent's own namespace for a topology file that names no
+  namespace of a composite.
+- Open point, decided as above until answered: whether the agent's own token is chosen by `M2M_AUTH_MODE` or by a
+  setting of its own.
