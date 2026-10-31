@@ -5,7 +5,7 @@
 # relative path. Build with this directory as the context:
 #   docker build -t local/authz-parity-suite:ci -f test/parity/suite/Dockerfile test/parity/suite
 
-FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine3.24@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -17,7 +17,7 @@ COPY . ./
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
     go test -c -tags integration -o /out/parity.test .
 
-FROM ghcr.io/netcracker/qubership-core-base:2.4.2@sha256:78e39e1332035b539eb61f605a9a3b638ccad27b3c64ed0783f76b6b6d4de8c5
+FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.11@sha256:1b80a6ba225210f2308c68679aa40e5211d4712269200a55862ec2a9061a55de
 
 # Everything the image ships stays root-owned: the inputs world-readable, the
 # binary world-executable, so the runtime uid can run it but not change it.

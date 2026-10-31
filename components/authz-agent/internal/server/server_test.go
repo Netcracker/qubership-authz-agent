@@ -63,6 +63,16 @@ func newApp(t *testing.T, logs *decisionlog.Logger, health func() Report) (*fibe
 	return app, eng
 }
 
+// pullServer registers both surfaces with pullNow as [Options.PullNow] and
+// returns the internal one and the public one.
+func pullServer(t *testing.T, pullNow func(context.Context) error) (internal, public *fiber.App) {
+	t.Helper()
+	internal = fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
+	public = fiber.New(fiber.Config{Immutable: true, DisableStartupMessage: true})
+	Register(internal, nil, nil, Options{PullNow: pullNow}).RegisterPublic(public)
+	return internal, public
+}
+
 // checkAs sends one READ of an ORDER to /access/v1/check/resource with an
 // admission token and the subject token "Bearer <subject>", plus headers.
 func checkAs(t *testing.T, app *fiber.App, subject string, headers map[string]string) (int, map[string]any, string) {
