@@ -110,6 +110,36 @@ cd test/integration/pipstub && go test -count=1 ./...
 cd test/integration/tenantmanager && go test -count=1 ./...
 ```
 
+### Mutation testing of a change
+
+`make mutation-diff` mutates the Go lines your branch changes and lists every mutant on them that no test kills. Run
+it before you open a pull request. It compares the working tree with the merge base of `HEAD` and `origin/main`, so
+fetch `origin` first. Uncommitted changes to tracked files count, and a new file counts once it is committed or added
+with `git add -N`. For a pull request that targets another branch, `MUTATION_BASE` names that branch, or any commit, to
+take the merge base with:
+
+```sh
+make mutation-diff
+make mutation-diff MUTATION_BASE=origin/<target-branch>
+```
+
+The target runs [mutago](https://github.com/quality-gates/mutago) at a pinned version with `go run`, so it needs only
+Go. It mutates the root module and leaves `test/`, `_test.go` files, and generated files alone. The tests of the
+changed packages have to pass before any mutation, within `MUTATION_TIMEOUT`, or the run stops. mutago runs the
+mutants in parallel and leaves the checkout unmodified. A branch in `internal/token` whose changed lines give about
+50 mutants takes under half a minute.
+
+The target fails when a mutant on a changed line survives and prints each one as a diff. The tests pass with that
+change, so they would also pass if the line broke the same way: add or strengthen a test, or, when the mutant changes
+nothing a caller can observe, say in the pull request why it is equivalent. The log and the summary stay in
+`test/artifacts/mutation/`.
+
+`make` exits 2 whenever the target fails, so its exit status does not tell a survivor from a run that did not
+complete. `test/scripts/mutation-diff.sh [base]`, which the target runs, does: it exits 1 when a mutant on a changed
+line survives and 2 when the run did not complete. A run also ends with 2 when mutago read fewer changed files from
+`git diff` than the script counts, or did not load a changed source file. Its header lists the environment variables
+that set the mutago command, the test timeout, and the output directory.
+
 ### jsonPath against Jayway
 
 `internal/jsonpath` is compared with Jayway JsonPath 2.9.0, one of the versions legacy access-control evaluates jsonPath
