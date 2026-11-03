@@ -1,0 +1,503 @@
+{
+ "about": "Round 72: the caller check on every check route other than the recorded check/resource v1. Each case runs in a tenant of its own; a user's token goes alone in Authorization (bearer:<username>).",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "c72-routes-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own, decided by the M2M token. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_C72_ROUTES_CONTROL_FIRST",
+   "tenant": "parity-c72-routes-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-routes-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "304a4747-0b64-ce2a-0efc-0c0af6f11272",
+       "name": "c72-routes-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_ROUTES_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "ad61e348-efe0-0f5c-8fb1-17ddbfd422a3",
+         "name": "c72-routes-control-first reader",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "39fb0957-c7b5-76a5-7dcc-8dc1dedd5c2d",
+           "name": "c72-routes-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "subject": "m2m",
+       "resource": {
+        "id": "c72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-routes-user",
+   "about": "parity-reader's token alone in Authorization on each check route, against the case's own tenant (no tenant claim names it) and against the default tenant. check/resource v1 is the recorded 403 of issue #167; v2, bulk, bulk operations v1 and v2 and filter answer 403 if the caller check covers them, and decide (allow the item, ALLOW in the filter) if not. Against the default tenant every route decides.",
+   "resourceType": "PARITY_SUITE_C72_ROUTES_USER",
+   "tenant": "parity-c72-routes-user",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-routes-user"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-check-v1",
+      "decide:own-check-v2",
+      "decide:own-bulk-v1",
+      "decide:own-bulk-operations-v1",
+      "decide:own-bulk-operations-v2",
+      "decide:own-filter",
+      "decide:default-check-v1",
+      "decide:default-check-v2",
+      "decide:default-bulk-v1",
+      "decide:default-bulk-operations-v1",
+      "decide:default-bulk-operations-v2",
+      "decide:default-filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "698ed459-9b90-9181-7587-1d6a6b5f0206",
+       "name": "c72-routes-user set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_ROUTES_USER'",
+       "policies": [
+        {
+         "policyId": "2289a94a-e220-66d3-65d8-56837ef57e2d",
+         "name": "c72-routes-user anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "2c9ec2b8-ef4c-fbf8-d258-11f6ec808042",
+           "name": "c72-routes-user anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "subject": "bearer:parity-reader",
+       "name": "own-check-v1",
+       "resource": {
+        "id": "c72-a"
+       }
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "name": "own-check-v2",
+       "resource": {
+        "id": "c72-a"
+       },
+       "v2": {}
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "name": "own-bulk-v1",
+       "bulk": [
+        {
+         "id": "c72-a",
+         "operation": "READ",
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ]
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "name": "own-bulk-operations-v1",
+       "bulkOperations": [
+        {
+         "id": "c72-a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ]
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "name": "own-bulk-operations-v2",
+       "bulkOperations": [
+        {
+         "id": "c72-a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ],
+       "v2": {}
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "name": "own-filter",
+       "filter": true,
+       "operation": "READ"
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "tenantId": "default",
+       "name": "default-check-v1",
+       "resource": {
+        "id": "c72-a"
+       }
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "tenantId": "default",
+       "name": "default-check-v2",
+       "resource": {
+        "id": "c72-a"
+       },
+       "v2": {}
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "tenantId": "default",
+       "name": "default-bulk-v1",
+       "bulk": [
+        {
+         "id": "c72-a",
+         "operation": "READ",
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ]
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "tenantId": "default",
+       "name": "default-bulk-operations-v1",
+       "bulkOperations": [
+        {
+         "id": "c72-a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ]
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "tenantId": "default",
+       "name": "default-bulk-operations-v2",
+       "bulkOperations": [
+        {
+         "id": "c72-a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ],
+       "v2": {}
+      },
+      {
+       "subject": "bearer:parity-reader",
+       "tenantId": "default",
+       "name": "default-filter",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-routes-m2m",
+   "about": "Control: the suite's M2M token on the same routes against the case's own tenant. Every route decides: the set allows any subject.",
+   "resourceType": "PARITY_SUITE_C72_ROUTES_M2M",
+   "tenant": "parity-c72-routes-m2m",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-routes-m2m"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:own-check-v1",
+      "decide:own-check-v2",
+      "decide:own-bulk-v1",
+      "decide:own-bulk-operations-v1",
+      "decide:own-bulk-operations-v2",
+      "decide:own-filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "1130af06-b8f5-4743-ea8d-b664d586957a",
+       "name": "c72-routes-m2m set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_ROUTES_M2M'",
+       "policies": [
+        {
+         "policyId": "5bc8bb5a-a6f1-a22b-dfb4-bd50345d6242",
+         "name": "c72-routes-m2m anyone",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "2836dd91-f7c7-e4fd-dc9e-16c8f19199b1",
+           "name": "c72-routes-m2m anyone",
+           "target": "true",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "subject": "m2m",
+       "name": "own-check-v1",
+       "resource": {
+        "id": "c72-a"
+       }
+      },
+      {
+       "subject": "m2m",
+       "name": "own-check-v2",
+       "resource": {
+        "id": "c72-a"
+       },
+       "v2": {}
+      },
+      {
+       "subject": "m2m",
+       "name": "own-bulk-v1",
+       "bulk": [
+        {
+         "id": "c72-a",
+         "operation": "READ",
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ]
+      },
+      {
+       "subject": "m2m",
+       "name": "own-bulk-operations-v1",
+       "bulkOperations": [
+        {
+         "id": "c72-a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ]
+      },
+      {
+       "subject": "m2m",
+       "name": "own-bulk-operations-v2",
+       "bulkOperations": [
+        {
+         "id": "c72-a",
+         "operations": [
+          "READ"
+         ],
+         "resource": {
+          "id": "c72-a"
+         }
+        }
+       ],
+       "v2": {}
+      },
+      {
+       "subject": "m2m",
+       "name": "own-filter",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "c72-routes-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own, decided by the M2M token. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_C72_ROUTES_CONTROL_LAST",
+   "tenant": "parity-c72-routes-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-c72-routes-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "500868f9-f526-a4aa-f942-b12b5ec15fe9",
+       "name": "c72-routes-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_C72_ROUTES_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "ed3db48d-8765-2d69-80cb-bd4e94188778",
+         "name": "c72-routes-control-last reader",
+         "target": "true",
+         "rules": [
+          {
+           "ruleId": "54bd5b80-004e-2087-29b5-1887cb1c8d46",
+           "name": "c72-routes-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "subject": "m2m",
+       "resource": {
+        "id": "c72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

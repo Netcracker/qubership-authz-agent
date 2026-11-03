@@ -1,0 +1,2639 @@
+{
+ "about": "Round 72: claims Keycloak cannot issue, in an Incoming-Token the builder wrote. Asked only once incoming-token.json shows that legacy reads such a token. Default tenant.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "i72-claims-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ic72-sub-array",
+   "about": "An Incoming-Token the builder wrote whose claims Keycloak cannot issue: sub an array of two strings. The probes ask subject.id, name and roles as the tokensubject-claims cases of round 68 do (a = n, a = y and a DENY twin). They mean something only if legacy reads the claims of such a token (incoming-token.json).",
+   "resourceType": "PARITY_SUITE_IC72_SUB_ARRAY",
+   "sets": [
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-id-is-sub-first",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_FIRST'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-sub-first",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-sub-first",
+         "target": "true",
+         "condition": "subject.id == 'parity-minted-a' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-sub-first",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_FIRST_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-sub-first",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-sub-first",
+         "target": "true",
+         "condition": "subject.id == 'parity-minted-a'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-id-is-sub-text",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_TEXT'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-sub-text",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-sub-text",
+         "target": "true",
+         "condition": "subject.id == '[parity-minted-a, parity-minted-b]' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-sub-text",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_TEXT_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-sub-text",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-sub-text",
+         "target": "true",
+         "condition": "subject.id == '[parity-minted-a, parity-minted-b]'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_PREFERRED_USERNAME'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_PREFERRED_USERNAME_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ROLES_CONTAIN_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-contain-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ROLES_CONTAIN_READER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-contain-reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ROLES_IS_EMPTY'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-is-empty",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ARRAY_ROLES_IS_EMPTY_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-is-empty",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-sub-first-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_FIRST",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-sub-first-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_FIRST",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-sub-first-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_FIRST_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-sub-text-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_TEXT",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-sub-text-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_TEXT",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "id-is-sub-text-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ID_IS_SUB_TEXT_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "name-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "name-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "name-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_NAME_IS_PREFERRED_USERNAME_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "roles-contain-reader-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ROLES_CONTAIN_READER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    },
+    {
+     "name": "roles-is-empty-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ARRAY_ROLES_IS_EMPTY_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpbInBhcml0eS1taW50ZWQtYSIsInBhcml0eS1taW50ZWQtYiJdLCJ0eXAiOiJCZWFyZXIifQ.EbJH5qKkLALVg78wcu6yJjZm6u7XljZkx2W_MveA70n9QWvFcNDgSTUu0AAPDrcvPww7iztbImeHvdp94jDOK5qPLtjdLgqFDtEmj3S5pGfUcqAH--d_FRfBh-02AED3LAfFDUm7SbwmHFIcjyFFo2aMHQKD4xpToXzP0kpRRVUlEjI1taXF_y9o3qj7srRMwSzPHCZAzdHrc9PeFjDDeWkwzJpBJxmviHGy22ehdr6wznvlV9DExp95q-U4qOg3d0F5Oo7Lvup6BeapswZIODtgyg53-ZYr_qANocTYCNssr-9kQ7fynSAtvH1T7AHtPktHjSMe4thLhujPv3oeIg"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ic72-sub-null",
+   "about": "An Incoming-Token the builder wrote whose claims Keycloak cannot issue: sub null. The probes ask subject.id, name and roles as the tokensubject-claims cases of round 68 do (a = n, a = y and a DENY twin). They mean something only if legacy reads the claims of such a token (incoming-token.json).",
+   "resourceType": "PARITY_SUITE_IC72_SUB_NULL",
+   "sets": [
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_NAME_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_NAME_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_NAME_IS_PREFERRED_USERNAME'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_NAME_IS_PREFERRED_USERNAME_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_ROLES_CONTAIN_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-contain-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_ROLES_CONTAIN_READER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-contain-reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_ROLES_IS_EMPTY'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-is-empty",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NULL_ROLES_IS_EMPTY_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-is-empty",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "name-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "name-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "name-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_NAME_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_NAME_IS_PREFERRED_USERNAME_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "roles-contain-reader-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ROLES_CONTAIN_READER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    },
+    {
+     "name": "roles-is-empty-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NULL_ROLES_IS_EMPTY_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjpudWxsLCJ0eXAiOiJCZWFyZXIifQ.kQcOXECfk-OU0-k6TetRun0q5e1pgbqYLc9a69D64m_grMlOuGsqWJGz11q6dOecfLUNqpuvQWudBA9AL2gzm5Ag0vM96utlK9-ZGFdcwaG4FQwvImP61JHoJLE7k7S6O3CyO7XOgfoAgQTNgznempc5M3GCteYLilgvBegcrdfNh6sqmeqTYkKSfSnpAKY1dwucVk_SmCEvd1OSG2mkecYMH8e-wg6BE8M098sFFcIwfDiy0BM0bOeTun7bVh4Avqiz5qzxnzjBrQpP5XtjTpeRuYq1uU-NFTFo8KZAbs7O-eOFR_aiTRcioJmMHCUKbrD-LFf11RP4iAlNWJ8L5Q"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ic72-sub-number",
+   "about": "An Incoming-Token the builder wrote whose claims Keycloak cannot issue: sub a number. The probes ask subject.id, name and roles as the tokensubject-claims cases of round 68 do (a = n, a = y and a DENY twin). They mean something only if legacy reads the claims of such a token (incoming-token.json).",
+   "resourceType": "PARITY_SUITE_IC72_SUB_NUMBER",
+   "sets": [
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_PREFERRED_USERNAME'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_PREFERRED_USERNAME_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_ROLES_CONTAIN_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-contain-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_ROLES_CONTAIN_READER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-contain-reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_ROLES_IS_EMPTY'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-is-empty",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_NUMBER_ROLES_IS_EMPTY_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-is-empty",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "name-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "name-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "name-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_NAME_IS_PREFERRED_USERNAME_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "roles-contain-reader-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ROLES_CONTAIN_READER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    },
+    {
+     "name": "roles-is-empty-deny",
+     "type": "PARITY_SUITE_IC72_SUB_NUMBER_ROLES_IS_EMPTY_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjo3MjAxLCJ0eXAiOiJCZWFyZXIifQ.Z-uG3pRCmBHixcCObreBAxEV2ff9Ydoi-xlMSBCydygNrSAi1R3faUx_NgusyBA0DpkELBquxvUOo0jvta0uKe-Rzuz_pkVLfXEVrjsbBze74kwiesbBIKveCdLlH_tvGnBH1flOht6376QnrFYfli6DH5PzdK62U6GO9p-ISKvzREOvwf0Dz3Wf3-RrGXxaweUZK-xgKS2gNrpjVm3_HCzQknSR7Iz4tYjZd5CxNrpsFWP-l7nbJLZ3AM4IgBhxRW5XJffU9qt1ggFKwPG1y5lBL3ycpp3LtCZ35lFMXtjiUwjNB-RI2J9q947IabfYe4QP8rR3IlLApZ9hQSYsJw"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ic72-sub-absent",
+   "about": "An Incoming-Token the builder wrote whose claims Keycloak cannot issue: no sub. The probes ask subject.id, name and roles as the tokensubject-claims cases of round 68 do (a = n, a = y and a DENY twin). They mean something only if legacy reads the claims of such a token (incoming-token.json).",
+   "resourceType": "PARITY_SUITE_IC72_SUB_ABSENT",
+   "sets": [
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_PREFERRED_USERNAME'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_PREFERRED_USERNAME_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_ROLES_CONTAIN_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-contain-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_ROLES_CONTAIN_READER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-contain-reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_ROLES_IS_EMPTY'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-is-empty",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_SUB_ABSENT_ROLES_IS_EMPTY_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-is-empty",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "name-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "name-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "name-is-null-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_NAME_IS_PREFERRED_USERNAME_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "roles-contain-reader-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ROLES_CONTAIN_READER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-n",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-y",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    },
+    {
+     "name": "roles-is-empty-deny",
+     "type": "PARITY_SUITE_IC72_SUB_ABSENT_ROLES_IS_EMPTY_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwidHlwIjoiQmVhcmVyIn0.B9uCYUGS7HcYlOCm3f1BFM-52LYJADHMrvzANGBYZ71RpuduoEONdf5yflwbGjhmEbNpQS3v_Cgm89zQTSwVeTDUK71nLsaqcfthNCHHhKn8WumejfkXA1JIlBWPrbLHfYWLd5rGcVXTyxxilfqSg6JGAxnk9IVaEfhxAq7yc1l2UzZDQTh9fUa1ipHkxabqLV8sTms_6T7IXytG6sQe_-NHO_IMK8fXLiXyKWdZJcSynsyKF_f0QeMxSK79ow0FnQJKrAgaOiD3GQXhIGlvwhdAzLFsM6hp6noTaDcKUhLNfFvTSR1bN15EgOZL1FUOROId9ufa2xh5km9PZr3ONA"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ic72-name-number",
+   "about": "An Incoming-Token the builder wrote whose claims Keycloak cannot issue: preferred_username a number. The probes ask subject.id, name and roles as the tokensubject-claims cases of round 68 do (a = n, a = y and a DENY twin). They mean something only if legacy reads the claims of such a token (incoming-token.json).",
+   "resourceType": "PARITY_SUITE_IC72_NAME_NUMBER",
+   "sets": [
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-id-is-sub",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_SUB'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-sub",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-sub",
+         "target": "true",
+         "condition": "subject.id == '00000000-0000-0000-0000-00000000720f' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-sub",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_SUB_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-sub",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-sub",
+         "target": "true",
+         "condition": "subject.id == '00000000-0000-0000-0000-00000000720f'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_NAME_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_NAME_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ROLES_CONTAIN_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-contain-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ROLES_CONTAIN_READER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-contain-reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ROLES_IS_EMPTY'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-is-empty",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_NAME_NUMBER_ROLES_IS_EMPTY_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-is-empty",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "id-is-sub-a-n",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_SUB",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "id-is-sub-a-y",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_SUB",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "id-is-sub-deny",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ID_IS_SUB_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "name-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "name-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "name-is-null-deny",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_NAME_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-n",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-y",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "roles-contain-reader-deny",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ROLES_CONTAIN_READER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-n",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-y",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    },
+    {
+     "name": "roles-is-empty-deny",
+     "type": "PARITY_SUITE_IC72_NAME_NUMBER_ROLES_IS_EMPTY_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjo3MjAyLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.L1_uVZ9-WnIU8mViA6EH7WjxDBeZ2SYsBjyiPYHUIdp6SXPmW2PtThXAV00EaH7t6JxXLir0KuAZZXaIvGbiqW-78jqcsU2oufZmhAyZwNIb3hn3G0PGITiDjLvP_G0T2pofxYGOcGVJT_JkKqnY8UBRUHsJC-uh21kpNh0mPtlY4b8RnZ77PsjoXLwGq4vt_Mb1Hd0EdS-PSx8PMmhOOAVZ_PaVTyMM53nzyqmytiiympXk6g59lzexUNB44pksfiesO0eJ4KKKHutr6rFF_J_QiwQf_3-5eZsV7XhdKQU3p26sQ65kisDPJflGUDn4ebnD65GLA-rYwryjcmSOwA"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ic72-roles-string",
+   "about": "An Incoming-Token the builder wrote whose claims Keycloak cannot issue: realm_access.roles a string. The probes ask subject.id, name and roles as the tokensubject-claims cases of round 68 do (a = n, a = y and a DENY twin). They mean something only if legacy reads the claims of such a token (incoming-token.json).",
+   "resourceType": "PARITY_SUITE_IC72_ROLES_STRING",
+   "sets": [
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-id-is-sub",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ID_IS_SUB'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-sub",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-sub",
+         "target": "true",
+         "condition": "subject.id == '00000000-0000-0000-0000-00000000720f' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-sub",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ID_IS_SUB_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-sub",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-sub",
+         "target": "true",
+         "condition": "subject.id == '00000000-0000-0000-0000-00000000720f'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-null",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_PREFERRED_USERNAME'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-name-is-preferred-username",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_PREFERRED_USERNAME_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-name-is-preferred-username",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-name-is-preferred-username",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ROLES_CONTAIN_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-contain-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-contain-reader",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ROLES_CONTAIN_READER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-contain-reader",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-contain-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ROLES_IS_EMPTY'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-is-empty",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-roles-is-empty",
+     "target": "resourceType == 'PARITY_SUITE_IC72_ROLES_STRING_ROLES_IS_EMPTY_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-roles-is-empty",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-roles-is-empty",
+         "target": "true",
+         "condition": "subject.roles IS EMPTY",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "id-is-sub-a-n",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ID_IS_SUB",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "id-is-sub-a-y",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ID_IS_SUB",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "id-is-sub-deny",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ID_IS_SUB_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "name-is-null-a-n",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "name-is-null-a-y",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "name-is-null-deny",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-n",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-a-y",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_PREFERRED_USERNAME",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "name-is-preferred-username-deny",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_NAME_IS_PREFERRED_USERNAME_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-n",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "roles-contain-reader-a-y",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ROLES_CONTAIN_READER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "roles-contain-reader-deny",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ROLES_CONTAIN_READER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-n",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "roles-is-empty-a-y",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ROLES_IS_EMPTY",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    },
+    {
+     "name": "roles-is-empty-deny",
+     "type": "PARITY_SUITE_IC72_ROLES_STRING_ROLES_IS_EMPTY_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOiJST0xFX1BBUklUWV9SRUFERVIifSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsInN1YiI6IjAwMDAwMDAwLTAwMDAtMDAwMC0wMDAwLTAwMDAwMDAwNzIwZiIsInR5cCI6IkJlYXJlciJ9.TBmmsDmHsfdTblXV2YmChxrp-Y6tHMv6fFFyF7GFqEfuGkcrxy6yATUwbOK2afZONVaOK0ycmaONMzfS_OaX65p-1-tv2oUbfoKfuvq7hXKtbNaHWWeeVqkZosx83p6qlY-WLowCzmH40XoseNoVzxBIQ2JgyE_TBl8vQPPwew0nyQdTA-8cLzQGqrc5Zg3hka6KEjxUj9aVS62JmBQ_6V_EPlSE5uujqzrjpCv96whL0OuK4KSZloi3u-3k1km7FZ1ZVk9wbaxp6z_l6GhjB2hGUC-d_n6TRT7xVyqwaHbd8a-RZHEPAlsxysdqIv1MsMQ0xUt3IAcKtbaGsZyk_A"
+     }
+    }
+   ]
+  },
+  {
+   "id": "i72-claims-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
