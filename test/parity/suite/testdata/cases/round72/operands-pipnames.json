@@ -1,0 +1,926 @@
+{
+ "about": "Round 72: subject.id.x, subject.name.x and subject.entitledResources without .of(, each declared as a GENERAL PIP of that full name and undeclared, beside the twin subject.parityR72Plain. Each case runs in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/r72-id-x": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r72-name-x": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r72-entitled": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r72-plain": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "cases": [
+  {
+   "id": "o72-pipnames-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_PIPNAMES_CONTROL_FIRST",
+   "tenant": "parity-o72-pipnames-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pipnames-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "7d64d0d7-64f0-954e-d610-fd025281122b",
+       "name": "o72-pipnames-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIPNAMES_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "40919ddf-9350-52f1-a8f3-d16ee1912688",
+         "name": "o72-pipnames-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "f5277e7b-866d-5d3b-bb6d-e3963cb6e109",
+           "name": "o72-pipnames-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-id-x-declared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.id.x CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. subject.id.x is declared as a GENERAL PIP whose route answers [\"v\"]. A reference to the PIP of the full text is true for a = n with one call of the route, as the twin over subject.parityR72Plain; a built-in subject member read with a step after it is false or ends the condition.",
+   "resourceType": "PARITY_SUITE_O72_PIP_ID_X_DECLARED",
+   "tenant": "parity-o72-pip-id-x-declared",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.id.x",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r72-id-x",
+       "requestAttributes": {
+        "case": "r72-id-x"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-id-x-declared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "5ea3674e-4319-8d96-c879-d494dd91ad19",
+       "name": "o72-pip-id-x-declared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_ID_X_DECLARED'",
+       "policies": [
+        {
+         "policyId": "f9298ff7-f7e0-d896-e07c-a104e1768810",
+         "name": "o72-pip-id-x-declared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "37f089eb-3c0b-945d-89bd-66d167443f6e",
+           "name": "o72-pip-id-x-declared probe",
+           "target": "true",
+           "condition": "subject.id.x CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       },
+       "pipCalls": "/api/v1/pip/r72-id-x"
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-id-x-undeclared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.id.x CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. No PIP is declared. A reference to a PIP of the full text refuses the upload (PIP doesn't exist), as for the twin over subject.parityR72Plain; a built-in subject member with a step after it is stored.",
+   "resourceType": "PARITY_SUITE_O72_PIP_ID_X_UNDECLARED",
+   "tenant": "parity-o72-pip-id-x-undeclared",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-id-x-undeclared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "71facc92-0f23-dee3-0ad8-6e491d02d683",
+       "name": "o72-pip-id-x-undeclared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_ID_X_UNDECLARED'",
+       "policies": [
+        {
+         "policyId": "eb0e562d-089c-ec13-56b4-d3a34136d2d0",
+         "name": "o72-pip-id-x-undeclared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "c1bc93b0-eff3-1e12-c9c6-d335d8966a40",
+           "name": "o72-pip-id-x-undeclared probe",
+           "target": "true",
+           "condition": "subject.id.x CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-name-x-declared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.name.x CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. subject.name.x is declared as a GENERAL PIP whose route answers [\"v\"]. A reference to the PIP of the full text is true for a = n with one call of the route, as the twin over subject.parityR72Plain; a built-in subject member read with a step after it is false or ends the condition.",
+   "resourceType": "PARITY_SUITE_O72_PIP_NAME_X_DECLARED",
+   "tenant": "parity-o72-pip-name-x-declared",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.name.x",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r72-name-x",
+       "requestAttributes": {
+        "case": "r72-name-x"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-name-x-declared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "254c86ac-6882-b7a2-1794-a375a638cc81",
+       "name": "o72-pip-name-x-declared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_NAME_X_DECLARED'",
+       "policies": [
+        {
+         "policyId": "8200acff-c416-e7d4-9930-1b56baf97799",
+         "name": "o72-pip-name-x-declared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "3ff5708e-4125-236d-8fce-a5d5d645f386",
+           "name": "o72-pip-name-x-declared probe",
+           "target": "true",
+           "condition": "subject.name.x CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       },
+       "pipCalls": "/api/v1/pip/r72-name-x"
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-name-x-undeclared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.name.x CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. No PIP is declared. A reference to a PIP of the full text refuses the upload (PIP doesn't exist), as for the twin over subject.parityR72Plain; a built-in subject member with a step after it is stored.",
+   "resourceType": "PARITY_SUITE_O72_PIP_NAME_X_UNDECLARED",
+   "tenant": "parity-o72-pip-name-x-undeclared",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-name-x-undeclared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "d03ea3a7-0373-3a3d-d353-8d933e228cba",
+       "name": "o72-pip-name-x-undeclared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_NAME_X_UNDECLARED'",
+       "policies": [
+        {
+         "policyId": "ba3f1f70-0347-89cf-05ef-22deedfacb1e",
+         "name": "o72-pip-name-x-undeclared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "3075f34b-08ce-13da-d327-208a8e549691",
+           "name": "o72-pip-name-x-undeclared probe",
+           "target": "true",
+           "condition": "subject.name.x CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-entitled-declared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.entitledResources CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. subject.entitledResources is declared as a GENERAL PIP whose route answers [\"v\"]. A reference to the PIP of the full text is true for a = n with one call of the route, as the twin over subject.parityR72Plain; a built-in subject member read with a step after it is false or ends the condition.",
+   "resourceType": "PARITY_SUITE_O72_PIP_ENTITLED_DECLARED",
+   "tenant": "parity-o72-pip-entitled-declared",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.entitledResources",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r72-entitled",
+       "requestAttributes": {
+        "case": "r72-entitled"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-entitled-declared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "79acedf3-45ec-2985-1555-0f82aab242b0",
+       "name": "o72-pip-entitled-declared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_ENTITLED_DECLARED'",
+       "policies": [
+        {
+         "policyId": "c06abf74-b96c-c2da-14f8-6d548ea1efbd",
+         "name": "o72-pip-entitled-declared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "c6b104e3-e3df-efd2-7be5-07c2f522d2aa",
+           "name": "o72-pip-entitled-declared probe",
+           "target": "true",
+           "condition": "subject.entitledResources CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       },
+       "pipCalls": "/api/v1/pip/r72-entitled"
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-entitled-undeclared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.entitledResources CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. No PIP is declared. A reference to a PIP of the full text refuses the upload (PIP doesn't exist), as for the twin over subject.parityR72Plain; a built-in subject member with a step after it is stored.",
+   "resourceType": "PARITY_SUITE_O72_PIP_ENTITLED_UNDECLARED",
+   "tenant": "parity-o72-pip-entitled-undeclared",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-entitled-undeclared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b8db9e5c-3e8e-e064-2f81-4bc788fdcfc4",
+       "name": "o72-pip-entitled-undeclared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_ENTITLED_UNDECLARED'",
+       "policies": [
+        {
+         "policyId": "582da86f-28c8-e043-234f-02db979b13c1",
+         "name": "o72-pip-entitled-undeclared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "95f18658-b4d3-5d3a-1464-41979b5d846d",
+           "name": "o72-pip-entitled-undeclared probe",
+           "target": "true",
+           "condition": "subject.entitledResources CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-plain-declared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. subject.parityR72Plain is declared as a GENERAL PIP whose route answers [\"v\"]. A reference to the PIP of the full text is true for a = n with one call of the route, as the twin over subject.parityR72Plain; a built-in subject member read with a step after it is false or ends the condition.",
+   "resourceType": "PARITY_SUITE_O72_PIP_PLAIN_DECLARED",
+   "tenant": "parity-o72-pip-plain-declared",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.parityR72Plain",
+       "pipType": "GENERAL",
+       "httpMethod": "POST",
+       "cacheable": false,
+       "url": "http://pip-mock:8090/api/v1/pip/r72-plain",
+       "requestAttributes": {
+        "case": "r72-plain"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-plain-declared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c3a53259-64a3-2c1b-4993-7615d337988e",
+       "name": "o72-pip-plain-declared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_PLAIN_DECLARED'",
+       "policies": [
+        {
+         "policyId": "3a88a393-21fe-437b-29b1-a7c3eb9e5acd",
+         "name": "o72-pip-plain-declared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "1e66b479-19ea-d2be-2e88-074207fecc53",
+           "name": "o72-pip-plain-declared probe",
+           "target": "true",
+           "condition": "subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       },
+       "pipCalls": "/api/v1/pip/r72-plain"
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pip-plain-undeclared",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y'`, a = n and a = y. No PIP is declared. A reference to a PIP of the full text refuses the upload (PIP doesn't exist), as for the twin over subject.parityR72Plain; a built-in subject member with a step after it is stored.",
+   "resourceType": "PARITY_SUITE_O72_PIP_PLAIN_UNDECLARED",
+   "tenant": "parity-o72-pip-plain-undeclared",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pip-plain-undeclared"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b954216b-59b6-c82a-1b06-78821c3dd8ec",
+       "name": "o72-pip-plain-undeclared set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIP_PLAIN_UNDECLARED'",
+       "policies": [
+        {
+         "policyId": "ccf960a2-cf50-e4a0-667d-bd01373da571",
+         "name": "o72-pip-plain-undeclared reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "8dcb6d89-9f12-355d-9f2f-8de76bd92a4d",
+           "name": "o72-pip-plain-undeclared probe",
+           "target": "true",
+           "condition": "subject.parityR72Plain CONTAINS 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-pipnames-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_PIPNAMES_CONTROL_LAST",
+   "tenant": "parity-o72-pipnames-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-pipnames-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e12aadeb-fefb-7fe6-9c1c-4356019a033a",
+       "name": "o72-pipnames-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PIPNAMES_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "674a5337-5970-2a91-40ef-c84a797416b1",
+         "name": "o72-pipnames-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "a3bf8689-40ee-bd18-d1e5-3d78657f8a13",
+           "name": "o72-pipnames-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}
