@@ -203,6 +203,7 @@ func caseRequests(specs []requestSpec, rt string) []isolatedRequest {
 		req := isolatedRequest{
 			name: r.Name, operation: r.Operation, typ: r.Type, resource: withResourceType(r.Resource, rt),
 			headers: r.Headers, filter: r.Filter, m2mOnly: r.Subject == "m2m" || strings.HasPrefix(r.Subject, "m2m@"), classifyBy: r.ClassifyBy,
+			bearer:   strings.HasPrefix(r.Subject, "bearer:"),
 			tenantID: r.TenantID, pipCalls: r.PIPCalls, user: r.user(), client: r.client(),
 			userClaims: r.SubjectClaims,
 			userID:     r.UserID, emptyOperation: r.EmptyOperation, omitOperation: r.OmitOperation,
@@ -224,10 +225,14 @@ func caseRequests(specs []requestSpec, rt string) []isolatedRequest {
 	return requests
 }
 
-// user returns the username of a "user:" subject, and "" for any other.
+// user returns the username of a "user:" or "bearer:" subject, and "" for any
+// other.
 func (r requestSpec) user() string {
 	who, _, _ := strings.Cut(r.Subject, "@")
 	if name, ok := strings.CutPrefix(who, "user:"); ok {
+		return name
+	}
+	if name, ok := strings.CutPrefix(who, "bearer:"); ok {
 		return name
 	}
 	return ""
@@ -251,6 +256,8 @@ func TestRequestSpec_SplitsTheSubjectIntoUserAndClient(t *testing.T) {
 		{"user:parity-reader", "parity-reader", ""},
 		{"m2m@parity-ts-bare", "", "parity-ts-bare"},
 		{"user:parity-ts-many@parity-ts-arrays", "parity-ts-many", "parity-ts-arrays"},
+		{"bearer:parity-reader", "parity-reader", ""},
+		{"bearer:parity-ts-many@parity-ts-arrays", "parity-ts-many", "parity-ts-arrays"},
 	} {
 		t.Run(tc.subject, func(t *testing.T) {
 			r := requestSpec{Subject: tc.subject}
@@ -259,6 +266,29 @@ func TestRequestSpec_SplitsTheSubjectIntoUserAndClient(t *testing.T) {
 			}
 			if got := r.client(); got != tc.client {
 				t.Errorf("client() of %q = %q, want %q", tc.subject, got, tc.client)
+			}
+		})
+	}
+}
+
+// Only a bearer: subject sends the user's token alone; a user: subject sends
+// it beside the M2M token, and an m2m subject sends no user's token.
+func TestCaseRequests_SendsTheUsersTokenAloneOnlyForABearerSubject(t *testing.T) {
+	for _, tc := range []struct {
+		subject         string
+		bearer, m2mOnly bool
+	}{
+		{"bearer:parity-reader", true, false},
+		{"bearer:parity-ts-many@parity-ts-arrays", true, false},
+		{"user:parity-reader", false, false},
+		{"m2m", false, true},
+		{"", false, false},
+	} {
+		t.Run(tc.subject, func(t *testing.T) {
+			req := caseRequests([]requestSpec{{Name: "r", Subject: tc.subject}}, "PARITY_T")[0]
+			if req.bearer != tc.bearer || req.m2mOnly != tc.m2mOnly {
+				t.Errorf("caseRequests(subject %q): bearer = %v, m2mOnly = %v, want %v, %v",
+					tc.subject, req.bearer, req.m2mOnly, tc.bearer, tc.m2mOnly)
 			}
 		})
 	}
