@@ -1,0 +1,421 @@
+{
+ "about": "Round 72: a customPredicate parameter bound to a GENERAL PIP whose list holds 9007199254740993, -9007199254740993, 1e400, 0.1 or 1e3. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R72_FILTER_CNUM_",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/r72-cnum-big": {
+   "statusCode": 200,
+   "body": {
+    "value": [
+     9007199254740993
+    ]
+   }
+  },
+  "/api/v1/pip/r72-cnum-big-negative": {
+   "statusCode": 200,
+   "body": {
+    "value": [
+     -9007199254740993
+    ]
+   }
+  },
+  "/api/v1/pip/r72-cnum-beyond-double": {
+   "statusCode": 200,
+   "body": {
+    "value": [
+     1e400
+    ]
+   }
+  },
+  "/api/v1/pip/r72-cnum-fraction": {
+   "statusCode": 200,
+   "body": {
+    "value": [
+     0.1
+    ]
+   }
+  },
+  "/api/v1/pip/r72-cnum-exponent": {
+   "statusCode": 200,
+   "body": {
+    "value": [
+     1e3
+    ]
+   }
+  }
+ },
+ "pips": {
+  "big": {
+   "name": "subject.parityR72CnumBig",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-cnum-big",
+   "requestAttributes": {
+    "case": "r72-cnum-big"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "bignegative": {
+   "name": "subject.parityR72CnumBigNegative",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-cnum-big-negative",
+   "requestAttributes": {
+    "case": "r72-cnum-big-negative"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "beyonddouble": {
+   "name": "subject.parityR72CnumBeyondDouble",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-cnum-beyond-double",
+   "requestAttributes": {
+    "case": "r72-cnum-beyond-double"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "fraction": {
+   "name": "subject.parityR72CnumFraction",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-cnum-fraction",
+   "requestAttributes": {
+    "case": "r72-cnum-fraction"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  },
+  "exponent": {
+   "name": "subject.parityR72CnumExponent",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-cnum-exponent",
+   "requestAttributes": {
+    "case": "r72-cnum-exponent"
+   },
+   "type": "JSON",
+   "jsonPath": "$.value"
+  }
+ },
+ "cases": [
+  {
+   "id": "f72-cnum-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f72-cnum-big",
+   "about": "A customPredicate whose parameter reads subject.parityR72CnumBig, a GENERAL PIP whose body holds the list [9007199254740993] as written: the filter's customFilterCondition shows the parameter as the stand keeps it, its digits or a Double.",
+   "pips": [
+    "beyonddouble",
+    "big",
+    "bignegative",
+    "exponent",
+    "fraction"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.parityR72CnumBig"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "f72-cnum-big-negative",
+   "about": "A customPredicate whose parameter reads subject.parityR72CnumBigNegative, a GENERAL PIP whose body holds the list [-9007199254740993] as written: the filter's customFilterCondition shows the parameter as the stand keeps it, its digits or a Double.",
+   "pips": [
+    "beyonddouble",
+    "big",
+    "bignegative",
+    "exponent",
+    "fraction"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.parityR72CnumBigNegative"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "f72-cnum-beyond-double",
+   "about": "A customPredicate whose parameter reads subject.parityR72CnumBeyondDouble, a GENERAL PIP whose body holds the list [1e400] as written: the filter's customFilterCondition shows the parameter as the stand keeps it, its digits or a Double.",
+   "pips": [
+    "beyonddouble",
+    "big",
+    "bignegative",
+    "exponent",
+    "fraction"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.parityR72CnumBeyondDouble"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "f72-cnum-fraction",
+   "about": "A customPredicate whose parameter reads subject.parityR72CnumFraction, a GENERAL PIP whose body holds the list [0.1] as written: the filter's customFilterCondition shows the parameter as the stand keeps it, its digits or a Double.",
+   "pips": [
+    "beyonddouble",
+    "big",
+    "bignegative",
+    "exponent",
+    "fraction"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.parityR72CnumFraction"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "f72-cnum-exponent",
+   "about": "A customPredicate whose parameter reads subject.parityR72CnumExponent, a GENERAL PIP whose body holds the list [1e3] as written: the filter's customFilterCondition shows the parameter as the stand keeps it, its digits or a Double.",
+   "pips": [
+    "beyonddouble",
+    "big",
+    "bignegative",
+    "exponent",
+    "fraction"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "allow",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "customPredicate": {
+           "predicate": "[{\"value\":${p},\"property\":\"f8\",\"operator\":\"in\"}]",
+           "params": {
+            "p": "subject.parityR72CnumExponent"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "f72-cnum-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1078 @@
+{
+ "about": "The subject a token yields. Each case is one subject: a token of a client of testdata/realm-clients/token-subject-clients.json lacks a claim or carries an array in place of a string, and its requests ask conditions over subject.id, name, type, serviceAccount, scopes and roles. Needs those clients and the users of testdata/realm/token-subject-users.json in the parity realm; subjectClaims stops a request whose token carries other claims.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ts72-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ts72-service",
+   "about": "Subject the service account of a client with the profile scope alone: client_id, azp, a preferred_username with the service-account- prefix, and no realm role.",
+   "resourceType": "PARITY_SUITE_TS72_SERVICE",
+   "sets": [
+    {
+     "key": "token",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_TOKEN'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "token",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-id-is-client-id",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_ID_IS_CLIENT_ID'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-client-id",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-client-id",
+         "target": "true",
+         "condition": "subject.id == 'parity-ts-service' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-client-id",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_ID_IS_CLIENT_ID_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-client-id",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-client-id",
+         "target": "true",
+         "condition": "subject.id == 'parity-ts-service'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_ID_IS_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-id-is-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-id-is-null",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_ID_IS_NULL_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-id-is-null",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-id-is-null",
+         "target": "true",
+         "condition": "subject.id IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_TYPE_IS_SERVICE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-service",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_TYPE_IS_SERVICE_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-service",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_TYPE_IS_USER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-user",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_SERVICE_TYPE_IS_USER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-user",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "token-accepted",
+     "type": "PARITY_SUITE_TS72_SERVICE_TOKEN",
+     "resource": {
+      "id": "ts"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "id-is-client-id-a-n",
+     "type": "PARITY_SUITE_TS72_SERVICE_ID_IS_CLIENT_ID",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "id-is-client-id-a-y",
+     "type": "PARITY_SUITE_TS72_SERVICE_ID_IS_CLIENT_ID",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "id-is-client-id-deny",
+     "type": "PARITY_SUITE_TS72_SERVICE_ID_IS_CLIENT_ID_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "id-is-null-a-n",
+     "type": "PARITY_SUITE_TS72_SERVICE_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "id-is-null-a-y",
+     "type": "PARITY_SUITE_TS72_SERVICE_ID_IS_NULL",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "id-is-null-deny",
+     "type": "PARITY_SUITE_TS72_SERVICE_ID_IS_NULL_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "type-is-service-a-n",
+     "type": "PARITY_SUITE_TS72_SERVICE_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "type-is-service-a-y",
+     "type": "PARITY_SUITE_TS72_SERVICE_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "type-is-service-deny",
+     "type": "PARITY_SUITE_TS72_SERVICE_TYPE_IS_SERVICE_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "type-is-user-a-n",
+     "type": "PARITY_SUITE_TS72_SERVICE_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "type-is-user-a-y",
+     "type": "PARITY_SUITE_TS72_SERVICE_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    },
+    {
+     "name": "type-is-user-deny",
+     "type": "PARITY_SUITE_TS72_SERVICE_TYPE_IS_USER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "m2m@parity-ts-service",
+     "subjectClaims": {
+      "client_id": "parity-ts-service",
+      "azp": "parity-ts-service",
+      "preferred_username": "service-account-parity-ts-service",
+      "realm_access": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "ts72-role-m2m",
+   "about": "Subject a user with the realm role ROLE_M2M and no service-account- prefix.",
+   "resourceType": "PARITY_SUITE_TS72_ROLE_M2M",
+   "sets": [
+    {
+     "key": "token",
+     "target": "resourceType == 'PARITY_SUITE_TS72_ROLE_M2M_TOKEN'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "token",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_SERVICE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-service",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_SERVICE_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-service",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_USER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-user",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_USER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-user",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "token-accepted",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TOKEN",
+     "resource": {
+      "id": "ts"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    },
+    {
+     "name": "type-is-service-a-n",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    },
+    {
+     "name": "type-is-service-a-y",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    },
+    {
+     "name": "type-is-service-deny",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_SERVICE_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    },
+    {
+     "name": "type-is-user-a-n",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    },
+    {
+     "name": "type-is-user-a-y",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    },
+    {
+     "name": "type-is-user-deny",
+     "type": "PARITY_SUITE_TS72_ROLE_M2M_TYPE_IS_USER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-role-m2m",
+     "subjectClaims": {
+      "preferred_username": "parity-r72-role-m2m",
+      "realm_access": {
+       "roles": [
+        "ROLE_PARITY_READER",
+        "ROLE_M2M"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ts72-level-external",
+   "about": "Subject a user whose claim level is external.",
+   "resourceType": "PARITY_SUITE_TS72_LEVEL_EXTERNAL",
+   "sets": [
+    {
+     "key": "token",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_EXTERNAL_TOKEN'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "token",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_SERVICE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-service",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_SERVICE_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-service",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_USER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-user",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_USER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-user",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "token-accepted",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TOKEN",
+     "resource": {
+      "id": "ts"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "type-is-service-a-n",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "type-is-service-a-y",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "type-is-service-deny",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_SERVICE_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "type-is-user-a-n",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "type-is-user-a-y",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    },
+    {
+     "name": "type-is-user-deny",
+     "type": "PARITY_SUITE_TS72_LEVEL_EXTERNAL_TYPE_IS_USER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-external",
+     "subjectClaims": {
+      "level": "external"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ts72-level-key-manager",
+   "about": "Subject a user whose claim level is key-manager.",
+   "resourceType": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER",
+   "sets": [
+    {
+     "key": "token",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TOKEN'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "anyone",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "token",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_SERVICE'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-service",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-service",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_SERVICE_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-service",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-service",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "or-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_USER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-type-is-user",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "deny-type-is-user",
+     "target": "resourceType == 'PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_USER_D'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "d-type-is-user",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny-type-is-user",
+         "target": "true",
+         "condition": "subject.type == 'USER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "token-accepted",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TOKEN",
+     "resource": {
+      "id": "ts"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    },
+    {
+     "name": "type-is-service-a-n",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    },
+    {
+     "name": "type-is-service-a-y",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_SERVICE",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    },
+    {
+     "name": "type-is-service-deny",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_SERVICE_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    },
+    {
+     "name": "type-is-user-a-n",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    },
+    {
+     "name": "type-is-user-a-y",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_USER",
+     "resource": {
+      "id": "ts",
+      "a": "y"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    },
+    {
+     "name": "type-is-user-deny",
+     "type": "PARITY_SUITE_TS72_LEVEL_KEY_MANAGER_TYPE_IS_USER_D",
+     "resource": {
+      "id": "ts",
+      "a": "n"
+     },
+     "subject": "user:parity-r72-level-key-manager",
+     "subjectClaims": {
+      "level": "key-manager"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ts72-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}
