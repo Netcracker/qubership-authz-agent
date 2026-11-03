@@ -289,15 +289,17 @@ type requestSpec struct {
 	Headers   map[string]string `json:"headers"`
 	Filter    bool              `json:"filter"`
 	// Subject "m2m" sends the M2M token alone; "user:<username>" sends the
-	// token of that user of the parity realm beside the M2M token; empty sends
-	// parity-reader. "m2m@<client>" and "user:<username>@<client>" take the
+	// token of that user of the parity realm beside the M2M token;
+	// "bearer:<username>" sends that user's token alone in Authorization, with
+	// no Incoming-Token; empty sends parity-reader. "m2m@<client>",
+	// "user:<username>@<client>" and "bearer:<username>@<client>" take the
 	// token from a client of
 	// testdata/realm-clients/token-subject-clients.json instead (see
-	// Config.TokenSubject): the service account's token alone, or the user's
-	// beside the M2M token.
+	// Config.TokenSubject): the service account's token alone, the user's
+	// beside the M2M token, or the user's alone.
 	Subject string `json:"subject"`
-	// SubjectClaims holds claim values the token of a "user:", "m2m" or "m2m@"
-	// subject must carry, such as sub and preferred_username, in their JSON
+	// SubjectClaims holds claim values the token of a "user:", "bearer:",
+	// "m2m" or "m2m@" subject must carry, such as sub and preferred_username, in their JSON
 	// form; null requires the claim to be absent. The suite decodes the token
 	// and fails before sending the request when a claim differs, so a stand
 	// whose realm lacks the user or the client, or gives them other claims,
@@ -1247,9 +1249,9 @@ func customEntryProblems(kind string, e any) []string {
 }
 
 // subjectProblem returns why a request cannot send the subject s, or "" when
-// it can: s is empty, m2m, user:<username>, or one of those two followed by
-// @<client> with a client of tokenSubjectClients, which for m2m has to have a
-// service account.
+// it can: s is empty, m2m, user:<username>, bearer:<username>, or one of the
+// last three followed by @<client> with a client of tokenSubjectClients, which
+// for m2m has to have a service account.
 func subjectProblem(s string) string {
 	who, client, at := strings.Cut(s, "@")
 	if at {
@@ -1262,10 +1264,11 @@ func subjectProblem(s string) string {
 			return fmt.Sprintf("names the subject %q, whose client has no service account", s)
 		}
 	}
-	if s == "" || who == "m2m" || strings.HasPrefix(who, "user:") && who != "user:" {
+	if s == "" || who == "m2m" || strings.HasPrefix(who, "user:") && who != "user:" ||
+		strings.HasPrefix(who, "bearer:") && who != "bearer:" {
 		return ""
 	}
-	return fmt.Sprintf("names the subject %q, which is neither m2m nor user:<username>", s)
+	return fmt.Sprintf("names the subject %q, which is none of m2m, user:<username> and bearer:<username>", s)
 }
 
 // requestProblems returns the problems of r, a request of the case c. pinned
@@ -1280,8 +1283,8 @@ func requestProblems(c caseSpec, r requestSpec, pinned map[string]bool, rt strin
 		report("%s", problem)
 	}
 	if len(r.SubjectClaims) > 0 && r.Subject != "m2m" && !strings.HasPrefix(r.Subject, "user:") &&
-		!strings.HasPrefix(r.Subject, "m2m@") {
-		report("sets subjectClaims without a user:, m2m or m2m@ subject")
+		!strings.HasPrefix(r.Subject, "bearer:") && !strings.HasPrefix(r.Subject, "m2m@") {
+		report("sets subjectClaims without a user:, bearer:, m2m or m2m@ subject")
 	}
 	if r.PIPCalls != "" {
 		if !pinned[r.PIPCalls] {

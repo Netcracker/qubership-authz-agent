@@ -403,8 +403,8 @@ func TestForwardedHeaders_ClassesTheSubjectOfTheToken(t *testing.T) {
 	}
 }
 
-// A case names its subject as m2m or user:<username>, either one optionally
-// followed by @<client> with a client of
+// A case names its subject as m2m, user:<username>, or bearer:<username>, each
+// optionally followed by @<client> with a client of
 // testdata/realm-clients/token-subject-clients.json; any
 // other subject is a problem of the file.
 func TestSubjectProblem_TakesOnlyTheSubjectsTheRunnerCanSend(t *testing.T) {
@@ -417,6 +417,11 @@ func TestSubjectProblem_TakesOnlyTheSubjectsTheRunnerCanSend(t *testing.T) {
 		{"a realm user", "user:parity-reader", false},
 		{"a service account of a token-subject client", "m2m@parity-ts-bare", false},
 		{"a user through a token-subject client", "user:parity-reader@parity-ts-arrays", false},
+		{"a user's token alone", "bearer:parity-reader", false},
+		{"a user's token alone through a token-subject client", "bearer:parity-reader@parity-ts-arrays", false},
+		{"a user's token alone without a name", "bearer:", true},
+		{"a user's token alone without a name through a client", "bearer:@parity-ts-bare", true},
+		{"a user's token alone through a client outside token-subject-clients.json", "bearer:parity-reader@parity-m2m", true},
 		{"a user without a name", "user:", true},
 		{"a user without a name through a client", "user:@parity-ts-bare", true},
 		{"another kind of subject", "admin", true},

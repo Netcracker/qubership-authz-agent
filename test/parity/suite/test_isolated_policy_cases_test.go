@@ -85,6 +85,9 @@ type isolatedRequest struct {
 	// m2mOnly sends the service's M2M token alone, with no end-user token, so
 	// the subject is the service account rather than parity-reader.
 	m2mOnly bool
+	// bearer sends the token of user alone in Authorization, with no
+	// Incoming-Token; see requestSpec.Subject.
+	bearer bool
 	// classifyBy is the pip-mock route whose call log files the golden of a
 	// regular case's request under its order class; see requestSpec.ClassifyBy.
 	classifyBy string
@@ -146,7 +149,8 @@ func (r isolatedRequest) callOptions() PerCallOptions {
 }
 
 // requestTokens returns the tokens req is sent with: parity-reader's bundle,
-// the M2M token alone for an m2mOnly request, or the bundle of req.user. With
+// the M2M token alone for an m2mOnly request, the token of req.user alone in
+// Authorization for a bearer request, or the bundle of req.user. With
 // req.client, the token of req.user, or of the client's service account for an
 // m2mOnly request, comes from that client. That token, or the M2M token of an
 // m2mOnly request, must carry req.userClaims, or the test fails before the
@@ -171,7 +175,7 @@ func (s *ParitySuite) requestTokens(req isolatedRequest) TokenBundle {
 	for name, want := range req.userClaims {
 		s.Require().Equal(want, claims[name], "claim %s in the token of %q", name, who)
 	}
-	if req.m2mOnly {
+	if req.m2mOnly || req.bearer {
 		return TokenBundle{M2M: token}
 	}
 	return TokenBundle{M2M: s.mustM2MToken(), EndUser: token}
