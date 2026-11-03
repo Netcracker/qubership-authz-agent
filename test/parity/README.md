@@ -476,8 +476,8 @@ Optional fields change one part of the upload or the request; without them a cas
 | `status` | A set | The set's status instead of `ACTIVE`, such as `INACTIVE` |
 | `tenantId` | A request | The value of the `tenant_id` query parameter instead of the stand's tenant; `""` sends the parameter with an empty value |
 | `type` | A request | The resource type the request asks for instead of the case's, in a check and in a filter request |
-| `subject` | A request | `m2m` sends the M2M token alone. `user:<username>` sends the token of that user of the parity realm, which logs in with the suite's end-user client and `PARITY_END_USER_PASSWORD`, beside the M2M token. `m2m@<client>` and `user:<username>@<client>` take the token from a client of `suite/testdata/realm-clients/token-subject-clients.json` instead: the service account's token alone, or the user's beside the M2M token. Without it the request is parity-reader's |
-| `subjectClaims` | A request with a `user:`, `m2m` or `m2m@` subject | Claim values, such as `sub` and `preferred_username`, that the token must carry, written as JSON: a string, an array, or an object; `null` requires the claim to be absent. The suite decodes the token and fails before sending the request when a claim differs |
+| `subject` | A request | `m2m` sends the M2M token alone. `user:<username>` sends the token of that user of the parity realm, which logs in with the suite's end-user client and `PARITY_END_USER_PASSWORD`, beside the M2M token. `bearer:<username>` sends that user's token alone in `Authorization`, with no `Incoming-Token`. `m2m@<client>`, `user:<username>@<client>` and `bearer:<username>@<client>` take the token from a client of `suite/testdata/realm-clients/token-subject-clients.json` instead: the service account's token alone, the user's beside the M2M token, or the user's alone. Without it the request is parity-reader's |
+| `subjectClaims` | A request with a `user:`, `bearer:`, `m2m` or `m2m@` subject | Claim values, such as `sub` and `preferred_username`, that the token must carry, written as JSON: a string, an array, or an object; `null` requires the claim to be absent. The suite decodes the token and fails before sending the request when a claim differs |
 | `pipCalls` | A request | A route the file, the case, or this or an earlier request of the case pins. The pip-mock call log is cleared before the request, and what the route received while the request ran is recorded under `pip-call/<kind>/<case>/<request>` beside the request's own golden |
 | `userManagement` | The file, a case, or a request | user-management-mock answers by route, `{statusCode, body}`, pinned before the first case, when the case starts, or before the request, as `pins` does for pip-mock; see [User Management stub](#user-management-stub) |
 | `userManagementCalls` | A request | `true` clears the call log of user-management-mock before the request and records every call it received while the request ran under `user-management-call/<kind>/<case>/<request>`; see [User Management stub](#user-management-stub) |
@@ -624,9 +624,9 @@ file does not declare, a case id two cases share, a `classifyBy`, a `pipCalls`, 
 request on a route nothing pins before it (the file, the case, or the request itself or one before it), a request's
 `pipCalls` beside `classifyBy`, a case's `pipCalls` or `readsRoutes` beside a request, a step's included, that sets
 `pipCalls`, `classifyBy`, or `readsRoutes`, an `omitOperation` on a request that is not a filter or that sets
-`operation` or `emptyOperation`, a `subject` other than `m2m` or
-`user:<username>`, alone or followed by `@<client>` with a client of `suite/testdata/realm-clients/token-subject-clients.json`,
-`subjectClaims` without a `user:`, `m2m` or `m2m@` subject, a field of a case without `sets` on a case with `sets` or
+`operation` or `emptyOperation`, a `subject` other than `m2m`,
+`user:<username>` or `bearer:<username>`, alone or followed by `@<client>` with a client of `suite/testdata/realm-clients/token-subject-clients.json`,
+`subjectClaims` without a `user:`, `bearer:`, `m2m` or `m2m@` subject, a field of a case without `sets` on a case with `sets` or
 the other way round, a `ruleIdsOf` that names no earlier case with `sets` of the file, two requests or two steps of a
 case with one name, a step with neither `level` nor `omitLevel`, a step that sets more than one of `delete`, `pips` or
 `pipBody`, and `sets` or `body`, `pips` beside `pipBody`, a `delete` that names both a set and a PIP or neither, a
