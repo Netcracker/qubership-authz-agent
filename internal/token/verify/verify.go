@@ -107,10 +107,14 @@ type Error struct {
 	// Detail describes the fault for a log line. It never contains the
 	// token itself.
 	Detail string
-	// ProviderID is the id of the provider whose key verified the signature
-	// of the token, in the form of [Token.ProviderID]. It is "" when Verify
-	// refused the token before the signature verified. Verify sets it on an
-	// error of [Options.Admit] too, so Admit leaves it empty.
+	// ProviderID is the id of the source, a provider or a realm, whose key
+	// verified the signature of the token, in the form of [Token.ProviderID].
+	// It is "" when Verify refused the token before the signature verified.
+	// One code falls on both sides: a [CodeFormatInvalid] for an exp, nbf, or
+	// iat that is not a number in range comes after the signature and carries
+	// the id, and every other one comes before it. Verify sets the id on a
+	// copy of an error of [Options.Admit], replacing any value Admit set, so
+	// Admit need not set it.
 	ProviderID string
 }
 
@@ -227,14 +231,19 @@ func (t *Token) Kind() Kind { return t.kind }
 // marked [keys.Provider.Kubernetes].
 func (t *Token) Kubernetes() bool { return t.kind == KindKubernetes }
 
-// IsM2M reports whether the token is a machine-to-machine token: every token of
-// [KindKubernetes], whose sub [Verifier.Verify] has checked, and a token of
-// [KindRealm] whose level claim is m2m or key-manager in any case, or whose
-// realm_access.roles array holds ROLE_M2M exactly. A level that is not a string
-// counts for nothing, and neither does a role that is not a string. A token of
+// IsM2M reports whether the token is a machine-to-machine token. Every token of
+// [KindKubernetes] is one, because [Verifier.Verify] refuses such a token unless
+// its sub starts with system:serviceaccount:, the prefix of the sub that the API
+// server issues for a service account. A token of [KindRealm] is one when its
+// level claim is m2m or key-manager, compared without regard to case, or when
+// its realm_access.roles array holds the string ROLE_M2M, compared exactly. A
+// level or a role that is not a string does not make a token M2M. A token of
 // [KindFile] is never one: level and realm_access.roles carry that meaning only
 // in a token that a key of a realm verified, and a provider may sign either
-// claim with a meaning of its own.
+// claim with a meaning of its own. A token of a realm whose address is also the
+// issuer of a provider is of [KindFile] when its iss matches that issuer byte for
+// byte, and of [KindRealm] when its iss names the realm under another address,
+// as [keys.Provider.Issuer] states.
 func (t *Token) IsM2M() bool { return t.m2m }
 
 // KeyID returns the kid of the key that verified the token.
@@ -366,8 +375,7 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 }
 
 // check verifies raw, whose SHA-256 digest is digest, and caches the token
-// it returns. It reads the clock for exp, nbf, and iat after the key is
-// found, because finding the key can wait for a reload.
+// it returns.
 func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte) (*Token, error) {
 	alg, query, claims, err := parse(raw)
 	if err != nil {
@@ -408,7 +416,10 @@ func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
 }
 
 // checkClaims runs the checks that follow the signature and returns the verified
-// token, or a refusal for check to name the provider on.
+// token, or the refusal of the first check that fails; [Verifier.check] sets
+// [Error.ProviderID] on that refusal. It reads the clock for
+// exp, nbf, and iat after the key is found, because finding the key can wait for
+// a reload.
 func (v *Verifier) checkClaims(raw string, payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
 	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err

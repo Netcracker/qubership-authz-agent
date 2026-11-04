@@ -20,7 +20,7 @@
 // checks. A [keys.Set] built for [Issuer.KubernetesConfig] also needs
 // [Issuer.KeysOptions].
 //
-// Only tests import this package.
+// Production code must not import this package.
 package tokentest
 
 import (
