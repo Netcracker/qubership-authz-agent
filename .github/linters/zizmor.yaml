@@ -8,5 +8,9 @@ rules:
     ignore:
       - cla.yaml
       - pr-assigner.yml
+      # Needs issue_comment to filter comments; the job neither checks out code
+      # nor runs a shell. zizmor cannot scope this to one trigger: an inline
+      # comment covers the whole on: block, and file:line breaks when lines move.
+      - profanity-filter.yaml
   secrets-outside-env:
     disable: true
