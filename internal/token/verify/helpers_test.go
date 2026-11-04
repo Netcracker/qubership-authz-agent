@@ -41,6 +41,9 @@ var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 // testIssuer is the only issuer a fakeKeys trusts, and the iss of [claimsAt].
 const testIssuer = "https://idp.example/auth/realms/r"
 
+// serviceAccountSub is the sub of a token of a Kubernetes provider.
+const serviceAccountSub = "system:serviceaccount:ns:app"
+
 // fakeKeys is a KeyFinder that holds the keys of testIssuer in memory, and
 // finds a key by kid alone.
 type fakeKeys struct {
@@ -276,6 +279,12 @@ func (c *clock) advance(d time.Duration) {
 func newVerifier(source KeyFinder) (*Verifier, *clock) {
 	c := &clock{now: start}
 	return New(source, Options{now: c.Now}), c
+}
+
+// newAdmittingVerifier returns a Verifier on source whose clock reads start and
+// whose Admit passes every token, so a Kubernetes token reaches its result.
+func newAdmittingVerifier(source KeyFinder) *Verifier {
+	return New(source, Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return nil }})
 }
 
 // codeOf returns the Code of an *Error, and "" for nil or any other error.

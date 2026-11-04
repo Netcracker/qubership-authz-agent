@@ -73,10 +73,8 @@ func TestToken_KubernetesReportsTheMarkOfTheVerifyingProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", &tt.provider)
-			v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error {
-				return nil
-			}})
-			tok := mustVerify(t, v, s.sign(t, claimsAt(start, nil)))
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
 			if got := tok.Kubernetes(); got != tt.want {
 				t.Errorf("Kubernetes() = %t, want %t", got, tt.want)
 			}
@@ -401,11 +399,13 @@ func TestVerify_AcceptsATokenWhoseKeyAReloadBringsWhileItsContextLasts(t *testin
 func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	long := strings.Repeat("x", 1000)
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm", Audiences: []string{"account"}})
+	marked := newSigner(t, "k2", &keys.Provider{ID: "k8s", Kubernetes: true})
 	tests := []struct {
 		name string
 		raw  string
 		want Code
 	}{
+		{"sub", marked.sign(t, claimsAt(start, map[string]any{"sub": long})), CodeSubjectInvalid},
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": long}, claimsAt(start, nil)), CodeKIDUnknown},
 		{"iss", unsigned(t, map[string]any{"alg": "ES256", "kid": "k1"}, claimsAt(start, map[string]any{"iss": long})), CodeIssuerUnknown},
 		{"alg", unsigned(t, map[string]any{"alg": long, "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
@@ -414,7 +414,7 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v, _ := newVerifier(newFakeKeys(s))
+			v, _ := newVerifier(newFakeKeys(s, marked))
 			_, err := v.Verify(t.Context(), tt.raw)
 			if codeOf(err) != tt.want {
 				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
@@ -567,8 +567,8 @@ func TestVerify_RefusesAnIATInTheFutureOnlyForAKubernetesToken(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", nil)
 			s.key.Source = tt.source
-			v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return nil }})
-			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iat": tt.iat.Unix()})))
+			v := newAdmittingVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iat": tt.iat.Unix(), "sub": serviceAccountSub})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
@@ -600,11 +600,93 @@ func TestVerify_RefusesATokenThatExpiresBeforeItIsIssued(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", tt.provider)
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix()})))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"exp": tt.exp.Unix(), "iat": tt.iat.Unix(), "sub": serviceAccountSub})))
 			if codeOf(err) != tt.want {
 				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
+	}
+}
+
+// The unmarked provider is the control: the rule reads the mark, and a token of
+// any other provider keeps a sub of its own.
+func TestVerify_RefusesAKubernetesTokenWhoseSubNamesNoServiceAccount(t *testing.T) {
+	unmarked := &keys.Provider{ID: "kubernetes"}
+	marked := &keys.Provider{ID: "k8s", Kubernetes: true}
+	tests := []struct {
+		name     string
+		provider *keys.Provider
+		sub      any
+		want     Code
+	}{
+		{"service account", marked, serviceAccountSub, ""},
+		{"the prefix alone", marked, "system:serviceaccount:", ""},
+		{"the prefix without its colon", marked, "system:serviceaccount", CodeSubjectInvalid},
+		{"the group of the service accounts of a namespace", marked, "system:serviceaccounts:ns", CodeSubjectInvalid},
+		{"another name", marked, "user-1", CodeSubjectInvalid},
+		{"the prefix after other text", marked, "user:system:serviceaccount:ns:app", CodeSubjectInvalid},
+		{"the prefix in another case", marked, "System:ServiceAccount:ns:app", CodeSubjectInvalid},
+		{"the prefix cut short", marked, "system:serviceaccoun", CodeSubjectInvalid},
+		{"sub that is a number", marked, 5, CodeSubjectInvalid},
+		{"no sub", marked, nil, CodeSubjectInvalid},
+		{"another name on an unmarked provider", unmarked, "user-1", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSigner(t, "k1", tt.provider)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": tt.sub})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			}
+		})
+	}
+}
+
+func TestVerify_NamesWhyItRefusesTheSubOfAKubernetesToken(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "k8s", Kubernetes: true})
+	tests := []struct {
+		name string
+		sub  any
+		want string
+	}{
+		{"no sub", nil, `token has no sub claim, and provider "k8s" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub that is a number", 5, `claim sub is not a string, and provider "k8s" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub that is null", json.RawMessage("null"), `claim sub is not a string, and provider "k8s" issues only service account tokens, whose sub starts with system:serviceaccount:`},
+		{"sub without the prefix", "user-1", `sub "user-1" does not start with system:serviceaccount:, and provider "k8s" issues only service account tokens`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := newAdmittingVerifier(newFakeKeys(s)).Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": tt.sub})))
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("Verify() error = %v, want one that contains %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// A token refused for its sub stays out of the cache, so the second
+// presentation is checked again rather than served as a verified token.
+func TestVerify_RefusesTheSameKubernetesTokenForItsSubEachTime(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "k8s", Kubernetes: true})
+	v := newAdmittingVerifier(newFakeKeys(s))
+	raw := s.sign(t, claimsAt(start, map[string]any{"sub": "user-1"}))
+	if _, err := v.Verify(t.Context(), raw); codeOf(err) != CodeSubjectInvalid {
+		t.Errorf("first Verify() error = %v, want code %s", err, CodeSubjectInvalid)
+	}
+	if _, err := v.Verify(t.Context(), raw); codeOf(err) != CodeSubjectInvalid {
+		t.Errorf("second Verify() of the same token error = %v, want code %s", err, CodeSubjectInvalid)
+	}
+}
+
+// The sub check comes last, so a token that also breaks an earlier rule gets
+// the code of that rule.
+func TestVerify_RefusesOnTheLifetimeBeforeTheSub(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "k8s", Kubernetes: true})
+	v := newAdmittingVerifier(newFakeKeys(s))
+	_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"sub": "user-1", "exp": nil})))
+	if codeOf(err) != CodeExpMissing {
+		t.Errorf("Verify() error = %v, want code %s", err, CodeExpMissing)
 	}
 }
 
@@ -939,9 +1021,12 @@ func TestVerify_RefusesAKubernetesTokenWithoutAdmit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := newSigner(t, "k1", &tt.provider)
 			v, _ := newVerifier(newFakeKeys(s))
-			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, nil)))
-			if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
-				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
+			raw := s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub}))
+			for _, call := range []string{"first", "second, from the cache"} {
+				_, err := v.Verify(t.Context(), raw)
+				if got := codeOf(err); got != tt.want || (tt.want == "" && err != nil) {
+					t.Errorf("Verify(), %s call: error = %v, want code %q", call, err, tt.want)
+				}
 			}
 		})
 	}
