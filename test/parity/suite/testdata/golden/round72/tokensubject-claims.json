@@ -1,0 +1,56 @@
+{
+  "ts72-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts72-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts72-level-external": {
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-user-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-user-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-user-deny": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts72-level-key-manager": {
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-user-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-user-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-user-deny": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts72-role-m2m": {
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-deny": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-user-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-user-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-user-deny": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "ts72-service": {
+    "check-resource-v1-outcome/regular/id-is-client-id-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-client-id-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-client-id-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-null-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/id-is-null-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/id-is-null-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/token-accepted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/type-is-service-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-service-deny": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-user-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-user-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/type-is-user-deny": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "o72-match-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-o72-match-control-first",
+            "name": "o72-match-control-first set",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "o72-match-control-first reader",
+                "policyId": "d56926e1-0c3a-fcaa-de04-1af64fad4aa9",
+                "rules": [
+                  {
+                    "condition": "resource.c == 'zz'",
+                    "effect": "DENY",
+                    "name": "o72-match-control-first probe",
+                    "ruleId": "88862788-33fd-3833-6902-79be6246748b",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-match-control-first"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-match-control-first"
+              }
+            ],
+            "policySetId": "387ab5ff-c041-ca3d-8622-46330307d680",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_MATCH_CONTROL_FIRST'",
+            "tenantId": "parity-o72-match-control-first",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o72-match-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+            "externalId": "parity-o72-match-control-last",
+            "name": "o72-match-control-last set",
+            "policies": [
+              {
+                "combiningAlgorithm": "PERMIT_UNLESS_DENY",
+                "name": "o72-match-control-last reader",
+                "policyId": "a5ee2f08-fc73-4136-551b-ecda6bb16857",
+                "rules": [
+                  {
+                    "condition": "resource.c == 'zz'",
+                    "effect": "DENY",
+                    "name": "o72-match-control-last probe",
+                    "ruleId": "925c658c-e4f6-b5f0-4171-33217fc8163e",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-match-control-last"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-match-control-last"
+              }
+            ],
+            "policySetId": "6ce12301-6a3f-a1a8-263a-e5f52b387814",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_MATCH_CONTROL_LAST'",
+            "tenantId": "parity-o72-match-control-last",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o72-match-dash": {
+    "check-resource-v1-outcome/sequence/path-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/path-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/pattern-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/pattern-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-match-dash",
+            "name": "o72-match-dash set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-match-dash reader",
+                "policyId": "e8834b66-7dba-83bb-8821-f913e2600595",
+                "rules": [
+                  {
+                    "condition": "resource.v MATCH subject.x-y OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-match-dash probe",
+                    "ruleId": "4d545514-16c0-d113-1c67-0f886ead6d70",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-match-dash"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-match-dash"
+              }
+            ],
+            "policySetId": "51a4f7be-ed1e-8224-85bf-2ecdb0ef6f6c",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_MATCH_DASH'",
+            "tenantId": "parity-o72-match-dash",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  },
+  "o72-match-name": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":false},
+    "load-policy-sets-v1/sequence/upload": {
+      "status": 400,
+      "message": "Expression [resource.v MATCH subject.name OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.v MATCH subject.name OR resource.a == 'y'"
+    },
+    "pap-error-v1/sequence/upload": {
+      "status": 400,
+      "body": "Expression [resource.v MATCH subject.name OR resource.a == 'y']: Invalid expression: Expression parsing has failed! Please check the spelling.\nPossible reasons: incorrect operator, invalid operand, missing whitespaces around operator, incorrect expressions joining using AND and OR, incorrect quotes usage. Incorrect expression: resource.v MATCH subject.name OR resource.a == 'y'"
+    },
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {"status":200,"body":{"policySets":[]}}
+  },
+  "o72-not-match-two-indexes": {
+    "check-resource-v1-outcome/sequence/read-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "pap-read-raw-v1/sequence/upload-raw-pips": {"status":200,"body":{"pips":[]}},
+    "pap-read-raw-v1/sequence/upload-raw-sets": {
+      "status": 200,
+      "body": {
+        "policySets": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "externalId": "parity-o72-not-match-two-indexes",
+            "name": "o72-not-match-two-indexes set",
+            "policies": [
+              {
+                "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+                "name": "o72-not-match-two-indexes reader",
+                "policyId": "91ecfa46-2903-ea37-15d2-54fe9bab9266",
+                "rules": [
+                  {
+                    "condition": "resource.v NOT MATCH resource.m[0, 1] OR resource.a == 'y'",
+                    "effect": "ALLOW",
+                    "name": "o72-not-match-two-indexes probe",
+                    "ruleId": "d2346cb9-57ee-e18c-c012-aa3e43877f3a",
+                    "ruleType": "DEFAULT",
+                    "target": "true",
+                    "tenantId": "parity-o72-not-match-two-indexes"
+                  }
+                ],
+                "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+                "tenantId": "parity-o72-not-match-two-indexes"
+              }
+            ],
+            "policySetId": "1886e580-b51e-12ef-561d-fb56975011c3",
+            "policySets": [],
+            "status": "ACTIVE",
+            "target": "resourceType == 'PARITY_SUITE_O72_NOT_MATCH_TWO_INDEXES'",
+            "tenantId": "parity-o72-not-match-two-indexes",
+            "type": "DEFAULT"
+          }
+        ]
+      }
+    }
+  }
+}

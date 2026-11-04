@@ -1,0 +1,73 @@
+{
+  "i72-token-control-first": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "i72-token-control-last": {
+    "check-resource-v1-outcome/regular/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-alg-none": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-empty": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-expired": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-foreign-iss": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-future": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-keycloak": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-not-a-jwt": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":false},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-signed": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "it72-tenant-b": {
+    "check-resource-v1-outcome/regular/name-m2m": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/name-minted": {"status":200,"decision":true},
+    "check-resource-v1-outcome/regular/name-null": {"status":200,"decision":false},
+    "check-resource-v1-outcome/regular/roles-reader": {"status":200,"decision":true},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

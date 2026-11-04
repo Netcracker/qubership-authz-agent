@@ -1,0 +1,39 @@
+{
+  "g72-empty-tenant-bulk": {
+    "check-resource-bulk-operations-v1-outcome/regular/operations-with-an-empty-tenant": {"status":200,"decision":{"READ":["r72a","r72b"]}},
+    "check-resource-bulk-operations-v2-outcome/regular/operations-v2-with-an-empty-tenant": {"status":200,"decision":{"READ":["r72a","r72b"]}},
+    "check-resource-bulk-v1-outcome/regular/bulk-in-the-default-tenant": {"status":200,"allowed":["r72a","r72b"]},
+    "check-resource-bulk-v1-outcome/regular/bulk-with-an-empty-tenant": {"status":200,"allowed":["r72a","r72b"]},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g72-unknown-tenant-bulk-v2": {
+    "check-resource-bulk-operations-v2-outcome/regular/operations-in-an-unknown-tenant": {"status":200,"decision":{"READ":[]}},
+    "check-resource-bulk-operations-v2-outcome/regular/operations-in-the-default-tenant": {"status":200,"decision":{"READ":["r72a","r72b"]}},
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  },
+  "g72-unknown-tenant-filter": {
+    "check-filter-v1-outcome/regular/filter-in-an-unknown-tenant": {
+      "status": 200,
+      "result": {
+        "calculationResult": "DENY",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "check-filter-v1-outcome/regular/filter-in-the-default-tenant": {
+      "status": 200,
+      "result": {
+        "calculationResult": "ALLOW",
+        "filterCondition": null,
+        "mongodbFilterCondition": null,
+        "rsqlFilterCondition": null,
+        "sqlFilterCondition": null,
+        "customFilterCondition": null
+      }
+    },
+    "load-policy-sets-v1/regular/upload-1": {"status":200}
+  }
+}

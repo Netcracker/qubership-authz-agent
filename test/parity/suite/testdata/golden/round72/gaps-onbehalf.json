@@ -1,0 +1,372 @@
+{
+  "g72-ob-bulk-lookup-404": {
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-when-the-lookup-fails": {"status":404},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-when-the-lookup-finds-the-user": {"status":200,"decision":{"READ":["r72a","r72b"]}},
+    "check-resource-bulk-v1-outcome/sequence/bulk-when-the-lookup-fails": {"status":404},
+    "check-resource-bulk-v1-outcome/sequence/bulk-when-the-lookup-finds-the-user": {"status":200,"allowed":["r72a","r72b"]},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/bulk-when-the-lookup-fails": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007205",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/bulk-when-the-lookup-finds-the-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007207",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        },
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007207",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/operations-when-the-lookup-fails": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007206",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/operations-when-the-lookup-finds-the-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007208",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        },
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007208",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "g72-ob-bulk-lookup-500": {
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-when-the-lookup-fails": {"status":500},
+    "check-resource-bulk-operations-v1-outcome/sequence/operations-when-the-lookup-finds-the-user": {"status":200,"decision":{"READ":["r72a","r72b"]}},
+    "check-resource-bulk-v1-outcome/sequence/bulk-when-the-lookup-fails": {"status":500},
+    "check-resource-bulk-v1-outcome/sequence/bulk-when-the-lookup-finds-the-user": {"status":200,"allowed":["r72a","r72b"]},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/bulk-when-the-lookup-fails": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007201",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/bulk-when-the-lookup-finds-the-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007203",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        },
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007203",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/operations-when-the-lookup-fails": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007202",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/operations-when-the-lookup-finds-the-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007204",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        },
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007204",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "g72-ob-check-source-500": {
+    "check-resource-bulk-v1-outcome/sequence/bulk-as-a-user": {"status":200,"allowed":[]},
+    "check-resource-v1-outcome/sequence/authorization-check": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-as-a-user": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/bulk-as-a-user": {"calls":[]},
+    "user-management-call/sequence/read-as-a-user": {"calls":[]}
+  },
+  "g72-ob-check-source-ok": {
+    "check-resource-bulk-v1-outcome/sequence/bulk-as-a-user": {"status":200,"allowed":["r72a"]},
+    "check-resource-v1-outcome/sequence/authorization-check": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-as-a-user": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/read-without-user-id": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/bulk-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007216",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/read-as-a-user": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007215",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "g72-ob-token-default": {
+    "check-resource-v1-outcome/sequence/absent-as-a-user-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/absent-as-a-user-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/absent-as-self-a-n": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/absent-as-self-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/dept-as-a-user-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/dept-as-a-user-a-y": {"status":200,"decision":true},
+    "check-resource-v1-outcome/sequence/dept-as-self-a-n": {"status":200,"decision":false},
+    "check-resource-v1-outcome/sequence/dept-as-self-a-y": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "load-simplified-policies-v1/sequence/declare": {"status":201},
+    "pap-error-v1/sequence/declare": {"status":201,"body":null},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null},
+    "user-management-call/sequence/absent-as-a-user-a-n": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007211",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/absent-as-a-user-a-y": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007212",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/dept-as-a-user-a-n": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007209",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    },
+    "user-management-call/sequence/dept-as-a-user-a-y": {
+      "calls": [
+        {
+          "method": "GET",
+          "requestUri": "/api/v1/user-management/scim/users/00000000-0000-0000-0000-000000007210",
+          "headerNames": [
+            "authorization",
+            "tenant",
+            "user-agent"
+          ],
+          "headers": {
+            "authorization": "\u003cservice account\u003e",
+            "authorization:issuer": "\u003cidp\u003e",
+            "tenant": "\u003ctenant_id\u003e"
+          }
+        }
+      ]
+    }
+  },
+  "g72-onbehalf-control-first": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null}
+  },
+  "g72-onbehalf-control-last": {
+    "check-resource-v1-outcome/sequence/read": {"status":200,"decision":true},
+    "load-policy-sets-v1/sequence/upload": {"status":200},
+    "pap-error-v1/sequence/upload": {"status":200,"body":null}
+  }
+}
