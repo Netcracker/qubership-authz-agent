@@ -21,6 +21,7 @@ package main
 import (
 	"context"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -44,7 +45,10 @@ import (
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
 	"authz-agent/components/authz-agent/internal/server"
+	"authz-agent/components/authz-agent/internal/snapshot"
 	"authz-agent/internal/pips"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen"
 	"authz-agent/policies"
 )
 
@@ -88,14 +92,33 @@ func main() {
 	}
 	cfg.Pull.Entitlements = pips.LoadEntitlementsConfigFromEnv()
 	var source pull.Tokens
+	ownToken := func() (string, error) { return "", m2m.ErrNoToken }
 	if tokens != nil {
 		source = tokens
+		ownToken = tokens.Bearer
 	}
+	table, err := regogen.DefaultTable()
+	if err != nil {
+		logger.Errorf("specification table: %v", err)
+		os.Exit(1)
+	}
+	cacheTTL := cfg.PIPCacheTTL
+	if cacheTTL == 0 {
+		cacheTTL = -1
+	}
+	snapshots := snapshot.New(snapshot.Config{
+		HTTP:     &regobuiltins.HTTP{Client: &http.Client{}, Token: ownToken, Timeout: cfg.PIPTimeout},
+		CacheTTL: cacheTTL,
+	}, table, logger)
+	cfg.Pull.Snapshots = snapshots
+	tenant := newDefaultTenant(cfg.DefaultTenant, cfg.Authn.TenantManagerURL)
 	puller := pull.New(cfg.Pull, eng, source, logger)
 	opts := server.Options{
-		Log:     logger,
-		Health:  func() server.Report { return report(providers, puller) },
-		PullNow: puller.PullNow,
+		Log:           logger,
+		PullNow:       puller.PullNow,
+		Health:        func() server.Report { return report(providers, puller, snapshots) },
+		Snapshots:     snapshots,
+		DefaultTenant: tenant.Get,
 	}
 
 	// Immutable: strings handed out by the request context must not alias the
@@ -131,6 +154,7 @@ func main() {
 	if puller != nil {
 		go puller.Run(ctx)
 	}
+	go tenant.Run(ctx, 30*time.Second)
 	if providers != nil {
 		go providers.Run(ctx)
 	}
@@ -225,8 +249,9 @@ func get(key, fallback string) string {
 
 // report composes the state of the loops: the trusted providers' outcome
 // under the bootstrap rules decides Healthy, and the policies' first load
-// decides Loaded. providers may be nil; puller may not.
-func report(providers *authn.Manager, puller *pull.Puller) server.Report {
+// decides Loaded; the state of every tenant's snapshot goes along. providers
+// may be nil; puller and snapshots may not.
+func report(providers *authn.Manager, puller *pull.Puller, snapshots *snapshot.Registry) server.Report {
 	r := server.Report{Healthy: true}
 	if providers != nil {
 		healthy, message, configError, details := authn.Evaluate(providers.Status())
@@ -237,5 +262,7 @@ func report(providers *authn.Manager, puller *pull.Puller) server.Report {
 	status := puller.Status()
 	r.Conversion = status.Conversion
 	r.Loaded = status.PoliciesLoaded
+	h := snapshots.Health()
+	r.Snapshots = &h
 	return r
 }
