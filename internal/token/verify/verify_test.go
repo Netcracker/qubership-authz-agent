@@ -140,13 +140,20 @@ func TestToken_IsM2MFollowsTheLevelTheRolesAndTheProvider(t *testing.T) {
 		{"level of a user", realm, map[string]any{"level": "user"}, false},
 		{"level external", realm, map[string]any{"level": "external"}, false},
 		{"level with a trailing space", realm, map[string]any{"level": "m2m "}, false},
+		{"empty level", realm, map[string]any{"level": ""}, false},
 		{"level that is a number", realm, map[string]any{"level": 2}, false},
 		{"level that is an array", realm, map[string]any{"level": []string{"m2m"}}, false},
 		{"the role among others", realm, roles("offline_access", "ROLE_M2M"), true},
 		{"the role beside a value that is not a string", realm, roles(1, "ROLE_M2M"), true},
+		{"the role inside an array", realm, roles([]any{"ROLE_M2M"}), false},
 		{"the role in lower case", realm, roles("role_m2m"), false},
 		{"a longer role that starts with it", realm, roles("ROLE_M2M_ADMIN"), false},
-		{"no roles in the array", realm, roles(), false},
+		{"the role beside the level of a user", realm, map[string]any{"level": "user", "realm_access": map[string]any{"roles": []string{"ROLE_M2M"}}}, true},
+		{"the role beside a level that is a number", realm, map[string]any{"level": 2, "realm_access": map[string]any{"roles": []string{"ROLE_M2M"}}}, true},
+		{"level m2m beside other roles", realm, map[string]any{"level": "m2m", "realm_access": map[string]any{"roles": []string{"offline_access"}}}, true},
+		{"level m2m beside the role", realm, map[string]any{"level": "m2m", "realm_access": map[string]any{"roles": []string{"ROLE_M2M"}}}, true},
+		{"no roles in the array", realm, roles([]any{}...), false},
+		{"roles that are null", realm, roles(), false},
 		{"roles that are a string", realm, map[string]any{"realm_access": map[string]any{"roles": "ROLE_M2M"}}, false},
 		{"realm_access that is not an object", realm, map[string]any{"realm_access": "ROLE_M2M"}, false},
 		{"the role at the top level", realm, map[string]any{"roles": []string{"ROLE_M2M"}}, false},
@@ -1292,6 +1299,7 @@ func TestError_NamesTheProviderOnceTheSignatureVerifies(t *testing.T) {
 		{"alg nothing accepts", unsigned(t, map[string]any{"alg": "HS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, "", ""},
 		{"issuer", s.sign(t, valid(map[string]any{"iss": "https://other.example"})), CodeIssuerUnknown, "", ""},
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": "k2"}, valid(nil)), CodeKIDUnknown, "", ""},
+		{"no kid", unsigned(t, map[string]any{"alg": "ES256"}, valid(nil)), CodeKIDMissing, "", ""},
 		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, "", ""},
 		{"signature", attacker.sign(t, valid(nil)), CodeSignatureInvalid, "", ""},
 		{"signature, key of a realm", realmAttacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid, "", ""},
@@ -1357,24 +1365,39 @@ func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *tes
 }
 
 // Admit may return one *Error for many tokens, and the tokens may come from
-// different providers, so Verify leaves that value as it is.
+// different sources, so Verify leaves that value as it is.
 func TestVerify_NamesTheProviderOnACopyOfTheRefusalOfAdmit(t *testing.T) {
-	s := newSigner(t, "k1", providerOf(keys.IdentityProviderID))
-	refusal := &Error{Code: CodeNamespaceNotAllowed, Detail: "refused"}
-	v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return refusal }})
-	raw := s.sign(t, claimsAt(start, nil))
-	for _, call := range []string{"first", "second, from the cache"} {
-		_, err := v.Verify(t.Context(), raw)
-		var refused *Error
-		if !errors.As(err, &refused) {
-			t.Fatalf("Verify(), %s call: error = %v, want an *Error", call, err)
-		}
-		if refused.ProviderID != keys.IdentityProviderID {
-			t.Errorf("Verify(), %s call: ProviderID = %q, want %q", call, refused.ProviderID, keys.IdentityProviderID)
-		}
+	tests := []struct {
+		name      string
+		source    keys.Source
+		wantRealm string
+	}{
+		{"key of a single provider", keys.Source{Provider: providerOf(keys.IdentityProviderID)}, ""},
+		{"key of a realm", keys.Source{Provider: providerOf(keys.IdentityProviderID), Realm: "r"}, "r"},
 	}
-	if refusal.ProviderID != "" {
-		t.Errorf("the value Admit returned has ProviderID %q, want it unchanged", refusal.ProviderID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			refusal := &Error{Code: CodeNamespaceNotAllowed, Detail: "refused", ProviderID: "set-by-admit", Realm: "set-by-admit"}
+			v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return refusal }})
+			raw := s.sign(t, claimsAt(start, nil))
+			for _, call := range []string{"first", "second, from the cache"} {
+				_, err := v.Verify(t.Context(), raw)
+				var refused *Error
+				if !errors.As(err, &refused) {
+					t.Fatalf("Verify(), %s call: error = %v, want an *Error", call, err)
+				}
+				if refused.ProviderID != keys.IdentityProviderID {
+					t.Errorf("Verify(), %s call: ProviderID = %q, want %q", call, refused.ProviderID, keys.IdentityProviderID)
+				}
+				if refused.Realm != tt.wantRealm {
+					t.Errorf("Verify(), %s call: Realm = %q, want %q", call, refused.Realm, tt.wantRealm)
+				}
+			}
+			if refusal.ProviderID != "set-by-admit" || refusal.Realm != "set-by-admit" {
+				t.Errorf("the value Admit returned has ProviderID %q and Realm %q, want both unchanged, %q", refusal.ProviderID, refusal.Realm, "set-by-admit")
+			}
+		})
 	}
 }
 

@@ -112,10 +112,15 @@ type Error struct {
 	// Detail describes the fault for a log line. It never contains the
 	// token itself.
 	Detail string
-	// ProviderID is the id of the provider whose key verified the signature
-	// of the token, as [Token.ProviderID] returns it. It is "" when Verify
-	// refused the token before the signature verified. Verify sets it on an
-	// error of [Options.Admit] too, so Admit leaves it empty.
+	// ProviderID is the [keys.Provider.ID] of the provider whose key verified
+	// the signature of the token, as [Token.ProviderID] returns it. It is ""
+	// when Verify refused the token before the signature verified.
+	// [CodeFormatInvalid] is the one code that Verify returns both before and
+	// after the signature verifies: for an exp, nbf, or iat that is not a
+	// number in range it comes after the signature and carries the id, and
+	// for every other fault it comes before. Verify sets the id on a copy of
+	// an error of [Options.Admit], replacing any value Admit set, so Admit
+	// need not set it.
 	ProviderID string
 	// Realm is the name of the realm whose key verified the signature of the
 	// token, as [Token.Realm] returns it. Verify sets it wherever it sets
@@ -378,8 +383,7 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 }
 
 // check verifies raw, whose SHA-256 digest is digest, and caches the token
-// it returns. It reads the clock for exp, nbf, and iat after the key is
-// found, because finding the key can wait for a reload.
+// it returns.
 func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte) (*Token, error) {
 	alg, query, claims, err := parse(raw)
 	if err != nil {
@@ -420,7 +424,10 @@ func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
 }
 
 // checkClaims runs the checks that follow the signature and returns the verified
-// token, or a refusal for check to name the provider on.
+// token, or the refusal of the first check that fails; [Verifier.check] sets
+// [Error.ProviderID] and [Error.Realm] on that refusal. It reads the clock for
+// exp, nbf, and iat after the key is found, because finding the key can wait
+// for a reload.
 func (v *Verifier) checkClaims(raw string, payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
 	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err
