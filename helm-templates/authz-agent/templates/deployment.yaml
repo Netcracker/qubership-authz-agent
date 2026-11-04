@@ -171,10 +171,6 @@ spec:
             {{- end }}
             - name: AUTHZ_ENTITLEMENTS_URL
               value: '{{ .Values.AUTHZ_ENTITLEMENTS_URL }}'
-            - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
-            - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
           volumeMounts:
             - name: trusted-providers
               mountPath: /etc/authz
