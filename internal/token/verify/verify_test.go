@@ -17,8 +17,10 @@ package verify
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -1041,6 +1043,111 @@ func TestVerify_RunsNoAdmitForARefusedToken(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Errorf("Admit calls = %d, want 0", calls)
+	}
+}
+
+// A token whose signature has not verified only claims to come from a provider,
+// so its refusal names none. The verifier has no Admit, so a token that passes
+// every check reaches the refusal of a Kubernetes token.
+func TestError_NamesTheProviderOnceTheSignatureVerifies(t *testing.T) {
+	provider := &keys.Provider{ID: "k8s", Kubernetes: true, Audiences: []string{"netcracker"}}
+	s := newSigner(t, "k1", provider)
+	attacker := newSigner(t, "k1", provider)
+	valid := func(fields map[string]any) map[string]any {
+		claims := claimsAt(start, map[string]any{"sub": serviceAccountSub, "aud": "netcracker"})
+		for name, value := range fields {
+			claims[name] = value
+		}
+		return claims
+	}
+	tests := []struct {
+		name         string
+		raw          string
+		wantCode     Code
+		wantProvider string
+	}{
+		{"format of the token", "not-a-token", CodeFormatInvalid, ""},
+		{"alg nothing accepts", unsigned(t, map[string]any{"alg": "HS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, ""},
+		{"issuer", s.sign(t, valid(map[string]any{"iss": "https://other.example"})), CodeIssuerUnknown, ""},
+		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": "k2"}, valid(nil)), CodeKIDUnknown, ""},
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, valid(nil)), CodeAlgNotAllowed, ""},
+		{"signature", attacker.sign(t, valid(nil)), CodeSignatureInvalid, ""},
+		{"aud", s.sign(t, valid(map[string]any{"aud": "other"})), CodeAudienceInvalid, "k8s"},
+		{"exp that is not a number", s.sign(t, valid(map[string]any{"exp": "soon"})), CodeFormatInvalid, "k8s"},
+		{"exp in the past", s.sign(t, valid(map[string]any{"iat": start.Add(-2 * time.Hour).Unix(), "exp": start.Add(-time.Hour).Unix()})), CodeExpired, "k8s"},
+		{"nbf in the future", s.sign(t, valid(map[string]any{"nbf": start.Add(time.Minute).Unix()})), CodeNotYetValid, "k8s"},
+		{"iat in the future", s.sign(t, valid(map[string]any{"iat": start.Add(time.Minute).Unix()})), CodeIATInvalid, "k8s"},
+		{"sub", s.sign(t, valid(map[string]any{"sub": "user-1"})), CodeSubjectInvalid, "k8s"},
+		{"no namespace check", s.sign(t, valid(nil)), CodeNamespaceNotAllowed, "k8s"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), tt.raw)
+			var refused *Error
+			if !errors.As(err, &refused) {
+				t.Fatalf("Verify() error = %v, want an *Error", err)
+			}
+			if refused.Code != tt.wantCode {
+				t.Errorf("Verify() code = %s, want %s", refused.Code, tt.wantCode)
+			}
+			if refused.ProviderID != tt.wantProvider {
+				t.Errorf("Verify() ProviderID = %q, want %q", refused.ProviderID, tt.wantProvider)
+			}
+		})
+	}
+}
+
+// The detail reaches a log line, so it quotes the iss, which is text from the
+// token, and names no provider, as the field does.
+func TestError_DetailOfARefusalByTheSelectedKeyQuotesTheIssNotTheProvider(t *testing.T) {
+	provider := &keys.Provider{ID: "named-provider"}
+	s := newSigner(t, "k1", provider)
+	attacker := newSigner(t, "k1", provider)
+	tests := []struct {
+		name string
+		raw  string
+		want Code
+	}{
+		{"alg the found key does not accept", unsigned(t, map[string]any{"alg": "RS256", "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
+		{"signature", attacker.sign(t, claimsAt(start, nil)), CodeSignatureInvalid},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), tt.raw)
+			if codeOf(err) != tt.want {
+				t.Fatalf("Verify() error = %v, want code %s", err, tt.want)
+			}
+			if strings.Contains(err.Error(), provider.ID) {
+				t.Errorf("Verify() error = %q, want it to name no provider", err)
+			}
+			if !strings.Contains(err.Error(), strconv.Quote(testIssuer)) {
+				t.Errorf("Verify() error = %q, want it to quote the iss %q", err, testIssuer)
+			}
+		})
+	}
+}
+
+// Admit may return one *Error for many tokens, and the tokens may come from
+// different providers, so Verify leaves that value as it is.
+func TestVerify_NamesTheProviderOnACopyOfTheRefusalOfAdmit(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	refusal := &Error{Code: CodeNamespaceNotAllowed, Detail: "refused"}
+	v := New(newFakeKeys(s), Options{now: func() time.Time { return start }, Admit: func(*Token) *Error { return refusal }})
+	raw := s.sign(t, claimsAt(start, nil))
+	for _, call := range []string{"first", "second, from the cache"} {
+		_, err := v.Verify(t.Context(), raw)
+		var refused *Error
+		if !errors.As(err, &refused) {
+			t.Fatalf("Verify(), %s call: error = %v, want an *Error", call, err)
+		}
+		if refused.ProviderID != "realm" {
+			t.Errorf("Verify(), %s call: ProviderID = %q, want %q", call, refused.ProviderID, "realm")
+		}
+	}
+	if refusal.ProviderID != "" {
+		t.Errorf("the value Admit returned has ProviderID %q, want it unchanged", refusal.ProviderID)
 	}
 }
 

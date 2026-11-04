@@ -59,7 +59,7 @@ const (
 	// ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
 	// CodeAlgNotAllowed marks a token whose header names no algorithm, one
-	// that no key accepts, or one that the key its header selects does not
+	// that no key accepts, or one that the key its iss and kid select does not
 	// accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
@@ -73,7 +73,7 @@ const (
 	// CodeKIDUnknown marks a token whose kid no loaded key of its source has.
 	CodeKIDUnknown Code = "TOKEN_KID_UNKNOWN"
 	// CodeSignatureInvalid marks a token whose signature does not verify
-	// with the key its header selects.
+	// with the key its iss and kid select.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
 	// CodeExpMissing marks a token without an exp claim.
 	CodeExpMissing Code = "TOKEN_EXP_MISSING"
@@ -107,12 +107,25 @@ type Error struct {
 	// Detail describes the fault for a log line. It never contains the
 	// token itself.
 	Detail string
+	// ProviderID is the id of the provider whose key verified the signature
+	// of the token, in the form of [Token.ProviderID]. It is "" when Verify
+	// refused the token before the signature verified. Verify sets it on an
+	// error of [Options.Admit] too, so Admit leaves it empty.
+	ProviderID string
 }
 
 func (e *Error) Error() string { return string(e.Code) + ": " + e.Detail }
 
 func fail(code Code, format string, args ...any) *Error {
 	return &Error{Code: code, Detail: fmt.Sprintf(format, args...)}
+}
+
+// ofProvider returns a copy of e that names the provider id. It copies because
+// [Options.Admit] may return one *Error for many tokens.
+func (e *Error) ofProvider(id string) *Error {
+	named := *e
+	named.ProviderID = id
+	return &named
 }
 
 // Kind is the kind of a verified token. The source of the key that verified the
@@ -336,12 +349,12 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	}
 	if v.opts.Admit == nil {
 		if tok.Kubernetes() {
-			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID())
+			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID()).ofProvider(tok.ProviderID())
 		}
 		return tok, nil
 	}
 	if err := v.opts.Admit(tok); err != nil {
-		return nil, err
+		return nil, err.ofProvider(tok.ProviderID())
 	}
 	return tok, nil
 }
@@ -358,27 +371,52 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err != nil {
 		return nil, lookupFailure(query, err)
 	}
+	payload, refused := checkSignature(raw, alg, query.Issuer, key)
+	if refused != nil {
+		return nil, refused
+	}
+	tok, refused := v.checkClaims(raw, payload, query, claims, key)
+	if refused != nil {
+		return nil, refused.ofProvider(key.Source.ID())
+	}
+	if v.cache != nil {
+		v.cache.put(digest, tok)
+	}
+	return tok, nil
+}
+
+// checkSignature returns the signed payload of raw when key, the one that the
+// iss and the kid of raw selected, accepts alg and verifies its signature. A
+// refusal quotes iss, the issuer that raw claims, and names no provider, because
+// such a token only claims to come from the provider of key.
+func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
 	if !key.Allows(alg) {
-		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(key.ID), key.Source.ID(), alg)
+		return nil, fail(CodeAlgNotAllowed, "key %s of iss %s does not accept %s", short(key.ID), short(iss), alg)
 	}
 	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
 	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
 	if err != nil {
-		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of provider %q", short(key.ID), key.Source.ID())
+		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of iss %s", short(key.ID), short(iss))
 	}
+	return payload, nil
+}
+
+// checkClaims runs the checks that follow the signature and returns the verified
+// token, or a refusal for check to name the provider on.
+func (v *Verifier) checkClaims(raw string, payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
 	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err
 	}
-	expiry, err := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
-	if err != nil {
-		return nil, err
+	expiry, refused := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
+	if refused != nil {
+		return nil, refused
 	}
 	if err := checkSubject(claims, key.Source); err != nil {
 		return nil, err
 	}
 	standard := standardOf(claims)
 	kind := kindOf(key.Source)
-	tok := &Token{
+	return &Token{
 		raw:        raw,
 		payload:    payload,
 		claims:     claims,
@@ -390,11 +428,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 		issuer:     query.Issuer,
 		expiry:     expiry,
 		key:        key.JWK,
-	}
-	if v.cache != nil {
-		v.cache.put(digest, tok)
-	}
-	return tok, nil
+	}, nil
 }
 
 // lookupFailure returns the [*Error] for err, the error a [KeyFinder] returned

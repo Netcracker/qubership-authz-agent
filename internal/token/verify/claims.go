@@ -43,7 +43,7 @@ const m2mRole = "ROLE_M2M"
 // with leeway either way. An exp before iat is refused, with no leeway. An iat
 // later than now by more than leeway is refused only for a Kubernetes token,
 // one whose source [keys.Source.Kubernetes] reports as marked.
-func checkTimes(claims map[string]json.RawMessage, from keys.Source, now time.Time, leeway time.Duration) (time.Time, error) {
+func checkTimes(claims map[string]json.RawMessage, from keys.Source, now time.Time, leeway time.Duration) (time.Time, *Error) {
 	exp, present, err := numericDate(claims, "exp")
 	if err != nil {
 		return time.Time{}, err
@@ -79,7 +79,7 @@ func checkTimes(claims map[string]json.RawMessage, from keys.Source, now time.Ti
 
 // numericDate reads the claim name as a number of seconds since the epoch;
 // present is false when the payload has no such claim.
-func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, err error) {
+func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, refused *Error) {
 	raw, ok := claims[name]
 	if !ok {
 		return time.Time{}, false, nil
@@ -88,8 +88,8 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	if !ok {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is not a number", name)
 	}
-	seconds, err := n.Float64()
-	if err != nil || math.Abs(seconds) > maxNumericDate {
+	seconds, parseErr := n.Float64()
+	if parseErr != nil || math.Abs(seconds) > maxNumericDate {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is %s, outside ±%d seconds", name, short(n.String()), int64(maxNumericDate))
 	}
 	whole, fraction := math.Modf(seconds)
@@ -100,7 +100,7 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 // [keys.Provider.Kubernetes] whose sub does not start with
 // serviceAccountPrefix. The rest of sub is not parsed, because the namespace of
 // the token comes from its kubernetes.io claim.
-func checkSubject(claims map[string]json.RawMessage, from keys.Source) error {
+func checkSubject(claims map[string]json.RawMessage, from keys.Source) *Error {
 	if !from.Kubernetes() {
 		return nil
 	}
@@ -149,7 +149,7 @@ func namesM2M(s Standard) bool {
 // Otherwise aud, a string or an array of strings, has to name one of them
 // exactly, and a token without aud passes only when the provider sets
 // AllowMissingAud.
-func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
+func checkAudience(claims map[string]json.RawMessage, from keys.Source) *Error {
 	p := from.Provider
 	if p == nil || len(p.Audiences) == 0 {
 		return nil
