@@ -22,7 +22,6 @@ import (
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
-	"authz-agent/components/authz-agent/internal/snapshot"
 	"authz-agent/internal/regobuiltins"
 )
 
@@ -48,9 +47,10 @@ type config struct {
 	DefaultTenant string
 	// PIPTimeout bounds one call of a PIP the generated policies make.
 	PIPTimeout time.Duration
-	// PIPCacheTTL is how long the answer of a cacheable PIP is reused
-	// across decision requests; zero turns the cache off.
-	PIPCacheTTL time.Duration
+	// EntitlementsURL is the base URL of the entitlements service, which a
+	// condition on subject.entitledResources calls; empty fails such a
+	// condition's operand.
+	EntitlementsURL string
 }
 
 // lookup reads one configuration key; configloader in main, a map in tests.
@@ -82,9 +82,9 @@ func loadConfig(get lookup) config {
 			TokenFile:        get("authz.pap.client.token.file", m2m.DefaultTokenFile),
 			WatchInterval:    m2m.DefaultWatchInterval,
 		},
-		DefaultTenant: strings.TrimSpace(get("authz.default.tenant", "default")),
-		PIPTimeout:    seconds(get, "authz.pip.timeout", regobuiltins.DefaultTimeout),
-		PIPCacheTTL:   seconds(get, "authz.pip.cache.ttl", snapshot.DefaultCacheTTL),
+		DefaultTenant:   strings.TrimSpace(get("authz.default.tenant", "default")),
+		PIPTimeout:      seconds(get, "authz.pip.timeout", regobuiltins.DefaultTimeout),
+		EntitlementsURL: strings.TrimSpace(get("authz.entitlements.url", "")),
 	}
 }
 
