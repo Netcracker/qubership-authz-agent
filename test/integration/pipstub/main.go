@@ -447,7 +447,11 @@ func handleConfigure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cfg []pipRoute
-	if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
+	// A number in a route body is kept as its text and answered with the same
+	// digits; as a float64, 1e400 would be refused and 9007199254740993 rounded.
+	decoder := json.NewDecoder(r.Body)
+	decoder.UseNumber()
+	if err := decoder.Decode(&cfg); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = fmt.Fprintf(w, `{"error":"%s"}`, err.Error())
 		return

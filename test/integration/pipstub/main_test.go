@@ -350,3 +350,24 @@ func TestHandleReset_EmptiesAFullJournal(t *testing.T) {
 		t.Errorf("calls after reset and /x, /y, /z = %v dropped %s, want %v dropped 1", paths, dropped, want)
 	}
 }
+
+// A configured route answers each number in its body with the digits it was
+// configured with, including a value that float64 cannot hold or holds only
+// approximately.
+func TestHandleConfigure_KeepsNumbersAsWritten(t *testing.T) {
+	for _, number := range []string{"9007199254740993", "-9007199254740993", "1e400", "0.1", "1e3"} {
+		t.Run(number, func(t *testing.T) {
+			resetState()
+			config := `[{"path":"/n","responses":[{"statusCode":200,"body":{"value":[` + number + `]}}]}]`
+			rr := httptest.NewRecorder()
+			handleConfigure(rr, httptest.NewRequest(http.MethodPut, "/pip-stub/configure", strings.NewReader(config)))
+			if rr.Code != http.StatusOK {
+				t.Fatalf("PUT /pip-stub/configure %s = %d %s, want 200", config, rr.Code, strings.TrimSpace(rr.Body.String()))
+			}
+			want := `{"value":[` + number + `]}`
+			if status, body := serve(http.MethodGet, "/n"); status != http.StatusOK || body != want {
+				t.Errorf("GET /n = %d %s, want 200 %s", status, body, want)
+			}
+		})
+	}
+}
