@@ -63,6 +63,50 @@ func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[strin
 	return srv.URL
 }
 
+// The level m2m makes a token of realm b M2M. A provider of the configuration has
+// the address of realm b as its issuer, so it takes the token whose iss is that
+// address, and the same key verifies both tokens: only the source of the key
+// separates the two answers.
+func TestVerify_ComputesTheM2MTestFromTheSourceOfARealKey(t *testing.T) {
+	realm := newSigner(t, "k1", &keys.Provider{ID: "unused"})
+	url := keycloakOf(t, map[string][]*signer{"b": {realm}}, nil)
+	fileIssuer := url + realmsPath + "b"
+	set, err := keys.New(keys.Config{
+		Keycloak:  &keys.Keycloak{URL: url},
+		Providers: []keys.Provider{{ID: "file", Issuer: fileIssuer}},
+	}, keys.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name     string
+		iss      string
+		wantKind Kind
+		wantM2M  bool
+	}{
+		{"token of realm b under another address", "https://public.example" + realmsPath + "b", KindRealm, true},
+		{"token of a provider whose issuer is the address of realm b", fileIssuer, KindFile, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(set)
+			tok, err := v.Verify(t.Context(), realm.sign(t, claimsAt(start, map[string]any{"iss": tt.iss, "level": "m2m"})))
+			if err != nil {
+				t.Fatalf("Verify() error = %v", err)
+			}
+			if got := tok.Kind(); got != tt.wantKind {
+				t.Errorf("Kind() = %q, want %q", got, tt.wantKind)
+			}
+			if got := tok.IsM2M(); got != tt.wantM2M {
+				t.Errorf("IsM2M() = %t, want %t", got, tt.wantM2M)
+			}
+		})
+	}
+}
+
 // These tokens go through a real [keys.Set], because the choice of the key is
 // the behavior: which issuer a token names, and which key of that issuer its
 // header selects. Realms a and b publish the same kid and have one key each, so
