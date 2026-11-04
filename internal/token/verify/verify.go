@@ -113,6 +113,22 @@ func fail(code Code, format string, args ...any) *Error {
 	return &Error{Code: code, Detail: fmt.Sprintf(format, args...)}
 }
 
+// Kind is the kind of a verified token. The source of the key that verified the
+// token decides it, and no claim does.
+type Kind string
+
+// Kinds of a verified token.
+const (
+	// KindRealm marks a token that a key of a realm of the Keycloak verified.
+	KindRealm Kind = "realm"
+	// KindFile marks a token that a key of a provider of the configuration
+	// verified, where the provider is not marked [keys.Provider.Kubernetes].
+	KindFile Kind = "file"
+	// KindKubernetes marks a token that a key of a provider marked
+	// [keys.Provider.Kubernetes] verified.
+	KindKubernetes Kind = "kubernetes"
+)
+
 // Token is a verified token. Nothing changes a Token after Verify returns
 // it, and every method that returns JSON text returns a copy, so one Token is
 // safe to read from many goroutines, and the cache shares it between the
@@ -123,7 +139,8 @@ type Token struct {
 	claims     map[string]json.RawMessage
 	standard   Standard
 	providerID string
-	kubernetes bool
+	kind       Kind
+	m2m        bool
 	keyID      string
 	issuer     string
 	expiry     time.Time
@@ -184,9 +201,20 @@ func (t *Token) Standard() Standard {
 // Keycloak.
 func (t *Token) ProviderID() string { return t.providerID }
 
+// Kind returns the kind of the token.
+func (t *Token) Kind() Kind { return t.kind }
+
 // Kubernetes reports whether the provider whose key verified the token is
 // marked [keys.Provider.Kubernetes].
-func (t *Token) Kubernetes() bool { return t.kubernetes }
+func (t *Token) Kubernetes() bool { return t.kind == KindKubernetes }
+
+// IsM2M reports whether the token is a machine-to-machine token: every token of
+// [KindKubernetes], whose sub [Verifier.Verify] has checked, and a token of
+// [KindRealm] whose level claim is m2m or key-manager in any case, or whose
+// realm_access.roles array holds ROLE_M2M exactly. A level that is not a string
+// counts for nothing, and neither does a role that is not a string. A token of
+// [KindFile] is never one, because its claims are whatever that provider signs.
+func (t *Token) IsM2M() bool { return t.m2m }
 
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
@@ -343,13 +371,16 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err := checkSubject(claims, key.Provider); err != nil {
 		return nil, err
 	}
+	standard := standardOf(claims)
+	kind := kindOf(key.Provider)
 	tok := &Token{
 		raw:        raw,
 		payload:    payload,
 		claims:     claims,
-		standard:   standardOf(claims),
+		standard:   standard,
 		providerID: key.Provider.ID,
-		kubernetes: key.Provider.Kubernetes,
+		kind:       kind,
+		m2m:        isM2M(kind, standard),
 		keyID:      key.ID,
 		issuer:     query.Issuer,
 		expiry:     expiry,

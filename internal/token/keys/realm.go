@@ -32,6 +32,11 @@ const (
 	maxRealmNameBytes = 255
 )
 
+// IsRealm reports whether p stands for a realm of a [Keycloak] rather than an
+// entry of [Config.Providers]. Such an entry cannot have the id of a realm,
+// because [Config.Validate] refuses a slash in an id.
+func (p Provider) IsRealm() bool { return strings.HasPrefix(p.ID, realmIDPrefix) }
+
 // realmOf returns the realm that iss names: the part after the last slash of
 // an iss that contains realmsPath, percent-decoded, because Keycloak encodes
 // the name in an iss. The second result is false for any other iss and for a
