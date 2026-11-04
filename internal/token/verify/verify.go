@@ -83,7 +83,8 @@ const (
 	CodeNotYetValid Code = "TOKEN_NOT_YET_VALID"
 	// CodeIATMissing marks a token without an iat claim.
 	CodeIATMissing Code = "TOKEN_IAT_MISSING"
-	// CodeIATInvalid marks a token whose iat is in the future.
+	// CodeIATInvalid marks a token whose exp comes before its iat, and a
+	// Kubernetes token whose iat is in the future.
 	CodeIATInvalid Code = "TOKEN_IAT_INVALID"
 	// CodeAudienceMissing marks a token without an aud claim from a provider
 	// that requires one.
@@ -211,8 +212,10 @@ const (
 
 // Options tunes a [Verifier]. A zero field takes its default.
 type Options struct {
-	// Leeway is the difference between the clocks of the provider and of the
-	// service that exp, nbf, and iat tolerate.
+	// Leeway is how far the clocks of the provider and of the service may
+	// differ. It applies when exp and nbf are compared with the clock, and
+	// when the iat of a Kubernetes token is; exp is compared with iat
+	// without it.
 	Leeway time.Duration
 	// CacheSize is the largest number of verified tokens the cache keeps; a
 	// negative value turns the cache off.
@@ -321,7 +324,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err
 	}
-	expiry, err := checkTimes(claims, v.opts.now(), v.opts.Leeway)
+	expiry, err := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
 	if err != nil {
 		return nil, err
 	}

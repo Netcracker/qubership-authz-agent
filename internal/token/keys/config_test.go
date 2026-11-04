@@ -27,13 +27,13 @@ func TestParseConfig_ReadsKeycloakAndProviders(t *testing.T) {
 	 "providers": [
 		{"id": "external", "issuer": "https://idp.example/oidc", "audiences": ["account"], "allowMissingAud": true},
 		{"id": "kubernetes", "issuer": "https://kubernetes.default.svc", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
-		 "caFile": "/var/run/ca.crt", "tokenFile": "/var/run/token", "audiences": ["netcracker"]}
+		 "caFile": "/var/run/ca.crt", "tokenFile": "/var/run/token", "audiences": ["netcracker"], "kubernetes": true}
 	]}`
 	want := Config{
 		Keycloak: &Keycloak{URL: "https://kc.example", RequiredRealms: []string{"cloud-common"}, CAFile: "/var/run/kc-ca.crt"},
 		Providers: []Provider{
 			{ID: "external", Issuer: "https://idp.example/oidc", Audiences: []string{"account"}, AllowMissingAud: true},
-			{ID: "kubernetes", Issuer: "https://kubernetes.default.svc", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", CAFile: "/var/run/ca.crt", TokenFile: "/var/run/token", Audiences: []string{"netcracker"}},
+			{ID: "kubernetes", Issuer: "https://kubernetes.default.svc", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", CAFile: "/var/run/ca.crt", TokenFile: "/var/run/token", Audiences: []string{"netcracker"}, Kubernetes: true},
 		},
 	}
 	got, err := ParseConfig([]byte(doc))
