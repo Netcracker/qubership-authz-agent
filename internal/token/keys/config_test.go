@@ -22,17 +22,20 @@ import (
 	"testing"
 )
 
-func TestParseConfig_ReadsBothAddressForms(t *testing.T) {
-	doc := `{"providers": [
-		{"id": "cloud-common", "issuer": "https://idp.example/auth/realms/cloud-common",
-		 "audiences": ["account"], "allowMissingAud": true},
-		{"id": "kubernetes", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
+func TestParseConfig_ReadsKeycloakAndProviders(t *testing.T) {
+	doc := `{"keycloak": {"url": "https://kc.example", "requiredRealms": ["cloud-common"], "caFile": "/var/run/kc-ca.crt"},
+	 "providers": [
+		{"id": "external", "issuer": "https://idp.example/oidc", "audiences": ["account"], "allowMissingAud": true},
+		{"id": "kubernetes", "issuer": "https://kubernetes.default.svc", "jwksUri": "https://kubernetes.default.svc/openid/v1/jwks",
 		 "caFile": "/var/run/ca.crt", "tokenFile": "/var/run/token", "audiences": ["netcracker"]}
 	]}`
-	want := Config{Providers: []Provider{
-		{ID: "cloud-common", Issuer: "https://idp.example/auth/realms/cloud-common", Audiences: []string{"account"}, AllowMissingAud: true},
-		{ID: "kubernetes", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", CAFile: "/var/run/ca.crt", TokenFile: "/var/run/token", Audiences: []string{"netcracker"}},
-	}}
+	want := Config{
+		Keycloak: &Keycloak{URL: "https://kc.example", RequiredRealms: []string{"cloud-common"}, CAFile: "/var/run/kc-ca.crt"},
+		Providers: []Provider{
+			{ID: "external", Issuer: "https://idp.example/oidc", Audiences: []string{"account"}, AllowMissingAud: true},
+			{ID: "kubernetes", Issuer: "https://kubernetes.default.svc", JWKSURI: "https://kubernetes.default.svc/openid/v1/jwks", CAFile: "/var/run/ca.crt", TokenFile: "/var/run/token", Audiences: []string{"netcracker"}},
+		},
+	}
 	got, err := ParseConfig([]byte(doc))
 	if err != nil {
 		t.Fatalf("ParseConfig() error = %v", err)
@@ -42,8 +45,35 @@ func TestParseConfig_ReadsBothAddressForms(t *testing.T) {
 	}
 }
 
-// Every document puts a valid provider first and breaks one rule in the
-// second, so an error that names providers[1] blames the entry at fault.
+func TestParseConfig_AcceptsAKeycloakWithoutProviders(t *testing.T) {
+	doc := `{"keycloak": {"url": "https://kc.example"}}`
+	if _, err := ParseConfig([]byte(doc)); err != nil {
+		t.Errorf("ParseConfig(%s) error = %v, want none", doc, err)
+	}
+}
+
+func TestParseConfig_RejectsAKeycloakThatBreaksARule(t *testing.T) {
+	tests := []struct {
+		name string
+		doc  string
+	}{
+		{"no url", `{"keycloak": {}}`},
+		{"url that is not http", `{"keycloak": {"url": "ftp://kc.example"}}`},
+		{"url without a host", `{"keycloak": {"url": "https:///auth"}}`},
+		{"empty required realm", `{"keycloak": {"url": "https://kc.example", "requiredRealms": [""]}}`},
+		{"required realm that is a dot segment", `{"keycloak": {"url": "https://kc.example", "requiredRealms": [".."]}}`},
+		{"unknown field", `{"keycloak": {"url": "https://kc.example", "realm": "a"}}`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := ParseConfig([]byte(tt.doc))
+			if err == nil || !strings.Contains(err.Error(), "keycloak") && !strings.Contains(err.Error(), `"realm"`) {
+				t.Errorf("ParseConfig(%s) error = %v, want an error about the keycloak object", tt.doc, err)
+			}
+		})
+	}
+}
+
 func TestParseConfig_AcceptsAnIDOfLettersDigitsDotsUnderscoresAndHyphens(t *testing.T) {
 	doc := `{"providers": [{"id": "Cloud_common.v2-x", "issuer": "https://idp.example/realms/a"}]}`
 	if _, err := ParseConfig([]byte(doc)); err != nil {
@@ -51,6 +81,8 @@ func TestParseConfig_AcceptsAnIDOfLettersDigitsDotsUnderscoresAndHyphens(t *test
 	}
 }
 
+// Every document puts a valid provider first and breaks one rule in the
+// second, so an error that names providers[1] blames the entry at fault.
 func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -59,14 +91,15 @@ func TestParseConfig_RejectsAnEntryThatBreaksARule(t *testing.T) {
 		{"empty id", map[string]any{"id": "", "issuer": "https://idp.example/realms/b"}},
 		{"id with a space", map[string]any{"id": "realm b", "issuer": "https://idp.example/realms/b"}},
 		{"duplicate id", map[string]any{"id": "a", "issuer": "https://idp.example/realms/b"}},
-		{"neither issuer nor jwksUri", map[string]any{"id": "b"}},
-		{"both issuer and jwksUri", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "jwksUri": "https://idp.example/realms/b/certs"}},
-		{"tokenFile with issuer", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "tokenFile": "/var/run/token"}},
+		{"no issuer", map[string]any{"id": "b"}},
+		{"jwksUri without issuer", map[string]any{"id": "b", "jwksUri": "https://idp.example/realms/b/certs"}},
+		{"duplicate issuer", map[string]any{"id": "b", "issuer": "https://idp.example/realms/a"}},
+		{"tokenFile without jwksUri", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "tokenFile": "/var/run/token"}},
 		{"allowMissingAud without audiences", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "allowMissingAud": true}},
 		{"empty audience", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "audiences": []string{""}}},
 		{"issuer that is not http", map[string]any{"id": "b", "issuer": "ftp://idp.example/realms/b"}},
 		{"issuer without a host", map[string]any{"id": "b", "issuer": "https:///realms/b"}},
-		{"jwksUri that is not http", map[string]any{"id": "b", "jwksUri": "file:///etc/jwks.json"}},
+		{"jwksUri that is not http", map[string]any{"id": "b", "issuer": "https://idp.example/realms/b", "jwksUri": "file:///etc/jwks.json"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -18,8 +18,10 @@ import (
 	"bytes"
 	"context"
 	"crypto"
+	"crypto/sha256"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,6 +29,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
@@ -37,6 +40,11 @@ import (
 // maxResponseBytes bounds the body of a discovery document and of a JWKS,
 // 1 MiB (1048576 bytes).
 const maxResponseBytes = 1 << 20
+
+// maxListedSkippedKeys bounds the skipped keys whose reasons a warning or an
+// error lists; the skipped keys after them are only counted. A JWKS may list
+// any number of entries, and a required source logs the error of every retry.
+const maxListedSkippedKeys = 5
 
 // The weakest RSA public key a provider may sign with: a modulus of
 // minRSAModulusBits and a public exponent of minRSAPublicExponent.
@@ -91,56 +99,77 @@ func curveOf(key jwk.Key) string {
 	return crv.String()
 }
 
-// fetcher downloads the signing keys of one provider.
+// fetcher downloads the signing keys of one source.
 type fetcher struct {
-	provider *Provider
-	client   *http.Client
-	log      Logger
+	source Source
+	// address is the address discovery runs under: the Issuer of a provider,
+	// or the address of a realm under [Keycloak.URL].
+	address string
+	client  *http.Client
+	log     Logger
+	// skipped holds the [skippedKeys.digest] of the keys that the last parse
+	// to load a key skipped, so a parse warns only when those keys change. The
+	// fetches of a source are serialized, so it needs no lock.
+	skipped string
 }
 
-// newFetcher builds the HTTP client for p: the proxy settings of the
-// environment, timeout per request, p.CAFile as the only trusted roots when
-// it is set, and no redirect followed. [http.Client] forwards the bearer
-// token of p.TokenFile to a redirect target on the same host or a subdomain
-// of it, whatever its port or scheme, so a redirect ends the request as a
-// failure instead.
-func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error) {
+// jwksURI returns the [Provider.JWKSURI] of a provider, and "" for a realm.
+func (f *fetcher) jwksURI() string {
+	if f.source.Provider == nil {
+		return ""
+	}
+	return f.source.Provider.JWKSURI
+}
+
+// tokenFile returns the [Provider.TokenFile] of a provider, and "" for a realm.
+func (f *fetcher) tokenFile() string {
+	if f.source.Provider == nil {
+		return ""
+	}
+	return f.source.Provider.TokenFile
+}
+
+// newClient builds the HTTP client for one server: the proxy settings of the
+// environment, timeout per request, caFile as the only trusted roots when it
+// is set, and no redirect followed. [http.Client] forwards the bearer token
+// of [Provider.TokenFile] to a redirect target on the same host or a
+// subdomain of it, whatever its port or scheme, so a redirect ends the
+// request as a failure instead. owner names the server in an error.
+func newClient(owner, caFile string, timeout time.Duration) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if p.CAFile != "" {
-		pem, err := os.ReadFile(p.CAFile)
+	if caFile != "" {
+		pem, err := os.ReadFile(caFile)
 		if err != nil {
-			return nil, fmt.Errorf("provider %q caFile: %w", p.ID, err)
+			return nil, fmt.Errorf("%s caFile: %w", owner, err)
 		}
 		roots := x509.NewCertPool()
 		if !roots.AppendCertsFromPEM(pem) {
-			return nil, fmt.Errorf("provider %q caFile %s holds no PEM certificate", p.ID, p.CAFile)
+			return nil, fmt.Errorf("%s caFile %s holds no PEM certificate", owner, caFile)
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
 	}
-	client := &http.Client{
+	return &http.Client{
 		Transport: transport,
 		Timeout:   timeout,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-	}
-	return &fetcher{provider: p, client: client, log: log}, nil
+	}, nil
 }
 
 // errNoUsableKey reports a JWKS that parses and holds no usable signing key.
-// [Load] retries such a provider and fails when it stays so; [Set.Refresh]
-// removes the provider's keys.
+// A reload that gets it removes the keys of the source.
 var errNoUsableKey = errors.New("no usable signing key")
 
-// fetch downloads the provider's JWKS, through discovery when the provider
-// names an issuer, and returns its signing keys. It fails when a request
+// fetch downloads the JWKS of the source, through discovery unless a provider
+// names a JWKSURI, and returns its signing keys. It fails when a request
 // fails or answers a status other than 2xx, when a document is not the JSON
 // it should be, and when the JWKS lists two different keys under one kid;
 // a JWKS without a usable signing key fails with errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
-	uri := f.provider.JWKSURI
+	uri := f.jwksURI()
 	if uri == "" {
-		discovery := strings.TrimRight(f.provider.Issuer, "/") + "/.well-known/openid-configuration"
+		discovery := strings.TrimRight(f.address, "/") + "/.well-known/openid-configuration"
 		body, err := f.get(ctx, discovery)
 		if err != nil {
 			return nil, err
@@ -167,19 +196,19 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	return keys, nil
 }
 
-// get returns the body of a 2xx response to a GET of url, with the bearer
-// token of the provider's TokenFile when it has one. Any other status,
-// a redirect included, is an error.
+// get returns the body of a 2xx response to a GET of url, with the bearer token
+// of the [Provider.TokenFile] of a provider that sets one. Any other status, a
+// redirect included, is an error.
 func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	if f.provider.TokenFile != "" {
-		token, err := readToken(f.provider.TokenFile)
+	if path := f.tokenFile(); path != "" {
+		token, err := readToken(path)
 		if err != nil {
-			return nil, fmt.Errorf("provider %q tokenFile: %w", f.provider.ID, err)
+			return nil, fmt.Errorf("%s tokenFile: %w", f.source.label(), err)
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
@@ -213,12 +242,15 @@ func readToken(path string) (string, error) {
 	return token, nil
 }
 
-// parseJWKS returns the signing keys of a JWKS document. A key that cannot
-// sign a token the service accepts is skipped with a warning, and the same
-// key listed twice under one kid is kept once. A keys member that is null
-// counts as an empty array, the way a Go server writes an empty key set;
-// one that is missing or holds another value is an error, and so is a JWKS
-// left with no usable signing key, which fails with errNoUsableKey.
+// parseJWKS returns the signing keys of a JWKS document. A key that cannot sign
+// a token the service accepts is skipped, and when the parse loads a key,
+// [fetcher.reportSkipped] reports the skipped keys. The same key listed twice
+// under one kid is kept once. A keys member that is null counts as an empty
+// array, the way a Go server writes an empty key set; one that is missing or
+// holds another value is an error. So is a JWKS left with no usable signing
+// key, which fails with errNoUsableKey and the [skippedKeys.describe] text: the
+// reasons of the first maxListedSkippedKeys skipped keys, the count of the
+// rest, and the count of encryption keys.
 func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 	var doc struct {
 		Keys json.RawMessage `json:"keys"`
@@ -234,19 +266,21 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 		return nil, fmt.Errorf("keys is not an array: %w", err)
 	}
 	var out []Key
+	var skipped skippedKeys
 	thumbprints := make(map[string][]byte, len(entries))
-	skipped := 0
 	for i, raw := range entries {
 		key, reason := signingKey(raw)
+		if reason == encryptionKey {
+			skipped.encryption++
+			continue
+		}
 		if reason != "" {
-			skipped++
-			f.log.Warnf("trusted providers: provider %q skips keys[%d]: %s", f.provider.ID, i, reason)
+			skipped.add(i, raw, reason)
 			continue
 		}
 		thumbprint, err := key.JWK.Thumbprint(crypto.SHA256)
 		if err != nil {
-			skipped++
-			f.log.Warnf("trusted providers: provider %q skips keys[%d]: thumbprint: %v", f.provider.ID, i, err)
+			skipped.add(i, raw, fmt.Sprintf("thumbprint: %q", err.Error()))
 			continue
 		}
 		if earlier, seen := thumbprints[key.ID]; seen {
@@ -256,14 +290,101 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 			return nil, fmt.Errorf("kid %q names two different keys", key.ID)
 		}
 		thumbprints[key.ID] = thumbprint
-		key.Provider = f.provider
+		key.Source = f.source
 		out = append(out, key)
 	}
 	if len(out) == 0 {
-		return nil, fmt.Errorf("%w (%d skipped)", errNoUsableKey, skipped)
+		return nil, fmt.Errorf("%w: %s", errNoUsableKey, skipped.describe())
 	}
+	f.reportSkipped(skipped)
 	return out, nil
 }
+
+// skippedKeys describes the keys of one JWKS that a parse skipped.
+type skippedKeys struct {
+	// reasons names each of the first maxListedSkippedKeys skipped keys other
+	// than encryption keys by its position and the reason.
+	reasons []string
+	// count counts the skipped keys other than encryption keys.
+	count int
+	// digests holds the SHA-256 digest of the JSON text of each skipped key
+	// other than an encryption key, so two parses compare the keys and not
+	// their positions.
+	digests []string
+	// encryption counts the encryption keys, which are skipped silently.
+	encryption int
+}
+
+func (k *skippedKeys) add(i int, raw json.RawMessage, reason string) {
+	sum := sha256.Sum256(raw)
+	k.count++
+	k.digests = append(k.digests, hex.EncodeToString(sum[:]))
+	if len(k.reasons) < maxListedSkippedKeys {
+		k.reasons = append(k.reasons, fmt.Sprintf("keys[%d]: %s", i, reason))
+	}
+}
+
+// digest returns the SHA-256 digests of the JSON text of the skipped keys other
+// than encryption keys, sorted and joined, so the result does not change when a
+// key moves within the JWKS.
+func (k *skippedKeys) digest() string {
+	digests := slices.Clone(k.digests)
+	slices.Sort(digests)
+	return strings.Join(digests, ",")
+}
+
+// listed returns the reasons of the first maxListedSkippedKeys skipped keys
+// other than encryption keys, and the count of the rest.
+func (k *skippedKeys) listed() []string {
+	parts := slices.Clone(k.reasons)
+	if rest := k.count - len(k.reasons); rest > 0 {
+		parts = append(parts, countOf(rest, "more skipped key"))
+	}
+	return parts
+}
+
+// describe describes the skipped keys: the ones [skippedKeys.listed] lists, and
+// the encryption keys by their count.
+func (k *skippedKeys) describe() string {
+	parts := k.listed()
+	if k.encryption > 0 {
+		parts = append(parts, countOf(k.encryption, "encryption key"))
+	}
+	if len(parts) == 0 {
+		return "the keys array is empty"
+	}
+	return strings.Join(parts, "; ")
+}
+
+// countOf returns n and noun, with an s for any n but 1.
+func countOf(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
+}
+
+// reportSkipped warns about the keys that a parse which loaded a key skipped,
+// other than encryption keys, when they differ from the keys that the last such
+// parse skipped. A source is parsed on every load, and an unchanged JWKS says
+// nothing new. A parse that loads no key does not call it: its errNoUsableKey
+// error lists the keys, and the hourly reload may log that error for only one
+// realm of many, so the next parse that loads a key reports them.
+func (f *fetcher) reportSkipped(keys skippedKeys) {
+	digest := keys.digest()
+	if digest == f.skipped {
+		return
+	}
+	f.skipped = digest
+	if keys.count > 0 {
+		f.log.Warnf("trusted providers: %s skips %s of its JWKS: %s", f.source.label(), countOf(keys.count, "key"), strings.Join(keys.listed(), "; "))
+	}
+}
+
+// encryptionKey is the reason [signingKey] gives for a key whose use is enc.
+// Keycloak publishes such a key in the JWKS of every realm beside the signing
+// keys, so skipping it is expected and is not reported.
+const encryptionKey = "an encryption key"
 
 // signingKey returns the public signing key raw describes, or the reason it
 // is not one: [jwk.ParseKey] refuses it; it has no kid; its use is other
@@ -274,11 +395,14 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 func signingKey(raw json.RawMessage) (Key, string) {
 	key, err := jwk.ParseKey(raw)
 	if err != nil {
-		return Key{}, fmt.Sprintf("cannot be parsed: %v", err)
+		return Key{}, fmt.Sprintf("cannot be parsed: %q", err.Error())
 	}
 	kid, _ := key.KeyID()
 	if kid == "" {
 		return Key{}, "has no kid"
+	}
+	if use, ok := key.KeyUsage(); ok && use == "enc" {
+		return Key{}, encryptionKey
 	}
 	if use, ok := key.KeyUsage(); ok && use != "sig" {
 		return Key{}, fmt.Sprintf("kid %q has use %q, not sig", kid, use)
@@ -296,7 +420,7 @@ func signingKey(raw json.RawMessage) (Key, string) {
 	}
 	public, err := jwk.PublicKeyOf(key)
 	if err != nil {
-		return Key{}, fmt.Sprintf("kid %q: public key: %v", kid, err)
+		return Key{}, fmt.Sprintf("kid %q: public key: %q", kid, err.Error())
 	}
 	if reason := unusableKey(public, alg); reason != "" {
 		return Key{}, fmt.Sprintf("kid %q %s", kid, reason)

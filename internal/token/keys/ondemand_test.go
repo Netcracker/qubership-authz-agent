@@ -49,7 +49,7 @@ func (g *gatedReload) reload(ctx context.Context) {
 // newGated returns a gatedReload and an onDemand that runs it.
 func newGated() (*gatedReload, *onDemand) {
 	g := &gatedReload{release: make(chan struct{})}
-	return g, &onDemand{reload: g.reload, interval: time.Minute, now: time.Now}
+	return g, &onDemand{load: g.reload, interval: time.Minute, loads: newWindowLimit(maxLoadsPerMinute)}
 }
 
 // The joining caller asks while the reload that the starting caller started
