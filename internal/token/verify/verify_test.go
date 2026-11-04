@@ -35,7 +35,7 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	v, _ := newVerifier(newFakeKeys(s))
 	payload := `{"sub":"user-1","level":5.0,"realm_access":{"roles":["admin"],"b":1,"a":2},` +
-		`"iss":"https://idp.example/realms/r","iat":1792065600,"exp":1792069200}`
+		`"iss":"` + testIssuer + `","iat":1792065600,"exp":1792069200}`
 	raw := s.signPayload(t, []byte(payload), nil)
 
 	tok := mustVerify(t, v, raw)
@@ -51,20 +51,22 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	if got := tok.KeyID(); got != "k1" {
 		t.Errorf("KeyID() = %q, want %q", got, "k1")
 	}
-	if got := tok.Issuer(); got != "https://idp.example/realms/r" {
-		t.Errorf("Issuer() = %q, want %q", got, "https://idp.example/realms/r")
+	if got := tok.Issuer(); got != testIssuer {
+		t.Errorf("Issuer() = %q, want %q", got, testIssuer)
 	}
 	if got, want := tok.Expiry(), time.Unix(1792069200, 0); !got.Equal(want) {
 		t.Errorf("Expiry() = %s, want %s", got, want)
 	}
 }
 
-// verifyPayload verifies a token of payload, signed by a key of a provider
-// that lists no audiences, at start.
-func verifyPayload(t *testing.T, payload string) *Token {
+// verifyPayload verifies a token of testIssuer whose payload is the members of
+// the JSON object members plus an iat and an exp, signed by a key of a
+// provider that lists no audiences, at start.
+func verifyPayload(t *testing.T, members string) *Token {
 	t.Helper()
 	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	v, _ := newVerifier(newFakeKeys(s))
+	payload := `{` + members + `"iss":"` + testIssuer + `","iat":1792065600,"exp":1792069200}`
 	return mustVerify(t, v, s.signPayload(t, []byte(payload), nil))
 }
 
@@ -78,8 +80,8 @@ func TestToken_StandardHoldsEachClaimAsThePayloadCarriesIt(t *testing.T) {
 	}{
 		{
 			"every claim present",
-			`{"sub":"user-1","preferred_username":"alice","realm_access":{"roles":["admin", "viewer"]},` +
-				`"scope":5,"level":5.0,"tenant-id":null,"iat":1792065600,"exp":1792069200}`,
+			`"sub":"user-1","preferred_username":"alice","realm_access":{"roles":["admin", "viewer"]},` +
+				`"scope":5,"level":5.0,"tenant-id":null,`,
 			Standard{
 				Subject:           json.RawMessage(`"user-1"`),
 				PreferredUsername: json.RawMessage(`"alice"`),
@@ -91,12 +93,12 @@ func TestToken_StandardHoldsEachClaimAsThePayloadCarriesIt(t *testing.T) {
 		},
 		{
 			"roles that is a string",
-			`{"realm_access":{"roles":"admin"},"iat":1792065600,"exp":1792069200}`,
+			`"realm_access":{"roles":"admin"},`,
 			Standard{Roles: json.RawMessage(`"admin"`)},
 		},
-		{"no claim present", `{"iat":1792065600,"exp":1792069200}`, Standard{}},
-		{"realm_access that is an array", `{"realm_access":["admin"],"iat":1792065600,"exp":1792069200}`, Standard{}},
-		{"realm_access without roles", `{"realm_access":{"role":"admin"},"iat":1792065600,"exp":1792069200}`, Standard{}},
+		{"no claim present", ``, Standard{}},
+		{"realm_access that is an array", `"realm_access":["admin"],`, Standard{}},
+		{"realm_access without roles", `"realm_access":{"role":"admin"},`, Standard{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -115,7 +117,7 @@ func fields(s Standard) string {
 }
 
 func TestToken_ClaimHoldsATopLevelClaimAsThePayloadCarriesIt(t *testing.T) {
-	tok := verifyPayload(t, `{"kubernetes.io":{"namespace":"ns","b":1,"a":2},"iat":1792065600,"exp":1792069200}`)
+	tok := verifyPayload(t, `"kubernetes.io":{"namespace":"ns","b":1,"a":2},`)
 	tests := []struct {
 		name   string
 		claim  string
@@ -136,21 +138,27 @@ func TestToken_ClaimHoldsATopLevelClaimAsThePayloadCarriesIt(t *testing.T) {
 	}
 }
 
-func TestToken_IssuerIsTheIssClaimWhenItIsAString(t *testing.T) {
+// The iss selects the keys, so a token without a string iss has none to be
+// checked against. The trusted iss is the control.
+func TestVerify_RefusesATokenWhoseIssNamesNoTrustedIssuer(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
 	tests := []struct {
-		name    string
-		payload string
-		want    string
+		name string
+		iss  any
+		want Code
 	}{
-		{"string", `{"iss":"https://idp.example/realms/r","iat":1792065600,"exp":1792069200}`, "https://idp.example/realms/r"},
-		{"number", `{"iss":5,"iat":1792065600,"exp":1792069200}`, ""},
-		{"null", `{"iss":null,"iat":1792065600,"exp":1792069200}`, ""},
-		{"no iss", `{"iat":1792065600,"exp":1792069200}`, ""},
+		{"trusted iss", testIssuer, ""},
+		{"iss of another issuer", "https://other.example/oidc", CodeIssuerUnknown},
+		{"iss that is a number", 5, CodeIssuerUnknown},
+		{"iss that is null", json.RawMessage("null"), CodeIssuerUnknown},
+		{"no iss", nil, CodeIssuerUnknown},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := verifyPayload(t, tt.payload).Issuer(); got != tt.want {
-				t.Errorf("Issuer() of %s = %q, want %q", tt.payload, got, tt.want)
+			v, _ := newVerifier(newFakeKeys(s))
+			_, err := v.Verify(t.Context(), s.sign(t, claimsAt(start, map[string]any{"iss": tt.iss})))
+			if codeOf(err) != tt.want {
+				t.Errorf("Verify() error = %v, want code %q", err, tt.want)
 			}
 		})
 	}
@@ -160,8 +168,8 @@ func TestToken_IssuerIsTheIssClaimWhenItIsAString(t *testing.T) {
 // cache shares one Token between callers, so a change one caller makes must
 // not reach the next.
 func TestToken_ReturnsCopiesThatACallerCannotChange(t *testing.T) {
-	tok := verifyPayload(t, `{"sub":"user-1","preferred_username":"alice","realm_access":{"roles":["admin"]},`+
-		`"scope":"openid","level":"high","tenant-id":"t1","iat":1792065600,"exp":1792069200}`)
+	tok := verifyPayload(t, `"sub":"user-1","preferred_username":"alice","realm_access":{"roles":["admin"]},`+
+		`"scope":"openid","level":"high","tenant-id":"t1",`)
 	tests := []struct {
 		name string
 		read func() []byte
@@ -279,6 +287,35 @@ func TestVerify_RefusesAHeaderThatNamesNoUsableKey(t *testing.T) {
 	}
 }
 
+// The issuer of these tokens holds the key that signed them, and a reload would
+// bring it again, so the missing kid is what refuses them.
+func TestVerify_RefusesATokenWithoutAKIDAndStartsNoLoad(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm"})
+	tests := []struct {
+		name   string
+		header map[string]any
+	}{
+		{"no kid", map[string]any{"kid": nil}},
+		{"empty kid", map[string]any{"kid": ""}},
+		{"x5t in place of the kid", map[string]any{"kid": nil, "x5t": "dGh1bWI"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			source := newFakeKeys(s)
+			loads := 0
+			source.reloading = func() { loads++ }
+			v, _ := newVerifier(source)
+			_, err := v.Verify(t.Context(), s.signWithHeaders(t, claimsAt(start, nil), tt.header))
+			if codeOf(err) != CodeKIDMissing {
+				t.Errorf("Verify() error = %v, want code %s", err, CodeKIDMissing)
+			}
+			if loads != 0 {
+				t.Errorf("loads the token started = %d, want 0", loads)
+			}
+		})
+	}
+}
+
 // The token's exp plus the 30 s leeway falls 1 s after start, and the reload
 // that brings its key takes the time in the row.
 func TestVerify_ChecksExpAtTheTimeTheReloadEnds(t *testing.T) {
@@ -345,8 +382,9 @@ func TestVerify_CutsSenderValuesInTheDetail(t *testing.T) {
 		want Code
 	}{
 		{"kid", unsigned(t, map[string]any{"alg": "ES256", "kid": long}, claimsAt(start, nil)), CodeKIDUnknown},
+		{"iss", unsigned(t, map[string]any{"alg": "ES256", "kid": "k1"}, claimsAt(start, map[string]any{"iss": long})), CodeIssuerUnknown},
 		{"alg", unsigned(t, map[string]any{"alg": long, "kid": "k1"}, claimsAt(start, nil)), CodeAlgNotAllowed},
-		{"exp", s.signPayload(t, []byte(`{"aud": "account", "exp": 1`+strings.Repeat("0", 1000)+`}`), nil), CodeFormatInvalid},
+		{"exp", s.signPayload(t, []byte(`{"iss": "`+testIssuer+`", "aud": "account", "exp": 1`+strings.Repeat("0", 1000)+`}`), nil), CodeFormatInvalid},
 		{"aud", s.sign(t, claimsAt(start, map[string]any{"aud": []any{long, long, long, long, long}})), CodeAudienceInvalid},
 	}
 	for _, tt := range tests {

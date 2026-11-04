@@ -246,9 +246,16 @@ func TestAllowlist_IsSafeForConcurrentUse(t *testing.T) {
 // oneKey is a verify.KeyFinder that publishes one key.
 type oneKey struct{ key keys.Key }
 
-func (o oneKey) Lookup(kid string) (keys.Key, bool) { return o.key, kid == o.key.ID }
+func (o oneKey) Lookup(q keys.Query) (keys.Key, error) {
+	if q.KID != o.key.ID {
+		return keys.Key{}, keys.ErrKeyUnknown
+	}
+	return o.key, nil
+}
 
-func (o oneKey) LookupOrReload(_ context.Context, kid string) (keys.Key, bool) { return o.Lookup(kid) }
+func (o oneKey) LookupOrReload(_ context.Context, q keys.Query) (keys.Key, error) {
+	return o.Lookup(q)
+}
 
 // verifierFor returns a Verifier that trusts one EC key of provider and runs
 // admit, and a function that signs a token with that key whose claims are an
@@ -263,11 +270,11 @@ func verifierFor(t *testing.T, provider string, admit func(*verify.Token) *verif
 	if err != nil {
 		t.Fatal(err)
 	}
-	key := keys.Key{Provider: &keys.Provider{ID: provider}, ID: "k1", JWK: public}
+	key := keys.Key{Source: keys.Source{Provider: &keys.Provider{ID: provider}}, ID: "k1", JWK: public}
 	v := verify.New(oneKey{key}, verify.Options{Admit: admit})
 	sign := func(fields map[string]any) string {
 		now := time.Now()
-		claims := map[string]any{"iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
+		claims := map[string]any{"iss": "https://issuer.example", "iat": now.Unix(), "exp": now.Add(time.Hour).Unix()}
 		maps.Copy(claims, fields)
 		payload, err := json.Marshal(claims)
 		if err != nil {
