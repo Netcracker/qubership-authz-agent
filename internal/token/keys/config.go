@@ -16,6 +16,7 @@ package keys
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -86,12 +87,13 @@ type Provider struct {
 	// Kubernetes marks the provider as the service account token issuer of
 	// a Kubernetes API server, and
 	// [authz-agent/internal/token/verify.Token.Kubernetes] reports the mark
-	// on every token its keys verify. A token its keys verify is refused
-	// when its iat is ahead of the verifier's clock by more than the
-	// verifier's leeway. The mark requires Audiences, because every Pod's
-	// default token is issued for the API server itself, and refuses
-	// AllowMissingAud, so a Kubernetes token is accepted only when it names
-	// an audience the service accepts.
+	// on every token its keys verify. Such a token is refused when its sub
+	// does not start with system:serviceaccount, when its iat is ahead of
+	// the verifier's clock by more than the verifier's leeway, and when its
+	// namespace is not an allowed one. The mark requires Audiences, because
+	// every Pod's default token is issued for the API server itself, and
+	// refuses AllowMissingAud, so a Kubernetes token is accepted only when it
+	// names an audience the service accepts.
 	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 
@@ -219,6 +221,38 @@ func checkHTTPURL(raw string) error {
 		return fmt.Errorf("%q has no host", raw)
 	}
 	return nil
+}
+
+// IssuerOfTokenFile returns the iss of the JWT in the file at path, without
+// checking its signature. A Pod holds such a file, written by the kubelet, so
+// a [Provider] of the API server can take the issuer of the cluster from it
+// rather than from a setting. It returns an error when the file cannot be read
+// or does not hold three parts whose second is a payload with a non-empty
+// string iss.
+func IssuerOfTokenFile(path string) (string, error) {
+	token, err := readToken(path)
+	if err != nil {
+		return "", fmt.Errorf("issuer of a token file: %w", err)
+	}
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return "", fmt.Errorf("issuer of a token file: %s holds %d parts separated by dots, and a JWT has 3", path, len(parts))
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", fmt.Errorf("issuer of a token file: payload of %s: %w", path, err)
+	}
+	// A map matches only the exact key, where a struct field would also take
+	// ISS.
+	var claims map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return "", fmt.Errorf("issuer of a token file: payload of %s: %w", path, err)
+	}
+	var issuer string
+	if err := json.Unmarshal(claims["iss"], &issuer); err != nil || issuer == "" {
+		return "", fmt.Errorf("issuer of a token file: the token in %s has no non-empty string iss", path)
+	}
+	return issuer, nil
 }
 
 // kubernetesHosts are the in-cluster names of the Kubernetes API server.

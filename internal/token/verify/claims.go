@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"math"
 	"slices"
+	"strings"
 	"time"
 
 	"authz-agent/internal/token/keys"
@@ -29,6 +30,10 @@ import (
 // allows. Past it a float64 no longer holds every whole second, so the
 // time read could differ from the one the provider wrote.
 const maxNumericDate = 1<<53 - 1
+
+// serviceAccountPrefix starts the sub of every token that a Kubernetes API
+// server issues for a service account.
+const serviceAccountPrefix = "system:serviceaccount"
 
 // checkTimes checks exp, nbf, and iat, and returns the time exp names. exp
 // and iat are required; nbf is optional. exp and nbf are compared with now,
@@ -88,10 +93,24 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	return time.Unix(int64(whole), int64(fraction*float64(time.Second))), true, nil
 }
 
-// checkAudience applies the audiences of the provider of from. The aud of a
-// realm token is not checked, and with no audiences listed every token passes.
-// Otherwise aud, a string or an array of strings, has to name one of them
-// exactly, and a token without aud passes only when the provider sets
+// checkSubject refuses a token of a provider marked
+// [keys.Provider.Kubernetes] whose sub does not start with
+// serviceAccountPrefix. The rest of sub is not parsed, because the namespace of
+// the token comes from its kubernetes.io claim.
+func checkSubject(claims map[string]json.RawMessage, from keys.Source) error {
+	if !from.Kubernetes() {
+		return nil
+	}
+	sub := stringClaim(claims, "sub")
+	if !strings.HasPrefix(sub, serviceAccountPrefix) {
+		return fail(CodeSubjectInvalid, "sub %s names no service account, and provider %q issues only service account tokens", short(sub), from.ID())
+	}
+	return nil
+}
+
+// checkAudience applies the audiences of the provider p. With none listed,
+// every token passes. Otherwise aud, a string or an array of strings, has to
+// name one of them exactly, and a token without aud passes only when p sets
 // AllowMissingAud.
 func checkAudience(claims map[string]json.RawMessage, from keys.Source) error {
 	p := from.Provider

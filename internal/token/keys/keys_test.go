@@ -98,6 +98,21 @@ func TestNew_WarnsAboutAnUnmarkedProviderThatLooksLikeKubernetes(t *testing.T) {
 	}
 }
 
+// The provider that looks like the API server is listed after one that does
+// not, so a loop that stops at the first provider fails.
+func TestNew_WarnsAboutAProviderAnywhereInTheList(t *testing.T) {
+	log := &warnRecorder{}
+	opts := testOptions()
+	opts.Log = log
+	mustNew(t, Config{Providers: []Provider{
+		{ID: "idp", Issuer: "https://idp.example"},
+		{ID: "kubernetes", Issuer: "https://other.example"},
+	}}, opts)
+	if got := log.count(`provider "kubernetes" looks like a Kubernetes API server`); got != 1 {
+		t.Errorf("warnings about the provider listed second = %d, want 1; warnings: %q", got, log.warnings)
+	}
+}
+
 // Each case comes first in a JWKS whose next key is usable, so a provider
 // that loaded nothing, or stopped at the skipped key, fails the control
 // instead of passing the case.
