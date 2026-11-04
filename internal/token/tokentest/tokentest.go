@@ -19,7 +19,7 @@
 // kind of token, so a test goes through the real key loading and the real
 // checks.
 //
-// Only tests import this package.
+// Production code must not import this package.
 package tokentest
 
 import (
