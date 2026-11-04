@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package verify checks a JWT against the signing keys of the trusted
-// providers and returns its claims. [Verifier.Verify] reads nothing from the
-// payload until the signature verifies: the header names the algorithm and
-// the kid, a [KeyFinder] finds the key, and only a token whose signature
-// that key accepts has its aud, exp, nbf, and iat checked. A refused token
-// yields an [*Error] whose [Code] names the reason; a verified one is a
-// [*Token], which keeps the payload as the provider signed it.
+// Package verify checks a JWT against the signing keys of the trusted sources
+// and returns its claims. [Verifier.Verify] reads one claim before the
+// signature verifies: iss selects the source whose keys are searched. It grants
+// nothing, because a [KeyFinder] takes keys only from configured addresses, and
+// a token that names another source than the one that signed it finds no key
+// there or fails on its signature. The header names the algorithm and the key,
+// and only a token whose signature that key accepts has its aud, exp, nbf, and
+// iat checked. A refused token yields an [*Error] whose [Code] names the
+// reason; a verified one is a [*Token], which keeps the payload as its issuer
+// signed it.
 //
 // A verified token is cached by the SHA-256 digest of its compact form
 // until it expires, so a token presented again costs a map lookup.
@@ -56,14 +59,21 @@ const (
 	// ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
 	// CodeAlgNotAllowed marks a token whose header names no algorithm, one
-	// that no key accepts, or one that the key its kid names does not accept.
+	// that no key accepts, or one that the key its header selects does not
+	// accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
-	// CodeKIDMissing marks a token whose header has no kid.
+	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
+	// or names neither a provider of the configuration nor a realm. An iss
+	// names a realm when the configuration has a Keycloak and the iss contains
+	// /auth/realms/ with a realm name after its last slash, whatever its host
+	// and whether that realm exists, as [keys.Keycloak] states.
+	CodeIssuerUnknown Code = "TOKEN_ISSUER_UNKNOWN"
+	// CodeKIDMissing marks a token whose header has no kid, or an empty one.
 	CodeKIDMissing Code = "TOKEN_KID_MISSING"
-	// CodeKIDUnknown marks a token whose kid no trusted provider publishes.
+	// CodeKIDUnknown marks a token whose kid no loaded key of its source has.
 	CodeKIDUnknown Code = "TOKEN_KID_UNKNOWN"
 	// CodeSignatureInvalid marks a token whose signature does not verify
-	// with the key its kid names.
+	// with the key its header selects.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
 	// CodeExpMissing marks a token without an exp claim.
 	CodeExpMissing Code = "TOKEN_EXP_MISSING"
@@ -115,7 +125,7 @@ type Token struct {
 	expiry     time.Time
 
 	// key is the key that verified the token. A cached Token is returned
-	// only while [KeyFinder.Lookup] returns this key for keyID.
+	// only while [KeyFinder.Lookup] returns this key for issuer and keyID.
 	key jwk.Key
 }
 
@@ -165,28 +175,32 @@ func (t *Token) Standard() Standard {
 	}
 }
 
-// ProviderID returns the id of the provider whose key verified the token.
+// ProviderID returns the [keys.Source.ID] of the source whose key verified the
+// token: a [keys.Provider.ID] of the configuration, or realm/<name> for a realm
+// of a Keycloak. A realm name is the token's text, so a caller that logs the id
+// quotes it.
 func (t *Token) ProviderID() string { return t.providerID }
 
 // KeyID returns the kid of the key that verified the token.
 func (t *Token) KeyID() string { return t.keyID }
 
-// Issuer returns the iss claim, or "" when the payload has no iss or iss is
-// not a JSON string. Verify accepts a token whatever its iss.
+// Issuer returns the iss claim.
 func (t *Token) Issuer() string { return t.issuer }
 
 // Expiry returns the time exp names.
 func (t *Token) Expiry() time.Time { return t.expiry }
 
-// KeyFinder finds a signing key by kid; [*keys.Set] implements it.
+// KeyFinder finds the signing key a token asks for; [*keys.Set] implements it.
+// Both methods report a key they cannot return with [keys.ErrIssuerUnknown] or
+// [keys.ErrKeyUnknown].
 type KeyFinder interface {
-	// Lookup returns the key published under kid from the keys already
-	// loaded, without waiting.
-	Lookup(kid string) (keys.Key, bool)
-	// LookupOrReload returns the key published under kid. When no loaded
-	// key has that kid, it may reload the keys first; it returns once the
-	// reload ends or ctx ends, from the keys loaded by then.
-	LookupOrReload(ctx context.Context, kid string) (keys.Key, bool)
+	// Lookup returns the key q names from the keys already loaded, without
+	// waiting.
+	Lookup(q keys.Query) (keys.Key, error)
+	// LookupOrReload returns the key q names. When no loaded key matches, it
+	// may reload the keys first; it returns once the reload ends or ctx ends,
+	// from the keys loaded by then.
+	LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, error)
 }
 
 // Defaults of [Options].
@@ -248,22 +262,24 @@ func New(source KeyFinder, opts Options) *Verifier {
 
 // Verify checks raw, a JWT in compact serialization without a "Bearer"
 // prefix, and returns the verified token. The checks run in this order, and
-// the first that fails is returned as an [*Error]: the format, the alg and
-// the kid of the header, the key the kid names, the signature, aud, exp,
-// nbf, and iat. Nothing from the payload is read before the signature
-// verifies, so a forged token is refused with [CodeSignatureInvalid]
-// whatever its claims say.
+// the first that fails is returned as an [*Error]: the format of the token and
+// of its header, the alg, the kid, the format of the payload, the key that the
+// iss and the kid select, the signature, aud, exp, nbf, and iat. A token
+// without a kid is refused before any key is looked up, so it starts no load.
+// The payload is parsed before the signature verifies, but of its claims only
+// iss is used, so a forged token whose key is found is refused with
+// [CodeSignatureInvalid] whatever its other claims say.
 //
-// When no loaded key has the kid, Verify waits for the reload that
+// When no loaded key matches, Verify waits for the reload that
 // [KeyFinder.LookupOrReload] may start, until the reload ends or ctx ends.
-// When ctx ends first, the kid is looked up among the keys loaded by then,
-// and a token whose kid is still unknown is refused with [CodeKIDUnknown],
-// not with ctx.Err().
+// When ctx ends first, the key is looked up among the keys loaded by then, and
+// a token still without a key is refused with [CodeKIDUnknown], not with
+// ctx.Err().
 //
 // A token verified earlier that has not expired is served from the cache,
 // as the *Token the earlier call returned, while [KeyFinder.Lookup] returns
-// the same key for its kid. [Options.Admit] then runs on the token either
-// way.
+// the same key for its issuer and kid. [Options.Admit] then runs on the token
+// either way.
 func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	now := v.opts.now()
 	digest := sha256.Sum256([]byte(raw))
@@ -286,27 +302,23 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 // it returns. It reads the clock for exp, nbf, and iat after the key is
 // found, because finding the key can wait for a reload.
 func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]byte) (*Token, error) {
-	alg, kid, err := readHeader(raw)
+	alg, query, claims, err := parse(raw)
 	if err != nil {
 		return nil, err
 	}
-	key, ok := v.keys.LookupOrReload(ctx, kid)
-	if !ok {
-		return nil, fail(CodeKIDUnknown, "kid %s is published by no trusted provider", short(kid))
+	key, err := v.keys.LookupOrReload(ctx, query)
+	if err != nil {
+		return nil, lookupFailure(query, err)
 	}
 	if !key.Allows(alg) {
-		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(kid), key.Provider.ID, alg)
+		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(key.ID), key.Source.ID(), alg)
 	}
 	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
 	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
 	if err != nil {
-		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of provider %q", short(kid), key.Provider.ID)
+		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of provider %q", short(key.ID), key.Source.ID())
 	}
-	claims, err := decodeClaims(payload)
-	if err != nil {
-		return nil, err
-	}
-	if err := checkAudience(claims, key.Provider); err != nil {
+	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err
 	}
 	expiry, err := checkTimes(claims, v.opts.now(), v.opts.Leeway)
@@ -318,9 +330,9 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 		payload:    payload,
 		claims:     claims,
 		standard:   standardOf(claims),
-		providerID: key.Provider.ID,
-		keyID:      kid,
-		issuer:     stringClaim(claims, "iss"),
+		providerID: key.Source.ID(),
+		keyID:      key.ID,
+		issuer:     query.Issuer,
 		expiry:     expiry,
 		key:        key.JWK,
 	}
@@ -330,8 +342,17 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	return tok, nil
 }
 
+// lookupFailure returns the [*Error] for err, the error a [KeyFinder] returned
+// for q. Each [Error.Detail] quotes the sender's text through [short].
+func lookupFailure(q keys.Query, err error) *Error {
+	if errors.Is(err, keys.ErrIssuerUnknown) {
+		return fail(CodeIssuerUnknown, "iss %s names no trusted provider and no Keycloak realm", short(q.Issuer))
+	}
+	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", short(q.Issuer), short(q.KID))
+}
+
 // cached returns the cached token for digest when it has not expired and its
-// key is still the one the source publishes under its kid.
+// key is still the one the source publishes for its issuer and kid.
 func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 	if v.cache == nil {
 		return nil
@@ -340,33 +361,49 @@ func (v *Verifier) cached(digest [sha256.Size]byte, now time.Time) *Token {
 	if tok == nil {
 		return nil
 	}
-	if key, ok := v.keys.Lookup(tok.keyID); !ok || key.JWK != tok.key {
+	key, err := v.keys.Lookup(keys.Query{Issuer: tok.issuer, KID: tok.keyID})
+	if err != nil || key.JWK != tok.key {
 		return nil
 	}
 	return tok
 }
 
-// readHeader checks that raw is three base64url parts whose header is a JSON
-// object without a crit or a b64 parameter, names an accepted alg, and has a
-// kid, and returns the alg and the kid. Parameter names match exactly, case
-// included, so a KID parameter is not read as the kid. Every check here runs
-// before any key is looked up.
-func readHeader(raw string) (alg, kid string, err error) {
+// parse checks that raw is three base64url parts. Its header has to be a JSON
+// object that names an accepted alg and a kid and has no crit or b64 parameter,
+// and its payload a JSON object. It returns the alg, the query for the key, and
+// the claims. The caller reads iss from the query before the signature
+// verifies, and every other claim only after it.
+// Parameter names match exactly, case included, so a KID parameter is not read
+// as the kid. Every check here runs before any key is looked up.
+func parse(raw string) (alg string, query keys.Query, claims map[string]json.RawMessage, err error) {
 	parts := strings.Split(raw, ".")
 	if len(parts) != 3 {
-		return "", "", fail(CodeFormatInvalid, "a compact JWS has 3 parts separated by dots, the token has %d", len(parts))
+		return "", keys.Query{}, nil, fail(CodeFormatInvalid, "a compact JWS has 3 parts separated by dots, the token has %d", len(parts))
 	}
 	var decoded [3][]byte
 	for i, name := range []string{"header", "payload", "signature"} {
 		if decoded[i], err = base64.RawURLEncoding.DecodeString(parts[i]); err != nil {
-			return "", "", fail(CodeFormatInvalid, "%s is not base64url: %v", name, err)
+			return "", keys.Query{}, nil, fail(CodeFormatInvalid, "%s is not base64url: %v", name, err)
 		}
 	}
+	alg, kid, err := parseHeader(decoded[0])
+	if err != nil {
+		return "", keys.Query{}, nil, err
+	}
+	if claims, err = decodeClaims(decoded[1]); err != nil {
+		return "", keys.Query{}, nil, err
+	}
+	return alg, keys.Query{Issuer: stringClaim(claims, "iss"), KID: kid}, claims, nil
+}
+
+// parseHeader returns the alg and the kid of the protected header, and refuses
+// a header that breaks a rule of [parse].
+func parseHeader(raw []byte) (alg, kid string, err error) {
 	// encoding/json matches struct fields without regard to case, so the
 	// header is read into a map, whose keys match only the same string, as
 	// RFC 7515, section 10.13, requires.
 	var header map[string]json.RawMessage
-	if err := json.Unmarshal(decoded[0], &header); err != nil || header == nil {
+	if err := json.Unmarshal(raw, &header); err != nil || header == nil {
 		return "", "", fail(CodeFormatInvalid, "header is not a JSON object")
 	}
 	if alg, err = headerString(header, "alg"); err != nil {

@@ -15,7 +15,6 @@
 package keys
 
 import (
-	"context"
 	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -31,6 +30,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -59,8 +59,6 @@ type fakeIdP struct {
 	token     string
 	lastAuth  string
 	discovers int
-	// gate, when non-nil, holds every JWKS response until it is closed.
-	gate chan struct{}
 }
 
 func newIdP(t *testing.T, keys ...json.RawMessage) *fakeIdP {
@@ -84,8 +82,9 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	idp.lastAuth = r.Header.Get("Authorization")
 	switch {
 	case idp.status != 0:
+		status := idp.status
 		idp.mu.Unlock()
-		w.WriteHeader(idp.status)
+		w.WriteHeader(status)
 		return
 	case idp.failures > 0:
 		idp.failures--
@@ -98,7 +97,6 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body []byte
-	var gate chan struct{}
 	switch r.URL.Path {
 	case "/.well-known/openid-configuration":
 		idp.discovers++
@@ -107,7 +105,6 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			body, _ = json.Marshal(map[string]string{"jwks_uri": idp.srv.URL + "/jwks"})
 		}
 	case "/jwks":
-		gate = idp.gate
 		body = idp.jwks
 		if body == nil {
 			body, _ = json.Marshal(map[string]any{"keys": idp.keys})
@@ -118,9 +115,6 @@ func (idp *fakeIdP) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idp.mu.Unlock()
-	if gate != nil {
-		<-gate
-	}
 	_, _ = w.Write(body)
 }
 
@@ -141,12 +135,6 @@ func (idp *fakeIdP) setStatus(status int) {
 	idp.mu.Lock()
 	defer idp.mu.Unlock()
 	idp.status = status
-}
-
-func (idp *fakeIdP) setGate(gate chan struct{}) {
-	idp.mu.Lock()
-	defer idp.mu.Unlock()
-	idp.gate = gate
 }
 
 func (idp *fakeIdP) discoveries() int {
@@ -175,7 +163,7 @@ func issuer(id string, idp *fakeIdP) Provider {
 
 // direct is a provider whose JWKS is fetched from idp without discovery.
 func direct(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, JWKSURI: idp.srv.URL + "/jwks"}
+	return Provider{ID: id, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks"}
 }
 
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
@@ -289,33 +277,37 @@ func writeFile(t *testing.T, name, content string) string {
 	return path
 }
 
-// testOptions has Load retry a failed fetch after 10 ms, doubling the pause
-// each time, for up to two seconds.
+// testOptions has Run retry a failed fetch after 10 ms, doubling the pause
+// each time.
 func testOptions() Options {
-	return Options{StartupTimeout: 2 * time.Second, firstRetryDelay: 10 * time.Millisecond}
+	return Options{firstRetryDelay: 10 * time.Millisecond}
 }
 
-// mustLoad loads providers with opts and stops the test when Load fails.
+// mustLoad returns a Set of providers with opts, after one Refresh, and stops
+// the test when Refresh fails.
 func mustLoad(t *testing.T, opts Options, providers ...Provider) *Set {
 	t.Helper()
-	set, err := Load(context.Background(), Config{Providers: providers}, opts)
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+	set := mustNew(t, Config{Providers: providers}, opts)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
 	}
 	return set
 }
 
-// waitFor polls cond every 5 ms for up to five seconds and fails the test
-// with what when it never holds.
-func waitFor(t *testing.T, what string, cond func() bool) {
+// mustNew returns a Set of cfg with opts and stops the test when New fails.
+func mustNew(t *testing.T, cfg Config, opts Options) *Set {
 	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for !cond() {
-		if time.Now().After(deadline) {
-			t.Fatalf("timed out after 5s waiting for %s", what)
-		}
-		time.Sleep(5 * time.Millisecond)
+	set, err := New(cfg, opts)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
 	}
+	return set
+}
+
+// loaded reports whether set holds a key under kid for the issuer of p.
+func loaded(set *Set, p Provider, kid string) bool {
+	_, err := set.Lookup(Query{Issuer: p.Issuer, KID: kid})
+	return err == nil
 }
 
 // warnRecorder is a Logger that keeps the warnings.
@@ -332,6 +324,26 @@ func (r *warnRecorder) Warnf(format string, args ...any) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
+}
+
+// matches reports whether one warning contains every one of parts.
+func (r *warnRecorder) matches(parts ...string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return slices.ContainsFunc(r.warnings, func(w string) bool { return containsAll(w, parts...) })
+}
+
+// count returns how many warnings contain part.
+func (r *warnRecorder) count(part string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	matched := 0
+	for _, w := range r.warnings {
+		if strings.Contains(w, part) {
+			matched++
+		}
+	}
+	return matched
 }
 
 // containsAll reports whether s contains every one of parts.
