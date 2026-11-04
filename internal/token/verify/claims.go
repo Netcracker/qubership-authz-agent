@@ -35,6 +35,9 @@ const maxNumericDate = 1<<53 - 1
 // server issues for a service account, system:serviceaccount:<namespace>:<name>.
 const serviceAccountPrefix = "system:serviceaccount:"
 
+// m2mRole is the realm role that makes a token M2M, whatever its level.
+const m2mRole = "ROLE_M2M"
+
 // checkTimes checks exp, nbf, and iat, and returns the time exp names. exp
 // and iat are required; nbf is optional. exp and nbf are compared with now,
 // with leeway either way. An exp before iat is refused, with no leeway. An iat
@@ -106,6 +109,39 @@ func checkSubject(claims map[string]json.RawMessage, from keys.Source) error {
 		return fail(CodeSubjectInvalid, "sub %s names no service account, and provider %q issues only service account tokens", short(sub), from.ID())
 	}
 	return nil
+}
+
+// kindOf returns the kind of a token that a key of from verified.
+func kindOf(from keys.Source) Kind {
+	switch {
+	case from.Kubernetes():
+		return KindKubernetes
+	case from.Provider == nil:
+		return KindRealm
+	}
+	return KindFile
+}
+
+// isM2M reports whether a token of the given kind with the claims s is M2M, as
+// [Token.IsM2M] states.
+func isM2M(kind Kind, s Standard) bool {
+	switch kind {
+	case KindKubernetes:
+		return true
+	case KindRealm:
+		return namesM2M(s)
+	}
+	return false
+}
+
+// namesM2M reports whether the level or the roles of s make a token M2M.
+func namesM2M(s Standard) bool {
+	level, _ := decode(s.Level).(string)
+	if strings.EqualFold(level, "m2m") || strings.EqualFold(level, "key-manager") {
+		return true
+	}
+	roles, _ := decode(s.Roles).([]any)
+	return slices.Contains(roles, any(m2mRole))
 }
 
 // checkAudience applies the audiences of the provider of from. The aud of a

@@ -122,11 +122,18 @@ type signer struct {
 // newSigner returns an ES256 signer whose key provider publishes under kid.
 func newSigner(t *testing.T, kid string, provider *keys.Provider) *signer {
 	t.Helper()
+	return newSignerFrom(t, kid, keys.Source{Provider: provider})
+}
+
+// newSignerFrom returns an ES256 signer whose key the source from publishes
+// under kid.
+func newSignerFrom(t *testing.T, kid string, from keys.Source) *signer {
+	t.Helper()
 	private, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return signerFor(t, jwa.ES256(), private, &private.PublicKey, kid, provider)
+	return signerFor(t, jwa.ES256(), private, &private.PublicKey, kid, from)
 }
 
 func newRSASigner(t *testing.T, alg jwa.SignatureAlgorithm, kid string, provider *keys.Provider) *signer {
@@ -135,7 +142,7 @@ func newRSASigner(t *testing.T, alg jwa.SignatureAlgorithm, kid string, provider
 	if err != nil {
 		t.Fatal(err)
 	}
-	return signerFor(t, alg, private, &private.PublicKey, kid, provider)
+	return signerFor(t, alg, private, &private.PublicKey, kid, keys.Source{Provider: provider})
 }
 
 func newEdSigner(t *testing.T, kid string, provider *keys.Provider) *signer {
@@ -144,16 +151,16 @@ func newEdSigner(t *testing.T, kid string, provider *keys.Provider) *signer {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return signerFor(t, jwa.EdDSA(), private, public, kid, provider)
+	return signerFor(t, jwa.EdDSA(), private, public, kid, keys.Source{Provider: provider})
 }
 
-func signerFor(t *testing.T, alg jwa.SignatureAlgorithm, private, public any, kid string, provider *keys.Provider) *signer {
+func signerFor(t *testing.T, alg jwa.SignatureAlgorithm, private, public any, kid string, from keys.Source) *signer {
 	t.Helper()
 	key, err := jwk.Import(public)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &signer{alg: alg, private: private, key: keys.Key{Source: keys.Source{Provider: provider}, ID: kid, JWK: key}}
+	return &signer{alg: alg, private: private, key: keys.Key{Source: from, ID: kid, JWK: key}}
 }
 
 // republished returns the signer's key as a new jwk.Key value, as a reload

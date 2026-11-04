@@ -82,6 +82,80 @@ func TestToken_KubernetesReportsTheMarkOfTheVerifyingProvider(t *testing.T) {
 	}
 }
 
+func TestToken_IsM2MFollowsTheLevelTheRolesAndTheProvider(t *testing.T) {
+	roles := func(values ...any) map[string]any {
+		return map[string]any{"realm_access": map[string]any{"roles": values}}
+	}
+	realm := keys.Source{Realm: "r"}
+	file := keys.Source{Provider: &keys.Provider{ID: "idp"}}
+	tests := []struct {
+		name   string
+		source keys.Source
+		fields map[string]any
+		want   bool
+	}{
+		{"neither a level nor roles", realm, nil, false},
+		{"level m2m", realm, map[string]any{"level": "m2m"}, true},
+		{"level m2m in upper case", realm, map[string]any{"level": "M2M"}, true},
+		{"level key-manager", realm, map[string]any{"level": "key-manager"}, true},
+		{"level key-manager in mixed case", realm, map[string]any{"level": "Key-Manager"}, true},
+		{"level of a user", realm, map[string]any{"level": "user"}, false},
+		{"level external", realm, map[string]any{"level": "external"}, false},
+		{"level with a trailing space", realm, map[string]any{"level": "m2m "}, false},
+		{"level that is a number", realm, map[string]any{"level": 2}, false},
+		{"level that is an array", realm, map[string]any{"level": []string{"m2m"}}, false},
+		{"the role among others", realm, roles("offline_access", "ROLE_M2M"), true},
+		{"the role beside a value that is not a string", realm, roles(1, "ROLE_M2M"), true},
+		{"the role in lower case", realm, roles("role_m2m"), false},
+		{"a longer role that starts with it", realm, roles("ROLE_M2M_ADMIN"), false},
+		{"no roles in the array", realm, roles(), false},
+		{"roles that are a string", realm, map[string]any{"realm_access": map[string]any{"roles": "ROLE_M2M"}}, false},
+		{"realm_access that is not an object", realm, map[string]any{"realm_access": "ROLE_M2M"}, false},
+		{"the role at the top level", realm, map[string]any{"roles": []string{"ROLE_M2M"}}, false},
+		{"service account sub on a realm token", realm, map[string]any{"sub": serviceAccountSub}, false},
+		{"file token with level m2m", file, map[string]any{"level": "m2m"}, false},
+		{"file token with the role", file, roles("ROLE_M2M"), false},
+		{"file token with a service account sub", file, map[string]any{"sub": serviceAccountSub}, false},
+		{"Kubernetes token", keys.Source{Provider: &keys.Provider{ID: "k8s", Kubernetes: true}}, map[string]any{"sub": serviceAccountSub}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, tt.fields)))
+			if got := tok.IsM2M(); got != tt.want {
+				t.Errorf("IsM2M() = %t, want %t", got, tt.want)
+			}
+		})
+	}
+}
+
+// The source decides the kind, and no id does: a provider whose id has the
+// form of the id of a realm stays a provider, and the marked provider and the
+// file provider share an id.
+func TestToken_KindFollowsTheSourceOfTheKeyThatVerifiedIt(t *testing.T) {
+	tests := []struct {
+		name   string
+		source keys.Source
+		want   Kind
+	}{
+		{"key of a realm", keys.Source{Realm: "r"}, KindRealm},
+		{"key of a provider of the file", keys.Source{Provider: &keys.Provider{ID: "idp"}}, KindFile},
+		{"key of a provider whose id has the form of a realm id", keys.Source{Provider: &keys.Provider{ID: "realm/r"}}, KindFile},
+		{"key of a marked provider", keys.Source{Provider: &keys.Provider{ID: "idp", Kubernetes: true}}, KindKubernetes},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := newSignerFrom(t, "k1", tt.source)
+			v := newAdmittingVerifier(newFakeKeys(s))
+			tok := mustVerify(t, v, s.sign(t, claimsAt(start, map[string]any{"sub": serviceAccountSub})))
+			if got := tok.Kind(); got != tt.want {
+				t.Errorf("Kind() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 // verifyPayload verifies a token of testIssuer whose payload is the members of
 // the JSON object members plus an iat and an exp, signed by a key of a
 // provider that lists no audiences, at start.
