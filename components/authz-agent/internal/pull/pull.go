@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package pull keeps data.policies and data.pips, the documents the
-// decision policies read, in step with their source: the v3 configuration
-// API of the policy source, fetched every interval and converted to the
-// simplified model. [Puller.Status] reports the first successful load, which
+// Package pull keeps the policies in step with their source, the v3
+// configuration API of the policy source, fetched every interval: the
+// per-tenant snapshots of [Config.Snapshots], built from the documents as
+// sent, and data.policies and data.pips, the documents converted to the
+// simplified model that the embedded policies of check/filter read.
+// [Puller.Status] reports the first successful load, which
 // readiness waits for, and the counts of the last conversion.
 package pull
 
@@ -59,6 +61,17 @@ type Config struct {
 	// Entitlements is the entitlements PIP pinned by the deployment; nil
 	// adds none.
 	Entitlements *pips.EntitlementsConfig
+	// Snapshots receives the fetched documents as the source sent them,
+	// before they are converted for the embedded policies; nil sends them
+	// nowhere.
+	Snapshots SnapshotLoader
+}
+
+// SnapshotLoader builds the per-tenant policies from the documents of
+// /access/v3/config/policySets and /access/v3/config/pips. An error means
+// the documents could not be read at all, and nothing was published.
+type SnapshotLoader interface {
+	LoadSnapshots(ctx context.Context, policySets, pips []byte) error
 }
 
 // Putter receives the documents.
@@ -218,8 +231,10 @@ func (p *Puller) waitForToken(ctx context.Context) {
 }
 
 // PullOnce fetches the policy sets and the PIPs from the source and loads
-// them; the documents in the store are untouched when any step fails. Loads
-// run one at a time: a call waits for the load in progress to finish.
+// them into the snapshots and into the documents of the store, each apart:
+// the documents are untouched when a step of their conversion fails, and
+// a failure of either is returned. Loads run one at a time: a call waits
+// for the load in progress to finish.
 //
 // The load is reported at info until [Puller.PullNow], which every tick of
 // [Puller.Run] calls, has recorded a first success, and at debug from then
@@ -242,9 +257,17 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("fetch pips: %w", err)
 	}
+	var snapErr error
+	if p.cfg.Snapshots != nil {
+		if err := p.cfg.Snapshots.LoadSnapshots(ctx, policySets, pipsRaw); err != nil {
+			snapErr = fmt.Errorf("load snapshots: %w", err)
+		}
+	}
+	// the documents of check/filter load whether or not the snapshots did
+	fail := func(err error) error { return errors.Join(snapErr, err) }
 	policyList, stats, err := acconfig.ConvertPolicySets(policySets, p.log)
 	if err != nil {
-		return fmt.Errorf("convert policySets: %w", err)
+		return fail(fmt.Errorf("convert policySets: %w", err))
 	}
 	conversion := Conversion(stats)
 	if stats.RulesSkipped > 0 || stats.PolicySetsSkipped > 0 {
@@ -253,18 +276,18 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 	}
 	pipList, err := acconfig.ConvertPIPs(pipsRaw, p.log)
 	if err != nil {
-		return fmt.Errorf("convert pips: %w", err)
+		return fail(fmt.Errorf("convert pips: %w", err))
 	}
 	policies, err := simplifiedpolicies.NormalizePolicies(policyList)
 	if err != nil {
-		return fmt.Errorf("normalize policies: %w", err)
+		return fail(fmt.Errorf("normalize policies: %w", err))
 	}
 	pipDoc, _, err := pips.NormalizeItems(pipList)
 	if err != nil {
-		return fmt.Errorf("normalize pips: %w", err)
+		return fail(fmt.Errorf("normalize pips: %w", err))
 	}
 	if err := p.load(ctx, policies, pipDoc); err != nil {
-		return err
+		return fail(err)
 	}
 	p.mu.Lock()
 	p.lastConversion = &conversion
@@ -278,7 +301,7 @@ func (p *Puller) PullOnce(ctx context.Context) error {
 		report = p.log.Infof
 	}
 	report("policies: updated (%d policies, %d PIPs)", stats.Policies, len(pipList))
-	return nil
+	return snapErr
 }
 
 // load completes the PIP document with the pinned entitlements and the
