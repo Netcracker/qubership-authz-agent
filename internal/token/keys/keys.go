@@ -198,6 +198,9 @@ func (s Source) ID() string {
 	return realmIDPrefix + s.Realm
 }
 
+// Kubernetes reports whether s is a provider marked [Provider.Kubernetes].
+func (s Source) Kubernetes() bool { return s.Provider != nil && s.Provider.Kubernetes }
+
 // label names s in a log line or an error of this package: realm "<name>" for
 // a realm, provider "<id>" for a provider.
 func (s Source) label() string {
