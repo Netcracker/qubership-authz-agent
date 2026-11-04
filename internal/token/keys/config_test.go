@@ -15,6 +15,7 @@
 package keys
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"path/filepath"
 	"reflect"
@@ -158,6 +159,49 @@ func TestParseConfig_RejectsADocumentThatBreaksARule(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if _, err := ParseConfig([]byte(tt.doc)); err == nil {
 				t.Errorf("ParseConfig(%s) error = nil, want an error", tt.doc)
+			}
+		})
+	}
+}
+
+// jwtWith returns a compact JWT whose payload is the JSON text payload. The
+// header and the signature are placeholders, since nothing checks them.
+func jwtWith(payload string) string {
+	return "e30." + base64.RawURLEncoding.EncodeToString([]byte(payload)) + ".c2ln"
+}
+
+func TestIssuerOfTokenFile_ReturnsTheIssOfTheToken(t *testing.T) {
+	const want = "https://kubernetes.default.svc.cluster.local"
+	path := writeFile(t, "token", jwtWith(`{"iss": "`+want+`", "sub": "system:serviceaccount:ns:app"}`)+"\n")
+	got, err := IssuerOfTokenFile(path)
+	if err != nil {
+		t.Fatalf("IssuerOfTokenFile() error = %v", err)
+	}
+	if got != want {
+		t.Errorf("IssuerOfTokenFile() = %q, want %q", got, want)
+	}
+}
+
+func TestIssuerOfTokenFile_RefusesAFileWithoutAnIssuer(t *testing.T) {
+	tests := []struct {
+		name, path string
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent")},
+		{"empty file", writeFile(t, "token", "\n")},
+		{"two parts", writeFile(t, "token", strings.TrimSuffix(jwtWith(`{"iss": "https://a.example"}`), ".c2ln"))},
+		{"four parts", writeFile(t, "token", jwtWith(`{"iss": "https://a.example"}`)+".c2ln")},
+		{"payload that is not base64url", writeFile(t, "token", "e30.%%%.c2ln")},
+		{"payload that is not JSON", writeFile(t, "token", jwtWith("not json"))},
+		{"payload without iss", writeFile(t, "token", jwtWith(`{"sub": "a"}`))},
+		{"ISS in place of iss", writeFile(t, "token", jwtWith(`{"ISS": "https://a.example"}`))},
+		{"iss that is a number", writeFile(t, "token", jwtWith(`{"iss": 5}`))},
+		{"empty iss", writeFile(t, "token", jwtWith(`{"iss": ""}`))},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := IssuerOfTokenFile(tt.path)
+			if err == nil {
+				t.Errorf("IssuerOfTokenFile(%s) = %q, want an error", tt.path, got)
 			}
 		})
 	}
