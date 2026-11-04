@@ -163,11 +163,11 @@ against) and imports the realms of [`cloud-common-realm.json`](../k8s/parity/idp
 [`parity-mt-b-realm.json`](../k8s/parity/idp-seed/parity-mt-b-realm.json) at every start. The `parity` realm it imports
 also holds the users of [`suite/testdata/realm/`](suite/testdata/realm/README.md) and the clients of
 `suite/testdata/realm-clients/`, so the cases that need them run on the kind harness. `make test-stand-files` adds
-them and gives a user that declares no first name, last name, or email the ones it has on the stand the goldens were
-recorded on: Keycloak refuses a password grant to such a user with `Account is not fully set up`. The
-realm files use only built-in Keycloak protocol mappers and require no custom SPI extensions. The suite calls the
-standard OIDC token endpoint (`/auth/realms/parity/protocol/openid-connect/token`) for `client_credentials` and
-`password` grants; no custom Keycloak REST APIs are involved.
+them and gives a user that declares no first name, last name, or email, other than a service account's user, the ones
+it has on the stand the goldens were recorded on: Keycloak refuses a password grant to such a user with `Account is not
+fully set up`. The realm files use only built-in Keycloak protocol mappers and require no custom SPI extensions. The
+suite calls the standard OIDC token endpoint (`/auth/realms/parity/protocol/openid-connect/token`) for
+`client_credentials` and `password` grants; no custom Keycloak REST APIs are involved.
 
 The chart sets `KC_HTTP_RELATIVE_PATH=/auth` so the realm is reachable at `/auth/realms/parity/...` (Keycloak dropped
 the `/auth` prefix in v17; the parity fixtures carry that prefix throughout, so it is restored via config). It prefixes
