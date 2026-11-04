@@ -59,7 +59,7 @@ const (
 	// ±(2^53 - 1) seconds.
 	CodeFormatInvalid Code = "TOKEN_FORMAT_INVALID"
 	// CodeAlgNotAllowed marks a token whose header names no algorithm, one
-	// that no key accepts, or one that the key its header selects does not
+	// that no key accepts, or one that the key its iss and kid select does not
 	// accept.
 	CodeAlgNotAllowed Code = "TOKEN_ALG_NOT_ALLOWED"
 	// CodeIssuerUnknown marks a token whose iss is missing, is not a string,
@@ -73,7 +73,7 @@ const (
 	// CodeKIDUnknown marks a token whose kid no loaded key of its source has.
 	CodeKIDUnknown Code = "TOKEN_KID_UNKNOWN"
 	// CodeSignatureInvalid marks a token whose signature does not verify
-	// with the key its header selects.
+	// with the key its iss and kid select.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
 	// CodeExpMissing marks a token without an exp claim.
 	CodeExpMissing Code = "TOKEN_EXP_MISSING"
@@ -107,12 +107,25 @@ type Error struct {
 	// Detail describes the fault for a log line. It never contains the
 	// token itself.
 	Detail string
+	// ProviderID is the id of the provider whose key verified the signature
+	// of the token, in the form of [Token.ProviderID]. It is "" when Verify
+	// refused the token before the signature verified. Verify sets it on an
+	// error of [Options.Admit] too, so Admit leaves it empty.
+	ProviderID string
 }
 
 func (e *Error) Error() string { return string(e.Code) + ": " + e.Detail }
 
 func fail(code Code, format string, args ...any) *Error {
 	return &Error{Code: code, Detail: fmt.Sprintf(format, args...)}
+}
+
+// withProviderID returns a copy of e whose ProviderID is id. It copies because
+// [Options.Admit] may return one *Error for many tokens.
+func (e *Error) withProviderID(id string) *Error {
+	named := *e
+	named.ProviderID = id
+	return &named
 }
 
 // Kind is the kind of a verified token, which the source of the key that
@@ -264,7 +277,8 @@ type Options struct {
 	CacheSize int
 	// Admit, when set, runs on every token Verify is about to return,
 	// verified now or taken from the cache, and the *Error it returns
-	// refuses the token. It holds the checks whose answer can change while
+	// refuses the token: Verify returns a copy of that *Error with
+	// [Error.ProviderID] set. It holds the checks whose answer can change while
 	// a token stays cached, such as the namespaces a Kubernetes token may
 	// come from. Without Admit, Verify refuses every token for which
 	// [Token.Kubernetes] reports true. Admit has to check the namespace of
@@ -341,12 +355,12 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	}
 	if v.opts.Admit == nil {
 		if tok.Kubernetes() {
-			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID())
+			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID()).withProviderID(tok.ProviderID())
 		}
 		return tok, nil
 	}
 	if err := v.opts.Admit(tok); err != nil {
-		return nil, err
+		return nil, err.withProviderID(tok.ProviderID())
 	}
 	return tok, nil
 }
@@ -363,27 +377,52 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err != nil {
 		return nil, lookupFailure(query, err)
 	}
+	payload, refused := checkSignature(raw, alg, query.Issuer, key)
+	if refused != nil {
+		return nil, refused
+	}
+	tok, refused := v.checkClaims(raw, payload, query, claims, key)
+	if refused != nil {
+		return nil, refused.withProviderID(key.Source.ID())
+	}
+	if v.cache != nil {
+		v.cache.put(digest, tok)
+	}
+	return tok, nil
+}
+
+// checkSignature returns the signed payload of raw when key, the one that the
+// iss and the kid of raw selected, accepts alg and verifies its signature. A
+// refusal quotes iss, the issuer that raw claims, and names no source, because
+// such a token only claims to come from the source of key.
+func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
 	if !key.Allows(alg) {
-		return nil, fail(CodeAlgNotAllowed, "key %s of provider %q does not accept %s", short(key.ID), key.Source.ID(), alg)
+		return nil, fail(CodeAlgNotAllowed, "key %s of iss %s does not accept %s", short(key.ID), shortIssuer(iss), alg)
 	}
 	algorithm, _ := jwa.LookupSignatureAlgorithm(alg)
 	payload, err := jws.Verify([]byte(raw), jws.WithKey(algorithm, key.JWK), jws.WithCompact(), jws.WithCritValidation(true))
 	if err != nil {
-		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of provider %q", short(key.ID), key.Source.ID())
+		return nil, fail(CodeSignatureInvalid, "signature does not verify with key %s of iss %s", short(key.ID), shortIssuer(iss))
 	}
+	return payload, nil
+}
+
+// checkClaims runs the checks that follow the signature and returns the verified
+// token, or a refusal for check to name the provider on.
+func (v *Verifier) checkClaims(raw string, payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
 	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err
 	}
-	expiry, err := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
-	if err != nil {
-		return nil, err
+	expiry, refused := checkTimes(claims, key.Source, v.opts.now(), v.opts.Leeway)
+	if refused != nil {
+		return nil, refused
 	}
 	if err := checkSubject(claims, key.Source); err != nil {
 		return nil, err
 	}
 	standard := standardOf(claims)
 	kind := kindOf(key.Source)
-	tok := &Token{
+	return &Token{
 		raw:        raw,
 		payload:    payload,
 		claims:     claims,
@@ -395,20 +434,17 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 		issuer:     query.Issuer,
 		expiry:     expiry,
 		key:        key.JWK,
-	}
-	if v.cache != nil {
-		v.cache.put(digest, tok)
-	}
-	return tok, nil
+	}, nil
 }
 
 // lookupFailure returns the [*Error] for err, the error a [KeyFinder] returned
-// for q. Each [Error.Detail] quotes the sender's text through [short].
+// for q. Each [Error.Detail] quotes the sender's text through [short] or
+// [shortIssuer].
 func lookupFailure(q keys.Query, err error) *Error {
 	if errors.Is(err, keys.ErrIssuerUnknown) {
-		return fail(CodeIssuerUnknown, "iss %s names no trusted provider and no Keycloak realm", short(q.Issuer))
+		return fail(CodeIssuerUnknown, "iss %s names no trusted provider and no Keycloak realm", shortIssuer(q.Issuer))
 	}
-	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", short(q.Issuer), short(q.KID))
+	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", shortIssuer(q.Issuer), short(q.KID))
 }
 
 // cached returns the cached token for digest when it has not expired and its
@@ -552,6 +588,20 @@ func short(s string) string {
 		return fmt.Sprintf("%q...", s[:limit])
 	}
 	return fmt.Sprintf("%q", s)
+}
+
+// shortIssuer quotes iss for a detail, because iss is the sender's text. An iss
+// of at most 96 bytes is quoted whole, and a longer one keeps its first 32
+// bytes and its last 64, each quoted, with ... between them. A realm iss ends
+// with the name of the realm, after an address that the sender writes, so the
+// last 64 bytes of a long iss hold the whole name of a realm that the iss spells
+// in at most 64 bytes.
+func shortIssuer(iss string) string {
+	const head, tail = 32, 64
+	if len(iss) <= head+tail {
+		return fmt.Sprintf("%q", iss)
+	}
+	return fmt.Sprintf("%q...%q", iss[:head], iss[len(iss)-tail:])
 }
 
 // shortList quotes the first three of values as [short] does and counts the
