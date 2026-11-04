@@ -1,0 +1,132 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package verify
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/lestrrat-go/jwx/v3/jwk"
+
+	"authz-agent/internal/token/keys"
+)
+
+const realmsPath = "/auth/realms/"
+
+// keycloakOf serves the OIDC discovery document and the JWKS of each realm of
+// realms, whose keys are the public keys of the signers, each with its kid and
+// the x5t that thumbprints holds for that kid, and returns the address of the
+// server.
+func keycloakOf(t *testing.T, realms map[string][]*signer, thumbprints map[string]string) string {
+	t.Helper()
+	var srv *httptest.Server
+	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		realm, rest, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, realmsPath), "/")
+		signers, ok := realms[realm]
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		if rest == ".well-known/openid-configuration" {
+			_ = json.NewEncoder(w).Encode(map[string]string{"jwks_uri": srv.URL + realmsPath + realm + "/jwks"})
+			return
+		}
+		published := make([]jwk.Key, 0, len(signers))
+		for _, s := range signers {
+			key, err := s.key.JWK.Clone()
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			_ = key.Set(jwk.KeyIDKey, s.key.ID)
+			_ = key.Set(jwk.X509CertThumbprintKey, thumbprints[s.key.ID])
+			published = append(published, key)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"keys": published})
+	}))
+	t.Cleanup(srv.Close)
+	return srv.URL
+}
+
+// These tokens go through a real [keys.Set], because the choice of the key is
+// the behavior: which issuer a token names, and which key of that issuer its
+// header selects. Realms a and b publish the same kid and have one key each, so
+// a token signed in one realm that names the other selects a key that did not
+// sign it.
+func TestVerify_ChecksATokenAgainstTheKeyOfTheRealmItNames(t *testing.T) {
+	realmA := newSigner(t, "k1", &keys.Provider{ID: "unused"})
+	realmB := newSigner(t, "k1", &keys.Provider{ID: "unused"})
+	first := newSigner(t, "first", &keys.Provider{ID: "unused"})
+	second := newSigner(t, "second", &keys.Provider{ID: "unused"})
+	url := keycloakOf(t,
+		map[string][]*signer{"a": {realmA}, "b": {realmB}, "two": {first, second}},
+		map[string]string{"k1": "dGh1bWI", "first": "Zmlyc3Q", "second": "c2Vjb25k"},
+	)
+	set, err := keys.New(keys.Config{Keycloak: &keys.Keycloak{URL: url}}, keys.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	const public = "https://public.example" + realmsPath
+	tests := []struct {
+		name    string
+		raw     string
+		want    Code
+		wantKID string
+	}{
+		{"token of the realm that signed it", realmA.sign(t, claimsAt(start, map[string]any{"iss": public + "a"})), "", "k1"},
+		{
+			"token signed in one realm that names another",
+			realmA.sign(t, claimsAt(start, map[string]any{"iss": public + "b"})),
+			CodeSignatureInvalid, "",
+		},
+		{
+			"token signed in one realm under a kid that the realm it names lacks",
+			first.sign(t, claimsAt(start, map[string]any{"iss": public + "b"})),
+			CodeKIDUnknown, "",
+		},
+		{
+			"no kid in a realm with one key",
+			realmB.signWithHeaders(t, claimsAt(start, map[string]any{"iss": public + "b"}), map[string]any{"kid": nil}),
+			CodeKIDMissing, "",
+		},
+		{
+			"no kid, x5t of a key of the realm",
+			second.signWithHeaders(t, claimsAt(start, map[string]any{"iss": public + "two"}), map[string]any{"kid": nil, "x5t": "c2Vjb25k"}),
+			CodeKIDMissing, "",
+		},
+		{
+			"no kid in a realm that does not exist",
+			realmA.signWithHeaders(t, claimsAt(start, map[string]any{"iss": public + "ghost"}), map[string]any{"kid": nil}),
+			CodeKIDMissing, "",
+		},
+		{"kid in a realm that does not exist", realmA.sign(t, claimsAt(start, map[string]any{"iss": public + "ghost"})), CodeKIDUnknown, ""},
+		{"iss outside Keycloak", realmA.sign(t, claimsAt(start, map[string]any{"iss": "https://other.example/oidc"})), CodeIssuerUnknown, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, _ := newVerifier(set)
+			tok, err := v.Verify(t.Context(), tt.raw)
+			if codeOf(err) != tt.want {
+				t.Fatalf("Verify() error = %v, want code %q", err, tt.want)
+			}
+			if tok != nil && tok.KeyID() != tt.wantKID {
+				t.Errorf("KeyID() = %q, want %q", tok.KeyID(), tt.wantKID)
+			}
+		})
+	}
+}

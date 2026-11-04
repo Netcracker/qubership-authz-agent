@@ -98,42 +98,40 @@ type fetcher struct {
 	log      Logger
 }
 
-// newFetcher builds the HTTP client for p: the proxy settings of the
-// environment, timeout per request, p.CAFile as the only trusted roots when
-// it is set, and no redirect followed. [http.Client] forwards the bearer
-// token of p.TokenFile to a redirect target on the same host or a subdomain
-// of it, whatever its port or scheme, so a redirect ends the request as a
-// failure instead.
-func newFetcher(p *Provider, timeout time.Duration, log Logger) (*fetcher, error) {
+// newClient builds the HTTP client for one server: the proxy settings of the
+// environment, timeout per request, caFile as the only trusted roots when it
+// is set, and no redirect followed. [http.Client] forwards the bearer token
+// of [Provider.TokenFile] to a redirect target on the same host or a
+// subdomain of it, whatever its port or scheme, so a redirect ends the
+// request as a failure instead. owner names the server in an error.
+func newClient(owner, caFile string, timeout time.Duration) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
-	if p.CAFile != "" {
-		pem, err := os.ReadFile(p.CAFile)
+	if caFile != "" {
+		pem, err := os.ReadFile(caFile)
 		if err != nil {
-			return nil, fmt.Errorf("provider %q caFile: %w", p.ID, err)
+			return nil, fmt.Errorf("%s caFile: %w", owner, err)
 		}
 		roots := x509.NewCertPool()
 		if !roots.AppendCertsFromPEM(pem) {
-			return nil, fmt.Errorf("provider %q caFile %s holds no PEM certificate", p.ID, p.CAFile)
+			return nil, fmt.Errorf("%s caFile %s holds no PEM certificate", owner, caFile)
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
 	}
-	client := &http.Client{
+	return &http.Client{
 		Transport: transport,
 		Timeout:   timeout,
 		CheckRedirect: func(*http.Request, []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-	}
-	return &fetcher{provider: p, client: client, log: log}, nil
+	}, nil
 }
 
 // errNoUsableKey reports a JWKS that parses and holds no usable signing key.
-// [Load] retries such a provider and fails when it stays so; [Set.Refresh]
-// removes the provider's keys.
+// A reload that gets it removes the keys of the source.
 var errNoUsableKey = errors.New("no usable signing key")
 
-// fetch downloads the provider's JWKS, through discovery when the provider
-// names an issuer, and returns its signing keys. It fails when a request
+// fetch downloads the provider's JWKS, through discovery unless the provider
+// names a JWKSURI, and returns its signing keys. It fails when a request
 // fails or answers a status other than 2xx, when a document is not the JSON
 // it should be, and when the JWKS lists two different keys under one kid;
 // a JWKS without a usable signing key fails with errNoUsableKey.
