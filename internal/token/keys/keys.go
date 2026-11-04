@@ -199,6 +199,12 @@ func (s Source) ID() string {
 	return s.Provider.ID
 }
 
+// Kubernetes reports whether s belongs to the provider [KubernetesID]. The name
+// of a provider is its key in the providers object of a provider file, and
+// that name alone decides whether a token that a signing key of s verifies is
+// a Kubernetes token.
+func (s Source) Kubernetes() bool { return s.Provider.ID == KubernetesID }
+
 // label names s in a log line or an error of this package: realm "<name>" of
 // provider "<id>" for a realm, provider "<id>" for a single provider.
 func (s Source) label() string {
