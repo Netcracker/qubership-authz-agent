@@ -84,7 +84,11 @@ func (f *fakeKeys) LookupOrReload(ctx context.Context, q keys.Query) (keys.Key, 
 		}
 		f.onReload = nil
 	}
-	return f.find(q)
+	key, err := f.find(q)
+	if errors.Is(err, keys.ErrKeyUnknown) && ctx.Err() != nil {
+		return keys.Key{}, keys.ErrKeysUnavailable
+	}
+	return key, err
 }
 
 // find returns the key of q. The caller holds mu.
