@@ -116,6 +116,15 @@ func TestParseConfig_AcceptsATokenFileWithDiscoveryOfTheClusterAPIServer(t *test
 	}
 }
 
+// New validates the configuration too, so a caller that builds a Config in code
+// and never parses a file gets the same refusal.
+func TestNew_RefusesAnUnmarkedProviderThatLooksLikeKubernetes(t *testing.T) {
+	_, err := New(Config{Providers: []Provider{{ID: "kubernetes", Issuer: "https://idp.example"}}}, testOptions())
+	if err == nil || !strings.Contains(err.Error(), `provider "kubernetes" looks like a Kubernetes API server`) {
+		t.Errorf("New() error = %v, want the refusal of the unmarked provider", err)
+	}
+}
+
 // The reader holds only this text, so it names the setting that repairs the
 // file and the way out for a provider that is not the API server.
 func TestParseConfig_SaysHowToRepairAnUnmarkedProvider(t *testing.T) {
