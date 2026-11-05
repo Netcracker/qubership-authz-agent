@@ -62,7 +62,7 @@ func validRealm(name string) bool {
 
 // realmSource returns the source of the realm, adding it and starting its
 // first load when no token named that realm before. It returns
-// [ErrKeyUnknown] when the ceiling of [maxLoadsPerMinute] loads refuses
+// [ErrKeysUnavailable] when the ceiling of [maxLoadsPerMinute] loads refuses
 // another, and when the Set already holds [Options.maxRealms] realms. A realm
 // that failed to load stays for a minute, so its tokens send no request, and
 // then leaves the Set at the next new realm or the next [Set.Refresh]. Names
@@ -80,12 +80,12 @@ func (s *Set) realmSource(ctx context.Context, name string) (*source, error) {
 	now := s.opts.now()
 	if !s.loads.take(now) {
 		s.warnOnce(now, "trusted providers: realm %q is not loaded, and its tokens are refused for now: the pod started %d key loads in the last minute, the most it allows", name, maxLoadsPerMinute)
-		return nil, ErrKeyUnknown
+		return nil, ErrKeysUnavailable
 	}
 	s.dropFailedRealms(now)
 	if len(s.realms) >= s.opts.maxRealms {
 		s.warnOnce(now, "trusted providers: realm %q is not loaded, and its tokens are refused: the pod holds %d realms, the most it keeps", name, s.opts.maxRealms)
-		return nil, ErrKeyUnknown
+		return nil, ErrKeysUnavailable
 	}
 	src := s.newSource(s.realmProvider(name), s.keycloakClient, false)
 	s.realms[name] = src

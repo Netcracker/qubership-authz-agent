@@ -41,6 +41,10 @@ type source struct {
 	current atomic.Pointer[[]Key]
 	// loaded is set by the first load that finds a usable key, and stays set.
 	loaded atomic.Bool
+	// unanswered is set while the last load got no answer about the keys of
+	// the source. A JWKS without a usable key is an answer, and so is the 404
+	// of a realm that holds no keys. A load writes it after the keys.
+	unanswered atomic.Bool
 }
 
 func (src *source) id() string { return src.fetcher.provider.ID }
@@ -73,6 +77,7 @@ func (src *source) reload(ctx context.Context) error {
 	if p := src.current.Load(); p != nil {
 		previous = *p
 	}
+	defer func() { src.unanswered.Store(src.gotNoAnswer(err, len(previous) > 0)) }()
 	switch {
 	case errors.Is(err, errNoUsableKey):
 		src.current.Store(nil)
@@ -88,6 +93,17 @@ func (src *source) reload(ctx context.Context) error {
 		src.log.Infof("trusted providers: provider %q now publishes %d signing keys", src.id(), len(fetched))
 	}
 	return nil
+}
+
+// gotNoAnswer reports whether err, the result of a fetch, says nothing about
+// the keys of the source, which held keys before the fetch when holdsKeys is
+// set. A 404 is an answer only for a realm with no keys, because a token that
+// names a realm the Keycloak does not hold gets that 404. A realm with keys
+// existed when it loaded them, and a provider is one the configuration names
+// wrongly or that does not publish its keys there.
+func (src *source) gotNoAnswer(err error, holdsKeys bool) bool {
+	unknownRealm := errors.Is(err, errNotFound) && src.fetcher.provider.IsRealm() && !holdsKeys
+	return err != nil && !errors.Is(err, errNoUsableKey) && !unknownRealm
 }
 
 func sameKIDs(a, b []Key) bool {

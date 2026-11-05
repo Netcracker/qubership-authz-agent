@@ -88,6 +88,10 @@ var (
 	ErrIssuerUnknown = errors.New("issuer is not trusted")
 	// ErrKeyUnknown reports that no loaded key of the issuer has the kid.
 	ErrKeyUnknown = errors.New("no loaded key has the kid")
+	// ErrKeysUnavailable reports that no loaded key of the issuer has the kid
+	// and the last load got no answer about the keys of the source: the load
+	// failed, the wait for it ran out, or a limit refused it.
+	ErrKeysUnavailable = errors.New("the keys of the issuer cannot be loaded")
 )
 
 // Query names the key a token asks for.
@@ -363,7 +367,9 @@ func (s *Set) Lookup(q Query) (Key, error) {
 // matches, it reloads the keys of that issuer, waits until the reload ends,
 // ctx ends, or [Options.ReloadWait] passes, and looks again among the keys
 // loaded by then. A realm no token named before is loaded the same way. The
-// errors are those of [Set.Lookup].
+// errors are those of [Set.Lookup], and [ErrKeysUnavailable] when no key matches
+// and the last load got no answer about the keys of the source. A JWKS that
+// lacks the key is an answer, and so is the 404 of a realm that holds no keys.
 //
 // Callers that ask while such a reload runs wait for it rather than start
 // another. One source reloads at most once a minute this way, a [Set] starts
@@ -383,8 +389,15 @@ func (s *Set) LookupOrReload(ctx context.Context, q Query) (Key, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, s.opts.ReloadWait)
 	defer cancel()
-	src.onDemand.wait(ctx)
-	return src.find(q.KID)
+	// unanswered is read before find, and a load writes it after the keys, so
+	// a load that ends between the two cannot turn a key it brought into a
+	// refusal of a key the source does not hold.
+	answered := src.onDemand.wait(ctx) && !src.unanswered.Load()
+	key, err = src.find(q.KID)
+	if errors.Is(err, ErrKeyUnknown) && !answered {
+		return Key{}, ErrKeysUnavailable
+	}
+	return key, err
 }
 
 // sourceFor returns the source of issuer, adding a realm no token named
