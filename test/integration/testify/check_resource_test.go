@@ -161,10 +161,10 @@ func (s *RuntimeSuite) TestCheckResource() {
 			"Incoming-Token (order-reader) must take precedence over Authorization (admin) for subject evaluation")
 	})
 
-	// Anonymous ingress is signalled by Authorization-Type:
-	// anonymous. Envoy must leave subject empty so canonical identity.rego
-	// matches the anonymous_subject path. Admission still requires a valid
-	// Authorization (M2M) token.
+	// An anonymous request (Authorization-Type: anonymous) is decided with
+	// the claims of its Authorization token, as legacy decides it, so the
+	// admin token's ROLE_ADMINISTRATOR allows BULK_OPEN READ. Admission
+	// still requires a valid Authorization token.
 	s.Step("check_resource.anonymous_subject_marker", func() {
 		h := map[string]string{
 			"Content-Type":       "application/json",
@@ -176,9 +176,9 @@ func (s *RuntimeSuite) TestCheckResource() {
 			"resource": map[string]interface{}{"id": "bulk-open-anon"},
 		}
 		code, b := s.post("/access/v1/check/resource", h, body)
-		s.Require().Equal(200, code, "admission via valid M2M passes; anonymous subject evaluates as DENY not 401")
-		s.Assert().Equal("false", bodyStr(b),
-			"anonymous subject has no roles — BULK_OPEN READ must DENY")
+		s.Require().Equal(200, code, "body: %s", string(b))
+		s.Assert().Equal("true", bodyStr(b),
+			"an anonymous request takes the roles of its Authorization token, so BULK_OPEN READ must ALLOW")
 	})
 
 	// The Incoming-Token header must never appear in
@@ -259,10 +259,11 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().Equal("false", bodyStr(b))
 	})
 
-	// The policy's condition compares the resource with subject.allowedCustomers,
-	// which the GENERAL PIP the pip-stub answers fills in: a customer on the
-	// list is allowed and one off it is denied. The step pins the stub's answer
-	// itself, because another step may have pinned a different one.
+	// The policy's condition and its ${subject.allowedCustomers} template
+	// are filled from the GENERAL PIP the pip-stub answers: check/resource
+	// allows a listed customer and denies one off the list, and check/filter
+	// renders the list into the rsql predicate. The step pins the stub's
+	// answer itself, because another step may have pinned a different one.
 	s.Step("check_resource.pip_value_substituted", func() {
 		pin := `[{"path":"/api/v1/pip/allowed","responses":[{"statusCode":200,"body":["C1","C2","C3"]}]}]`
 		pinCode, _ := s.doHTTPDirect("PUT", s.cfg.PIPStubURL+"/pip-stub/configure",
@@ -282,5 +283,12 @@ func (s *RuntimeSuite) TestCheckResource() {
 		code, b = s.post("/access/v1/check/resource", incomingTokenHeader(s.validAdminToken), unlisted)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("false", bodyStr(b), "customerId C9 is not on the list the PIP returned")
+
+		code, b = s.post("/access/v1/check/filter?resourceType=CUSTOMER&operation=READ",
+			incomingTokenHeader(s.validAdminToken), map[string]interface{}{})
+		s.Require().Equal(200, code, "body: %s", string(b))
+		// PIP-resolved array elements are
+		// JSON-quoted and comma-space-joined.
+		s.Assert().Equal(`customerId=in=("C1", "C2", "C3")`, jsonObj(b)["rsqlFilterCondition"])
 	})
 }
