@@ -399,7 +399,7 @@ func TestFetch_SendsTheTokenWithDiscoveryOfTheClusterAPIServer(t *testing.T) {
 func TestFetch_DoesNotFollowARedirectOfDiscoveryWithTheToken(t *testing.T) {
 	const issuer = "https://kubernetes.default.svc"
 	server := &clusterAPIServer{redirect: issuer + ":6443/.well-known/openid-configuration"}
-	client, err := newClient("provider \"k8s\"", "", time.Second)
+	client, err := newClient("provider \"k8s\" caFile", emptyCertPool, "", time.Second)
 	if err != nil {
 		t.Fatalf("newClient() error = %v", err)
 	}
