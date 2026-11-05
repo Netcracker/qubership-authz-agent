@@ -82,22 +82,23 @@ type Provider struct {
 	// this provider. It requires JWKSURI, unless the provider reads its keys
 	// from the API server of its own cluster through discovery: an https
 	// Issuer on an in-cluster name of the API server, and a CAFile. Such a
-	// server is the one that names the jwks_uri the token goes to. No request
-	// follows a redirect, so the token goes to no other address. It is read
-	// on every request, so a rotated token takes effect without a restart.
+	// server names the jwks_uri the token goes to, and a fetch fails when
+	// that address is not https. No request follows a redirect, so the token
+	// goes to no other address. It is read on every request, so a rotated
+	// token takes effect without a restart.
 	TokenFile string `json:"tokenFile,omitempty"`
 	// Kubernetes marks the provider as the service account token issuer of
 	// a Kubernetes API server, and
 	// [authz-agent/internal/token/verify.Token.Kubernetes] reports the mark
-	// on every token its keys verify. A provider that looks like the API
-	// server, by the id kubernetes or an address on one of its in-cluster
-	// names, has to set the mark. Such a token is refused when its sub
+	// on every token its keys verify. Such a token is refused when its sub
 	// does not start with system:serviceaccount, when its iat is ahead of
 	// the verifier's clock by more than the verifier's leeway, and when its
 	// namespace is not an allowed one. The mark requires Audiences, because
 	// every Pod's default token is issued for the API server itself, and
 	// refuses AllowMissingAud, so a Kubernetes token is accepted only when it
-	// names an audience the service accepts.
+	// names an audience the service accepts. A provider with the id
+	// kubernetes, or with an address on an in-cluster name of the API server,
+	// has to set the mark.
 	Kubernetes bool `json:"kubernetes,omitempty"`
 }
 

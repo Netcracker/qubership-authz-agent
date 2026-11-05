@@ -164,8 +164,9 @@ var errNoUsableKey = errors.New("no usable signing key")
 // fetch downloads the JWKS of the source, through discovery unless a provider
 // names a JWKSURI, and returns its signing keys. It fails when a request
 // fails or answers a status other than 2xx, when a document is not the JSON
-// it should be, and when the JWKS lists two different keys under one kid;
-// a JWKS without a usable signing key fails with errNoUsableKey.
+// it should be, when discovery names an address that is not https for a
+// provider that sends a token, and when the JWKS lists two different keys
+// under one kid; a JWKS without a usable signing key fails with errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	uri := f.jwksURI()
 	if uri == "" {
@@ -184,7 +185,7 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 			return nil, fmt.Errorf("discovery document %s has no jwks_uri", discovery)
 		}
 		if f.tokenFile() != "" && !strings.HasPrefix(doc.JWKSURI, "https://") {
-			return nil, fmt.Errorf("discovery document %s names the jwks_uri %q; %s sends its token, so that address has to be https", discovery, doc.JWKSURI, f.source.label())
+			return nil, fmt.Errorf("discovery document %s names the jwks_uri %.200q; %s sends its token, so that address has to be https", discovery, doc.JWKSURI, f.source.label())
 		}
 		uri = doc.JWKSURI
 	}

@@ -29,6 +29,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/lestrrat-go/jwx/v3/jwk"
 )
@@ -350,13 +351,20 @@ func providerFetcher(p *Provider, client *http.Client, log Logger) *fetcher {
 type clusterAPIServer struct {
 	jwksURI string
 	jwks    []byte
-	urls    []string
-	headers []string
+	// redirect, when set, answers the next request with a 302 to this address.
+	redirect string
+	urls     []string
+	headers  []string
 }
 
 func (s *clusterAPIServer) RoundTrip(r *http.Request) (*http.Response, error) {
 	s.urls = append(s.urls, r.URL.String())
 	s.headers = append(s.headers, r.Header.Get("Authorization"))
+	if s.redirect != "" {
+		header := http.Header{"Location": {s.redirect}}
+		s.redirect = ""
+		return &http.Response{StatusCode: http.StatusFound, Header: header, Body: http.NoBody, Request: r}, nil
+	}
 	body := s.jwks
 	if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
 		body = []byte(`{"jwks_uri": "` + s.jwksURI + `"}`)
@@ -385,6 +393,26 @@ func TestFetch_SendsTheTokenWithDiscoveryOfTheClusterAPIServer(t *testing.T) {
 	wantHeaders := []string{"Bearer sa-token", "Bearer sa-token"}
 	if !slices.Equal(server.headers, wantHeaders) {
 		t.Errorf("Authorization headers = %q, want %q", server.headers, wantHeaders)
+	}
+}
+
+// The redirect target is on the same host, where an HTTP client still forwards
+// an Authorization header, so only the client of newClient keeps the token from
+// it.
+func TestFetch_DoesNotFollowARedirectOfDiscoveryWithTheToken(t *testing.T) {
+	const issuer = "https://kubernetes.default.svc"
+	server := &clusterAPIServer{redirect: issuer + ":6443/.well-known/openid-configuration"}
+	client, err := newClient("provider \"k8s\"", "", time.Second)
+	if err != nil {
+		t.Fatalf("newClient() error = %v", err)
+	}
+	client.Transport = server
+	f := providerFetcher(&Provider{ID: "k8s", Issuer: issuer, TokenFile: writeFile(t, "token", "sa-token")}, client, &warnRecorder{})
+	if _, err := f.fetch(t.Context()); err == nil || !strings.Contains(err.Error(), "HTTP 302") {
+		t.Errorf("fetch() error = %v, want the HTTP 302 of the redirect", err)
+	}
+	if want := []string{issuer + "/.well-known/openid-configuration"}; !slices.Equal(server.urls, want) {
+		t.Errorf("requests = %q, want %q", server.urls, want)
 	}
 }
 
