@@ -293,7 +293,34 @@ func verifierFor(t *testing.T, provider keys.Provider, admit func(*verify.Token)
 	return v, sign
 }
 
-// The Kubernetes provider is named k8s and the unmarked one kubernetes, so
+// A token without a namespace and one from a namespace outside the topology get
+// the same code, so the Detail tells them apart.
+func TestAllowlist_AdmitNamesWhyItRefusesAKubernetesToken(t *testing.T) {
+	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
+	const noNamespace = "token names no kubernetes.io namespace"
+	tests := []struct {
+		name   string
+		claims map[string]any
+		want   string
+	}{
+		{"no kubernetes.io claim", map[string]any{"sub": "system:serviceaccount:own:agent"}, noNamespace},
+		{"kubernetes.io that is a string", map[string]any{"kubernetes.io": "sat-peer"}, noNamespace},
+		{"namespace that is not a string", map[string]any{"kubernetes.io": map[string]any{"namespace": 5}}, noNamespace},
+		{"namespace outside the topology", map[string]any{"kubernetes.io": map[string]any{"namespace": "own"}}, `namespace "own" is not an allowed namespace`},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, sign := verifierFor(t, keys.Provider{ID: "k8s", Kubernetes: true}, a.Admit)
+			_, err := v.Verify(t.Context(), sign(tt.claims))
+			var refused *verify.Error
+			if !errors.As(err, &refused) || refused.Detail != tt.want {
+				t.Errorf("Verify() error = %v, want a *verify.Error with the Detail %q", err, tt.want)
+			}
+		})
+	}
+}
+
+// The marked provider is named k8s and the unmarked one kubernetes, so
 // the mark, not the id, decides which tokens are checked.
 func TestAllowlist_AdmitChecksTheTokensOfKubernetesProviders(t *testing.T) {
 	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})

@@ -308,7 +308,7 @@ func (v *Verifier) Verify(ctx context.Context, raw string) (*Token, error) {
 	}
 	if v.opts.Admit == nil {
 		if tok.Kubernetes() {
-			return nil, fail(CodeNamespaceNotAllowed, "provider %q is a Kubernetes provider and the verifier checks no namespace", tok.ProviderID())
+			return nil, fail(CodeNamespaceNotAllowed, "a Kubernetes token of provider %q needs a namespace check, and the verifier has none", tok.ProviderID())
 		}
 		return tok, nil
 	}
