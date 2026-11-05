@@ -56,9 +56,17 @@ type Config struct {
 
 // SnapshotLoader builds the per-tenant policies from the documents of
 // /access/v3/config/policySets and /access/v3/config/pips. An error means
-// the documents could not be read at all, and nothing was published.
+// the documents could not be read at all, and nothing was published, unless
+// it wraps a [PartialLoad] whose Partial returns true.
 type SnapshotLoader interface {
 	LoadSnapshots(ctx context.Context, policySets, pips []byte) error
+}
+
+// PartialLoad is implemented by an error of [SnapshotLoader.LoadSnapshots]
+// that may report a load which published the documents for some tenants
+// and refused the others; Partial reports whether it does.
+type PartialLoad interface {
+	Partial() bool
 }
 
 // Tokens supplies the bearer token the source is fetched with; nil fetches
@@ -77,7 +85,7 @@ type Logger interface {
 }
 
 // Status reports the pull. PoliciesLoaded is set by the first successful
-// load and never cleared: a source that becomes unreachable leaves the
+// load, a partial one included, and never cleared: a source that becomes unreachable leaves the
 // snapshots already published, which are better than none. Reason
 // explains a PoliciesLoaded set without a load because the pull is
 // disabled.
@@ -103,6 +111,9 @@ type Puller struct {
 	mu           sync.Mutex
 	status       Status
 	firstSuccess time.Time
+	// refusal is the text of the partial load of the last pull, empty when
+	// that pull published every tenant or failed.
+	refusal string
 }
 
 // New returns a puller for cfg; an HTTPTimeout that is zero or negative
@@ -158,6 +169,7 @@ func (p *Puller) Run(ctx context.Context) {
 	}
 }
 
+// pull runs PullNow and reports a load that failed.
 func (p *Puller) pull(ctx context.Context) {
 	if err := p.PullNow(ctx); err != nil {
 		p.log.Warnf("policies: pull failed, keeping the previous snapshots: %v", err)
@@ -167,15 +179,34 @@ func (p *Puller) pull(ctx context.Context) {
 // PullNow loads the snapshots once, as a tick of [Puller.Run] does, and
 // returns once they are loaded or the load has failed. The policies it
 // loads were fetched after the call: a load already in progress finishes
-// first. A failed load keeps the previous snapshots. It loads whatever the
-// pull interval, even 0; with no source URL it returns an error and loads
+// first. A failed load keeps the previous snapshots. A partial load counts
+// as a load, since it published the tenants it did not refuse, and PullNow
+// returns nil for it; its refusals are reported when they differ from the
+// previous pull's, and their end at info. It loads whatever the pull
+// interval, even 0; with no source URL it returns an error and loads
 // nothing.
 func (p *Puller) PullNow(ctx context.Context) error {
 	if strings.TrimSpace(p.cfg.SourceURL) == "" {
 		return errors.New("pull disabled: source URL empty")
 	}
-	if err := p.PullOnce(ctx); err != nil {
+	err := p.PullOnce(ctx)
+	var partial PartialLoad
+	if err != nil && (!errors.As(err, &partial) || !partial.Partial()) {
 		return err
+	}
+	refusal := ""
+	if err != nil {
+		refusal = err.Error()
+	}
+	p.mu.Lock()
+	previous := p.refusal
+	p.refusal = refusal
+	p.mu.Unlock()
+	switch {
+	case refusal != "" && refusal != previous:
+		p.log.Warnf("policies: pulled from %s, and some tenants are not updated: %s", p.cfg.SourceURL, refusal)
+	case refusal == "" && previous != "":
+		p.log.Infof("policies: pulled from %s, and every tenant is updated", p.cfg.SourceURL)
 	}
 	p.loaded()
 	return nil
@@ -196,8 +227,9 @@ func (p *Puller) waitForToken(ctx context.Context) {
 }
 
 // PullOnce fetches the policy sets and the PIPs from the source and loads
-// them into the snapshots. Loads run one at a time: a call waits for the
-// load in progress to finish.
+// them into the snapshots. It returns the error of
+// [SnapshotLoader.LoadSnapshots] wrapped, a [PartialLoad] included. Loads
+// run one at a time: a call waits for the load in progress to finish.
 //
 // The load is reported at info until [Puller.PullNow], which every tick of
 // [Puller.Run] calls, has recorded a first success, and at debug from then
