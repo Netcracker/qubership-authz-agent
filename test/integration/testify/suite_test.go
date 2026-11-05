@@ -48,6 +48,10 @@ type RuntimeSuite struct {
 
 	results []stepResult
 	mu      sync.Mutex
+
+	// noPullRoute reports once per run that the agent has no pull route, which
+	// leaves every upload waiting a pull interval.
+	noPullRoute sync.Once
 }
 
 func TestRuntimeSuite(t *testing.T) {
@@ -279,7 +283,14 @@ func (s *RuntimeSuite) awaitACPull() error {
 	if err != nil || loaded {
 		return err
 	}
-	time.Sleep(s.cfg.PullInterval + 2*time.Second)
+	wait := s.cfg.PullInterval + 2*time.Second
+	if strings.TrimSpace(s.cfg.AgentPullURL) != "" {
+		s.noPullRoute.Do(func() {
+			fmt.Printf("[suite] POST %s: 404, the agent was built without the paritytest tag; every upload waits %s for the pull\n",
+				s.cfg.AgentPullURL, wait)
+		})
+	}
+	time.Sleep(wait)
 	return nil
 }
 
