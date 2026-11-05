@@ -46,11 +46,9 @@ func (s *ParitySuite) round9UploadDomain(subCase, domain string, pips, policies 
 	s.T().Helper()
 	status, err := UploadIsolatedPolicies(context.Background(), s.cfg, s.tokens, domain, pips, policies)
 	s.Require().NoError(err)
-	if !isAuthzAgentProfile(s.cfg.Profile) {
-		s.Run(subCase, func() {
-			s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase, &model.PolicyLoadOutcome{Status: status})
-		})
-	}
+	s.Run(subCase, func() {
+		s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, subCase, &model.PolicyLoadOutcome{Status: status})
+	})
 	return status >= http.StatusOK && status < http.StatusMultipleChoices
 }
 

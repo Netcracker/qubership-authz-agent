@@ -29,8 +29,9 @@ import (
 // isolatedCaseDomain receives one case's PIPs and policy at a time. On the legacy
 // profile a declaration the PAP refuses never reaches the seeded domain and cannot
 // fail its upload. On the authz-agent profile authz-policy-admin serves the union
-// of all domains, so a policy the agent cannot parse fails the agent's load until
-// the next case replaces it; the requests of that case then see stale policies.
+// of all domains, so a policy it accepts and the agent cannot parse fails the
+// agent's load until the next case replaces it; the requests of that case then see
+// stale policies.
 const isolatedCaseDomain = "PARITY_ISOLATED"
 
 // isolatedCase is one policy uploaded alone, with the PIPs it references, and the
@@ -205,8 +206,9 @@ func (s *ParitySuite) subjectToken(req isolatedRequest) (string, error) {
 // domain the case names, and records the upload status and, when the PAP
 // accepts the case, the status and the answer of every request. The upload
 // status is a golden of its own, so a form the PAP refuses is a recorded result
-// rather than a failed case. On the authz-agent profile the upload status is
-// not compared (authz-policy-admin accepts anything) and the requests are.
+// rather than a failed case. On the authz-agent profile the upload goes to
+// authz-policy-admin, whose status is compared the same way, and a case it
+// refuses ends there too.
 //
 // When it ends, it empties every domain its cases uploaded into.
 func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
@@ -260,13 +262,11 @@ func (s *ParitySuite) runIsolatedCases(cases []isolatedCase) {
 			status, body, err := UploadIsolatedPoliciesWithQuery(ctx, s.cfg, s.tokens, valueOr(tc.domain, isolatedCaseDomain), tc.pips, []any{policy}, tc.policiesQuery)
 			s.Require().NoError(err)
 
-			if !isAuthzAgentProfile(s.cfg.Profile) {
-				s.Run("upload", func() {
-					s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+tc.id, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
-				})
-				if status < http.StatusOK || status >= http.StatusMultipleChoices {
-					return
-				}
+			s.Run("upload", func() {
+				s.requirePendingGolden(PSUITE_LOAD_SIMPLIFIED_POLICIES, "isolated/"+tc.id, &model.PolicyLoadOutcome{Status: status, Message: s.refusal(status, body)})
+			})
+			if status < http.StatusOK || status >= http.StatusMultipleChoices {
+				return
 			}
 			for _, req := range tc.requests {
 				s.Run(req.name, func() {
