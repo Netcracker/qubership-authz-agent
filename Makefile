@@ -91,6 +91,9 @@ SUITE_START_SECONDS ?= 180
 # Where the suites send their requests: the chart's Service, which fronts the
 # agent Pod.
 E2E_BASE_URL ?= http://authz-agent:8080
+# A suite pointed at another E2E_BASE_URL must not ask the local agent to pull
+# and then assert against an agent that did not.
+E2E_PULL_URL_ARGS = $(if $(call given,E2E_BASE_URL),--set suite.env.AGENT_PULL_URL=)
 PARITY_AC_BASE_URL ?= http://authz-agent:8080
 # A suite pointed at another PARITY_AC_BASE_URL must not ask the local agent
 # to pull and then assert against an agent that did not.
@@ -107,7 +110,7 @@ e2e-cluster:
 # The images the charts reference as local/<name>:ci. Keycloak is the public
 # image and is not built here. The agent is built with the paritytest tag, so
 # the parity suite can ask it to load the policies instead of waiting a pull
-# interval; the runtime suite runs against the same image.
+# interval; the runtime suite does the same.
 e2e-images:
 	docker build -t local/authz-agent:ci               --build-arg GO_BUILD_TAGS=paritytest -f build/authz-agent/Dockerfile .
 	docker build -t local/authz-policy-admin:ci        -f build/authz-policy-admin/Dockerfile .
@@ -155,7 +158,7 @@ given = $(filter command line environment override,$(origin $(1)))
 # client-credentials Secret the chart expects the platform to provision, and
 # the runtime suite Job, which e2e-suite runs.
 e2e-harness: test-stand-files
-	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--install --create-namespace -f test/k8s/test-stand-values.yaml --set suite.env.BASE_URL=$(E2E_BASE_URL) $(TEST_STAND_HELM_ARGS))
+	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--install --create-namespace -f test/k8s/test-stand-values.yaml --set suite.env.BASE_URL=$(E2E_BASE_URL) $(E2E_PULL_URL_ARGS) $(TEST_STAND_HELM_ARGS))
 
 # The stub first: the agent reports Ready only once it has pulled its policies,
 # so its --wait would run out with no policy source to pull from. Each chart
@@ -209,7 +212,7 @@ endef
 # release has.
 e2e-suite: $(if $(call given,E2E_BASE_URL),test-stand-files)
 ifneq ($(call given,E2E_BASE_URL),)
-	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--reuse-values --set suite.env.BASE_URL=$(E2E_BASE_URL))
+	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--reuse-values --set suite.env.BASE_URL=$(E2E_BASE_URL) $(E2E_PULL_URL_ARGS))
 endif
 	$(call run-suite,$(E2E_KUBECTL),$(E2E_HELM),runtime-suite,$(E2E_SUITE_TIMEOUT))
 
