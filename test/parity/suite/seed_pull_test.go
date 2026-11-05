@@ -20,13 +20,14 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 )
 
-// wipeWithAgent runs WipeDomain of the authz-agent seeder against a stub that
-// accepts every write and an agent whose pull route answers with agent, and
-// returns how long WipeDomain took and its error.
-func wipeWithAgent(t *testing.T, agent http.HandlerFunc) (time.Duration, error) {
+// runWithAgent runs step on the authz-agent seeder against a stub that accepts
+// every write and an agent whose pull route answers with agent, and returns how
+// long step took and its error.
+func runWithAgent(t *testing.T, agent http.HandlerFunc, step func(*authzAgentInternalSeeder) error) (time.Duration, error) {
 	t.Helper()
 	stub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -42,8 +43,16 @@ func wipeWithAgent(t *testing.T, agent http.HandlerFunc) (time.Duration, error) 
 	t.Setenv("PARITY_PULL_SETTLE_SECONDS", "1")
 	seeder := &authzAgentInternalSeeder{cfg: Config{ACStubBaseURL: stub.URL}}
 	start := time.Now()
-	err := seeder.WipeDomain(context.Background(), "PARITY_DOMAIN")
+	err := step(seeder)
 	return time.Since(start), err
+}
+
+func wipe(s *authzAgentInternalSeeder) error {
+	return s.WipeDomain(context.Background(), "PARITY_DOMAIN")
+}
+
+func seedEmpty(s *authzAgentInternalSeeder) error {
+	return s.SeedDomain(context.Background(), "PARITY_DOMAIN", fstest.MapFS{})
 }
 
 func answering(status int, body string) http.HandlerFunc {
@@ -58,7 +67,7 @@ func answering(status int, body string) http.HandlerFunc {
 }
 
 func TestAwaitPull_ReturnsAtOnceWhenTheAgentLoaded(t *testing.T) {
-	took, err := wipeWithAgent(t, answering(http.StatusNoContent, ""))
+	took, err := runWithAgent(t, answering(http.StatusNoContent, ""), wipe)
 
 	if err != nil || took >= time.Second {
 		t.Errorf("WipeDomain() = %v after %s, want nil before the 1s settle delay", err, took)
@@ -66,17 +75,27 @@ func TestAwaitPull_ReturnsAtOnceWhenTheAgentLoaded(t *testing.T) {
 }
 
 func TestAwaitPull_FailsTheSeedWhenTheAgentLoadFails(t *testing.T) {
-	_, err := wipeWithAgent(t, answering(http.StatusBadGateway, `{"error":"fetch policySets: HTTP 500"}`))
+	for _, tc := range []struct {
+		name string
+		step func(*authzAgentInternalSeeder) error
+	}{
+		{"WipeDomain", wipe},
+		{"SeedDomain", seedEmpty},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := runWithAgent(t, answering(http.StatusBadGateway, `{"error":"fetch policySets: HTTP 500"}`), tc.step)
 
-	if err == nil || !strings.Contains(err.Error(), "HTTP 502") || !strings.Contains(err.Error(), "fetch policySets: HTTP 500") {
-		t.Errorf("WipeDomain() = %v, want an error with the agent's status and body", err)
+			if err == nil || !strings.Contains(err.Error(), "HTTP 502") || !strings.Contains(err.Error(), "fetch policySets: HTTP 500") {
+				t.Errorf("%s() = %v, want an error with the agent's status and body", tc.name, err)
+			}
+		})
 	}
 }
 
 func TestAwaitPull_FailsTheSeedWhenTheAgentIsUnreachable(t *testing.T) {
-	_, err := wipeWithAgent(t, func(w http.ResponseWriter, r *http.Request) {
+	_, err := runWithAgent(t, func(w http.ResponseWriter, r *http.Request) {
 		panic(http.ErrAbortHandler)
-	})
+	}, wipe)
 
 	if err == nil {
 		t.Error("WipeDomain() = nil with the agent's connection aborted, want an error")
@@ -92,7 +111,7 @@ func TestAwaitPull_WaitsTheSettleDelayWithoutAPullRoute(t *testing.T) {
 		{"PARITY_AGENT_PULL_URL empty", nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			took, err := wipeWithAgent(t, tc.agent)
+			took, err := runWithAgent(t, tc.agent, wipe)
 
 			if err != nil || took < time.Second {
 				t.Errorf("WipeDomain() = %v after %s, want nil after the 1s settle delay", err, took)
