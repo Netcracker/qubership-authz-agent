@@ -183,6 +183,9 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 		if doc.JWKSURI == "" {
 			return nil, fmt.Errorf("discovery document %s has no jwks_uri", discovery)
 		}
+		if f.tokenFile() != "" && !strings.HasPrefix(doc.JWKSURI, "https://") {
+			return nil, fmt.Errorf("discovery document %s names the jwks_uri %q; %s sends its token, so that address has to be https", discovery, doc.JWKSURI, f.source.label())
+		}
 		uri = doc.JWKSURI
 	}
 	body, err := f.get(ctx, uri)
