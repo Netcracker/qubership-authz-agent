@@ -229,22 +229,12 @@ type Set struct {
 }
 
 // New returns a [Set] for cfg, with no keys loaded yet. It fails when cfg
-// breaks [Config.Validate] and when a caFile cannot be read. It logs a warning
-// for every provider that does not set [Provider.Kubernetes] but has the id
-// kubernetes or an address on an in-cluster name of the Kubernetes API server,
-// since its tokens would get no namespace check.
+// breaks [Config.Validate] and when a caFile cannot be read.
 func New(cfg Config, opts Options) (*Set, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
 	opts = opts.withDefaults()
-	for _, p := range cfg.Providers {
-		if !p.Kubernetes && p.looksLikeKubernetes() {
-			opts.Log.Warnf("trusted providers: provider %q looks like a Kubernetes API server but does not set "+
-				"\"kubernetes\": true, so its tokens get no namespace check; set it on this provider in the trusted "+
-				"providers file if the provider is the API server", p.ID)
-		}
-	}
 	s := &Set{
 		opts:      opts,
 		providers: make(map[string]*source, len(cfg.Providers)),
