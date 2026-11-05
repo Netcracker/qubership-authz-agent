@@ -143,7 +143,7 @@ func (s *ParitySuite) TestRound10TwoDomainMappingCases() {
 // filtered to them. Legacy profile only: the statuses are the PAP's.
 func (s *ParitySuite) TestRound10ResourceTypeAllUploadCases() {
 	if isAuthzAgentProfile(s.cfg.Profile) {
-		s.T().Skip("the upload status is the PAP's; authz-policy-admin accepts anything")
+		s.T().Skip("the upload status is the PAP's; authz-policy-admin refuses only part of what the PAP refuses")
 	}
 	ctx := context.Background()
 	s.T().Cleanup(func() {

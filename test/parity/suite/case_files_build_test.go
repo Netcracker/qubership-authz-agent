@@ -891,40 +891,56 @@ func TestUploadIsolatedPoliciesWithQuery_ExtendsOnlyTheUploadOfThePolicies(t *te
 
 // UploadIsolatedPoliciesWithQuery returns the body of the PUT whose status it
 // returns: the first one refused, which ends the upload, or else the last one.
+// On the authz-agent profile the PUTs go to authz-policy-admin, a refusal returns
+// without waiting for the agent's pull, and an accepted upload returns no body.
 func TestUploadIsolatedPoliciesWithQuery_ReturnsTheBodyOfTheReturnedStatus(t *testing.T) {
 	cases := []struct {
+		profile    string
 		name       string
-		refuse     string
+		refusePut  int
 		wantStatus int
 		wantBody   string
 		wantPuts   int
 	}{
-		{"the PIP declaration refused", "domainPIPs", http.StatusBadRequest, "refused domainPIPs", 2},
-		{"the policies refused", "applicableForFrontend", http.StatusBadRequest, "refused applicableForFrontend", 3},
-		{"nothing refused", "", http.StatusOK, "accepted 3", 3},
+		{"legacy", "the emptying of the policies refused", 1, http.StatusBadRequest, "refused PUT 1", 1},
+		{"legacy", "the PIP declaration refused", 2, http.StatusBadRequest, "refused PUT 2", 2},
+		{"legacy", "the policies refused", 3, http.StatusBadRequest, "refused PUT 3", 3},
+		{"legacy", "nothing refused", 0, http.StatusOK, "accepted 3", 3},
+		{"authz-agent", "the emptying of the policies refused", 1, http.StatusBadRequest, "refused PUT 1", 1},
+		{"authz-agent", "the PIP declaration refused", 2, http.StatusBadRequest, "refused PUT 2", 2},
+		{"authz-agent", "the policies refused", 3, http.StatusBadRequest, "refused PUT 3", 3},
+		{"authz-agent", "nothing refused", 0, http.StatusOK, "", 3},
 	}
 	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.profile+"/"+tc.name, func(t *testing.T) {
+			// A refusal that waited for the pull would take the whole delay.
+			settle := "0"
+			if tc.refusePut != 0 {
+				settle = "5"
+			}
+			t.Setenv("PARITY_PULL_SETTLE_SECONDS", settle)
 			puts := 0
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				puts++
-				if tc.refuse != "" && strings.Contains(r.URL.Path+"?"+r.URL.RawQuery, tc.refuse) {
+				if puts == tc.refusePut {
 					w.WriteHeader(http.StatusBadRequest)
-					_, _ = w.Write([]byte("refused " + tc.refuse))
+					_, _ = fmt.Fprintf(w, "refused PUT %d", puts)
 					return
 				}
 				_, _ = fmt.Fprintf(w, "accepted %d", puts)
 			}))
 			t.Cleanup(srv.Close)
-			cfg := Config{ACBaseURL: srv.URL, TenantID: "t", Profile: "legacy"}
+			cfg := Config{ACBaseURL: srv.URL, ACStubBaseURL: srv.URL, TenantID: "t", Profile: tc.profile}
 			tokens := &TokenFactory{cache: map[string]tokenEntry{"m2m": {accessToken: "m2m-token", expiresAt: time.Now().Add(time.Hour)}}}
+			start := time.Now()
 			status, body, err := UploadIsolatedPoliciesWithQuery(context.Background(), cfg, tokens, "D", nil, []any{}, "applicableForFrontend=true")
+			elapsed := time.Since(start)
 			if err != nil {
 				t.Fatal(err)
 			}
-			if status != tc.wantStatus || string(body) != tc.wantBody || puts != tc.wantPuts {
-				t.Errorf("UploadIsolatedPoliciesWithQuery = %d, %q after %d PUTs, want %d, %q after %d",
-					status, body, puts, tc.wantStatus, tc.wantBody, tc.wantPuts)
+			if status != tc.wantStatus || string(body) != tc.wantBody || puts != tc.wantPuts || elapsed > 2*time.Second {
+				t.Errorf("UploadIsolatedPoliciesWithQuery = %d, %q after %d PUTs in %s, want %d, %q after %d in under 2s",
+					status, body, puts, elapsed, tc.wantStatus, tc.wantBody, tc.wantPuts)
 			}
 		})
 	}

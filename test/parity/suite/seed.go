@@ -221,9 +221,10 @@ func HelperDeletePolicySetsByExternalID(ctx context.Context, cfg Config, m2mToke
 // last one. It empties the policies before replacing the PIPs, so no policy still
 // references a PIP being removed. On the legacy profile the status is the PAP's,
 // which refuses a declaration or a condition it does not accept. On the authz-agent
-// profile the uploads go to authz-policy-admin, which accepts anything, and the call
-// waits for the agent's next pull; the status is then 200 and says nothing about
-// the agent.
+// profile the uploads go to authz-policy-admin, and the status is its own: it
+// refuses part of what the PAP refuses, with a body of its own wording. After an
+// accepted upload the call waits for the agent's next pull; the status 200 then
+// says nothing about the agent.
 func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any) (int, error) {
 	status, _, err := UploadIsolatedPoliciesWithQuery(ctx, cfg, tokens, domain, pips, policies, "")
 	return status, err
@@ -234,7 +235,8 @@ func UploadIsolatedPolicies(ctx context.Context, cfg Config, tokens *TokenFactor
 // upload, the one that carries policies. An example is
 // applicableForFrontend=true. The authz-agent profile ignores it, since
 // authz-policy-admin reads no query. It also returns the response body of the
-// upload whose status it returns; that body is nil on the authz-agent profile.
+// upload whose status it returns; on the authz-agent profile that body is nil
+// unless the upload was refused.
 func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *TokenFactory, domain string, pips, policies []any, policiesQuery string) (int, []byte, error) {
 	steps := []struct {
 		kind    string
@@ -248,8 +250,12 @@ func UploadIsolatedPoliciesWithQuery(ctx context.Context, cfg Config, tokens *To
 	if isAuthzAgentProfile(cfg.Profile) {
 		seeder := &authzAgentInternalSeeder{cfg: cfg}
 		for _, step := range steps {
-			if err := seeder.putACStub(ctx, simplifiedPath(step.kind, domain), step.payload); err != nil {
-				return 0, nil, err
+			status, body, err := seeder.putACStubStatus(ctx, simplifiedPath(step.kind, domain), step.payload)
+			if err != nil {
+				return status, body, err
+			}
+			if status < http.StatusOK || status >= http.StatusMultipleChoices {
+				return status, body, nil
 			}
 		}
 		awaitPull(ctx)
@@ -375,6 +381,19 @@ func simplifiedPath(kind, domain string) string {
 }
 
 func (ds *authzAgentInternalSeeder) putACStub(ctx context.Context, path string, payload any) error {
+	status, raw, err := ds.putACStubStatus(ctx, path, payload)
+	if err != nil {
+		return err
+	}
+	if status < 200 || status >= 300 {
+		return fmt.Errorf("status=%d body=%s", status, strings.TrimSpace(string(raw)))
+	}
+	return nil
+}
+
+// putACStubStatus is putACStub that returns a refusal as its status and body
+// rather than as an error.
+func (ds *authzAgentInternalSeeder) putACStubStatus(ctx context.Context, path string, payload any) (int, []byte, error) {
 	req, err := buildRequest(
 		ctx,
 		http.MethodPut,
@@ -384,17 +403,9 @@ func (ds *authzAgentInternalSeeder) putACStub(ctx context.Context, path string, 
 		PerCallOptions{},
 	)
 	if err != nil {
-		return err
+		return 0, nil, err
 	}
-
-	status, raw, err := doRequest(req)
-	if err != nil {
-		return err
-	}
-	if status < 200 || status >= 300 {
-		return fmt.Errorf("status=%d body=%s", status, strings.TrimSpace(string(raw)))
-	}
-	return nil
+	return doRequest(req)
 }
 
 func loadFixturePayloads(root fs.FS) ([]any, []any, []regularPolicyFixture, error) {
