@@ -47,6 +47,10 @@ type ParitySuite struct {
 	// scopeRead is set while a test runs a case file that declares or pins a
 	// permission scope; see TearDownTest.
 	scopeRead bool
+	// seeder seeds and wipes the main domain; see BeforeTest.
+	seeder DomainSeeder
+	// mainPackSeeded is set while the main domain holds the main fixtures.
+	mainPackSeeded bool
 }
 
 // scopeCacheTTL outlasts the cachePeriod the case files declare for the
@@ -74,12 +78,12 @@ func (s *ParitySuite) SetupSuite() {
 	s.umMock = NewPipController(s.cfg.UMMockControlURL)
 
 	ctx := context.Background()
-	seeder := NewDomainSeeder(s.cfg, s.tokens)
+	s.seeder = NewDomainSeeder(s.cfg, s.tokens)
 
-	if err := seeder.WipeDomain(ctx, s.cfg.DomainName); err != nil {
+	if err := s.seeder.WipeDomain(ctx, s.cfg.DomainName); err != nil {
 		s.T().Fatalf("wipe before smoke seed: %v", err)
 	}
-	if err := seeder.SeedDomain(ctx, s.cfg.DomainName, smokeFixtureFS); err != nil {
+	if err := s.seeder.SeedDomain(ctx, s.cfg.DomainName, smokeFixtureFS); err != nil {
 		s.T().Fatalf("seed smoke fixtures: %v", err)
 	}
 	if err := RunSmokePhase(ctx, s.cfg, s.tokens, s.pipMock); err != nil {
@@ -97,12 +101,39 @@ func (s *ParitySuite) SetupSuite() {
 	if err := s.eaMock.ResetCalls(ctx); err != nil {
 		s.T().Fatalf("reset entitlements-mock calls after smoke: %v", err)
 	}
-	if err := seeder.WipeDomain(ctx, s.cfg.DomainName); err != nil {
+	if err := s.seeder.WipeDomain(ctx, s.cfg.DomainName); err != nil {
 		s.T().Fatalf("wipe after smoke: %v", err)
 	}
-	if err := seeder.SeedDomain(ctx, s.cfg.DomainName, mainFixtureFS); err != nil {
-		s.T().Fatalf("seed main fixtures: %v", err)
+}
+
+// BeforeTest seeds the main domain with the main fixtures when a TestRow
+// test is about to run and empties it when a test of any other kind is. Only
+// the TestRow tests read their resource types and PIPs; the case files seed
+// domains of their own. On the authz-agent profile the agent recompiles every
+// policy of the tenant whenever a domain changes, so with the main fixtures in
+// place each case file would pay for compiling them. The tests run in name
+// order, which puts the TestRow tests together, so the fixtures are seeded
+// once and wiped once.
+func (s *ParitySuite) BeforeTest(_, testName string) {
+	needed := strings.HasPrefix(testName, "TestRow")
+	if needed == s.mainPackSeeded {
+		return
 	}
+	ctx := context.Background()
+	if needed {
+		if err := s.seeder.SeedDomain(ctx, s.cfg.DomainName, mainFixtureFS); err != nil {
+			s.T().Fatalf("seed main fixtures: %v", err)
+		}
+		// The agent compiles the main fixtures for longer than the pull
+		// interval, and the next test asserts at once, so wait a second
+		// settle delay for this one seed.
+		if isAuthzAgentProfile(s.cfg.Profile) {
+			awaitPull(ctx)
+		}
+	} else if err := s.seeder.WipeDomain(ctx, s.cfg.DomainName); err != nil {
+		s.T().Fatalf("wipe main fixtures: %v", err)
+	}
+	s.mainPackSeeded = needed
 }
 
 // TearDownTest resets every mock's pinned-route state so the next test's
