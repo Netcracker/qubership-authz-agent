@@ -1,0 +1,78 @@
+{
+ "about": "The entitlements service answers the reader with one entitlement of type PARITY_R30_ENT whose Owner reference lists e1 and whose Viewer reference lists e2; the suite pins /api-version of the service to major 3 for this file, as for every case file with entitlements. Round 29 asked the first case without that pin, and the decision failed before it read the entitlements. Each comparison is `<comparison> OR resource.a == 'y'`.",
+ "resourceTypePrefix": "PARITY_SUITE_R30X_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r30fix-entitlements-other-reference",
+   "about": "e2 is listed under Viewer only. a = n true if as('Owner') does not filter the references by name.",
+   "condition": "subject.entitledResources.of('PARITY_R30_ENT').as('Owner') CONTAINS 'e2' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30fix-entitlements-own-reference",
+   "about": "Control: e1 is listed under Owner; a = n true.",
+   "condition": "subject.entitledResources.of('PARITY_R30_ENT').as('Owner') CONTAINS 'e1' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ],
+ "entitlements": {
+  "statusCode": 200,
+  "body": {
+   "entitlements": [
+    {
+     "resourceType": "PARITY_R30_ENT",
+     "references": [
+      {
+       "name": "Owner",
+       "resources": [
+        {
+         "resourceId": "e1"
+        }
+       ]
+      },
+      {
+       "name": "Viewer",
+       "resources": [
+        {
+         "resourceId": "e2"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

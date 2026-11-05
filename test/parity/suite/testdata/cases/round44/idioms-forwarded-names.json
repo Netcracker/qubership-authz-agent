@@ -1,0 +1,494 @@
+{
+ "about": "Implementation idioms: a name in the headers field of a GENERAL with a control character, a no-break or an ideographic space at its end, and whether the PIP call forwards the request header of that name. A file of its own: each regular case declares every PIP of its file, and a refused declaration would take the other cases with it.",
+ "resourceTypePrefix": "PARITY_SUITE_R44_IDIOM_",
+ "pins": {},
+ "pips": {
+  "obs-subject-parityidiomfwdname1": {
+   "name": "subject.parityIdiomFwdName1",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "X-Parity-Fwd\u001c"
+  },
+  "obs-subject-parityidiomfwdname3": {
+   "name": "subject.parityIdiomFwdName3",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "X-Parity-Fwd　"
+  },
+  "obs-subject-parityidiomfwdname7": {
+   "name": "subject.parityIdiomFwdName7",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/idiom-gen",
+   "headers": "X-Parity-Fwd "
+  }
+ },
+ "cases": [
+  {
+   "id": "id44-fwd-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "id44-forward-name-trim-0-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityIdiomFwdName1 CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomfwdname1",
+    "obs-subject-parityidiomfwdname3",
+    "obs-subject-parityidiomfwdname7"
+   ]
+  },
+  {
+   "id": "id44-forward-name-trim-0-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityIdiomFwdName1 CONTAINS 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomfwdname1",
+    "obs-subject-parityidiomfwdname3",
+    "obs-subject-parityidiomfwdname7"
+   ]
+  },
+  {
+   "id": "id44-forward-name-trim-1-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityIdiomFwdName3 CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomfwdname1",
+    "obs-subject-parityidiomfwdname3",
+    "obs-subject-parityidiomfwdname7"
+   ]
+  },
+  {
+   "id": "id44-forward-name-trim-1-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityIdiomFwdName3 CONTAINS 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomfwdname1",
+    "obs-subject-parityidiomfwdname3",
+    "obs-subject-parityidiomfwdname7"
+   ]
+  },
+  {
+   "id": "id44-forward-name-trim-2-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.parityIdiomFwdName7 CONTAINS 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "a-n",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    },
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "a-y",
+     "resource": {
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomfwdname1",
+    "obs-subject-parityidiomfwdname3",
+    "obs-subject-parityidiomfwdname7"
+   ]
+  },
+  {
+   "id": "id44-forward-name-trim-2-deny",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.parityIdiomFwdName7 CONTAINS 'v'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "pins": {
+      "/api/v1/pip/idiom-gen": {
+       "statusCode": 200,
+       "body": [
+        "v"
+       ]
+      }
+     },
+     "headers": {
+      "X-Parity-Fwd": "f"
+     },
+     "pipCalls": "/api/v1/pip/idiom-gen",
+     "pipHeaders": [
+      "X-Parity-Fwd"
+     ],
+     "name": "read",
+     "resource": {
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ],
+   "pips": [
+    "obs-subject-parityidiomfwdname1",
+    "obs-subject-parityidiomfwdname3",
+    "obs-subject-parityidiomfwdname7"
+   ]
+  },
+  {
+   "id": "id44-fwd-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-y",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "y"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

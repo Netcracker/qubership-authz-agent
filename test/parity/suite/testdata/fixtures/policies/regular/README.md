@@ -6,7 +6,7 @@ instead of the simplified-policy channel.
 
 These files are imported by
 [`test/parity/suite/seed.go`](../../../../seed.go) during
-`ParitySuite.SetupSuite` rather than by a compose-side shell script.
+`ParitySuite.BeforeTest`, before the first `TestRow` test, rather than by a compose-side shell script.
 
 Why it exists:
 

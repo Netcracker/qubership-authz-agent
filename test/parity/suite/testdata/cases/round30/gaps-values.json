@@ -1,0 +1,202 @@
+{
+ "about": "jsonPath over values round 29 did not send. Each comparison is `<comparison> OR resource.a == 'y'`.",
+ "resourceTypePrefix": "PARITY_SUITE_R30G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r30gaps-values-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-regex-over-null",
+   "about": "k is null. True if =~ reads null as the text null.",
+   "condition": "resource.l[?(@.k =~ /n.*/)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": null
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": null
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-regex-over-false",
+   "about": "k is false. True if =~ reads false as its text, as round 29 saw for true.",
+   "condition": "resource.l[?(@.k =~ /f.*/)].id CONTAINS 'a' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n",
+      "l": [
+       {
+        "id": "a",
+        "k": false
+       }
+      ]
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y",
+      "l": [
+       {
+        "id": "a",
+        "k": false
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-filter-over-object-not-holding",
+   "about": "o is the object {\"k\": \"w\"}, which the filter does not select. True if the filter selects nothing; the rule ends if it reads no value at all.",
+   "condition": "resource.o[?(@.k == 'v')] IS EMPTY OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n",
+      "o": {
+       "k": "w"
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y",
+      "o": {
+       "k": "w"
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-star-after-star-over-objects",
+   "about": "o holds an object whose value is v. True if the second [*] takes the values of the object the first selected.",
+   "condition": "resource.o[*][*] CONTAINS 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r30",
+      "a": "n",
+      "o": {
+       "x": {
+        "k": "v"
+       }
+      }
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r30",
+      "a": "y",
+      "o": {
+       "x": {
+        "k": "v"
+       }
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "r30gaps-values-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r30",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

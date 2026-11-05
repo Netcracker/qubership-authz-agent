@@ -1,0 +1,284 @@
+{
+ "about": "How the filter writes an iterate pass that gives two groups: the nested iterating set of round 13 whose pass holds two scoped policies with predicates, beside the allowed==1 policy. Round 13 showed that the groups of two passes stand as one parenthesised group of the parent; here each pass gives two groups of its own. Each case pins the scope service to its own answer, one grant of r1 or two grants of r1 and r2 (no grant gives no pass and so no group), and waits out the scope's cachePeriod before its first request, as permission-scope-wire does. Each sends the filter on LIST and check/resource on LIST in regions r1 and r2. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "r14-pass-with-two-predicates-one-grant-r1",
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "id": "00000000-0000-0000-0000-000000000101",
+        "isInherited": false,
+        "name": "parity-reader",
+        "type": "USER",
+        "policies": [
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r1"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        },
+        {
+         "key": "kinded",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "kinded-list",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "kind==1"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r14-pass-with-two-predicates-two-grants-r1-and-r2",
+   "pins": {
+    "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+     "statusCode": 200,
+     "body": {
+      "permissionScope": [
+       {
+        "id": "00000000-0000-0000-0000-000000000101",
+        "isInherited": false,
+        "name": "parity-reader",
+        "type": "USER",
+        "policies": [
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r1"
+             }
+            ]
+           }
+          ]
+         },
+         {
+          "scopeItems": [
+           {
+            "key": "region",
+            "values": [
+             {
+              "id": "r2"
+             }
+            ]
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "pips": [
+    "scope"
+   ],
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "algorithm": "DENY_OVERRIDES"
+       },
+       "policies": [
+        {
+         "key": "scoped",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "scoped-region-granted",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "subject.permissionScope.region CONTAINS resource.region",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "region=in=(${subject.permissionScope.region})"
+           }
+          }
+         ]
+        },
+        {
+         "key": "kinded",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "kinded-list",
+           "target": "operation == 'LIST' AND subject.permissionScope.region IS NOT NULL",
+           "condition": "true",
+           "effect": "ALLOW",
+           "predicates": {
+            "rsqlPredicate": "kind==1"
+           }
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "pauseMs": 2000
+    },
+    {
+     "name": "check-list-in-region-r1",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r1"
+     }
+    },
+    {
+     "name": "check-list-in-region-r2",
+     "operation": "LIST",
+     "resource": {
+      "id": "r13-iterate",
+      "region": "r2"
+     }
+    }
+   ]
+  }
+ ]
+}

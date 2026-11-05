@@ -1,0 +1,376 @@
+{
+ "about": "What NOT IN, MATCH, CONTAINS ANY and IS SUBSET answer over a HEADER PIP whose header holds one value, and what a header sent empty resolves to. ==, !=, IN and CONTAINS over one value are recorded (sl-header-*); the other operators are recorded over a header split into a list (hl1-hl3) or absent (es-*), and an empty header is recorded nowhere: it may be an empty list, a list of one empty string, or an absent header. The single-value cases are sent the header a and the header b, alone, and the header a through the probe and its control, whose ids end in -or-true. The empty-header cases ask IS EMPTY, IS NULL, equality with the empty string, and resource.id IN the header, each with the header sent empty and not sent at all; the absent header is the control, recorded as an empty list (es-absent-header-*). The agent's condition parser accepts every condition here.",
+ "resourceTypePrefix": "PARITY_SUITE_R10_",
+ "pins": {},
+ "pips": {
+  "oneheader": {
+   "name": "subject.parityR9OneHeader",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r9-one",
+   "cacheable": false
+  }
+ },
+ "cases": [
+  {
+   "id": "sv-header-not-in",
+   "condition": "subject.parityR9OneHeader NOT IN 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-not-in-or-true",
+   "condition": "subject.parityR9OneHeader NOT IN 'a', 'z' OR resource.a == 'y'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-not-in-or-true-control",
+   "resourceType": "PARITY_SUITE_R10_SV_HEADER_NOT_IN_OR_TRUE_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9OneHeader NOT IN 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-match",
+   "condition": "subject.parityR9OneHeader MATCH a",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-match-or-true",
+   "condition": "subject.parityR9OneHeader MATCH a OR resource.a == 'y'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-match-or-true-control",
+   "resourceType": "PARITY_SUITE_R10_SV_HEADER_MATCH_OR_TRUE_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9OneHeader MATCH a",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-contains-any",
+   "condition": "subject.parityR9OneHeader CONTAINS ANY 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-contains-any-or-true",
+   "condition": "subject.parityR9OneHeader CONTAINS ANY 'a', 'z' OR resource.a == 'y'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-contains-any-or-true-control",
+   "resourceType": "PARITY_SUITE_R10_SV_HEADER_CONTAINS_ANY_OR_TRUE_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9OneHeader CONTAINS ANY 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-is-subset",
+   "condition": "subject.parityR9OneHeader IS SUBSET 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    },
+    {
+     "name": "header-b",
+     "headers": {
+      "x-parity-r9-one": "b"
+     },
+     "resource": {
+      "id": "r10-sv"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-is-subset-or-true",
+   "condition": "subject.parityR9OneHeader IS SUBSET 'a', 'z' OR resource.a == 'y'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "sv-header-is-subset-or-true-control",
+   "resourceType": "PARITY_SUITE_R10_SV_HEADER_IS_SUBSET_OR_TRUE_CTL",
+   "condition": "resource.a == 'y' OR subject.parityR9OneHeader IS SUBSET 'a', 'z'",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-a",
+     "headers": {
+      "x-parity-r9-one": "a"
+     },
+     "resource": {
+      "id": "r10-sv",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "eh-header-is-empty",
+   "condition": "subject.parityR9OneHeader IS EMPTY",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-empty",
+     "headers": {
+      "x-parity-r9-one": ""
+     },
+     "resource": {
+      "id": ""
+     }
+    },
+    {
+     "name": "header-absent",
+     "resource": {
+      "id": ""
+     }
+    }
+   ]
+  },
+  {
+   "id": "eh-header-is-null",
+   "condition": "subject.parityR9OneHeader IS NULL",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-empty",
+     "headers": {
+      "x-parity-r9-one": ""
+     },
+     "resource": {
+      "id": ""
+     }
+    },
+    {
+     "name": "header-absent",
+     "resource": {
+      "id": ""
+     }
+    }
+   ]
+  },
+  {
+   "id": "eh-header-equals-empty-string",
+   "condition": "subject.parityR9OneHeader == ''",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-empty",
+     "headers": {
+      "x-parity-r9-one": ""
+     },
+     "resource": {
+      "id": ""
+     }
+    },
+    {
+     "name": "header-absent",
+     "resource": {
+      "id": ""
+     }
+    }
+   ]
+  },
+  {
+   "id": "eh-header-resource-in",
+   "condition": "resource.id IN subject.parityR9OneHeader",
+   "pips": [
+    "oneheader"
+   ],
+   "requests": [
+    {
+     "name": "header-empty",
+     "headers": {
+      "x-parity-r9-one": ""
+     },
+     "resource": {
+      "id": ""
+     }
+    },
+    {
+     "name": "header-absent",
+     "resource": {
+      "id": ""
+     }
+    }
+   ]
+  }
+ ]
+}

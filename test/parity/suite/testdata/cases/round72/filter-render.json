@@ -1,0 +1,363 @@
+{
+ "about": "Round 72: whether check/filter copies a predicate's function arguments, a bracketed rsql operand and a mongodb array as written, and keeps the order of a GENERAL PIP's list it substitutes. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R72_FILTER_RENDER_",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/pip/r72-render-ab": {
+   "statusCode": 200,
+   "body": [
+    "a",
+    "b"
+   ]
+  },
+  "/api/v1/pip/r72-render-ba": {
+   "statusCode": 200,
+   "body": [
+    "b",
+    "a"
+   ]
+  }
+ },
+ "pips": {
+  "ab": {
+   "name": "subject.parityR72RenderAB",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-render-ab",
+   "requestAttributes": {
+    "case": "r72-render-ab"
+   }
+  },
+  "ba": {
+   "name": "subject.parityR72RenderBA",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r72-render-ba",
+   "requestAttributes": {
+    "case": "r72-render-ba"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "f72-render-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f72-render-function-tight",
+   "about": "An ALLOW rule whose sqlPredicate is COALESCE(fa,fb) = 'u' and whose rsqlPredicate is fa=bt=(1,5) beside a second ALLOW policy with fz==9, under PERMIT_OVERRIDES: the filter, in every dialect. Compared with the other spelling, the text shows whether the stand copies the predicate as written.",
+   "pips": [
+    "ab",
+    "ba"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "probe",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa=bt=(1,5)",
+          "sqlPredicate": "COALESCE(fa,fb) = 'u'",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"tags\": [ \"a\",\"b\" ] }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "other",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-other",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fz==9",
+          "sqlPredicate": "fz=9",
+          "predicate": "${resourceType}.fz.eq(9)",
+          "mongodbPredicate": "{ \"fz\": 9 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "f72-render-function-spaced",
+   "about": "An ALLOW rule whose sqlPredicate is COALESCE(fa, fb) = 'u' and whose rsqlPredicate is fa=bt=(1, 5) beside a second ALLOW policy with fz==9, under PERMIT_OVERRIDES: the filter, in every dialect. Compared with the other spelling, the text shows whether the stand copies the predicate as written.",
+   "pips": [
+    "ab",
+    "ba"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "probe",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa=bt=(1, 5)",
+          "sqlPredicate": "COALESCE(fa, fb) = 'u'",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"tags\": [ \"a\", \"b\" ] }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "other",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-other",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fz==9",
+          "sqlPredicate": "fz=9",
+          "predicate": "${resourceType}.fz.eq(9)",
+          "mongodbPredicate": "{ \"fz\": 9 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "f72-render-pip-ab",
+   "about": "An ALLOW rule whose predicates substitute a GENERAL PIP returning [\"a\", \"b\"] in every dialect beside a second ALLOW policy with fz==9, under PERMIT_OVERRIDES: the filter, in every dialect. Compared with the other order, the text shows whether the stand keeps the order of the PIP's list.",
+   "pips": [
+    "ab",
+    "ba"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "probe",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f=in=(${subject.parityR72RenderAB})",
+          "sqlPredicate": "f IN (${subject.parityR72RenderAB})",
+          "predicate": "${resourceType}.f.in(${subject.parityR72RenderAB})",
+          "mongodbPredicate": "{ \"f\": { \"$in\": ${subject.parityR72RenderAB} } }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "other",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-other",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fz==9",
+          "sqlPredicate": "fz=9",
+          "predicate": "${resourceType}.fz.eq(9)",
+          "mongodbPredicate": "{ \"fz\": 9 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "f72-render-pip-ba",
+   "about": "An ALLOW rule whose predicates substitute a GENERAL PIP returning [\"b\", \"a\"] in every dialect beside a second ALLOW policy with fz==9, under PERMIT_OVERRIDES: the filter, in every dialect. Compared with the other order, the text shows whether the stand keeps the order of the PIP's list.",
+   "pips": [
+    "ab",
+    "ba"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "probe",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "f=in=(${subject.parityR72RenderBA})",
+          "sqlPredicate": "f IN (${subject.parityR72RenderBA})",
+          "predicate": "${resourceType}.f.in(${subject.parityR72RenderBA})",
+          "mongodbPredicate": "{ \"f\": { \"$in\": ${subject.parityR72RenderBA} } }"
+         }
+        }
+       ]
+      },
+      {
+       "key": "other",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow-other",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fz==9",
+          "sqlPredicate": "fz=9",
+          "predicate": "${resourceType}.fz.eq(9)",
+          "mongodbPredicate": "{ \"fz\": 9 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "f72-render-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

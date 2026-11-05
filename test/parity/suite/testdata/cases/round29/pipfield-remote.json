@@ -1,0 +1,284 @@
+{
+ "about": "Remote PIPs for subjects without a level claim: parity-reader (the control the goldens already show), the M2M token alone, and an anonymous request (Authorization-Type: anonymous). The policy target is true, so the rule applies to every subject; pipCalls records whether pip-mock was called. The DENY rule under PERMIT_UNLESS_DENY tells a failed decision (false) from an ended rule (true).",
+ "resourceTypePrefix": "PARITY_SUITE_R29F_",
+ "pins": {
+  "/api/v1/pip/r29pipfield-remote": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "remote": {
+   "name": "subject.parityR29Remote",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r29pipfield-remote",
+   "requestAttributes": {
+    "case": "r29pipfield-remote"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r29pipfield-remote-allow",
+   "about": "GENERAL PIP, allow form",
+   "pips": [
+    "remote"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR29Remote == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "anonymous-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "anonymous-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-remote-deny",
+   "about": "GENERAL PIP, deny form",
+   "pips": [
+    "remote"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR29Remote == 'v' OR resource.a == 'y'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "anonymous-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "anonymous-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r29pipfield-remote-is-empty",
+   "about": "GENERAL PIP, is empty form",
+   "pips": [
+    "remote"
+   ],
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR29Remote IS EMPTY OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "reader-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "reader-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     }
+    },
+    {
+     "name": "m2m-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "m2m-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "anonymous-a-n",
+     "resource": {
+      "id": "r29",
+      "a": "n"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "pipCalls": "/api/v1/pip/r29pipfield-remote"
+    },
+    {
+     "name": "anonymous-a-y",
+     "resource": {
+      "id": "r29",
+      "a": "y"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  }
+ ]
+}

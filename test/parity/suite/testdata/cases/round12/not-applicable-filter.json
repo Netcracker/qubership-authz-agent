@@ -1,0 +1,141 @@
+{
+ "about": "What check/filter answers for a PERMIT_UNLESS_DENY set none of whose policies applies, and for an ALLOW without a predicate beside a predicate under DENY_OVERRIDES. fn-nested-set-without-an-applicable-policy-under-permit-unless-deny nests such a set beside the allowed==1 policy under DENY_OVERRIDES and answers allowed==1. Two readings produce that: A, the set does not apply in a filter, although it permits in check/resource (algorithm-permit-unless-deny); B, the set gives ALLOW, and an ALLOW beside a predicate under DENY_OVERRIDES keeps the predicate. The control of the predicate policy alone is deny-overrides-set-with-the-predicate-policy-alone in round9/filter-algebra.json. Every case sends the filter on LIST and check/resource on LIST. Legacy profile only, like every case with sets.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "permit-unless-deny-set-without-an-applicable-policy",
+   "about": "The set alone, its one policy targeting a role nobody holds: the filter is DENY under A and ALLOW under B, and check/resource is true under both.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "for-nobody",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "for-nobody-list-allow",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "deny-overrides-set-with-an-unrestricted-allow-beside-a-predicate",
+   "about": "The allowed==1 policy beside a policy that allows LIST with no predicate: the filter is ALLOW under A and allowed==1 under B.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "allows-list",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "deny-overrides-set-with-the-unrestricted-allow-alone",
+   "about": "Control: the policy without a predicate alone, ALLOW under both readings, which shows that it lifts the filter on its own.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "allows-list",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-allow",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  }
+ ]
+}

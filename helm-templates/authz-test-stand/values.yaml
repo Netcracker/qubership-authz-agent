@@ -42,6 +42,8 @@ idp:
 # by the Service name. `port` is the container and Service port. `config`
 # names a rule file under files/pip-stub/ that the stub loads at start; a
 # changed rule file restarts the instance at the next upgrade.
+# `resources`, when set, replaces pipStub.resources for that instance, for a
+# stub that holds more than a few routes in memory.
 pipStub:
   imageRepository: ghcr.io/netcracker/qubership-authz-pip-stub
   instances: {}
@@ -100,8 +102,8 @@ suite:
     - -test.run
     - ^TestParitySuite$
   # Seconds the Job may run. Keep it no lower than -test.timeout in args, and
-  # no higher than the `helm test --timeout` (E2E_SUITE_TIMEOUT or
-  # PARITY_SUITE_TIMEOUT on kind, 15m).
+  # no higher than the `helm test --timeout` (on kind, E2E_SUITE_TIMEOUT, 15m,
+  # or PARITY_SUITE_TIMEOUT, 5h30m).
   activeDeadlineSeconds: 900
   # Plain variables, by name.
   env: {}

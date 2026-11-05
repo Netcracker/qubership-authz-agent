@@ -1,0 +1,184 @@
+{
+ "about": "What check/resource/bulk and check/resource/bulk/operations answer when the check of one item answers 400 because its condition names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}, beside an item another policy allows. No golden has an item whose check fails the request.",
+ "resourceTypePrefix": "PARITY_SUITE_R39B_",
+ "pins": {
+  "/api/v1/pip/r39open-m2m-bulk": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "r39open-m2m-bulk": {
+   "name": "subject.parityR39M2mBulk",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r39open-m2m-bulk",
+   "requestAttributes": {
+    "case": "r39open-m2m-bulk",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r39openm2mbulk-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r39open-m2m-bulk",
+   "pips": [
+    "r39open-m2m-bulk"
+   ],
+   "about": "A top-level set whose only rule allows on subject.parityR39M2mBulk == 'v'. The check of its resource reads the GENERAL and answers 400 (read), as r37open-ra-is-m2m did; i-named is that resource, and i-other a resource of PARITY_SUITE_R39B_R39OPENM2MBULK_CONTROL_FIRST, the type of this file's first control, which allows it. The bulk answers 400 if an item whose check answers 400 fails the whole response; i-other alone if that item is only not allowed. The same for bulk/operations.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.parityR39M2mBulk == 'v'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r39open-m2m-bulk"
+    },
+    {
+     "name": "bulk",
+     "bulk": [
+      {
+       "id": "i-named",
+       "operation": "READ",
+       "resource": {
+        "id": "r39",
+        "a": "y"
+       }
+      },
+      {
+       "id": "i-other",
+       "operation": "READ",
+       "type": "PARITY_SUITE_R39B_R39OPENM2MBULK_CONTROL_FIRST",
+       "resource": {
+        "id": "r39",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "operations",
+     "bulkOperations": [
+      {
+       "id": "i-named",
+       "operations": [
+        "READ"
+       ],
+       "resource": {
+        "id": "r39",
+        "a": "y"
+       }
+      },
+      {
+       "id": "i-other",
+       "operations": [
+        "READ"
+       ],
+       "type": "PARITY_SUITE_R39B_R39OPENM2MBULK_CONTROL_FIRST",
+       "resource": {
+        "id": "r39",
+        "c": "n"
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r39openm2mbulk-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r39",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

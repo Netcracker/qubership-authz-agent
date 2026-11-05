@@ -29,12 +29,14 @@ package paritysuite
 //  3. Path matching is strictly literal against r.URL.Path
 //     (pipstub/main.go:110). No wildcards / regex / templates. The
 //     PinEntitlementsV3ForUser helper resolves the per-user literal path
-//     once per pin call.
+//     once per pin call. The one exception is the path DefaultRoute, whose
+//     answer serves every path that has no route of its own.
 //
-// The same control surface is reused for the entitlements-mock service.
-// Two PipController instances are therefore instantiated at SetupSuite time:
-// one bound to Config.PipMockControlURL for pip-mock, one bound to
-// Config.EAMockControlURL for entitlements-mock.
+// The same control surface is reused for the entitlements-mock service and
+// for user-management-mock. Three PipController instances are therefore
+// instantiated at SetupSuite time: one bound to Config.PipMockControlURL for
+// pip-mock, one bound to Config.EAMockControlURL for entitlements-mock, and
+// one bound to Config.UMMockControlURL for user-management-mock.
 
 import (
 	"bytes"
@@ -45,6 +47,11 @@ import (
 	"strings"
 	"sync"
 )
+
+// DefaultRoute is the path PinRoute takes to pin the answer pipstub gives to
+// every request whose path has no route of its own. ResetPinnedRoutes resets
+// it to 404 like any other pinned path.
+const DefaultRoute = "*"
 
 // PipStubResponse mirrors pipstub's pipResponse struct verbatim.
 // pipstub accepts body as an arbitrary JSON value (Go any), so every scalar /
@@ -70,12 +77,15 @@ type pipStubRoute struct {
 // for case-insensitive matching — look them up in lowercase (e.g.
 // `call.Headers["x-request-id"]`, not `"X-Request-Id"`).
 type PipStubCall struct {
-	Path    string              `json:"path"`
-	Method  string              `json:"method"`
-	Query   map[string][]string `json:"query,omitempty"`
-	Headers map[string]string   `json:"headers,omitempty"`
-	BodyRaw string              `json:"bodyRaw,omitempty"`
-	Body    any                 `json:"body,omitempty"`
+	Path string `json:"path"`
+	// RequestURI is the request target as the stub received it, with the path
+	// and the query still encoded as the caller wrote them.
+	RequestURI string              `json:"requestUri"`
+	Method     string              `json:"method"`
+	Query      map[string][]string `json:"query,omitempty"`
+	Headers    map[string]string   `json:"headers,omitempty"`
+	BodyRaw    string              `json:"bodyRaw,omitempty"`
+	Body       any                 `json:"body,omitempty"`
 }
 
 // PipController wraps the /pip-stub/configure + /pip-stub/reset control
@@ -130,7 +140,7 @@ func (pc *PipController) PinEntitlementsV3ForUser(ctx context.Context, userID st
 
 // PinEntitlementsV3PerDefinition pins the per-(resourceType,name) lookup path
 // legacy AC calls when the EA cache has a definition hit but no resource-id
-// entry. See EntitlementsPipServiceImpl.java:170-201.
+// entry.
 func (pc *PipController) PinEntitlementsV3PerDefinition(ctx context.Context, userID, resourceType, name string, resp PipStubResponse) error {
 	if userID == "" || resourceType == "" || name == "" {
 		return fmt.Errorf("paritysuite: PinEntitlementsV3PerDefinition requires all of userID/resourceType/name")
@@ -157,7 +167,9 @@ func (pc *PipController) ResetCalls(ctx context.Context) error {
 	return nil
 }
 
-// GetCalls returns pipstub's observed call log.
+// GetCalls returns pipstub's observed call log. It returns an error when the
+// stub's journal dropped calls since the last reset, because a count or a
+// first call taken from a truncated log is wrong.
 func (pc *PipController) GetCalls(ctx context.Context) ([]PipStubCall, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pc.baseURL+"/pip-stub/calls", nil)
 	if err != nil {
@@ -170,6 +182,11 @@ func (pc *PipController) GetCalls(ctx context.Context) ([]PipStubCall, error) {
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("pipstub calls failed: status=%d", resp.StatusCode)
+	}
+	if dropped := resp.Header.Get("Pip-Stub-Calls-Dropped"); dropped != "" && dropped != "0" {
+		return nil, fmt.Errorf("pipstub at %s dropped %s calls since the last reset, so its call log is incomplete; "+
+			"reset the stub closer to the request the test checks, or raise maxCalls in test/integration/pipstub/main.go",
+			pc.baseURL, dropped)
 	}
 	var calls []PipStubCall
 	if err := json.NewDecoder(resp.Body).Decode(&calls); err != nil {

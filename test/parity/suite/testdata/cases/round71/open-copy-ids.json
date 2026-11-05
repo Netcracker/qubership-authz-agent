@@ -1,0 +1,842 @@
+{
+ "about": "Round 71: the letter case of a policySetId in another tenant's customization entry and in a child entry. Each case cleans up what it wrote in both tenants.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p71x-copy-ids-control-first",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P71X_COPY_IDS_CONTROL_FIRST",
+   "tenant": "parity-p71x-copy-ids-control-first",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-copy-ids-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "500de74f-766b-bb76-b27d-93c24a6a31ed",
+       "name": "p71x-copy-ids-control-first s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_COPY_IDS_CONTROL_FIRST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "cd71b389-34b6-f1a6-8419-4c3602ed2897",
+         "name": "p71x-copy-ids-control-first s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "2a4fbf0e-5154-2f6a-db46-ff78a3f0a99d",
+           "name": "p71x-copy-ids-control-first s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_COPY_IDS_CONTROL_FIRST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71x-copy-ids-control-first",
+      "PARITY_SUITE_P71X_COPY_IDS_CONTROL_FIRST"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p71x-copy-entry-upper",
+   "about": "Another tenant uploads a set under its policySetId in lower case and customizes it at CUSTOMER with an entry naming the set in upper case and setting its description, a field of the set itself; this tenant uploads the same policySetId and decides: its raw read of the export leaves the other tenant's set alone when the entry names it (one id), or moves its policy into this tenant's set (two ids).",
+   "resourceType": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+   "tenant": "parity-p71x-copy-entry-upper",
+   "steps": [
+    {
+     "name": "h1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-copy-entry-upper-holder"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "8ad37187-3319-4518-1f84-557302924ce5",
+       "name": "p71x-copy-entry-upper s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_COPY_ENTRY_UPPER'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "729daa1f-a750-b075-0c4a-164c0d099301",
+         "name": "p71x-copy-entry-upper s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "97756584-d3b7-a054-e1b2-19ffe4479888",
+           "name": "p71x-copy-entry-upper s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "h2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:h2-read",
+      "decide:h2-update"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "8AD37187-3319-4518-1F84-557302924CE5",
+       "policies": [
+        {
+         "policyId": "729daa1f-a750-b075-0c4a-164c0d099301",
+         "rules": [
+          {
+           "ruleId": "97756584-d3b7-a054-e1b2-19ffe4479888",
+           "name": "p71x-copy-entry-upper s rule",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ],
+       "description": "parity p71x-copy-entry-upper"
+      }
+     ],
+     "requests": [
+      {
+       "name": "h2-read",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "h2-update",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "UPDATE"
+      }
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "h2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "h2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-copy-entry-upper"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read",
+      "decide:w1-update",
+      "decide:w1-delete"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "8ad37187-3319-4518-1f84-557302924ce5",
+       "name": "p71x-copy-entry-upper own",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_COPY_ENTRY_UPPER'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "701bbd3c-fdf7-8a39-a573-05ce7c96431f",
+         "name": "p71x-copy-entry-upper own reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "ff7b03b1-a150-b089-f983-58a87a6f1786",
+           "name": "p71x-copy-entry-upper own rule",
+           "target": "operation == 'DELETE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "w1-update",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "UPDATE"
+      },
+      {
+       "name": "w1-delete",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "DELETE"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "t1",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "decide:t1-read",
+      "decide:t1-update",
+      "decide:t1-delete"
+     ],
+     "requests": [
+      {
+       "name": "t1-read",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "t1-update",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "UPDATE"
+      },
+      {
+       "name": "t1-delete",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "DELETE"
+      }
+     ]
+    },
+    {
+     "name": "t1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "t1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "h3",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "decide:h3-read",
+      "decide:h3-update",
+      "decide:h3-delete"
+     ],
+     "requests": [
+      {
+       "name": "h3-read",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "h3-update",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "UPDATE"
+      },
+      {
+       "name": "h3-delete",
+       "type": "PARITY_SUITE_P71X_COPY_ENTRY_UPPER",
+       "operation": "DELETE"
+      }
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "h3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "h3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ],
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "8ad37187-3319-4518-1f84-557302924ce5",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "8ad37187-3319-4518-1f84-557302924ce5"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-3",
+     "op": "delete-set",
+     "args": {
+      "id": "8ad37187-3319-4518-1f84-557302924ce5"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p71x-copy-entry-upper-holder"
+    }
+   ]
+  },
+  {
+   "id": "p71x-copy-child-upper",
+   "about": "Another tenant uploads a set with a child set and customizes it at CUSTOMER through an entry naming the child in upper case and adding a child set whose new policySetId is in upper case; this tenant holds the parent and the child and decides.",
+   "resourceType": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+   "tenant": "parity-p71x-copy-child-upper",
+   "steps": [
+    {
+     "name": "h1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-copy-child-upper-holder"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b6e0a30f-9c62-9f4d-a68f-80c3dc0c6039",
+       "name": "p71x-copy-child-upper s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_COPY_CHILD_UPPER'",
+       "policySets": [
+        {
+         "policySetId": "c1922a43-4efd-3335-a1b0-f3630b78c922",
+         "name": "p71x-copy-child-upper c",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P71X_COPY_CHILD_UPPER'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "ddbb9515-8312-6c30-9550-10e23f6bc671",
+           "name": "p71x-copy-child-upper c reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "1002ebec-d42b-bc62-c17a-094b4c4a1f5f",
+             "name": "p71x-copy-child-upper c rule",
+             "target": "operation == 'LIST'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        }
+       ],
+       "policies": [
+        {
+         "policyId": "94b8da1a-42a6-247d-fb64-a685b81dd35b",
+         "name": "p71x-copy-child-upper s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "5590e05e-3634-dbb8-b782-74dfaf38a322",
+           "name": "p71x-copy-child-upper s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "h2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status",
+      "decide:h2-read",
+      "decide:h2-list"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b6e0a30f-9c62-9f4d-a68f-80c3dc0c6039",
+       "policySets": [
+        {
+         "policySetId": "C1922A43-4EFD-3335-A1B0-F3630B78C922",
+         "policies": [
+          {
+           "policyId": "ddbb9515-8312-6c30-9550-10e23f6bc671",
+           "rules": [
+            {
+             "ruleId": "1002ebec-d42b-bc62-c17a-094b4c4a1f5f",
+             "name": "p71x-copy-child-upper c rule",
+             "effect": "ALLOW",
+             "target": "operation == 'READ'",
+             "condition": "true"
+            }
+           ]
+          }
+         ]
+        },
+        {
+         "policySetId": "E91855B3-4846-7F4F-78C1-9D5F56E07C1A",
+         "name": "p71x-copy-child-upper added",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P71X_COPY_CHILD_UPPER'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "1a96b88d-6e6a-f61c-8a38-fdee3bd79c45",
+           "name": "p71x-copy-child-upper added reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "fe44ef9b-4e06-abb6-2a3b-f31b46166361",
+             "name": "p71x-copy-child-upper added rule",
+             "target": "operation == 'CREATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        }
+       ]
+      }
+     ],
+     "requests": [
+      {
+       "name": "h2-read",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "h2-list",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "LIST"
+      }
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "h2-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "h2-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-copy-child-upper"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read",
+      "decide:w1-list",
+      "decide:w1-create",
+      "decide:w1-delete"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "b6e0a30f-9c62-9f4d-a68f-80c3dc0c6039",
+       "name": "p71x-copy-child-upper own",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_COPY_CHILD_UPPER'",
+       "policySets": [
+        {
+         "policySetId": "c1922a43-4efd-3335-a1b0-f3630b78c922",
+         "name": "p71x-copy-child-upper own-c",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P71X_COPY_CHILD_UPPER'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "0ee51784-8a1b-e210-b211-775ac8b53d09",
+           "name": "p71x-copy-child-upper own-c reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "ec76bb9d-52b4-08c9-9deb-1391e44fa71d",
+             "name": "p71x-copy-child-upper own-c rule",
+             "target": "operation == 'CREATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        }
+       ],
+       "policies": [
+        {
+         "policyId": "81a400e1-f8de-49c1-55f0-4703ab5e107a",
+         "name": "p71x-copy-child-upper own reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "a8fb0d01-80b7-7f15-29bf-86c0a90367fe",
+           "name": "p71x-copy-child-upper own rule",
+           "target": "operation == 'DELETE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "w1-list",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "LIST"
+      },
+      {
+       "name": "w1-create",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "CREATE"
+      },
+      {
+       "name": "w1-delete",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "DELETE"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "h3",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "decide:h3-read",
+      "decide:h3-list",
+      "decide:h3-create",
+      "decide:h3-delete"
+     ],
+     "requests": [
+      {
+       "name": "h3-read",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "h3-list",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "LIST"
+      },
+      {
+       "name": "h3-create",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "CREATE"
+      },
+      {
+       "name": "h3-delete",
+       "type": "PARITY_SUITE_P71X_COPY_CHILD_UPPER",
+       "operation": "DELETE"
+      }
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "h3-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "h3-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ],
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "b6e0a30f-9c62-9f4d-a68f-80c3dc0c6039",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "b6e0a30f-9c62-9f4d-a68f-80c3dc0c6039"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-3",
+     "op": "delete-set",
+     "args": {
+      "id": "b6e0a30f-9c62-9f4d-a68f-80c3dc0c6039"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p71x-copy-child-upper-holder"
+    }
+   ]
+  },
+  {
+   "id": "p71x-copy-ids-control-last",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P71X_COPY_IDS_CONTROL_LAST",
+   "tenant": "parity-p71x-copy-ids-control-last",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p71x-copy-ids-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "a584c515-acfe-fff4-8c59-2fc4e8322742",
+       "name": "p71x-copy-ids-control-last s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P71X_COPY_IDS_CONTROL_LAST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "f2bb4b49-900c-de6b-cfe7-64b70a4be289",
+         "name": "p71x-copy-ids-control-last s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "81fa93cf-43d6-0e7a-ab75-e9f0379df098",
+           "name": "p71x-copy-ids-control-last s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P71X_COPY_IDS_CONTROL_LAST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p71x-copy-ids-control-last",
+      "PARITY_SUITE_P71X_COPY_IDS_CONTROL_LAST"
+     ]
+    }
+   ]
+  }
+ ]
+}

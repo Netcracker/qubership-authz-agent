@@ -1,0 +1,390 @@
+{
+ "about": "subject.isM2M as the whole condition or target. access-control 6.1.6 accepts it as the whole condition of a simplified policy (g8a-subject-is-m2m, sx-is-m2m-alone and others, 400 before), and its three new goldens ask parity-reader only, false. Beside a connective in a set's rule condition it is true for the M2M token alone (s18q-is-m2m-*). Each case asks the M2M token alone, parity-reader, and parity-r29-level-m2m, a user whose token carries the claim level m2m (testdata/realm/round29-pipfield-users.json and the level mapper of the parity realm).",
+ "resourceTypePrefix": "PARITY_SUITE_R42MA_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r42openm2malone-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-alone-control",
+   "roles": [
+    "ROLE_PARITY_READER",
+    "ROLE_M2M"
+   ],
+   "condition": "resource.c == 'n'",
+   "about": "Control: a simplified policy for READ with the roles ROLE_PARITY_READER and ROLE_M2M, whose condition holds. All three requests answer true if each subject reaches the policy by its roles; a false here makes the other simplified cases of the file say nothing for that subject.",
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-alone-simplified",
+   "roles": [
+    "ROLE_PARITY_READER",
+    "ROLE_M2M"
+   ],
+   "condition": "subject.isM2M",
+   "about": "A simplified policy for READ with the roles of the control and the condition subject.isM2M alone. m2m true and reader false mean it checks that the subject is a service account; m2m false means the whole condition is never true; level-m2m true means a user token whose level claim is m2m counts as one.",
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-beside-or",
+   "roles": [
+    "ROLE_PARITY_READER",
+    "ROLE_M2M"
+   ],
+   "condition": "subject.isM2M OR resource.a == 'y'",
+   "about": "The same policy with subject.isM2M OR resource.a == 'y', asked with a = n: the operand beside a connective, which the M2M token alone makes true in a set's rule condition (s18q-is-m2m-*); no golden asks it in a simplified policy. level-m2m true means a user token whose level claim is m2m counts as a service account whether or not the condition is whole.",
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42",
+      "a": "n"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42",
+      "a": "n"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42",
+      "a": "n"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-alone-rule-condition",
+   "about": "An ACTIVE top-level set whose policy (target true) holds one ALLOW rule with condition subject.isM2M. m2m true and reader false mean it checks that the subject is a service account; m2m false means it is never true; a refused upload means the PAP takes subject.isM2M alone in a simplified policy only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "subject.isM2M",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-alone-rule-target",
+   "about": "The same set, the ALLOW rule with target subject.isM2M and condition true. m2m true and reader false mean it checks that the subject is a service account; m2m false means it is never true; a refused upload means the PAP takes subject.isM2M alone in a simplified policy only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "subject.isM2M",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-alone-policy-target",
+   "about": "The same set, the policy with target subject.isM2M and an ALLOW rule with condition true. m2m true and reader false mean it checks that the subject is a service account; m2m false means it is never true; a refused upload means the PAP takes subject.isM2M alone in a simplified policy only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "subject.isM2M",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-m2m-alone-set-target",
+   "about": "A top-level set whose target is subject.isM2M alone, with a policy (target true) and an ALLOW rule with condition true. The target names no resource type, so the set applies to every type: the case comes last before the closing control, which asks parity-reader. m2m true and reader false mean it checks that the subject is a service account; m2m false means it is never true; a refused upload means the PAP takes subject.isM2M alone in a simplified policy only.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "subject.isM2M",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "reader",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "level-m2m",
+     "resource": {
+      "id": "r42"
+     },
+     "subject": "user:parity-r29-level-m2m",
+     "subjectClaims": {
+      "level": "m2m"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42openm2malone-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

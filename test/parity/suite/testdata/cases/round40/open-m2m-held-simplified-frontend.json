@@ -1,0 +1,105 @@
+{
+ "about": "Whether a simplified policy for the user interface holds a condition that names a GENERAL whose requestAttributes carry a whole ${subject.isM2M}. A simplified policy with applicableForFrontend true takes part in a decision (round 29: r29fields-frontend-body-true). The first control is a simplified policy, since the runner runs the simplified cases of a file before its cases with sets; the case replaces it in the domain.",
+ "resourceTypePrefix": "PARITY_SUITE_R40SF_",
+ "pins": {
+  "/api/v1/pip/r40open-m2m-held-simplified-frontend": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "held": {
+   "name": "subject.parityR40HeldSimplifiedFrontend",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r40open-m2m-held-simplified-frontend",
+   "requestAttributes": {
+    "case": "r40open-m2m-held-simplified-frontend",
+    "x": "${subject.isM2M}"
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r40openm2mheldsimplifiedfrontend-control-first",
+   "condition": "resource.c == 'n'",
+   "about": "Control: a simplified policy for READ whose condition holds. True unless the stand answers every check with 400.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r40open-m2m-held-simplified-frontend",
+   "pips": [
+    "held"
+   ],
+   "condition": "resource.a == 'y' OR subject.parityR40HeldSimplifiedFrontend == 'v'",
+   "policy": {
+    "applicableForFrontend": true
+   },
+   "about": "A simplified policy for READ with applicableForFrontend true and condition resource.a == 'y' OR subject.parityR40HeldSimplifiedFrontend == 'v'. read-other (the first control's type, whose policy this upload replaced) and the last control answer 400 if the tenant holds the condition of a policy for the user interface; false and true if it does not. read-a-y evaluates the condition and answers 400 either way.",
+   "requests": [
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r40",
+      "a": "y"
+     },
+     "pipCalls": "/api/v1/pip/r40open-m2m-held-simplified-frontend"
+    },
+    {
+     "name": "read-other",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     },
+     "type": "PARITY_SUITE_R40SF_R40OPENM2MHELDSIMPLIFIEDFRONTEND_CONTROL_FIRST"
+    }
+   ]
+  },
+  {
+   "id": "r40openm2mheldsimplifiedfrontend-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r40",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

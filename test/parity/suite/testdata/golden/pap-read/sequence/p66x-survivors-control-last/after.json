@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-survivors-control-last",
+        "name": "p66x-survivors-control-last s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-survivors-control-last s reader",
+            "policyId": "72e5d6c5-c5d3-8f80-e22c-fb20ea589f75",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-survivors-control-last s rule",
+                "ruleId": "5a5181aa-50c8-097a-cefe-5d5cd71395cc",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-survivors-control-last"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-survivors-control-last"
+          }
+        ],
+        "policySetId": "2a871321-5731-f024-c8f6-200a289dfa4d",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_SURVIVORS_CONTROL_LAST'",
+        "tenantId": "parity-p66x-survivors-control-last",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p66x-survivors-control-last"
+  ]
+}

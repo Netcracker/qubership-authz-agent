@@ -1,0 +1,234 @@
+{
+ "about": "Uploads round 30 did not send, each with a value the documentation does not list for its field. The load golden is the answer; a read follows each accepted upload.",
+ "resourceTypePrefix": "PARITY_SUITE_R31G_",
+ "pins": {
+  "/api/v1/pip/r31gaps-typed": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  }
+ },
+ "pips": {
+  "number-for-a-boolean": {
+   "name": "subject.parityR31Typed0",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": 1,
+   "url": "http://pip-mock:8090/api/v1/pip/r31gaps-typed",
+   "requestAttributes": {
+    "case": "r31gaps-typed"
+   }
+  },
+  "text-for-a-boolean": {
+   "name": "subject.parityR31Typed1",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": "false",
+   "url": "http://pip-mock:8090/api/v1/pip/r31gaps-typed",
+   "requestAttributes": {
+    "case": "r31gaps-typed"
+   }
+  },
+  "fraction-for-an-integer": {
+   "name": "subject.parityR31Typed2",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r31gaps-typed",
+   "requestAttributes": {
+    "case": "r31gaps-typed"
+   },
+   "cachePeriod": 2.5
+  }
+ },
+ "cases": [
+  {
+   "id": "r31gaps-pap-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-boolean-for-a-string",
+   "about": "The set's description is the boolean true. Upload 200 if a scalar binds to a string field, 400 if only a string or a number does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ],
+     "fields": {
+      "description": true
+     }
+    }
+   ],
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-number-for-a-boolean",
+   "about": "The GENERAL PIP's cacheable is the number 1. Upload 200 if a number binds to a boolean field, 400 if it does not.",
+   "pips": [
+    "number-for-a-boolean"
+   ],
+   "condition": "subject.parityR31Typed0 == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-text-for-a-boolean",
+   "about": "The GENERAL PIP's cacheable is the text \"false\". Upload 200 if the text of a boolean binds to a boolean field, 400 if only a boolean does.",
+   "pips": [
+    "text-for-a-boolean"
+   ],
+   "condition": "subject.parityR31Typed1 == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-fraction-for-an-integer",
+   "about": "The GENERAL PIP's cachePeriod is 2.5. Upload 200 if a fraction binds to an integer field, 400 if it does not.",
+   "pips": [
+    "fraction-for-an-integer"
+   ],
+   "condition": "subject.parityR31Typed2 == 'v' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "read-a-n",
+     "resource": {
+      "id": "r31",
+      "a": "n"
+     }
+    },
+    {
+     "name": "read-a-y",
+     "resource": {
+      "id": "r31",
+      "a": "y"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-pap-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

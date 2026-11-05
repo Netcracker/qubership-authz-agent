@@ -1,0 +1,675 @@
+{
+ "about": "Round 66: how the v3 export matches another tenant's customized set to the reader's: the letter case of a UUID, and two child sets under two spellings of one UUID.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "p66x-copy-control-first",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P66X_COPY_CONTROL_FIRST",
+   "tenant": "parity-p66x-copy-control-first",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-copy-control-first"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "ec74b04f-ada4-7a3a-0553-cba73e53976e",
+       "name": "p66x-copy-control-first s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_COPY_CONTROL_FIRST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "4ebf1037-3ea4-21da-64f7-7e9ca2d6592f",
+         "name": "p66x-copy-control-first s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "c7f905a2-02c6-9b60-de22-c1e0186f80d5",
+           "name": "p66x-copy-control-first s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_COPY_CONTROL_FIRST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66x-copy-control-first",
+      "PARITY_SUITE_P66X_COPY_CONTROL_FIRST"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "p66x-copy-id-upper",
+   "about": "Another tenant uploads and customizes a set under its policySetId in lower case; this tenant uploads the same UUID in upper case and decides: its raw read of the export moves the other tenant's policy (one id) or answers 500 (two ids).",
+   "resourceType": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+   "tenant": "parity-p66x-copy-id-upper",
+   "steps": [
+    {
+     "name": "h1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-copy-id-upper-holder"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e6bcf41c-8847-48bd-bf60-87ac16460cab",
+       "name": "p66x-copy-id-upper s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_UPPER'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "714d0e39-1df8-a4c0-7767-3689b76dbb19",
+         "name": "p66x-copy-id-upper s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "b5603160-42cd-bf59-6fc7-f872ec4ae407",
+           "name": "p66x-copy-id-upper s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "tenant": "parity-p66x-copy-id-upper-holder"
+    },
+    {
+     "name": "h2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e6bcf41c-8847-48bd-bf60-87ac16460cab",
+       "policies": [
+        {
+         "policyId": "714d0e39-1df8-a4c0-7767-3689b76dbb19",
+         "rules": [
+          {
+           "ruleId": "b5603160-42cd-bf59-6fc7-f872ec4ae407",
+           "name": "p66x-copy-id-upper s rule",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "tenant": "parity-p66x-copy-id-upper-holder"
+    },
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-copy-id-upper"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read",
+      "decide:w1-update",
+      "decide:w1-delete"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "E6BCF41C-8847-48BD-BF60-87AC16460CAB",
+       "name": "p66x-copy-id-upper own",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_UPPER'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "a13c128d-1564-3cd9-51c7-a12192bb8a5c",
+         "name": "p66x-copy-id-upper own reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "1e480163-7276-91eb-d3d4-315164f27f19",
+           "name": "p66x-copy-id-upper own rule",
+           "target": "operation == 'DELETE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "w1-update",
+       "type": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+       "operation": "UPDATE"
+      },
+      {
+       "name": "w1-delete",
+       "type": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+       "operation": "DELETE"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "t1",
+     "op": "read-merged-obligations",
+     "args": {},
+     "observe": [
+      "decide:t1-read",
+      "decide:t1-update",
+      "decide:t1-delete"
+     ],
+     "requests": [
+      {
+       "name": "t1-read",
+       "type": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+       "operation": "READ"
+      },
+      {
+       "name": "t1-update",
+       "type": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+       "operation": "UPDATE"
+      },
+      {
+       "name": "t1-delete",
+       "type": "PARITY_SUITE_P66X_COPY_ID_UPPER",
+       "operation": "DELETE"
+      }
+     ]
+    },
+    {
+     "name": "t1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "t1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "e6bcf41c-8847-48bd-bf60-87ac16460cab",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p66x-copy-id-upper-holder"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "E6BCF41C-8847-48BD-BF60-87AC16460CAB"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-3",
+     "op": "delete-set",
+     "args": {
+      "id": "e6bcf41c-8847-48bd-bf60-87ac16460cab"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p66x-copy-id-upper-holder"
+    }
+   ]
+  },
+  {
+   "id": "p66x-copy-id-children",
+   "about": "Another tenant uploads a set with two child sets whose policySetIds are one UUID in lower and in upper case, and customizes the parent's policy; this tenant holds the parent and decides.",
+   "resourceType": "PARITY_SUITE_P66X_COPY_ID_CHILDREN",
+   "tenant": "parity-p66x-copy-id-children",
+   "steps": [
+    {
+     "name": "h1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-copy-id-children-holder"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c138c339-b9c2-00fd-4f79-b1364a74b58e",
+       "name": "p66x-copy-id-children s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+       "policySets": [
+        {
+         "policySetId": "c1eee5be-6c66-87f9-2ee6-a94cf9b168c6",
+         "name": "p66x-copy-id-children c",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "3bbf4aa5-ffdf-7a8a-d0c3-001fee01ee8e",
+           "name": "p66x-copy-id-children c reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "b4092f40-088c-d13b-0eff-f1dfec3c6e4b",
+             "name": "p66x-copy-id-children c rule",
+             "target": "operation == 'LIST'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        },
+        {
+         "policySetId": "C1EEE5BE-6C66-87F9-2EE6-A94CF9B168C6",
+         "name": "p66x-copy-id-children d",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "9777a422-95ae-c700-c689-b59db3bdbdd7",
+           "name": "p66x-copy-id-children d reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "d1a10f09-ac03-f4c0-8c72-5d137b4a8880",
+             "name": "p66x-copy-id-children d rule",
+             "target": "operation == 'CREATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        }
+       ],
+       "policies": [
+        {
+         "policyId": "eefb6e75-d30a-6758-806b-89601871201f",
+         "name": "p66x-copy-id-children s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "ed73efc8-a87c-08df-e116-dd28c4cf326a",
+           "name": "p66x-copy-id-children s rule",
+           "target": "operation == 'UPDATE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "tenant": "parity-p66x-copy-id-children-holder"
+    },
+    {
+     "name": "h2",
+     "op": "customize-sets",
+     "args": {
+      "level": "CUSTOMER"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c138c339-b9c2-00fd-4f79-b1364a74b58e",
+       "policies": [
+        {
+         "policyId": "eefb6e75-d30a-6758-806b-89601871201f",
+         "rules": [
+          {
+           "ruleId": "ed73efc8-a87c-08df-e116-dd28c4cf326a",
+           "name": "p66x-copy-id-children s rule",
+           "effect": "ALLOW",
+           "target": "operation == 'READ'",
+           "condition": "true"
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "tenant": "parity-p66x-copy-id-children-holder"
+    },
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-copy-id-children"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read",
+      "decide:w1-list",
+      "decide:w1-create",
+      "decide:w1-delete"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c138c339-b9c2-00fd-4f79-b1364a74b58e",
+       "name": "p66x-copy-id-children own",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+       "policySets": [
+        {
+         "policySetId": "c1eee5be-6c66-87f9-2ee6-a94cf9b168c6",
+         "name": "p66x-copy-id-children own-c",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "resourceType == 'PARITY_SUITE_P66X_COPY_ID_CHILDREN'",
+         "policySets": [],
+         "policies": [
+          {
+           "policyId": "81e0cdb2-b5bc-3a4d-4bf9-9b0d4b20382d",
+           "name": "p66x-copy-id-children own-c reader",
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "e2243006-1db1-9dc3-7a87-9b606a5c1cb1",
+             "name": "p66x-copy-id-children own-c rule",
+             "target": "operation == 'CREATE'",
+             "condition": "true",
+             "effect": "ALLOW"
+            }
+           ]
+          }
+         ],
+         "status": "ACTIVE"
+        }
+       ],
+       "policies": [
+        {
+         "policyId": "a3457fa2-1cdf-ee18-ad00-70d4723790bb",
+         "name": "p66x-copy-id-children own reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "ad48984b-2d6d-8fab-a4ba-506ca5121dc6",
+           "name": "p66x-copy-id-children own rule",
+           "target": "operation == 'DELETE'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_COPY_ID_CHILDREN",
+       "operation": "READ"
+      },
+      {
+       "name": "w1-list",
+       "type": "PARITY_SUITE_P66X_COPY_ID_CHILDREN",
+       "operation": "LIST"
+      },
+      {
+       "name": "w1-create",
+       "type": "PARITY_SUITE_P66X_COPY_ID_CHILDREN",
+       "operation": "CREATE"
+      },
+      {
+       "name": "w1-delete",
+       "type": "PARITY_SUITE_P66X_COPY_ID_CHILDREN",
+       "operation": "DELETE"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "cleanup",
+     "op": "delete-set-customization",
+     "args": {
+      "id": "c138c339-b9c2-00fd-4f79-b1364a74b58e",
+      "level": "CUSTOMER",
+      "recursive": "true"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p66x-copy-id-children-holder"
+    },
+    {
+     "name": "cleanup-2",
+     "op": "delete-set",
+     "args": {
+      "id": "c138c339-b9c2-00fd-4f79-b1364a74b58e"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue"
+    },
+    {
+     "name": "cleanup-3",
+     "op": "delete-set",
+     "args": {
+      "id": "c138c339-b9c2-00fd-4f79-b1364a74b58e"
+     },
+     "observe": [
+      "status"
+     ],
+     "onRefusal": "continue",
+     "tenant": "parity-p66x-copy-id-children-holder"
+    }
+   ]
+  },
+  {
+   "id": "p66x-copy-control-last",
+   "about": "Control: an ACTIVE set uploaded in a tenant of its own, decided and read back.",
+   "resourceType": "PARITY_SUITE_P66X_COPY_CONTROL_LAST",
+   "tenant": "parity-p66x-copy-control-last",
+   "steps": [
+    {
+     "name": "w1",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-p66x-copy-control-last"
+     },
+     "observe": [
+      "status",
+      "decide:w1-read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "f045ff94-5dbd-d5ca-0831-1dc95b251b41",
+       "name": "p66x-copy-control-last s",
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "target": "resourceType == 'PARITY_SUITE_P66X_COPY_CONTROL_LAST'",
+       "policySets": [],
+       "policies": [
+        {
+         "policyId": "c545a886-1cc7-59a2-3d55-4f928e4cd70b",
+         "name": "p66x-copy-control-last s reader",
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "38f086f2-276c-86ce-d448-07df866a1de8",
+           "name": "p66x-copy-control-last s rule",
+           "target": "operation == 'READ'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ],
+       "status": "ACTIVE"
+      }
+     ],
+     "requests": [
+      {
+       "name": "w1-read",
+       "type": "PARITY_SUITE_P66X_COPY_CONTROL_LAST",
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "w1-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "w1-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    },
+    {
+     "name": "after",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read:read-config-sets"
+     ],
+     "markers": [
+      "p66x-copy-control-last",
+      "PARITY_SUITE_P66X_COPY_CONTROL_LAST"
+     ]
+    }
+   ]
+  }
+ ]
+}

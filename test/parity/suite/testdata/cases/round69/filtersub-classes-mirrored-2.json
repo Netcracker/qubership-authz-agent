@@ -1,0 +1,188 @@
+{
+ "about": "Round 69: a filter of each class of the invariant «the filter selects nothing the check denies» that no golden pairs with checks of its rows, beside the checks of rows of its resource type as the same subject; the configuration repeats the source the class was found in.",
+ "resourceTypePrefix": "PARITY_SUITE_FS69_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 29 case"
+   }
+  }
+ },
+ "pips": {
+  "hdr": {
+   "name": "subject.parityR29PairsHdr",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r29-pairs",
+   "cacheable": false
+  },
+  "scope": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  }
+ },
+ "cases": [
+  {
+   "id": "fs69-c-inv-iter0-11-13",
+   "sets": [
+    {
+     "key": "s0",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "s0p0",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "rules": [
+        {
+         "key": "r1",
+         "target": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "f1a==${resourceType};f1b==v1,f1c==v2"
+         },
+         "condition": "resource.f1a == '{{resourceType}}' AND resource.f1b == 'v1' OR resource.f1c == 'v2'"
+        },
+        {
+         "key": "r2",
+         "target": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "sqlPredicate": "f2a=${subject.id} OR f2b='v1'"
+         },
+         "condition": "resource.f2a == subject.id OR resource.f2b == 'v1'"
+        }
+       ],
+       "algorithm": "PERMIT_UNLESS_DENY"
+      },
+      {
+       "key": "s0p1",
+       "target": "true",
+       "rules": [
+        {
+         "key": "r3",
+         "target": "true",
+         "effect": "DENY",
+         "predicates": {
+          "sqlPredicate": "f3a IN (${subject.parityR29PairsHdr})"
+         },
+         "condition": "resource.f3a IN subject.parityR29PairsHdr"
+        }
+       ],
+       "algorithm": "DENY_UNLESS_PERMIT"
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filtersub",
+     "filter": true,
+     "operation": "READ",
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "f1a": "zz",
+      "f1b": "zz",
+      "f1c": "zz",
+      "f2a": "h1",
+      "f2b": "zz"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "f1a": "zz",
+      "f1b": "zz",
+      "f3a": "ROLE_PARITY_READER"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-3",
+     "operation": "READ",
+     "resource": {
+      "f1a": "zz",
+      "f1c": "v2",
+      "f2a": "p1",
+      "f3a": "r1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-4",
+     "operation": "READ",
+     "resource": {
+      "f1a": "zz",
+      "f1b": "v1",
+      "f1c": "zz",
+      "f2a": "00000000-0000-0000-0000-000000000101",
+      "f3a": "h1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-5",
+     "operation": "READ",
+     "resource": {
+      "f1a": "PARITY_SUITE_FS69_FS69_C_INV_ITER0_11_13",
+      "f1b": "v1",
+      "f2a": "h1",
+      "f3a": "p2"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-6",
+     "operation": "READ",
+     "resource": {
+      "f1a": "zz",
+      "f2a": "h1",
+      "f3a": "r1"
+     }
+    },
+    {
+     "headers": {
+      "x-parity-r29-pairs": "h1,h2"
+     },
+     "name": "row-7",
+     "operation": "READ",
+     "resource": {
+      "f1a": "zz",
+      "f1b": "v1",
+      "f2a": "p2",
+      "f3a": "ROLE_PARITY_READER"
+     }
+    }
+   ],
+   "pips": [
+    "hdr",
+    "scope"
+   ]
+  }
+ ]
+}

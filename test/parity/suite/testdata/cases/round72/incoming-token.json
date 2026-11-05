@@ -1,0 +1,1258 @@
+{
+ "about": "Round 72: does legacy verify Incoming-Token? Each case sends one token the builder wrote, in the request's own headers beside the M2M token; the first case is the control with a token of the stand's Keycloak. Default tenant.",
+ "resourceTypePrefix": "PARITY_SUITE_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "i72-token-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-keycloak",
+   "about": "Incoming-Token beside the M2M token: parity-reader's token from the stand's Keycloak (the control). Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_KEYCLOAK",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_KEYCLOAK_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_KEYCLOAK_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_KEYCLOAK_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_KEYCLOAK_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_KEYCLOAK_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_KEYCLOAK_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_KEYCLOAK_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_KEYCLOAK_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-signed",
+   "about": "Incoming-Token beside the M2M token: a token with valid claims and times, signed by no key of the stand. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_SIGNED",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_SIGNED_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_SIGNED_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_SIGNED_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_SIGNED_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_SIGNED_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.d5OpuICDHoKTFye0pmoYdoXTe6vNdYlp3xBxeNMTBpy0bdEu6g6nZjWb55xbp1PEQeoG48jem9y9kBpIUFJVc5tm8QPet-RsYKxDQCV79cZt2xPl4O4vH5c2JhgPzahlBnldP03hoO3cMnBnvwdzx8pKew0rEKzcwYkStMV44cOb0s345Zehfe4WlImSidUJs00ZyoM40ijpxTKJ9uJxOaJqWyxKmD2_0Cay3JRSQM85n7f6Pkt8REhptym9wyBbowitXXb5DTVML2cIdxDQjm-FIjGesZeKQ0oVfmzspO7JHzDjGtYE4Mcl2MRgm2oO59bDlZwXzWQqpZW4sPHHCw"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_SIGNED_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.d5OpuICDHoKTFye0pmoYdoXTe6vNdYlp3xBxeNMTBpy0bdEu6g6nZjWb55xbp1PEQeoG48jem9y9kBpIUFJVc5tm8QPet-RsYKxDQCV79cZt2xPl4O4vH5c2JhgPzahlBnldP03hoO3cMnBnvwdzx8pKew0rEKzcwYkStMV44cOb0s345Zehfe4WlImSidUJs00ZyoM40ijpxTKJ9uJxOaJqWyxKmD2_0Cay3JRSQM85n7f6Pkt8REhptym9wyBbowitXXb5DTVML2cIdxDQjm-FIjGesZeKQ0oVfmzspO7JHzDjGtYE4Mcl2MRgm2oO59bDlZwXzWQqpZW4sPHHCw"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_SIGNED_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.d5OpuICDHoKTFye0pmoYdoXTe6vNdYlp3xBxeNMTBpy0bdEu6g6nZjWb55xbp1PEQeoG48jem9y9kBpIUFJVc5tm8QPet-RsYKxDQCV79cZt2xPl4O4vH5c2JhgPzahlBnldP03hoO3cMnBnvwdzx8pKew0rEKzcwYkStMV44cOb0s345Zehfe4WlImSidUJs00ZyoM40ijpxTKJ9uJxOaJqWyxKmD2_0Cay3JRSQM85n7f6Pkt8REhptym9wyBbowitXXb5DTVML2cIdxDQjm-FIjGesZeKQ0oVfmzspO7JHzDjGtYE4Mcl2MRgm2oO59bDlZwXzWQqpZW4sPHHCw"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_SIGNED_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0.d5OpuICDHoKTFye0pmoYdoXTe6vNdYlp3xBxeNMTBpy0bdEu6g6nZjWb55xbp1PEQeoG48jem9y9kBpIUFJVc5tm8QPet-RsYKxDQCV79cZt2xPl4O4vH5c2JhgPzahlBnldP03hoO3cMnBnvwdzx8pKew0rEKzcwYkStMV44cOb0s345Zehfe4WlImSidUJs00ZyoM40ijpxTKJ9uJxOaJqWyxKmD2_0Cay3JRSQM85n7f6Pkt8REhptym9wyBbowitXXb5DTVML2cIdxDQjm-FIjGesZeKQ0oVfmzspO7JHzDjGtYE4Mcl2MRgm2oO59bDlZwXzWQqpZW4sPHHCw"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-alg-none",
+   "about": "Incoming-Token beside the M2M token: the same claims under alg none, no signature. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_ALG_NONE",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_ALG_NONE_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_ALG_NONE_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_ALG_NONE_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_ALG_NONE_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_ALG_NONE_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJub25lIiwia2lkIjoicGFyaXR5LXN1aXRlLWtleSIsInR5cCI6IkpXVCJ9.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0."
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_ALG_NONE_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJub25lIiwia2lkIjoicGFyaXR5LXN1aXRlLWtleSIsInR5cCI6IkpXVCJ9.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0."
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_ALG_NONE_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJub25lIiwia2lkIjoicGFyaXR5LXN1aXRlLWtleSIsInR5cCI6IkpXVCJ9.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0."
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_ALG_NONE_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJub25lIiwia2lkIjoicGFyaXR5LXN1aXRlLWtleSIsInR5cCI6IkpXVCJ9.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidHlwIjoiQmVhcmVyIn0."
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-expired",
+   "about": "Incoming-Token beside the M2M token: exp 2001-01-01. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_EXPIRED",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EXPIRED_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EXPIRED_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EXPIRED_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EXPIRED_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_EXPIRED_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjk3ODMwNzIwMCwiaWF0IjoxNzY3MjI1NjAwLCJpc3MiOiJodHRwOi8vaWRwL3JlYWxtcy9wYXJpdHkiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.753pd7g2AQ-QsiysYjJHW4-qShQqyJugU_F77AyJ7VauhqcAvmzesBl9DK8Was2FYKTXd35mgirqGCZlLautHgI08L_61aeHlOhZpCet5jaNAlN1_MxhpMwPow7FQJHvWLOjdkQWR7AF4pZxTHdwd-7wtVgzioo1qfV_4XjUcYtvQgjLLWZh2xGMiJm7RzyOECo8NcGR5Y26A4uT25nOzXM9M527VOSudHQ8lH-1UIUu4Ah5AN52mRJGxG52e2wPcgMdlLhtQtI9SP5Q8DIxYjeIQvFzpnW607M_6sN__VkQgX_yIueglZ29JFMtIqARiHZ-3KCh73ZazwDl9qWlaA"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_EXPIRED_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjk3ODMwNzIwMCwiaWF0IjoxNzY3MjI1NjAwLCJpc3MiOiJodHRwOi8vaWRwL3JlYWxtcy9wYXJpdHkiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.753pd7g2AQ-QsiysYjJHW4-qShQqyJugU_F77AyJ7VauhqcAvmzesBl9DK8Was2FYKTXd35mgirqGCZlLautHgI08L_61aeHlOhZpCet5jaNAlN1_MxhpMwPow7FQJHvWLOjdkQWR7AF4pZxTHdwd-7wtVgzioo1qfV_4XjUcYtvQgjLLWZh2xGMiJm7RzyOECo8NcGR5Y26A4uT25nOzXM9M527VOSudHQ8lH-1UIUu4Ah5AN52mRJGxG52e2wPcgMdlLhtQtI9SP5Q8DIxYjeIQvFzpnW607M_6sN__VkQgX_yIueglZ29JFMtIqARiHZ-3KCh73ZazwDl9qWlaA"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_EXPIRED_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjk3ODMwNzIwMCwiaWF0IjoxNzY3MjI1NjAwLCJpc3MiOiJodHRwOi8vaWRwL3JlYWxtcy9wYXJpdHkiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.753pd7g2AQ-QsiysYjJHW4-qShQqyJugU_F77AyJ7VauhqcAvmzesBl9DK8Was2FYKTXd35mgirqGCZlLautHgI08L_61aeHlOhZpCet5jaNAlN1_MxhpMwPow7FQJHvWLOjdkQWR7AF4pZxTHdwd-7wtVgzioo1qfV_4XjUcYtvQgjLLWZh2xGMiJm7RzyOECo8NcGR5Y26A4uT25nOzXM9M527VOSudHQ8lH-1UIUu4Ah5AN52mRJGxG52e2wPcgMdlLhtQtI9SP5Q8DIxYjeIQvFzpnW607M_6sN__VkQgX_yIueglZ29JFMtIqARiHZ-3KCh73ZazwDl9qWlaA"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_EXPIRED_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjk3ODMwNzIwMCwiaWF0IjoxNzY3MjI1NjAwLCJpc3MiOiJodHRwOi8vaWRwL3JlYWxtcy9wYXJpdHkiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.753pd7g2AQ-QsiysYjJHW4-qShQqyJugU_F77AyJ7VauhqcAvmzesBl9DK8Was2FYKTXd35mgirqGCZlLautHgI08L_61aeHlOhZpCet5jaNAlN1_MxhpMwPow7FQJHvWLOjdkQWR7AF4pZxTHdwd-7wtVgzioo1qfV_4XjUcYtvQgjLLWZh2xGMiJm7RzyOECo8NcGR5Y26A4uT25nOzXM9M527VOSudHQ8lH-1UIUu4Ah5AN52mRJGxG52e2wPcgMdlLhtQtI9SP5Q8DIxYjeIQvFzpnW607M_6sN__VkQgX_yIueglZ29JFMtIqARiHZ-3KCh73ZazwDl9qWlaA"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-future",
+   "about": "Incoming-Token beside the M2M token: iat and nbf 2099-01-01. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_FUTURE",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FUTURE_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FUTURE_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FUTURE_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FUTURE_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_FUTURE_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6NDA3MDkwODgwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwibmJmIjo0MDcwOTA4ODAwLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.uq4vsAF5lNclPpmY_AjmZf_vGOe3T_cWLFzNudQfQ8QBYg-zk8F3Ad9Jv0Q4OSvhyQiggwUKuHlVPgoUea1g_CWjvNNigfLHhpV4q7oSYz_DmjlVyEAILymLZcrHEgAmF9EZEjIBxTxTzkFGBHmbVUQVjoYy68yQckHxCeBLJSGO8norT2ccZFeMF7BqOQ2AfHlQJAt56EW04prwaiyClhssjwCne5r08Dnyf4mlTpdGGaDuM4lk69GF-OyyPQqQ2DYze_4Fp6WVqKFmaIDRCEJIKq3cY3-d23YxwIczXnVCIBcpUZ_fysGVbx6B_3UQWMeu8BgAoigoJfbY8RMd_g"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_FUTURE_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6NDA3MDkwODgwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwibmJmIjo0MDcwOTA4ODAwLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.uq4vsAF5lNclPpmY_AjmZf_vGOe3T_cWLFzNudQfQ8QBYg-zk8F3Ad9Jv0Q4OSvhyQiggwUKuHlVPgoUea1g_CWjvNNigfLHhpV4q7oSYz_DmjlVyEAILymLZcrHEgAmF9EZEjIBxTxTzkFGBHmbVUQVjoYy68yQckHxCeBLJSGO8norT2ccZFeMF7BqOQ2AfHlQJAt56EW04prwaiyClhssjwCne5r08Dnyf4mlTpdGGaDuM4lk69GF-OyyPQqQ2DYze_4Fp6WVqKFmaIDRCEJIKq3cY3-d23YxwIczXnVCIBcpUZ_fysGVbx6B_3UQWMeu8BgAoigoJfbY8RMd_g"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_FUTURE_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6NDA3MDkwODgwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwibmJmIjo0MDcwOTA4ODAwLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.uq4vsAF5lNclPpmY_AjmZf_vGOe3T_cWLFzNudQfQ8QBYg-zk8F3Ad9Jv0Q4OSvhyQiggwUKuHlVPgoUea1g_CWjvNNigfLHhpV4q7oSYz_DmjlVyEAILymLZcrHEgAmF9EZEjIBxTxTzkFGBHmbVUQVjoYy68yQckHxCeBLJSGO8norT2ccZFeMF7BqOQ2AfHlQJAt56EW04prwaiyClhssjwCne5r08Dnyf4mlTpdGGaDuM4lk69GF-OyyPQqQ2DYze_4Fp6WVqKFmaIDRCEJIKq3cY3-d23YxwIczXnVCIBcpUZ_fysGVbx6B_3UQWMeu8BgAoigoJfbY8RMd_g"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_FUTURE_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6NDA3MDkwODgwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwibmJmIjo0MDcwOTA4ODAwLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.uq4vsAF5lNclPpmY_AjmZf_vGOe3T_cWLFzNudQfQ8QBYg-zk8F3Ad9Jv0Q4OSvhyQiggwUKuHlVPgoUea1g_CWjvNNigfLHhpV4q7oSYz_DmjlVyEAILymLZcrHEgAmF9EZEjIBxTxTzkFGBHmbVUQVjoYy68yQckHxCeBLJSGO8norT2ccZFeMF7BqOQ2AfHlQJAt56EW04prwaiyClhssjwCne5r08Dnyf4mlTpdGGaDuM4lk69GF-OyyPQqQ2DYze_4Fp6WVqKFmaIDRCEJIKq3cY3-d23YxwIczXnVCIBcpUZ_fysGVbx6B_3UQWMeu8BgAoigoJfbY8RMd_g"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-foreign-iss",
+   "about": "Incoming-Token beside the M2M token: iss of the realm parity-unknown. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_FOREIGN_ISS",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FOREIGN_ISS_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FOREIGN_ISS_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FOREIGN_ISS_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_FOREIGN_ISS_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_FOREIGN_ISS_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5LXVua25vd24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.g37KmalY3VtPynUJN2MM1ISlMIJlNywXC6a1y4DMUhK2o7Ihegq1NRU1B2zz2gL0hDm8Hw9gH9UcDW71nHXVElFTVky9oJaonU1jwLLJhkSZrB27T1XawquK4Lc1OrPS1U_-2kd765cJi4Zjx6Dpa5MsHC103lxNLpveOWFtVvtBdcnLEl8iwQrXwjfUknLWkYjJXN54eEDyM-e3jeAkdHXo-W8BxSW9SaekVgvx2G4xcPC5Y8loTuasqjYeDsqTCgNx_W-AoP-KwkINFrfKwUzP1Lu4Sahi5A3Vi-Fc7HNu3vAGxuv0wFxK-3AuSvvzOU26J2cuY4gqwegeFq8h9w"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_FOREIGN_ISS_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5LXVua25vd24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.g37KmalY3VtPynUJN2MM1ISlMIJlNywXC6a1y4DMUhK2o7Ihegq1NRU1B2zz2gL0hDm8Hw9gH9UcDW71nHXVElFTVky9oJaonU1jwLLJhkSZrB27T1XawquK4Lc1OrPS1U_-2kd765cJi4Zjx6Dpa5MsHC103lxNLpveOWFtVvtBdcnLEl8iwQrXwjfUknLWkYjJXN54eEDyM-e3jeAkdHXo-W8BxSW9SaekVgvx2G4xcPC5Y8loTuasqjYeDsqTCgNx_W-AoP-KwkINFrfKwUzP1Lu4Sahi5A3Vi-Fc7HNu3vAGxuv0wFxK-3AuSvvzOU26J2cuY4gqwegeFq8h9w"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_FOREIGN_ISS_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5LXVua25vd24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.g37KmalY3VtPynUJN2MM1ISlMIJlNywXC6a1y4DMUhK2o7Ihegq1NRU1B2zz2gL0hDm8Hw9gH9UcDW71nHXVElFTVky9oJaonU1jwLLJhkSZrB27T1XawquK4Lc1OrPS1U_-2kd765cJi4Zjx6Dpa5MsHC103lxNLpveOWFtVvtBdcnLEl8iwQrXwjfUknLWkYjJXN54eEDyM-e3jeAkdHXo-W8BxSW9SaekVgvx2G4xcPC5Y8loTuasqjYeDsqTCgNx_W-AoP-KwkINFrfKwUzP1Lu4Sahi5A3Vi-Fc7HNu3vAGxuv0wFxK-3AuSvvzOU26J2cuY4gqwegeFq8h9w"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_FOREIGN_ISS_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5LXVua25vd24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJwYXJpdHktbWludGVkLXJlYWRlciIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJST0xFX1BBUklUWV9SRUFERVIiXX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDcyMGYiLCJ0eXAiOiJCZWFyZXIifQ.g37KmalY3VtPynUJN2MM1ISlMIJlNywXC6a1y4DMUhK2o7Ihegq1NRU1B2zz2gL0hDm8Hw9gH9UcDW71nHXVElFTVky9oJaonU1jwLLJhkSZrB27T1XawquK4Lc1OrPS1U_-2kd765cJi4Zjx6Dpa5MsHC103lxNLpveOWFtVvtBdcnLEl8iwQrXwjfUknLWkYjJXN54eEDyM-e3jeAkdHXo-W8BxSW9SaekVgvx2G4xcPC5Y8loTuasqjYeDsqTCgNx_W-AoP-KwkINFrfKwUzP1Lu4Sahi5A3Vi-Fc7HNu3vAGxuv0wFxK-3AuSvvzOU26J2cuY4gqwegeFq8h9w"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-tenant-b",
+   "about": "Incoming-Token beside the M2M token: a tenant-id claim of tenant B against the default tenant. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_TENANT_B",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_TENANT_B_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_TENANT_B_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_TENANT_B_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_TENANT_B_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_TENANT_B_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidGVuYW50LWlkIjoicGFyaXR5LW10LWIiLCJ0eXAiOiJCZWFyZXIifQ.-FiZ_1EM-EW2Gp3Log2YTooYq09aJpCYCt0wZiCr-MwD7hCh5wqsaBlHfCAgu4ATsT7eZ3ocaCVdUkGC7SbV-xT2PNsMq7dO3AX3BRK1d6GhsXMPuJPmPUoUxwFHDjEOSjMrpUrfzI5Y02NOQOFNjh1D-NZXT_wHRLxXtpXOTmV-PrehNsKsqugWpup31d6ACmwbzJOF5Kec-6IWcHkB_4FZJjAXg8EmmT9X-sC3JQ3YRosGcGfCbM05GCN5CJ0FAfCNtt10Lhe-GLZ7TEho6SgFoIx4Z8DjSBwztAb11ztCmoaPpkt9d8jwMNLOWWpuougp5bEeXOw-o0k302_7cA"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_TENANT_B_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidGVuYW50LWlkIjoicGFyaXR5LW10LWIiLCJ0eXAiOiJCZWFyZXIifQ.-FiZ_1EM-EW2Gp3Log2YTooYq09aJpCYCt0wZiCr-MwD7hCh5wqsaBlHfCAgu4ATsT7eZ3ocaCVdUkGC7SbV-xT2PNsMq7dO3AX3BRK1d6GhsXMPuJPmPUoUxwFHDjEOSjMrpUrfzI5Y02NOQOFNjh1D-NZXT_wHRLxXtpXOTmV-PrehNsKsqugWpup31d6ACmwbzJOF5Kec-6IWcHkB_4FZJjAXg8EmmT9X-sC3JQ3YRosGcGfCbM05GCN5CJ0FAfCNtt10Lhe-GLZ7TEho6SgFoIx4Z8DjSBwztAb11ztCmoaPpkt9d8jwMNLOWWpuougp5bEeXOw-o0k302_7cA"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_TENANT_B_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidGVuYW50LWlkIjoicGFyaXR5LW10LWIiLCJ0eXAiOiJCZWFyZXIifQ.-FiZ_1EM-EW2Gp3Log2YTooYq09aJpCYCt0wZiCr-MwD7hCh5wqsaBlHfCAgu4ATsT7eZ3ocaCVdUkGC7SbV-xT2PNsMq7dO3AX3BRK1d6GhsXMPuJPmPUoUxwFHDjEOSjMrpUrfzI5Y02NOQOFNjh1D-NZXT_wHRLxXtpXOTmV-PrehNsKsqugWpup31d6ACmwbzJOF5Kec-6IWcHkB_4FZJjAXg8EmmT9X-sC3JQ3YRosGcGfCbM05GCN5CJ0FAfCNtt10Lhe-GLZ7TEho6SgFoIx4Z8DjSBwztAb11ztCmoaPpkt9d8jwMNLOWWpuougp5bEeXOw-o0k302_7cA"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_TENANT_B_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "eyJhbGciOiJSUzI1NiIsImtpZCI6InBhcml0eS1zdWl0ZS1rZXkiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJwYXJpdHktZW5kLXVzZXIiLCJleHAiOjQxMDI0NDQ4MDAsImlhdCI6MTc2NzIyNTYwMCwiaXNzIjoiaHR0cDovL2lkcC9yZWFsbXMvcGFyaXR5IiwicHJlZmVycmVkX3VzZXJuYW1lIjoicGFyaXR5LW1pbnRlZC1yZWFkZXIiLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiUk9MRV9QQVJJVFlfUkVBREVSIl19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic3ViIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDA3MjBmIiwidGVuYW50LWlkIjoicGFyaXR5LW10LWIiLCJ0eXAiOiJCZWFyZXIifQ.-FiZ_1EM-EW2Gp3Log2YTooYq09aJpCYCt0wZiCr-MwD7hCh5wqsaBlHfCAgu4ATsT7eZ3ocaCVdUkGC7SbV-xT2PNsMq7dO3AX3BRK1d6GhsXMPuJPmPUoUxwFHDjEOSjMrpUrfzI5Y02NOQOFNjh1D-NZXT_wHRLxXtpXOTmV-PrehNsKsqugWpup31d6ACmwbzJOF5Kec-6IWcHkB_4FZJjAXg8EmmT9X-sC3JQ3YRosGcGfCbM05GCN5CJ0FAfCNtt10Lhe-GLZ7TEho6SgFoIx4Z8DjSBwztAb11ztCmoaPpkt9d8jwMNLOWWpuougp5bEeXOw-o0k302_7cA"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-not-a-jwt",
+   "about": "Incoming-Token beside the M2M token: a value that is not a JWT. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_NOT_A_JWT",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_NOT_A_JWT_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": "parity-not-a-jwt"
+     }
+    }
+   ]
+  },
+  {
+   "id": "it72-empty",
+   "about": "Incoming-Token beside the M2M token: an empty value. Four probes: the name of the token's claims (parity-minted-reader), no name (an anonymous subject), the name of the M2M token's service account (the header ignored), and the role the claims give. A token legacy reads answers true, false, false, true.",
+   "resourceType": "PARITY_SUITE_IT72_EMPTY",
+   "sets": [
+    {
+     "key": "name-minted",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EMPTY_NAME_MINTED'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-minted",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-minted",
+         "target": "true",
+         "condition": "subject.name == 'parity-minted-reader'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-null",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EMPTY_NAME_NULL'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-null",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-null",
+         "target": "true",
+         "condition": "subject.name IS NULL",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "name-m2m",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EMPTY_NAME_M2M'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-name-m2m",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-name-m2m",
+         "target": "true",
+         "condition": "subject.name == 'service-account-parity-m2m'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "key": "roles-reader",
+     "target": "resourceType == 'PARITY_SUITE_IT72_EMPTY_ROLES_READER'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "p-roles-reader",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "r-roles-reader",
+         "target": "true",
+         "condition": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "name-minted",
+     "type": "PARITY_SUITE_IT72_EMPTY_NAME_MINTED",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": ""
+     }
+    },
+    {
+     "name": "name-null",
+     "type": "PARITY_SUITE_IT72_EMPTY_NAME_NULL",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": ""
+     }
+    },
+    {
+     "name": "name-m2m",
+     "type": "PARITY_SUITE_IT72_EMPTY_NAME_M2M",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": ""
+     }
+    },
+    {
+     "name": "roles-reader",
+     "type": "PARITY_SUITE_IT72_EMPTY_ROLES_READER",
+     "resource": {
+      "id": "it72"
+     },
+     "subject": "m2m",
+     "headers": {
+      "Incoming-Token": ""
+     }
+    }
+   ]
+  },
+  {
+   "id": "i72-token-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

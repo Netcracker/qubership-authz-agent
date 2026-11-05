@@ -1,0 +1,137 @@
+{
+ "about": "How ${subject.name} and ${subject.type} are rendered by each predicate dialect. rls-happy records ${subject.id} unquoted in rsql, and substitution-subject-roles records a subject list quoted; the two other scalar subject attributes are recorded nowhere, so an unquoted id is an observation of one attribute rather than a rule for scalars. Each case is the substitution-* shape: one placeholder in all five predicate fields of one LIST rule, and one filter request. substitution-subject-id is the control, the attribute already recorded, in the same five fields. The agent's converter accepts every set here.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "substitution-subject-name",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.name}",
+          "sqlPredicate": "a=${subject.name}",
+          "mongodbPredicate": "{ \"a\": ${subject.name} }",
+          "predicate": "${resourceType}.a.eq(${subject.name})",
+          "customPredicate": {
+           "predicate": "a:${p}",
+           "params": {
+            "p": "subject.name"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "substitution-subject-type",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.type}",
+          "sqlPredicate": "a=${subject.type}",
+          "mongodbPredicate": "{ \"a\": ${subject.type} }",
+          "predicate": "${resourceType}.a.eq(${subject.type})",
+          "customPredicate": {
+           "predicate": "a:${p}",
+           "params": {
+            "p": "subject.type"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  },
+  {
+   "id": "substitution-subject-id",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "a==${subject.id}",
+          "sqlPredicate": "a=${subject.id}",
+          "mongodbPredicate": "{ \"a\": ${subject.id} }",
+          "predicate": "${resourceType}.a.eq(${subject.id})",
+          "customPredicate": {
+           "predicate": "a:${p}",
+           "params": {
+            "p": "subject.id"
+           }
+          }
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    }
+   ]
+  }
+ ]
+}

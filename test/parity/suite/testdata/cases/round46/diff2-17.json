@@ -1,0 +1,184 @@
+{
+ "about": "Inputs on which the specification and two second models, written apart from it, answer differently: each case is the smallest input found that keeps one such difference, with its single rule in the observation forms where it has one. Controls first and last must answer alike.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_D2_",
+ "pins": {},
+ "pips": {
+  "failing": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR16Failing",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "subject.parityR16Failing"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r16-failing"
+  }
+ },
+ "cases": [
+  {
+   "id": "d2r46-f16-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "d2r46-d2cff13835",
+   "about": "Two root sets: one reads a PIP that fails, the other allows. Legacy access-control answers by the order it evaluates the roots in, so ry is classed by whether the PIP was read; the agent is compared with ry, which holds the allow.",
+   "pins": {
+    "/api/v1/pip/r16-failing": {
+     "statusCode": 500,
+     "body": {
+      "error": "parity round 16 case"
+     }
+    }
+   },
+   "pips": [
+    "failing"
+   ],
+   "requests": [
+    {
+     "name": "ry",
+     "resource": {
+      "id": "r16"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ],
+   "sets": [
+    {
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "s0",
+     "policies": [],
+     "sets": [
+      {
+       "algorithm": "PERMIT_OVERRIDES",
+       "key": "s0-s0",
+       "policies": [],
+       "sets": [
+        {
+         "algorithm": "DENY_OVERRIDES",
+         "key": "s0-s0-s1",
+         "policies": [
+          {
+           "algorithm": "DENY_OVERRIDES",
+           "key": "s0-s0-s1-p0",
+           "rules": [
+            {
+             "condition": "subject.parityR16Failing == 'v'",
+             "effect": "ALLOW",
+             "key": "s0-s0-s1-p0-r0",
+             "target": "true"
+            }
+           ],
+           "target": "true"
+          }
+         ],
+         "sets": [],
+         "target": "true"
+        }
+       ],
+       "target": "true"
+      }
+     ],
+     "target": "true"
+    },
+    {
+     "algorithm": "DENY_OVERRIDES",
+     "key": "s1",
+     "policies": [
+      {
+       "key": "s1-p0",
+       "rules": [
+        {
+         "condition": "true",
+         "effect": "ALLOW",
+         "key": "s1-p0-r0",
+         "target": "true"
+        }
+       ],
+       "target": "true"
+      }
+     ],
+     "sets": [],
+     "target": "true"
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R16_D2SF1_114"
+  },
+  {
+   "id": "d2r46-f16-control-last-or",
+   "about": "Control. The root sets of d2r46-d2cff13835, whose target is true, are still loaded, so legacy access-control answers by the order it evaluates the roots in here too: a-n is classed by whether their PIP was read, and the agent is compared with a-n, which holds the allow.",
+   "pins": {
+    "/api/v1/pip/r16-failing": {
+     "statusCode": 500,
+     "body": {
+      "error": "parity round 16 case"
+     }
+    }
+   },
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     },
+     "classifyBy": "/api/v1/pip/r16-failing"
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

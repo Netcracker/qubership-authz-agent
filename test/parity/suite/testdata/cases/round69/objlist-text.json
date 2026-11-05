@@ -1,0 +1,543 @@
+{
+ "about": "Round 69: a list or an object of the resource against a string literal under == and !=: the text a list prints as when its order or repeats differ, an object whose member is a list, an object whose member is a Double beyond 10^7; and MATCH over the number 1e400. Controls first and last must answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_OBJLIST_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "ol69-text-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-order-eq",
+   "about": "The list [\"w\", \"v\"] against the string [v, w], the text of a HashSet of it, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '[v, w]'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       "w",
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-order-ne",
+   "about": "The list [\"w\", \"v\"] against the string [v, w], the text of a HashSet of it, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x != '[v, w]'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       "w",
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-repeats-eq",
+   "about": "The list [\"v\", \"v\"] against the string [v], the text of a HashSet of it, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '[v]'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       "v",
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-repeats-ne",
+   "about": "The list [\"v\", \"v\"] against the string [v], the text of a HashSet of it, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x != '[v]'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": [
+       "v",
+       "v"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-member-json-eq",
+   "about": "The object {\"k\": [\"v\", \"w\"]} against the string {k=[\"v\",\"w\"]}, a map whose member prints as JSON, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '{k=[\"v\",\"w\"]}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": {
+       "k": [
+        "v",
+        "w"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-member-json-ne",
+   "about": "The object {\"k\": [\"v\", \"w\"]} against the string {k=[\"v\",\"w\"]}, a map whose member prints as JSON, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x != '{k=[\"v\",\"w\"]}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": {
+       "k": [
+        "v",
+        "w"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-member-java-eq",
+   "about": "The object {\"k\": [\"v\", \"w\"]} against the string {k=[v, w]}, its String.valueOf text, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '{k=[v, w]}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": {
+       "k": [
+        "v",
+        "w"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-member-java-ne",
+   "about": "The object {\"k\": [\"v\", \"w\"]} against the string {k=[v, w]}, its String.valueOf text, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x != '{k=[v, w]}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": {
+       "k": [
+        "v",
+        "w"
+       ]
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-double-eq",
+   "about": "The object {\"k\": 1.2345678912345679E8} against the string {k=123456789.12345679}, the member in plain digits; Double.toString prints 1.2345678912345679E8, under ==.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x == '{k=123456789.12345679}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": {
+       "k": 1.2345678912345679E8
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-double-ne",
+   "about": "The object {\"k\": 1.2345678912345679E8} against the string {k=123456789.12345679}, the member in plain digits; Double.toString prints 1.2345678912345679E8, under !=.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x != '{k=123456789.12345679}'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "x": {
+       "k": 1.2345678912345679E8
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-match-infinity",
+   "about": "Resource.x MATCH Inf.* with x the JSON number 1e400, beyond the double range, whose Double prints as Infinity. ALLOW form: the comparison OR resource.a == 'y'.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x MATCH Inf.* OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 1e400
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y",
+      "x": 1e400
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-match-infinity-deny",
+   "about": "Resource.x MATCH Inf.* with x the JSON number 1e400, beyond the double range, whose Double prints as Infinity. DENY form: the comparison as a DENY rule under PERMIT_UNLESS_DENY.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "resource.x MATCH Inf.*",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n",
+      "x": 1e400
+     }
+    }
+   ]
+  },
+  {
+   "id": "ol69-text-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

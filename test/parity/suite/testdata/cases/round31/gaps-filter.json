@@ -1,0 +1,210 @@
+{
+ "about": "Filters round 30 did not send. A DENY_UNLESS_PERMIT policy whose only rules are a DENY rule with an rsql predicate and a DENY rule without one: round 30 saw the predicate dropped into an empty condition when the DENY rule stood alone. Two rsql ALLOW predicates under DENY_OVERRIDES whose text holds a comma inside quotes, the second after an escaped quote: each is joined by AND with a negated DENY predicate, and a predicate with a comma at its top level is wrapped in parentheses there.",
+ "resourceTypePrefix": "PARITY_SUITE_R31G_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r31gaps-filter-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-dropped-deny-predicate-beside-deny",
+   "about": "The policy's DENY rule with rsqlPredicate d==1 and its DENY rule without a predicate, both with condition true, alone in a DENY_UNLESS_PERMIT set. The filter is DENY if the unrestricted rule decides, USE_FILTER_CONDITION with every condition empty if the dropped predicate does.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "deny-p",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "d==1"
+         }
+        },
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-quoted-join",
+   "about": "The comma of q=='a,b' sits inside quotes. An ALLOW rule with this predicate and a DENY rule with r==1 under DENY_OVERRIDES: the filter joins the ALLOW predicate and the negated DENY one by AND, and wraps the ALLOW predicate in parentheses only where a comma stands outside quotes.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow-q",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q=='a,b'"
+         }
+        },
+        {
+         "key": "deny-r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "r==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-quoted-join-escaped-quote",
+   "about": "q=='a\\',b' holds an escaped quote before the comma, so the comma is still inside quotes if the backslash escapes the quote, and outside them if it does not. An ALLOW rule with this predicate and a DENY rule with r==1 under DENY_OVERRIDES: the filter joins the ALLOW predicate and the negated DENY one by AND, and wraps the ALLOW predicate in parentheses only where a comma stands outside quotes.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow-q",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "q=='a\\',b'"
+         }
+        },
+        {
+         "key": "deny-r",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "r==1"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "LIST"
+    }
+   ]
+  },
+  {
+   "id": "r31gaps-filter-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r31",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

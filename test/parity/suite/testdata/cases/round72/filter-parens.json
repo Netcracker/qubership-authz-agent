@@ -1,0 +1,148 @@
+{
+ "about": "Round 72: the rsql negation of a DENY predicate that holds ';', joined to the ALLOW side, with rows beside the filter. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R72_FILTER_PARENS_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "f72-parens-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "f72-parens-deny-and",
+   "about": "A DENY_OVERRIDES policy with an ALLOW rule whose predicate is fa==1 and one DENY rule whose rsql predicate is fb==2;fc==3 (round 69's op69-parens-deny-and had two DENY rules, and its filter text varied from stand to stand; with one there is one order). Its negation fb!=2,fc!=3 joined without parentheses, (fa==1);fb!=2,fc!=3, selects row-1 (fa = 0, fb = 2, fc = 2); in parentheses it does not. The rows are check/resource of the same subject: the DENY rule denies both.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_OVERRIDES",
+       "rules": [
+        {
+         "key": "allow",
+         "target": "true",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "fa==1",
+          "sqlPredicate": "fa=1",
+          "predicate": "${resourceType}.fa.eq(1)",
+          "mongodbPredicate": "{ \"fa\": 1 }"
+         }
+        },
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "true",
+         "effect": "DENY",
+         "predicates": {
+          "rsqlPredicate": "fb==2;fc==3",
+          "sqlPredicate": "fb=2 AND fc=3",
+          "predicate": "${resourceType}.fb.eq(2).and(${resourceType}.fc.eq(3))",
+          "mongodbPredicate": "{ \"fb\": 2, \"fc\": 3 }"
+         }
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    },
+    {
+     "name": "row-1",
+     "operation": "READ",
+     "resource": {
+      "id": "row-1",
+      "fa": 0,
+      "fb": 2,
+      "fc": 2
+     }
+    },
+    {
+     "name": "row-2",
+     "operation": "READ",
+     "resource": {
+      "id": "row-2",
+      "fa": 1,
+      "fb": 1,
+      "fc": 3
+     }
+    }
+   ]
+  },
+  {
+   "id": "f72-parens-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

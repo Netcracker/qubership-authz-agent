@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": null,
+    "mongodbFilterCondition": "{ \"$or\": [ { { \"f\": \"3\" } },{{ \"e\": \"2\" }}, {{ \"d\": \"1\" }}, {{ \"g\": \"4\" }} ] }",
+    "rsqlFilterCondition": null,
+    "sqlFilterCondition": null,
+    "customFilterCondition": null
+  }
+}

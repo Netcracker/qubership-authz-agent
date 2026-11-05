@@ -1,0 +1,41 @@
+{
+  "status": 200,
+  "body": {
+    "policySets": [
+      {
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+        "externalId": "parity-p66x-obligations-control-last",
+        "name": "p66x-obligations-control-last s",
+        "policies": [
+          {
+            "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+            "name": "p66x-obligations-control-last s reader",
+            "policyId": "a2b554d3-964d-c40a-c90a-7d948faf16ff",
+            "rules": [
+              {
+                "condition": "true",
+                "effect": "ALLOW",
+                "name": "p66x-obligations-control-last s rule",
+                "ruleId": "17659f67-9456-66e4-b807-640616fb99d0",
+                "ruleType": "DEFAULT",
+                "target": "operation == 'READ'",
+                "tenantId": "parity-p66x-obligations-control-last"
+              }
+            ],
+            "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+            "tenantId": "parity-p66x-obligations-control-last"
+          }
+        ],
+        "policySetId": "b6cecf38-d6c4-cab5-f04f-ad37fad1b89d",
+        "policySets": [],
+        "status": "ACTIVE",
+        "target": "resourceType == 'PARITY_SUITE_P66X_OBLIGATIONS_CONTROL_LAST'",
+        "tenantId": "parity-p66x-obligations-control-last",
+        "type": "DEFAULT"
+      }
+    ]
+  },
+  "keptTenants": [
+    "parity-p66x-obligations-control-last"
+  ]
+}

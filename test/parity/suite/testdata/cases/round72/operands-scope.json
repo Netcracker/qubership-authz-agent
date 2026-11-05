@@ -1,0 +1,781 @@
+{
+ "about": "Round 72: subject.permissionScope without a key inside an iterate, in a top-level and in a nested set, and the scope key a] with a bracket. Each case declares the PERMISSION_SCOPE (region r1, a] v) in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "r1"
+           }
+          ]
+         },
+         {
+          "key": "a]",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "o72-scope-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_SCOPE_CONTROL_FIRST",
+   "tenant": "parity-o72-scope-control-first",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "cacheable": false,
+       "cachePeriod": 1,
+       "url": "http://pip-mock:8090"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-scope-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "85e2871a-5c32-2c1c-4114-ebc4483ea61d",
+       "name": "o72-scope-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "0436ed9a-7c84-74e9-baa3-68b9fbea9d0a",
+         "name": "o72-scope-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "d2dfdb79-f2f9-8ac0-32cb-5c4269bf35c1",
+           "name": "o72-scope-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-scope-bare-top",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope IS NULL OR resource.a == 'y'` inside an iterate over subject.permissionScope on the top-level set. subject.permissionScope without a key is a reference to a PIP of that name. Round 69 saw every check/resource of the tenant answer 400 once such a set was stored; the case asks it in a tenant of its own, with check/resource (a = n, a = y), bulk and check/filter. A tenant that does not fail answers check/resource and bulk by the reading: a reference without a value fails the decision, the whole assignment is not null (false for a = n, true for a = y).",
+   "resourceType": "PARITY_SUITE_O72_SCOPE_BARE_TOP",
+   "tenant": "parity-o72-scope-bare-top",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "cacheable": false,
+       "cachePeriod": 1,
+       "url": "http://pip-mock:8090"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-scope-bare-top"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y",
+      "decide:bulk",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "ad3efbf3-d27e-ecca-75cc-4b19cbf0036c",
+       "name": "o72-scope-bare-top set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_BARE_TOP'",
+       "policies": [
+        {
+         "policyId": "4455ff90-abdd-efc3-a023-f46d9244396e",
+         "name": "o72-scope-bare-top reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "7f5d9113-5cbb-64a8-1845-1a51d8398cbd",
+           "name": "o72-scope-bare-top probe",
+           "target": "true",
+           "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      },
+      {
+       "name": "bulk",
+       "bulk": [
+        {
+         "id": "r72-n",
+         "operation": "READ",
+         "resource": {
+          "id": "r72-n",
+          "a": "n"
+         }
+        },
+        {
+         "id": "r72-y",
+         "operation": "READ",
+         "resource": {
+          "id": "r72-y",
+          "a": "y"
+         }
+        }
+       ]
+      },
+      {
+       "name": "filter",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-scope-bare-nested",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope IS NULL OR resource.a == 'y'` inside an iterate over subject.permissionScope on a set nested under the top-level set. subject.permissionScope without a key is a reference to a PIP of that name. Round 69 saw every check/resource of the tenant answer 400 once such a set was stored; the case asks it in a tenant of its own, with check/resource (a = n, a = y), bulk and check/filter. A tenant that does not fail answers check/resource and bulk by the reading: a reference without a value fails the decision, the whole assignment is not null (false for a = n, true for a = y). Whether a nested set fails the tenant as a top-level one does is the question.",
+   "resourceType": "PARITY_SUITE_O72_SCOPE_BARE_NESTED",
+   "tenant": "parity-o72-scope-bare-nested",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "cacheable": false,
+       "cachePeriod": 1,
+       "url": "http://pip-mock:8090"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-scope-bare-nested"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y",
+      "decide:bulk",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "950bc3f3-73d6-8e68-c466-4a345ce0664b",
+       "name": "o72-scope-bare-nested set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_BARE_NESTED'",
+       "policies": [],
+       "policySets": [
+        {
+         "policySetId": "02612b84-12a9-e592-af0c-bc08408a2970",
+         "name": "o72-scope-bare-nested inner",
+         "status": "ACTIVE",
+         "target": "true",
+         "policies": [
+          {
+           "policyId": "4a2cf690-7ccb-41cd-8aca-c330dd77f6b8",
+           "name": "o72-scope-bare-nested reader",
+           "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+           "rules": [
+            {
+             "ruleId": "ac9e0461-ebf5-56b3-55c1-117fb423f9a0",
+             "name": "o72-scope-bare-nested probe",
+             "target": "true",
+             "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+             "effect": "ALLOW"
+            }
+           ],
+           "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+          }
+         ],
+         "policySets": [],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+         "iterate": {
+          "foreach": "subject.permissionScope",
+          "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+         }
+        }
+       ],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      },
+      {
+       "name": "bulk",
+       "bulk": [
+        {
+         "id": "r72-n",
+         "operation": "READ",
+         "resource": {
+          "id": "r72-n",
+          "a": "n"
+         }
+        },
+        {
+         "id": "r72-y",
+         "operation": "READ",
+         "resource": {
+          "id": "r72-y",
+          "a": "y"
+         }
+        }
+       ]
+      },
+      {
+       "name": "filter",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-scope-bare-outside",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope IS NULL OR resource.a == 'y'` outside any iterate on the top-level set. subject.permissionScope without a key is a reference to a PIP of that name. Round 69 saw every check/resource of the tenant answer 400 once such a set was stored; the case asks it in a tenant of its own, with check/resource (a = n, a = y), bulk and check/filter. A tenant that does not fail answers check/resource and bulk by the reading: a reference without a value fails the decision, the whole assignment is not null (false for a = n, true for a = y). Outside an iterate the scope fails the decision under either reading; only the status says whether the reference fails the tenant.",
+   "resourceType": "PARITY_SUITE_O72_SCOPE_BARE_OUTSIDE",
+   "tenant": "parity-o72-scope-bare-outside",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "cacheable": false,
+       "cachePeriod": 1,
+       "url": "http://pip-mock:8090"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-scope-bare-outside"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y",
+      "decide:bulk",
+      "decide:filter"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "26d1f2a4-1d6f-2f52-ff20-c7ba93a3f246",
+       "name": "o72-scope-bare-outside set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_BARE_OUTSIDE'",
+       "policies": [
+        {
+         "policyId": "d88d1078-dc45-bc37-6400-4e488be9879f",
+         "name": "o72-scope-bare-outside reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "7a275ee1-3197-f0c9-a5bf-8014a3fb0c38",
+           "name": "o72-scope-bare-outside probe",
+           "target": "true",
+           "condition": "subject.permissionScope IS NULL OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y"
+       }
+      },
+      {
+       "name": "bulk",
+       "bulk": [
+        {
+         "id": "r72-n",
+         "operation": "READ",
+         "resource": {
+          "id": "r72-n",
+          "a": "n"
+         }
+        },
+        {
+         "id": "r72-y",
+         "operation": "READ",
+         "resource": {
+          "id": "r72-y",
+          "a": "y"
+         }
+        }
+       ]
+      },
+      {
+       "name": "filter",
+       "filter": true,
+       "operation": "READ"
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-scope-key-bracket",
+   "about": "A DENY_UNLESS_PERMIT rule `subject.permissionScope.a] == 'v' OR resource.a == 'y'` inside an iterate over subject.permissionScope, whose assignment holds a] = v. The requests named match hold subject.permissionScope.a] = v in the resource, those named other hold w. A path from the resource with the key a] (the path token is longer than the scope token) is true for match and false for other; a read of the scope key a] is true for both.",
+   "resourceType": "PARITY_SUITE_O72_SCOPE_KEY_BRACKET",
+   "tenant": "parity-o72-scope-key-bracket",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "cacheable": false,
+       "cachePeriod": 1,
+       "url": "http://pip-mock:8090"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-scope-key-bracket"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:match-a-n",
+      "decide:match-a-y",
+      "decide:other-a-n",
+      "decide:other-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "99a9da80-89b2-4e0c-99a1-6734b9d1005f",
+       "name": "o72-scope-key-bracket set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_KEY_BRACKET'",
+       "policies": [
+        {
+         "policyId": "174be9d9-f53a-77ec-ce69-256c87bb111f",
+         "name": "o72-scope-key-bracket reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "398df4b1-1d7b-e208-1b14-5d5a369ad978",
+           "name": "o72-scope-key-bracket probe",
+           "target": "true",
+           "condition": "subject.permissionScope.a] == 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+       "iterate": {
+        "foreach": "subject.permissionScope",
+        "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+       }
+      }
+     ],
+     "requests": [
+      {
+       "name": "match-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "subject": {
+         "permissionScope": {
+          "a]": "v"
+         }
+        }
+       }
+      },
+      {
+       "name": "match-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "subject": {
+         "permissionScope": {
+          "a]": "v"
+         }
+        }
+       }
+      },
+      {
+       "name": "other-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "subject": {
+         "permissionScope": {
+          "a]": "w"
+         }
+        }
+       }
+      },
+      {
+       "name": "other-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "subject": {
+         "permissionScope": {
+          "a]": "w"
+         }
+        }
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-scope-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_SCOPE_CONTROL_LAST",
+   "tenant": "parity-o72-scope-control-last",
+   "steps": [
+    {
+     "name": "declare",
+     "op": "write-domain-pips",
+     "args": {
+      "domain": "PARITY_ISOLATED"
+     },
+     "observe": [
+      "status",
+      "error-class"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "name": "subject.permissionScope",
+       "pipType": "PERMISSION_SCOPE",
+       "cacheable": false,
+       "cachePeriod": 1,
+       "url": "http://pip-mock:8090"
+      }
+     ]
+    },
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-scope-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "6cb31ec1-9081-181b-e1dd-ddb403b0e530",
+       "name": "o72-scope-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_SCOPE_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "04ae0986-8ea3-f0df-f19e-d4410bda0a05",
+         "name": "o72-scope-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "4b0d252c-6b08-ec44-d2e2-976b878d70a0",
+           "name": "o72-scope-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

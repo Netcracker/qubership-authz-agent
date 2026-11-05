@@ -22,9 +22,8 @@ import (
 )
 
 // Row 29 — validation of missing `resourceType` query param on
-// POST /access/v1/check/filter. Jakarta @NotNull @QueryParam("resourceType")
-// on CheckEndpoint.filter (CheckEndpoint.java:137-182) triggers HTTP 400
-// before the policy engine is reached.
+// POST /access/v1/check/filter. The legacy server answers HTTP 400 before the
+// policy engine is reached.
 func (s *ParitySuite) TestRow29ValidationMissingResourceType() {
 	ctx := context.Background()
 

@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "PARITY_SUITE_R29O_R29R28_PERMISSIONS_THIRTEEN.a.in(\"parity_r29_q8_10\", \"parity_r29_q8_05\", \"parity_r29_q8_04\", \"parity_r29_q8_07\", \"parity_r29_q8_06\", \"parity_r29_q8_01\", \"parity_r29_q8_12\", \"parity_r29_q8_00\", \"parity_r29_q8_11\", \"parity_r29_q8_03\", \"parity_r29_q8_02\", \"parity_r29_q8_09\", \"parity_r29_q8_08\")",
+    "mongodbFilterCondition": "{ { \"a\": { \"$in\": [ { \"$uuid\": \"parity_r29_q8_10\" }, { \"$uuid\": \"parity_r29_q8_05\" }, { \"$uuid\": \"parity_r29_q8_04\" }, { \"$uuid\": \"parity_r29_q8_07\" }, { \"$uuid\": \"parity_r29_q8_06\" }, { \"$uuid\": \"parity_r29_q8_01\" }, { \"$uuid\": \"parity_r29_q8_12\" }, { \"$uuid\": \"parity_r29_q8_00\" }, { \"$uuid\": \"parity_r29_q8_11\" }, { \"$uuid\": \"parity_r29_q8_03\" }, { \"$uuid\": \"parity_r29_q8_02\" }, { \"$uuid\": \"parity_r29_q8_09\" }, { \"$uuid\": \"parity_r29_q8_08\" } ] } } }",
+    "rsqlFilterCondition": "a=in=(\"parity_r29_q8_10\", \"parity_r29_q8_05\", \"parity_r29_q8_04\", \"parity_r29_q8_07\", \"parity_r29_q8_06\", \"parity_r29_q8_01\", \"parity_r29_q8_12\", \"parity_r29_q8_00\", \"parity_r29_q8_11\", \"parity_r29_q8_03\", \"parity_r29_q8_02\", \"parity_r29_q8_09\", \"parity_r29_q8_08\")",
+    "sqlFilterCondition": "a IN ('parity_r29_q8_10', 'parity_r29_q8_05', 'parity_r29_q8_04', 'parity_r29_q8_07', 'parity_r29_q8_06', 'parity_r29_q8_01', 'parity_r29_q8_12', 'parity_r29_q8_00', 'parity_r29_q8_11', 'parity_r29_q8_03', 'parity_r29_q8_02', 'parity_r29_q8_09', 'parity_r29_q8_08')",
+    "customFilterCondition": null
+  }
+}

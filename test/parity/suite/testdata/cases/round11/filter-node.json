@@ -1,0 +1,446 @@
+{
+ "about": "What check/filter answers for a set nested in a DENY_OVERRIDES set beside a policy with an ALLOW predicate, when the nested set denies or does not apply in a way the filter has not been asked about; and for a policy with an ALLOW predicate beside a policy without a LIST rule, under the two set algorithms no earlier case asks it under. Every case sends the filter on LIST and check/resource on LIST. The cases live in their own test function so that a recording run can be filtered to them and leave every golden already committed alone. Legacy profile only, like every regular case.",
+ "resourceTypePrefix": "PARITY_SUITE_REG_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "fn-nested-set-target-reads-the-resource",
+   "about": "Nests a set whose target reads resource.x. A target that reads the resource is recorded to deny a filter alone (set-target-reads-*/filter), where a node that denies and a node that does not apply give the same DENY; beside the predicate policy under DENY_OVERRIDES, a node that denies takes the whole answer and a node that does not apply leaves allowed==1. check/resource without x and with x = a are the controls.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "resource.x == 'a'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "nested-allows",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "nested-list-allow",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list-without-x",
+     "operation": "LIST",
+     "resource": {
+      "id": "r11-filter"
+     }
+    },
+    {
+     "name": "check-list-with-x-a",
+     "operation": "LIST",
+     "resource": {
+      "id": "r11-filter",
+      "x": "a"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fn-nested-set-without-an-applicable-policy-under-deny-unless-permit",
+   "about": "Nests a set under DENY_UNLESS_PERMIT whose one policy targets a role nobody holds. What a set whose policies all do not apply contributes to a filter is recorded nowhere; the answer is DENY, allowed==1, or ALLOW depending on whether the nested set denies, does not apply, or permits.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "policies": [
+        {
+         "key": "for-nobody",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "for-nobody-list-allow",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fn-nested-set-without-an-applicable-policy-under-permit-unless-deny",
+   "about": "Nests a set under PERMIT_UNLESS_DENY whose one policy targets a role nobody holds. What a set whose policies all do not apply contributes to a filter is recorded nowhere; the answer is DENY, allowed==1, or ALLOW depending on whether the nested set denies, does not apply, or permits.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "policies": [
+        {
+         "key": "for-nobody",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "for-nobody-list-allow",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fn-nested-set-without-an-applicable-policy-under-deny-overrides",
+   "about": "Nests a set under DENY_OVERRIDES whose one policy targets a role nobody holds. What a set whose policies all do not apply contributes to a filter is recorded nowhere; the answer is DENY, allowed==1, or ALLOW depending on whether the nested set denies, does not apply, or permits.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "DENY_OVERRIDES",
+       "policies": [
+        {
+         "key": "for-nobody",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "for-nobody-list-allow",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fn-nested-set-without-an-applicable-policy-under-permit-overrides",
+   "about": "Nests a set under PERMIT_OVERRIDES whose one policy targets a role nobody holds. What a set whose policies all do not apply contributes to a filter is recorded nowhere; the answer is DENY, allowed==1, or ALLOW depending on whether the nested set denies, does not apply, or permits.",
+   "sets": [
+    {
+     "key": "outer",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      }
+     ],
+     "sets": [
+      {
+       "key": "nested",
+       "target": "true",
+       "algorithm": "PERMIT_OVERRIDES",
+       "policies": [
+        {
+         "key": "for-nobody",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_NOBODY'",
+         "algorithm": "DENY_UNLESS_PERMIT",
+         "rules": [
+          {
+           "key": "for-nobody-list-allow",
+           "target": "operation == 'LIST'",
+           "condition": "true",
+           "effect": "ALLOW"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fn-permit-overrides-set-with-a-policy-without-a-list-rule",
+   "about": "deny-overrides-set-with-a-policy-without-a-list-rule under PERMIT_OVERRIDES: a policy with an ALLOW predicate on LIST beside a DENY_UNLESS_PERMIT policy with a rule on UPDATE alone, which denies LIST. Under DENY_OVERRIDES that deny takes the filter (DENY); under DENY_UNLESS_PERMIT a deny beside a predicate is dropped (deny-in-one-policy-beside-a-predicate-in-another). PERMIT_OVERRIDES and PERMIT_UNLESS_DENY are recorded nowhere.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_OVERRIDES",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "update-only",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  },
+  {
+   "id": "fn-permit-unless-deny-set-with-a-policy-without-a-list-rule",
+   "about": "deny-overrides-set-with-a-policy-without-a-list-rule under PERMIT_UNLESS_DENY: a policy with an ALLOW predicate on LIST beside a DENY_UNLESS_PERMIT policy with a rule on UPDATE alone, which denies LIST. Under DENY_OVERRIDES that deny takes the filter (DENY); under DENY_UNLESS_PERMIT a deny beside a predicate is dropped (deny-in-one-policy-beside-a-predicate-in-another). PERMIT_OVERRIDES and PERMIT_UNLESS_DENY are recorded nowhere.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "with-a-predicate",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "list-with-a-predicate",
+         "target": "operation == 'LIST'",
+         "condition": "true",
+         "effect": "ALLOW",
+         "predicates": {
+          "rsqlPredicate": "allowed==1"
+         }
+        }
+       ]
+      },
+      {
+       "key": "update-only",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "update-allow",
+         "target": "operation == 'UPDATE'",
+         "condition": "true",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "filter",
+     "filter": true
+    },
+    {
+     "name": "check-list",
+     "operation": "LIST",
+     "resource": {
+      "id": "r9-filter"
+     }
+    }
+   ]
+  }
+ ]
+}

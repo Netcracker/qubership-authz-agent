@@ -1,0 +1,192 @@
+{
+ "about": "The keys of a simplified policy's predicates object. access-control 6.1.6 takes predicates.mongodbPredicate as the mongodb predicate and ignores the top-level mongodbPredicate, sqlPredicate and querydslPredicate; the top-level rsqlPredicate still counts (r29fields-predicates-every-key, -nested-only), and predicates {} is refused (r29pap-policy-predicates-empty-bad). No golden sends another key inside predicates. Each policy has no condition, so check/resource allows; the filter says which keys became predicates of which dialect, and ALLOW means none did.",
+ "resourceTypePrefix": "PARITY_SUITE_R42PN_",
+ "pins": {},
+ "pips": {},
+ "cases": [
+  {
+   "id": "r42openpredicatesnested-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "r42open-predicates-nested-rsql",
+   "policy": {
+    "predicates": {
+     "rsqlPredicate": "a==nested"
+    }
+   },
+   "about": "Only predicates.rsqlPredicate a==nested. The rsql text a==nested if a nested rsqlPredicate counts; ALLOW if not; a refused upload if the PAP counts mongodbPredicate alone as a format.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r42open-predicates-nested-sql",
+   "policy": {
+    "predicates": {
+     "sqlPredicate": "a='nested'"
+    }
+   },
+   "about": "Only predicates.sqlPredicate a='nested'. The sql text if a nested sqlPredicate counts; ALLOW if not; a refused upload if the PAP counts mongodbPredicate alone as a format.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r42open-predicates-nested-every-format",
+   "policy": {
+    "predicates": {
+     "rsqlPredicate": "a==nested",
+     "sqlPredicate": "a='nested'",
+     "querydslPredicate": "{{resourceType}}.a.eq(\"nested\")",
+     "mongodbPredicate": "\"a\":{\"$eq\":\"nested\"}"
+    }
+   },
+   "about": "rsqlPredicate, sqlPredicate, querydslPredicate and mongodbPredicate, all inside predicates. Each dialect's text says whether its nested key counts; the mongodb text is known to.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r42open-predicates-nested-unknown-key",
+   "policy": {
+    "predicates": {
+     "parityR42Format": "a==unknown"
+    }
+   },
+   "about": "predicates with one key that names no predicate format. ALLOW if the PAP takes any key; a refused upload if it needs a format key, as it refuses predicates {}, or if it refuses any key it does not know: r42open-predicates-nested-mongodb-and-unknown-key tells those two apart.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r42open-predicates-nested-mongodb-and-unknown-key",
+   "policy": {
+    "predicates": {
+     "mongodbPredicate": "\"a\":{\"$eq\":\"nested\"}",
+     "parityR42Format": "a==unknown"
+    }
+   },
+   "about": "predicates with mongodbPredicate, which 6.1.6 takes, beside a key that names no format. USE_FILTER_CONDITION with the mongodb text if the PAP needs at least one format key; a refused upload if it refuses any key it does not know.",
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42"
+     }
+    },
+    {
+     "name": "filter",
+     "filter": true,
+     "operation": "READ"
+    }
+   ]
+  },
+  {
+   "id": "r42openpredicatesnested-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r42",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

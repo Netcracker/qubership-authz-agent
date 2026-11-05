@@ -1,0 +1,352 @@
+{
+ "about": "Inputs on which the specification and two second models, written apart from it, answer differently: each case is the smallest input found that keeps one such difference, with its single rule in the observation forms where it has one. Controls first and last must answer alike.",
+ "resourceTypePrefix": "PARITY_SUITE_R46_D2_",
+ "pins": {
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         }
+        ]
+       }
+      ],
+      "type": "USER"
+     }
+    ]
+   },
+   "statusCode": 200
+  },
+  "/api/v1/pip/r28pip-g-empty": {
+   "body": [],
+   "statusCode": 200
+  },
+  "/api/v1/pip/r28pip-g-fail404": {
+   "body": {
+    "error": "parity round 28 case"
+   },
+   "statusCode": 404
+  },
+  "/api/v1/pip/r28pip-g-fail500": {
+   "body": {
+    "error": "parity round 28 case"
+   },
+   "statusCode": 500
+  },
+  "/api/v1/pip/r28pip-g-null": {
+   "bodyRaw": "null",
+   "statusCode": 200
+  },
+  "/api/v1/pip/r28pip-g-ok-list": {
+   "body": [
+    "v",
+    "w"
+   ],
+   "statusCode": 200
+  },
+  "/api/v1/pip/r28pip-g-ok-number": {
+   "body": 5,
+   "statusCode": 200
+  },
+  "/api/v1/pip/r28pip-g-ok-one": {
+   "body": [
+    "v"
+   ],
+   "statusCode": 200
+  }
+ },
+ "pips": {
+  "parityr28f-filtered-0": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR28F.filtered",
+   "pipType": "FILTERED",
+   "requestAttributes": {
+    "case": "r28pip-filtered"
+   },
+   "resourceType": "PARITY_R28_FILTERED",
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-list"
+  },
+  "parityr28g-0": {
+   "cacheable": false,
+   "httpMethod": "POST",
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "requestAttributes": {
+    "case": "r28pip-g-ok-one"
+   },
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-one"
+  },
+  "parityr28h-0": {
+   "cacheable": false,
+   "header": "Authorization",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-1": {
+   "cacheable": false,
+   "header": "Host",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-10": {
+   "cacheable": false,
+   "header": "Cookie",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-11": {
+   "cacheable": false,
+   "header": "Content-Type",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-2": {
+   "cacheable": false,
+   "header": "authorization",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-3": {
+   "cacheable": false,
+   "header": "",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-4": {
+   "cacheable": false,
+   "header": " x-parity-r28-h ",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-5": {
+   "cacheable": false,
+   "header": "X-Parity-R28-H",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-6": {
+   "cacheable": false,
+   "defaultValue": "d",
+   "header": "x-parity-r28-h",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-7": {
+   "cacheable": false,
+   "defaultValue": "d",
+   "header": "X-Parity-R28-H",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-8": {
+   "cacheable": false,
+   "header": "Incoming-Token",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28h-9": {
+   "cacheable": false,
+   "header": "Tenant",
+   "name": "subject.parityR28H",
+   "pipType": "HEADER",
+   "type": "UUID"
+  },
+  "parityr28t-0": {
+   "cacheable": false,
+   "claim": "department",
+   "name": "subject.parityR28T",
+   "pipType": "TOKEN",
+   "type": "UUID"
+  },
+  "permissions-parityr28m-0": {
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_P",
+      "PARITY_R28_Q"
+     ]
+    }
+   },
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING"
+  },
+  "permissions-parityr28other-0": {
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_O"
+     ]
+    }
+   },
+   "name": "subject.permissions.parityR28Other",
+   "pipType": "MAPPING"
+  },
+  "permissionscope-0": {
+   "cachePeriod": 1,
+   "cacheable": false,
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090"
+  }
+ },
+ "cases": [
+  {
+   "id": "d2r46-f2-control-first-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  },
+  {
+   "about": "HEADER over '', defaultValue None, request without it; the use: rule_condition",
+   "id": "d2r46-83757ddac5",
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-0",
+    "parityr28h-0",
+    "parityr28h-1",
+    "parityr28h-10",
+    "parityr28h-11",
+    "parityr28h-2",
+    "parityr28h-3",
+    "parityr28h-4",
+    "parityr28h-5",
+    "parityr28h-6",
+    "parityr28h-7",
+    "parityr28h-8",
+    "parityr28h-9",
+    "parityr28t-0",
+    "permissions-parityr28m-0",
+    "permissions-parityr28other-0",
+    "permissionscope-0"
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "a": "n",
+      "id": "r28"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "a": "y",
+      "id": "r28"
+     }
+    }
+   ],
+   "sets": [
+    {
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "key": "set",
+     "policies": [
+      {
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "key": "pol",
+       "rules": [
+        {
+         "condition": "subject.parityR28H IS NOT NULL OR resource.a == 'y'",
+         "effect": "ALLOW",
+         "key": "probe",
+         "target": "true"
+        }
+       ],
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'"
+      }
+     ],
+     "target": "resourceType == '{{resourceType}}'"
+    }
+   ],
+   "resourceType": "PARITY_SUITE_R28P_R28PIP_HEADER_EMPTY_NO_DEFAULT_RULE_CONDITION_NONE"
+  },
+  {
+   "id": "d2r46-f2-control-last-or",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "resource.x == 'v' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "x": "v",
+      "id": "obs",
+      "a": "n"
+     }
+    }
+   ]
+  }
+ ],
+ "standVersion": true
+}

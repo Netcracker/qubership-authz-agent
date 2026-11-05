@@ -1,0 +1,777 @@
+{
+ "about": "Round 69: subject.type of a request with Authorization-Type: anonymous, with the M2M token alone and beside the reader's Incoming-Token, read by rules whose policy target is true. Controls first and last answer true.",
+ "resourceTypePrefix": "PARITY_SUITE_R69_OPEN_ANON_",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "op69-anon-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-anonymous-or",
+   "about": "Authorization-Type: anonymous with the M2M token alone: an ALLOW rule `subject.type == 'ANONYMOUS' OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type == 'ANONYMOUS' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-anonymous-deny",
+   "about": "Authorization-Type: anonymous with the M2M token alone: a DENY rule `subject.type == 'ANONYMOUS'` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type == 'ANONYMOUS'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-user-or",
+   "about": "Authorization-Type: anonymous with the M2M token alone: an ALLOW rule `subject.type == 'USER' OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-user-deny",
+   "about": "Authorization-Type: anonymous with the M2M token alone: a DENY rule `subject.type == 'USER'` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type == 'USER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-service-or",
+   "about": "Authorization-Type: anonymous with the M2M token alone: an ALLOW rule `subject.type == 'SERVICE' OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-service-deny",
+   "about": "Authorization-Type: anonymous with the M2M token alone: a DENY rule `subject.type == 'SERVICE'` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-is-null-or",
+   "about": "Authorization-Type: anonymous with the M2M token alone: an ALLOW rule `subject.type IS NULL OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-m2m-type-is-null-deny",
+   "about": "Authorization-Type: anonymous with the M2M token alone: a DENY rule `subject.type IS NULL` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     },
+     "subject": "m2m"
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-anonymous-or",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: an ALLOW rule `subject.type == 'ANONYMOUS' OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type == 'ANONYMOUS' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-anonymous-deny",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: a DENY rule `subject.type == 'ANONYMOUS'` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type == 'ANONYMOUS'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-user-or",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: an ALLOW rule `subject.type == 'USER' OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type == 'USER' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-user-deny",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: a DENY rule `subject.type == 'USER'` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type == 'USER'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-service-or",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: an ALLOW rule `subject.type == 'SERVICE' OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-service-deny",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: a DENY rule `subject.type == 'SERVICE'` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type == 'SERVICE'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-is-null-or",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: an ALLOW rule `subject.type IS NULL OR resource.a == 'y'`, a = n and a = y.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "permit",
+         "target": "true",
+         "condition": "subject.type IS NULL OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r33",
+      "a": "y"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-user-type-is-null-deny",
+   "about": "Authorization-Type: anonymous with the reader's Incoming-Token beside the M2M token: a DENY rule `subject.type IS NULL` under PERMIT_UNLESS_DENY, a = n.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "any",
+       "target": "true",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "subject.type IS NULL",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "a": "n"
+     },
+     "headers": {
+      "Authorization-Type": "anonymous"
+     }
+    }
+   ]
+  },
+  {
+   "id": "op69-anon-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold. True unless the stand answers every check with 400.",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "PERMIT_UNLESS_DENY",
+     "policies": [
+      {
+       "key": "reader",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "PERMIT_UNLESS_DENY",
+       "rules": [
+        {
+         "key": "deny",
+         "target": "true",
+         "condition": "resource.c == 'zz'",
+         "effect": "DENY"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "read",
+     "resource": {
+      "id": "r33",
+      "c": "n"
+     }
+    }
+   ]
+  }
+ ]
+}

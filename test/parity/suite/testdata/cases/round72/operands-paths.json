@@ -1,0 +1,649 @@
+{
+ "about": "Round 72: a dot at the end of a resource path on either side of ==, and spaces inside the brackets of an index. Each case runs in a tenant of its own. Controls first and last answer true.",
+ "standVersion": true,
+ "cases": [
+  {
+   "id": "o72-paths-control-first",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_PATHS_CONTROL_FIRST",
+   "tenant": "parity-o72-paths-control-first",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-paths-control-first"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "43f70454-6f56-6683-8bd3-073ae5891c23",
+       "name": "o72-paths-control-first set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PATHS_CONTROL_FIRST'",
+       "policies": [
+        {
+         "policyId": "bbba42f8-6e73-d6f4-7bfd-8f95fc056c7b",
+         "name": "o72-paths-control-first reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "868aaf52-e4a6-b631-f66a-53df5cddeed7",
+           "name": "o72-paths-control-first probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-dot-right",
+   "about": "A DENY_UNLESS_PERMIT rule `'v' == resource.x. OR resource.a == 'y'` over a resource with x = v, a = n and a = y. Jayway refuses a path that ends in a dot, and the read fails the rule: false for both requests. A reading that drops the dot is true for a = n; one that reads an absent attribute is false for a = n and true for a = y. Round 69 asked it in a tenant that answered 400 for every check.",
+   "resourceType": "PARITY_SUITE_O72_DOT_RIGHT",
+   "tenant": "parity-o72-dot-right",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-dot-right"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "e44dc751-e9e8-b499-aaa4-3d5e9e8f77e5",
+       "name": "o72-dot-right set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_DOT_RIGHT'",
+       "policies": [
+        {
+         "policyId": "c1096391-bcb9-9724-8f7f-21b78ff156d0",
+         "name": "o72-dot-right reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "6722a551-bd63-7627-2a7b-1beccbd14b52",
+           "name": "o72-dot-right probe",
+           "target": "true",
+           "condition": "'v' == resource.x. OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "x": "v"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "x": "v"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-dot-left",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.x. == 'v' OR resource.a == 'y'` over a resource with x = v, a = n and a = y. Jayway refuses a path that ends in a dot, and the read fails the rule: false for both requests. A reading that drops the dot is true for a = n; one that reads an absent attribute is false for a = n and true for a = y. Round 69 asked it in a tenant that answered 400 for every check.",
+   "resourceType": "PARITY_SUITE_O72_DOT_LEFT",
+   "tenant": "parity-o72-dot-left",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-dot-left"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read-a-n",
+      "decide:read-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "32513aaf-e36f-52ab-56eb-970d8ddd986f",
+       "name": "o72-dot-left set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_DOT_LEFT'",
+       "policies": [
+        {
+         "policyId": "8db61c44-2d80-f67b-a69f-de73f82eaf9c",
+         "name": "o72-dot-left reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "2ab6434a-0b20-006d-cc2d-a554e8878b7a",
+           "name": "o72-dot-left probe",
+           "target": "true",
+           "condition": "resource.x. == 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "x": "v"
+       }
+      },
+      {
+       "name": "read-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "x": "v"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-index-spaces-left",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.l[ 0 ] == 'v' OR resource.a == 'y'` over l = [v] (match) and l = [w] (other), a = n and a = y. Spaces inside the brackets stay in the path, and Jayway reads [ 0 ] as the index 0: true for match, false for other. A path that keeps the spaces as a key reads nothing: false or the end of the condition for both.",
+   "resourceType": "PARITY_SUITE_O72_INDEX_SPACES_LEFT",
+   "tenant": "parity-o72-index-spaces-left",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-index-spaces-left"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:match-a-n",
+      "decide:match-a-y",
+      "decide:other-a-n",
+      "decide:other-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "c6a46503-e6b0-e774-632f-7397ff0a8ea1",
+       "name": "o72-index-spaces-left set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_INDEX_SPACES_LEFT'",
+       "policies": [
+        {
+         "policyId": "e7c38530-ee4b-2dfb-d0d6-f3627b15693d",
+         "name": "o72-index-spaces-left reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "711dac28-4b8e-a364-3631-2f124735992c",
+           "name": "o72-index-spaces-left probe",
+           "target": "true",
+           "condition": "resource.l[ 0 ] == 'v' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "match-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "v"
+        ]
+       }
+      },
+      {
+       "name": "match-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "v"
+        ]
+       }
+      },
+      {
+       "name": "other-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "w"
+        ]
+       }
+      },
+      {
+       "name": "other-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "w"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-index-spaces-right",
+   "about": "A DENY_UNLESS_PERMIT rule `'v' == resource.l[ 0 ] OR resource.a == 'y'` over l = [v] (match) and l = [w] (other), a = n and a = y. Spaces inside the brackets stay in the path, and Jayway reads [ 0 ] as the index 0: true for match, false for other. A path that keeps the spaces as a key reads nothing: false or the end of the condition for both.",
+   "resourceType": "PARITY_SUITE_O72_INDEX_SPACES_RIGHT",
+   "tenant": "parity-o72-index-spaces-right",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-index-spaces-right"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:match-a-n",
+      "decide:match-a-y",
+      "decide:other-a-n",
+      "decide:other-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "7b1d5312-a0e8-dfd5-2dd6-a57d1bb18e2a",
+       "name": "o72-index-spaces-right set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_INDEX_SPACES_RIGHT'",
+       "policies": [
+        {
+         "policyId": "675b5394-9185-3254-11a1-6c3ffbe32cb1",
+         "name": "o72-index-spaces-right reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "930a8c1c-1bc5-6dd0-9232-829b3bc1bb93",
+           "name": "o72-index-spaces-right probe",
+           "target": "true",
+           "condition": "'v' == resource.l[ 0 ] OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "match-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "v"
+        ]
+       }
+      },
+      {
+       "name": "match-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "v"
+        ]
+       }
+      },
+      {
+       "name": "other-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "w"
+        ]
+       }
+      },
+      {
+       "name": "other-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "w"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-index-spaces-two",
+   "about": "A DENY_UNLESS_PERMIT rule `resource.l[ 0 , 1 ] CONTAINS 'w' OR resource.a == 'y'` over l = [v, w] (second) and l = [v, x] (neither), a = n and a = y. Jayway reads [ 0 , 1 ] as the indexes 0 and 1, the list [v, w]: true for second, false for neither.",
+   "resourceType": "PARITY_SUITE_O72_INDEX_SPACES_TWO",
+   "tenant": "parity-o72-index-spaces-two",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-index-spaces-two"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:second-a-n",
+      "decide:second-a-y",
+      "decide:neither-a-n",
+      "decide:neither-a-y"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "87622be3-3ec0-26d2-5084-39062d41351c",
+       "name": "o72-index-spaces-two set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_INDEX_SPACES_TWO'",
+       "policies": [
+        {
+         "policyId": "1707a15e-e2fe-388e-7a5d-93853a67bc81",
+         "name": "o72-index-spaces-two reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "0512bd6a-c30f-aa62-3753-81db251c6f81",
+           "name": "o72-index-spaces-two probe",
+           "target": "true",
+           "condition": "resource.l[ 0 , 1 ] CONTAINS 'w' OR resource.a == 'y'",
+           "effect": "ALLOW"
+          }
+         ],
+         "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "DENY_UNLESS_PERMIT"
+      }
+     ],
+     "requests": [
+      {
+       "name": "second-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "v",
+         "w"
+        ]
+       }
+      },
+      {
+       "name": "second-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "v",
+         "w"
+        ]
+       }
+      },
+      {
+       "name": "neither-a-n",
+       "resource": {
+        "id": "r72",
+        "a": "n",
+        "l": [
+         "v",
+         "x"
+        ]
+       }
+      },
+      {
+       "name": "neither-a-y",
+       "resource": {
+        "id": "r72",
+        "a": "y",
+        "l": [
+         "v",
+         "x"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "o72-paths-control-last",
+   "about": "Control: a DENY rule over a resource attribute that does not hold, in a tenant of its own. True unless the stand fails every check.",
+   "resourceType": "PARITY_SUITE_O72_PATHS_CONTROL_LAST",
+   "tenant": "parity-o72-paths-control-last",
+   "steps": [
+    {
+     "name": "upload",
+     "op": "write-external-id-sets",
+     "args": {
+      "externalId": "parity-o72-paths-control-last"
+     },
+     "observe": [
+      "status",
+      "error-class",
+      "decide:read"
+     ],
+     "onRefusal": "continue",
+     "body": [
+      {
+       "policySetId": "885b31ee-52d4-b52b-2985-9461faba62ba",
+       "name": "o72-paths-control-last set",
+       "status": "ACTIVE",
+       "target": "resourceType == 'PARITY_SUITE_O72_PATHS_CONTROL_LAST'",
+       "policies": [
+        {
+         "policyId": "255de30c-926e-9468-ce2f-d8b0d4871005",
+         "name": "o72-paths-control-last reader",
+         "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+         "rules": [
+          {
+           "ruleId": "e98e7eb5-2883-4e9c-e421-f1d5ef371c1d",
+           "name": "o72-paths-control-last probe",
+           "target": "true",
+           "condition": "resource.c == 'zz'",
+           "effect": "DENY"
+          }
+         ],
+         "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+        }
+       ],
+       "policySets": [],
+       "combiningAlgorithm": "PERMIT_UNLESS_DENY"
+      }
+     ],
+     "requests": [
+      {
+       "name": "read",
+       "resource": {
+        "id": "r72",
+        "c": "n"
+       }
+      }
+     ]
+    },
+    {
+     "name": "upload-raw-sets",
+     "op": "read-config-sets",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-sets"
+     ]
+    },
+    {
+     "name": "upload-raw-pips",
+     "op": "read-config-pips",
+     "args": {},
+     "observe": [
+      "read-raw:read-config-pips"
+     ]
+    }
+   ]
+  }
+ ]
+}

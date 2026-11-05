@@ -1,0 +1,78 @@
+{
+  "status": 200,
+  "export": {
+    "pips": [
+      {
+        "cachePeriod": 1,
+        "cacheable": true,
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.permissionScope",
+        "pipType": "PERMISSION_SCOPE",
+        "tenantId": "default",
+        "type": "UUID",
+        "url": "http://pip-mock:8090"
+      },
+      {
+        "cacheable": false,
+        "claim": "department",
+        "defaultValue": "none",
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.parityConfigExportToken",
+        "pipType": "TOKEN",
+        "tenantId": "default",
+        "type": "UUID"
+      },
+      {
+        "cacheable": false,
+        "defaultValue": "none",
+        "domain": "PARITY_ISOLATED",
+        "header": "x-parity-config-export",
+        "name": "subject.parityConfigExportHeader",
+        "pipType": "HEADER",
+        "tenantId": "default",
+        "type": "UUID"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "jsonPath": "$.value",
+        "name": "subject.parityConfigExportGeneral",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT"
+        },
+        "tenantId": "default",
+        "type": "JSON",
+        "url": "http://pip-mock:8090/api/v1/pip/config-export"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "httpMethod": "POST",
+        "jsonPath": "$.value",
+        "name": "subject.parityConfigExportGeneral",
+        "pipType": "GENERAL",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT"
+        },
+        "tenantId": "parity-mt-b",
+        "type": "JSON",
+        "url": "http://pip-mock:8090/api/v1/pip/config-export-b"
+      },
+      {
+        "cacheable": false,
+        "domain": "PARITY_ISOLATED",
+        "name": "subject.parityConfigExport.filtered",
+        "pipType": "FILTERED",
+        "requestAttributes": {
+          "resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT"
+        },
+        "resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT",
+        "tenantId": "default",
+        "type": "UUID",
+        "url": "http://pip-mock:8090/api/v1/pip/config-export-filtered"
+      }
+    ]
+  }
+}

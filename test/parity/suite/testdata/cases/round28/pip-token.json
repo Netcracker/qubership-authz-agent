@@ -1,0 +1,214 @@
+{
+ "about": "TOKEN PIP declarations with an empty claim: a token without the claim, a failed PIP, or a refused upload.",
+ "resourceTypePrefix": "PARITY_SUITE_R28P_",
+ "pins": {
+  "/api/v1/pip/r28pip-g-ok-list": {
+   "statusCode": 200,
+   "body": [
+    "v",
+    "w"
+   ]
+  },
+  "/api/v1/pip/r28pip-g-ok-one": {
+   "statusCode": 200,
+   "body": [
+    "v"
+   ]
+  },
+  "/api/v1/pip/r28pip-g-ok-number": {
+   "statusCode": 200,
+   "body": 5
+  },
+  "/api/v1/pip/r28pip-g-null": {
+   "statusCode": 200,
+   "bodyRaw": "null"
+  },
+  "/api/v1/pip/r28pip-g-empty": {
+   "statusCode": 200,
+   "body": []
+  },
+  "/api/v1/pip/r28pip-g-fail500": {
+   "statusCode": 500,
+   "body": {
+    "error": "parity round 28 case"
+   }
+  },
+  "/api/v1/pip/r28pip-g-fail404": {
+   "statusCode": 404,
+   "body": {
+    "error": "parity round 28 case"
+   }
+  },
+  "/api/v1/permission-scope/user/00000000-0000-0000-0000-000000000101/policies": {
+   "statusCode": 200,
+   "body": {
+    "permissionScope": [
+     {
+      "id": "00000000-0000-0000-0000-000000000101",
+      "isInherited": false,
+      "name": "parity-reader",
+      "type": "USER",
+      "policies": [
+       {
+        "scopeItems": [
+         {
+          "key": "region",
+          "values": [
+           {
+            "id": "v"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "pips": {
+  "parityr28t-0": {
+   "name": "subject.parityR28T",
+   "type": "UUID",
+   "pipType": "TOKEN",
+   "claim": "",
+   "cacheable": false
+  },
+  "parityr28f-filtered-0": {
+   "name": "subject.parityR28F.filtered",
+   "pipType": "FILTERED",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "resourceType": "PARITY_R28_FILTERED",
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-list",
+   "requestAttributes": {
+    "case": "r28pip-filtered"
+   }
+  },
+  "parityr28g-0": {
+   "name": "subject.parityR28G",
+   "pipType": "GENERAL",
+   "httpMethod": "POST",
+   "cacheable": false,
+   "url": "http://pip-mock:8090/api/v1/pip/r28pip-g-ok-one",
+   "requestAttributes": {
+    "case": "r28pip-g-ok-one"
+   }
+  },
+  "parityr28h-0": {
+   "name": "subject.parityR28H",
+   "type": "UUID",
+   "pipType": "HEADER",
+   "header": "x-parity-r28-h",
+   "cacheable": false
+  },
+  "permissionscope-0": {
+   "name": "subject.permissionScope",
+   "pipType": "PERMISSION_SCOPE",
+   "url": "http://pip-mock:8090",
+   "cacheable": false,
+   "cachePeriod": 1
+  },
+  "permissions-parityr28m-0": {
+   "name": "subject.permissions.parityR28M",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_P",
+      "PARITY_R28_Q"
+     ]
+    }
+   }
+  },
+  "permissions-parityr28other-0": {
+   "name": "subject.permissions.parityR28Other",
+   "pipType": "MAPPING",
+   "customMapping": {
+    "subject.roles": {
+     "ROLE_PARITY_READER": [
+      "PARITY_R28_O"
+     ]
+    }
+   }
+  }
+ },
+ "cases": [
+  {
+   "id": "r28pip-token-empty-no-default-simplified-reader",
+   "about": "TOKEN over claim '', defaultValue None; the use: simplified",
+   "condition": "subject.parityR28T == 'finance' OR resource.a == 'y'",
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28t-0"
+   ]
+  },
+  {
+   "id": "r28pip-token-empty-no-default-rule-condition-reader",
+   "about": "TOKEN over claim '', defaultValue None; the use: rule_condition",
+   "sets": [
+    {
+     "key": "set",
+     "target": "resourceType == '{{resourceType}}'",
+     "algorithm": "DENY_UNLESS_PERMIT",
+     "policies": [
+      {
+       "key": "pol",
+       "target": "subject.roles CONTAINS 'ROLE_PARITY_READER'",
+       "algorithm": "DENY_UNLESS_PERMIT",
+       "rules": [
+        {
+         "key": "probe",
+         "target": "true",
+         "condition": "subject.parityR28T == 'finance' OR resource.a == 'y'",
+         "effect": "ALLOW"
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "requests": [
+    {
+     "name": "a-n",
+     "resource": {
+      "id": "r28",
+      "a": "n"
+     }
+    },
+    {
+     "name": "a-y",
+     "resource": {
+      "id": "r28",
+      "a": "y"
+     }
+    }
+   ],
+   "pips": [
+    "parityr28f-filtered-0",
+    "parityr28g-0",
+    "parityr28h-0",
+    "parityr28t-0",
+    "permissionscope-0",
+    "permissions-parityr28m-0",
+    "permissions-parityr28other-0"
+   ]
+  }
+ ]
+}

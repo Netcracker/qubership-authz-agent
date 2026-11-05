@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_GENERAL_DQ_OUT.a.notIn(\"x\"y\")).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$in\": [ { \"$uuid\": \"x\"y\" } ] } } }",
+    "rsqlFilterCondition": "a=in=(\"x\"y\")",
+    "sqlFilterCondition": "NOT (a NOT IN ('x\"y'))",
+    "customFilterCondition": null
+  }
+}

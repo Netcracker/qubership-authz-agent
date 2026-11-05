@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "result": {
+    "calculationResult": "USE_FILTER_CONDITION",
+    "filterCondition": "(PARITY_SUITE_R28RSQL_DO_OP_LT_ALT_BARE.a.lt(5)).not()",
+    "mongodbFilterCondition": "{ { \"a\": { \"$gte\": 5 } } }",
+    "rsqlFilterCondition": "a\u003e=5",
+    "sqlFilterCondition": "NOT (a\u003c5)",
+    "customFilterCondition": null
+  }
+}
