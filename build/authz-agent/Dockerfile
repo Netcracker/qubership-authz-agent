@@ -7,6 +7,9 @@
 FROM --platform=$BUILDPLATFORM golang:1.27.3-alpine3.24@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS builder
 ARG TARGETOS
 ARG TARGETARCH
+# The Go build tags; empty in a release. The parity stand builds with
+# paritytest, which adds POST /internal/v1/pull to the internal port.
+ARG GO_BUILD_TAGS=""
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
@@ -14,7 +17,7 @@ COPY components/ components/
 COPY internal/ internal/
 COPY policies/ policies/
 RUN CGO_ENABLED=0 GOOS="${TARGETOS}" GOARCH="${TARGETARCH}" \
-    go build -o /out/authz-agent ./components/authz-agent
+    go build -tags "${GO_BUILD_TAGS}" -o /out/authz-agent ./components/authz-agent
 
 # The platform base image: CA bundle, uid 10001 in the root group.
 FROM ghcr.io/netcracker/qubership-core-base:alpine-2.5.11@sha256:1b80a6ba225210f2308c68679aa40e5211d4712269200a55862ec2a9061a55de

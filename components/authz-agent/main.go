@@ -103,6 +103,7 @@ func main() {
 		CollectorURL:   cfg.DecisionLogs.URL,
 		NDBuiltinCache: cfg.NDBuiltinCache,
 		Health:         func() server.Report { return report(providers, puller) },
+		PullNow:        puller.PullNow,
 	}
 
 	// Immutable: strings handed out by the request context, such as a header

@@ -132,6 +132,7 @@ jobs:
         with:
           go-version-file: go.mod
           cache-dependency-path: |
+            go.sum
             test/integration/testify/go.sum
             test/parity/suite/go.sum
 
@@ -142,6 +143,11 @@ jobs:
       - name: Vet the parity suite
         working-directory: test/parity/suite
         run: go vet -tags integration ./...
+
+      # The pull route of the parity stand compiles only with this tag, which
+      # the CI workflow's go test does not pass.
+      - name: Test the agent's paritytest build
+        run: go test -tags paritytest ./components/authz-agent/internal/server/
 
   jsonpath-jayway:
     name: jsonPath against Jayway
