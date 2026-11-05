@@ -334,6 +334,16 @@ func (r *warnRecorder) matches(parts ...string) bool {
 }
 
 // count returns how many warnings contain part.
+// infoRecorder keeps the informational messages too.
+type infoRecorder struct {
+	warnRecorder
+	infos []string
+}
+
+func (r *infoRecorder) Infof(format string, args ...any) {
+	r.infos = append(r.infos, fmt.Sprintf(format, args...))
+}
+
 func (r *warnRecorder) count(part string) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()

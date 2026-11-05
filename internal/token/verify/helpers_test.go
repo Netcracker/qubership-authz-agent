@@ -41,7 +41,7 @@ var start = time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
 // testIssuer is the only issuer a fakeKeys trusts, and the iss of [claimsAt].
 const testIssuer = "https://idp.example/auth/realms/r"
 
-// serviceAccountSub is the sub of a token of a Kubernetes provider.
+// serviceAccountSub is the sub of a Kubernetes token.
 const serviceAccountSub = "system:serviceaccount:ns:app"
 
 // fakeKeys is a KeyFinder that holds the keys of testIssuer in memory, and

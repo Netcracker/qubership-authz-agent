@@ -129,22 +129,29 @@ func (f *fetcher) tokenFile() string {
 	return f.source.Provider.TokenFile
 }
 
+// emptyCertPool is the base pool of a caFile that replaces the system roots.
+func emptyCertPool() (*x509.CertPool, error) { return x509.NewCertPool(), nil }
+
 // newClient builds the HTTP client for one server: the proxy settings of the
-// environment, timeout per request, caFile as the only trusted roots when it
-// is set, and no redirect followed. [http.Client] forwards the bearer token
-// of [Provider.TokenFile] to a redirect target on the same host or a
+// environment, timeout per request, and no redirect followed. When caFile is
+// set, the client trusts the pool that base returns with caFile added. Without
+// it the client trusts the system roots. [http.Client] forwards the bearer
+// token of [Provider.TokenFile] to a redirect target on the same host or a
 // subdomain of it, whatever its port or scheme, so a redirect ends the
-// request as a failure instead. owner names the server in an error.
-func newClient(owner, caFile string, timeout time.Duration) (*http.Client, error) {
+// request as a failure instead. label names caFile in an error.
+func newClient(label string, base func() (*x509.CertPool, error), caFile string, timeout time.Duration) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	if caFile != "" {
 		pem, err := os.ReadFile(caFile)
 		if err != nil {
-			return nil, fmt.Errorf("%s caFile: %w", owner, err)
+			return nil, fmt.Errorf("%s: %w", label, err)
 		}
-		roots := x509.NewCertPool()
+		roots, err := base()
+		if err != nil {
+			return nil, fmt.Errorf("%s: system roots: %w", label, err)
+		}
 		if !roots.AppendCertsFromPEM(pem) {
-			return nil, fmt.Errorf("%s caFile %s holds no PEM certificate", owner, caFile)
+			return nil, fmt.Errorf("%s %s holds no PEM certificate", label, caFile)
 		}
 		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
 	}

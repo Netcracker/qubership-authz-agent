@@ -293,7 +293,7 @@ func verifierFor(t *testing.T, provider keys.Provider, admit func(*verify.Token)
 	return v, sign
 }
 
-// The Kubernetes provider is named k8s and the unmarked one kubernetes, so
+// The marked provider is named k8s and the unmarked one kubernetes, so
 // the mark, not the id, decides which tokens are checked.
 func TestAllowlist_AdmitChecksTheTokensOfKubernetesProviders(t *testing.T) {
 	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})

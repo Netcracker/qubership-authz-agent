@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -64,8 +65,9 @@ type Provider struct {
 	// Issuer is the iss of the provider's tokens, compared byte for byte, and
 	// an absolute http or https URL. It is unique within a Config. The OIDC
 	// discovery document lies under it, at
-	// /.well-known/openid-configuration.
-	Issuer string `json:"issuer"`
+	// /.well-known/openid-configuration. A provider that sets Kubernetes
+	// leaves it empty: [New] takes it from the token in TokenFile.
+	Issuer string `json:"issuer,omitempty"`
 	// JWKSURI is the address of the provider's JWKS, an absolute http or
 	// https URL. With it, the keys are fetched without discovery.
 	JWKSURI string `json:"jwksUri,omitempty"`
@@ -76,16 +78,22 @@ type Provider struct {
 	// requires Audiences.
 	AllowMissingAud bool `json:"allowMissingAud,omitempty"`
 	// CAFile is a PEM bundle that replaces the system roots for HTTPS
-	// requests to this provider.
+	// requests to this provider. [New] does not use it for a provider that
+	// takes an issuer outside its cluster from its token and has no JWKSURI:
+	// such a provider trusts the system roots and [Options.InternalCAFile].
 	CAFile string `json:"caFile,omitempty"`
 	// TokenFile holds a bearer token sent with every request for the keys of
-	// this provider. It requires JWKSURI, unless the provider reads its keys
-	// from the API server of its own cluster through discovery: an https
-	// Issuer on an in-cluster name of the API server, and a CAFile. Such a
-	// server names the jwks_uri the token goes to, and a fetch fails when
-	// that address is not https. No request follows a redirect, so the token
-	// goes to no other address. It is read on every request, so a rotated
-	// token takes effect without a restart.
+	// this provider. A provider that does not set Kubernetes needs JWKSURI
+	// with it. A provider that sets Kubernetes has to set it, because [New]
+	// takes the Issuer from this token. That token grants access to the API
+	// server, so such a provider sends it to a JWKSURI only on an https
+	// in-cluster name of the API server. Without a JWKSURI it sends the token
+	// through discovery when the Issuer is an https in-cluster name and
+	// CAFile is set: that server names the jwks_uri the token goes to, and a
+	// fetch fails when that address is not https. Under any other issuer it
+	// sends no token. No request follows a redirect, so the token goes to no
+	// other address. It is read on every request, so a rotated token takes
+	// effect without a restart.
 	TokenFile string `json:"tokenFile,omitempty"`
 	// Kubernetes marks the provider as the service account token issuer of
 	// a Kubernetes API server, and
@@ -150,7 +158,6 @@ func (c Config) Validate() error {
 		}
 	}
 	ids := make(map[string]bool, len(c.Providers))
-	issuers := make(map[string]bool, len(c.Providers))
 	for i, p := range c.Providers {
 		if err := p.validate(); err != nil {
 			return fmt.Errorf("providers[%d]: %w", i, err)
@@ -159,6 +166,19 @@ func (c Config) Validate() error {
 			return fmt.Errorf("providers[%d]: id %q is used by an earlier provider", i, p.ID)
 		}
 		ids[p.ID] = true
+	}
+	return c.checkIssuers()
+}
+
+// checkIssuers returns an error for two providers with one issuer. A provider
+// without an issuer yet is left out, so [New] calls it again once it has read
+// the tokens.
+func (c Config) checkIssuers() error {
+	issuers := make(map[string]bool, len(c.Providers))
+	for i, p := range c.Providers {
+		if p.Issuer == "" {
+			continue
+		}
 		if issuers[p.Issuer] {
 			return fmt.Errorf("providers[%d]: issuer %q is used by an earlier provider", i, p.Issuer)
 		}
@@ -185,10 +205,12 @@ func (p Provider) validate() error {
 		return errors.New("id is empty")
 	case !validProviderID.MatchString(p.ID):
 		return fmt.Errorf("id %q has a character other than a letter, a digit, '.', '_', or '-'", p.ID)
-	case p.Issuer == "":
-		return fmt.Errorf("provider %q has no issuer", p.ID)
-	case p.TokenFile != "" && p.JWKSURI == "" && !p.readsTheClusterAPIServer():
-		return fmt.Errorf("provider %q sets tokenFile without jwksUri; the token goes through discovery only to an https issuer on an in-cluster name of the Kubernetes API server, with its CA in caFile, so set jwksUri, or fix issuer and caFile", p.ID)
+	case p.Kubernetes && p.Issuer != "":
+		return fmt.Errorf("provider %q sets both kubernetes and issuer; a provider that sets kubernetes takes its issuer from the token in tokenFile, so remove issuer", p.ID)
+	case p.Issuer == "" && !p.takesIssuerFromToken():
+		return fmt.Errorf("provider %q has no issuer; only a provider that sets kubernetes and tokenFile takes it from its token", p.ID)
+	case !p.Kubernetes && p.TokenFile != "" && p.JWKSURI == "":
+		return fmt.Errorf("provider %q sets tokenFile without jwksUri; only a provider that sets kubernetes sends a token through discovery, so set jwksUri or remove tokenFile", p.ID)
 	case p.AllowMissingAud && len(p.Audiences) == 0:
 		return fmt.Errorf("provider %q sets allowMissingAud without audiences", p.ID)
 	case p.Kubernetes && len(p.Audiences) == 0:
@@ -203,14 +225,32 @@ func (p Provider) validate() error {
 			return fmt.Errorf("provider %q lists an empty audience", p.ID)
 		}
 	}
-	if err := checkHTTPURL(p.Issuer); err != nil {
-		return fmt.Errorf("provider %q issuer: %w", p.ID, err)
+	if p.Issuer != "" {
+		if err := checkHTTPURL(p.Issuer); err != nil {
+			return fmt.Errorf("provider %q issuer: %w", p.ID, err)
+		}
 	}
 	if p.JWKSURI == "" {
 		return nil
 	}
 	if err := checkHTTPURL(p.JWKSURI); err != nil {
 		return fmt.Errorf("provider %q jwksUri: %w", p.ID, err)
+	}
+	if p.Kubernetes {
+		return p.checkTokenAddress()
+	}
+	return nil
+}
+
+// checkTokenAddress refuses a JWKSURI that p, which sets Kubernetes, must not
+// send its token to.
+func (p Provider) checkTokenAddress() error {
+	u, err := url.Parse(p.JWKSURI)
+	switch {
+	case err != nil || !kubernetesHosts[strings.ToLower(u.Hostname())]:
+		return fmt.Errorf("provider %q sends the token in tokenFile to jwksUri %q, which is outside the cluster, and that token grants access to the API server; set jwksUri to an https address on kubernetes.default.svc or kubernetes.default.svc.cluster.local, or remove jwksUri to find the keys through discovery", p.ID, p.JWKSURI)
+	case u.Scheme != "https":
+		return fmt.Errorf("provider %q sends the token in tokenFile to jwksUri %q over http, and that token grants access to the API server; use https", p.ID, p.JWKSURI)
 	}
 	return nil
 }
@@ -283,10 +323,55 @@ func (p Provider) looksLikeKubernetes() bool {
 	return false
 }
 
-// readsTheClusterAPIServer reports whether the keys of p come from the API
-// server of its own cluster: an https issuer on an in-cluster name, and a CA
-// of its own in place of the system roots.
-func (p Provider) readsTheClusterAPIServer() bool {
+// hasInClusterIssuer reports whether the issuer of p is an https address on an
+// in-cluster name of the Kubernetes API server.
+func (p Provider) hasInClusterIssuer() bool {
 	u, err := url.Parse(p.Issuer)
-	return err == nil && u.Scheme == "https" && kubernetesHosts[strings.ToLower(u.Hostname())] && p.CAFile != ""
+	return err == nil && u.Scheme == "https" && kubernetesHosts[strings.ToLower(u.Hostname())]
+}
+
+// takesIssuerFromToken reports whether [New] fills in the issuer of p.
+func (p Provider) takesIssuerFromToken() bool {
+	return p.Issuer == "" && p.Kubernetes && p.TokenFile != ""
+}
+
+// discoversOutsideTheCluster reports whether p, whose issuer is filled in,
+// finds its keys through discovery under an address outside its cluster.
+func (p Provider) discoversOutsideTheCluster() bool {
+	return p.Kubernetes && p.JWKSURI == "" && !p.hasInClusterIssuer()
+}
+
+// withIssuers returns a copy of c with the issuer of each provider that takes
+// it from its token. The token and the CA of such a provider belong to its
+// cluster, so discovery outside the cluster uses neither: it sends no token, and
+// [New] gives it a client on the system roots and [Options.InternalCAFile]. It
+// fails when a token file holds no token with an iss, when that iss is not an
+// http or https URL, when an in-cluster issuer has neither a caFile nor a
+// jwksUri, and when two providers end up with one issuer.
+func (c Config) withIssuers(log Logger) (Config, error) {
+	c.Providers = slices.Clone(c.Providers)
+	for i := range c.Providers {
+		p := &c.Providers[i]
+		if !p.takesIssuerFromToken() {
+			continue
+		}
+		issuer, err := IssuerOfTokenFile(p.TokenFile)
+		if err != nil {
+			return Config{}, fmt.Errorf("provider %q takes its issuer from tokenFile, so mount the token there or fix tokenFile: %w", p.ID, err)
+		}
+		if err := checkHTTPURL(issuer); err != nil {
+			return Config{}, fmt.Errorf("provider %q issuer: %w", p.ID, err)
+		}
+		p.Issuer = issuer
+		switch {
+		case p.discoversOutsideTheCluster():
+			log.Infof("trusted providers: provider %q takes the issuer %q from %s; discovery under an issuer outside the cluster sends no token and ignores caFile, so set jwksUri if it needs them", p.ID, issuer, p.TokenFile)
+			p.TokenFile, p.CAFile = "", ""
+		case p.JWKSURI == "" && p.CAFile == "":
+			return Config{}, fmt.Errorf("provider %q takes the in-cluster issuer %q from tokenFile, and discovery there needs the cluster CA, so set caFile", p.ID, issuer)
+		default:
+			log.Infof("trusted providers: provider %q takes the issuer %q from %s", p.ID, issuer, p.TokenFile)
+		}
+	}
+	return c, c.checkIssuers()
 }
