@@ -116,10 +116,9 @@ var jsonPathRef = &Ref{Kind: spectables.KindResJSONPath, Subset: true}
 
 // JSONPathRecord returns the value record of path over the resource doc, in
 // the state [selection] gives it. doc is nil for a request without a resource
-// or with a null one, and the record is then ABSENT. The ERROR of a selection
-// too large is outside the domain of a path without a dot at its end
-// (pathDomain), so every comparison over the record is undefined, as over a
-// failed source.
+// or with a null one, and the record is then ABSENT. A selection too large
+// is ERROR, which the domain of every path that can stop that way keeps
+// (pathDomain), so a comparison over it is unknown, as over a failed source.
 func JSONPathRecord(doc jsonvalue.Value, path string) (*ast.Term, error) {
 	p, err := regobuiltins.CompilePath(path)
 	if err != nil {

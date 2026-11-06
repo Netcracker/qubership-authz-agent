@@ -622,6 +622,34 @@ func binaryTree(depth int) string {
 // of inLists(v, 12) 4096 times.
 var twice12 = strings.Repeat("[0,0]", 12)
 
+// A path is bounded where every step selects one member or one element: a
+// key, a bracketed key, or an index. Any step that may select several
+// values, or a function over them, makes it unbounded.
+func TestBounded(t *testing.T) {
+	for _, tt := range []struct {
+		path string
+		want bool
+	}{
+		{".a.b", true},
+		{".a['b'][2]", true},
+		{"..a", false},
+		{".a[*]", false},
+		{".a[?(@.b)]", false},
+		{".a[0,1]", false},
+		{".a[0:2]", false},
+		{".a.length()", false},
+	} {
+		p, err := Compile(tt.path)
+		if err != nil {
+			t.Errorf("Compile(%q): %v", tt.path, err)
+			continue
+		}
+		if got := p.Bounded(); got != tt.want {
+			t.Errorf("Compile(%q).Bounded() = %v, want %v", tt.path, got, tt.want)
+		}
+	}
+}
+
 // A path whose work outgrows its document stops with KindTooLarge, whether a
 // step visits nested parts of the document or repeats the values an earlier
 // step selected. A selection as large as the document, made of parts that do
