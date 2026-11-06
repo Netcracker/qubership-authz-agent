@@ -44,7 +44,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
 | `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_DEFAULT_TENANT` | `default` | Display name of the tenant a check request is decided in when it names none in the `tenant_id` parameter or the `Tenant` header; resolved to the tenant ID through `AUTHZ_TENANT_MANAGER_URL` |
-| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP; a call that takes longer is a failed PIP |
+| `AUTHZ_PIP_TIMEOUT` | `2` | Seconds a policy waits for one call of a PIP; a call that takes longer is a failed PIP, as is a response whose body exceeds 8 MiB |
 | `AUTHZ_ENTITLEMENTS_URL` | empty | Base URL of the entitlements service, which a condition on `subject.entitledResources` calls at `/api/v3/user-entitlements/user/<subject id>`, once per decision request, within `AUTHZ_PIP_TIMEOUT` and without retries. Empty makes such a condition's operand fail, and the item is denied with the reason `PIP resolution failed` |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
