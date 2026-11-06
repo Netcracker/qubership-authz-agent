@@ -332,6 +332,17 @@ func parseInt(s string) (int, error) {
 	return int(n), nil
 }
 
+// Bounded reports whether Select never stops with [KindTooLarge]: every step
+// of p selects one member or one element of one value.
+func (p *Path) Bounded() bool {
+	for _, s := range p.steps {
+		if s.kind != stepKey && s.kind != stepIndex {
+			return false
+		}
+	}
+	return true
+}
+
 // Select applies the path to doc. The selected values are parts of doc, not
 // copies. Select gives [KindTooLarge] once its work exceeds a fixed multiple
 // of the size of doc: each value a step visits, each member a filter reads,

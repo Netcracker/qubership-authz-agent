@@ -174,6 +174,38 @@ func TestAComparisonWithSubjectIsM2MIsDecided(t *testing.T) {
 	}
 }
 
+// A deep scan the jsonpath package stops as too large leaves a DENY rule
+// over it unknown, so the item is denied as on a failed source. Such a
+// selection used to fall on neither rail of a two-valued leaf, and the DENY
+// rule did not apply. A resource without the member is the control that
+// the ALLOW rule allows.
+func TestADenyOverASelectionTooLargeDenies(t *testing.T) {
+	set := `{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"},
+				{"ruleId": "deny", "target": "true", "condition": "resource..secret IS NOT NULL", "effect": "DENY",
+					"tenantId": "a"}]}]}`
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, set)
+	nested := strings.Repeat(`{"secret":`, 40) + `1` + strings.Repeat(`}`, 40)
+	for _, tc := range []struct {
+		name, resource string
+		want           Result
+	}{
+		{"secret nested 40 deep", nested, Result{Reason: ReasonUnknown}},
+		{"no secret", `{"a": 1}`, Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := readDoc(t, "a", "x", 1)
+			req.Items[0].Resource = mustObject(t, tc.resource)
+			if got := decide(t, r, req); got[0] != tc.want {
+				t.Errorf("Decide(resource %.40s) = %+v, want %+v", tc.resource, got[0], tc.want)
+			}
+		})
+	}
+}
+
 // broken is a condition the agent's parser refuses, which rejects the
 // candidate of its tenant as a whole.
 const broken = "resource.a =="
