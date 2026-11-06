@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"authz-agent/internal/policyir"
+	"authz-agent/internal/regogen/spectables"
 )
 
 // The module text carries comments that lead a reader from a line back to
@@ -45,8 +46,12 @@ type exprSrc struct {
 	// labels of the innermost nodes the referenced clauses came from at
 	// this reference.
 	nodes []string
-	// atom is the comparison as policyir.FormatCondition writes it.
+	// atom is the comparison as policyir.FormatConditionBrief writes it.
 	atom string
+	// outcome is the outcome of atom that the expression's clause requires:
+	// T on the true rail of the comparison, F on the false one, and empty
+	// for the atom of a simplified group.
+	outcome spectables.Outcome
 }
 
 var uuidRE = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
@@ -101,11 +106,20 @@ func condText(c *policyir.Condition) string {
 	if c == nil {
 		return "(none)"
 	}
-	return policyir.FormatCondition(c)
+	return policyir.FormatConditionBrief(c)
 }
 
 func atomText(a policyir.Atom) string {
-	return policyir.FormatCondition(&policyir.Condition{Disjuncts: [][]policyir.Atom{{a}}})
+	return policyir.FormatConditionBrief(&policyir.Condition{Disjuncts: [][]policyir.Atom{{a}}})
+}
+
+// nodeHead is the first line of the source of a set, a policy, or a rule:
+// its kind, its ID, its name where it has one, and what follows.
+func nodeHead(kind, id, name, tail string) string {
+	if name == "" {
+		return fmt.Sprintf("%s %q, %s", kind, id, tail)
+	}
+	return fmt.Sprintf("%s %q %q, %s", kind, id, commentLine(name), tail)
 }
 
 // stamp returns d with src on every expression that has no source yet.
@@ -123,19 +137,6 @@ func stamp(d dnf, src *exprSrc) dnf {
 			nc[j] = e
 		}
 		out[i] = nc
-	}
-	return out
-}
-
-// withCell returns c with the cell on each check of a state or a class that
-// has none yet.
-func withCell(c clause, cell string) clause {
-	out := make(clause, len(c))
-	for i, e := range c {
-		if e.cell == "" && (e.fact.field == 's' || e.fact.field == 't') {
-			e.cell = cell
-		}
-		out[i] = e
 	}
 	return out
 }
@@ -197,22 +198,29 @@ func atoms(d dnf) []string {
 	return out
 }
 
-// lineComment is the comment after an expression: for a check of a state or
-// a class, the comparison it belongs to and, where one cell decides it, the
-// points and the outcome; for a subject group's membership, the comparisons
-// it holds; empty for any other expression.
-func lineComment(e expr) string {
-	atom := ""
-	if e.src != nil {
-		atom = e.src.atom
+// clauseComment is the comment above a clause of a product several nodes
+// read: the innermost nodes the clause came from, then each comparison it
+// requires and the outcome it requires of it, as in
+// "set_x_p1_r1: subject.roles CONTAINS "A" -> T".
+func clauseComment(c clause) string {
+	var parts []string
+	for _, e := range c {
+		if e.src == nil || e.src.atom == "" {
+			continue
+		}
+		p := e.src.atom
+		if e.src.outcome != "" {
+			p += " -> " + string(e.src.outcome)
+		}
+		if !slices.Contains(parts, p) {
+			parts = append(parts, p)
+		}
 	}
-	switch {
-	case atom != "" && e.cell != "":
-		return atom + ": " + e.cell
-	case atom != "" && (e.fact.field == 's' || e.fact.field == 't'):
-		return atom
+	line := strings.Join(clauseNodes(c), ", ")
+	if len(parts) > 0 && line != "" {
+		line += ": "
 	}
-	return e.cell
+	return line + strings.Join(parts, "; ")
 }
 
 // commentLine makes s fit on one comment line.
@@ -258,15 +266,22 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # string equals a list or an object by, equality_key the key two lists or
 # objects are equal by, length, element_tokens the tokens of the elements and
 # element_tokens_with_text those and the token of the text of a list or an
-# object element, number the number < and > compare, subset_left and
-# subset_right the tokens IS SUBSET reads on the left and on the right. A
-# class is string, scalar (a number or a boolean), list, header_list (a list
-# from a header), list_with_null, nested_list (a list with a list or an
-# object element), object, or null. input.folded_roles holds
-# the folded roles, input.subject_groups the subject groups the request is in,
+# object element, number the key < and > compare a number by, a list that
+# sorts as the numbers do, subset_left and subset_right the tokens IS SUBSET reads on the
+# left and on the right. A token is a key with its kind: t: text, o: object,
+# l:[...] list, and in the tokens of IS SUBSET also s: string and b: boolean.
+# A class is string, scalar (a number or a boolean), list, header_list (a
+# list from a header), list_with_null, nested_list (a list with a list or an
+# object element), object, or null. input.folded_roles holds the folded
+# roles, input.subject_groups the subject groups the request is in,
 # input.m2m whether the subject is machine-to-machine, input.scope_passes the
 # passes of an iterate over the permission scope, and input.scope_failed
 # whether reading the scope failed.
+#
+# A comment above c_<hash> names the condition and whether the rule holds
+# where the condition is true or where it is false; a comment above each
+# clause of m_<hash> names the nodes it came from and the outcome it
+# requires of each comparison.
 `
 
 // commenter writes the comments above the clauses of one module text.
