@@ -479,7 +479,7 @@ func setsTerm(sets [][]string) *ast.Term {
 func (r Record) term() *ast.Term {
 	o := ast.NewObject([2]*ast.Term{strTerm(fieldState), strTerm(r.S)})
 	if r.T != "" {
-		o.Insert(strTerm(fieldClass), strTerm(r.T))
+		o.Insert(strTerm(fieldClass), strTerm(regoClass(spectables.Class(r.T))))
 	}
 	if r.K != nil {
 		o.Insert(strTerm(fieldKey), strTerm(*r.K))
@@ -618,6 +618,29 @@ const (
 	memberPIPRequests   = "pip_requests"
 )
 
+// regoClasses names each value class as a module reads it in the field class
+// of a record; the specification's tables spell the class by its code.
+var regoClasses = map[spectables.Class]string{
+	spectables.ClassString:      "string",
+	spectables.ClassScalar:      "scalar",
+	spectables.ClassList:        "list",
+	spectables.ClassHeaderList:  "header_list",
+	spectables.ClassNullElement: "list_with_null",
+	spectables.ClassNested:      "nested_list",
+	spectables.ClassObject:      "object",
+	spectables.ClassNull:        "null",
+}
+
+// regoClass returns the name of the class with code c in a module and its
+// input, and panics on a code [spectables.Classes] lacks.
+func regoClass(c spectables.Class) string {
+	name, ok := regoClasses[c]
+	if !ok {
+		panic("regogen: no value class " + string(c))
+	}
+	return name
+}
+
 // recordFields names the maps of [fieldMaps].
 var recordFields = []string{fieldState, fieldClass, fieldKey, fieldElementKeys, fieldText, fieldSegments,
 	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqualityKey, fieldLength,
@@ -739,7 +762,7 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 		put(fieldState, strTerm(rec.S))
 	}
 	if rec.T != "" && emit.has(fieldClass) {
-		put(fieldClass, strTerm(rec.T))
+		put(fieldClass, strTerm(regoClass(spectables.Class(rec.T))))
 	}
 	if rec.K != nil && emit.has(fieldKey) {
 		put(fieldKey, strTerm(*rec.K))
