@@ -2948,8 +2948,9 @@ func TestAJSONPathOperandIsReadFromTheResource(t *testing.T) {
 // A node no unknown value reaches has its hi bound equal to its lo bound, so
 // with Decision the module reads the lo clauses for it: maybe has the clauses
 // of allow, and neither a rule of a hi bound nor the hi rule of a subject
-// allowed copy appears. A condition over a GENERAL PIP and one over a
-// resource path that ends in a dot are the controls that keep the hi bound.
+// allowed copy appears. A condition over a GENERAL PIP, one over a resource
+// path that ends in a dot, and one over a deep scan, which can stop as too
+// large, are the controls that keep the hi bound.
 func TestAnAlwaysKnownTreeAddsNoHiBound(t *testing.T) {
 	sets := `{"policySets": [{"policySetId": "s1", "name": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
 		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
@@ -2966,6 +2967,7 @@ func TestAnAlwaysKnownTreeAddsNoHiBound(t *testing.T) {
 	}{
 		{"an attribute of the resource", "resource.a == 'w'", false},
 		{"an attribute of the resource written with a dot at its end", "resource.a. == 'w'", true},
+		{"a deep scan of the resource", "resource..a == 'w'", true},
 		{"a GENERAL PIP", "subject.g == 'w'", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

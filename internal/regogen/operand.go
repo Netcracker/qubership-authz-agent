@@ -417,8 +417,12 @@ func (g *gen) ref(o policyir.Operand, kind spectables.Kind, network bool) (*Ref,
 		return nil, fmt.Errorf("kind %s has no domain", kind)
 	}
 	if res, ok := o.(policyir.Resource); ok && kind != spectables.KindNull && kind != spectables.KindResource {
+		bounded := false
+		if p, err := jsonpath.Compile(res.Path); err == nil {
+			bounded = p.Bounded()
+		}
 		var err error
-		if dom, err = g.pathDomain(dom, res.TrailingDot); err != nil {
+		if dom, err = g.pathDomain(dom, res.TrailingDot, bounded); err != nil {
 			return nil, err
 		}
 	}
@@ -551,11 +555,13 @@ func (g *gen) splitList(raw string) ([]jsonvalue.Value, error) {
 // trailing_dot_path names the state legacy gives the first: a path that ends
 // in a dot is that state with a resource in the request and ABSENT without
 // one. DROP reads the dot away before this point, and ABSENT adds no state of
-// its own. With ERROR, a path without the dot loses ERROR from its domain:
-// the other states the specification adds to a path kind, of a path through
-// null and of a path that starts with a bracket, are ABSENT, as
-// [JSONPathRecord] reads them too. Any other value of the knob is an error.
-func (g *gen) pathDomain(dom spectables.Domain, dot bool) (spectables.Domain, error) {
+// its own. With ERROR, a bounded path without the dot ([jsonpath.Path.Bounded])
+// loses ERROR from its domain: the other states the specification adds to a
+// path kind, of a path through null and of a path that starts with a
+// bracket, are ABSENT, as [JSONPathRecord] reads them too. Any other path
+// keeps ERROR, which [selection] gives a selection stopped as too large. Any
+// other value of the knob is an error.
+func (g *gen) pathDomain(dom spectables.Domain, dot, bounded bool) (spectables.Domain, error) {
 	v, err := g.stringKnob("trailing_dot_path")
 	if err != nil {
 		return dom, err
@@ -573,6 +579,9 @@ func (g *gen) pathDomain(dom spectables.Domain, dot bool) (spectables.Domain, er
 		return spectables.Domain{States: slices.DeleteFunc(slices.Clone(dom.States), func(s spectables.State) bool {
 			return s != spectables.StateAbsent && s != state
 		})}, nil
+	}
+	if !bounded {
+		return dom, nil
 	}
 	return spectables.Domain{States: slices.DeleteFunc(slices.Clone(dom.States), func(s spectables.State) bool {
 		return s == state
