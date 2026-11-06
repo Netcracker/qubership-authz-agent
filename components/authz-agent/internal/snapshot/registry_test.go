@@ -174,6 +174,22 @@ func TestAComparisonWithSubjectIsM2MIsDecided(t *testing.T) {
 	}
 }
 
+// The filter reads subject.isM2M in a comparison as the check does.
+func TestAComparisonWithSubjectIsM2MIsFiltered(t *testing.T) {
+	for _, tc := range []struct{ condition, want string }{
+		{"subject.isM2M IS NULL", allow},
+		{"subject.isM2M == true", deny},
+	} {
+		t.Run(tc.condition, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, set("a", tc.condition))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) with %s = %s, want %s", tc.condition, got, tc.want)
+			}
+		})
+	}
+}
+
 // denyWhere is a DENY_OVERRIDES set of tenant a on the resource type doc:
 // one rule allows every operation, and one denies where condition holds.
 func denyWhere(condition string) string {
