@@ -872,8 +872,14 @@ func jsonString(s string) string {
 
 var numberRE = regexp.MustCompile(`^(-?)(\d*)(?:\.(\d*))?(?:[eE]([-+]?\d+))?$`)
 
+// plainZeroLimit is the most zeros plainStripped adds to the digits of a
+// number to write it in plain notation: 1e999999999 would take a gigabyte.
+const plainZeroLimit = 64
+
 // plainStripped is BigDecimal.stripTrailingZeros().toPlainString() of a
-// number's text: 5.50 is 5.5, 5.0 is 5, 1e3 is 1000.
+// number's text: 5.50 is 5.5, 5.0 is 5, 1e3 is 1000. A number that needs
+// more than plainZeroLimit zeros, such as 1e65 or 1e-66, keeps its text as
+// written, where legacy prints every zero.
 func plainStripped(text string) string {
 	m := numberRE.FindStringSubmatch(text)
 	if m == nil {
@@ -894,6 +900,9 @@ func plainStripped(text string) string {
 	}
 	if coef == "" {
 		return "0"
+	}
+	if exp > plainZeroLimit || -(len(coef)+exp) > plainZeroLimit {
+		return text
 	}
 	var out string
 	switch point := len(coef) + exp; {
