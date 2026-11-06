@@ -22,6 +22,7 @@ package pull
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -113,6 +114,11 @@ type Puller struct {
 	log    Logger
 	client *http.Client
 
+	// loadMu serializes the loads, so a load that fetched the documents
+	// before a change at the source cannot store them after a load that
+	// fetched them after it.
+	loadMu sync.Mutex
+
 	mu             sync.Mutex
 	status         Status
 	firstSuccess   time.Time
@@ -174,11 +180,26 @@ func (p *Puller) Run(ctx context.Context) {
 }
 
 func (p *Puller) pull(ctx context.Context) {
-	if err := p.PullOnce(ctx); err != nil {
+	if err := p.PullNow(ctx); err != nil {
 		p.log.Warnf("policies: pull failed, keeping the previous documents: %v", err)
-		return
+	}
+}
+
+// PullNow loads the documents once, as a tick of [Puller.Run] does, and
+// returns once they are stored or the load has failed. The documents it
+// stores were fetched after the call: a load already in progress finishes
+// first. A failed load keeps the previous documents. It loads whatever the
+// pull interval, even 0; with no source URL it returns an error and loads
+// nothing.
+func (p *Puller) PullNow(ctx context.Context) error {
+	if strings.TrimSpace(p.cfg.SourceURL) == "" {
+		return errors.New("pull disabled: source URL empty")
+	}
+	if err := p.PullOnce(ctx); err != nil {
+		return err
 	}
 	p.loaded()
+	return nil
 }
 
 // waitForToken gives the token source a bounded time to obtain the first
@@ -196,12 +217,15 @@ func (p *Puller) waitForToken(ctx context.Context) {
 }
 
 // PullOnce fetches the policy sets and the PIPs from the source and loads
-// them; the documents in the store are untouched when any step fails.
+// them; the documents in the store are untouched when any step fails. Loads
+// run one at a time: a call waits for the load in progress to finish.
 //
-// The load is reported at info until [Puller.Run] has recorded a first
-// success, and at debug from then on, so a caller that drives PullOnce
-// itself reports every load at info.
+// The load is reported at info until [Puller.PullNow], which every tick of
+// [Puller.Run] calls, has recorded a first success, and at debug from then
+// on, so a caller that drives PullOnce itself reports every load at info.
 func (p *Puller) PullOnce(ctx context.Context) error {
+	p.loadMu.Lock()
+	defer p.loadMu.Unlock()
 	token := ""
 	if p.tokens != nil {
 		token = p.tokens.Token()
