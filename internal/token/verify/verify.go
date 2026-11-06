@@ -150,7 +150,6 @@ const (
 // safe to read from many goroutines, and the cache shares it between the
 // callers that present the same token.
 type Token struct {
-	raw        string
 	payload    []byte
 	claims     map[string]json.RawMessage
 	standard   Standard
@@ -185,9 +184,6 @@ type Standard struct {
 	// TenantID is the tenant-id claim.
 	TenantID json.RawMessage
 }
-
-// Raw returns the token in the compact form Verify received it in.
-func (t *Token) Raw() string { return t.raw }
 
 // Payload returns the JSON text of the payload exactly as the provider
 // signed it, with the text of every number and the order of every key.
@@ -377,7 +373,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if refused != nil {
 		return nil, refused
 	}
-	tok, refused := v.checkClaims(raw, payload, query, claims, key)
+	tok, refused := v.checkClaims(payload, query, claims, key)
 	if refused != nil {
 		return nil, refused.ofProvider(key.Source.ID())
 	}
@@ -407,7 +403,7 @@ func checkSignature(raw, alg, iss string, key keys.Key) ([]byte, *Error) {
 // token, or a refusal for check to name the provider on. It reads the clock for
 // exp, nbf, and iat after the key is found, because finding the key can wait for
 // a reload.
-func (v *Verifier) checkClaims(raw string, payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
+func (v *Verifier) checkClaims(payload []byte, query keys.Query, claims map[string]json.RawMessage, key keys.Key) (*Token, *Error) {
 	if err := checkAudience(claims, key.Source); err != nil {
 		return nil, err
 	}
@@ -421,7 +417,6 @@ func (v *Verifier) checkClaims(raw string, payload []byte, query keys.Query, cla
 	standard := standardOf(claims)
 	kind := kindOf(key.Source)
 	return &Token{
-		raw:        raw,
 		payload:    payload,
 		claims:     claims,
 		standard:   standard,
