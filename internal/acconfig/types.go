@@ -57,16 +57,15 @@ type PolicyV3 struct {
 
 // RuleV3 is one rule element inside a policy.
 type RuleV3 struct {
-	RuleID            string  `json:"ruleId"`
-	Name              string  `json:"name"`
-	Target            string  `json:"target"`
-	Condition         *string `json:"condition"` // null ⇒ absent ⇒ no condition
-	Effect            string  `json:"effect"`
-	RSQLPredicate     string  `json:"rsqlPredicate"`     // optional
-	SQLPredicate      string  `json:"sqlPredicate"`      // optional
-	MongoDBPredicate  string  `json:"mongodbPredicate"`  // optional
-	QueryDSLPredicate string  `json:"querydslPredicate"` // optional
-	Predicate         string  `json:"predicate"`         // legacy CLANG/querydsl; kept for completeness, not mapped
+	RuleID           string  `json:"ruleId"`
+	Name             string  `json:"name"`
+	Target           string  `json:"target"`
+	Condition        *string `json:"condition"` // null ⇒ absent ⇒ no condition
+	Effect           string  `json:"effect"`
+	RSQLPredicate    string  `json:"rsqlPredicate"`    // optional
+	SQLPredicate     string  `json:"sqlPredicate"`     // optional
+	MongoDBPredicate string  `json:"mongodbPredicate"` // optional
+	Predicate        string  `json:"predicate"`        // optional; the querydsl predicate
 	// ProductMapping and other non-SIMPLIFIED fields are ignored.
 	ProductMapping json.RawMessage `json:"productMapping,omitempty"`
 }

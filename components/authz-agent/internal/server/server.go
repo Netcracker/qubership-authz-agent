@@ -87,6 +87,10 @@ type Options struct {
 	// it unless the decisions are stored in the service. Empty, with no
 	// store, leaves the download unregistered.
 	CollectorURL string
+	// PullNow loads the policies from their source and returns once they
+	// are stored. Only a build with the paritytest tag routes a request to
+	// it.
+	PullNow func(ctx context.Context) error
 }
 
 // Server owns the handlers.
@@ -97,7 +101,8 @@ type Server struct {
 }
 
 // Register adds the routes of the internal surface to app: /health,
-// /ready, and /api-version.
+// /ready, and /api-version, and in a build with the paritytest tag
+// POST /internal/v1/pull when [Options.PullNow] is set.
 func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts Options) *Server {
 	if opts.Log == nil {
 		opts.Log = discardLogger{}
@@ -106,6 +111,7 @@ func Register(app *fiber.App, eng *engine.Engine, logs *decisionlog.Logger, opts
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
+	registerTestRoutes(app, s)
 	return s
 }
 

@@ -1,0 +1,52 @@
+pip "subject.permissionScope" type=PERMISSION_SCOPE url="http://pip-mock:8090" returnType="UUID" domain="PARITY_ISOLATED" cacheable=true cachePeriod=1
+pip "subject.parityConfigExportToken" type=TOKEN claim="department" defaultValue="none" returnType="UUID" domain="PARITY_ISOLATED" cacheable=false
+pip "subject.parityConfigExportHeader" type=HEADER header="x-parity-config-export" defaultValue="none" returnType="UUID" domain="PARITY_ISOLATED" cacheable=false
+pip "subject.parityConfigExportGeneral" type=GENERAL url="http://pip-mock:8090/api/v1/pip/config-export" httpMethod="POST" jsonPath="$.value" returnType="JSON" domain="PARITY_ISOLATED" requestAttributes={"resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT"} cacheable=false
+pip "subject.parityConfigExport.filtered" type=FILTERED url="http://pip-mock:8090/api/v1/pip/config-export-filtered" returnType="UUID" resourceType="PARITY_SUITE_REG_CONFIG_EXPORT" domain="PARITY_ISOLATED" requestAttributes={"resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT"} cacheable=false
+pip "subject.permissions" type=MAPPING returnType="UUID" productMapping={"subject.roles":{"ROLE_PARITY_READER":["parity_r10_product"]}} customMapping={"subject.roles":{"ROLE_PARITY_OTHER":["parity_r10_custom_other"],"ROLE_PARITY_READER":["parity_r10_custom"]}} cacheable=true
+pip "subject.parityR10Headers" type=GENERAL url="http://pip-mock:8090/api/v1/pip/r10-headers" httpMethod="POST" returnType="UUID" headers="X-A,X-B" domain="PARITY_ISOLATED_B" cacheable=false
+simplified "5783b67a-1013-db15-3adf-578b79b599f4" name="PARITY_ISOLATED_PARITY_PARITY_SUITE_REG_CONFIG_EXPORT_PolicySet" domain="PARITY_ISOLATED" component="PARITY" resourceType="PARITY_SUITE_REG_CONFIG_EXPORT"
+  policy "a465f7a9-383b-2e6e-5a5b-74e3fe7fc4ee" operation="ALL" roles=["ROLE_PARITY_READER"]
+    condition[simplified]: TRUE
+  policy "fa01017e-b201-fad7-da8f-3cb75ec53ba1" operation="READ" roles=["ROLE_PARITY_READER"]
+    condition[simplified]: resource.a EQ "y"
+    predicate rsql "a==y"
+set "18cc872e-fe1b-271e-c1c0-10ae26521369" name="config-export iterating" domain="" algorithm=DENY_UNLESS_PERMIT externalId="parity-config-export-iterating"
+  target[set_target]: resourceType EQ "PARITY_SUITE_REG_CONFIG_EXPORT"
+  iterate var="iterate1" algorithm=DENY_UNLESS_PERMIT
+  policy "5d7f6022-91f4-e843-35d8-70429993ac9f" name="config-export scoped" algorithm=DENY_UNLESS_PERMIT
+    target[policy_target]: subject.roles CONTAINS "ROLE_PARITY_READER"
+    rule "fd0e6283-1aa9-c2f7-4225-f270f4c618a7" name="config-export region-granted" effect=ALLOW
+      target[rule_target]: operation EQ "READ"
+      condition[rule_condition]: pass("iterate1")["region"] CONTAINS resource.region
+set "29d30093-46d9-6451-f124-47bc4403a4e9" name="config-export plain" domain="" algorithm=DENY_UNLESS_PERMIT externalId="parity-config-export-plain"
+  target[set_target]: resourceType EQ "PARITY_SUITE_REG_CONFIG_EXPORT"
+  policy "3ed8a456-2feb-be77-3a84-7cf4b9d0b0bb" name="config-export reader" algorithm=DENY_UNLESS_PERMIT
+    target[policy_target]: subject.roles CONTAINS "ROLE_PARITY_READER"
+    rule "9f94d4a5-b4ed-dcf4-78db-fddfa7065f0c" name="config-export read-deny-when-n" effect=DENY
+      target[rule_target]: operation EQ "READ"
+      condition[rule_condition]: resource.a EQ "n"
+    rule "0ad3f6a0-dd3d-3593-de27-26b06d3270e9" name="config-export list-with-every-predicate" effect=ALLOW
+      target[rule_target]: operation EQ "LIST"
+      condition[rule_condition]: TRUE
+      predicate rsql "a==${subject.id}"
+      predicate sql "a=${subject.id}"
+      predicate mongodb "{ \"a\": \"${subject.id}\" }"
+      predicate querydsl "${resourceType}.a.eq(\"${subject.id}\")"
+      customPredicate "[{\"value\":${owner},\"property\":\"a\",\"operator\":\"in\"}]" params={"owner": "subject.id"}
+    rule "c117ba8f-710c-f333-e37e-2be01bc20717" name="config-export read-allow" effect=ALLOW
+      target[rule_target]: operation EQ "READ"
+      condition[rule_condition]: TRUE
+set "ea4c2bef-b7dd-030b-d113-6b529c37b216" name="config-export empty-rules" domain="" algorithm=PERMIT_UNLESS_DENY externalId="parity-config-export-empty-rules"
+  target[set_target]: resourceType EQ "PARITY_SUITE_REG_CONFIG_EXPORT"
+  policy "d5b578ed-0465-8b4f-eb28-ea32c805caf8" name="config-export no-rules" algorithm=PERMIT_UNLESS_DENY
+    target[policy_target]: subject.roles CONTAINS "ROLE_PARITY_READER"
+set "6712764e-aae1-df2f-ee70-87adf5cd02c7" name="config-export nested-outer" domain="" algorithm=PERMIT_UNLESS_DENY externalId="parity-config-export-nested"
+  target[set_target]: resourceType EQ "PARITY_SUITE_REG_CONFIG_EXPORT"
+  set "11c9201d-77b4-701e-6c4d-a24258bd8744" name="config-export nested-inner" domain="" algorithm=DENY_UNLESS_PERMIT externalId="parity-config-export-nested"
+    target[set_target]: resourceType EQ "PARITY_SUITE_REG_CONFIG_EXPORT"
+    policy "47a6b647-f17d-5ab9-2f97-8f34cd460f1d" name="config-export inner-reader" algorithm=DENY_UNLESS_PERMIT
+      target[policy_target]: subject.roles CONTAINS "ROLE_PARITY_READER"
+      rule "de206a16-87fb-fb10-3950-5562fb1b95d2" name="config-export inner-read-allow" effect=ALLOW
+        target[rule_target]: operation EQ "READ"
+        condition[rule_condition]: TRUE

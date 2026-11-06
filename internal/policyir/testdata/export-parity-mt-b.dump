@@ -1,0 +1,8 @@
+pip "subject.parityConfigExportGeneral" type=GENERAL url="http://pip-mock:8090/api/v1/pip/config-export-b" httpMethod="POST" jsonPath="$.value" returnType="JSON" domain="PARITY_ISOLATED" requestAttributes={"resourceType": "PARITY_SUITE_REG_CONFIG_EXPORT"} cacheable=false
+set "3752e811-aa67-f53d-c057-e6a67e0da8cd" name="config-export-b plain" domain="" algorithm=DENY_UNLESS_PERMIT externalId="parity-config-export-b"
+  target[set_target]: resourceType EQ "PARITY_SUITE_REG_CONFIG_EXPORT"
+  policy "77bf521d-ede1-007e-bf05-31ac5e2ec5a1" name="config-export-b reader" algorithm=DENY_UNLESS_PERMIT
+    target[policy_target]: subject.roles CONTAINS "ROLE_PARITY_READER"
+    rule "52eca080-ff20-9535-0528-b4619cfdd967" name="config-export-b read-allow" effect=ALLOW
+      target[rule_target]: operation EQ "READ"
+      condition[rule_condition]: TRUE

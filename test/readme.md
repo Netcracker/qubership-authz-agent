@@ -142,7 +142,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | Policy language semantics | `P0` | Operator coverage, precedence, parentheses, JSONPath behavior, `has access`, normalized `conditionAst` evaluation, predicate passthrough | `policies/policy_language_contract_test.rego` |
 | Token verification and subject normalization | `P0` | Valid token, expired token, wrong issuer, unknown `kid`, no roles, `realm_access.roles` only, non-realm claim ignored, service token, object-form `subject` rejection, anonymous compatibility mode | `policies/token_auth_contract_test.rego` |
 | Legacy v1 endpoint mapping | `P0` | `/access/v1/check/resource`, `/access/v1/check/resource/bulk`, `/access/v1/check/filter` request mapping, response remapping, stable error shape, tenant pass-through ignored in decisioning | Rego contract tests plus runtime checks |
-| Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization` admission token and `Incoming-Token` subject token, admission `401` mapping, deterministic DENY reasons, mounted runtime data wiring | the kind harness under `test/k8s/` via `make e2e` |
+| Runtime auth compatibility | `P0` | Keycloak-issued token flow, OIDC discovery bootstrap, `Authorization` admission token and `Incoming-Token` subject token, admission `401` mapping, deterministic DENY reasons, policies pulled from the policy source | the kind harness under `test/k8s/` via `make e2e` |
 | Public route wiring | `P1` | Per-route request and response translation, public non-exposure of `/authorize` and `/access/v1/authorize`, malformed body handling, query/header propagation | Runtime stack checks on kind (`test/k8s/`) |
 | Simplified policy normalization | `P1` | OLS/RLS split, role-scoped RLS index, `conditionAst` usage, `condition=true` fallback, `predicate=true` fallback, explicit-role wildcard normalization for `ALL/ALL`, `ALL/<operation>`, and `<resourceType>/ALL`, unconditional-access short-circuit semantics for all wildcard buckets, unknown field preservation | New unit suite under `tests/unit/` |
 | Deferred legacy v1 bulk operations and preview APIs | `Deferred` | Historical baseline only: `/access/v1/check/resource/bulk/operations` and `/preview/v1/check/resource/bulk/operations` are not implemented in the current repository snapshot and currently return `404`; no active implementation handover exists | Runtime `404` assertions only |
@@ -210,7 +210,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 - `make e2e-harness` and `make e2e-install` bring up Keycloak plus the agent from the Helm chart without
   pre-generated JWKS files.
 - Runtime tests execute as a Job inside the cluster (Testify suite under `test/integration/testify/`).
-- Runtime stack loads mounted policy data instead of relying on image-baked defaults.
+- The agent pulls the policies and PIPs the suite uploads to the `authz-policy-admin` stub.
 - OIDC discovery bootstrap populates runtime authn data before compatibility checks run.
 - The public surface answers every supported check route with the decision of the `authorize` document.
 - `/access/v1/check/resource/bulk` handles large payloads such as 3000 allowed IDs without restrictive RLS predicates.

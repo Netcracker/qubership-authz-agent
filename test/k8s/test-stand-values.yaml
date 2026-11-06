@@ -66,6 +66,10 @@ suite:
     # replaces it with E2E_BASE_URL.
     BASE_URL: http://authz-agent:8080
     OPA_DIRECT_URL: http://authz-agent:8181
+    # The image make e2e-images builds carries the paritytest tag and answers
+    # this POST once it has stored the policies, so the suite does not sleep
+    # for the pull interval after each upload.
+    AGENT_PULL_URL: http://authz-agent:8181/internal/v1/pull
     AUTHZ_POLICY_ADMIN_URL: http://authz-policy-admin:18090
     AUTHZ_PAP_CLIENT_PULL_INTERVAL: "2"
     KC_BASE_URL: http://keycloak:8080/auth/realms/authz-test

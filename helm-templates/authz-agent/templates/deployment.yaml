@@ -120,15 +120,6 @@ spec:
         - name: decision-logs
           emptyDir:
             sizeLimit: '{{ .Values.AUTHZ_DECISION_LOG_SIZE_LIMIT }}'
-        {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
-        # Mount-mode volume: an ALREADY-EXISTING ConfigMap named by
-        # AUTHZ_POLICY_CONFIGMAP (authz-agent-ADR-0071), which the chart never
-        # creates. Its presence switches the policy delivery from the pull
-        # loop to the mount.
-        - name: policy-data
-          configMap:
-            name: '{{ .Values.AUTHZ_POLICY_CONFIGMAP }}'
-        {{- end }}
         {{- if .Values.KUBERNETES_M2M_ENABLED }}
         # The platform's layout for projected tokens, which its charts mount
         # at /var/run/secrets/tokens with one directory per audience and its
@@ -206,21 +197,12 @@ spec:
               value: '{{ printf "%s/decision-logs.jsonl" (trimSuffix "/" .Values.AUTHZ_DECISION_LOG_PATH) }}'
             - name: AUTHZ_DECISION_LOG_HEADERS
               value: x-request-id,x-authz-original-path
-            {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
-            - name: AUTHZ_POLICY_MOUNT_DIR
-              value: /etc/authz/policies
-            {{- end }}
           volumeMounts:
             - name: trusted-providers
               mountPath: /etc/authz
               readOnly: true
             - name: decision-logs
               mountPath: '{{ .Values.AUTHZ_DECISION_LOG_PATH }}'
-            {{- if .Values.AUTHZ_POLICY_CONFIGMAP }}
-            - name: policy-data
-              mountPath: /etc/authz/policies
-              readOnly: true
-            {{- end }}
             {{- if .Values.KUBERNETES_M2M_ENABLED }}
             - name: projected-tokens
               mountPath: /var/run/secrets/tokens

@@ -58,22 +58,16 @@ func (s *RuntimeSuite) TestM2MKeycloak() {
 			"m2m-keycloak: policy pull with Keycloak token must produce a functional agent; body: %s", string(b))
 	})
 
-	// (b) Agent remains functional after the pull-loop retries triggered by the
-	//     race between token-fetcher startup and the first pull-loop tick.
+	// (b) The agent still serves decisions after a pull made later than the
+	//     setup's, with the token it holds at that time.
 	//
-	// When the opa container starts, token-fetcher is healthy (marker file
-	// present = first token written). However, subsequent ticks continue
-	// running while the token is still valid. This step waits for one
-	// additional pull interval and re-asserts the same decision path, confirming
-	// that TokenWatcher continues to publish the token and pull continues to
-	// succeed — i.e., the "retry after token refresh" cycle does not degrade
-	// functionality.
+	// waitForACPull asks the agent to pull now; on an agent without the pull
+	// route it waits one pull interval instead. With the route, the step fails
+	// when that pull fails.
 	s.Step("m2m_keycloak.agent_functional_after_token_refresh", func() {
 		if !s.cfg.M2MKeycloakProfile {
 			s.T().Skip("M2M Keycloak profile not active (M2M_KEYCLOAK_PROFILE != true)")
 		}
-		// Allow at least one full pull interval to elapse so any in-flight
-		// token refresh and re-publish cycle has completed.
 		s.waitForACPull()
 
 		h := incomingTokenHeader(s.validAdminToken)

@@ -116,10 +116,11 @@ func rejectUnsupported(idx int, pipType string, pip SimplifiedPIP) error {
 		return fmt.Errorf("pip %d (%s): unsupported pipType MAPPING", idx, pip.Name)
 	case PipTypeEntitlements:
 		// D-AG-16 / ADR-0054: ENTITLEMENT is container-pinned and is
-		// materialised at startup from AUTHZ_ENTITLEMENTS_URL + companions.
-		// It cannot be delivered via the pull loop or a ConfigMap mount;
-		// the error message names the runtime knob so the operator knows
-		// what to set without having to read the ADR.
+		// materialised at startup from AUTHZ_ENTITLEMENTS_URL and its
+		// companions, so a list that carries one is rejected here, with an
+		// error that names the variable to set instead. The pull does not
+		// reach this check: acconfig.ConvertPIPs drops such an entry during
+		// conversion.
 		return fmt.Errorf(
 			`pip %d (%s): pipType "ENTITLEMENT" is deployment-pinned; configure AUTHZ_ENTITLEMENTS_URL on the agent instead`,
 			idx, pip.Name,

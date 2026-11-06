@@ -455,8 +455,7 @@ for row in "${CHART_DIR}:ghcr.io/netcracker/qubership-authz-agent" "${STUB_CHART
 done
 
 # The M2M identity, which a platform install takes through a projected
-# service-account token, and the mount mode that replaces the pull loop.
-# Neither is rendered by the default above.
+# service-account token. The default above does not render it.
 k8s_m2m="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set KUBERNETES_M2M_ENABLED=true)"
 if [[ "${k8s_m2m}" == *"serviceAccountToken"* && "${k8s_m2m}" != *"client-credentials"* ]]; then
   pass "the agent Pod takes the projected token under KUBERNETES_M2M_ENABLED"
@@ -480,13 +479,6 @@ if [[ "${all_manifests}" == *"client-credentials"* && "${all_manifests}" != *"se
   pass "the agent Pod takes the client-credentials Secret without KUBERNETES_M2M_ENABLED"
 else
   fail "the agent Pod does not take the client-credentials Secret without KUBERNETES_M2M_ENABLED"
-fi
-
-mount_mode="$(helm template t "${CHART_DIR}" -f "${SIZING}" --set AUTHZ_POLICY_CONFIGMAP=my-policies)"
-if [[ "${mount_mode}" == *"AUTHZ_POLICY_MOUNT_DIR"* && "${mount_mode}" == *"my-policies"* ]]; then
-  pass "the agent Pod mounts AUTHZ_POLICY_CONFIGMAP and points the service at it"
-else
-  fail "the agent Pod does not mount AUTHZ_POLICY_CONFIGMAP"
 fi
 
 # Every setting the service reads has to reach it, and the objects it reads

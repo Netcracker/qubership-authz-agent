@@ -21,7 +21,7 @@
 
 FROM --platform=$BUILDPLATFORM ghcr.io/jqlang/jq:1.8.2@sha256:b9c68867e5766576263a222e91db3de422d802069c7af70440e667a95344e486 AS jq
 
-FROM --platform=$BUILDPLATFORM alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS generate
+FROM --platform=$BUILDPLATFORM alpine:3.24.3@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a AS generate
 # A failed find, sort, or cat in the user-file pipeline below fails the build
 # rather than hand jq an empty stream.
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]

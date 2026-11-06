@@ -16,9 +16,8 @@ in ADR 0080 under `docs/decisions`.
   when it changes, and its outcome drives `/health` under the bootstrap rules: strict mode wants every provider,
   permissive mode wants one, and a provider marked `required` has to be there in either.
 - `internal/pull`: the policies and PIPs. Every interval it fetches the v3 configuration of the policy source with
-  the agent's token, converts it to the simplified model, and publishes `data.policies` and `data.pips`; a mounted
-  directory with `policies.json` and `pips.json` replaces the source when it exists. The first successful load makes
-  the service ready.
+  the agent's token, converts it to the simplified model, and publishes `data.policies` and `data.pips`. The first
+  successful load makes the service ready.
 - `internal/m2m`: the agent's own token, obtained from the identity provider with client credentials and refreshed
   before it expires, or read from a file another party keeps current. It is sent to the policy source and published
   as `data.m2m.bearerToken` for the PIP calls.
@@ -27,8 +26,7 @@ in ADR 0080 under `docs/decisions`.
 - `internal/server`: the routes, on two listeners. The public surface carries the nine check routes,
   `GET /api-version`, `/health`, `GET /internal/v1/decision-logs`, and `404 {"message":"not found"}` for every
   other path. The internal surface carries `/health`, `/ready`, `/api-version`, and `/prometheus`. No route reads
-  or writes a store document: the store is written in the process, from `AUTHZ_DATA_DIRS` at start and by the
-  loops after.
+  or writes a store document: only the loops in the process write the store.
 - `main.go` and `config.go`: configuration from the environment through configloader.
 
 The chart assembles the agent Pod as this one container.
@@ -41,8 +39,6 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
 | `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
 | `AUTHZ_ND_BUILTIN_CACHE` | `true` | Record the non-deterministic builtin calls of a decision, the PIP requests and their responses, into its decision-log event |
-| `AUTHZ_DATA_DIRS` | empty | Comma-separated directories whose JSON and YAML files seed the store at start |
-| `AUTHZ_DATA_IGNORE` | empty | Comma-separated file name patterns skipped in those directories, such as `..*` |
 | `AUTHZ_DECISION_LOG_FILE` | empty | NDJSON file the decisions are stored in and `GET /internal/v1/decision-logs` serves; empty uploads them instead |
 | `AUTHZ_DECISION_LOG_URL` | empty | Collector base URL, where the decisions go and where `GET /internal/v1/decision-logs` is relayed when they are not stored; empty disables both |
 | `AUTHZ_DECISION_LOG_HEADERS` | empty | Comma-separated request headers recorded per decision |
@@ -53,8 +49,7 @@ The chart assembles the agent Pod as this one container.
 | `AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL` | `30` | Seconds between checks of the file for a change; `0` never reloads |
 | `AUTHZ_TENANT_MANAGER_URL` | `http://tenant-manager:8080` | Resolves a realm written by its tenant display name; empty disables the lookup |
 | `AUTHZ_PAP_CLIENT_SOURCE_URL` | empty | Base URL of the policy source; empty disables the pull |
-| `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls, and between checks of the mount; `0` disables the pull and the mount |
-| `AUTHZ_POLICY_MOUNT_DIR` | `/etc/authz/policies` | Directory with `policies.json` and `pips.json` that replaces the source when it exists |
+| `AUTHZ_PAP_CLIENT_PULL_INTERVAL` | `30` | Seconds between pulls; `0` disables the pull |
 | `AUTHZ_ENTITLEMENTS_URL`, `AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT`, `AUTHZ_ENTITLEMENTS_HTTP_RETRIES` | empty, `5`, `3` | The entitlements PIP pinned by the deployment; an empty URL adds none |
 | `AUTHZ_M2M_TOKEN_URL` | empty | Token endpoint for the client-credentials grant; empty reads the token from `AUTHZ_PAP_CLIENT_TOKEN_FILE` instead |
 | `AUTHZ_M2M_CLIENT_ID_FILE`, `AUTHZ_M2M_CLIENT_SECRET_FILE` | `/etc/secret/username`, `/etc/secret/password` | The client credentials |
@@ -63,6 +58,8 @@ The chart assembles the agent Pod as this one container.
 
 A variable set to the empty string switches its feature off where the table says so; an unset variable takes the
 default.
+
+The policy source is the only way policies reach the agent.
 
 At the default level the service reports what it could not do: a policy that failed to evaluate, a document it
 could not store, a collector that did not answer. `debug` adds a line per decision, per rejected legacy request, per
@@ -73,7 +70,9 @@ Every line carries the request id under `request_id`, the same id the decision l
 `GET /health` is 200 with the counts of the last policy conversion once the trusted providers meet the bootstrap
 rules, and 503 with the reason and its details until then. `GET /ready`, on the internal port, adds the policies:
 503 with the reason `policies not loaded yet` and the same details until they have loaded once, 200
-`{"status":"ready"}` after. A pull that fails later keeps the loaded policies and both verdicts.
+`{"status":"ready"}` after. A pull that fails later keeps the loaded policies and both verdicts. An empty
+`AUTHZ_PAP_CLIENT_SOURCE_URL` or an `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then
+answers 200 as soon as the trusted providers meet the bootstrap rules, with no policies loaded.
 
 ## Running it
 

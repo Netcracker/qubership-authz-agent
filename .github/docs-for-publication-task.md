@@ -47,6 +47,7 @@ the repository.
 | Secret | Used by | Purpose |
 | --- | --- | --- |
 | `SONAR_TOKEN` | `go-build.yaml` → `generic-go-build.yaml` | Token to authenticate to SonarQube |
+| `CODECOV_TOKEN` | `go-build.yaml` → `generic-go-build.yaml` | Token to upload coverage to Codecov (set at org level) |
 | `CLA_ACCESS_TOKEN` | `cla.yaml` | Personal access token for the CLA assistant to write to `cla-storage` |
 | `GITHUB_TOKEN` | all release workflows | Automatically provided by GitHub Actions; no manual setup needed |
 

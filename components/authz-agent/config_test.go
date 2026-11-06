@@ -39,22 +39,17 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	if cfg.Addr != "0.0.0.0:8181" || cfg.PublicAddr != "0.0.0.0:8080" {
 		t.Fatalf("default addresses: %+v", cfg)
 	}
-	if cfg.DecisionLogs.URL != "" || len(cfg.DataDirs) != 0 {
+	if cfg.DecisionLogs.URL != "" {
 		t.Fatalf("defaults: %+v", cfg)
 	}
 	cfg = loadConfig(fromMap(map[string]string{
 		"authz.http.addr":            ":9090",
 		"authz.public.addr":          ":9091",
-		"authz.data.dirs":            "/a, /b",
-		"authz.data.ignore":          "..*",
 		"authz.decision.log.url":     "http://collector:8183",
 		"authz.decision.log.headers": "x-request-id,x-authz-original-path",
 	}))
 	if cfg.Addr != ":9090" || cfg.PublicAddr != ":9091" {
 		t.Fatalf("addresses from env: %+v", cfg)
-	}
-	if len(cfg.DataDirs) != 2 || cfg.Ignore[0] != "..*" {
-		t.Fatalf("env values: %+v", cfg)
 	}
 	if cfg.DecisionLogs.URL != "http://collector:8183" || len(cfg.DecisionLogs.Headers) != 2 || cfg.DecisionLogs.Labels["id"] != "authz-agent" {
 		t.Fatalf("decision logs from env: %+v", cfg.DecisionLogs)
@@ -71,7 +66,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.Authn != wantAuthn {
 		t.Errorf("default trusted providers = %+v, want %+v", cfg.Authn, wantAuthn)
 	}
-	wantPull := pull.Config{Interval: 30 * time.Second, MountDir: "/etc/authz/policies", HTTPTimeout: 30 * time.Second}
+	wantPull := pull.Config{Interval: 30 * time.Second, HTTPTimeout: 30 * time.Second}
 	if cfg.Pull != wantPull {
 		t.Errorf("default pull = %+v, want %+v", cfg.Pull, wantPull)
 	}
@@ -92,7 +87,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.tenant.manager.url":                "",
 		"authz.pap.client.source.url":             "http://policy-admin:18090/",
 		"authz.pap.client.pull.interval":          "2",
-		"authz.policy.mount.dir":                  "/mount",
 		"authz.pap.client.token.file":             "/t",
 		"authz.m2m.token.url":                     "http://idp/token",
 		"authz.m2m.client.id.file":                "/id",
@@ -104,7 +98,7 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "" {
 		t.Errorf("trusted providers from env = %+v", cfg.Authn)
 	}
-	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second || cfg.Pull.MountDir != "/mount" {
+	if cfg.Pull.SourceURL != "http://policy-admin:18090" || cfg.Pull.Interval != 2*time.Second {
 		t.Errorf("pull from env = %+v", cfg.Pull)
 	}
 	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != "/id" || cfg.M2M.ClientSecretFile != "/secret" ||

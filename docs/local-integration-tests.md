@@ -79,7 +79,8 @@ minutes on a slow network; later runs reuse it.
 
 | Image | Dockerfile |
 | --- | --- |
-| `local/authz-agent:ci`, `local/authz-policy-admin:ci` | `build/*/Dockerfile`, the product images |
+| `local/authz-agent:ci` | `build/authz-agent/Dockerfile`, built with `GO_BUILD_TAGS=paritytest`, which adds the `POST /internal/v1/pull` route the suites call after each upload; the release image has no such route |
+| `local/authz-policy-admin:ci` | `build/authz-policy-admin/Dockerfile`, the product image |
 | `local/pip-stub:ci` | `test/integration/pipstub/Dockerfile` |
 | `local/tenant-manager:ci` | `test/integration/tenantmanager/Dockerfile`, the tenant-manager emulator |
 | `local/authz-runtime-suite:ci` | `test/integration/testify/Dockerfile`, the suite compiled with `go test -c -tags integration` |
@@ -134,7 +135,9 @@ make e2e-down     # delete the cluster
   and waits until it is Ready.
 - Another agent URL: `make e2e-suite E2E_BASE_URL=<url>` (`PARITY_AC_BASE_URL` for `parity-suite`) writes the URL into
   the installed test-stand release, together with any realm edit not yet applied, and runs the suite against it. The URL
-  stays in the release for later runs until `make e2e-harness` restores the default.
+  stays in the release for later runs until `make e2e-harness` restores the default. The same run clears
+  `AGENT_PULL_URL` (`PARITY_AGENT_PULL_URL`), so the suite waits a pull interval after each upload instead of asking
+  the local agent to pull; `make e2e-harness` (`make parity-harness`) without the URL restores it too.
 
 - A subset: set `RUNTIME_SUITE_RUN` (a `-test.run` regular expression) on the test-stand release, with
   `FULL_RUNTIME_SUITE` set to `false` so the coverage checks do not fail on a filtered run, then run `make e2e-suite`:

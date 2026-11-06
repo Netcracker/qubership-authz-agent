@@ -250,18 +250,11 @@ KUBERNETES_M2M_ENABLED: false
 
 # Policy delivery configuration (authz-agent-ADR-0071).
 #
-# Pull mode (default): the agent fetches simplified policies and PIPs from
-# access-control's v3 config API on a configurable interval and publishes them
-# into OPA without a Pod restart.  The Bearer token comes from AUTHZ_PAP_CLIENT_TOKEN_FILE
-# (written by the kubelet in KUBERNETES_M2M_ENABLED=true mode, or by the
-# agent itself in KUBERNETES_M2M_ENABLED=false mode).
-#
-# Mount mode: set AUTHZ_POLICY_CONFIGMAP to the name of an ALREADY-EXISTING
-# ConfigMap in the same namespace.  The chart mounts it as a directory at
-# /etc/authz/policies and sets AUTHZ_POLICY_MOUNT_DIR accordingly; the agent
-# detects the directory at startup and switches to mount-watcher mode
-# automatically.  The operator is responsible for creating and managing the
-# ConfigMap — the chart never creates it.
+# The agent fetches policies and PIPs from access-control's v3 config API on a
+# configurable interval and publishes them into OPA without a Pod restart.  The
+# Bearer token comes from AUTHZ_PAP_CLIENT_TOKEN_FILE (written by the kubelet in
+# KUBERNETES_M2M_ENABLED=true mode, or by the agent itself in
+# KUBERNETES_M2M_ENABLED=false mode).
 #
 # PAP is the Policy Administration Point, the service the policies come from;
 # the AUTHZ_PAP_CLIENT_* settings configure the agent as its client.
@@ -272,22 +265,18 @@ KUBERNETES_M2M_ENABLED: false
 #   chart's defaults; authz-agent-ADR-0073). Empty (default) leaves the pull
 #   loop off.
 AUTHZ_PAP_CLIENT_SOURCE_URL: ''
-# AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables both pull and
-#   mount-watcher.  Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
+# AUTHZ_PAP_CLIENT_PULL_INTERVAL: seconds between polls.  0 disables the pull.
+#   Same semantic as AUTHZ_TRUSTED_PROVIDERS_RELOAD_INTERVAL.
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 30
 # AUTHZ_PAP_CLIENT_TOKEN_FILE: path to the Bearer token written by the kubelet
 #   (KUBERNETES_M2M_ENABLED=true) or the agent's own token loop (false). The
 #   default is where the platform's charts mount the netcracker-audience token.
 AUTHZ_PAP_CLIENT_TOKEN_FILE: /var/run/secrets/tokens/netcracker/token
-# AUTHZ_POLICY_CONFIGMAP: name of an existing ConfigMap to mount as policy data
-#   (mount mode, authz-agent-ADR-0071). Empty (default) → pull mode; no volume,
-#   no volumeMount, and AUTHZ_POLICY_MOUNT_DIR is not set in the Deployment.
-AUTHZ_POLICY_CONFIGMAP: ''
 
 # Entitlements resolver.
 #
 # The ENTITLEMENT PIP is container-pinned: it cannot arrive through the pull
-# loop or a ConfigMap mount, the agent materialises it at startup from these
+# loop, the agent materialises it at startup from these
 # values. The Rego resolver then calls
 # `<AUTHZ_ENTITLEMENTS_URL>/api/v3/user-entitlements/user/<subject id>` once per
 # decision request.

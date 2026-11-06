@@ -25,9 +25,9 @@ const (
 	PipTypePermissionScope = "PERMISSION_SCOPE"
 	// PipTypeEntitlements is the container-pinned entry materialised at
 	// startup from AUTHZ_ENTITLEMENTS_URL + companion env knobs per
-	// ADR-0054 / D-AG-11. It cannot be delivered via the pull loop or a
-	// mounted ConfigMap: if encountered during conversion it is silently
-	// dropped (the container-pinned entry wins) per D-AG-16.
+	// ADR-0054 / D-AG-11. It cannot be delivered via the pull loop: if
+	// encountered during conversion it is silently dropped (the
+	// container-pinned entry wins) per D-AG-16.
 	PipTypeEntitlements = "ENTITLEMENT"
 
 	// EntitlementsPIPName and EntitlementsPIPAlias are the fixed
@@ -132,7 +132,7 @@ type EntitlementsPIPConfig struct {
 // EntitlementsConfig is the in-memory representation of the
 // deployment-pinned entitlements entry. It is built once at startup from
 // AUTHZ_ENTITLEMENTS_URL + companions and merged into every normalized PIP
-// document produced by the pull loop or the mount watcher.
+// document produced by the pull loop.
 type EntitlementsConfig struct {
 	URL                string
 	HTTPTimeoutSeconds int

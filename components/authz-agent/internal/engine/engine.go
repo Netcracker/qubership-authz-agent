@@ -21,13 +21,10 @@ package engine
 import (
 	"context"
 	"fmt"
-	"io/fs"
-	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/open-policy-agent/opa/v1/ast"
-	"github.com/open-policy-agent/opa/v1/loader"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
@@ -39,14 +36,6 @@ import (
 type Options struct {
 	// Modules are the Rego sources keyed by file name. They are compiled once.
 	Modules map[string]string
-	// DataDirs are directories whose JSON and YAML files seed the store the way
-	// `opa run <dir>` loads them: each file's document lands at the path of its
-	// directory. Rego files found there are ignored; the modules come from
-	// Modules.
-	DataDirs []string
-	// Ignore lists file name patterns to skip in DataDirs, such as `..*` for the
-	// bookkeeping entries of a Kubernetes ConfigMap mount.
-	Ignore []string
 }
 
 // Engine holds the compiled policies, the store, and the prepared queries.
@@ -60,7 +49,7 @@ type Engine struct {
 	prepared   map[string]rego.PreparedEvalQuery
 }
 
-// New compiles the modules, seeds the store from DataDirs, and sets up the
+// New compiles the modules, starts with an empty store, and sets up the
 // inter-query builtin caches that `http.send` relies on for its `cache`
 // option, as the OPA server does.
 func New(opts Options) (*Engine, error) {
@@ -80,38 +69,13 @@ func New(opts Options) (*Engine, error) {
 	if compiler.Failed() {
 		return nil, fmt.Errorf("compile policies: %w", compiler.Errors)
 	}
-	documents := map[string]any{}
-	if len(opts.DataDirs) > 0 {
-		result, err := loader.NewFileLoader().Filtered(opts.DataDirs, ignoreFilter(opts.Ignore))
-		if err != nil {
-			return nil, fmt.Errorf("load data from %v: %w", opts.DataDirs, err)
-		}
-		documents = result.Documents
-	}
 	return &Engine{
-		store:      inmem.NewFromObject(documents),
+		store:      inmem.New(),
 		compiler:   compiler,
 		queryCache: cache.NewInterQueryCache(nil),
 		valueCache: cache.NewInterQueryValueCache(context.Background(), nil),
 		prepared:   map[string]rego.PreparedEvalQuery{},
 	}, nil
-}
-
-// ignoreFilter skips files and directories whose base name matches one of the
-// patterns, and every Rego file, which the loader would otherwise parse.
-func ignoreFilter(patterns []string) loader.Filter {
-	return func(_ string, info fs.FileInfo, _ int) bool {
-		name := info.Name()
-		if !info.IsDir() && strings.HasSuffix(name, ".rego") {
-			return true
-		}
-		for _, pattern := range patterns {
-			if ok, _ := filepath.Match(pattern, name); ok {
-				return true
-			}
-		}
-		return false
-	}
 }
 
 // Query builds the Rego reference for a data path, `data["a"]["b"]`, so that
