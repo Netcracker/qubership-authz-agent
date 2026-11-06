@@ -8,7 +8,7 @@ require (
 	github.com/lestrrat-go/jwx/v3 v3.3.0
 	github.com/netcracker/qubership-core-lib-go-fiber-server-utils/v2 v2.11.4
 	github.com/netcracker/qubership-core-lib-go/v3 v3.15.3
-	github.com/open-policy-agent/opa v1.21.4
+	github.com/open-policy-agent/opa v1.22.0
 )
 
 require (
@@ -61,7 +61,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.77.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.37 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.58 // indirect
 	github.com/vibrantbyte/go-antpath v1.1.1 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
