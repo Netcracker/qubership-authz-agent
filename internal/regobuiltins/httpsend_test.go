@@ -15,6 +15,7 @@
 package regobuiltins
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
@@ -350,6 +351,37 @@ func TestHTTPSend_AFailedCallIsAnAnswer(t *testing.T) {
 	}
 	if got := calls.Load(); got != 1 {
 		t.Errorf("requests at the PIP = %d, want 1: the second query reads the failure", got)
+	}
+}
+
+// TestHTTPSend_AResponseOverTheLimitFails: a body of 8 MiB is a response,
+// and one byte more is a transport failure.
+func TestHTTPSend_AResponseOverTheLimitFails(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		size int
+		want string
+	}{
+		{"a body at the limit", maxResponseBody, "200"},
+		{"a body over the limit", maxResponseBody + 1, `"transport"`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, func(w http.ResponseWriter, _ *http.Request) {
+				_, _ = w.Write(bytes.Repeat([]byte("a"), tc.size))
+			})
+			ctx := (&HTTP{Token: ownToken}).Context(context.Background())
+			resp, err := sendEval(t, ctx, `nc.http.send({"url": "`+srv.URL+`", "raise_error": false})`)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := resp.Get(ast.StringTerm("status_code")).String()
+			if e := resp.Get(ast.StringTerm("error")); e != nil {
+				got = e.Get(ast.StringTerm("code")).String()
+			}
+			if got != tc.want {
+				t.Errorf("a body of %d bytes: status_code or error code = %s, want %s", tc.size, got, tc.want)
+			}
+		})
 	}
 }
 
