@@ -457,8 +457,11 @@ func (e *groupEval) release(ix *groupIndex) {
 }
 
 // rec returns the record of the reference i, and false where the input has
-// none.
+// none or i is -1, which numbers no reference.
 func (e *groupEval) rec(i int) (*Record, bool) {
+	if i < 0 {
+		return nil, false
+	}
 	switch e.loaded[i] {
 	case 0:
 		r, ok := e.in.Records[e.ix.refs[i]]
