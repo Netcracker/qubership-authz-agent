@@ -38,6 +38,11 @@ import (
 // timeout, where [HTTP.Timeout] is zero.
 const DefaultTimeout = 2 * time.Second
 
+// maxResponseBody is the largest body of a response nc.http.send reads, in
+// bytes. A PIP answers with attributes, and the body is held in memory
+// twice, as raw_body and as body, for the whole decision request.
+const maxResponseBody = 8 << 20
+
 // HTTP is how nc.http.send reaches the network: the client, the agent's own
 // token, and the timeout of a call. A query reaches the network only through
 // the HTTP that [HTTP.Context] put into its context; without one, every call
@@ -148,11 +153,11 @@ const (
 // does: status_code, headers (each name in lower case, with the list of its
 // values), raw_body, and body where raw_body parses as JSON.
 //
-// A failed call (no token, a timeout, or a transport error) is an error of
-// the function, or, with raise_error false, a response with status_code 0
-// and error {code, message}. A status code of any value is a response, not
-// a failure: the caller reads it. A request that is not an object of the
-// documented shape is always an error.
+// A failed call (no token, a timeout, a transport error, or a body over
+// 8 MiB) is an error of the function, or, with raise_error false, a response
+// with status_code 0 and error {code, message}. A status code of any value
+// is a response, not a failure: the caller reads it. A request that is not
+// an object of the documented shape is always an error.
 func httpSend(bctx rego.BuiltinContext, a *ast.Term) (*ast.Term, error) {
 	c, _ := bctx.Context.Value(callsKey{}).(*calls)
 	if c == nil {
@@ -343,12 +348,15 @@ func do(ctx context.Context, req sendRequest, timeout time.Duration) (*ast.Term,
 		return nil, codeTransport, err
 	}
 	defer func() { _ = resp.Body.Close() }()
-	raw, err := io.ReadAll(resp.Body)
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBody+1))
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
 			return nil, codeTimeout, fmt.Errorf("no complete response within %s", timeout)
 		}
 		return nil, codeTransport, fmt.Errorf("read the response: %w", err)
+	}
+	if len(raw) > maxResponseBody {
+		return nil, codeTransport, fmt.Errorf("the response body exceeds %d bytes (8 MiB), the limit of a PIP response", maxResponseBody)
 	}
 	return response(resp, raw), "", nil
 }
