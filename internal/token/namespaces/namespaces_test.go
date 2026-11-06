@@ -49,6 +49,12 @@ const composite = `{
   }
 }`
 
+// withoutComposite is the topology of an installation outside a composite.
+const withoutComposite = `{"cloudProvider": "OnPrem"}`
+
+// emptyComposite is a composite whose domains name no origin or peer.
+const emptyComposite = `{"composite": {"baseline": {"controller": "bg-ctl"}, "satellites": [null, {"origin": ""}]}}`
+
 // writeTopology writes content to a topology file in a new directory and
 // returns its path.
 func writeTopology(t *testing.T, content string) string {
@@ -61,7 +67,8 @@ func writeTopology(t *testing.T, content string) string {
 }
 
 // The service's own namespace, own, is not in the topology and is the
-// control: a parsed topology replaces it rather than adding to it.
+// control: a topology that names namespaces replaces it rather than adding
+// to it.
 func TestAllowlist_AllowsTheOriginAndPeerOfEveryDomain(t *testing.T) {
 	a := New(Options{TopologyFile: writeTopology(t, composite), Namespace: "own"})
 	tests := []struct {
@@ -91,13 +98,15 @@ func TestAllowlist_AllowsTheSatellitesOfACompositeWithoutABaseline(t *testing.T)
 	}
 }
 
-func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutATopology(t *testing.T) {
+func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutAComposite(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
 	}{
 		{"missing file", filepath.Join(t.TempDir(), "absent")},
 		{"file that is not JSON", writeTopology(t, "composite: yes")},
+		{"file without a composite", writeTopology(t, withoutComposite)},
+		{"composite that names no namespace", writeTopology(t, emptyComposite)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -112,17 +121,21 @@ func TestAllowlist_AllowsItsOwnNamespaceAloneWithoutATopology(t *testing.T) {
 	}
 }
 
-func TestAllowlist_AllowsNoneWithoutATopologyOrAnOwnNamespace(t *testing.T) {
-	a := New(Options{TopologyFile: filepath.Join(t.TempDir(), "absent")})
-	if a.Allows("") {
-		t.Errorf("Allows(%q) = true, want false", "")
+func TestAllowlist_AllowsNoneWithoutACompositeOrAnOwnNamespace(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent")},
+		{"file without a composite", writeTopology(t, withoutComposite)},
 	}
-}
-
-func TestAllowlist_AllowsNoneForATopologyWithoutAComposite(t *testing.T) {
-	a := New(Options{TopologyFile: writeTopology(t, `{"cloudProvider": "OnPrem"}`), Namespace: "own"})
-	if a.Allows("own") {
-		t.Errorf("Allows(%q) = true, want false", "own")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := New(Options{TopologyFile: tt.file})
+			if a.Allows("") {
+				t.Errorf("Allows(%q) = true, want false", "")
+			}
+		})
 	}
 }
 
@@ -203,20 +216,58 @@ func TestAllowlist_WarnsOnceWhileTheTopologyIsMissing(t *testing.T) {
 	}
 }
 
+// A file that parses is read without a warning, whether or not it names a
+// namespace of a composite.
+func TestAllowlist_WarnsOnlyWhenTheTopologyCannotBeReadOrParsed(t *testing.T) {
+	tests := []struct {
+		name string
+		file string
+		want int
+	}{
+		{"missing file", filepath.Join(t.TempDir(), "absent"), 1},
+		{"file that is not JSON", writeTopology(t, "composite: yes"), 1},
+		{"file without a composite", writeTopology(t, withoutComposite), 0},
+		{"composite that names no namespace", writeTopology(t, emptyComposite), 0},
+		{"composite", writeTopology(t, composite), 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			New(Options{TopologyFile: tt.file, Namespace: "own", Log: log})
+			if got := log.count(); got != tt.want {
+				t.Errorf("warnings = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+// Between the two times the file goes missing, it is read with or without a
+// composite.
 func TestAllowlist_WarnsAgainWhenTheTopologyGoesAwayAgain(t *testing.T) {
-	log := &recordingLogger{}
-	path := filepath.Join(t.TempDir(), "data")
-	a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
-	if err := os.WriteFile(path, []byte(composite), 0o600); err != nil {
-		t.Fatal(err)
+	tests := []struct {
+		name    string
+		content string
+	}{
+		{"composite", composite},
+		{"file without a composite", withoutComposite},
 	}
-	a.reload()
-	if err := os.Remove(path); err != nil {
-		t.Fatal(err)
-	}
-	a.reload()
-	if got := log.count(); got != 2 {
-		t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			log := &recordingLogger{}
+			path := filepath.Join(t.TempDir(), "data")
+			a := New(Options{TopologyFile: path, Namespace: "own", Log: log})
+			if err := os.WriteFile(path, []byte(tt.content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			if err := os.Remove(path); err != nil {
+				t.Fatal(err)
+			}
+			a.reload()
+			if got := log.count(); got != 2 {
+				t.Errorf("warnings = %d, want 2: one for each time the file went missing", got)
+			}
+		})
 	}
 }
 
