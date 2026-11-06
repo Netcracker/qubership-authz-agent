@@ -129,7 +129,7 @@ func (s *side) at(p point) clause {
 			fact: fact{ref: s.ref.ID, field: 's', val: string(p.st)},
 			test: refTest(s, &test{kind: "state", val: string(p.st)})}})
 	}
-	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldClass), p.cl),
+	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldClass), regoClass(p.cl)),
 		fact: fact{ref: s.ref.ID, field: 't', val: string(p.cl)}, test: refTest(s, &test{kind: "cls", val: string(p.cl)})}})
 }
 
@@ -311,7 +311,11 @@ func joinClasses(d dnf, s *side) dnf {
 		}
 		slices.Sort(j.classes)
 		c := slices.Clone(out[k])
-		c[j.at] = expr{cls: c[j.at].cls, text: s.field(fieldClass) + " in " + setLit(j.classes),
+		names := make([]string, len(j.classes))
+		for i, cl := range j.classes {
+			names[i] = regoClass(spectables.Class(cl))
+		}
+		c[j.at] = expr{cls: c[j.at].cls, text: s.field(fieldClass) + " in " + setLit(names),
 			fact: fact{ref: s.ref.ID, field: 't', vals: j.classes}, test: refTest(s, &test{kind: "clsin", set: j.classes})}
 		out[k] = c
 	}

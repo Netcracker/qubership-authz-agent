@@ -260,8 +260,9 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # element_tokens_with_text those and the token of the text of a list or an
 # object element, number the number < and > compare, subset_left and
 # subset_right the tokens IS SUBSET reads on the left and on the right. A
-# class is s string, n number or boolean, l list, hl list from a header, xn
-# list with null, xl nested list, xo object, z null. input.folded_roles holds
+# class is string, scalar (a number or a boolean), list, header_list (a list
+# from a header), list_with_null, nested_list (a list with a list or an
+# object element), object, or null. input.folded_roles holds
 # the folded roles, input.subject_groups the subject groups the request is in,
 # input.m2m whether the subject is machine-to-machine, input.scope_passes the
 # passes of an iterate over the permission scope, and input.scope_failed
