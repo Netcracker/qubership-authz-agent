@@ -246,8 +246,14 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # IDs, names, targets, and conditions stands above the first clause read from
 # a node, and "# <label>" above each run of clauses from one node.
 #
+# allow holds where permit holds and failed does not: permit where the
+# policies permit, failed where a rule applies whose condition is unknown
+# because a source it reads failed, which denies the resource whatever the
+# other rules give.
+#
 # Rules: <node>_<b><x>_K holds when bound b (lo, hi) of the node equals x (P
-# permit, D deny), <node>_in_<b><x>_K when its children combine to x, and
+# permit, D deny), and <node>_loE_K where failed holds at or below the node;
+# <node>_in_<b><x>_K when its children combine to x, and
 # <node>_any_<b><x> when some child of the node has bound b equal to x; for
 # an iterate, <node>_pass_<b><x>(p) is that bound in pass p.
 # dec_<operation>_<depth>_<b><x> is that bound of the decision for another

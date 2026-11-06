@@ -2117,7 +2117,7 @@ func TestTheModuleNamesThePolicyEachClauseCameFrom(t *testing.T) {
 		"# set_s1: set \"s1\" \"s1\", DENY_UNLESS_PERMIT\n#   target: resourceType EQ \"doc\"\n" +
 			"# set_s1_p1: policy \"p1\", DENY_UNLESS_PERMIT\n#   target: TRUE\n" +
 			"# set_s1_p1_r1: rule \"r1\", ALLOW\n#   target: operation EQ \"read\"\n" +
-			"#   condition: resource.a IS_EMPTY\n# set_s1_p1_r1\nallow if {\n",
+			"#   condition: resource.a IS_EMPTY\n# set_s1_p1_r1\npermit if {\n",
 	} {
 		if !strings.Contains(m.Text, want) {
 			t.Errorf("the module lacks\n%s\nmodule:\n%s", want, m.Text)
@@ -2591,6 +2591,105 @@ func TestAnIterateCombinesItsPasses(t *testing.T) {
 	}
 }
 
+// A simplified policy and a rule in an iterate pass whose condition reads a
+// failed PIP deny the resource beside a set that permits, in every form of
+// the module, and leave the decision unknown. A condition that a known
+// operand settles does not: the iterate's AND over a domain the pass does not
+// hold is false, and the simplified policy of a role the subject lacks does
+// not apply.
+func TestAFailedConditionDeniesBesideAPermitInEveryForm(t *testing.T) {
+	const allowAll = `{"policySetId": "all", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "r", "target": "true", "effect": "ALLOW", "tenantId": "t1"}]}]}`
+	const simplified = `{"policySetId": "s", "status": "ACTIVE", "type": "SIMPLIFIED", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "operation == 'read'", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "r", "target": "subject.roles CONTAINS ANY 'r1'", "condition": "subject.g == 'x'",
+			"effect": "ALLOW", "tenantId": "t1"}]}]}`
+	const iterate = `{"policySetId": "i", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "DENY_UNLESS_PERMIT"},
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+			"rules": [{"ruleId": "r", "target": "true",
+				"condition": "subject.permissionScope.domain CONTAINS resource.domain AND subject.g == 'x'",
+				"effect": "ALLOW", "tenantId": "t1"}]}]}`
+	const domain = `["subj","permissionScope.domain"]`
+	for _, tc := range []struct {
+		name, set, roles, resourceDomain string
+		want                             string
+	}{
+		{"a simplified policy of the subject's role", simplified, "r1", "d", "unknown"},
+		{"a simplified policy of another role", simplified, "r2", "d", "permit"},
+		{"an iterate pass that holds the domain", iterate, "r1", "d", "unknown"},
+		{"an iterate pass without the domain", iterate, "r1", "z", "permit"},
+	} {
+		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+allowAll+`, `+tc.set+`]}`),
+			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+		if err != nil {
+			t.Fatalf("FromRegular: %v", err)
+		}
+		for _, form := range []struct {
+			name string
+			opt  func(*Options)
+		}{{"flat", func(*Options) {}}, {"without inlining", func(o *Options) { o.Flat = false }},
+			{"with groups", func(o *Options) { o.Groups = true }}} {
+			t.Run(form.name+"/"+tc.name, func(t *testing.T) {
+				opt := DefaultOptions()
+				opt.Decision = true
+				form.opt(&opt)
+				m, err := Generate(exp.Trees["t1"], table(t), opt)
+				if err != nil {
+					t.Fatalf("Generate: %v", err)
+				}
+				req := Request{Body: Body{Operation: "read", ResourceType: "doc"}, Roles: []string{tc.roles},
+					Scope: &Scope{Passes: []map[string]Resolved{{domain: resolved(t, "VALUE", `["d"]`)}}},
+					Values: map[string]Resolved{`["subj","g"]`: resolved(t, "ERROR", ""),
+						`["res",".domain"]`: resolved(t, "VALUE", `"`+tc.resourceDomain+`"`)}}
+				if got := evalRule(t, m, req, "decision"); got != tc.want {
+					t.Errorf("decision(roles %s, resource.domain %s, subject.g failed) = %v, want %s",
+						tc.roles, tc.resourceDomain, got, tc.want)
+				}
+			})
+		}
+	}
+}
+
+// subject allowed 'write' reads the decision for write, which a rule over a
+// failed PIP denies as a whole, so a read that requires it is not permitted
+// either, as the check of write is not.
+func TestSubjectAllowedReadsADecisionDeniedOverAFailedSource(t *testing.T) {
+	const sets = `{"policySets": [{"policySetId": "w", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "w1", "target": "operation == 'write'", "effect": "ALLOW", "tenantId": "t1"},
+			{"ruleId": "w2", "target": "operation == 'write'", "condition": "subject.g == 'x'", "effect": "ALLOW",
+			"tenantId": "t1"}]}]},
+		{"policySetId": "r", "status": "ACTIVE", "target": "resourceType == 'doc'",
+		"combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1", "policies": [{"policyId": "p",
+		"target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT", "tenantId": "t1",
+		"rules": [{"ruleId": "r1", "target": "operation == 'read'", "condition": "subject allowed 'write' on resource",
+			"effect": "ALLOW", "tenantId": "t1"}]}]}]}`
+	exp, err := policyir.FromRegular([]byte(sets),
+		[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
+	if err != nil {
+		t.Fatalf("FromRegular: %v", err)
+	}
+	opt := DefaultOptions()
+	opt.Decision = true
+	m, err := Generate(exp.Trees["t1"], table(t), opt)
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	for _, op := range []string{"write", "read"} {
+		req := Request{Body: Body{Operation: op, ResourceType: "doc"},
+			Values: map[string]Resolved{`["subj","g"]`: resolved(t, "ERROR", "")}}
+		if got := evalRule(t, m, req, "decision"); got != "unknown" {
+			t.Errorf("decision(%s, subject.g failed) = %v, want unknown", op, got)
+		}
+	}
+}
+
 // Under PERMIT_UNLESS_DENY an iterate with no pass permits, the algorithm's
 // outcome over no children, while a scope that cannot be read leaves the
 // node unknown and denies.
@@ -2759,8 +2858,9 @@ func TestAnIterateInEveryFormOfTheModule(t *testing.T) {
 // keeps only allow: decision is permit where it allows,
 // deny where no node may permit, and unknown where the denial depends on a
 // value or a source the agent could not read. Every value known never gives
-// unknown, and one top-level node that permits decides beside an unknown one.
-// Without Decision the module has no rule decision.
+// unknown, and a rule whose condition reads a failed PIP leaves the denial
+// unknown even beside a top-level node that permits. Without Decision the
+// module has no rule decision.
 func TestTheDecisionTellsAnUnknownDenialApart(t *testing.T) {
 	sets := func(rules string) string {
 		return `{"policySets": [{"policySetId": "s1", "status": "ACTIVE", "target": "resourceType == 'doc'",
@@ -2787,8 +2887,8 @@ func TestTheDecisionTellsAnUnknownDenialApart(t *testing.T) {
 		{"a DENY rule's other value lets the permit through", sets(allowAll + "," + denyG), "VALUE", `"y"`, "permit"},
 		{"a DENY rule's failed PIP leaves the denial unknown", sets(allowAll + "," + denyG), "ERROR", "", "unknown"},
 		{"an undeclared PIP leaves the denial unknown", sets(allowNo), "VALUE", `"x"`, "unknown"},
-		{"a top-level node that permits decides beside an unknown one",
-			strings.TrimSuffix(sets(allowAll+","+denyG), "]}") + otherSet + "]}", "ERROR", "", "permit"},
+		{"a DENY rule's failed PIP denies beside a top-level node that permits",
+			strings.TrimSuffix(sets(allowAll+","+denyG), "]}") + otherSet + "]}", "ERROR", "", "unknown"},
 	} {
 		exp, err := policyir.FromRegular([]byte(tc.export),
 			[]byte(`{"pips": [{"tenantId": "t1", "name": "subject.g", "pipType": "GENERAL", "url": "http://g"}]}`))
@@ -2982,7 +3082,7 @@ func TestAnAlwaysKnownTreeAddsNoHiBound(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Generate: %v", err)
 			}
-			allow, maybe := strings.Count(m.Text, "\nallow if"), strings.Count(m.DecisionText, "\nmaybe if")
+			allow, maybe := strings.Count(m.Text, "\npermit if"), strings.Count(m.DecisionText, "\nmaybe if")
 			hiRules := strings.Contains(m.DecisionText, "_hiP") || strings.Contains(m.DecisionText, "_hiD")
 			if hiRules != tc.hi || !tc.hi && maybe != allow {
 				t.Errorf("module over %s: hi rules %v (want %v), %d maybe and %d allow clauses:\n%s", tc.condition,

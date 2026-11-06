@@ -253,7 +253,8 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 			sep = map[bool]string{true: " OR ", false: " AND "}[x.kind == "or"]
 		}
 		for i, p := range parts {
-			if (p.x.kind == "or" || p.x.kind == "and" || p.x.kind == "grp") && p.x.kind != x.kind {
+			if (p.x.kind == "or" || p.x.kind == "and" || p.x.kind == "grp") && p.x.kind != x.kind ||
+				d == policyir.DialectRSQL && x.kind == "and" && rsqlMayBeOr(p.text) {
 				texts[i] = "(" + texts[i] + ")"
 			}
 		}
@@ -267,6 +268,36 @@ func render(x *fexpr, d policyir.Dialect) (string, bool) {
 		return acc, true
 	}
 	return `{ "$` + x.kind + `": [ ` + strings.Join(texts, ", ") + " ] }", true
+}
+
+// rsqlMayBeOr reports whether the RSQL text s may be an OR at its top
+// level, which an AND around it has to put in parentheses, as ; binds
+// tighter than ,: the negation of an AND, or a predicate written as an OR.
+// A text the tokenizer refuses, or whose parentheses do not balance, may be
+// one. The text holds the values of placeholders, so it is scanned once, in
+// time linear in its length, rather than parsed.
+func rsqlMayBeOr(s string) bool {
+	tokens, err := rsqlTokens(s)
+	if err != nil {
+		return true
+	}
+	depth := 0
+	for _, t := range tokens {
+		switch t.kind {
+		case "LP":
+			depth++
+		case "RP":
+			depth--
+			if depth < 0 {
+				return true
+			}
+		case "OR":
+			if depth == 0 {
+				return true
+			}
+		}
+	}
+	return depth != 0
 }
 
 // joinGroups joins the texts of groups by OR, each in its own parentheses,

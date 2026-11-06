@@ -32,20 +32,32 @@ const scopeFailed = "input." + memberScopeFailed
 
 // iterateFlag returns the clauses where bound b of iterate node n is x.
 func (g *gen) iterateFlag(n *node, b, x string) (dnf, error) {
-	inner, err := g.inner(n, b, x)
+	read := func(b, x string) (dnf, error) {
+		var inner dnf
+		var err error
+		if x == "E" {
+			inner, err = g.anyPass(n, b, x, false)
+		} else {
+			inner, err = g.inner(n, b, x)
+		}
+		if err != nil {
+			return nil, err
+		}
+		return prod(dnf{{{cls: clsCheck, text: "not " + scopeFailed}}}, inner, true), nil
+	}
+	in, err := read(b, x)
 	if err != nil {
 		return nil, err
 	}
-	read := prod(dnf{{{cls: clsCheck, text: "not " + scopeFailed}}}, inner, true)
 	switch b + x {
 	case "loD", "hiP":
 		// a failed scope is [deny, permit]
-		read = union(read, dnf{{{cls: clsCheck, text: scopeFailed}}})
+		in = union(in, dnf{{{cls: clsCheck, text: scopeFailed}}})
 	}
 	if x == "P" {
-		return g.product(n.tgt.T(), read), nil
+		return g.product(n.tgt.T(), in), nil
 	}
-	return union(n.tgt.U(), g.product(n.tgt.T(), read)), nil
+	return g.product(n.tgt.notF(), in), nil
 }
 
 // anyPass returns the clauses of "some pass of iterate node n has bound b

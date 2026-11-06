@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -174,20 +175,41 @@ func TestAComparisonWithSubjectIsM2MIsDecided(t *testing.T) {
 	}
 }
 
+// The filter reads subject.isM2M in a comparison as the check does.
+func TestAComparisonWithSubjectIsM2MIsFiltered(t *testing.T) {
+	for _, tc := range []struct{ condition, want string }{
+		{"subject.isM2M IS NULL", allow},
+		{"subject.isM2M == true", deny},
+	} {
+		t.Run(tc.condition, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, set("a", tc.condition))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) with %s = %s, want %s", tc.condition, got, tc.want)
+			}
+		})
+	}
+}
+
+// denyWhere is a DENY_OVERRIDES set of tenant a on the resource type doc:
+// one rule allows every operation, and one denies where condition holds.
+func denyWhere(condition string) string {
+	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"},
+				{"ruleId": "deny", "target": "true", "condition": %q, "effect": "DENY", "tenantId": "a"}]}]}`,
+		condition)
+}
+
 // A deep scan the jsonpath package stops as too large leaves a DENY rule
 // over it unknown, so the item is denied as on a failed source. Such a
 // selection used to fall on neither rail of a two-valued leaf, and the DENY
 // rule did not apply. A resource without the member is the control that
 // the ALLOW rule allows.
 func TestADenyOverASelectionTooLargeDenies(t *testing.T) {
-	set := `{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
-		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
-		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"},
-				{"ruleId": "deny", "target": "true", "condition": "resource..secret IS NOT NULL", "effect": "DENY",
-					"tenantId": "a"}]}]}`
 	r := New(Config{}, tab(t), quiet{})
-	load(t, r, ``, set)
+	load(t, r, ``, denyWhere("resource..secret IS NOT NULL"))
 	nested := strings.Repeat(`{"secret":`, 40) + `1` + strings.Repeat(`}`, 40)
 	for _, tc := range []struct {
 		name, resource string
@@ -448,6 +470,289 @@ func TestADenialOnAFailedPIPNamesIt(t *testing.T) {
 
 	if want := (Result{Reason: "PIP resolution failed: subject.g"}); got[0] != want {
 		t.Errorf("Decide = %+v, want %+v", got[0], want)
+	}
+}
+
+// A DENY rule over a PIP whose call failed denies, as the PIP's value is
+// unknown: MATCH, where the table gives the failure the outcome false, as
+// well as an equality, where it gives an unknown one. MATCH over a failed
+// PIP used to be false, and the ALLOW rule allowed. The PIP answering a
+// value the pattern does not match is the control that the ALLOW rule
+// allows.
+func TestADenyOverAFailedPIPDenies(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition string
+		status          int
+		want            Result
+	}{
+		{"MATCH over a failed PIP", "subject.g MATCH block*", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"an equality over a failed PIP", "subject.g == 'blocked'", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"NOT MATCH over a failed PIP", "subject.g NOT MATCH other", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"MATCH over a value outside the pattern", "subject.g MATCH block*", http.StatusOK, Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, tc.status, `["other"]`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), denyWhere(tc.condition))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
+				t.Errorf("Decide(%s, PIP status %d) = %+v, want %+v", tc.condition, tc.status, got[0], tc.want)
+			}
+		})
+	}
+}
+
+// A target that is undefined, as one over a PIP whose call failed is, makes
+// its node deny where the node denies once the target holds, and not apply
+// otherwise, so the policy beside it allows. Each such node used to deny,
+// whatever it held: a policy of ALLOW rules alone denied every resource.
+// What the node gives is computed on the request: a DENY rule whose condition
+// is false, or a DENY_UNLESS_PERMIT policy whose ALLOW rule applies, does not
+// deny, while a DENY_UNLESS_PERMIT policy whose ALLOW rule does not apply
+// denies.
+func TestAnUndefinedTargetDeniesOnlyWhereItsNodeDenies(t *testing.T) {
+	const failed = "subject.g == 'x'"
+	for _, tc := range []struct {
+		name, policyTarget, alg, ruleTarget, effect, condition string
+		allowed                                                bool
+	}{
+		{"a policy target over a failed PIP and an ALLOW rule", failed, "DENY_OVERRIDES", "true", "ALLOW", "true", true},
+		{"a policy target over a failed PIP and a DENY rule", failed, "DENY_OVERRIDES", "true", "DENY", "true", false},
+		{"a policy target over a failed PIP and a DENY rule whose condition reads it", failed, "DENY_OVERRIDES",
+			"true", "DENY", "subject.g == 'blocked'", false},
+		{"a policy target over a failed PIP and a DENY rule whose condition is false", failed, "DENY_OVERRIDES",
+			"true", "DENY", "operation == 'write'", true},
+		{"a policy target over a failed PIP and DENY_UNLESS_PERMIT that permits", failed, "DENY_UNLESS_PERMIT",
+			"true", "ALLOW", "true", true},
+		{"a policy target over a failed PIP and DENY_UNLESS_PERMIT that denies", failed, "DENY_UNLESS_PERMIT",
+			"true", "ALLOW", "operation == 'write'", false},
+		{"a rule target over a failed PIP and an ALLOW rule", "true", "DENY_OVERRIDES", failed, "ALLOW", "true", true},
+		{"a rule target over a failed PIP and a DENY rule", "true", "DENY_OVERRIDES", failed, "DENY", "true", false},
+		{"a rule target over a failed PIP and a DENY rule whose condition is false", "true", "DENY_OVERRIDES", failed,
+			"DENY", "operation == 'write'", true},
+		{"a policy target over a path with a trailing dot and an ALLOW rule", "resource.a. == 'x'", "DENY_OVERRIDES",
+			"true", "ALLOW", "true", true},
+		{"a policy target over a path with a trailing dot and a DENY rule", "resource.a. == 'x'", "DENY_OVERRIDES",
+			"true", "DENY", "true", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+					{"policyId": "q", "target": %q, "combiningAlgorithm": %q, "tenantId": "a",
+					"rules": [{"ruleId": "r", "target": %q, "condition": %q, "effect": %q, "tenantId": "a"}]}]}`,
+				tc.policyTarget, tc.alg, tc.ruleTarget, tc.condition, tc.effect))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide = %+v, want allowed %v", got[0], tc.allowed)
+			}
+		})
+	}
+}
+
+// loneAllowPolicySet is a set of tenant a on doc under setAlg whose one
+// policy, under policyTarget, holds an ALLOW rule under ruleTarget.
+func loneAllowPolicySet(setAlg, policyTarget, ruleTarget string) string {
+	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": %q,
+		"policies": [{"policyId": "q", "target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "r", "target": %q, "effect": "ALLOW", "tenantId": "a"}]}]}`,
+		setAlg, policyTarget, ruleTarget)
+}
+
+// A policy of ALLOW rules under a target over a PIP whose call failed does
+// not apply, so the set's algorithm decides as over no child:
+// PERMIT_UNLESS_DENY allows, as legacy does, and DENY_UNLESS_PERMIT denies.
+// It neither permits nor denies, whether the failed read is in the policy
+// target or in the rule target.
+func TestAnAllowPolicyUnderAnUndefinedTargetLeavesTheSetToItsAlgorithm(t *testing.T) {
+	const failed = "subject.g == 'x'"
+	for _, tc := range []struct {
+		setAlg, policyTarget, ruleTarget string
+		allowed                          bool
+	}{
+		{"PERMIT_UNLESS_DENY", failed, "true", true},
+		{"PERMIT_UNLESS_DENY", "true", failed, true},
+		{"DENY_UNLESS_PERMIT", failed, "true", false},
+		{"DENY_UNLESS_PERMIT", "true", failed, false},
+	} {
+		t.Run(tc.setAlg+" "+tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), loneAllowPolicySet(tc.setAlg, tc.policyTarget, tc.ruleTarget))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide = %+v, want allowed %v", got[0], tc.allowed)
+			}
+		})
+	}
+}
+
+// besideAllow is a set of tenant a on doc under setAlg with two policies: one
+// allows every operation, and one, under policyTarget, holds a rule of effect
+// under ruleTarget with condition.
+func besideAllow(setAlg, policyTarget, ruleTarget, effect, condition string) string {
+	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": %q,
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+			{"policyId": "q", "target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "r", "target": %q, "condition": %q, "effect": %q, "tenantId": "a"}]}]}`,
+		setAlg, policyTarget, ruleTarget, condition, effect)
+}
+
+// A rule that applies and whose condition is unknown because it reads a PIP
+// whose call failed denies the resource, whatever its effect and whatever the
+// policy beside it gives, as legacy answers. Such a rule used to leave the
+// decision to the other rules: an ALLOW rule did not apply, and a DENY rule
+// lost to the ALLOW beside it under PERMIT_OVERRIDES. A condition that the
+// other operand of an OR makes true does not depend on the failed value, in
+// either operand order. A policy or rule target over the failed PIP is
+// undefined, which makes the rule one that can deny, so it denies the
+// resource too.
+func TestARuleWhoseConditionReadsAFailedPIPDeniesTheResource(t *testing.T) {
+	const failed = "subject.g == 'y'"
+	denied := Result{Reason: "PIP resolution failed: subject.g"}
+	for _, tc := range []struct {
+		name, setAlg, policyTarget, ruleTarget, effect, condition string
+		want                                                      Result
+	}{
+		{"an ALLOW rule, DENY_OVERRIDES", "DENY_OVERRIDES", "true", "true", "ALLOW", failed, denied},
+		{"an ALLOW rule, PERMIT_UNLESS_DENY", "PERMIT_UNLESS_DENY", "true", "true", "ALLOW", failed, denied},
+		{"an ALLOW rule, PERMIT_OVERRIDES", "PERMIT_OVERRIDES", "true", "true", "ALLOW", failed, denied},
+		{"a DENY rule, PERMIT_OVERRIDES", "PERMIT_OVERRIDES", "true", "true", "DENY", failed, denied},
+		{"a DENY rule, DENY_OVERRIDES", "DENY_OVERRIDES", "true", "true", "DENY", failed, denied},
+		{"a true operand OR the failed one", "DENY_OVERRIDES", "true", "true", "ALLOW",
+			"resource.a == 'x' OR " + failed, Result{Allowed: true}},
+		{"the failed operand OR a true one", "DENY_OVERRIDES", "true", "true", "ALLOW",
+			failed + " OR resource.a == 'x'", Result{Allowed: true}},
+		{"a false operand AND the failed one", "DENY_OVERRIDES", "true", "true", "DENY",
+			"resource.a == 'z' AND " + failed, Result{Allowed: true}},
+		{"the failed operand AND a false one", "DENY_OVERRIDES", "true", "true", "DENY",
+			failed + " AND resource.a == 'z'", Result{Allowed: true}},
+		{"an ALLOW rule over a PIP that is not declared, PERMIT_OVERRIDES", "PERMIT_OVERRIDES", "true", "true",
+			"ALLOW", "subject.h == 'y'", Result{Reason: "PIP resolution failed: subject.h"}},
+		{"a policy target that is false", "DENY_OVERRIDES", "operation == 'write'", "true", "ALLOW", failed,
+			Result{Allowed: true}},
+		{"a policy target over the failed PIP, DENY_OVERRIDES", "DENY_OVERRIDES", failed, "true", "ALLOW", failed, denied},
+		{"a policy target over the failed PIP, PERMIT_OVERRIDES", "PERMIT_OVERRIDES", failed, "true", "ALLOW", failed,
+			denied},
+		{"a rule target over the failed PIP, a DENY rule, PERMIT_OVERRIDES", "PERMIT_OVERRIDES", "true", failed, "DENY",
+			failed, denied},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), besideAllow(tc.setAlg, tc.policyTarget, tc.ruleTarget, tc.effect,
+				tc.condition))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
+				t.Errorf("Decide(%s %s rule if %s) = %+v, want %+v", tc.setAlg, tc.effect, tc.condition, got[0], tc.want)
+			}
+		})
+	}
+}
+
+// A PIP the tenant declares twice has no usable declaration, and a rule that
+// reads it denies the resource as one over a PIP whose call failed does,
+// beside a policy that allows; the filter denies every row.
+func TestARuleOverAPIPDeclaredTwiceDeniesTheResource(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["y"]`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, "")+", "+generalPIP(srv.URL, ""),
+		besideAllow("PERMIT_OVERRIDES", "true", "true", "ALLOW", "subject.g == 'y'"))
+	if got, want := decide(t, r, readDoc(t, "a", "x", 1))[0], (Result{Reason: "PIP resolution failed: subject.g"}); got != want {
+		t.Errorf("Decide(read doc) = %+v, want %+v", got, want)
+	}
+	if got := filterOf(t, r, "a", "read"); got != deny {
+		t.Errorf("Filter(doc, read) = %s, want %s", got, deny)
+	}
+}
+
+// A condition that is unknown for a value alone keeps its bounds beside a
+// policy that allows: resource.a. is undefined on the doc, and the PIP the
+// condition also reads answers. With the PIP failed, the same rule denies
+// the resource, unless a known operand settles the failed one: an AND with a
+// false operand, or a comparison that is false for every value of the PIP.
+func TestAnUnknownConditionWithoutAFailedSourceDoesNotDeny(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition string
+		status          int
+		want            Result
+	}{
+		{"the PIP answers", "resource.a. == 'q' AND subject.g == 'x'", http.StatusOK, Result{Allowed: true}},
+		{"the PIP failed", "resource.a. == 'q' AND subject.g == 'x'", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"the failed PIP under an AND with a false operand", "resource.a. == 'q' OR resource.b == 'no' AND subject.g == 'x'",
+			http.StatusInternalServerError, Result{Allowed: true}},
+		{"the failed PIP in a comparison false for every value", "resource.a. == 'q' OR subject.g IN resource.c",
+			http.StatusInternalServerError, Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, tc.status, `["x"]`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), besideAllow("DENY_OVERRIDES", "true", "true", "ALLOW", tc.condition))
+			req := readDoc(t, "a", "x", 1)
+			req.Items[0].Resource = mustObject(t, `{"a": "x", "b": "yes"}`)
+			if got := decide(t, r, req); got[0] != tc.want {
+				t.Errorf("Decide(%s, PIP status %d) = %+v, want %+v", tc.condition, tc.status, got[0], tc.want)
+			}
+		})
+	}
+}
+
+// In a bulk request, a condition over a failed PIP denies only the item
+// whose answer depends on the failed value: the doc whose member a is x
+// makes the OR true and is allowed, and the doc whose member a is z is
+// denied.
+func TestAFailedPIPDeniesOnlyTheItemWhoseConditionDependsOnIt(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, ""), besideAllow("DENY_OVERRIDES", "true", "true", "ALLOW",
+		"resource.a == 'x' OR subject.g == 'y'"))
+	req := readDoc(t, "a", "x", 1)
+	req.Items = append(req.Items, regogen.Body{Operation: "read", ResourceType: "doc",
+		Resource: mustObject(t, `{"a": "z"}`), HasResource: true})
+	got := decide(t, r, req)
+	want := []Result{{Allowed: true}, {Reason: "PIP resolution failed: subject.g"}}
+	if !slices.Equal(got, want) {
+		t.Errorf("Decide(a=x, a=z) = %+v, want %+v", got, want)
+	}
+}
+
+// entitled is a target over the entitlements service.
+const entitled = "subject.entitledResources.of('doc').as('owner') CONTAINS 'e1'"
+
+// failedEntitlementsRegistry is a registry whose entitlements service
+// answers every read with 404.
+func failedEntitlementsRegistry(t *testing.T) *Registry {
+	t.Helper()
+	srv, _ := countingServer(t, "/nowhere", ``)
+	return New(Config{Entitlements: srv.URL, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+}
+
+// A policy of ALLOW rules whose target reads the entitlements service, which
+// fails, does not apply: PERMIT_UNLESS_DENY allows, as legacy does, and
+// DENY_UNLESS_PERMIT denies.
+func TestAnAllowPolicyUnderAFailedEntitlementsReadDoesNotApply(t *testing.T) {
+	for _, tc := range []struct {
+		setAlg, policyTarget, ruleTarget string
+		allowed                          bool
+	}{
+		{"PERMIT_UNLESS_DENY", entitled, "true", true},
+		{"PERMIT_UNLESS_DENY", "true", entitled, true},
+		{"DENY_UNLESS_PERMIT", entitled, "true", false},
+	} {
+		t.Run(tc.setAlg+" "+tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			r := failedEntitlementsRegistry(t)
+			load(t, r, ``, loneAllowPolicySet(tc.setAlg, tc.policyTarget, tc.ruleTarget))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0].Allowed != tc.allowed {
+				t.Errorf("Decide = %+v, want allowed %v", got[0], tc.allowed)
+			}
+		})
 	}
 }
 

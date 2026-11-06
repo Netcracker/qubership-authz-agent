@@ -221,12 +221,11 @@ type gen struct {
 	failures []Failure
 
 	uncertainMemo map[*node]bool
+	failsMemo     map[*node]bool
 
 	// filter is set while the generator translates the tree for
-	// check/filter, where a comparison that reads the resource is unknown;
-	// touched collects the references the condition being translated reads.
-	filter  bool
-	touched map[*Ref]bool
+	// check/filter, where a comparison that reads the resource is unknown.
+	filter bool
 }
 
 // Generate translates the policy tree of a tenant into one Rego module that
@@ -256,6 +255,22 @@ func Generate(tree *policyir.Tree, tab *spectables.Table, opt Options) (*Module,
 		}
 		allows[i] = d
 	}
+	failed := make([]dnf, len(tops))
+	for i, t := range tops {
+		d, err := g.flag(t, "lo", "E")
+		if err != nil {
+			return nil, err
+		}
+		failed[i] = d
+	}
+	// a rule that applies with a condition over a failed source denies the
+	// resource whatever the other rules give
+	// allow reads the rule even where it has no clause, so that an edit of
+	// one set that makes it fail changes no line of another
+	anyFailed := union(failed...)
+	if !anyFailed.isFalse() {
+		g.rule(ruleFailed, anyFailed)
+	}
 	allow := union(allows...)
 	maybe := dnfFalse
 	if g.opt.Decision {
@@ -266,6 +281,9 @@ func Generate(tree *policyir.Tree, tab *spectables.Table, opt Options) (*Module,
 				return nil, err
 			}
 			maybes[i] = d
+		}
+		if !anyFailed.isFalse() {
+			maybes = append(maybes, failedRef)
 		}
 		maybe = union(maybes...)
 	}
@@ -297,7 +315,7 @@ func newGen(tree *policyir.Tree, tab *spectables.Table, opt Options) (*gen, erro
 		memo: map[string]string{}, counters: map[string]int{}, anyBodies: map[string]dnf{},
 		condMemo: map[string]*cond{}, decNames: map[string]string{}, decRoots: map[string]*node{},
 		groups: map[string]Group{}, groupIDs: map[string]string{}, factorIDs: map[string]int{},
-		params: map[string]bool{}, uncertainMemo: map[*node]bool{},
+		params: map[string]bool{}, uncertainMemo: map[*node]bool{}, failsMemo: map[*node]bool{},
 		sources: map[string]nodeSource{}, shared: map[string]bool{}, ruleHeads: map[string][]string{}, light: map[string]bool{},
 		hashedKeys: map[string]string{}}
 	g.stats.NoTemplate = map[string]int{}
@@ -317,7 +335,7 @@ func newGen(tree *policyir.Tree, tab *spectables.Table, opt Options) (*gen, erro
 func (g *gen) decisions() error {
 	for _, name := range g.decOrder {
 		root := g.decRoots[name]
-		for _, f := range []string{"loP", "loD", "hiP", "hiD"} {
+		for _, f := range []string{"loP", "loD", "hiP", "hiD", "loE"} {
 			body, err := g.flagBody(root, f[:2], f[2:])
 			if err != nil {
 				return err
@@ -677,13 +695,14 @@ type cond struct {
 	isTrue *bool
 	groups [][]leafRails
 	three  bool
+	// failed is the union of the leaves' [leafRails.failed]; fails is set
+	// where it is not false.
+	failed dnf
+	fails  bool
 	t, f   dnf
 	done   bool
 	// text is the condition as its rails' comments name it.
 	text string
-	// refs are the references the condition reads, set in the generator
-	// for check/filter only.
-	refs []*Ref
 }
 
 func (g *gen) constCond(v bool) *cond { return &cond{g: g, isTrue: &v} }
@@ -709,20 +728,6 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 	}
 	cc := &cond{g: g, text: condText(c)}
 	g.where.place = place
-	var outer map[*Ref]bool
-	if g.filter {
-		outer, g.touched = g.touched, map[*Ref]bool{}
-		defer func() {
-			for r := range g.touched {
-				cc.refs = append(cc.refs, r)
-				if outer != nil {
-					outer[r] = true
-				}
-			}
-			slices.SortFunc(cc.refs, func(a, b *Ref) int { return strings.Compare(a.Key, b.Key) })
-			g.touched = outer
-		}()
-	}
 	for _, d := range c.Disjuncts {
 		var leaves []leafRails
 		for _, a := range d {
@@ -742,6 +747,8 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 			l.f = stamp(l.f, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeF})
 			g.stats.Leaves++
 			cc.three = cc.three || l.threeValued
+			cc.failed = union(cc.failed, l.failed)
+			cc.fails = !cc.failed.isFalse()
 			leaves = append(leaves, l)
 		}
 		cc.groups = append(cc.groups, leaves)
@@ -798,7 +805,7 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 	if !ok {
 		name = fmt.Sprintf("dec_%s_%d", escapeID(g.fold(a.Operation)), depth)
 		g.decNames[key] = name
-		for _, f := range []string{"loP", "loD", "hiP", "hiD"} {
+		for _, f := range []string{"loP", "loD", "hiP", "hiD", "loE"} {
 			g.light[name+"_"+f] = true
 		}
 		g.decOrder = append(g.decOrder, name)
@@ -827,19 +834,48 @@ func (g *gen) access(a policyir.Access) (leafRails, error) {
 	if !three {
 		hi = name + "_loP"
 	}
+	// where a rule of the decision applies over a failed source, the
+	// decision denies the resource as a whole, so the leaf is unknown; a
+	// rule that reads it keeps its bounds there, as over any unknown value
+	known := dnfTrue
+	if g.fails(g.decRoots[name]) {
+		known, three = ref(name+"_loE", true), true
+	}
 	if !a.Denied {
-		return leafRails{t: ref(name+"_loP", false), f: ref(hi, true), threeValued: three}, nil
+		return leafRails{t: g.product(ref(name+"_loP", false), known), f: g.product(ref(hi, true), known),
+			threeValued: three}, nil
 	}
 	// denied: deny is true, permit false, and not applicable is
 	// denied_without_decision, true
-	return leafRails{t: ref(hi, true), f: ref(name+"_loP", false), threeValued: three}, nil
+	return leafRails{t: g.product(ref(hi, true), known), f: g.product(ref(name+"_loP", false), known),
+		threeValued: three}, nil
+}
+
+// fails reports whether a rule condition at or below n reads a source that
+// may fail ([cond.fails]).
+func (g *gen) fails(n *node) bool {
+	if f, ok := g.failsMemo[n]; ok {
+		return f
+	}
+	f := false
+	switch n.kind {
+	case kindUnknown:
+	case kindRule:
+		f = n.cond.fails
+	case kindSimplified:
+		f = slices.ContainsFunc(n.simp, func(k simpKid) bool { return k.c.fails })
+	default:
+		f = slices.ContainsFunc(n.kids, g.fails)
+	}
+	g.failsMemo[n] = f
+	return f
 }
 
 // uncertain reports whether the lo and hi bounds of n can differ: a rule
 // condition at or below n is three-valued, or n or a node below it fails as a
 // source or iterates over a permission scope that may fail. A three-valued
-// target does not split the bounds, as an undefined target makes its node
-// deny on both.
+// target does not split the bounds, as an undefined target gives both bounds
+// of the node's body with its permit taken away.
 func (g *gen) uncertain(n *node) bool {
 	if u, ok := g.uncertainMemo[n]; ok {
 		return u
@@ -948,6 +984,53 @@ func (c *cond) railRule(d dnf, o spectables.Outcome) dnf {
 	return r
 }
 
+// failedU holds where the condition is unknown and its value depends on a
+// source that failed: some disjunct is unknown at a failed source and has no
+// false leaf, and no disjunct is true. The agent denies the resource there.
+// A condition unknown for a value alone, or whose failed operand a known
+// operand settles, keeps its bounds.
+func (c *cond) failedU() dnf {
+	if !c.fails {
+		return dnfFalse
+	}
+	g := c.g
+	// a factor of more than one clause is read through a rule, so the product
+	// grows with the number of factors, not with their clauses
+	one := func(d dnf) dnf {
+		if len(d) > 1 {
+			return g.refRule(d, prefixAnd, false)
+		}
+		return d
+	}
+	var parts []dnf
+	for _, grp := range c.groups {
+		for i, l := range grp {
+			if l.failed.isFalse() {
+				continue
+			}
+			// a disjunct is unknown at l where no other leaf is false: a
+			// two-valued leaf is then true, which its true rail says
+			// without a negation
+			fs := []dnf{one(l.failed)}
+			for j, k := range grp {
+				switch {
+				case j == i:
+				case k.threeValued:
+					fs = append(fs, g.refRule(k.f, prefixAnd, true))
+				default:
+					fs = append(fs, one(k.t))
+				}
+			}
+			parts = append(parts, g.productAll(fs))
+		}
+	}
+	d := one(union(parts...))
+	if len(c.groups) > 1 {
+		d = g.product(d, c.railRule(c.T(), spectables.OutcomeT))
+	}
+	return d
+}
+
 func (c *cond) U() dnf {
 	if c.isTrue != nil || !c.three {
 		return dnfFalse
@@ -976,6 +1059,18 @@ func (g *gen) call(name string) string {
 	}
 	return name
 }
+
+// ruleFailed holds where a rule applies and its condition is unknown because
+// a source it reads failed ([cond.failedU]), which denies the resource. allow
+// reads it once, beside rulePermit, which holds the clauses where the
+// policies permit: a reference in each of those clauses would cost the
+// compiler of OPA a walk of the rules of failed per clause.
+const (
+	ruleFailed = "failed"
+	rulePermit = "permit"
+)
+
+var failedRef = dnf{{{cls: clsCheck, text: ruleFailed, rule: ruleFailed}}}
 
 // The prefixes of the rules that any node may read, named by a hash of their
 // clauses: a factor moved out of a product, and the true and the false rail
@@ -1079,9 +1174,16 @@ var sequentialFactors = 16
 // -- flags --------------------------------------------------------------------
 
 // flag returns the clauses that hold exactly when bound b (lo, hi) of node n
-// is x (P permit, D deny). The hi bound of a node no unknown value reaches
-// (uncertain) is its lo bound, and reads the same clauses.
+// is x (P permit, D deny), or, for x E and bound lo, when a rule at or below n
+// applies and its condition is unknown because a source it reads failed,
+// which denies the resource. A rule applies under a target that is not
+// false: an undefined target makes it a node that can deny. The hi
+// bound of a node no unknown value reaches (uncertain) is its lo bound, and
+// reads the same clauses.
 func (g *gen) flag(n *node, b, x string) (dnf, error) {
+	if x == "E" && !g.fails(n) {
+		return dnfFalse, nil
+	}
 	if b == "hi" && !g.uncertain(n) {
 		return g.flag(n, "lo", x)
 	}
@@ -1099,26 +1201,27 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 	switch n.kind {
 	case kindRule:
 		t, c := n.tgt, n.cond
+		if x == "E" {
+			// a target that is undefined makes the rule one that can deny,
+			// as its condition denies the resource once the target holds
+			return g.product(t.notF(), c.failedU()), nil
+		}
 		switch n.effect {
 		case "ALLOW":
-			if x == "P" {
-				if b == "lo" {
-					return g.product(t.T(), c.T()), nil
-				}
+			switch {
+			case x == "P" && b == "lo":
+				return g.product(t.T(), c.T()), nil
+			case x == "P":
 				return g.product(t.T(), c.notF()), nil
 			}
-			return t.U(), nil
+			return dnfFalse, nil
 		case "DENY":
 			if x == "D" {
 				if b == "lo" {
-					return union(t.U(), g.product(t.T(), c.notF())), nil
+					return g.product(t.notF(), c.notF()), nil
 				}
-				return union(t.U(), g.product(t.T(), c.T())), nil
+				return g.product(t.notF(), c.T()), nil
 			}
-			return dnfFalse, nil
-		}
-		if x == "D" {
-			return t.U(), nil
 		}
 		return dnfFalse, nil
 	case kindSimplified:
@@ -1128,6 +1231,10 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 		parts := make([]dnf, 0, len(n.simp))
 		for _, k := range n.simp {
 			var body dnf
+			if x == "E" && g.opt.Groups {
+				parts = append(parts, g.product(dnf{k.match}, g.product(g.group(k.roles), k.c.failedU())))
+				continue
+			}
 			if g.opt.Groups {
 				if b == "lo" || !k.c.three {
 					body = k.c.tWithSubject(k.roles)
@@ -1141,9 +1248,12 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 			for _, r := range k.roles {
 				alts = append(alts, conj(k.match, r))
 			}
-			if b == "lo" {
+			switch {
+			case x == "E":
+				body = k.c.failedU()
+			case b == "lo":
 				body = k.c.T()
-			} else {
+			default:
 				body = k.c.notF()
 			}
 			parts = append(parts, g.product(alts, body))
@@ -1152,17 +1262,22 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 	case kindIterate:
 		return g.iterateFlag(n, b, x)
 	case kindUnknown:
-		// [deny, permit] under a true target, [deny, deny] under an
-		// undefined one
+		// [deny, permit] under a true target, [deny, not applicable] under
+		// an undefined one
 		switch b + x {
 		case "loD":
-			return union(n.tgt.U(), n.tgt.T()), nil
+			return n.tgt.notF(), nil
 		case "hiP":
 			return n.tgt.T(), nil
-		case "hiD":
-			return n.tgt.U(), nil
 		}
 		return dnfFalse, nil
+	}
+	if x == "E" {
+		kids, err := g.anyKid(n, "lo", "E", false)
+		if err != nil {
+			return nil, err
+		}
+		return g.product(n.tgt.notF(), kids), nil
 	}
 	inner, err := g.inner(n, b, x)
 	if err != nil {
@@ -1174,7 +1289,7 @@ func (g *gen) flagBody(n *node, b, x string) (dnf, error) {
 	if x == "P" {
 		return g.product(n.tgt.T(), inner), nil
 	}
-	return union(n.tgt.U(), g.product(n.tgt.T(), inner)), nil
+	return g.product(n.tgt.notF(), inner), nil
 }
 
 // anyKid returns the clauses of "some child of n has bound b equal to x",
@@ -1319,8 +1434,6 @@ func (g *gen) used(allow dnf) map[string]bool {
 }
 
 // decisionText is the rule decision, as [Options.Decision] describes it.
-// Only a denial whose bounds differ is unknown: a failed value in a target
-// makes its node deny on both bounds, and the denial is deny.
 const decisionText = `
 decision := "permit" if {
 	allow
@@ -1365,11 +1478,13 @@ func clauseText(name string, c clause) string {
 // rules maybe and decision and what maybe reads.
 func (g *gen) module(pkg string, allow, maybe dnf, decision bool) (string, int) {
 	var b strings.Builder
-	b.WriteString("package " + pkg + "\n\n" + legend + "\ndefault allow := false\n\n")
+	b.WriteString("package " + pkg + "\n\n" + legend + "\ndefault allow := false\n\n" +
+		"allow if {\n\t" + rulePermit + "\n\tnot " + ruleFailed + "\n}\n\ndefault " + rulePermit + " := false\n\n" +
+		"default " + ruleFailed + " := false\n\n")
 	cm := &commenter{g: g, b: &b, printed: map[string]bool{}}
 	for _, c := range allow {
 		cm.clause(c)
-		b.WriteString(clauseText("allow", c))
+		b.WriteString(clauseText(rulePermit, c))
 	}
 	clauses := len(allow)
 	if decision {
@@ -1382,7 +1497,7 @@ func (g *gen) module(pkg string, allow, maybe dnf, decision bool) (string, int) 
 		}
 		clauses += len(maybe)
 	}
-	used := g.used(union(allow, maybe))
+	used := g.used(union(allow, maybe, failedRef))
 	if !decision {
 		g.stats.Rules = len(used)
 	}
