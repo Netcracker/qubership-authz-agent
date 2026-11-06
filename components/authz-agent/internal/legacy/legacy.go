@@ -50,8 +50,10 @@ func errMissing(parameter string) *RequestError {
 }
 
 // Resource is one entry of input.resources. The values are kept as the
-// caller sent them, so a resource type or operation that is not a string
-// reaches the policy unchanged.
+// caller sent them, so a resource type that is a number or a boolean reaches
+// the policy unchanged, and so does such an operation on check/resource and
+// check/resource/bulk. The bulk/operations routes give the policy the text
+// of each operation.
 type Resource struct {
 	ResourceType any
 	Operation    any
@@ -263,7 +265,9 @@ func (it checkItem) resource() (Resource, *RequestError) {
 }
 
 // newResource converts the raw fields; a missing resource is an empty
-// object.
+// object. A type or operation that is a list or an object is a bad
+// request: the policies compare both as text, and a structure has no text
+// a caller could mean.
 func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
 	t, err := value(typ, "")
 	if err != nil {
@@ -273,6 +277,9 @@ func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
 	if err != nil {
 		return Resource{}, err
 	}
+	if structure(t) || structure(o) {
+		return Resource{}, errBadRequest
+	}
 	r, err := value(res, map[string]any{})
 	if err != nil {
 		return Resource{}, err
@@ -281,15 +288,25 @@ func newResource(typ, op, res json.RawMessage) (Resource, *RequestError) {
 		Raw: RawResource{Type: typ, Operation: op, Resource: res}}, nil
 }
 
+// structure reports whether v is a list or an object.
+func structure(v any) bool {
+	switch v.(type) {
+	case []any, map[string]any:
+		return true
+	}
+	return false
+}
+
 // expand appends one Resource and Entry per operation of a bulk/operations
-// item, skipping operations that are empty strings or null.
+// item, skipping operations that are empty strings or null. An operation
+// that is a list or an object is a bad request, as in [newResource].
 func expand(resources []Resource, entries []Entry, typ json.RawMessage, ops []json.RawMessage, res json.RawMessage, id string) ([]Resource, []Entry, *RequestError) {
 	for _, op := range ops {
 		name := text(op)
 		if name == "" {
 			continue
 		}
-		r, err := newResource(typ, nil, res)
+		r, err := newResource(typ, op, res)
 		if err != nil {
 			return nil, nil, err
 		}
