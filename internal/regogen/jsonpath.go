@@ -50,20 +50,48 @@ func Builtins() []func(*rego.Rego) {
 	return append(regobuiltins.Options(), pipRecordFunction(), jsonPathFunction(), pipFunction(), entRecordFunction())
 }
 
-// jsonPathFunction is the implementation of nc.resource_path.
+// jsonPathFunction is the implementation of nc.resource_path. It keeps each
+// record in the query's built-in cache by the identity of the document and
+// the path. OPA's Memoize would key the cache by the text of the arguments,
+// which prints the whole resource on every call.
 func jsonPathFunction() func(*rego.Rego) {
-	return rego.Function2(&rego.Function{Name: JSONPathDecl.Name, Decl: JSONPathDecl.Decl, Memoize: true},
+	return rego.Function2(&rego.Function{Name: JSONPathDecl.Name, Decl: JSONPathDecl.Decl},
 		func(bctx rego.BuiltinContext, doc, path *ast.Term) (*ast.Term, error) {
 			p, ok := path.Value.(ast.String)
 			if !ok {
 				return nil, errNotAPath
 			}
+			// a key holds an object or a list, whose identity is a pointer;
+			// another value, such as null, is not looked up
+			cached := bctx.Cache != nil
+			switch doc.Value.(type) {
+			case *ast.Array, ast.Object:
+			default:
+				cached = false
+			}
+			key := jsonPathKey{doc.Value, string(p)}
+			if cached {
+				if r, ok := bctx.Cache.Get(key); ok {
+					return r.(*ast.Term), nil
+				}
+			}
 			d, err := regobuiltins.JSONOf(bctx, doc)
 			if err != nil {
 				return nil, err
 			}
-			return JSONPathRecord(d, string(p))
+			r, err := JSONPathRecord(d, string(p))
+			if err == nil && cached {
+				bctx.Cache.Put(key, r)
+			}
+			return r, err
 		})
+}
+
+// jsonPathKey keys a record of nc.resource_path in the query's built-in
+// cache.
+type jsonPathKey struct {
+	doc  ast.Value
+	path string
 }
 
 // Capabilities returns the capabilities of [regobuiltins] with

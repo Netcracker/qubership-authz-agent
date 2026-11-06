@@ -253,3 +253,37 @@ func TestBulkItemSendsItsOwnPIPRequest(t *testing.T) {
 		}
 	}
 }
+
+// BenchmarkJSONPathOverALargeResource is one check whose condition reads two
+// jsonPath paths of a resource with 5000 items.
+func BenchmarkJSONPathOverALargeResource(b *testing.B) {
+	m, err := Generate(tenantWithSet(b, "DENY_UNLESS_PERMIT", "ALLOW",
+		"resource.items[0].id == 'x' OR resource.items[1].id == 'y'"), table(b), DefaultOptions())
+	if err != nil {
+		b.Fatalf("Generate: %v", err)
+	}
+	pq, err := rego.New(append([]func(*rego.Rego){rego.Query("data." + DefaultOptions().Package + ".allow"),
+		rego.Module("gen.rego", m.Text)}, Builtins()...)...).PrepareForEval(context.Background())
+	if err != nil {
+		b.Fatalf("PrepareForEval: %v", err)
+	}
+	items := make([]string, 5000)
+	for i := range items {
+		items[i] = fmt.Sprintf(`{"id": "v%d", "name": "item %d"}`, i, i)
+	}
+	body, err := ReadBody([]byte(`{"operation": "read", "type": "doc", "resource": {"items": [` +
+		strings.Join(items, ",") + `]}}`))
+	if err != nil {
+		b.Fatalf("ReadBody: %v", err)
+	}
+	in, err := Project(m, Request{Body: body})
+	if err != nil {
+		b.Fatalf("Project: %v", err)
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		if _, err := pq.Eval(in.Context(context.Background()), rego.EvalParsedInput(in.Value())); err != nil {
+			b.Fatalf("Eval: %v", err)
+		}
+	}
+}
