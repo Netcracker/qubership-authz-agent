@@ -30,10 +30,12 @@ import (
 // time read could differ from the one the provider wrote.
 const maxNumericDate = 1<<53 - 1
 
-// checkTimes checks exp, nbf, and iat against now with leeway either way,
-// and returns the time exp names. exp and iat are required; nbf is
-// optional.
-func checkTimes(claims map[string]json.RawMessage, now time.Time, leeway time.Duration) (time.Time, error) {
+// checkTimes checks exp, nbf, and iat, and returns the time exp names. exp
+// and iat are required; nbf is optional. exp and nbf are compared with now
+// with leeway either way. An exp before iat is refused, with no leeway. An iat
+// later than now by more than leeway is refused only when p is marked
+// [keys.Provider.Kubernetes].
+func checkTimes(claims map[string]json.RawMessage, p *keys.Provider, now time.Time, leeway time.Duration) (time.Time, error) {
 	exp, present, err := numericDate(claims, "exp")
 	if err != nil {
 		return time.Time{}, err
@@ -58,7 +60,10 @@ func checkTimes(claims map[string]json.RawMessage, now time.Time, leeway time.Du
 	if !present {
 		return time.Time{}, fail(CodeIATMissing, "token has no iat claim")
 	}
-	if iat.After(now.Add(leeway)) {
+	if exp.Before(iat) {
+		return time.Time{}, fail(CodeIATInvalid, "token expires at %s, before it was issued at %s", exp.UTC().Format(time.RFC3339), iat.UTC().Format(time.RFC3339))
+	}
+	if p.Kubernetes && iat.After(now.Add(leeway)) {
 		return time.Time{}, fail(CodeIATInvalid, "token was issued at %s, in the future", iat.UTC().Format(time.RFC3339))
 	}
 	return exp, nil

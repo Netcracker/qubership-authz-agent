@@ -81,7 +81,8 @@ const (
 	CodeNotYetValid Code = "TOKEN_NOT_YET_VALID"
 	// CodeIATMissing marks a token without an iat claim.
 	CodeIATMissing Code = "TOKEN_IAT_MISSING"
-	// CodeIATInvalid marks a token whose iat is in the future.
+	// CodeIATInvalid marks a token whose exp comes before its iat, and a
+	// token of a Kubernetes provider whose iat is in the future.
 	CodeIATInvalid Code = "TOKEN_IAT_INVALID"
 	// CodeAudienceMissing marks a token without an aud claim from a provider
 	// that requires one.
@@ -318,7 +319,7 @@ func (v *Verifier) check(ctx context.Context, raw string, digest [sha256.Size]by
 	if err := checkAudience(claims, key.Provider); err != nil {
 		return nil, err
 	}
-	expiry, err := checkTimes(claims, v.opts.now(), v.opts.Leeway)
+	expiry, err := checkTimes(claims, key.Provider, v.opts.now(), v.opts.Leeway)
 	if err != nil {
 		return nil, err
 	}
