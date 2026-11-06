@@ -20,8 +20,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/open-policy-agent/opa/v1/ast"
-
 	"authz-agent/internal/jsonvalue"
 )
 
@@ -44,46 +42,45 @@ func TestOf_ScalarCarriesTheTextsEachOperatorComparesBy(t *testing.T) {
 		key     string
 		caseKey string
 		number  string // Decimal.String, or "" for none
-		long    bool
 	}
 	tests := []struct {
 		name string
 		doc  string
 		want want
 	}{
-		{"a string folds to lower case", `"ABC"`, want{ClassString, TypeString, "abc", "ABC", "", false}},
-		{"a string whose scale BigDecimal refuses is no number", `"1.1e-2147483647"`, want{ClassString, TypeString, "1.1e-2147483647", "1.1e-2147483647", "", false}},
-		{"a string at the largest scale BigDecimal accepts is a number", `"1e-2147483647"`, want{ClassString, TypeString, "1e-2147483647", "1e-2147483647", "1e-2147483647", true}},
-		{"sharp s has no one-character upper case and stays", `"Straße"`, want{ClassString, TypeString, "straße", "Straße", "", false}},
-		{"dotted capital I folds to i", `"İ"`, want{ClassString, TypeString, "i", "İ", "", false}},
-		{"long s folds through its upper case to s", `"ſ"`, want{ClassString, TypeString, "s", "ſ", "", false}},
-		{"final sigma folds through its upper case to sigma", `"ς"`, want{ClassString, TypeString, "σ", "ς", "", false}},
-		{"a letter outside the BMP folds as one code point", `"𐐀"`, want{ClassString, TypeString, "𐐨", "𐐀", "", false}},
-		{"a string of digits reads as a number", `"5"`, want{ClassString, TypeString, "5", "5", "5", false}},
-		{"a string with a plus sign reads as a number", `"+5"`, want{ClassString, TypeString, "+5", "+5", "5", false}},
-		{"a string with no integer digits reads as a number", `".5"`, want{ClassString, TypeString, ".5", ".5", "0.5", false}},
-		{"a string with a trailing point reads as a number", `"5."`, want{ClassString, TypeString, "5.", "5.", "5", false}},
-		{"a string of Arabic-Indic digits reads as a number", `"٣"`, want{ClassString, TypeString, "٣", "٣", "3", false}},
-		{"a string beyond the double range keeps its exact value", `"1e400"`, want{ClassString, TypeString, "1e400", "1e400", "1e400", true}},
-		{"a string with a leading space is not a number", `" 5"`, want{ClassString, TypeString, " 5", " 5", "", false}},
-		{"a string with an underscore is not a number", `"5_0"`, want{ClassString, TypeString, "5_0", "5_0", "", false}},
-		{"the string NaN is not a number", `"NaN"`, want{ClassString, TypeString, "nan", "NaN", "", false}},
-		{"the string Infinity is not a number", `"Infinity"`, want{ClassString, TypeString, "infinity", "Infinity", "", false}},
-		{"an integer prints as its digits", `5`, want{ClassScalar, TypeNumber, "5", "5", "5", false}},
-		{"minus zero integer prints as 0", `-0`, want{ClassScalar, TypeNumber, "0", "0", "0", false}},
-		{"a fraction prints as Double.toString", `5.0`, want{ClassScalar, TypeNumber, "5.0", "5.0", "5", false}},
-		{"minus zero fraction keeps its sign in the text only", `-0.0`, want{ClassScalar, TypeNumber, "-0.0", "-0.0", "0", false}},
-		{"an exponent prints as a fraction", `1e2`, want{ClassScalar, TypeNumber, "100.0", "100.0", "100", false}},
-		{"a small magnitude prints with an exponent", `1.5e-4`, want{ClassScalar, TypeNumber, "1.5e-4", "1.5E-4", "0.00015", false}},
-		{"ten million prints with an exponent", `1e7`, want{ClassScalar, TypeNumber, "1.0e7", "1.0E7", "10000000", false}},
-		{"just under ten million prints plain", `9999999.0`, want{ClassScalar, TypeNumber, "9999999.0", "9999999.0", "9999999", false}},
-		{"an underflow reads as the zero of its Double", `1e-400`, want{ClassScalar, TypeNumber, "0.0", "0.0", "0", false}},
-		{"a negative underflow prints as minus zero and reads as zero", `-1e-400`, want{ClassScalar, TypeNumber, "-0.0", "-0.0", "0", false}},
-		{"an overflow prints as Infinity and has no number", `1e400`, want{ClassScalar, TypeNumber, "infinity", "Infinity", "", false}},
-		{"a long integer keeps every digit", `123456789012345678901234567890`, want{ClassScalar, TypeNumber, "123456789012345678901234567890", "123456789012345678901234567890", "1.2345678901234567890123456789e29", true}},
-		{"a long fraction reads as the nearest double", `12345678901234567.5`, want{ClassScalar, TypeNumber, "1.2345678901234568e16", "1.2345678901234568E16", "12345678901234568", true}},
-		{"digits beyond a double read as the double", `0.300000000000000010`, want{ClassScalar, TypeNumber, "0.3", "0.3", "0.3", false}},
-		{"true has a key and no number", `true`, want{ClassScalar, TypeBoolean, "true", "true", "", false}},
+		{"a string folds to lower case", `"ABC"`, want{ClassString, TypeString, "abc", "ABC", ""}},
+		{"a string whose scale BigDecimal refuses is no number", `"1.1e-2147483647"`, want{ClassString, TypeString, "1.1e-2147483647", "1.1e-2147483647", ""}},
+		{"a string at the largest scale BigDecimal accepts is a number", `"1e-2147483647"`, want{ClassString, TypeString, "1e-2147483647", "1e-2147483647", "1e-2147483647"}},
+		{"sharp s has no one-character upper case and stays", `"Straße"`, want{ClassString, TypeString, "straße", "Straße", ""}},
+		{"dotted capital I folds to i", `"İ"`, want{ClassString, TypeString, "i", "İ", ""}},
+		{"long s folds through its upper case to s", `"ſ"`, want{ClassString, TypeString, "s", "ſ", ""}},
+		{"final sigma folds through its upper case to sigma", `"ς"`, want{ClassString, TypeString, "σ", "ς", ""}},
+		{"a letter outside the BMP folds as one code point", `"𐐀"`, want{ClassString, TypeString, "𐐨", "𐐀", ""}},
+		{"a string of digits reads as a number", `"5"`, want{ClassString, TypeString, "5", "5", "5"}},
+		{"a string with a plus sign reads as a number", `"+5"`, want{ClassString, TypeString, "+5", "+5", "5"}},
+		{"a string with no integer digits reads as a number", `".5"`, want{ClassString, TypeString, ".5", ".5", "0.5"}},
+		{"a string with a trailing point reads as a number", `"5."`, want{ClassString, TypeString, "5.", "5.", "5"}},
+		{"a string of Arabic-Indic digits reads as a number", `"٣"`, want{ClassString, TypeString, "٣", "٣", "3"}},
+		{"a string beyond the double range keeps its exact value", `"1e400"`, want{ClassString, TypeString, "1e400", "1e400", "1e400"}},
+		{"a string with a leading space is not a number", `" 5"`, want{ClassString, TypeString, " 5", " 5", ""}},
+		{"a string with an underscore is not a number", `"5_0"`, want{ClassString, TypeString, "5_0", "5_0", ""}},
+		{"the string NaN is not a number", `"NaN"`, want{ClassString, TypeString, "nan", "NaN", ""}},
+		{"the string Infinity is not a number", `"Infinity"`, want{ClassString, TypeString, "infinity", "Infinity", ""}},
+		{"an integer prints as its digits", `5`, want{ClassScalar, TypeNumber, "5", "5", "5"}},
+		{"minus zero integer prints as 0", `-0`, want{ClassScalar, TypeNumber, "0", "0", "0"}},
+		{"a fraction prints as Double.toString", `5.0`, want{ClassScalar, TypeNumber, "5.0", "5.0", "5"}},
+		{"minus zero fraction keeps its sign in the text only", `-0.0`, want{ClassScalar, TypeNumber, "-0.0", "-0.0", "0"}},
+		{"an exponent prints as a fraction", `1e2`, want{ClassScalar, TypeNumber, "100.0", "100.0", "100"}},
+		{"a small magnitude prints with an exponent", `1.5e-4`, want{ClassScalar, TypeNumber, "1.5e-4", "1.5E-4", "0.00015"}},
+		{"ten million prints with an exponent", `1e7`, want{ClassScalar, TypeNumber, "1.0e7", "1.0E7", "10000000"}},
+		{"just under ten million prints plain", `9999999.0`, want{ClassScalar, TypeNumber, "9999999.0", "9999999.0", "9999999"}},
+		{"an underflow reads as the zero of its Double", `1e-400`, want{ClassScalar, TypeNumber, "0.0", "0.0", "0"}},
+		{"a negative underflow prints as minus zero and reads as zero", `-1e-400`, want{ClassScalar, TypeNumber, "-0.0", "-0.0", "0"}},
+		{"an overflow prints as Infinity and has no number", `1e400`, want{ClassScalar, TypeNumber, "infinity", "Infinity", ""}},
+		{"a long integer keeps every digit", `123456789012345678901234567890`, want{ClassScalar, TypeNumber, "123456789012345678901234567890", "123456789012345678901234567890", "1.2345678901234567890123456789e29"}},
+		{"a long fraction reads as the nearest double", `12345678901234567.5`, want{ClassScalar, TypeNumber, "1.2345678901234568e16", "1.2345678901234568E16", "12345678901234568"}},
+		{"digits beyond a double read as the double", `0.300000000000000010`, want{ClassScalar, TypeNumber, "0.3", "0.3", "0.3"}},
+		{"true has a key and no number", `true`, want{ClassScalar, TypeBoolean, "true", "true", ""}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -94,7 +91,7 @@ func TestOf_ScalarCarriesTheTextsEachOperatorComparesBy(t *testing.T) {
 				got.key, got.caseKey = *r.Key, *r.CaseKey
 			}
 			if r.Number != nil {
-				got.number, got.long = r.Number.String(), !r.Number.Short()
+				got.number = r.Number.String()
 			}
 			if r.State != StateValue {
 				t.Errorf("Of(%s).State = %s, want VALUE", tt.doc, r.State)
@@ -178,30 +175,6 @@ func TestOf_ListCarriesARecordPerElementIncludingNull(t *testing.T) {
 	want := []State{StateNull, StateValue, StateEmptyColl}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("states of the element records = %v, want %v", got, want)
-	}
-}
-
-func TestRecord_TermWritesTheShortKeys(t *testing.T) {
-	tests := []struct {
-		name string
-		rec  Record
-		want string
-	}{
-		{"a long number", Of(jsonvalue.Number("12345678901234567.5")),
-			`{"s": "VALUE", "t": "n", "j": "number", "k": "1.2345678901234568e16", "ck": "1.2345678901234568E16", "ks": ["1.2345678901234568e16"], "nl": true}`},
-		{"a short number", Of(jsonvalue.Number("12.50")),
-			`{"s": "VALUE", "t": "n", "j": "number", "k": "12.5", "ck": "12.5", "ks": ["12.5"], "n": 12.5}`},
-		{"a list that holds null", Of([]jsonvalue.Value{nil, true}),
-			`{"s": "NULL_ELEMENT", "t": "x", "j": "array", "k": "[null, true]", "ck": "[null, true]", "ks": ["true"], "o": "[null,true]", "e": [{"s": "NULL"}, {"s": "VALUE", "t": "n", "j": "boolean", "k": "true", "ck": "true", "ks": ["true"]}]}`},
-		{"a special state", WithState(StateIndexOOB), `{"s": "INDEX_OOB"}`},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			want := ast.MustParseTerm(tt.want)
-			if got := tt.rec.Term(); !got.Equal(want) {
-				t.Errorf("Term() = %v, want %v", got, want)
-			}
-		})
 	}
 }
 

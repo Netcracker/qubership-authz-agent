@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package regotest runs Rego tests that call the built-in functions of
-// [regobuiltins] with OPA's test runner. It is a separate package so that
+// Package regotest runs Rego tests with OPA's test runner and the built-in
+// functions [regobuiltins.All] lists. It is a separate package so that
 // production code does not link the runner.
 package regotest
 

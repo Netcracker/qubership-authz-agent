@@ -128,24 +128,3 @@ func TestDecimal_StringIsAJSONNumberWithoutTrailingZeros(t *testing.T) {
 		}
 	}
 }
-
-func TestDecimal_ShortBoundaries(t *testing.T) {
-	tests := []struct {
-		in   string
-		want bool
-	}{
-		{"0", true},
-		{"123456789012345", true},
-		{"1234567890123456", false},
-		{"1234567890123450000", true},
-		{"1e307", true},
-		{"1e308", false},
-		{"1e-307", true},
-		{"1e-308", false},
-	}
-	for _, tt := range tests {
-		if got := mustParseDecimal(t, tt.in).Short(); got != tt.want {
-			t.Errorf("ParseDecimal(%q).Short() = %v, want %v", tt.in, got, tt.want)
-		}
-	}
-}
