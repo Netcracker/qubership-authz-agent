@@ -251,10 +251,16 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 // iterate). prefix starts the custom keys of the rules of a policy that a
 // pass evaluates.
 func (e *filterEval) node(n *fnode, pass int, prefix string) (pair, error) {
-	if e.status(n.tgt, pass).v != 1 {
-		// a target over the resource or a failed source leaves the node out,
-		// as legacy does
+	// an undefined target makes its node deny, as in the check: everywhere
+	// over a failed source, and on rows the filter cannot name over the
+	// resource, where the node also allows rows it cannot name
+	switch t := e.status(n.tgt, pass); {
+	case t.v == 0:
 		return pair{}, nil
+	case t.v == -1 && t.err:
+		return pair{d: allRows}, nil
+	case t.v == -1:
+		return pair{d: rows{kind: rowsUnknown}}, nil
 	}
 	switch n.kind {
 	case kindUnknown:
@@ -313,7 +319,12 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 	allowAll, denyAll, denyUnknown := false, false, false
 	for _, r := range n.kids {
 		t := e.status(r.tgt, pass)
-		if t.v == 0 || t.v == -1 && t.err {
+		if t.v == 0 {
+			continue
+		}
+		if t.v == -1 && t.err {
+			// an undefined target makes its rule deny, as in the check
+			denyAll = true
 			continue
 		}
 		if r.effect != "ALLOW" && r.effect != "DENY" {

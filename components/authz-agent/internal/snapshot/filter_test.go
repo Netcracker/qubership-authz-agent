@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -42,7 +43,14 @@ func filter(t *testing.T, first bool, op string, sets ...string) string {
 	t.Helper()
 	r := New(Config{FilterFirstApproximation: first}, tab(t), quiet{})
 	load(t, r, "", sets...)
-	a, err := r.Filter(context.Background(), FilterRequest{Tenant: "t", ResourceType: "doc", Operation: &op})
+	return filterOf(t, r, "t", op)
+}
+
+// filterOf is the answer of r to a filter of doc in tenant for the
+// operation op, as the service writes it.
+func filterOf(t *testing.T, r *Registry, tenant, op string) string {
+	t.Helper()
+	a, err := r.Filter(context.Background(), FilterRequest{Tenant: tenant, ResourceType: "doc", Operation: &op})
 	if err != nil {
 		t.Fatalf("Filter(doc, %s): %v", op, err)
 	}
@@ -252,5 +260,45 @@ func TestACustomDenyPredicateIsNegated(t *testing.T) {
 	if want := `"customFilterCondition":{"logic":{"op":"NOT"`; !strings.Contains(got, want) ||
 		!strings.Contains(got, `"predicate":"owner"`) {
 		t.Errorf("Filter(doc, read) = %s, want a customFilterCondition with %s and the predicate owner", got, want)
+	}
+}
+
+// denyPolicySet is a DENY_OVERRIDES set of tenant a on doc with two
+// policies: one allows every row, and one under policyTarget holds a DENY
+// rule under ruleTarget.
+func denyPolicySet(policyTarget, ruleTarget string) string {
+	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+			{"policyId": "q", "target": %q, "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "deny", "target": %q, "effect": "DENY", "tenantId": "a"}]}]}`,
+		policyTarget, ruleTarget)
+}
+
+// A target the filter cannot evaluate makes its node deny, as the check
+// does: a policy whose target reads the resource denies rows the filter
+// cannot name, and a policy or a rule whose target reads a PIP whose call
+// failed denies every row. Each such node used to be left out, and the
+// filter allowed every row where the check denied. A DENY policy whose
+// target is false for the operation is the control that the ALLOW policy
+// allows.
+func TestATargetTheFilterCannotEvaluateDenies(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	for _, tc := range []struct {
+		name, policyTarget, ruleTarget, want string
+	}{
+		{"a policy target over the resource", "resource.secret == 1", "true", deny},
+		{"a policy target over a failed PIP", "subject.g == 'blocked'", "true", deny},
+		{"a rule target over a failed PIP", "true", "subject.g == 'blocked'", deny},
+		{"a policy target false for the operation", "operation == 'write'", "true", allow},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), denyPolicySet(tc.policyTarget, tc.ruleTarget))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
 	}
 }
