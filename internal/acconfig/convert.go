@@ -181,8 +181,8 @@ func convertPolicySet(ps PolicySetV3, logger Logger, stats *Stats) []simplifiedp
 			if strings.TrimSpace(rule.MongoDBPredicate) != "" {
 				sp.MongoDBPredicate = rule.MongoDBPredicate
 			}
-			if strings.TrimSpace(rule.QueryDSLPredicate) != "" {
-				sp.QueryDSLPredicate = rule.QueryDSLPredicate
+			if strings.TrimSpace(rule.Predicate) != "" {
+				sp.QueryDSLPredicate = rule.Predicate
 			}
 
 			result = append(result, sp)

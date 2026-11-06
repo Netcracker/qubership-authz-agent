@@ -7,6 +7,7 @@
 lint: test-stand-files
 	@echo "[lint] Go — root module"
 	golangci-lint run ./...
+	golangci-lint run --build-tags paritytest ./components/authz-agent/...
 	@echo "[lint] Go — test/parity/suite"
 	cd test/parity/suite && golangci-lint run ./...
 	@echo "[lint] Go — test/integration/testify"
@@ -90,7 +91,13 @@ SUITE_START_SECONDS ?= 180
 # Where the suites send their requests: the chart's Service, which fronts the
 # agent Pod.
 E2E_BASE_URL ?= http://authz-agent:8080
+# A suite pointed at another E2E_BASE_URL must not ask the local agent to pull
+# and then assert against an agent that did not.
+E2E_PULL_URL_ARGS = $(if $(call given,E2E_BASE_URL),--set suite.env.AGENT_PULL_URL=)
 PARITY_AC_BASE_URL ?= http://authz-agent:8080
+# A suite pointed at another PARITY_AC_BASE_URL must not ask the local agent
+# to pull and then assert against an agent that did not.
+PARITY_PULL_URL_ARGS = $(if $(call given,PARITY_AC_BASE_URL),--set suite.env.PARITY_AGENT_PULL_URL=)
 E2E_IMAGES := authz-agent authz-policy-admin pip-stub tenant-manager \
               authz-runtime-suite authz-parity-suite
 TEST_STAND_CHART := helm-templates/authz-test-stand
@@ -101,9 +108,11 @@ e2e-cluster:
 	kind get clusters | grep -qx $(KIND_CLUSTER) || kind create cluster --name $(KIND_CLUSTER) --wait 2m
 
 # The images the charts reference as local/<name>:ci. Keycloak is the public
-# image and is not built here.
+# image and is not built here. The agent is built with the paritytest tag, so
+# the parity suite can ask it to load the policies instead of waiting a pull
+# interval; the runtime suite does the same.
 e2e-images:
-	docker build -t local/authz-agent:ci               -f build/authz-agent/Dockerfile .
+	docker build -t local/authz-agent:ci               --build-arg GO_BUILD_TAGS=paritytest -f build/authz-agent/Dockerfile .
 	docker build -t local/authz-policy-admin:ci        -f build/authz-policy-admin/Dockerfile .
 	docker build -t local/pip-stub:ci                  -f test/integration/pipstub/Dockerfile test/integration/pipstub
 	docker build -t local/tenant-manager:ci            -f test/integration/tenantmanager/Dockerfile test/integration/tenantmanager
@@ -149,7 +158,7 @@ given = $(filter command line environment override,$(origin $(1)))
 # client-credentials Secret the chart expects the platform to provision, and
 # the runtime suite Job, which e2e-suite runs.
 e2e-harness: test-stand-files
-	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--install --create-namespace -f test/k8s/test-stand-values.yaml --set suite.env.BASE_URL=$(E2E_BASE_URL) $(TEST_STAND_HELM_ARGS))
+	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--install --create-namespace -f test/k8s/test-stand-values.yaml --set suite.env.BASE_URL=$(E2E_BASE_URL) $(E2E_PULL_URL_ARGS) $(TEST_STAND_HELM_ARGS))
 
 # The stub first: the agent reports Ready only once it has pulled its policies,
 # so its --wait would run out with no policy source to pull from. Each chart
@@ -203,7 +212,7 @@ endef
 # release has.
 e2e-suite: $(if $(call given,E2E_BASE_URL),test-stand-files)
 ifneq ($(call given,E2E_BASE_URL),)
-	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--reuse-values --set suite.env.BASE_URL=$(E2E_BASE_URL))
+	$(call upgrade-test-stand,$(E2E_KUBECTL),$(E2E_HELM),keycloak,--reuse-values --set suite.env.BASE_URL=$(E2E_BASE_URL) $(E2E_PULL_URL_ARGS))
 endif
 	$(call run-suite,$(E2E_KUBECTL),$(E2E_HELM),runtime-suite,$(E2E_SUITE_TIMEOUT))
 
@@ -241,12 +250,12 @@ parity: e2e-cluster e2e-images parity-harness parity-install parity-suite
 
 # The test stand of test/k8s/parity/test-stand-values.yaml: Keycloak with the
 # realms of test/k8s/parity/idp-seed/ and the users of
-# test/parity/suite/testdata/realm/, pip-mock with the request-args rule set,
+# test/parity/suite/testdata/realm/, pip-mock,
 # entitlements-mock, the M2M client-credentials Secret for the parity-m2m
 # client of the cloud-common realm, and the parity suite Job, which
 # parity-suite runs.
 parity-harness: test-stand-files
-	$(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_HELM),idp,--install --create-namespace -f test/k8s/parity/test-stand-values.yaml --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(TEST_STAND_HELM_ARGS))
+	$(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_HELM),idp,--install --create-namespace -f test/k8s/parity/test-stand-values.yaml --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(PARITY_PULL_URL_ARGS) $(TEST_STAND_HELM_ARGS))
 
 # The stub first, as in e2e-install.
 parity-install:
@@ -256,7 +265,7 @@ parity-install:
 # As e2e-suite, for PARITY_AC_BASE_URL.
 parity-suite: $(if $(call given,PARITY_AC_BASE_URL),test-stand-files)
 ifneq ($(call given,PARITY_AC_BASE_URL),)
-	$(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_HELM),idp,--reuse-values --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL))
+	$(call upgrade-test-stand,$(PARITY_KUBECTL),$(PARITY_HELM),idp,--reuse-values --set suite.env.PARITY_AC_BASE_URL=$(PARITY_AC_BASE_URL) $(PARITY_PULL_URL_ARGS))
 endif
 	$(call run-suite,$(PARITY_KUBECTL),$(PARITY_HELM),parity-suite,$(PARITY_SUITE_TIMEOUT))
 

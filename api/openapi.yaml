@@ -908,9 +908,7 @@ components:
       required: [policySets, policySetsSkipped, rules, rulesSkipped, rulesDenySkipped, policies]
       description: |
         Counts from the most recent conversion of the access-control policy
-        set into the OPA document. Present only in pull mode and only after the
-        first successful pull; absent in ConfigMap-mount mode and before the
-        first pull completes.
+        set into the OPA document. Present only after the first successful pull.
 
         The skipped counters are the load-bearing part. A pull that fetched
         1294 policy sets and converted none of them succeeds by every other

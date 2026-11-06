@@ -48,6 +48,10 @@ type RuntimeSuite struct {
 
 	results []stepResult
 	mu      sync.Mutex
+
+	// noPullRoute reports once per run that the agent has no pull route, which
+	// leaves every upload waiting a pull interval.
+	noPullRoute sync.Once
 }
 
 func TestRuntimeSuite(t *testing.T) {
@@ -117,7 +121,9 @@ func (s *RuntimeSuite) SetupSuite() {
 	s.SetupStep("setup.wait_for_agent", func() error {
 		// Wait for the pull loop to apply the uploaded policies before the
 		// agent health check, so the first decision assertions see live data.
-		time.Sleep(s.cfg.PullInterval + 2*time.Second)
+		if err := s.awaitACPull(); err != nil {
+			return err
+		}
 		return WaitForAgent(s.cfg.BaseURL, s.validAdminToken, 90*time.Second, s.currentRequestID())
 	})
 
@@ -257,14 +263,35 @@ func (s *RuntimeSuite) postRaw(path string, headers map[string]string, body inte
 	return code, b
 }
 
-// waitForACPull sleeps for the PolicyPuller tick interval plus a grace period,
-// ensuring that a policy or PIP upload to the authz-policy-admin is applied to OPA before
-// follow-up decision assertions run. The sleep duration is controlled by
-// RuntimeConfig.PullInterval (read from AUTHZ_PAP_CLIENT_PULL_INTERVAL) so the test
-// stack can keep it short (e.g. AUTHZ_PAP_CLIENT_PULL_INTERVAL=2).
+// waitForACPull returns once a policy or PIP upload to the authz-policy-admin is
+// applied to OPA, so follow-up decision assertions see it, and fails the test
+// when the agent did not load it; see awaitACPull.
 func (s *RuntimeSuite) waitForACPull() {
 	s.T().Helper()
-	time.Sleep(s.cfg.PullInterval + 2*time.Second)
+	s.Require().NoError(s.awaitACPull())
+}
+
+// awaitACPull asks the agent to pull at RuntimeConfig.AgentPullURL and returns
+// on 204. With the URL empty, or on the 404 of an agent built without the
+// paritytest tag, it sleeps for the PolicyPuller tick interval plus a grace
+// period; RuntimeConfig.PullInterval (read from AUTHZ_PAP_CLIENT_PULL_INTERVAL)
+// lets the test stack keep that short (e.g. AUTHZ_PAP_CLIENT_PULL_INTERVAL=2).
+// Any other answer, or none, is returned as an error, so the assertions that
+// follow do not run against the policies the agent held before the upload.
+func (s *RuntimeSuite) awaitACPull() error {
+	loaded, err := RequestAgentPull(s.cfg.AgentPullURL)
+	if err != nil || loaded {
+		return err
+	}
+	wait := s.cfg.PullInterval + 2*time.Second
+	if strings.TrimSpace(s.cfg.AgentPullURL) != "" {
+		s.noPullRoute.Do(func() {
+			fmt.Printf("[suite] POST %s: 404, the agent was built without the paritytest tag; every upload waits %s for the pull\n",
+				s.cfg.AgentPullURL, wait)
+		})
+	}
+	time.Sleep(wait)
+	return nil
 }
 
 func (s *RuntimeSuite) get(path string, headers map[string]string) (int, []byte) {

@@ -446,7 +446,7 @@
       "$id": "#/properties/AUTHZ_PAP_CLIENT_PULL_INTERVAL",
       "type": "integer",
       "title": "The AUTHZ_PAP_CLIENT_PULL_INTERVAL schema",
-      "description": "Seconds between policy pulls. 0 disables both the pull loop and the mount watcher",
+      "description": "Seconds between policy pulls. 0 disables the pull",
       "default": 30,
       "examples": [
         30,
@@ -462,16 +462,6 @@
       "default": "/var/run/secrets/tokens/netcracker/token",
       "examples": [
         "/var/run/secrets/tokens/netcracker/token"
-      ]
-    },
-    "AUTHZ_POLICY_CONFIGMAP": {
-      "$id": "#/properties/AUTHZ_POLICY_CONFIGMAP",
-      "type": "string",
-      "title": "The AUTHZ_POLICY_CONFIGMAP schema",
-      "description": "Name of an existing ConfigMap with policy data to mount instead of pulling (mount mode). Empty means pull mode; mount mode disables the pull loop, so AUTHZ_PAP_CLIENT_SOURCE_URL is then unused",
-      "default": "",
-      "examples": [
-        "authz-policies"
       ]
     },
     "AUTHZ_ENTITLEMENTS_URL": {

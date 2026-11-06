@@ -10,3 +10,14 @@
 #
 
 * @mr-joom @kichasov @vlsi
+
+# Files Renovate updates have no code owner, so a Renovate PR that changes
+# only these files requests no review. The list comes from the files that
+# automerged Renovate PRs changed on main; the last matching line wins.
+go.mod
+go.sum
+pom.xml
+Dockerfile
+mise.toml
+/.github/workflows/
+/helm-templates/authz-test-stand/values.yaml

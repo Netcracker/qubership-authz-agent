@@ -8,6 +8,9 @@ mesh routes, its canonical envelopes, the parity test that compared the two port
 and `opa-direct` modes, which the load-test workflow no longer offers. The lockdown step for `?explain=full` runs on
 `/access/v1/check/resource`. The agent keeps no canonical decision route: its clients call the check routes of the
 access-control API on port 8080, and port 8181 serves `/health`, `/ready`, `/api-version`, and `/prometheus`.
+`AUTHZ_DATA_DIRS` and `AUTHZ_DATA_IGNORE`, which the Decision names as the start-up source of the store, were removed in
+[PR #115](https://github.com/Netcracker/qubership-authz-agent/pull/115): the engine starts with an empty store,
+and only the loops in the process fill it.
 
 <!-- markdownlint-disable-next-line MD001 -->
 #### Date

@@ -464,3 +464,23 @@ func TestBuildRefIndexWildcardResourceTypeAll(t *testing.T) {
 		t.Fatalf("expected refIndex ORDER/ALL = [region], got %#v", allOp)
 	}
 }
+
+// A simplified policy has no querydsl field: a querydslPredicate key in its
+// JSON gives no predicate, and the policy allows every row as one with no
+// predicate does.
+func TestNormalizeIgnoresQuerydslPredicateKey(t *testing.T) {
+	t.Parallel()
+
+	normalized, err := Normalize([]byte(`[{"component": "C", "resourceType": "RT", "operation": "READ", "roles": ["ROLE_A"],
+		"querydslPredicate": "RT.ownerId.eq(\"${subject.id}\")"}]`))
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	got, err := json.Marshal(normalized["rls"].(map[string]any)["RT"].(map[string]any)["READ"].(map[string]any)["ROLE_A"])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `[{"condition":true,"predicates":[{"predicate":"true","type":"rsql"}]}]`; string(got) != want {
+		t.Errorf("rls.RT.READ.ROLE_A = %s, want %s", got, want)
+	}
+}

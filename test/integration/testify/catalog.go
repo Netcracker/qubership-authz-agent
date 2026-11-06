@@ -191,14 +191,6 @@ var Catalog = []StepEntry{
 	{"tenant_realm.resolved_realm_token_accepted", "admin (tenant default)", epCheckResource, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"tenant_realm.unregistered_realm_token.401", "admin (tenant unregistered)", epCheckResource, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 
-	// Verifies that the disk files written by pap-client have the correct
-	// OPA data-dir layout for restart recovery in ConfigMap-mount mode.
-	// In mount mode (MountWatcher) pap-client does NOT republish to OPA
-	// when the ConfigMap content is unchanged — disk loading is the ONLY
-	// recovery mechanism on OPA restart. This is the worst case.
-	// Red proof: removing the disk-write from MountWatcher (or PolicyPuller)
-	// causes these checks to fail (file absent or wrong top-level key).
-
 	// ── route_security ───────────────────────────────────────────────────
 	{"route_security.authorize_hidden.404", "admin", "POST /authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"route_security.access_authorize_absent.404", "admin", "POST /access/v1/authorize", "ORDER", "READ", "ROLE_ADMINISTRATOR"},

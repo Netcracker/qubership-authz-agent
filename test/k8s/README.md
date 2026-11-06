@@ -28,7 +28,7 @@ installing the stand does not start it.
 `parity/` holds the same shape for the parity replay suite (`test/parity`):
 its `test-stand-values.yaml` sets up Keycloak as `idp` with the realms of
 `parity/idp-seed/` and the users of `test/parity/suite/testdata/realm/`,
-`pip-mock` with the request-args rule set, `entitlements-mock`, and the parity
+`pip-mock`, `entitlements-mock`, and the parity
 suite Job. Its chart values add the parity realm as an explicit trusted
 provider. It runs in its own namespace, so its Keycloak can be named `idp`, the
 issuer host in the parity realm's tokens, next to the e2e namespace's
@@ -53,7 +53,7 @@ Step by step, in the order `make e2e` runs them:
 | Target | What it does |
 | --- | --- |
 | `e2e-cluster` | Creates the kind cluster `authz-e2e` unless it exists |
-| `e2e-images` | Builds the two product images, pip-stub, the tenant-manager emulator, and the suite images, then loads them into the cluster |
+| `e2e-images` | Builds the authz-policy-admin image, the agent image with the `paritytest` build tag, which adds the `POST /internal/v1/pull` route the suites call after each upload, pip-stub, the tenant-manager emulator, and the suite images, then loads them into the cluster |
 | `e2e-harness` | Generates the realm files (`test-stand-files`), then installs the test-stand chart with `test-stand-values.yaml` in the namespace: Keycloak, the stubs, the tenant-manager emulator, and the client-credentials Secret; waits until they are Ready. When the upgrade replaces the Keycloak Pod of a stand where the agent is installed, it restarts the agent, which otherwise keeps the old realm keys |
 | `e2e-install` | `helm upgrade --install` of the stub chart with its dev resource profile and `policy-admin-values.yaml`, then of the agent chart with its dev resource profile and `values.yaml`, each with `--wait` |
 | `e2e-suite` | Runs the suite Job with `helm test`, streams its log, and fails if the Job did not complete |
@@ -75,7 +75,10 @@ for the suite Job. They are the outermost of three limits: a suite that runs lon
 requests, the chart's Service by default. They go into the suite Job's values at
 `e2e-harness` or `parity-harness`. Given on the command line or in the environment
 of `e2e-suite` or `parity-suite`, they are written into the installed release
-before the run; otherwise the run keeps the URL the release has.
+before the run; otherwise the run keeps the URL the release has. Given either way, they
+also clear `AGENT_PULL_URL` or `PARITY_AGENT_PULL_URL`, so a suite aimed at another service
+waits a pull interval after each upload instead of asking the local agent to pull. The next
+`make e2e-harness` or `make parity-harness` without them restores the default.
 
 ## What runs
 
