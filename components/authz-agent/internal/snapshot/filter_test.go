@@ -193,6 +193,31 @@ func TestEachAlgorithmCombinesTheAllowAndDenyRows(t *testing.T) {
 	}
 }
 
+// An ALLOW rule whose target reads the resource is left out of the filter,
+// predicate and all, as the target of a rule over the resource drops the
+// rule in the specification. Its predicate used to be the answer, and the
+// filter returned rows whose target was false, which the check denies. The
+// same rule with a target true for every row is the control that the
+// predicate is the answer.
+func TestAnAllowRuleWhoseTargetReadsTheResourceIsLeftOut(t *testing.T) {
+	for _, tc := range []struct{ target, want string }{
+		{"resource.secret == 0", deny},
+		{"true", condition("rsqlFilterCondition", "a==1")},
+	} {
+		t.Run(tc.target, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+				"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "allow", "target": %q, "effect": "ALLOW", "tenantId": "a",
+						"rsqlPredicate": "a==1"}]}]}`, tc.target))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
 // The negation of a DENY predicate that is an AND is an OR, which RSQL
 // puts in parentheses inside the AND with the ALLOW rows, since ; binds
 // tighter than ,. It used to be written bare, and (a==1);a!=2,c!=2 selected

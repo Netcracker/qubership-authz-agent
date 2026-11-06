@@ -332,7 +332,9 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 		}
 		c := and(t, e.status(r.cond, pass))
 		if hasPredicate(r.preds) {
-			if c.v == 0 || c.v == -1 && c.err && r.effect == "ALLOW" {
+			// an ALLOW rule allows no row where its condition failed, nor where
+			// its target reads the resource, which drops the rule in the filter
+			if c.v == 0 || c.v == -1 && (c.err || t.v == -1) && r.effect == "ALLOW" {
 				continue
 			}
 			term, err := e.sub.term(r.preds, prefix+r.ruleID, pass)
