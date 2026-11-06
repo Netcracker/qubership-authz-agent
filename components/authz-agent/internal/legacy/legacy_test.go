@@ -272,7 +272,6 @@ func TestInput(t *testing.T) {
 			map[string][]string{
 				"Authorization": {"Bearer m2m"}, "Incoming-Token": {"Bearer user"}, "Authorization-Type": {""},
 				"X-Request-Id": {"r1"}, "X-Tenant": {"acme"}, "Host": {"agent"}, "Content-Type": {"application/json"},
-				"X-Authz-Original-Path": {"/x"},
 			},
 			map[string]any{
 				"authorizationToken": "Bearer m2m", "subject": "Bearer user", "authorizationType": "",

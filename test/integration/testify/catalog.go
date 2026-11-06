@@ -127,10 +127,9 @@ var Catalog = []StepEntry{
 	{"token_pip_filter.positive_alias_in_filter", "admin", epCheckFilter, "TOKEN_PIP_POSITIVE", "READ", "ROLE_ADMINISTRATOR"},
 	{"token_pip_filter.default_value_fallback", "admin", epCheckFilter, "TOKEN_PIP_DEFAULT", "READ", "ROLE_ADMINISTRATOR"},
 
-	// ── pip_deny_reason ─────────────────────────────────────────────────
+	// ── pip_deny ─────────────────────────────────────────────────
 	{"pip_deny.upload_broken_pip", "n/a", epUploadPIPs, "PIP_FAIL_TEST", "READ", "none"},
-	{"pip_deny.pip_failure_deny_reason", "admin", epCheckResource, "PIP_FAIL_TEST", "READ", "ROLE_ADMINISTRATOR"},
-	{"pip_deny.missing_attr_deny_reason", "admin", epCheckResource, "ATTR_MISS_TEST", "READ", "ROLE_ADMINISTRATOR"},
+	{"pip_deny.pip_failure_denied", "admin", epCheckResource, "PIP_FAIL_TEST", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── health ───────────────────────────────────────────────────────────
 	{"health.healthy_strict", "n/a", "GET /health", "-", "-", "none"},
@@ -138,10 +137,6 @@ var Catalog = []StepEntry{
 	{"health.regression.check_resource", "admin", epCheckResource, "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 	// readiness: pap-client healthcheck --readiness must exit 0 after the
 	// first successful policy pull (pull status latch written).
-
-	// ── decision_logs ────────────────────────────────────────────────────
-	{"decision_logs.download_no_token.200", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
-	{"decision_logs.content_is_ndjson", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
 
 	// ── entitlements ─────────────────────────────────────────────────────
 	// Exercises the container-pinned entitlements PIP end-to-end: the test
@@ -153,13 +148,11 @@ var Catalog = []StepEntry{
 	{"entitlements.contains.deny_miss", "admin", epCheckResource, "ENT_CONTRACT", "READ", "ROLE_ADMINISTRATOR"},
 	{"entitlements.is_empty.allow_when_empty", "admin", epCheckResource, "ENT_EMPTY", "READ", "ROLE_ADMINISTRATOR"},
 	{"entitlements.multi_as_union.allow", "admin", epCheckResource, "ENT_MULTI", "READ", "ROLE_ADMINISTRATOR"},
-	{"decision_logs.catalog_coverage", "n/a", "GET /internal/v1/decision-logs", "-", "-", "none"},
-	{"decision_logs.legacy_path_header", "admin", epCheckResource, "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── wildcard_access ─────────────────────────────────────────────────
 	{"wildcard_access.upload_wildcard_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
 	{"wildcard_access.all_all.no_predicates", "admin", epCheckFilter, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
-	{"wildcard_access.all_all.no_deny_reason", "admin", epCheckResource, "WC_EXACT_ONLY", "READ", "ROLE_ADMINISTRATOR"},
+	{"wildcard_access.all_all.exact_type_allowed", "admin", epCheckResource, "WC_EXACT_ONLY", "READ", "ROLE_ADMINISTRATOR"},
 	{"wildcard_access.all_op.reader_delete_denied", userOrderReader, epCheckResource, "UNKNOWN_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.rt_all.reader_any_op", userOrderReader, epCheckFilter, "WC_RT_TARGET", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.rt_all.reader_other_rt_denied", userOrderReader, epCheckResource, "OTHER_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},

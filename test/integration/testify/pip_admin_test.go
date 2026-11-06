@@ -62,7 +62,7 @@ func (s *RuntimeSuite) TestTokenPIPFilter() {
 	})
 }
 
-func (s *RuntimeSuite) TestPIPDenyReason() {
+func (s *RuntimeSuite) TestPIPFailureDenies() {
 	pipStubInternal := s.cfg.PIPStubInternalURL
 
 	s.Step("pip_deny.upload_broken_pip", func() {
@@ -74,26 +74,17 @@ func (s *RuntimeSuite) TestPIPDenyReason() {
 		s.waitForACPull()
 	})
 
-	s.Step("pip_deny.pip_failure_deny_reason", func() {
+	// The answer alone cannot tell a failed PIP from a policy that never
+	// loaded, which denies too, so the step also reads the call from the stub.
+	s.Step("pip_deny.pip_failure_denied", func() {
 		body := map[string]interface{}{"type": "PIP_FAIL_TEST", "operation": "READ", "resource": map[string]interface{}{"ownerId": "X"}}
-		mark := s.decisionLogMark()
 		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
 		s.Require().Equal(200, code, "body: %s", string(b))
 		s.Assert().Equal("false", bodyStr(b))
-		reason, _ := firstLoggedResult(s.loggedDecision(mark))["reason"].(string)
-		s.Assert().Contains(reason, "PIP resolution failed: brokenPip",
-			"deny reason must mention PIP failure, got: %s", reason)
-	})
 
-	s.Step("pip_deny.missing_attr_deny_reason", func() {
-		body := map[string]interface{}{"type": "ATTR_MISS_TEST", "operation": "READ", "resource": map[string]interface{}{"ownerId": "X"}}
-		mark := s.decisionLogMark()
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
-		s.Require().Equal(200, code, "body: %s", string(b))
-		s.Assert().Equal("false", bodyStr(b))
-		reason, _ := firstLoggedResult(s.loggedDecision(mark))["reason"].(string)
-		s.Assert().Contains(reason, "subject attribute not found: nonExistentAttr",
-			"deny reason must mention missing attr, got: %s", reason)
+		code, b = s.doHTTPDirect("GET", s.cfg.PIPStubURL+"/pip-stub/calls", nil, nil)
+		s.Require().Equal(200, code)
+		s.Assert().Contains(string(b), "/nonexistent/path", "expected the policy to call the broken PIP")
 	})
 }
 

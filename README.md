@@ -156,11 +156,11 @@ Requires Docker, `kind`, `kubectl`, and `helm`.
 
 ```sh
 make e2e          # cluster, images, harness, chart, suite
-make e2e-logs     # container logs, events, decision logs into test/artifacts/kind/
+make e2e-logs     # container logs and events into test/artifacts/kind/
 make e2e-down     # delete the cluster
 ```
 
-Expected: 20 groups pass, including the two catalog coverage checks. See
+Expected: every group passes, including the two catalog coverage checks. See
 [test/k8s/README.md](test/k8s/README.md) for the individual targets and
 [docs/local-integration-tests.md](docs/local-integration-tests.md) for a
 walkthrough from a clean machine.

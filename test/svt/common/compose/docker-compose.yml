@@ -74,14 +74,9 @@ services:
       AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
       AUTHZ_PAP_CLIENT_PULL_INTERVAL: "${SVT_PAP_PULL_INTERVAL:-2}"
       AUTHZ_PAP_CLIENT_TOKEN_FILE: /etc/authz/ac-pull-token
-      # The decisions are stored in the service and served from
-      # /internal/v1/decision-logs, where the collector served them before.
-      AUTHZ_DECISION_LOG_FILE: /var/log/authz-agent/decisions/decision-logs.jsonl
-      AUTHZ_DECISION_LOG_HEADERS: x-request-id,x-authz-original-path
     volumes:
       - ./keycloak/trusted-providers.json:/etc/authz/trusted-providers.json:ro
       - ./keycloak/ac-pull-token:/etc/authz/ac-pull-token:ro
-      - svt-common-decision-logs:/var/log/authz-agent/decisions
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.49.1@sha256:3cde6faf0791ebf7b41d6f8ae7145466fed712ea6f252c935294d2608b1af388
@@ -152,9 +147,5 @@ services:
       - authz-agent
 
 volumes:
-  # The decision log the agent writes and serves. A named volume rather than
-  # the container's writable layer, so `docker compose down -v` clears a run's
-  # decisions with the rest of the stand's state.
-  svt-common-decision-logs: {}
   svt-prometheus-data: {}
   svt-grafana-data: {}
