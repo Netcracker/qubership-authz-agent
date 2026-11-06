@@ -44,9 +44,6 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	if got := string(tok.Payload()); got != payload {
 		t.Errorf("Payload() = %s, want %s", got, payload)
 	}
-	if got := tok.Raw(); got != raw {
-		t.Errorf("Raw() = %q, want the token Verify received, %q", got, raw)
-	}
 	if got := tok.ProviderID(); got != "realm" {
 		t.Errorf("ProviderID() = %q, want %q", got, "realm")
 	}
@@ -58,6 +55,129 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	}
 	if got, want := tok.Expiry(), time.Unix(1792069200, 0); !got.Equal(want) {
 		t.Errorf("Expiry() = %s, want %s", got, want)
+	}
+}
+
+// The result reaches the code that builds a policy input, and a compact token is
+// a credential that anyone who reads it can present.
+func TestVerify_ReturnsAResultThatHoldsNoCompactToken(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm/r"})
+	v, _ := newVerifier(newFakeKeys(s))
+	raw := s.sign(t, claimsAt(start, nil))
+	tok := mustVerify(t, v, raw)
+	if at := pathOfText(reflect.ValueOf(tok), "Token", raw, map[uintptr]bool{}); at != "" {
+		t.Errorf("Verify() result holds the compact token in %s", at)
+	}
+}
+
+// pathOfText returns the path to the first string or byte slice inside v that
+// contains text, and "" when there is none. The path starts with path, the name
+// of v, and goes through fields (unexported ones too), elements, map keys and
+// values, pointers, and interfaces. seen holds the pointers already followed.
+func pathOfText(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	switch v.Kind() {
+	case reflect.String:
+		return pathIfContains(v.String(), path, text)
+	case reflect.Slice:
+		if v.Type().Elem().Kind() == reflect.Uint8 {
+			return pathIfContains(string(v.Bytes()), path, text)
+		}
+		return pathOfElement(v, path, text, seen)
+	case reflect.Array:
+		return pathOfElement(v, path, text, seen)
+	case reflect.Pointer:
+		if v.IsNil() || seen[v.Pointer()] {
+			return ""
+		}
+		seen[v.Pointer()] = true
+		return pathOfText(v.Elem(), path, text, seen)
+	case reflect.Interface:
+		if v.IsNil() {
+			return ""
+		}
+		return pathOfText(v.Elem(), path, text, seen)
+	case reflect.Map:
+		return pathOfEntry(v, path, text, seen)
+	case reflect.Struct:
+		return pathOfField(v, path, text, seen)
+	}
+	return ""
+}
+
+// pathIfContains returns path when s contains text, and "" otherwise.
+func pathIfContains(s, path, text string) string {
+	if strings.Contains(s, text) {
+		return path
+	}
+	return ""
+}
+
+// pathOfEntry returns the path to the first key or value of the map v that
+// contains text, searched as in [pathOfText].
+func pathOfEntry(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	for it := v.MapRange(); it.Next(); {
+		if at := pathOfText(it.Key(), path+" key", text, seen); at != "" {
+			return at
+		}
+		if at := pathOfText(it.Value(), fmt.Sprintf("%s[%v]", path, it.Key()), text, seen); at != "" {
+			return at
+		}
+	}
+	return ""
+}
+
+// pathOfField returns the path to the first field of the struct v that
+// contains text, searched as in [pathOfText].
+func pathOfField(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	for i := range v.NumField() {
+		if at := pathOfText(v.Field(i), path+"."+v.Type().Field(i).Name, text, seen); at != "" {
+			return at
+		}
+	}
+	return ""
+}
+
+// pathOfElement returns the path to the first element of v that contains text.
+// v is a slice or an array, and each element is searched as in [pathOfText].
+func pathOfElement(v reflect.Value, path, text string, seen map[uintptr]bool) string {
+	for i := range v.Len() {
+		if at := pathOfText(v.Index(i), fmt.Sprintf("%s[%d]", path, i), text, seen); at != "" {
+			return at
+		}
+	}
+	return ""
+}
+
+func TestPathOfText_FindsTheTextInEachKindOfValue(t *testing.T) {
+	type holder struct {
+		s string
+		b []byte
+		p *string
+		i any
+		m map[string]string
+		a []string
+	}
+	text := "secret"
+	tests := []struct {
+		name  string
+		value holder
+		want  string
+	}{
+		{"unexported string", holder{s: "a secret here"}, "h.s"},
+		{"byte slice", holder{b: []byte("secret")}, "h.b"},
+		{"pointer", holder{p: &text}, "h.p"},
+		{"interface", holder{i: "secret"}, "h.i"},
+		{"map key", holder{m: map[string]string{"secret": ""}}, "h.m key"},
+		{"map value", holder{m: map[string]string{"k": "secret"}}, "h.m[k]"},
+		{"slice element", holder{a: []string{"x", "secret"}}, "h.a[1]"},
+		{"no value that contains it", holder{s: "secre", b: []byte("t"), m: map[string]string{"sec": "ret"}}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := pathOfText(reflect.ValueOf(&tt.value), "h", text, map[uintptr]bool{}); got != tt.want {
+				t.Errorf("pathOfText(%+v, %q) = %q, want %q", tt.value, text, got, tt.want)
+			}
+		})
 	}
 }
 
