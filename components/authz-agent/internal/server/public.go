@@ -48,6 +48,7 @@ const (
 // the Envoy path matches did; the check routes then read the body, and the
 // filter routes the query, whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
+	app.Use(s.recoverPanic)
 	app.Use(s.requestID)
 	switch {
 	case s.logs != nil && s.logs.Store() != nil:

@@ -314,3 +314,37 @@ func TestDecide_LogsTheDecision(t *testing.T) {
 	case <-time.After(100 * time.Millisecond):
 	}
 }
+
+// TestRegister_APanicAnswers500: a handler that panics answers its request
+// with 500 and an error line that names the panic, on the internal and the
+// public surface, and the next request is answered.
+func TestRegister_APanicAnswers500(t *testing.T) {
+	eng, err := engine.New(engine.Options{Modules: map[string]string{"internals.rego": admissionStub}})
+	if err != nil {
+		t.Fatalf("engine: %v", err)
+	}
+	reported := &levels{}
+	internal := fiber.New(fiber.Config{DisableStartupMessage: true})
+	srv := Register(internal, eng, nil, Options{Log: reported, Health: func() Report { panic("health exploded") }})
+	public := fiber.New(fiber.Config{DisableStartupMessage: true})
+	srv.RegisterPublic(public)
+
+	for _, app := range []struct {
+		name string
+		app  *fiber.App
+	}{{"internal", internal}, {"public", public}} {
+		t.Run(app.name, func(t *testing.T) {
+			reported.lines = nil
+			for i := range 2 {
+				code, body, _ := call(t, app.app, http.MethodGet, "/health", "", nil)
+				if code != http.StatusInternalServerError || body != `{"code":"internal_error","message":"internal error"}` {
+					t.Errorf("GET /health %d = %d %s, want 500 internal_error", i+1, code, body)
+				}
+			}
+			errs := reported.at("error")
+			if len(errs) != 2 || !strings.Contains(errs[0], "GET /health panicked, answered 500: health exploded") {
+				t.Errorf("error lines %q, want one per request naming the panic", errs)
+			}
+		})
+	}
+}
