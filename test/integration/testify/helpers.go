@@ -63,11 +63,16 @@ type RuntimeConfig struct {
 	// Default: http://localhost:18090
 	ACStubURL string
 	// PullInterval is the PolicyPuller tick interval that the agent-under-test is
-	// configured with (AUTHZ_PAP_CLIENT_PULL_INTERVAL). waitForACPull sleeps for this
-	// duration plus a grace period so mid-test stub uploads are guaranteed to be
-	// applied before follow-up assertions run.
+	// configured with (AUTHZ_PAP_CLIENT_PULL_INTERVAL). Where the agent cannot be
+	// asked to pull, waitForACPull sleeps for this duration plus a grace period so
+	// mid-test stub uploads are guaranteed to be applied before follow-up
+	// assertions run.
 	// Default: 2s (test stacks must set AUTHZ_PAP_CLIENT_PULL_INTERVAL=2 or shorter).
 	PullInterval time.Duration
+	// AgentPullURL is POST /internal/v1/pull on the agent's internal port
+	// (AGENT_PULL_URL), which an agent built with the paritytest tag answers
+	// with 204 once it has stored the policies. Empty, waitForACPull sleeps.
+	AgentPullURL string
 	// M2MKeycloakProfile is true when the agent under test fetches its M2M
 	// token from Keycloak (M2M_KEYCLOAK_PROFILE=true), as the kind harness
 	// configures it. When false, m2m_keycloak catalog steps are skipped.
@@ -112,10 +117,44 @@ func LoadConfig() RuntimeConfig {
 		EntitlementsMockURL:   envOr("ENTITLEMENTS_MOCK_URL", "http://localhost:19998"),
 		OPADirectURL:          envOr("OPA_DIRECT_URL", "http://localhost:18181"),
 		PullInterval:          pullInterval,
+		AgentPullURL:          os.Getenv("AGENT_PULL_URL"),
 		M2MKeycloakProfile:    os.Getenv("M2M_KEYCLOAK_PROFILE") == "true",
 		// The tenant realms of test/k8s/authn, described in REALM-DESCRIPTION.md.
 		KcTenantBaseURL:             envOr("KC_TENANT_BASE_URL", "http://localhost:15556/auth/realms/6f1c2a9e-3b4d-4e8f-9a1b-2c3d4e5f6a7b"),
 		KcUnregisteredTenantBaseURL: envOr("KC_UNREGISTERED_TENANT_BASE_URL", "http://localhost:15556/auth/realms/0d9e8f7a-6b5c-4d3e-2f1a-0b9c8d7e6f5a"),
+	}
+}
+
+// agentPullTimeout bounds one POST to AgentPullURL. A load on the test stand
+// takes well under a second; an agent whose fetch from the stub hangs
+// answers only after its own HTTP timeout, 30 s per fetch, so the suite gives
+// up first and fails.
+const agentPullTimeout = 10 * time.Second
+
+// RequestAgentPull posts to pullURL and reports whether the agent stored the
+// policies (204). It reports false and no error when pullURL is empty or the
+// agent has no pull route (the 404 of a build without the paritytest tag), and
+// an error naming the URL, the status, and the body for any other answer or a
+// failed request.
+func RequestAgentPull(pullURL string) (bool, error) {
+	if strings.TrimSpace(pullURL) == "" {
+		return false, nil
+	}
+	client := &http.Client{Timeout: agentPullTimeout}
+	resp, err := client.Post(pullURL, "", nil)
+	if err != nil {
+		return false, fmt.Errorf("ask the agent to load the uploaded policies: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	default:
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return false, fmt.Errorf("the agent did not load the uploaded policies: POST %s: HTTP %d: %s",
+			pullURL, resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 }
 

@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -26,6 +27,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -165,27 +167,14 @@ func (ds *legacyPapSeeder) putJSON(ctx context.Context, endpoint, token string, 
 	return nil
 }
 
-// pullSettleDelay is how long to wait after writing to the authz-policy-admin before the
-// agent can be assumed to have applied the change.
-//
-// Writing to the stub is not the same as loading into the agent, which is the
-// substantive difference between this seeder and the legacy one. The legacy
-// seeder PUT straight at access-control's PAP and the decision path saw the new
-// policies on the next request; here the seeder writes to a stub and the agent's
-// PolicyPuller picks it up on its own tick. Nothing in
-// the suite waits for that tick, so without this delay SetupSuite seeds and
-// immediately asserts against whatever the agent still holds.
+// pullSettleDelay is how long awaitPull waits for the agent's next pull when
+// it cannot ask the agent to load the policies.
 //
 // The delay is the pull interval plus a margin for the fetch, conversion and
 // PUT into OPA. It must stay >= AUTHZ_PAP_CLIENT_PULL_INTERVAL in
 // test/k8s/parity/values.yaml (1 s there, so 2 s here).
 // Raise PARITY_PULL_SETTLE_SECONDS if that interval is raised, or on a slow
 // machine where the conversion of a large fixture set overruns the margin.
-//
-// This is a wait, not a poll, for the same reason the runtime suite's
-// waitForACPull is: the agent exposes no "applied revision" that a poll could
-// compare against, so a poll would have to guess a decision outcome and would
-// then be indistinguishable from the assertion it precedes.
 func pullSettleDelay() time.Duration {
 	if raw := strings.TrimSpace(os.Getenv("PARITY_PULL_SETTLE_SECONDS")); raw != "" {
 		if secs, err := strconv.Atoi(raw); err == nil && secs >= 0 {
@@ -195,11 +184,80 @@ func pullSettleDelay() time.Duration {
 	return 2 * time.Second
 }
 
-// awaitPull blocks for pullSettleDelay, honouring ctx cancellation.
-func awaitPull(ctx context.Context) {
+// awaitPull returns once the agent can be assumed to have applied what the
+// seeder wrote to the authz-policy-admin, or when ctx ends.
+//
+// Writing to the stub is not the same as loading into the agent, which is the
+// substantive difference between this seeder and the legacy one. The legacy
+// seeder PUT straight at access-control's PAP and the decision path saw the new
+// policies on the next request; here the agent pulls them from the stub, so
+// without a wait SetupSuite seeds and immediately asserts against whatever the
+// agent still holds.
+//
+// With PARITY_AGENT_PULL_URL set, awaitPull posts to it and returns on 204,
+// which an agent built with the paritytest tag answers once it has stored the
+// policies it fetched after the request. With the variable empty, or on the 404
+// of an agent built without the tag, it waits pullSettleDelay. Any other
+// answer, or no answer, means the agent did not load what the seeder wrote, and
+// awaitPull returns an error rather than let the case run against the policies
+// of the previous one. The wait is a fixed delay, not a poll, for the same
+// reason the runtime suite's waitForACPull is: the agent exposes no "applied
+// revision" that a poll could compare against.
+func awaitPull(ctx context.Context) error {
+	loaded, err := pullNow(ctx)
+	if err != nil || loaded {
+		return err
+	}
 	select {
 	case <-ctx.Done():
 	case <-time.After(pullSettleDelay()):
+	}
+	return nil
+}
+
+// pullNowTimeout bounds one POST to PARITY_AGENT_PULL_URL. A load on the
+// parity stand takes well under a second; an agent whose fetch from the stub
+// hangs answers only after its own HTTP timeout, 30 s per fetch, so the
+// suite gives up first and fails the seed.
+const pullNowTimeout = 10 * time.Second
+
+// noPullRoute reports once per run that the agent has no pull route, which
+// leaves every case waiting pullSettleDelay.
+var noPullRoute sync.Once
+
+// pullNow posts to PARITY_AGENT_PULL_URL and reports whether the agent stored
+// the policies (204). It reports false and no error when the variable is empty
+// or the agent has no pull route (404), and an error naming the URL, the status,
+// and the body for any other answer or a failed request.
+func pullNow(ctx context.Context) (bool, error) {
+	target := strings.TrimSpace(os.Getenv("PARITY_AGENT_PULL_URL"))
+	if target == "" {
+		return false, nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, pullNowTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target, nil)
+	if err != nil {
+		return false, fmt.Errorf("PARITY_AGENT_PULL_URL=%q: %w", target, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("ask the agent to load the seeded policies: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return true, nil
+	case http.StatusNotFound:
+		noPullRoute.Do(func() {
+			fmt.Printf("[paritysuite] POST %s: 404, the agent was built without the paritytest tag; every case waits %s for the pull\n",
+				target, pullSettleDelay())
+		})
+		return false, nil
+	default:
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return false, fmt.Errorf("the agent did not load the seeded policies: POST %s: HTTP %d: %s",
+			target, resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 }
 
@@ -210,8 +268,7 @@ func (ds *authzAgentInternalSeeder) WipeDomain(ctx context.Context, domain strin
 	if err := ds.putACStub(ctx, simplifiedPath("domainPIPs", domain), []any{}); err != nil {
 		return fmt.Errorf("wipe pips: %w", err)
 	}
-	awaitPull(ctx)
-	return nil
+	return awaitPull(ctx)
 }
 
 func (ds *authzAgentInternalSeeder) SeedDomain(ctx context.Context, domain string, fixtureRoot fs.FS) error {
@@ -240,8 +297,7 @@ func (ds *authzAgentInternalSeeder) SeedDomain(ctx context.Context, domain strin
 	if len(regular) > 0 {
 		fmt.Printf("[paritysuite] authz-agent seeder: skipped %d regular full-policy fixture(s) under policies/regular\n", len(regular))
 	}
-	awaitPull(ctx)
-	return nil
+	return awaitPull(ctx)
 }
 
 // simplifiedPath builds access-control's simplified-policy path for a domain.

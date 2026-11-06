@@ -41,6 +41,15 @@
       "description": "The OPA CLI in mise.toml runs the Rego tests, so it stays at the version of the OPA library that go.mod pins: one pull request updates both, and the tests run on the evaluator the agent embeds.",
       "matchDepNames": ["github.com/open-policy-agent/opa", "aqua:open-policy-agent/opa"],
       "groupName": "OPA"
+    },
+    {
+      "description": "The Go modules that the root go.mod requires directly and that OPA's go.mod requires too take patch updates only. The service embeds OPA as a library, and OPA is tested with the versions its own go.mod requires; a patch keeps the API of that version, while a newer minor runs OPA on a combination its tests never ran. The minor of a listed module rises in the OPA update instead: the new OPA's requirement raises the selected version, and go mod tidy writes it to go.mod. separateMinorPatch keeps the patch update: without it Renovate offers only the newest version within the major, and disabling that minor would drop the patch with it. The rule only stops Renovate from proposing these modules on their own. Indirect requirements are not listed because Renovate's gomod manager does not propose them unless a tool directive names them, but go mod tidy still raises a shared module, indirect or listed, when an update of another dependency requires a newer version. When the root go.mod gains a direct requirement that OPA's go.mod at the pinned version also lists, add it here, and remove a module that OPA stops requiring. The test modules in go.work are out of scope: OPA does not run with their versions in the service binary.",
+      "matchManagers": ["gomod"],
+      "matchFileNames": ["go.mod"],
+      "matchPackageNames": ["github.com/hashicorp/golang-lru/v2", "github.com/lestrrat-go/jwx/v3"],
+      "separateMinorPatch": true,
+      "minor": { "enabled": false },
+      "major": { "enabled": false }
     }
   ]
 }
