@@ -126,10 +126,11 @@ make mutation-diff MUTATION_BASE=origin/<target-branch>
 
 The target runs [mutago](https://github.com/quality-gates/mutago) at a pinned version with `go run`, so it needs only
 Go, and takes its file and mutator settings from `.mutago.yml`. It mutates the root module and leaves `test/` and
-`_test.go` files alone. The tests of every package have to pass within `MUTATION_TIMEOUT` seconds (default 120) before
-any mutation, or the run stops, and a mutant whose tests run longer counts as killed. mutago runs the mutants in
-parallel and leaves the source files unmodified. With the test cache warm, a change in `internal/token` that gives five
-mutants takes about 12 seconds.
+`_test.go` files alone. A file behind a build tag, such as `testroutes_paritytest.go`, is not built, so its lines get no
+mutants. The tests of every package have to pass within `MUTATION_TIMEOUT` seconds (default 120) before any mutation, or
+the run stops, and a mutant whose tests run longer counts as killed. mutago runs the mutants in parallel and leaves the
+source files unmodified. With the test cache warm, a change in `internal/token` that gives five mutants takes about 12
+seconds.
 
 The target fails when a mutant on a changed line survives and prints each one as a diff. The tests pass with that
 change, so they would also pass if the line broke the same way: add or strengthen a test, or, when the mutant changes

@@ -21,6 +21,8 @@ In a shallow clone, run `git fetch --unshallow origin` first: without a merge ba
 
 When the run reports `0 total` for a branch that changes Go code outside `test/`, run `git config --show-origin diff.external`: mutago cannot read the diff an external tool prints, so it finds no changed line. When the global config sets it, run again as `GIT_CONFIG_GLOBAL=/dev/null make mutation-diff`.
 
+A file behind a build tag, such as the `paritytest` routes, is not built, so its lines get no mutants: say so in the pull request description when the branch changes one.
+
 For each survivor:
 
 - If it changes behavior the code promises, add or strengthen a test through the unit's interface, not a test that pins the mutated line.
