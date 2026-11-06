@@ -259,26 +259,28 @@ func (s *RuntimeSuite) TestCheckResource() {
 		s.Assert().Equal("false", bodyStr(b))
 	})
 
-	// The policy's ${subject.allowedCustomers} template is filled from the
-	// GENERAL PIP the pip-stub answers, and the filter route returns the rsql
-	// predicate it rendered. The step pins the stub's answer itself, because
-	// another step may have pinned a different one.
+	// The policy's condition compares the resource with subject.allowedCustomers,
+	// which the GENERAL PIP the pip-stub answers fills in: a customer on the
+	// list is allowed and one off it is denied. The step pins the stub's answer
+	// itself, because another step may have pinned a different one.
 	s.Step("check_resource.pip_value_substituted", func() {
 		pin := `[{"path":"/api/v1/pip/allowed","responses":[{"statusCode":200,"body":["C1","C2","C3"]}]}]`
 		pinCode, _ := s.doHTTPDirect("PUT", s.cfg.PIPStubURL+"/pip-stub/configure",
 			map[string]string{"Content-Type": "application/json"}, []byte(pin))
 		s.Require().Equal(200, pinCode)
-		body := map[string]interface{}{
+
+		listed := map[string]interface{}{
 			"type": "CUSTOMER", "operation": "READ", "resource": map[string]interface{}{"customerId": "C1"},
 		}
-		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), body)
+		code, b := s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), listed)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		s.Assert().Equal("true", bodyStr(b))
-		code, b = s.post("/access/v1/check/filter?resourceType=CUSTOMER&operation=READ&tenant_id=default",
-			incomingTokenHeader(s.validAdminToken), map[string]interface{}{})
+		s.Assert().Equal("true", bodyStr(b), "customerId C1 is on the list the PIP returned")
+
+		unlisted := map[string]interface{}{
+			"type": "CUSTOMER", "operation": "READ", "resource": map[string]interface{}{"customerId": "C9"},
+		}
+		code, b = s.post("/access/v1/check/resource?tenant_id=default", incomingTokenHeader(s.validAdminToken), unlisted)
 		s.Require().Equal(200, code, "body: %s", string(b))
-		// PIP-resolved array elements are
-		// JSON-quoted and comma-space-joined.
-		s.Assert().Equal(`customerId=in=("C1", "C2", "C3")`, jsonObj(b)["rsqlFilterCondition"])
+		s.Assert().Equal("false", bodyStr(b), "customerId C9 is not on the list the PIP returned")
 	})
 }
