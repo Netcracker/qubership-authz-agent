@@ -46,9 +46,9 @@ type expr struct {
 	// src is the leaf the expression came from, for the comments of the
 	// module; nil for an expression no leaf wrote.
 	src *exprSrc
-	// cell is the comment after the expression: for a check of a state or a
-	// class, the point and the outcome of its cell; for a subject group, the
-	// comparisons it holds.
+	// cell is the comment after the expression: for a subject group, the
+	// comparisons it holds; for a comparison of a number with a literal, the
+	// literal's number.
 	cell string
 }
 
