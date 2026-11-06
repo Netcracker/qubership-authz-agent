@@ -21,6 +21,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -122,7 +123,9 @@ func TestStoreReloadsPersistedDomainsWithSameHash(t *testing.T) {
 	first := newTestServer(t, dir)
 	do(t, first, http.MethodPut, policiesPath+"BSS", bssPolicies)
 	do(t, first, http.MethodPut, policiesPath+"OSS", ossPolicies)
-	do(t, first, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
+	if rec := do(t, first, http.MethodPut, pipsPath+"BSS", `[{"name":"subject.tenant","pipType":"TOKEN","claim":"tenant_id"}]`); rec.Code != http.StatusOK {
+		t.Fatalf("PIP upload: got %d, body %s", rec.Code, rec.Body.String())
+	}
 	before := hashOf(t, first)
 
 	second := newTestServer(t, dir)
@@ -173,7 +176,9 @@ func TestPolicyAndPIPHashesAreIndependent(t *testing.T) {
 	do(t, mux, http.MethodPut, policiesPath+"BSS", bssPolicies)
 	policiesHash := hashOf(t, mux)
 
-	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
+	if rec := do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"subject.tenant","pipType":"TOKEN","claim":"tenant_id"}]`); rec.Code != http.StatusOK {
+		t.Fatalf("PIP upload: got %d, body %s", rec.Code, rec.Body.String())
+	}
 	if got := hashOf(t, mux); got != policiesHash {
 		t.Errorf("policy hash moved on a PIP upload: %q → %q", policiesHash, got)
 	}
@@ -228,7 +233,9 @@ func TestFailedPIPPersistKeepsPreviousContent(t *testing.T) {
 	}
 	dir := t.TempDir()
 	mux := newTestServer(t, dir)
-	do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"tenant","pipType":"TOKEN","claim":"tenant_id"}]`)
+	if rec := do(t, mux, http.MethodPut, pipsPath+"BSS", `[{"name":"subject.tenant","pipType":"TOKEN","claim":"tenant_id"}]`); rec.Code != http.StatusOK {
+		t.Fatalf("PIP upload: got %d, body %s", rec.Code, rec.Body.String())
+	}
 	before := hashOf(t, mux)
 
 	if err := os.Chmod(dir, 0o500); err != nil {
@@ -393,6 +400,47 @@ func TestInvalidDomainIsRejected(t *testing.T) {
 		if rec.Code == http.StatusOK {
 			t.Errorf("domain %q was accepted (%d)", domain, rec.Code)
 		}
+	}
+}
+
+// A PIP upload is refused whole with 400 when a name is not "subject."
+// followed by an alias with no space, tab, or line break, because the agent's
+// pull skips such a PIP. The valid PIP beside the bad one is refused with it,
+// the domain keeps the PIPs it held, and the error names the bad PIP by its
+// zero-based index and quotes its name.
+func TestPIPUploadWithANameTheAgentCannotReadIsRefused(t *testing.T) {
+	for _, tc := range []struct{ condition, name string }{
+		{"shorter than the prefix", "sub.x"},
+		{"no prefix", "tenant"},
+		{"prefix alone", "subject."},
+		{"empty", ""},
+		{"space before the prefix", " subject.x"},
+		{"space after the alias", "subject.x "},
+		{"tab in the alias", "subject.a\tb"},
+	} {
+		t.Run(tc.condition, func(t *testing.T) {
+			mux := newTestServer(t, t.TempDir())
+			held := `[{"name":"subject.x","pipType":"TOKEN","claim":"tenant_id"}]`
+			if rec := do(t, mux, http.MethodPut, pipsPath+"BSS", held); rec.Code != http.StatusOK {
+				t.Fatalf("PUT of a valid PIP: got %d, body %s", rec.Code, rec.Body.String())
+			}
+
+			upload := fmt.Sprintf(`[{"name":"subject.org","pipType":"HEADER","header":"X-Org-Id"},`+
+				`{"name":%q,"pipType":"TOKEN","claim":"tenant_id"}]`, tc.name)
+			rec := do(t, mux, http.MethodPut, pipsPath+"BSS", upload)
+			var refusal struct{ Error string }
+			decode(t, rec.Body.Bytes(), &refusal)
+			if rec.Code != http.StatusBadRequest || !strings.HasPrefix(refusal.Error, "pip 1: ") ||
+				!strings.Contains(refusal.Error, strconv.Quote(tc.name)) {
+				t.Errorf("PUT of a PIP named %q: got %d %q, want 400 with an error that names pip 1 and quotes the name", tc.name, rec.Code, refusal.Error)
+			}
+
+			var stored []simplifiedPIP
+			decode(t, do(t, mux, http.MethodGet, pipsPath+"BSS", "").Body.Bytes(), &stored)
+			if len(stored) != 1 || stored[0].Name != "subject.x" {
+				t.Errorf("PIPs of BSS after the refused PUT = %+v, want subject.x alone", stored)
+			}
+		})
 	}
 }
 
