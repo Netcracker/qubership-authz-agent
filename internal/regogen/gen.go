@@ -931,7 +931,11 @@ func (c *cond) notF() dnf {
 // condition, where the condition's outcome is o, and names the condition
 // and o in the rule's comment.
 func (c *cond) railRule(d dnf, o spectables.Outcome) dnf {
-	r := c.g.refRule(d, "c", true)
+	prefix := prefixRailF
+	if o == spectables.OutcomeT {
+		prefix = prefixRailT
+	}
+	r := c.g.refRule(d, prefix, true)
 	if len(r) == 1 && len(r[0]) == 1 && r[0][0].rule != "" {
 		name := r[0][0].rule
 		word := map[spectables.Outcome]string{spectables.OutcomeT: "true", spectables.OutcomeF: "false"}[o]
@@ -973,10 +977,24 @@ func (g *gen) call(name string) string {
 	return name
 }
 
+// The prefixes of the rules that any node may read, named by a hash of their
+// clauses: a factor moved out of a product, and the true and the false rail
+// of a condition.
+const (
+	prefixAnd   = "and"
+	prefixRailT = "rail_t"
+	prefixRailF = "rail_f"
+)
+
+// hashedPrefix reports whether the rules of prefix are named by a hash.
+func hashedPrefix(prefix string) bool {
+	return prefix == prefixAnd || prefix == prefixRailT || prefix == prefixRailF
+}
+
 // refRule returns a one-clause disjunction that reads a rule with these
 // clauses, or its negation. The rule of a node is named by prefix and a
-// counter; a product (prefix m) or a condition rail (prefix c), which any node
-// may read, by prefix and a hash of its clauses.
+// counter; a factor of a product or a condition rail, which any node may
+// read, by prefix and a hash of its clauses (hashedPrefix).
 func (g *gen) refRule(d dnf, prefix string, negate bool) dnf {
 	switch {
 	case d.isTrue() && negate, d.isFalse() && !negate:
@@ -987,17 +1005,17 @@ func (g *gen) refRule(d dnf, prefix string, negate bool) dnf {
 	k := fmt.Sprintf("%s|%t|%s", prefix, g.pass, d.key())
 	name, ok := g.memo[k]
 	if !ok {
-		if prefix == "m" || prefix == "c" {
+		if hashedPrefix(prefix) {
 			name = g.rule(g.hashed(prefix, k), d)
 		} else {
 			name = g.rule(g.fresh(prefix), d)
 		}
 		g.memo[k] = name
-		if prefix == "c" {
+		if prefix == prefixRailT || prefix == prefixRailF {
 			g.light[name] = true
 		}
 	}
-	if prefix == "m" || prefix == "c" {
+	if hashedPrefix(prefix) {
 		g.shared[name] = true
 	}
 	text := g.call(name)
@@ -1018,16 +1036,16 @@ func (g *gen) product(a, b dnf) dnf {
 		x, y := p[0], p[1]
 		if len(y) > g.opt.RefFanout && g.refsNodeRule(x) {
 			g.stats.Materialized++
-			return prod(x, g.refRule(y, "m", false), true)
+			return prod(x, g.refRule(y, prefixAnd, false), true)
 		}
 	}
 	if len(a) > 1 && len(b) > 1 && len(a)*len(b) > g.opt.ProductLimit {
 		g.stats.Materialized++
 		ga, gb := guarded(a), guarded(b)
 		if ga && !gb || ga == gb && len(b) > len(a) {
-			b = g.refRule(b, "m", false)
+			b = g.refRule(b, prefixAnd, false)
 		} else {
-			a = g.refRule(a, "m", false)
+			a = g.refRule(a, prefixAnd, false)
 		}
 	}
 	return prod(a, b, true)

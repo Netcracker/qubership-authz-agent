@@ -1866,7 +1866,7 @@ func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
 				"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "true",
 					"condition": %q, "effect": "DENY", "tenantId": "t1"}]}]}`, id, condition)
 	}
-	shared := regexp.MustCompile(`(?m)^c_[0-9a-f]{12}\b`)
+	shared := regexp.MustCompile(`(?m)^rail_[tf]_[0-9a-f]{12}\b`)
 	names := func(sets ...string) []string {
 		t.Helper()
 		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+strings.Join(sets, ", ")+`]}`),
@@ -1878,7 +1878,7 @@ func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Generate: %v", err)
 		}
-		if !regexp.MustCompile(`\n# c_[0-9a-f]{12}: holds where pip\("subject\.g"\) EQ `).MatchString(m.Text) {
+		if !regexp.MustCompile(`\n# rail_[tf]_[0-9a-f]{12}: holds where pip\("subject\.g"\) EQ `).MatchString(m.Text) {
 			t.Errorf("the module names no comparison above a shared rule; module:\n%s", m.Text)
 		}
 		got := shared.FindAllString(m.Text, -1)
@@ -1897,9 +1897,9 @@ func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
 // than read each other's clauses.
 func TestTwoBodiesWithOneHashedNameFailTheGeneration(t *testing.T) {
 	g := &gen{hashedKeys: map[string]string{}}
-	name := g.hashed("m", "a")
+	name := g.hashed(prefixAnd, "a")
 	g.hashedKeys[name] = "b"
-	g.hashed("m", "a")
+	g.hashed(prefixAnd, "a")
 	want := "two different bodies share the name " + name
 	if g.collision == nil || g.collision.Error() != want {
 		t.Errorf("collision = %v, want %s", g.collision, want)
@@ -2028,8 +2028,8 @@ func TestADecisionForAnotherOperationDoesNotMaterializeAProduct(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	if n := strings.Count(m.Text, "\nm_"); n != 0 {
-		t.Errorf("the module has %d m_ rules, want none; module:\n%s", n, m.Text)
+	if n := strings.Count(m.Text, "\n"+prefixAnd+"_"); n != 0 {
+		t.Errorf("the module has %d and_ rules, want none; module:\n%s", n, m.Text)
 	}
 }
 
@@ -2125,17 +2125,18 @@ func TestTheModuleNamesThePolicyEachClauseCameFrom(t *testing.T) {
 	}
 }
 
-// A rule that holds a rail of a condition names, above it, the condition and
-// whether the rule holds where the condition is true or false, so a reader of
-// "not c_<hash>" in a DENY rule learns which outcome the negation leaves. The
-// false rail of pip("subject.g") EQ "x" holds where the PIP's key is not "x".
+// A rule that holds a rail of a condition names the condition above it, and
+// its prefix, rail_t_ or rail_f_, says whether it holds where the condition is
+// true or false, so a reader of "not rail_f_<hash>" in a DENY rule learns which
+// outcome the negation leaves. The false rail of pip("subject.g") EQ "x" holds
+// where the PIP's key is not "x".
 func TestAConditionRailNamesTheConditionAndTheOutcomeItHoldsAt(t *testing.T) {
 	m, err := Generate(tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", "subject.g == 'x'",
 		`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`), table(t), DefaultOptions())
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	head := regexp.MustCompile(`(?m)^# (c_[0-9a-f]{12}): holds where pip\("subject\.g"\) EQ "x" is false\n`).
+	head := regexp.MustCompile(`(?m)^# (rail_f_[0-9a-f]{12}): holds where pip\("subject\.g"\) EQ "x" is false\n`).
 		FindStringSubmatchIndex(m.Text)
 	if head == nil {
 		t.Fatalf("the module names no false rail of the condition; module:\n%s", m.Text)
@@ -2150,7 +2151,7 @@ func TestAConditionRailNamesTheConditionAndTheOutcomeItHoldsAt(t *testing.T) {
 	}
 }
 
-// A product that a rule moves out into m_<hash> names the nodes it came from,
+// A product that a rule moves out into and_<hash> names the nodes it came from,
 // and each of its clauses names its node and the outcome it requires of each
 // comparison, which the clause itself does not show: T where the clause comes
 // from the comparison's true rail, F where it comes from the false one.
@@ -2173,8 +2174,8 @@ func TestAClauseOfASharedProductNamesItsNodeAndTheOutcomesItRequires(t *testing.
 			if err != nil {
 				t.Fatalf("Generate: %v", err)
 			}
-			want := regexp.MustCompile(`(?m)^# (m_[0-9a-f]{12}): clauses of set_s1_p1_r1\n` + tc.want +
-				`(m_[0-9a-f]{12}) if \{\n`)
+			want := regexp.MustCompile(`(?m)^# (and_[0-9a-f]{12}): clauses of set_s1_p1_r1\n` + tc.want +
+				`(and_[0-9a-f]{12}) if \{\n`)
 			if got := want.FindStringSubmatch(m.Text); got == nil || got[1] != got[2] {
 				t.Errorf("the module lacks a product named by its node and outcome, %s; module:\n%s", want, m.Text)
 			}

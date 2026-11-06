@@ -230,7 +230,7 @@ func subsetTest(L, R *side, kind string) *test {
 		t.sets = L.lit.subsetLeft
 	}
 	if R.ref != nil {
-		t.ref2, t.field2 = R.ref.ID, fieldSubsetRight
+		t.rightRef, t.rightField = R.ref.ID, fieldSubsetRight
 	} else {
 		t.set = R.lit.subsetRight
 	}
@@ -242,7 +242,7 @@ func subsetTest(L, R *side, kind string) *test {
 func (t *test) subsetHolds(e *groupEval) bool {
 	la, okL := t.sets, t.sets != nil
 	if t.ref != "" {
-		r, ok := e.rec(t.ri)
+		r, ok := e.rec(t.refIndex)
 		if !ok {
 			return false
 		}
@@ -258,8 +258,8 @@ func (t *test) subsetHolds(e *groupEval) bool {
 		return len(la) == 0
 	}
 	rb, okR := t.set, t.set != nil
-	if t.ref2 != "" {
-		r, ok := e.rec(t.ri2)
+	if t.rightRef != "" {
+		r, ok := e.rec(t.rightRefIndex)
 		if !ok {
 			return false
 		}
@@ -269,8 +269,8 @@ func (t *test) subsetHolds(e *groupEval) bool {
 		return false
 	}
 	in := func(x string) bool { return slices.Contains(rb, x) }
-	if t.ref2 != "" {
-		in = func(x string) bool { return e.contains(t.slot2, rb, x) }
+	if t.rightRef != "" {
+		in = func(x string) bool { return e.contains(t.rightSlot, rb, x) }
 	}
 	unmatched := func(e []string) bool { return !slices.ContainsFunc(e, in) }
 	if t.kind == "subset" {
