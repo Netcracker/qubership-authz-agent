@@ -105,13 +105,11 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `wildcard_access.upload_wildcard_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `wildcard_access.all_all.no_predicates` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `wildcard_access.all_all.exact_type_allowed` | admin | `POST /access/v1/check/resource` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_op.reader_delete_denied` | order-reader | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_any_op` | order-reader | `POST /access/v1/check/filter` | WC_RT_TARGET | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_other_rt_denied` | order-reader | `POST /access/v1/check/resource` | OTHER_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,INVOICE | DELETE,READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,OTHER_TYPE | DELETE,DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.legacy.check_resource_all_all` | admin | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
 | `wildcard_access.legacy.check_resource_bulk_all_all` | admin | `POST /access/v1/check/resource/bulk` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
-| `wildcard_access.legacy.check_filter_all_op` | order-reader | `POST /access/v1/check/filter` | UNKNOWN_TYPE | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.restore_original_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
