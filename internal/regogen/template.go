@@ -478,7 +478,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		}
 		if structured(cl) || structured(cr) {
 			// a list or an object takes part, so elements are equal as eq
-			// says, which the tokens of the records give (Record.EA)
+			// says, which the tokens of the records give (Record.ElementTokens)
 			c := clsCheck
 			if net {
 				c = clsAfterBuilt

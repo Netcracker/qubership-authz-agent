@@ -1536,7 +1536,7 @@ func TestASubjectGroupIsAnsweredForEachInputAlone(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Project: %v", err)
 			}
-			groups[i] = in.G
+			groups[i] = in.SubjectGroups
 		}
 	}
 	var wg sync.WaitGroup

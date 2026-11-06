@@ -92,15 +92,15 @@ func NewBulk(m *Module, req Request) (*Bulk, error) {
 // read the resource.
 func (b *Bulk) Item(body Body) *Input {
 	in := &Input{
-		Records:     make(map[string]Record, len(b.items)),
-		SRoles:      b.in.SRoles,
-		M2M:         b.in.M2M,
-		G:           b.in.G,
-		Passes:      b.in.Passes,
-		ScopeFailed: b.in.ScopeFailed,
-		refs:        b.in.refs,
-		docs:        regobuiltins.NewDocuments(),
-		bulk:        b,
+		Records:       make(map[string]Record, len(b.items)),
+		FoldedRoles:   b.in.FoldedRoles,
+		M2M:           b.in.M2M,
+		SubjectGroups: b.in.SubjectGroups,
+		Passes:        b.in.Passes,
+		ScopeFailed:   b.in.ScopeFailed,
+		refs:          b.in.refs,
+		docs:          regobuiltins.NewDocuments(),
+		bulk:          b,
 	}
 	if body.HasResource {
 		in.resource = body.Resource

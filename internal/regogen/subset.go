@@ -246,7 +246,7 @@ func (t *test) subsetHolds(e *groupEval) bool {
 		if !ok {
 			return false
 		}
-		la, okL = r.SA, r.SA != nil
+		la, okL = r.SubsetLeft, r.SubsetLeft != nil
 	}
 	if !okL {
 		return false
@@ -263,7 +263,7 @@ func (t *test) subsetHolds(e *groupEval) bool {
 		if !ok {
 			return false
 		}
-		rb, okR = r.SB, r.SB != nil
+		rb, okR = r.SubsetRight, r.SubsetRight != nil
 	}
 	if !okR {
 		return false
