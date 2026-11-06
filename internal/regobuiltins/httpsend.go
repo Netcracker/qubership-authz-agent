@@ -249,7 +249,15 @@ func (c *calls) note(a, resp *ast.Term, err error) {
 
 func send(ctx context.Context, a *ast.Term) (*ast.Term, error) {
 	var req sendRequest
-	if err := util.UnmarshalJSON([]byte(a.String()), &req); err != nil {
+	v, err := ast.JSON(a.Value)
+	var raw []byte
+	if err == nil {
+		raw, err = json.Marshal(v)
+	}
+	if err == nil {
+		err = util.UnmarshalJSON(raw, &req)
+	}
+	if err != nil {
 		return nil, fmt.Errorf("nc.http.send: the request is not an object of method, url, headers, body, timeout, "+
 			"raise_error, and pip: %w", err)
 	}
