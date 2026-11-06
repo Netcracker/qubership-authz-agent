@@ -424,15 +424,27 @@ func TestPullNow_WithoutASourceURLLoadsNothing(t *testing.T) {
 	}
 }
 
-// refusal is an error of a load that published part of the tenants.
+// refusal is an error of a load that refused some tenants and left each of
+// them its previous snapshot.
 type refusal string
 
-func (e refusal) Error() string { return string(e) }
-func (refusal) Partial() bool   { return true }
+func (e refusal) Error() string    { return string(e) }
+func (refusal) Partial() bool      { return true }
+func (refusal) Unserved() []string { return nil }
+
+// firstRefusal is the error of a load that refused the tenant it names,
+// which has no previous snapshot.
+type firstRefusal string
+
+func (e firstRefusal) Error() string {
+	return "tenant " + string(e) + ": candidate snapshot refused, the tenant is not served"
+}
+func (firstRefusal) Partial() bool        { return true }
+func (e firstRefusal) Unserved() []string { return []string{string(e)} }
 
 // TestPull_APartialLoadMarksThePoliciesLoaded: a load that refused a tenant
-// and published the others releases readiness, and PullOnce still returns
-// the refusal to its caller.
+// which keeps its previous snapshot releases readiness, and PullOnce still
+// returns the refusal to its caller.
 func TestPull_APartialLoadMarksThePoliciesLoaded(t *testing.T) {
 	srv, _ := source(t, http.StatusOK)
 	snaps := &loader{err: refusal("tenant a: candidate snapshot refused")}
@@ -446,6 +458,73 @@ func TestPull_APartialLoadMarksThePoliciesLoaded(t *testing.T) {
 	var partial PartialLoad
 	if err := p.PullOnce(context.Background()); !errors.As(err, &partial) {
 		t.Errorf("PullOnce() = %v, want the partial load of the snapshots", err)
+	}
+}
+
+func TestPullNow_ATenantWithoutASnapshotKeepsThePoliciesNotLoaded(t *testing.T) {
+	srv, _ := source(t, http.StatusOK)
+	snaps := &loader{err: firstRefusal("a")}
+	rec := &recorder{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, rec)
+
+	err := p.PullNow(context.Background())
+
+	if err != nil {
+		t.Errorf("PullNow() = %v, want nil for a load that published the other tenants", err)
+	}
+	if got := p.Status(); got.PoliciesLoaded || !reflect.DeepEqual(got.Waiting, []string{"a"}) {
+		t.Errorf("Status() = %+v, want not loaded and waiting for [a]", got)
+	}
+	want := []string{"warn: policies: pulled from " + srv.URL + ", and the service is not ready until tenants a have a snapshot: " +
+		"load snapshots: tenant a: candidate snapshot refused, the tenant is not served"}
+	if !reflect.DeepEqual(rec.lines, want) {
+		t.Errorf("lines =\n%s\nwant\n%s", strings.Join(rec.lines, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// TestPullNow_ASnapshotOfTheLastWaitingTenantMarksThePoliciesLoaded: once a
+// load gives the tenant it waited for a snapshot, the policies are loaded and
+// nothing is waited for.
+func TestPullNow_ASnapshotOfTheLastWaitingTenantMarksThePoliciesLoaded(t *testing.T) {
+	srv, _ := source(t, http.StatusOK)
+	snaps := &loader{err: firstRefusal("a")}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
+	if err := p.PullNow(context.Background()); err != nil {
+		t.Fatalf("the refused PullNow() = %v", err)
+	}
+	snaps.mu.Lock()
+	snaps.err = nil
+	snaps.mu.Unlock()
+
+	if err := p.PullNow(context.Background()); err != nil {
+		t.Errorf("PullNow() = %v, want nil", err)
+	}
+
+	if got := p.Status(); !got.PoliciesLoaded || got.Waiting != nil {
+		t.Errorf("Status() = %+v, want loaded and waiting for nothing", got)
+	}
+}
+
+// TestPullNow_ATenantRefusedAfterThePoliciesLoadedKeepsThemLoaded: readiness,
+// once released, stays released when a later load leaves a tenant without a
+// snapshot; that tenant denies every request meanwhile.
+func TestPullNow_ATenantRefusedAfterThePoliciesLoadedKeepsThemLoaded(t *testing.T) {
+	srv, _ := source(t, http.StatusOK)
+	snaps := &loader{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour, Snapshots: snaps}, nil, quiet{})
+	if err := p.PullNow(context.Background()); err != nil {
+		t.Fatalf("the first PullNow() = %v", err)
+	}
+	snaps.mu.Lock()
+	snaps.err = firstRefusal("b")
+	snaps.mu.Unlock()
+
+	if err := p.PullNow(context.Background()); err != nil {
+		t.Errorf("PullNow() = %v, want nil", err)
+	}
+
+	if got := p.Status(); !got.PoliciesLoaded || got.Waiting != nil {
+		t.Errorf("Status() = %+v, want loaded and waiting for nothing", got)
 	}
 }
 

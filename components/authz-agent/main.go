@@ -275,7 +275,7 @@ func report(providers *authn.Manager, puller *pull.Puller, snapshots *snapshot.R
 		}
 	}
 	status := puller.Status()
-	r.Loaded = status.PoliciesLoaded
+	r.Loaded, r.Waiting = status.PoliciesLoaded, status.Waiting
 	h := snapshots.Health()
 	r.Snapshots = &h
 	return r

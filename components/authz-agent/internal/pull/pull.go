@@ -64,9 +64,12 @@ type SnapshotLoader interface {
 
 // PartialLoad is implemented by an error of [SnapshotLoader.LoadSnapshots]
 // that may report a load which published the documents for some tenants
-// and refused the others; Partial reports whether it does.
+// and refused the others; Partial reports whether it does. Unserved names
+// the refused tenants that have no snapshot at all and deny every request;
+// a refused tenant that keeps its previous snapshot is not among them.
 type PartialLoad interface {
 	Partial() bool
+	Unserved() []string
 }
 
 // Tokens supplies the bearer token the source is fetched with; nil fetches
@@ -84,16 +87,19 @@ type Logger interface {
 	Warnf(format string, args ...any)
 }
 
-// Status reports the pull. PoliciesLoaded is set by the first successful
-// load, a partial one included, and never cleared: a source that becomes
-// unreachable leaves the snapshots already published, which are better than
-// none. Reason explains a PoliciesLoaded set without a load because the pull
-// is disabled.
+// Status reports the pull. PoliciesLoaded is set by the first load after
+// which every tenant the documents name has a snapshot, and never cleared:
+// a later load that refuses a tenant, or a source that becomes unreachable,
+// leaves the snapshots already published, which are better than none.
+// Until it is set, Waiting names the tenants of the last load that have no
+// snapshot. Reason explains a PoliciesLoaded set without a load because the
+// pull is disabled.
 type Status struct {
-	PoliciesLoaded bool   `json:"policiesLoaded"`
-	FirstSuccessAt string `json:"firstSuccessAt,omitempty"`
-	LastSuccessAt  string `json:"lastSuccessAt,omitempty"`
-	Reason         string `json:"reason,omitempty"`
+	PoliciesLoaded bool     `json:"policiesLoaded"`
+	FirstSuccessAt string   `json:"firstSuccessAt,omitempty"`
+	LastSuccessAt  string   `json:"lastSuccessAt,omitempty"`
+	Waiting        []string `json:"waiting,omitempty"`
+	Reason         string   `json:"reason,omitempty"`
 }
 
 // Puller loads the documents into the snapshots.
@@ -180,12 +186,13 @@ func (p *Puller) pull(ctx context.Context) {
 // PullNow loads the snapshots once, as a tick of [Puller.Run] does, and
 // returns once they are loaded or the load has failed. The policies it
 // loads were fetched after the call: a load already in progress finishes
-// first. A failed load keeps the previous snapshots. A partial load counts
-// as a load, since it published the tenants it did not refuse, and PullNow
+// first. A failed load keeps the previous snapshots and is returned. A
+// partial load published the tenants it did not refuse, and PullNow
 // returns nil for it; its refusals are reported when they differ from the
-// previous pull's, and their end at info. It loads whatever the pull
-// interval, even 0; with no source URL it returns an error and loads
-// nothing.
+// previous pull's, and their end at info. A partial load that leaves a
+// tenant without a snapshot sets no [Status.PoliciesLoaded] unless an
+// earlier load did. It loads whatever the pull interval, even 0; with no
+// source URL it returns an error and loads nothing.
 func (p *Puller) PullNow(ctx context.Context) error {
 	if strings.TrimSpace(p.cfg.SourceURL) == "" {
 		return errors.New("pull disabled: source URL empty")
@@ -196,20 +203,31 @@ func (p *Puller) PullNow(ctx context.Context) error {
 		return err
 	}
 	refusal := ""
+	var unserved []string
 	if err != nil {
 		refusal = err.Error()
+		unserved = partial.Unserved()
 	}
 	p.mu.Lock()
 	previous := p.refusal
 	p.refusal = refusal
+	waiting := !p.status.PoliciesLoaded && len(unserved) > 0
+	if waiting {
+		p.status.Waiting = unserved
+	}
 	p.mu.Unlock()
 	switch {
+	case refusal != "" && refusal != previous && waiting:
+		p.log.Warnf("policies: pulled from %s, and the service is not ready until tenants %s have a snapshot: %s",
+			p.cfg.SourceURL, strings.Join(unserved, ", "), refusal)
 	case refusal != "" && refusal != previous:
 		p.log.Warnf("policies: pulled from %s, and some tenants are not updated: %s", p.cfg.SourceURL, refusal)
 	case refusal == "" && previous != "":
 		p.log.Infof("policies: pulled from %s, and every tenant is updated", p.cfg.SourceURL)
 	}
-	p.loaded()
+	if !waiting {
+		p.loaded()
+	}
 	return nil
 }
 
