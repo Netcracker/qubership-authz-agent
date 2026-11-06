@@ -1,0 +1,128 @@
+---
+# Daily Grype and Trivy scan of the images users pull: the current main
+# build and the latest release. The scan after each build in go-build.yaml
+# sees the CVEs known when the image was built; this one picks up CVEs
+# published later, which no build would otherwise report.
+#
+# Main is scanned by digest: the image of the newest of the last 20 main
+# commits that has a main-<first 7 of the commit hash> tag, which is the tag
+# the CI build pushes for main. A digest reference puts the results in the
+# same code-scanning category as the post-build scan of main, so the two keep
+# one set of alerts. The release is scanned by its major tag
+# (qubership-authz-agent:0), which the release workflow moves to every new
+# release of that major version: the category stays the same across releases,
+# and an alert closes once a release without the vulnerability is out.
+#
+# The images are the components of .qubership/docker.cfg whose security.scan
+# flag is true, as in the organisation's security-scan-with-config template.
+# HIGH and CRITICAL findings with a fix, linux/amd64 only, reported as SARIF
+# in the Security tab; the scan never fails on a finding, for the reasons on
+# scan-images in go-build.yaml.
+
+name: Security scan
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  targets:
+    name: Images to scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      images: ${{ steps.images.outputs.images }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: .qubership/docker.cfg
+          sparse-checkout-cone-mode: false
+          ref: main
+          fetch-depth: 20
+
+      - name: Resolve docker config
+        id: config
+        uses: netcracker/qubership-workflow-hub/actions/config-resolver@e6afd0a6bcc4f24d73e3e4d5fb9a31ada009e3f1 # v2.8.2
+        with:
+          file-path: .qubership/docker.cfg
+
+      # A main commit whose build failed or is still running has no image; the
+      # search moves on to the commit before it. A component added since the latest release has no image under the
+      # major tag yet; it is skipped with a notice until the next release.
+      # Any other inspect failure fails the job.
+      - name: Resolve the images
+        id: images
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          CONFIG: ${{ steps.config.outputs.config }}
+        run: |
+          set -euo pipefail
+          docker login ghcr.io -u "$ACTOR" --password-stdin <<< "$GH_TOKEN"
+          scanned=$(jq -r '.[] | select(.security_scan == true) | .image | ascii_downcase' <<< "$CONFIG")
+          images=()
+          for image in $scanned; do
+            digest=""
+            for sha in $(git log -20 --format=%H); do
+              if manifest="$(docker buildx imagetools inspect "$image:main-${sha::7}" --format '{{json .Manifest}}' 2>/dev/null)"; then
+                digest="$(jq -r .digest <<< "$manifest")"
+                echo "$image:main-${sha::7} is $image@$digest"
+                break
+              fi
+            done
+            if [[ -z "$digest" ]]; then
+              echo "::error::No $image:main-<sha> image for the last 20 main commits"
+              exit 1
+            fi
+            images+=("$image@$digest")
+          done
+          if release="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name)"; then
+            major="${release#v}"
+            major="${major%%.*}"
+            for image in $scanned; do
+              if ! out="$(docker buildx imagetools inspect "$image:$major" 2>&1)"; then
+                if [[ "$out" == *"not found"* ]]; then
+                  echo "::notice::$image:$major is not published; $release predates the component"
+                  continue
+                fi
+                echo "$out" >&2
+                exit 1
+              fi
+              images+=("$image:$major")
+            done
+          else
+            echo "::notice::No release published; scanning the main images only"
+          fi
+          echo "images=$(printf '%s\n' "${images[@]}" | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
+  scan:
+    name: Scan
+    needs: [targets]
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.targets.outputs.images) }}
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@e6afd0a6bcc4f24d73e3e4d5fb9a31ada009e3f1 # v2.8.2
+    with:
+      target: docker
+      image: ${{ matrix.image }}
+      continue-on-error: false
+      # The shared workflow installs the latest release otherwise.
+      trivy-version: v0.74.0
+      grype-version: v0.120.1
