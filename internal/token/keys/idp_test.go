@@ -15,7 +15,6 @@
 package keys
 
 import (
-	"context"
 	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -25,6 +24,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -174,7 +174,7 @@ func issuer(id string, idp *fakeIdP) Provider {
 
 // direct is a provider whose JWKS is fetched from idp without discovery.
 func direct(id string, idp *fakeIdP) Provider {
-	return Provider{ID: id, JWKSURI: idp.srv.URL + "/jwks"}
+	return Provider{ID: id, Issuer: idp.srv.URL, JWKSURI: idp.srv.URL + "/jwks"}
 }
 
 // ecJWK returns the public JWK of a new P-256 key with kid, alg ES256, and
@@ -288,20 +288,37 @@ func writeFile(t *testing.T, name, content string) string {
 	return path
 }
 
-// testOptions has Load retry a failed fetch after 10 ms, doubling the pause
-// each time, for up to two seconds.
+// testOptions has Run retry a failed fetch after 10 ms, doubling the pause
+// each time.
 func testOptions() Options {
-	return Options{StartupTimeout: 2 * time.Second, firstRetryDelay: 10 * time.Millisecond}
+	return Options{firstRetryDelay: 10 * time.Millisecond}
 }
 
-// mustLoad loads providers with opts and stops the test when Load fails.
+// mustLoad returns a Set of providers with opts, after one Refresh, and stops
+// the test when Refresh fails.
 func mustLoad(t *testing.T, opts Options, providers ...Provider) *Set {
 	t.Helper()
-	set, err := Load(context.Background(), Config{Providers: providers}, opts)
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+	set := mustNew(t, Config{Providers: providers}, opts)
+	if err := set.Refresh(t.Context()); err != nil {
+		t.Fatalf("Refresh() error = %v", err)
 	}
 	return set
+}
+
+// mustNew returns a Set of cfg with opts and stops the test when New fails.
+func mustNew(t *testing.T, cfg Config, opts Options) *Set {
+	t.Helper()
+	set, err := New(cfg, opts)
+	if err != nil {
+		t.Fatalf("New() error = %v", err)
+	}
+	return set
+}
+
+// loaded reports whether set holds a key under kid for the issuer of p.
+func loaded(set *Set, p Provider, kid string) bool {
+	_, err := set.Lookup(Query{Issuer: p.Issuer, KID: kid})
+	return err == nil
 }
 
 // waitFor polls cond every 5 ms for up to five seconds and fails the test
@@ -315,6 +332,35 @@ func waitFor(t *testing.T, what string, cond func() bool) {
 		}
 		time.Sleep(5 * time.Millisecond)
 	}
+}
+
+// warnRecorder is a Logger that keeps the warnings.
+type warnRecorder struct {
+	mu       sync.Mutex
+	warnings []string
+}
+
+func (r *warnRecorder) Infof(string, ...any) {
+	// Informational messages are not recorded.
+}
+
+func (r *warnRecorder) Warnf(format string, args ...any) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.warnings = append(r.warnings, fmt.Sprintf(format, args...))
+}
+
+// count returns how many warnings contain part.
+func (r *warnRecorder) count(part string) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	matched := 0
+	for _, w := range r.warnings {
+		if strings.Contains(w, part) {
+			matched++
+		}
+	}
+	return matched
 }
 
 // containsAll reports whether s contains every one of parts.
