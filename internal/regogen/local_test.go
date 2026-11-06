@@ -51,7 +51,7 @@ func TestResolveSubject_ReadsAHeaderPIP(t *testing.T) {
 		{"one item", `{"name": "subject.r", "pipType": "HEADER", "header": "X-R"}`,
 			map[string]string{"x-r": " a\t"}, resolved(t, "VALUE", `"a"`)},
 		{"items split at commas, repeats dropped", `{"name": "subject.r", "pipType": "HEADER", "header": "X-R"}`,
-			map[string]string{"x-r": "a, b ,a,"}, Resolved{State: "VALUE", Value: []jsonvalue.Value{"a", "b"}, HeaderList: true}},
+			map[string]string{"x-r": "a, b ,a,"}, Resolved{State: "VALUE", Value: []jsonvalue.Value{"a", "b"}, PIPList: true}},
 		{"a byte above ASCII as one Latin-1 character", `{"name": "subject.r", "pipType": "HEADER", "header": "X-R"}`,
 			map[string]string{"x-r": "\xe9"}, resolved(t, "VALUE", `"é"`)},
 		{"an empty header takes the default", `{"name": "subject.r", "pipType": "HEADER", "header": "X-R", "defaultValue": "d"}`,

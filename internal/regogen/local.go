@@ -131,7 +131,7 @@ func headerPIP(decl *policyir.PIP, headers map[string]string) Resolved {
 	r := pipList(splitItems(hv))
 	if r.State == spectables.StateValue {
 		_, list := r.Value.([]jsonvalue.Value)
-		r.HeaderList = list
+		r.PIPList = list
 	}
 	return r
 }

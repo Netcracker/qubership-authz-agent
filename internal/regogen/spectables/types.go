@@ -170,27 +170,29 @@ type Class string
 // The value classes.
 const (
 	// ClassString is a string.
-	ClassString Class = "s"
+	ClassString Class = "string"
 	// ClassScalar is a number or a boolean.
-	ClassScalar Class = "n"
+	ClassScalar Class = "scalar"
 	// ClassList is a list of scalars.
-	ClassList Class = "l"
-	// ClassHeaderList is a list of scalars read from a HEADER or GENERAL PIP.
-	ClassHeaderList Class = "hl"
+	ClassList Class = "list"
+	// ClassPIPList is a list of several scalars that a HEADER, GENERAL, or
+	// FILTERED PIP builds from its answer. An operator that reads one value
+	// treats it apart from [ClassList].
+	ClassPIPList Class = "pip_list"
 	// ClassNullElement is a list with a null element.
-	ClassNullElement Class = "xn"
+	ClassNullElement Class = "list_with_null"
 	// ClassNested is a list with a list or an object element, and no null
 	// element.
-	ClassNested Class = "xl"
+	ClassNested Class = "nested_list"
 	// ClassObject is an object.
-	ClassObject Class = "xo"
+	ClassObject Class = "object"
 	// ClassNull is a null value in state VALUE, such as a whole resource that
 	// is JSON null; it differs from state NULL.
-	ClassNull Class = "z"
+	ClassNull Class = "null"
 )
 
 // Classes lists every value class.
-var Classes = []Class{ClassString, ClassScalar, ClassList, ClassHeaderList, ClassNullElement, ClassNested,
+var Classes = []Class{ClassString, ClassScalar, ClassList, ClassPIPList, ClassNullElement, ClassNested,
 	ClassObject, ClassNull}
 
 // ValueRule names the branch of the specification that decides a by_value

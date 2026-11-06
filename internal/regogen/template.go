@@ -69,7 +69,7 @@ func fieldOf(f string, cl spectables.Class) bool {
 	case fieldText, fieldSegments:
 		return cl == spectables.ClassString
 	case fieldTextKey, fieldEqualityKey:
-		return cl == spectables.ClassList || cl == spectables.ClassHeaderList || isStructure(cl)
+		return cl == spectables.ClassList || cl == spectables.ClassPIPList || isStructure(cl)
 	}
 	return false
 }
@@ -81,7 +81,7 @@ func isStructureOrList(cl spectables.Class) bool {
 
 // isListClass reports whether cl is a list.
 func isListClass(cl spectables.Class) bool {
-	return cl == spectables.ClassList || cl == spectables.ClassHeaderList || cl == spectables.ClassNullElement ||
+	return cl == spectables.ClassList || cl == spectables.ClassPIPList || cl == spectables.ClassNullElement ||
 		cl == spectables.ClassNested
 }
 
@@ -174,9 +174,10 @@ func template(op spectables.Operator, L, R *side, cl, cr spectables.Class) (tpl,
 	if _, ok := negated[op]; ok {
 		return valueTemplate(op, L, R, cl, cr)
 	}
-	// A list with a null element (class xn, or a SINGLE_ODD list read as one)
-	// ends the rule on one side of a collection operator: the right of IN, the
-	// left of CONTAINS, and the left of CONTAINS ANY when the right has none.
+	// A list with a null element (class list_with_null, or a SINGLE_ODD list
+	// read as one) ends the rule on one side of a collection operator: the
+	// right of IN, the left of CONTAINS, and the left of CONTAINS ANY when the
+	// right has none.
 	// The agent reads the end as undefined, so both rails require that side to
 	// hold no null element; elsewhere the null element has no key and the
 	// list compares as any other.
@@ -409,7 +410,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			f := conj(bind, clause{{cls: c, text: "not " + L.field(fieldTextKey) + " in " + b.ks(R), fact: vfact(L)}})
 			return out(spectables.RuleStructureTextLeft, dnf{t}, dnf{f})
 		}
-		rightOK := isScalar(cr) || cr == spectables.ClassList || cr == spectables.ClassHeaderList ||
+		rightOK := isScalar(cr) || cr == spectables.ClassList || cr == spectables.ClassPIPList ||
 			isStructure(cr) && rref
 		if !isScalar(cl) || !rightOK {
 			return tpl{}, false
@@ -449,7 +450,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		return out(spectables.RuleInAny, dnf{t}, dnf{f})
 	case spectables.OpContains, spectables.OpContainsAny:
 		listy := func(c spectables.Class) bool {
-			return isScalar(c) || c == spectables.ClassList || c == spectables.ClassHeaderList || isStructure(c)
+			return isScalar(c) || c == spectables.ClassList || c == spectables.ClassPIPList || isStructure(c)
 		}
 		if op == spectables.OpContains && rref && isRes(R.kind) && isListClass(cr) {
 			// a resource attribute on the right is one value, and no element
@@ -463,7 +464,8 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if op == spectables.OpContains && rref && !isScalar(cr) && cr != spectables.ClassObject &&
 			(!subjectList || isRes(R.kind)) {
 			// a list on the right of CONTAINS is one value, unless it is a
-			// list of class l, xn, or xl of the subject or a PIP, whose cells
+			// list of class list, list_with_null, or nested_list of the
+			// subject or a PIP, whose cells
 			// add right_list_scalar_ops: the template then sees a list of at
 			// most one value
 			return tpl{}, false

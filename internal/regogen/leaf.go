@@ -120,7 +120,7 @@ func (s *side) at(p point) clause {
 			fact: fact{ref: s.ref.ID, field: 's', val: string(p.st)},
 			test: refTest(s, &test{kind: "state", val: string(p.st)})}})
 	}
-	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldClass), regoClass(p.cl)),
+	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldClass), p.cl),
 		fact: fact{ref: s.ref.ID, field: 't', val: string(p.cl)}, test: refTest(s, &test{kind: "cls", val: string(p.cl)})}})
 }
 
@@ -300,11 +300,7 @@ func joinClasses(d dnf, s *side) dnf {
 		}
 		slices.Sort(j.classes)
 		c := slices.Clone(out[k])
-		names := make([]string, len(j.classes))
-		for i, cl := range j.classes {
-			names[i] = regoClass(spectables.Class(cl))
-		}
-		c[j.at] = expr{cls: c[j.at].cls, text: s.field(fieldClass) + " in " + setLit(names),
+		c[j.at] = expr{cls: c[j.at].cls, text: s.field(fieldClass) + " in " + setLit(j.classes),
 			fact: fact{ref: s.ref.ID, field: 't', vals: j.classes}, test: refTest(s, &test{kind: "clsin", set: j.classes})}
 		out[k] = c
 	}
@@ -331,7 +327,8 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 	cell := cells[i][j]
 	// A one-element GENERAL list of null, a boolean, or an object
 	// (SINGLE_ODD) is a list that may hold a null element to the collection
-	// operators: the templates of class xn, whose guard reads the record's has_null.
+	// operators: the templates of class list_with_null, whose guard reads the
+	// record's has_null.
 	odd := func(p point) point {
 		if p.st == spectables.StateSingleOdd {
 			return point{spectables.StateValue, spectables.ClassNullElement}

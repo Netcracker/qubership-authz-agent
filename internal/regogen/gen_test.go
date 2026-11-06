@@ -1719,12 +1719,12 @@ func TestAClauseNeedsAClassEveryClassCheckAllows(t *testing.T) {
 		c    clause
 		want bool
 	}{
-		{"a class among those allowed", clause{some("l", "n", "s"), one("s")}, true},
-		{"a class outside those allowed", clause{some("l", "n", "s"), one("xo")}, false},
-		{"two sets that share a class", clause{some("l", "n"), some("n", "xo")}, true},
-		{"two sets that share no class", clause{some("l", "n", "s"), some("xl", "xo")}, false},
-		{"a set and a class of another reference", clause{some("l", "n"),
-			{fact: fact{ref: "r2", field: 't', val: "xo"}}}, true},
+		{"a class among those allowed", clause{some("list", "scalar", "string"), one("string")}, true},
+		{"a class outside those allowed", clause{some("list", "scalar", "string"), one("object")}, false},
+		{"two sets that share a class", clause{some("list", "scalar"), some("scalar", "object")}, true},
+		{"two sets that share no class", clause{some("list", "scalar", "string"), some("nested_list", "object")}, false},
+		{"a set and a class of another reference", clause{some("list", "scalar"),
+			{fact: fact{ref: "r2", field: 't', val: "object"}}}, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := consistent(tc.c); got != tc.want {
