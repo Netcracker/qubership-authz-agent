@@ -35,12 +35,15 @@ const maxNumericDate = 1<<53 - 1
 // server issues for a service account.
 const serviceAccountPrefix = "system:serviceaccount"
 
+// m2mRole is the realm role that makes a token M2M, whatever its level.
+const m2mRole = "ROLE_M2M"
+
 // checkTimes checks exp, nbf, and iat, and returns the time exp names. exp
 // and iat are required; nbf is optional. exp and nbf are compared with now
 // with leeway either way. An exp before iat is refused, with no leeway. An iat
 // later than now by more than leeway is refused only when p is marked
 // [keys.Provider.Kubernetes].
-func checkTimes(claims map[string]json.RawMessage, p *keys.Provider, now time.Time, leeway time.Duration) (time.Time, error) {
+func checkTimes(claims map[string]json.RawMessage, p *keys.Provider, now time.Time, leeway time.Duration) (time.Time, *Error) {
 	exp, present, err := numericDate(claims, "exp")
 	if err != nil {
 		return time.Time{}, err
@@ -76,7 +79,7 @@ func checkTimes(claims map[string]json.RawMessage, p *keys.Provider, now time.Ti
 
 // numericDate reads the claim name as a number of seconds since the epoch;
 // present is false when the payload has no such claim.
-func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, err error) {
+func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, present bool, refused *Error) {
 	raw, ok := claims[name]
 	if !ok {
 		return time.Time{}, false, nil
@@ -85,8 +88,8 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 	if !ok {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is not a number", name)
 	}
-	seconds, err := n.Float64()
-	if err != nil || math.Abs(seconds) > maxNumericDate {
+	seconds, parseErr := n.Float64()
+	if parseErr != nil || math.Abs(seconds) > maxNumericDate {
 		return time.Time{}, true, fail(CodeFormatInvalid, "claim %s is %s, outside ±%d seconds", name, short(n.String()), int64(maxNumericDate))
 	}
 	whole, fraction := math.Modf(seconds)
@@ -97,7 +100,7 @@ func numericDate(claims map[string]json.RawMessage, name string) (t time.Time, p
 // [keys.Provider.Kubernetes] whose sub does not start with
 // serviceAccountPrefix. The rest of sub is not parsed, because the namespace of
 // the token comes from its kubernetes.io claim.
-func checkSubject(claims map[string]json.RawMessage, p *keys.Provider) error {
+func checkSubject(claims map[string]json.RawMessage, p *keys.Provider) *Error {
 	if !p.Kubernetes {
 		return nil
 	}
@@ -108,11 +111,44 @@ func checkSubject(claims map[string]json.RawMessage, p *keys.Provider) error {
 	return nil
 }
 
+// kindOf returns the kind of a token that a key of p verified.
+func kindOf(p *keys.Provider) Kind {
+	switch {
+	case p.Kubernetes:
+		return KindKubernetes
+	case p.IsRealm():
+		return KindRealm
+	}
+	return KindFile
+}
+
+// isM2M reports whether a token of the given kind with the claims s is M2M, as
+// [Token.IsM2M] states.
+func isM2M(kind Kind, s Standard) bool {
+	switch kind {
+	case KindKubernetes:
+		return true
+	case KindRealm:
+		return namesM2M(s)
+	}
+	return false
+}
+
+// namesM2M reports whether the level or the roles of s make a token M2M.
+func namesM2M(s Standard) bool {
+	level, _ := decode(s.Level).(string)
+	if strings.EqualFold(level, "m2m") || strings.EqualFold(level, "key-manager") {
+		return true
+	}
+	roles, _ := decode(s.Roles).([]any)
+	return slices.Contains(roles, any(m2mRole))
+}
+
 // checkAudience applies the audiences of the provider p. With none listed,
 // every token passes. Otherwise aud, a string or an array of strings, has to
 // name one of them exactly, and a token without aud passes only when p sets
 // AllowMissingAud.
-func checkAudience(claims map[string]json.RawMessage, p *keys.Provider) error {
+func checkAudience(claims map[string]json.RawMessage, p *keys.Provider) *Error {
 	if len(p.Audiences) == 0 {
 		return nil
 	}
