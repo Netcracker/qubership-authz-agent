@@ -167,14 +167,14 @@ func subsetTemplate(L, R *side, b *tb) (tpl, bool) {
 		b.use(L, fieldSubsetLeft)
 		la = L.field(fieldSubsetLeft)
 	} else {
-		la = setsLit(L.lit.sa)
+		la = setsLit(L.lit.subsetLeft)
 	}
 	if R.ref != nil {
 		R.ref.Subset = true
 		b.use(R, fieldSubsetRight)
 		rb = R.field(fieldSubsetRight)
 	} else {
-		rb = setLit(R.lit.sb)
+		rb = setLit(R.lit.subsetRight)
 	}
 	c := clsCheck
 	if L.ref != nil && L.ref.Network || R.ref != nil && R.ref.Network {
@@ -227,12 +227,12 @@ func subsetTest(L, R *side, kind string) *test {
 	if L.ref != nil {
 		t.ref = L.ref.ID
 	} else {
-		t.sets = L.lit.sa
+		t.sets = L.lit.subsetLeft
 	}
 	if R.ref != nil {
 		t.ref2, t.field2 = R.ref.ID, fieldSubsetRight
 	} else {
-		t.set = R.lit.sb
+		t.set = R.lit.subsetRight
 	}
 	return t
 }

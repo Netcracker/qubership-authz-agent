@@ -101,13 +101,13 @@ type litVal struct {
 	class spectables.Class
 	key   string
 	keys  []string
-	raw   string // the text of a string literal
+	text  string // the text of a string literal
 	// num is the number <, <=, >, and >= read the literal as, nil for none.
 	num *jsonvalue.Decimal
-	// sa and sb are the tokens IS SUBSET reads of the literal on the left and
-	// on the right.
-	sa [][]string
-	sb []string
+	// subsetLeft and subsetRight are the tokens IS SUBSET reads of the
+	// literal on the left and on the right.
+	subsetLeft  [][]string
+	subsetRight []string
 }
 
 // side is one operand of a comparison: a literal, a pattern, a reference, or a
@@ -244,7 +244,7 @@ func literalSplit(o policyir.Operand, split func(raw string) ([]jsonvalue.Value,
 	rec := legacyvalue.Of(v)
 	l := &litVal{kind: kind, keys: rec.Keys}
 	if s, ok := v.(string); ok {
-		l.raw = s
+		l.text = s
 	}
 	if rec.Key != nil {
 		l.key = *rec.Key
@@ -261,7 +261,7 @@ func literalSplit(o policyir.Operand, split func(raw string) ([]jsonvalue.Value,
 	if _, ok := o.(policyir.List); ok {
 		num = listNumberText
 	}
-	l.sa, l.sb = subsetLeft(v, num), subsetRight(v, num, false)
+	l.subsetLeft, l.subsetRight = subsetLeft(v, num), subsetRight(v, num, false)
 	switch kind {
 	case spectables.KindLitStr:
 		l.class = spectables.ClassString
@@ -463,7 +463,7 @@ func (g *gen) side(o policyir.Operand) (*side, error) {
 		if g.fixedOp != nil {
 			l, _ := literal(policyir.String{Value: *g.fixedOp})
 			return &side{kind: spectables.KindOperation, lit: &litVal{kind: spectables.KindOperation,
-				class: spectables.ClassString, key: l.key, keys: l.keys, raw: l.raw, num: l.num, sa: l.sa, sb: l.sb}}, nil
+				class: spectables.ClassString, key: l.key, keys: l.keys, text: l.text, num: l.num, subsetLeft: l.subsetLeft, subsetRight: l.subsetRight}}, nil
 		}
 	case policyir.Subject:
 		if o.Attr == policyir.SubjectPermissionScope {

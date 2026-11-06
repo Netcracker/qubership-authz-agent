@@ -1712,8 +1712,8 @@ func TestAJoinedClassCheckAdmitsOnlyTheClassesItJoins(t *testing.T) {
 // A clause holds only where one class satisfies every class check of a
 // reference in it, a check that allows several classes included.
 func TestAClauseNeedsAClassEveryClassCheckAllows(t *testing.T) {
-	one := func(cl string) expr { return expr{fact: fact{ref: "r1", field: 't', val: cl}} }
-	some := func(cls ...string) expr { return expr{fact: fact{ref: "r1", field: 't', vals: cls}} }
+	one := func(cl string) expr { return expr{fact: fact{ref: "r1", field: factClass, val: cl}} }
+	some := func(cls ...string) expr { return expr{fact: fact{ref: "r1", field: factClass, vals: cls}} }
 	for _, tc := range []struct {
 		name string
 		c    clause
@@ -1724,7 +1724,7 @@ func TestAClauseNeedsAClassEveryClassCheckAllows(t *testing.T) {
 		{"two sets that share a class", clause{some("list", "scalar"), some("scalar", "object")}, true},
 		{"two sets that share no class", clause{some("list", "scalar", "string"), some("nested_list", "object")}, false},
 		{"a set and a class of another reference", clause{some("list", "scalar"),
-			{fact: fact{ref: "r2", field: 't', val: "object"}}}, true},
+			{fact: fact{ref: "r2", field: factClass, val: "object"}}}, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := consistent(tc.c); got != tc.want {

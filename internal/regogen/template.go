@@ -100,11 +100,11 @@ func setLit(keys []string) string {
 	if len(keys) == 0 {
 		return "set()"
 	}
-	ks := slices.Clone(keys)
-	slices.Sort(ks)
-	ks = slices.Compact(ks)
-	parts := make([]string, len(ks))
-	for i, k := range ks {
+	sorted := slices.Clone(keys)
+	slices.Sort(sorted)
+	sorted = slices.Compact(sorted)
+	parts := make([]string, len(sorted))
+	for i, k := range sorted {
 		parts[i] = lit(k)
 	}
 	return "{" + strings.Join(parts, ", ") + "}"
@@ -125,8 +125,8 @@ func (b *tb) use(s *side, f string) {
 	b.fields[s][f] = true
 }
 
-// k is the key of a scalar side, as a literal or a field.
-func (b *tb) k(s *side) string {
+// key is the key of a scalar side, as a literal or a field.
+func (b *tb) key(s *side) string {
 	if s.ref == nil {
 		return lit(s.lit.key)
 	}
@@ -134,7 +134,9 @@ func (b *tb) k(s *side) string {
 	return s.field(fieldKey)
 }
 
-func (b *tb) ks(s *side) string {
+// elementKeys is the set of element keys of a list side, as a literal or a
+// field.
+func (b *tb) elementKeys(s *side) string {
 	if s.ref == nil {
 		return setLit(s.lit.keys)
 	}
@@ -146,7 +148,7 @@ func vfact(s *side) fact {
 	if s.ref == nil {
 		return fact{}
 	}
-	return fact{ref: s.ref.ID, field: 'v'}
+	return fact{ref: s.ref.ID, field: factValue}
 }
 
 func isScalar(c spectables.Class) bool {
@@ -267,8 +269,8 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if net {
 			c = clsAfterBuilt
 		}
-		t := conj(bind, clause{{cls: c, text: structure.field(fieldTextKey) + " == " + b.k(text), fact: vfact(structure)}})
-		f := conj(bind, clause{{cls: c, text: structure.field(fieldTextKey) + " != " + b.k(text), fact: vfact(structure)}})
+		t := conj(bind, clause{{cls: c, text: structure.field(fieldTextKey) + " == " + b.key(text), fact: vfact(structure)}})
+		f := conj(bind, clause{{cls: c, text: structure.field(fieldTextKey) + " != " + b.key(text), fact: vfact(structure)}})
 		tp, _ := out(spectables.RuleEq, dnf{t}, dnf{f})
 		tp.rules[spectables.RuleStructureTextLeft] = true
 		return tp, true
@@ -281,8 +283,8 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if net {
 			c = clsAfterBuilt
 		}
-		t := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " == " + b.k(R), fact: vfact(L)}})
-		f := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " != " + b.k(R), fact: vfact(L)}})
+		t := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " == " + b.key(R), fact: vfact(L)}})
+		f := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " != " + b.key(R), fact: vfact(L)}})
 		return out(spectables.RuleStructureTextLeft, dnf{t}, dnf{f})
 	}
 	if op == spectables.OpContains && cl == spectables.ClassObject && isListClass(cr) && lref && rref &&
@@ -384,12 +386,12 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			cls = clsAfterBuilt
 		}
 		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: cls, text: b.k(L) + " == " + b.k(R), fact: vfact(L), test: scalarTest("eq", L, R)}})
+		t := conj(bind, clause{{cls: cls, text: b.key(L) + " == " + b.key(R), fact: vfact(L), test: scalarTest("eq", L, R)}})
 		fc := cls
 		if fc == clsIndexEq {
 			fc = clsCheck
 		}
-		f := conj(bind, clause{{cls: fc, text: b.k(L) + " != " + b.k(R), fact: vfact(L), test: scalarTest("ne", L, R)}})
+		f := conj(bind, clause{{cls: fc, text: b.key(L) + " != " + b.key(R), fact: vfact(L), test: scalarTest("ne", L, R)}})
 		return out(spectables.RuleEq, dnf{t}, dnf{f})
 	case spectables.OpIn:
 		if cl == spectables.ClassNull && lref {
@@ -406,8 +408,8 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 				c = clsAfterBuilt
 			}
 			bind := conj(L.bind(), R.bind())
-			t := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " in " + b.ks(R), fact: vfact(L)}})
-			f := conj(bind, clause{{cls: c, text: "not " + L.field(fieldTextKey) + " in " + b.ks(R), fact: vfact(L)}})
+			t := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " in " + b.elementKeys(R), fact: vfact(L)}})
+			f := conj(bind, clause{{cls: c, text: "not " + L.field(fieldTextKey) + " in " + b.elementKeys(R), fact: vfact(L)}})
 			return out(spectables.RuleStructureTextLeft, dnf{t}, dnf{f})
 		}
 		rightOK := isScalar(cr) || cr == spectables.ClassList || cr == spectables.ClassPIPList ||
@@ -419,9 +421,9 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			if !rref {
 				return tpl{}, false
 			}
-			t := conj(R.bind(), clause{{cls: R.cls(clsIndexIn), text: b.k(L) + " in " + b.ks(R), fact: vfact(R),
+			t := conj(R.bind(), clause{{cls: R.cls(clsIndexIn), text: b.key(L) + " in " + b.elementKeys(R), fact: vfact(R),
 				test: refTest(R, &test{kind: "has", val: L.lit.key})}})
-			f := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: "not " + b.k(L) + " in " + b.ks(R),
+			f := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: "not " + b.key(L) + " in " + b.elementKeys(R),
 				fact: vfact(R), test: refTest(R, &test{kind: "nothas", val: L.lit.key})}})
 			return out(spectables.RuleInAny, dnf{t}, dnf{f})
 		}
@@ -429,13 +431,13 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			keys := R.lit.keys
 			var t clause
 			if len(keys) == 1 {
-				t = conj(L.bind(), clause{{cls: L.cls(clsIndexEq), text: b.k(L) + " == " + lit(keys[0]), fact: vfact(L),
+				t = conj(L.bind(), clause{{cls: L.cls(clsIndexEq), text: b.key(L) + " == " + lit(keys[0]), fact: vfact(L),
 					test: refTest(L, &test{kind: "eq", val: keys[0]})}})
 			} else {
-				t = conj(L.bind(), clause{{cls: L.cls(clsIndexIn), text: b.k(L) + " in " + setLit(keys), fact: vfact(L),
+				t = conj(L.bind(), clause{{cls: L.cls(clsIndexIn), text: b.key(L) + " in " + setLit(keys), fact: vfact(L),
 					test: refTest(L, &test{kind: "in", set: keys})}})
 			}
-			f := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + b.k(L) + " in " + setLit(keys),
+			f := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + b.key(L) + " in " + setLit(keys),
 				fact: vfact(L), test: refTest(L, &test{kind: "notin", set: keys})}})
 			return out(spectables.RuleInAny, dnf{t}, dnf{f})
 		}
@@ -444,8 +446,8 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			c = clsAfterBuilt
 		}
 		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: c, text: b.k(L) + " in " + b.ks(R), fact: vfact(L), test: pairTest("inref", L, R)}})
-		f := conj(bind, clause{{cls: c, text: "not " + b.k(L) + " in " + b.ks(R), fact: vfact(L),
+		t := conj(bind, clause{{cls: c, text: b.key(L) + " in " + b.elementKeys(R), fact: vfact(L), test: pairTest("inref", L, R)}})
+		f := conj(bind, clause{{cls: c, text: "not " + b.key(L) + " in " + b.elementKeys(R), fact: vfact(L),
 			test: pairTest("notinref", L, R)}})
 		return out(spectables.RuleInAny, dnf{t}, dnf{f})
 	case spectables.OpContains, spectables.OpContainsAny:
@@ -529,7 +531,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		}
 		rks := ""
 		if rref {
-			rks = b.ks(R)
+			rks = b.elementKeys(R)
 		}
 		// With literals on one side, each literal gets a clause of its own,
 		// "k" in element_keys, because the OPA rule index files such a clause
@@ -557,12 +559,12 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if !rref {
 			var ts dnf
 			for _, k := range R.lit.keys {
-				ts = append(ts, conj(L.bind(), clause{{cls: L.cls(clsIndexIn), text: lit(k) + " in " + b.ks(L),
+				ts = append(ts, conj(L.bind(), clause{{cls: L.cls(clsIndexIn), text: lit(k) + " in " + b.elementKeys(L),
 					fact: vfact(L), test: refTest(L, &test{kind: "has", val: k})}}))
 			}
 			f := conj(L.bind(), clause{{cls: L.cls(clsCheck), fact: vfact(L),
 				test: refTest(L, &test{kind: "none", set: R.lit.keys}),
-				text: fmt.Sprintf("every x in %s { not x in %s }", b.ks(L), setLit(R.lit.keys))}})
+				text: fmt.Sprintf("every x in %s { not x in %s }", b.elementKeys(L), setLit(R.lit.keys))}})
 			return out(spectables.RuleContainsAny, union(ts), dnf{f})
 		}
 		c := clsCheck
@@ -571,11 +573,11 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		}
 		v := "x_" + L.ref.Var + "_" + R.ref.Var
 		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: c, text: fmt.Sprintf("some %s in %s", v, b.ks(L)), fact: vfact(L),
+		t := conj(bind, clause{{cls: c, text: fmt.Sprintf("some %s in %s", v, b.elementKeys(L)), fact: vfact(L),
 			test: pairTest("overlap", L, R)},
 			{cls: c, text: fmt.Sprintf("%s in %s", v, rks), fact: vfact(R), test: pairTest("noop", L, R)}})
 		f := conj(bind, clause{{cls: c, fact: vfact(L), test: pairTest("disjoint", L, R),
-			text: fmt.Sprintf("every %s in %s { not %s in %s }", v, b.ks(L), v, rks)}})
+			text: fmt.Sprintf("every %s in %s { not %s in %s }", v, b.elementKeys(L), v, rks)}})
 		return out(spectables.RuleContainsAny, dnf{t}, dnf{f})
 	}
 	return tpl{}, false
