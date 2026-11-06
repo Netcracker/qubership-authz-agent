@@ -1403,6 +1403,8 @@ func TestASubjectGroupComparesSubsets(t *testing.T) {
 		{"an element in another case", "subject.permissions IS SUBSET 'x', 'y'", `["X"]`, `[]`, "F"},
 		{"every element in the roles", "subject.permissions IS SUBSET subject.roles", `["x"]`, `["x", "y"]`, "T"},
 		{"an element not in the roles", "subject.permissions IS SUBSET subject.roles", `["x", "z"]`, `["x"]`, "F"},
+		{"a literal in the permissions", "'x' IS SUBSET subject.permissions", `["x", "y"]`, `[]`, "T"},
+		{"a literal not in the permissions", "'z' IS SUBSET subject.permissions", `["x", "y"]`, `[]`, "F"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			values := map[string]Resolved{`["subj","permissions"]`: resolved(t, "VALUE", tc.perms),
