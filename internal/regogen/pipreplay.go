@@ -52,7 +52,7 @@ func ReplayTransport(in *Input) (http.RoundTripper, []error) {
 	for _, r := range in.refs {
 		q := in.calls.Get(strTerm(r.ID))
 		v, ok := in.pipValues[r.ID]
-		if r.pip == nil || q == nil || !ok || q.Get(strTerm("s")) != nil {
+		if r.pip == nil || q == nil || !ok || q.Get(strTerm(queryState)) != nil {
 			continue
 		}
 		var req struct {

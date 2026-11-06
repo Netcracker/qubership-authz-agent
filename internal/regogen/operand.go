@@ -33,7 +33,7 @@ import (
 // Ref is an operand the module reads from the request: an attribute of the
 // resource, the subject, or a PIP, or a value an iterate's pass binds. The
 // projection puts its value record into input under the reference's ID, into
-// each pass of input.ps for a pass value; for a network PIP the stub nc.pip
+// each pass of input.scope_passes for a pass value; for a network PIP the stub nc.pip
 // returns it, and for a lazily read resource path nc.resource_path.
 type Ref struct {
 	// ID is the name of the reference in the module and the key of its
@@ -63,7 +63,7 @@ type Ref struct {
 	// Subset is set when IS SUBSET reads the value's element tokens.
 	Subset bool
 	// Pass is set for a value an iterate's pass binds: its record is in each
-	// pass of input.ps, not in the input itself.
+	// pass of input.scope_passes, not in the input itself.
 	Pass bool
 	// Path is the resource path of a reference read lazily, with Network
 	// set: nc.resource_path(input.resource, Path) returns its record.

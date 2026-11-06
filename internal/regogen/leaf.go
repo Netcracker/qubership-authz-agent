@@ -98,7 +98,7 @@ func (s *side) bind() clause {
 		return nil
 	}
 	if s.ref.Path != "" {
-		return clause{{cls: clsBuiltin, text: fmt.Sprintf("p_%s := nc.resource_path(input.resource, %s)", s.ref.Var,
+		return clause{{cls: clsBuiltin, text: fmt.Sprintf("p_%s := nc.resource_path(input.%s, %s)", s.ref.Var, memberResource,
 			lit(s.ref.Path))}}
 	}
 	if s.ref.pip != nil {
@@ -125,11 +125,11 @@ func (s *side) at(p point) clause {
 		return nil
 	}
 	if p.st != spectables.StateValue {
-		return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field("s"), p.st),
+		return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldState), p.st),
 			fact: fact{ref: s.ref.ID, field: 's', val: string(p.st)},
 			test: refTest(s, &test{kind: "state", val: string(p.st)})}})
 	}
-	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field("t"), p.cl),
+	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldClass), p.cl),
 		fact: fact{ref: s.ref.ID, field: 't', val: string(p.cl)}, test: refTest(s, &test{kind: "cls", val: string(p.cl)})}})
 }
 
@@ -278,7 +278,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 // joinClasses replaces each set of clauses of d that are equal except for the
 // class they require of s with one clause that requires any of those classes,
 // so d holds for the same requests with fewer clauses. A template that reads
-// a field several classes share, such as ks, gives such a set: CONTAINS ANY
+// a field several classes share, such as element_keys, gives such a set: CONTAINS ANY
 // with literals writes a membership per literal for each class.
 func joinClasses(d dnf, s *side) dnf {
 	if s == nil || s.ref == nil || len(d) < 2 {
@@ -311,7 +311,7 @@ func joinClasses(d dnf, s *side) dnf {
 		}
 		slices.Sort(j.classes)
 		c := slices.Clone(out[k])
-		c[j.at] = expr{cls: c[j.at].cls, text: s.field("t") + " in " + setLit(j.classes),
+		c[j.at] = expr{cls: c[j.at].cls, text: s.field(fieldClass) + " in " + setLit(j.classes),
 			fact: fact{ref: s.ref.ID, field: 't', vals: j.classes}, test: refTest(s, &test{kind: "clsin", set: j.classes})}
 		out[k] = c
 	}
@@ -338,7 +338,7 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 	cell := cells[i][j]
 	// A one-element GENERAL list of null, a boolean, or an object
 	// (SINGLE_ODD) is a list that may hold a null element to the collection
-	// operators: the templates of class xn, whose guard reads the record's n0.
+	// operators: the templates of class xn, whose guard reads the record's has_null.
 	odd := func(p point) point {
 		if p.st == spectables.StateSingleOdd {
 			return point{spectables.StateValue, spectables.ClassNullElement}
@@ -375,7 +375,7 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		}
 		// the guard reads the odd list in its own state, so it states no
 		// fact of state VALUE, which would contradict that state
-		g2 := conj(oddSide.bind(), clause{{cls: oddSide.cls(clsCheck), text: "not " + oddSide.field("n0"),
+		g2 := conj(oddSide.bind(), clause{{cls: oddSide.cls(clsCheck), text: "not " + oddSide.field(fieldHasNull),
 			test: refTest(oddSide, &test{kind: "non0"})}})
 		c := conj(L.at(lps[i]), rightAt(R, rps[j]), g2)
 		if rest[0] == spectables.OutcomeT {
@@ -391,8 +391,8 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		len(cell.ValueRule) == 1 && cell.ValueRule[0] == spectables.RuleEq {
 		// a right operand in a special state whose cell evaluates the values
 		// is read as an empty list, and a string equals it by the text []
-		eq := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field("k") + ` == "[]"`, fact: vfact(L)}})
-		ne := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field("k") + ` != "[]"`, fact: vfact(L)}})
+		eq := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldKey) + ` == "[]"`, fact: vfact(L)}})
+		ne := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldKey) + ` != "[]"`, fact: vfact(L)}})
 		if op == spectables.OpNE {
 			eq, ne = ne, eq
 		}
@@ -451,9 +451,9 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 		// object holds no null, so a null element on the left ends the rule
 		// there as it does against any list without one. NOT CONTAINS ANY
 		// ends where CONTAINS ANY does, and the guard applies to both rails.
-		g := dnf{conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field("n0"), fact: vfact(L)}})}
+		g := dnf{conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field(fieldHasNull), fact: vfact(L)}})}
 		if oddR && !oddL {
-			g = append(g, conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field("n0"), fact: vfact(R)}}))
+			g = append(g, conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldHasNull), fact: vfact(R)}}))
 		}
 		tp.t, tp.f = prod(g, tp.t, true), prod(g, tp.f, true)
 		tp.undefined = true
@@ -490,15 +490,15 @@ func (g *gen) byValue(rails *leafRails, op spectables.Operator, L, R *side, cell
 	}
 	// same reports whether the template's true rows are the same at every
 	// point of s whose record carries the fields they read, with the other
-	// side at its point. A SINGLE_ODD record carries ks too, so a row that
-	// reads ks keeps its check where the domain has that state.
+	// side at its point. A SINGLE_ODD record carries element_keys too, so a
+	// row that reads element_keys keeps its check where the domain has that state.
 	same := func(s *side, isLeft bool) bool {
 		if s == nil || s.ref == nil {
 			return true
 		}
 		fields := tp.fields[s]
 		if len(fields) == 0 || fields["guard"] ||
-			fields["ks"] && slices.Contains(s.ref.domain.States, spectables.StateSingleOdd) {
+			fields[fieldElementKeys] && slices.Contains(s.ref.domain.States, spectables.StateSingleOdd) {
 			return false
 		}
 		classes := tp.fieldClasses(s)
@@ -663,8 +663,8 @@ func (g *gen) rightListScalarOps(tp *tpl, R *side, rp point) error {
 	if !ok {
 		return fmt.Errorf("knob right_list_scalar_ops is %q, not an outcome", knob)
 	}
-	long := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field("ln") + " > 1", fact: vfact(R)}})
-	short := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field("ln") + " <= 1", fact: vfact(R)}})
+	long := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldLength) + " > 1", fact: vfact(R)}})
+	short := conj(R.bind(), clause{{cls: R.cls(clsCheck), text: R.field(fieldLength) + " <= 1", fact: vfact(R)}})
 	tp.t = prod(dnf{short}, tp.t, true)
 	tp.f = prod(dnf{short}, tp.f, true)
 	switch outcome {
@@ -678,7 +678,7 @@ func (g *gen) rightListScalarOps(tp *tpl, R *side, rp point) error {
 	if tp.fields[R] == nil {
 		tp.fields[R] = map[string]bool{}
 	}
-	tp.fields[R]["ln"] = true
+	tp.fields[R][fieldLength] = true
 	tp.rules[spectables.RuleRightListScalarOps] = true
 	return nil
 }

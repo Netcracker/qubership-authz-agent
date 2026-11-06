@@ -16,9 +16,10 @@ package regogen
 
 // An iterate over subject.permissionScope evaluates its set once per
 // assignment of the subject's permission scope, and combines the passes by
-// the iterate's algorithm. The projection writes the passes to input.ps, each
+// the iterate's algorithm. The projection writes the passes to input.scope_passes, each
 // with the records of the scope keys the module reads in the layout of the
-// input (p.s["subject.permissionScope.x"], ...), and sets input.psf when the
+// input (p.state["subject.permissionScope.x"], ...), and sets input.scope_failed
+// when the
 // permission scope cannot be read. The subtree of the set is translated with
 // the pass as a parameter: its rules are functions of p, and a pass value
 // reads p.
@@ -27,7 +28,7 @@ package regogen
 // children; a failed scope leaves the node unknown, [deny, permit], as a
 // failed source does.
 
-const scopeFailed = "input.psf"
+const scopeFailed = "input." + memberScopeFailed
 
 // iterateFlag returns the clauses where bound b of iterate node n is x.
 func (g *gen) iterateFlag(n *node, b, x string) (dnf, error) {
@@ -62,7 +63,7 @@ func (g *gen) anyPass(n *node, b, x string, negate bool) (dnf, error) {
 		}
 		fn := g.rule(n.id+"_pass_"+b+x, d)
 		g.pass = saved
-		body := dnf{{{cls: clsCheck, text: "some p in input.ps"}, {cls: clsCheck, text: g.call(fn), rule: fn}}}
+		body := dnf{{{cls: clsCheck, text: "some p in input." + memberScopePasses}, {cls: clsCheck, text: g.call(fn), rule: fn}}}
 		if d.isFalse() {
 			body = dnfFalse
 		}

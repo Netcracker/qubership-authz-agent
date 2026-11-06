@@ -56,18 +56,19 @@ func (t tpl) fieldClasses(s *side) []spectables.Class {
 }
 
 // fieldOf reports whether [record] writes field f, which the module reads,
-// for a value of class cl: k and nk for s and n; ks for every class but z;
-// raw and the segments for s; tk and o for the lists and the object. Any
-// other field, such as n0, keeps the check of the class.
+// for a value of class cl: key and number for s and n; element_keys for every
+// class but z; text and the segments for s; text_key and equality_key for the
+// lists and the object. Any other field, such as has_null, keeps the check of
+// the class.
 func fieldOf(f string, cl spectables.Class) bool {
 	switch f {
-	case "k", "nk":
+	case fieldKey, fieldNumber:
 		return cl == spectables.ClassString || cl == spectables.ClassScalar
-	case "ks":
+	case fieldElementKeys:
 		return cl != spectables.ClassNull
-	case "raw", "seg":
+	case fieldText, fieldSegments:
 		return cl == spectables.ClassString
-	case "tk", "o":
+	case fieldTextKey, fieldEqualityKey:
 		return cl == spectables.ClassList || cl == spectables.ClassHeaderList || isStructure(cl)
 	}
 	return false
@@ -129,16 +130,16 @@ func (b *tb) k(s *side) string {
 	if s.ref == nil {
 		return lit(s.lit.key)
 	}
-	b.use(s, "k")
-	return s.field("k")
+	b.use(s, fieldKey)
+	return s.field(fieldKey)
 }
 
 func (b *tb) ks(s *side) string {
 	if s.ref == nil {
 		return setLit(s.lit.keys)
 	}
-	b.use(s, "ks")
-	return s.field("ks")
+	b.use(s, fieldElementKeys)
+	return s.field(fieldElementKeys)
 }
 
 func vfact(s *side) fact {
@@ -200,14 +201,14 @@ func template(op spectables.Operator, L, R *side, cl, cr spectables.Class) (tpl,
 	if !ok || ends == nil || ends.ref == nil {
 		return t, ok
 	}
-	g := conj(ends.bind(), clause{{cls: ends.cls(clsCheck), text: "not " + ends.field("n0"), fact: vfact(ends),
+	g := conj(ends.bind(), clause{{cls: ends.cls(clsCheck), text: "not " + ends.field(fieldHasNull), fact: vfact(ends),
 		test: refTest(ends, &test{kind: "non0"})}})
 	t.t = prod(dnf{g}, t.t, true)
 	t.f = prod(dnf{g}, t.f, true)
 	if t.fields[ends] == nil {
 		t.fields[ends] = map[string]bool{}
 	}
-	t.fields[ends]["n0"] = true
+	t.fields[ends][fieldHasNull] = true
 	t.undefined = true
 	t.rules[spectables.RuleNullElementEnds] = true
 	return t, true
@@ -233,12 +234,12 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 	if (op == spectables.OpIsEmpty || op == spectables.OpIsNotEmpty) && L.ref != nil && isListClass(cl) {
 		// a list in state VALUE is empty by its length: the whole resource
 		// [], or a subject list (rule empty)
-		empty := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field("ln") + " == 0", fact: vfact(L)}})
-		full := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field("ln") + " > 0", fact: vfact(L)}})
+		empty := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldLength) + " == 0", fact: vfact(L)}})
+		full := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldLength) + " > 0", fact: vfact(L)}})
 		if op == spectables.OpIsNotEmpty {
 			empty, full = full, empty
 		}
-		return tpl{t: dnf{empty}, f: dnf{full}, fields: map[*side]map[string]bool{L: {"ln": true}},
+		return tpl{t: dnf{empty}, f: dnf{full}, fields: map[*side]map[string]bool{L: {fieldLength: true}},
 			rules: map[spectables.ValueRule]bool{spectables.RuleEmpty: true}}, true
 	}
 	if R == nil {
@@ -259,28 +260,28 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if !isStructureOrList(cl) {
 			structure, text = R, L
 		}
-		b.use(structure, "tk")
+		b.use(structure, fieldTextKey)
 		bind := conj(L.bind(), R.bind())
 		c := clsCheck
 		if net {
 			c = clsAfterBuilt
 		}
-		t := conj(bind, clause{{cls: c, text: structure.field("tk") + " == " + b.k(text), fact: vfact(structure)}})
-		f := conj(bind, clause{{cls: c, text: structure.field("tk") + " != " + b.k(text), fact: vfact(structure)}})
+		t := conj(bind, clause{{cls: c, text: structure.field(fieldTextKey) + " == " + b.k(text), fact: vfact(structure)}})
+		f := conj(bind, clause{{cls: c, text: structure.field(fieldTextKey) + " != " + b.k(text), fact: vfact(structure)}})
 		tp, _ := out(spectables.RuleEq, dnf{t}, dnf{f})
 		tp.rules[spectables.RuleStructureTextLeft] = true
 		return tp, true
 	}
 	if op == spectables.OpContains && cl == spectables.ClassObject && cr == spectables.ClassString && lref {
 		// an object on the left of CONTAINS equals a string by its Java text
-		b.use(L, "tk")
+		b.use(L, fieldTextKey)
 		bind := conj(L.bind(), R.bind())
 		c := L.cls(clsCheck)
 		if net {
 			c = clsAfterBuilt
 		}
-		t := conj(bind, clause{{cls: c, text: L.field("tk") + " == " + b.k(R), fact: vfact(L)}})
-		f := conj(bind, clause{{cls: c, text: L.field("tk") + " != " + b.k(R), fact: vfact(L)}})
+		t := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " == " + b.k(R), fact: vfact(L)}})
+		f := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " != " + b.k(R), fact: vfact(L)}})
 		return out(spectables.RuleStructureTextLeft, dnf{t}, dnf{f})
 	}
 	if op == spectables.OpContains && cl == spectables.ClassObject && isListClass(cr) && lref && rref &&
@@ -292,10 +293,10 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 	if op == spectables.OpIn && lref && !rref && (isListClass(cl) || cl == spectables.ClassObject) {
 		// a list or an object on the left of IN is in a literal list holding
 		// its Java text
-		b.use(L, "tk")
+		b.use(L, fieldTextKey)
 		keys := R.lit.keys
-		t := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field("tk") + " in " + setLit(keys), fact: vfact(L)}})
-		f := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field("tk") + " in " + setLit(keys),
+		t := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: L.field(fieldTextKey) + " in " + setLit(keys), fact: vfact(L)}})
+		f := conj(L.bind(), clause{{cls: L.cls(clsCheck), text: "not " + L.field(fieldTextKey) + " in " + setLit(keys),
 			fact: vfact(L)}})
 		return out(spectables.RuleStructureTextLeft, dnf{t}, dnf{f})
 	}
@@ -303,15 +304,15 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		cl == spectables.ClassObject && cr == spectables.ClassObject && lref && rref {
 		// two objects are equal by their members: the same keys, each value
 		// of the same JSON type and equal, a list inside in order
-		b.use(L, "o")
-		b.use(R, "o")
+		b.use(L, fieldEqualityKey)
+		b.use(R, fieldEqualityKey)
 		c := clsCheck
 		if net {
 			c = clsAfterBuilt
 		}
 		bind := conj(L.bind(), R.bind())
-		t := conj(bind, clause{{cls: c, text: L.field("o") + " == " + R.field("o"), fact: vfact(L)}})
-		f := conj(bind, clause{{cls: c, text: L.field("o") + " != " + R.field("o"), fact: vfact(L)}})
+		t := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " == " + R.field(fieldEqualityKey), fact: vfact(L)}})
+		f := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " != " + R.field(fieldEqualityKey), fact: vfact(L)}})
 		// IN and CONTAINS reach the comparison through object_eq, == through
 		// eq
 		tp, _ := out(spectables.RuleObjectEq, dnf{t}, dnf{f})
@@ -334,8 +335,8 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if err != nil {
 			return tpl{}, false
 		}
-		b.use(L, "raw")
-		call := expr{cls: L.cls(clsCheck), text: fmt.Sprintf("regex.match(%s, %s)", lit(rx), L.field("raw")),
+		b.use(L, fieldText)
+		call := expr{cls: L.cls(clsCheck), text: fmt.Sprintf("regex.match(%s, %s)", lit(rx), L.field(fieldText)),
 			fact: vfact(L)}
 		t := conj(L.bind(), clause{call})
 		if !L.ref.Network {
@@ -345,7 +346,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			}
 		}
 		f := conj(L.bind(), clause{{cls: L.cls(clsCheck),
-			text: fmt.Sprintf("not regex.match(%s, %s)", lit(rx), L.field("raw")), fact: vfact(L)}})
+			text: fmt.Sprintf("not regex.match(%s, %s)", lit(rx), L.field(fieldText)), fact: vfact(L)}})
 		return out(spectables.RuleMatch, dnf{t}, dnf{f})
 	case spectables.OpEQ:
 		// a null element is an element of the set too
@@ -355,15 +356,15 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if listOrNested(cl) && listOrNested(cr) && lref && rref {
 			// two lists are equal as sets of typed elements, a number by its
 			// text and a string with its case
-			b.use(L, "o")
-			b.use(R, "o")
+			b.use(L, fieldEqualityKey)
+			b.use(R, fieldEqualityKey)
 			c := clsCheck
 			if net {
 				c = clsAfterBuilt
 			}
 			bind := conj(L.bind(), R.bind())
-			t := conj(bind, clause{{cls: c, text: L.field("o") + " == " + R.field("o"), fact: vfact(L)}})
-			f := conj(bind, clause{{cls: c, text: L.field("o") + " != " + R.field("o"), fact: vfact(L)}})
+			t := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " == " + R.field(fieldEqualityKey), fact: vfact(L)}})
+			f := conj(bind, clause{{cls: c, text: L.field(fieldEqualityKey) + " != " + R.field(fieldEqualityKey), fact: vfact(L)}})
 			return out(spectables.RuleListEq, dnf{t}, dnf{f})
 		}
 		if (cl == spectables.ClassScalar || cl == spectables.ClassObject) && isListClass(cr) && rref {
@@ -398,14 +399,14 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 		if (cl == spectables.ClassList || isStructure(cl)) && lref && rref {
 			// a list or an object on the left is in the right when a string
 			// there equals its Java text
-			b.use(L, "tk")
+			b.use(L, fieldTextKey)
 			c := clsCheck
 			if net {
 				c = clsAfterBuilt
 			}
 			bind := conj(L.bind(), R.bind())
-			t := conj(bind, clause{{cls: c, text: L.field("tk") + " in " + b.ks(R), fact: vfact(L)}})
-			f := conj(bind, clause{{cls: c, text: "not " + L.field("tk") + " in " + b.ks(R), fact: vfact(L)}})
+			t := conj(bind, clause{{cls: c, text: L.field(fieldTextKey) + " in " + b.ks(R), fact: vfact(L)}})
+			f := conj(bind, clause{{cls: c, text: "not " + L.field(fieldTextKey) + " in " + b.ks(R), fact: vfact(L)}})
 			return out(spectables.RuleStructureTextLeft, dnf{t}, dnf{f})
 		}
 		rightOK := isScalar(cr) || cr == spectables.ClassList || cr == spectables.ClassHeaderList ||
@@ -454,7 +455,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			// a resource attribute on the right is one value, and no element
 			// equals a list (right_attribute_one_value,
 			// contains_right_attribute_list_false)
-			b.use(L, "ks")
+			b.use(L, fieldElementKeys)
 			return out(spectables.RuleContainsRightAttributeList, dnfFalse, dnf{conj(L.bind(), R.bind())})
 		}
 		subjectList := cr == spectables.ClassList || cr == spectables.ClassNullElement ||
@@ -481,23 +482,24 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 				c = clsAfterBuilt
 			}
 			if !lref || !rref {
-				// a literal's tokens are its keys, the same in ea and eb, and
-				// ea is part of eb, so the other side's eb decides
+				// a literal's tokens are its keys, the same in element_tokens
+				// and element_tokens_with_text, and the first is part of the
+				// second, so the other side's element_tokens_with_text decides
 				lits, other := L, R
 				if lref {
 					lits, other = R, L
 				}
-				b.use(other, "eb")
-				eb := other.field("eb")
+				b.use(other, fieldElementTokensWithText)
+				eb := other.field(fieldElementTokensWithText)
 				toks := make([]string, len(lits.lit.keys))
 				var ts dnf
 				for i, k := range lits.lit.keys {
 					toks[i] = "t:" + k
 					ts = append(ts, conj(other.bind(), clause{{cls: other.cls(c), text: lit(toks[i]) + " in " + eb,
-						fact: vfact(other), test: refTest(other, &test{kind: "has", val: toks[i], field: "eb"})}}))
+						fact: vfact(other), test: refTest(other, &test{kind: "has", val: toks[i], field: fieldElementTokensWithText})}}))
 				}
 				f := conj(other.bind(), clause{{cls: other.cls(c), fact: vfact(other),
-					test: refTest(other, &test{kind: "none", set: toks, field: "eb"}),
+					test: refTest(other, &test{kind: "none", set: toks, field: fieldElementTokensWithText}),
 					text: fmt.Sprintf("every x in %s { not x in %s }", eb, setLit(toks))}})
 				return out(spectables.RuleContainsAny, union(ts), dnf{f})
 			}
@@ -505,7 +507,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			bind := conj(L.bind(), R.bind())
 			var t dnf
 			var f clause
-			for _, p := range [][2]string{{"ea", "eb"}, {"eb", "ea"}} {
+			for _, p := range [][2]string{{fieldElementTokens, fieldElementTokensWithText}, {fieldElementTokensWithText, fieldElementTokens}} {
 				b.use(L, p[0])
 				b.use(R, p[1])
 				pair := func(kind string) *test {
@@ -528,9 +530,9 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 			rks = b.ks(R)
 		}
 		// With literals on one side, each literal gets a clause of its own,
-		// "k" in ks, because the OPA rule index files such a clause under k
-		// and skips it for a request whose ks lacks k. One clause for all
-		// literals, some x in ks; x in {...}, is a loop the index cannot file,
+		// "k" in element_keys, because the OPA rule index files such a clause
+		// under k and skips it for a request whose element_keys lacks k. One
+		// clause for all literals, some x in element_keys; x in {...}, is a loop the index cannot file,
 		// so every request evaluates it. On the PROD corpus with subject groups
 		// it saved under 0.2 % of the clauses and made Eval p50 and p99 3 to 7 %
 		// slower on the bundles it changed. Without groups it cut the largest
@@ -634,7 +636,7 @@ func segmentGuards(pattern, ref string) clause {
 	}
 	var out clause
 	if first < 0 {
-		out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.nseg%s == %d", refIndex(ref), len(segs))})
+		out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.%s%s == %d", fieldSegmentCount, refIndex(ref), len(segs))})
 	}
 	head := segs
 	if first >= 0 {
@@ -643,7 +645,7 @@ func segmentGuards(pattern, ref string) clause {
 	n := 0
 	for i := len(head) - 1; i >= 0 && n < most; i-- {
 		if head[i] != "" && !isMeta(head[i]) {
-			out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.seg%s[%d] == %s", refIndex(ref), i, lit(head[i]))})
+			out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.%s%s[%d] == %s", fieldSegments, refIndex(ref), i, lit(head[i]))})
 			n++
 		}
 	}
@@ -652,7 +654,7 @@ func segmentGuards(pattern, ref string) clause {
 		for j := 0; j < len(tail) && len(out) < most+1; j++ {
 			x := tail[len(tail)-1-j]
 			if x != "" && !isMeta(x) {
-				out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.eseg%s[%d] == %s", refIndex(ref), j, lit(x))})
+				out = append(out, expr{cls: clsIndexEq, text: fmt.Sprintf("input.%s%s[%d] == %s", fieldSegmentsFromEnd, refIndex(ref), j, lit(x))})
 			}
 		}
 	}
