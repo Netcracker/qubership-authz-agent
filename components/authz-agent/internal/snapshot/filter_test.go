@@ -193,6 +193,25 @@ func TestEachAlgorithmCombinesTheAllowAndDenyRows(t *testing.T) {
 	}
 }
 
+// The negation of a DENY predicate that is an AND is an OR, which RSQL
+// puts in parentheses inside the AND with the ALLOW rows, since ; binds
+// tighter than ,. It used to be written bare, and (a==1);a!=2,c!=2 selected
+// rows with a==2 and c!=2, which the check denies. The negation of an OR
+// is an AND and needs none.
+func TestAnRSQLNegationThatIsAnOrIsParenthesized(t *testing.T) {
+	for _, tc := range []struct{ deny, want string }{
+		{"a==2;c==2", `(a==1);(a!=2,c!=2)`},
+		{"a==2,c==2", `(a==1);a!=2;c!=2`},
+	} {
+		t.Run(tc.deny, func(t *testing.T) {
+			set := pairSet("s", "DENY_OVERRIDES", `"rsqlPredicate": "a==1"`, `"rsqlPredicate": "`+tc.deny+`"`)
+			if got, want := filter(t, false, "read", set), condition("rsqlFilterCondition", tc.want); got != want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, want)
+			}
+		})
+	}
+}
+
 // A dialect the DENY predicate does not write cannot subtract its rows, so
 // that dialect gets no condition rather than the ALLOW predicate alone, which
 // would return rows the check denies.
