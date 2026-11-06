@@ -151,6 +151,29 @@ func TestEachTenantIsDecidedByItsOwnPolicies(t *testing.T) {
 	}
 }
 
+// subject.isM2M as an operand of a comparison is ABSENT, whatever the
+// subject's token holds: IS NULL holds, and an equality with a literal
+// aborts the condition. The decision request used to fail with "no resolved
+// value of ["subj","isM2M"]", which the service answered with 500.
+func TestAComparisonWithSubjectIsM2MIsDecided(t *testing.T) {
+	for _, tc := range []struct {
+		condition string
+		want      Result
+	}{
+		{"subject.isM2M IS NULL", Result{Allowed: true}},
+		{"subject.isM2M == true", Result{Reason: ReasonDenied}},
+		{"subject.isM2M != true", Result{Reason: ReasonDenied}},
+	} {
+		t.Run(tc.condition, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, set("a", tc.condition))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
+				t.Errorf("Decide(%s) = %+v, want %+v", tc.condition, got[0], tc.want)
+			}
+		})
+	}
+}
+
 // broken is a condition the agent's parser refuses, which rejects the
 // candidate of its tenant as a whole.
 const broken = "resource.a =="

@@ -32,8 +32,10 @@ import (
 // under the agent profile: a TOKEN PIP from req.Claims, a HEADER PIP from
 // req.Headers, and subject.permissions from the MAPPING PIPs
 // ([Module.permissions]). A MAPPING PIP read by its own name is ABSENT
-// (mapping_own_name=ABSENT), and a PIP of type PERMISSION_SCOPE read as a
-// value is ERROR, as a failed PIP is. subject.entitledResources is left to
+// (mapping_own_name=ABSENT), and so is subject.isM2M as an operand of a
+// comparison, whose domain holds that state alone. A PIP of type
+// PERMISSION_SCOPE read as a value is ERROR, as a failed PIP is.
+// subject.entitledResources is left to
 // the module, which calls the entitlements service, unless req names no
 // such service: then it is ERROR. It returns the keys of the operands set to
 // ERROR for want of a source, which the reason of a denial names. A
@@ -78,7 +80,7 @@ func (m *Module) ResolveSubject(req *Request) []string {
 			continue
 		case spectables.KindSubjPermissions:
 			v = m.permissions(req)
-		case spectables.KindPIPMapping:
+		case spectables.KindPIPMapping, spectables.KindSubjIsM2M:
 			v = Resolved{State: spectables.StateAbsent}
 		case spectables.KindSubjPermissionScope:
 			v = Resolved{State: spectables.StateError}
