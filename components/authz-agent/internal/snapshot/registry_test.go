@@ -174,20 +174,25 @@ func TestAComparisonWithSubjectIsM2MIsDecided(t *testing.T) {
 	}
 }
 
+// denyWhere is a DENY_OVERRIDES set of tenant a on the resource type doc:
+// one rule allows every operation, and one denies where condition holds.
+func denyWhere(condition string) string {
+	return fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"},
+				{"ruleId": "deny", "target": "true", "condition": %q, "effect": "DENY", "tenantId": "a"}]}]}`,
+		condition)
+}
+
 // A deep scan the jsonpath package stops as too large leaves a DENY rule
 // over it unknown, so the item is denied as on a failed source. Such a
 // selection used to fall on neither rail of a two-valued leaf, and the DENY
 // rule did not apply. A resource without the member is the control that
 // the ALLOW rule allows.
 func TestADenyOverASelectionTooLargeDenies(t *testing.T) {
-	set := `{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
-		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
-		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
-			"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"},
-				{"ruleId": "deny", "target": "true", "condition": "resource..secret IS NOT NULL", "effect": "DENY",
-					"tenantId": "a"}]}]}`
 	r := New(Config{}, tab(t), quiet{})
-	load(t, r, ``, set)
+	load(t, r, ``, denyWhere("resource..secret IS NOT NULL"))
 	nested := strings.Repeat(`{"secret":`, 40) + `1` + strings.Repeat(`}`, 40)
 	for _, tc := range []struct {
 		name, resource string
@@ -448,6 +453,37 @@ func TestADenialOnAFailedPIPNamesIt(t *testing.T) {
 
 	if want := (Result{Reason: "PIP resolution failed: subject.g"}); got[0] != want {
 		t.Errorf("Decide = %+v, want %+v", got[0], want)
+	}
+}
+
+// A DENY rule over a PIP whose call failed denies, as the PIP's value is
+// unknown: MATCH, where the table gives the failure the outcome false, as
+// well as an equality, where it gives an unknown one. MATCH over a failed
+// PIP used to be false, and the ALLOW rule allowed. The PIP answering a
+// value the pattern does not match is the control that the ALLOW rule
+// allows.
+func TestADenyOverAFailedPIPDenies(t *testing.T) {
+	for _, tc := range []struct {
+		name, condition string
+		status          int
+		want            Result
+	}{
+		{"MATCH over a failed PIP", "subject.g MATCH block*", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"an equality over a failed PIP", "subject.g == 'blocked'", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"NOT MATCH over a failed PIP", "subject.g NOT MATCH other", http.StatusInternalServerError,
+			Result{Reason: "PIP resolution failed: subject.g"}},
+		{"MATCH over a value outside the pattern", "subject.g MATCH block*", http.StatusOK, Result{Allowed: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			srv, _ := pipServer(t, tc.status, `["other"]`)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), denyWhere(tc.condition))
+			if got := decide(t, r, readDoc(t, "a", "x", 1)); got[0] != tc.want {
+				t.Errorf("Decide(%s, PIP status %d) = %+v, want %+v", tc.condition, tc.status, got[0], tc.want)
+			}
+		})
 	}
 }
 
