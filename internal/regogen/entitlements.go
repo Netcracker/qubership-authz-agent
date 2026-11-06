@@ -34,10 +34,10 @@ import (
 // module, ent_<Var>, which a clause binds the operand's record from where it
 // reads it, the way a GENERAL PIP's function is bound:
 //
-//	ent_<Var> := nc.ent.record(q, pip_send(q), {...}) if q := input.pq[<ID>]
+//	ent_<Var> := nc.ent.record(q, pip_send(q), {...}) if q := input.pip_requests[<ID>]
 //
 // Go builds q before the query ([entCall]): the POST of the entitlements
-// service for the subject, or {"s": "ERROR"} where the agent makes no call.
+// service for the subject, or {"state": "ERROR"} where the agent makes no call.
 // Every operand of one subject sends the same request, which nc.http.send
 // makes once per decision request. nc.ent.record reads the response as the
 // specification's entitled does.
@@ -46,8 +46,8 @@ import (
 func entText(r *Ref) string {
 	as, _ := json.Marshal(r.ent.As)
 	return fmt.Sprintf("ent_%s := nc.ent.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, \"subset\": %t, "+
-		"\"jp\": null, \"type\": %s, \"as\": %s}) if q := input.pq[%s]\n\n", r.Var, r.read, r.Segments, r.Subset,
-		lit(r.ent.ResourceType), as, lit(r.ID))
+		"\"jp\": null, \"type\": %s, \"as\": %s}) if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments, r.Subset,
+		lit(r.ent.ResourceType), as, memberPIPRequests, lit(r.ID))
 }
 
 // entitlementsPIP is the name a failed call of the entitlements service
@@ -56,7 +56,7 @@ const entitlementsPIP = "subject.entitledResources"
 
 // entCall returns the q of an entitlements operand on req: a POST with the
 // body {} to <req.Entitlements>/api/v3/user-entitlements/user/<subject.id>,
-// or {"s": "ERROR"} without the service's URL or without a subject.id
+// or {"state": "ERROR"} without the service's URL or without a subject.id
 // value.
 func entCall(req *Request) *ast.Term {
 	id := req.Values[keySubjID]
@@ -101,7 +101,7 @@ func entRecordFunction() func(*rego.Rego) {
 			if err := ast.As(o.Get(ast.StringTerm("as")).Value, &as); err != nil {
 				return nil, fmt.Errorf("nc.ent.record: the names in %v: %w", opts, err)
 			}
-			if s := q.Get(ast.StringTerm("s")); s != nil {
+			if s := q.Get(ast.StringTerm(queryState)); s != nil {
 				st, ok := s.Value.(ast.String)
 				if !ok {
 					return nil, fmt.Errorf("nc.ent.record: the state %v is not a string", s)

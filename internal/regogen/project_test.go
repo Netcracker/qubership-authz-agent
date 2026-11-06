@@ -98,7 +98,7 @@ func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 func TestAListTokenGrowsByAFixedLengthPerLevelOfNesting(t *testing.T) {
 	value := `[[[[[[[[[[[[[[[["\""]]]]]]]]]]]]]]]]`
 	ea, sa := recordTokens(t, value)
-	for name, token := range map[string]string{"ea": ea[0], "sa": sa[len(sa)-1]} {
+	for name, token := range map[string]string{fieldElementTokens: ea[0], fieldSubsetLeft: sa[len(sa)-1]} {
 		if len(token) != 66 {
 			t.Errorf("record(%s): the %s token is %d bytes, want 66: %.80q", value, name, len(token), token)
 		}
@@ -216,12 +216,12 @@ func TestARecordHoldsTheFieldsTheModuleReads(t *testing.T) {
 			// a copy, so that reading the expressions marks no field
 			r := *m.Refs[i]
 			s := &side{ref: &r}
-			for f, has := range map[string][2]bool{"ks": {rec.KS != nil, whole.KS != nil},
-				"tk": {rec.TK != nil, whole.TK != nil}, "o": {rec.O != nil, whole.O != nil},
-				"ea": {rec.EA != nil, whole.EA != nil}} {
+			for f, has := range map[string][2]bool{fieldElementKeys: {rec.KS != nil, whole.KS != nil},
+				fieldTextKey: {rec.TK != nil, whole.TK != nil}, fieldEqualityKey: {rec.O != nil, whole.O != nil},
+				fieldElementTokens: {rec.EA != nil, whole.EA != nil}} {
 				reads := strings.Contains(m.Text, s.field(f))
-				if f == "ea" {
-					reads = reads || strings.Contains(m.Text, s.field("eb"))
+				if f == fieldElementTokens {
+					reads = reads || strings.Contains(m.Text, s.field(fieldElementTokensWithText))
 				}
 				if has[0] != (reads && has[1]) {
 					t.Errorf("the module reads %s of %s: %v, the record of every field holds it: %v, "+
@@ -252,20 +252,20 @@ func TestTheInputCarriesTheFieldsTheTextReads(t *testing.T) {
 		if in.Records[id].KS == nil {
 			t.Errorf("groups %v: the record of %s holds no keys", groups, id)
 		}
-		ks := in.Value().(ast.Object).Get(ast.StringTerm("ks")).Value.(ast.Object).Get(ast.StringTerm(id))
-		reads := strings.Contains(m.Text, "input.ks"+refIndex(id))
+		ks := in.Value().(ast.Object).Get(ast.StringTerm(fieldElementKeys)).Value.(ast.Object).Get(ast.StringTerm(id))
+		reads := strings.Contains(m.Text, "input."+fieldElementKeys+refIndex(id))
 		if (ks != nil) != reads {
-			t.Errorf("groups %v: the text reads input.ks of %s: %v, the input carries it: %v", groups, id, reads,
+			t.Errorf("groups %v: the text reads input.element_keys of %s: %v, the input carries it: %v", groups, id, reads,
 				ks != nil)
 		}
 		if reads == groups {
-			t.Errorf("groups %v: the text reads input.ks of %s: %v", groups, id, reads)
+			t.Errorf("groups %v: the text reads input.element_keys of %s: %v", groups, id, reads)
 		}
 	}
 }
 
 // markEmitted sets each field the text reads of the reference it reads it
-// of, and no other: every field name, n0 and nseg among them, after input
+// of, and no other: every field name, has_null and segment_count among them, after input
 // and after p, the record of a pass value, with the index of a name that is
 // an identifier and of one that is not. A field read with no index is set
 // for every reference.
@@ -273,20 +273,20 @@ func TestMarkEmittedSetsTheFieldsTheTextReads(t *testing.T) {
 	x, ab := &Ref{ID: "x"}, &Ref{ID: "a.b<"}
 	for _, f := range recordFields {
 		for _, text := range []string{
-			"input." + f + refIndex(x.ID) + " == 1\n  not input.s" + refIndex(ab.ID),
-			"some p in input.ps\n  p." + f + refIndex(x.ID) + "[0]\n  p.s" + refIndex(ab.ID),
+			"input." + f + refIndex(x.ID) + " == 1\n  not input.state" + refIndex(ab.ID),
+			"some p in input.scope_passes\n  p." + f + refIndex(x.ID) + "[0]\n  p.state" + refIndex(ab.ID),
 		} {
 			markEmitted([]*Ref{x, ab}, text)
 			if want := fieldsKnown | fieldBit(f); x.emit != want {
 				t.Errorf("%q: emit of x %b, want %b", text, x.emit, want)
 			}
-			if want := fieldsKnown | fieldBit("s"); ab.emit != want {
+			if want := fieldsKnown | fieldBit(fieldState); ab.emit != want {
 				t.Errorf("%q: emit of %s %b, want %b", text, ab.ID, ab.emit, want)
 			}
 		}
 	}
-	markEmitted([]*Ref{x, ab}, "count(input.ks) > 0")
-	if want := fieldsKnown | fieldBit("ks"); x.emit != want || ab.emit != want {
-		t.Errorf("input.ks with no index: emit %b and %b, want %b for both", x.emit, ab.emit, want)
+	markEmitted([]*Ref{x, ab}, "count(input.element_keys) > 0")
+	if want := fieldsKnown | fieldBit(fieldElementKeys); x.emit != want || ab.emit != want {
+		t.Errorf("input.element_keys with no index: emit %b and %b, want %b for both", x.emit, ab.emit, want)
 	}
 }

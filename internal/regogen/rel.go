@@ -95,8 +95,8 @@ func relTemplate(op spectables.Operator, L, R *side, b *tb) (tpl, bool) {
 			}
 			return orderKey(*s.lit.num).String(), true
 		}
-		b.use(s, "nk")
-		return s.field("nk"), true
+		b.use(s, fieldNumber)
+		return s.field(fieldNumber), true
 	}
 	l, okL := operand(L)
 	r, okR := operand(R)
@@ -122,7 +122,7 @@ func relTemplate(op spectables.Operator, L, R *side, b *tb) (tpl, bool) {
 		test: relTest(co, L, R)}})}
 	for _, s := range []*side{L, R} {
 		if s.ref != nil {
-			out.f = append(out.f, conj(bind, clause{{cls: c, text: "not " + s.field("nk"), fact: vfact(s),
+			out.f = append(out.f, conj(bind, clause{{cls: c, text: "not " + s.field(fieldNumber), fact: vfact(s),
 				test: refTest(s, &test{kind: "nonum"})}}))
 		}
 	}

@@ -494,8 +494,8 @@ func (g *gen) simplified(sg *policyir.SimplifiedGroup, label string) (*node, err
 			if err != nil {
 				return nil, err
 			}
-			r.read |= fieldBit("k")
-			m = conj(m, clause{{cls: clsIndexEq, text: "input.k" + refIndex(r.ID) + " == " + lit(g.fold(sg.ResourceType)),
+			r.read |= fieldBit(fieldKey)
+			m = conj(m, clause{{cls: clsIndexEq, text: "input." + fieldKey + refIndex(r.ID) + " == " + lit(g.fold(sg.ResourceType)),
 				src: simpSrc("resourceType == " + lit(sg.ResourceType))}})
 		}
 		op := p.Operation
@@ -508,14 +508,14 @@ func (g *gen) simplified(sg *policyir.SimplifiedGroup, label string) (*node, err
 			if err != nil {
 				return nil, err
 			}
-			r.read |= fieldBit("k")
-			m = conj(m, clause{{cls: clsIndexEq, text: "input.k" + refIndex(r.ID) + " == " + lit(g.fold(op)),
+			r.read |= fieldBit(fieldKey)
+			m = conj(m, clause{{cls: clsIndexEq, text: "input." + fieldKey + refIndex(r.ID) + " == " + lit(g.fold(op)),
 				src: simpSrc("operation == " + lit(op))}})
 		}
 		var roles dnf
 		for _, r := range p.Roles {
-			roles = append(roles, clause{{cls: clsIndexIn, text: lit(g.fold(r)) + " in input.sroles",
-				test: &test{kind: "has", ref: "sroles", val: g.fold(r)}, src: simpSrc("role " + lit(r))}})
+			roles = append(roles, clause{{cls: clsIndexIn, text: lit(g.fold(r)) + " in input." + memberFoldedRoles,
+				test: &test{kind: "has", ref: memberFoldedRoles, val: g.fold(r)}, src: simpSrc("role " + lit(r))}})
 		}
 		roles = union(roles)
 		// a simplified policy without a condition grants by its operation and
@@ -760,8 +760,8 @@ func (g *gen) leaf(a policyir.Atom, ctx spectables.Context) (leafRails, error) {
 	case policyir.IsM2M:
 		t := &test{kind: "m2m", val: "true"}
 		f := &test{kind: "m2m", val: "false"}
-		return leafRails{t: dnf{{{cls: clsIndexEq, text: "input.m2m == true", test: t}}},
-			f: dnf{{{cls: clsIndexEq, text: "input.m2m == false", test: f}}}, subjectOnly: true}, nil
+		return leafRails{t: dnf{{{cls: clsIndexEq, text: "input." + memberM2M + " == true", test: t}}},
+			f: dnf{{{cls: clsIndexEq, text: "input." + memberM2M + " == false", test: f}}}, subjectOnly: true}, nil
 	case policyir.Access:
 		if g.pass {
 			// legacy reads the decision for the operation in the current

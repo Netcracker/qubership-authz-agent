@@ -310,7 +310,7 @@ func (fg *filterGen) module(pkg string) string {
 				if readsPass(dnf{c}) {
 					v = "p"
 				}
-				b.WriteString("\tsome i, " + v + " in input.ps\n")
+				b.WriteString("\tsome i, " + v + " in input." + memberScopePasses + "\n")
 			}
 			es := slices.Clone(c)
 			slices.SortStableFunc(es, func(a, b expr) int { return a.cls - b.cls })

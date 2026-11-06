@@ -164,15 +164,15 @@ func subsetTemplate(L, R *side, b *tb) (tpl, bool) {
 	var la, rb string
 	if L.ref != nil {
 		L.ref.Subset = true
-		b.use(L, "sa")
-		la = L.field("sa")
+		b.use(L, fieldSubsetLeft)
+		la = L.field(fieldSubsetLeft)
 	} else {
 		la = setsLit(L.lit.sa)
 	}
 	if R.ref != nil {
 		R.ref.Subset = true
-		b.use(R, "sb")
-		rb = R.field("sb")
+		b.use(R, fieldSubsetRight)
+		rb = R.field(fieldSubsetRight)
 	} else {
 		rb = setLit(R.lit.sb)
 	}
@@ -230,7 +230,7 @@ func subsetTest(L, R *side, kind string) *test {
 		t.sets = L.lit.sa
 	}
 	if R.ref != nil {
-		t.ref2, t.field2 = R.ref.ID, "sb"
+		t.ref2, t.field2 = R.ref.ID, fieldSubsetRight
 	} else {
 		t.set = R.lit.sb
 	}

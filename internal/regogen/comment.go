@@ -246,21 +246,26 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # operation (subject allowed or denied), read from a copy of the tree whose
 # nodes are named dec_<operation>_<depth>_<label>. m_<hash> and c_<hash> hold
 # a product or a condition rail that several clauses share, and g_<hash> in
-# input.g a subject group; <hash> is the first 12 hex digits of the SHA-256 of
-# what they hold. <rule>__body holds the clauses of a long rule.
+# input.subject_groups a subject group; <hash> is the first 12 hex digits of
+# the SHA-256 of what they hold. <rule>__body holds the clauses of a long
+# rule.
 #
 # input.<field>[<operand>] is a field of the value record of an operand,
-# keyed by the operand as a policy writes it: s state, t class, k key, ks
-# keys of the elements, raw text, seg, eseg, and nseg path segments from the
-# start, from the end, and their count, n0 a list holds null, tk the key of
-# the text a string equals a list or an object by, o the key two lists or
-# objects are equal by, ln length, ea and eb element tokens, nk the number <
-# and > compare, sa and sb the tokens IS SUBSET reads. A class is s string, n
-# number or boolean, l list, hl list from a header, xn list with null, xl
-# nested list, xo object, z null. input.sroles holds the folded roles,
-# input.g the subject groups the request is in, input.m2m whether the subject
-# is machine-to-machine, input.ps the passes of an iterate over the
-# permission scope, and input.psf whether reading the scope failed.
+# keyed by the operand as a policy writes it: state, class, key,
+# element_keys the keys of the elements, text, segments, segments_from_end,
+# and segment_count the path segments from the start, from the end, and their
+# count, has_null whether a list holds null, text_key the key of the text a
+# string equals a list or an object by, equality_key the key two lists or
+# objects are equal by, length, element_tokens the tokens of the elements and
+# element_tokens_with_text those and the token of the text of a list or an
+# object element, number the number < and > compare, subset_left and
+# subset_right the tokens IS SUBSET reads on the left and on the right. A
+# class is s string, n number or boolean, l list, hl list from a header, xn
+# list with null, xl nested list, xo object, z null. input.folded_roles holds
+# the folded roles, input.subject_groups the subject groups the request is in,
+# input.m2m whether the subject is machine-to-machine, input.scope_passes the
+# passes of an iterate over the permission scope, and input.scope_failed
+# whether reading the scope failed.
 `
 
 // commenter writes the comments above the clauses of one module text.

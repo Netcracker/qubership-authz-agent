@@ -29,13 +29,14 @@ import (
 // negated one passes.
 type test struct {
 	kind string // a case of test.holds
-	ref  string // sroles for the roles a simplified policy matches
+	ref  string // folded_roles for the roles a simplified policy matches
 	val  string
 	set  []string // a literal's keys; for IS SUBSET, the tokens of a literal on the right; for clsin, the classes
 	ref2 string
 	// field and field2 name the list of the record of ref and of ref2 that
-	// has, nothas, none, overlap, and disjoint read: ks when empty, or ea or
-	// eb; field2 is sb for the right of IS SUBSET.
+	// has, nothas, none, overlap, and disjoint read: element_keys when empty,
+	// or element_tokens or element_tokens_with_text; field2 is subset_right
+	// for the right of IS SUBSET.
 	field, field2 string
 	// num is the literal number rel compares with.
 	num *jsonvalue.Decimal
@@ -43,15 +44,16 @@ type test struct {
 	// SUBSET.
 	sets [][]string
 	// ri and ri2 number ref and ref2 among the references of the module's
-	// groups, -1 for none and for sroles, and slot and slot2 number the
+	// groups, -1 for none and for folded_roles, and slot and slot2 number the
 	// lists of ref and ref2 that field and field2 name (listSlot).
 	// groupIndex sets them for the tests of the factors it holds.
 	ri, ri2, slot, slot2 int
 }
 
 // Group is a subject group: a conjunction of factors, each a disjunction of
-// clauses of tests. The module reads it as "g_<hash>" in input.g, where
-// <hash> is the first 12 hex digits of the SHA-256 of its factors.
+// clauses of tests. The module reads it as "g_<hash>" in
+// input.subject_groups, where <hash> is the first 12 hex digits of the SHA-256
+// of its factors.
 type Group struct {
 	Factors [][][]*test
 	// factorIDs numbers each factor among the factors of the module's
@@ -135,7 +137,7 @@ func (g *gen) group(factors ...dnf) dnf {
 		all = append(all, x.d...)
 	}
 	slices.Sort(as)
-	return dnf{{{cls: clsIndexIn, text: lit(id) + " in input.g", cell: "group: " + strings.Join(slices.Compact(as), "; "),
+	return dnf{{{cls: clsIndexIn, text: lit(id) + " in input." + memberSubjectGroups, cell: "group: " + strings.Join(slices.Compact(as), "; "),
 		src: &exprSrc{nodes: dnfNodes(all)}}}}
 }
 
@@ -219,7 +221,7 @@ func EvalGroups(m *Module, in *Input) []string {
 	}
 	try(ix.always)
 	for _, r := range in.SRoles {
-		try(ix.byKey["has\x00sroles\x00"+r])
+		try(ix.byKey["has\x00"+memberFoldedRoles+"\x00"+r])
 	}
 	for id, rec := range in.Records {
 		for _, k := range rec.KS {
@@ -301,7 +303,7 @@ func (m *Module) groupIndex() *groupIndex {
 		factorIDs := map[int]int{}
 		refIDs := map[string]int{}
 		refID := func(ref string) int {
-			if ref == "" || ref == "sroles" {
+			if ref == "" || ref == memberFoldedRoles {
 				return -1
 			}
 			i, ok := refIDs[ref]
@@ -501,11 +503,11 @@ func listSlot(ri int, field string) int {
 	switch {
 	case ri < 0:
 		return 0
-	case field == "ea":
+	case field == fieldElementTokens:
 		return 4*ri + 2
-	case field == "eb":
+	case field == fieldElementTokensWithText:
 		return 4*ri + 3
-	case field == "sb":
+	case field == fieldSubsetRight:
 		return 4*ri + 4
 	}
 	return 4*ri + 1
@@ -561,7 +563,7 @@ func (t *test) holds(e *groupEval) bool {
 	var st, cl string
 	var n0 bool
 	var num *jsonvalue.Decimal
-	if t.ref == "sroles" {
+	if t.ref == memberFoldedRoles {
 		ks = e.in.SRoles
 	} else if r, ok := e.rec(t.ri); ok {
 		ks, k, st, cl, n0, num = r.list(t.field), r.K, r.S, r.T, r.N0, r.N
@@ -629,13 +631,13 @@ func (t *test) holds(e *groupEval) bool {
 	panic("unknown test " + t.kind)
 }
 
-// list returns the list field f of the record: ks when f is empty, or ea or
-// eb.
+// list returns the list field f of the record: KS when f is empty, or EA
+// for element_tokens and EB for element_tokens_with_text.
 func (r Record) list(f string) []string {
 	switch f {
-	case "ea":
+	case fieldElementTokens:
 		return r.EA
-	case "eb":
+	case fieldElementTokensWithText:
 		return r.EB
 	}
 	return r.KS

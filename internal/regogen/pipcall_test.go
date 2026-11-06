@@ -85,7 +85,7 @@ func runPIPCases(t *testing.T, decl string, req Request, cases []pipCase) map[st
 			fmt.Fprintf(&b, "mock_%d(q) := {\"status_code\": 500, \"raw_body\": \"\"} if object.remove(q, {\"cache_key\"}) != %s\n\n", i, c.want)
 		}
 		fmt.Fprintf(&b, "mock_%d(q) := %s%s\n\n", i, c.response, cond)
-		fmt.Fprintf(&b, "got_%d := s if s := %s.%s.s with input as doc with nc.http.send as mock_%d\n\n",
+		fmt.Fprintf(&b, "got_%d := s if s := %s.%s.state with input as doc with nc.http.send as mock_%d\n\n",
 			i, DefaultOptions().Package, fn, i)
 		fmt.Fprintf(&b, "allow_%d if %s.allow with input as doc with nc.http.send as mock_%d\n\n",
 			i, DefaultOptions().Package, i)

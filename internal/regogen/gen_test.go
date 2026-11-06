@@ -2075,7 +2075,7 @@ func TestASubjectGroupIsNamedByItsContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	re := regexp.MustCompile(`(?m)^\t"(g_[0-9a-f]{12})" in input\.g # group: subject\.roles CONTAINS_ANY \["reader"\]$`)
+	re := regexp.MustCompile(`(?m)^\t"(g_[0-9a-f]{12})" in input\.subject_groups # group: subject\.roles CONTAINS_ANY \["reader"\]$`)
 	g := re.FindStringSubmatch(m.Text)
 	if g == nil {
 		t.Fatalf("the module has no membership of a group named by its content; module:\n%s", m.Text)
@@ -2118,7 +2118,7 @@ func TestTheModuleNamesThePolicyEachClauseCameFrom(t *testing.T) {
 			"# set_s1_p1: policy \"p1\" \"\", DENY_UNLESS_PERMIT\n#   target: TRUE\n" +
 			"# set_s1_p1_r1: rule \"r1\" \"\", ALLOW\n#   target: operation EQ \"read\"\n" +
 			"#   condition: resource.a IS_EMPTY\n# set_s1_p1_r1\nallow if {\n",
-		`input.s["resource.a"] == "EMPTY_COLL" # resource.a IS_EMPTY: EMPTY_COLL -> T` + "\n",
+		`input.state["resource.a"] == "EMPTY_COLL" # resource.a IS_EMPTY: EMPTY_COLL -> T` + "\n",
 	} {
 		if !strings.Contains(m.Text, want) {
 			t.Errorf("the module lacks\n%s\nmodule:\n%s", want, m.Text)
@@ -2782,7 +2782,7 @@ func TestAResourcePathTakesTheStateOfItsSelection(t *testing.T) {
 			if err != nil {
 				t.Fatalf("JSONPathRecord: %v", err)
 			}
-			if got := rec.Get(ast.StringTerm("s")); got == nil || got.Value.Compare(ast.String(tc.want)) != 0 {
+			if got := rec.Get(ast.StringTerm(fieldState)); got == nil || got.Value.Compare(ast.String(tc.want)) != 0 {
 				t.Errorf("state of %s over %s = %v, want %s", tc.path, tc.doc, got, tc.want)
 			}
 		})

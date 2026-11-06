@@ -241,7 +241,7 @@ func (s *substituter) callGeneral(decl *policyir.PIP, expr string) (sourceValue,
 	keep := sourceValue{kind: valKeep, text: expr}
 	q := pipCall(&Ref{pip: decl}, s.req, s.m.pips)
 	if o, ok := q.Value.(ast.Object); ok {
-		if st := o.Get(ast.StringTerm("s")); st != nil {
+		if st := o.Get(ast.StringTerm(queryState)); st != nil {
 			if st.Value.Compare(ast.String(spectables.StateError)) == 0 {
 				return sourceValue{}, errDenyAll
 			}
