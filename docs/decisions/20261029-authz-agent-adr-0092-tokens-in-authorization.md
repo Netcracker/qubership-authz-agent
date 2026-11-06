@@ -106,7 +106,7 @@ token that is not M2M to its own tenant.
 
 - **R17** (`handler`). No route requires an M2M token.
 - **R18** (`handler`). The agent drops its decision log and with it `/internal/v1/decision-logs`, its one service route.
-  A later record decides how decisions are read.
+  [Issue #223](https://github.com/Netcracker/qubership-authz-agent/issues/223) tracks how decisions are read.
 - **R19** (`handler`). A client of `/internal/v1/decision-logs` gets the 404 of any unknown path.
 - **R20** (`chart`). `AUTHZ_DECISION_LOG_PATH`, `AUTHZ_DECISION_LOG_SIZE_LIMIT`, `AUTHZ_DECISION_LOG_FILE`,
   `AUTHZ_DECISION_LOG_URL`, `AUTHZ_DECISION_LOG_HEADERS`, and the emptyDir of the chart go away with the decision log.
@@ -144,7 +144,7 @@ Negative:
 
 - A client-credentials token without `ROLE_M2M` and without `level` is treated as a user token, so it reaches only its
   own or the default tenant.
-- The decisions of a request cannot be downloaded from the agent until that later record is in place.
+- The decisions of a request cannot be downloaded from the agent. Issue #223 tracks how they are read.
 - Comparing with the tenant of the decision changes the answer of two requests that no golden covers:
   - A caller that is not M2M and has no `tenant-id`, such as a client-credentials token without `ROLE_M2M`, forwards the
     `Incoming-Token` of a user of tenant T. Without that header it is the golden `no-claim-names-no-tenant`, 200 in the
