@@ -48,6 +48,7 @@ const (
 // the Envoy path matches did; the check routes then read the body, and the
 // filter routes the query, whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
+	app.Use(s.recoverPanic)
 	app.Use(s.requestID)
 	switch {
 	case s.logs != nil && s.logs.Store() != nil:
@@ -152,7 +153,7 @@ func (s *Server) checkResource(originalPath string, v2 bool) fiber.Handler {
 		if err != nil {
 			return s.refuse(c, err)
 		}
-		return s.check(c, originalPath, resources, func(result any) []byte {
+		return s.decide(c, originalPath, resources, func(result any) []byte {
 			return legacy.CheckResourceResponse(result, v2)
 		})
 	}
@@ -163,7 +164,7 @@ func (s *Server) checkResourceBulk(c *fiber.Ctx) error {
 	if err != nil {
 		return s.refuse(c, err)
 	}
-	return s.check(c, "/access/v1/check/resource/bulk", resources, func(result any) []byte {
+	return s.decide(c, "/access/v1/check/resource/bulk", resources, func(result any) []byte {
 		return legacy.CheckResourceBulkResponse(result, ids)
 	})
 }
@@ -186,7 +187,7 @@ func (s *Server) checkResourceBulkOperations(v2 bool) fiber.Handler {
 			// the Lua filter answered it without calling OPA.
 			return sendJSON(c, http.StatusOK, legacy.CheckResourceBulkOperationsResponse(nil, nil, v2))
 		}
-		return s.check(c, c.OriginalURL(), resources, func(result any) []byte {
+		return s.decide(c, c.OriginalURL(), resources, func(result any) []byte {
 			return legacy.CheckResourceBulkOperationsResponse(result, entries, v2)
 		})
 	}
@@ -198,7 +199,7 @@ func (s *Server) checkFilter(originalPath string) fiber.Handler {
 		if err != nil {
 			return s.refuse(c, err)
 		}
-		return s.check(c, originalPath, resources, legacy.FilterResponse)
+		return s.filter(c, originalPath, resources[0])
 	}
 }
 
@@ -212,28 +213,6 @@ func lastQuery(c *fiber.Ctx, key string) string {
 		}
 	}
 	return value
-}
-
-// check evaluates the canonical decision for a legacy request and writes
-// the response: the body shape builds from the decision, or the authError
-// as {"message": ...} with its status when the policy refused the request.
-// An undefined decision gets the envelope without a result, and a failed
-// evaluation 500, so that both stay visible as they were through Envoy. The
-// route is recorded in the decision log as originalPath.
-func (s *Server) check(c *fiber.Ctx, originalPath string, resources []legacy.Resource, shape func(result any) []byte) error {
-	c.Request().Header.Set(originalPathHeader, originalPath)
-	input := legacy.Input(c.GetReqHeaders(), resources)
-	result, defined, id, err := s.evaluate(c, []string{"authorize"}, input)
-	if err != nil {
-		return opaError(c, http.StatusInternalServerError, "internal_error", err.Error())
-	}
-	if !defined {
-		return c.JSON(undefinedEnvelope(id))
-	}
-	if status, body, refused := legacy.AuthError(result); refused {
-		return sendJSON(c, status, body)
-	}
-	return sendJSON(c, http.StatusOK, shape(result))
 }
 
 // refuse writes a request the legacy API rejects before any policy runs:

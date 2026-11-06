@@ -36,7 +36,7 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_resource.incoming_token_used_for_subject` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.expired_authorization.401` | order-reader | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ORDER_MANAGEMENT_RO_USER (expired) |
 | `check_resource.no_token.401` | n/a | `POST /access/v1/check/resource` | ATTACHMENT | READ | none |
-| `check_resource.tenant_id_ignored` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `check_resource.unknown_tenant_id.deny` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.tenant_id_absent` | order-reader | `POST /access/v1/check/resource` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource.null_body.400` | admin | `POST /access/v1/check/resource` | - | - | ROLE_ADMINISTRATOR |
 | `check_resource.boolean_response` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
@@ -59,14 +59,14 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `check_resource_bulk.no_id_empty` | admin | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_resource_bulk.missing_type_op.400` | admin | `POST /access/v1/check/resource/bulk` | - | - | ROLE_ADMINISTRATOR |
 | `check_resource_bulk.duplicate_ids.400` | admin | `POST /access/v1/check/resource/bulk` | ORDER | READ,DELETE | ROLE_ADMINISTRATOR |
-| `check_resource_bulk.tenant_id_ignored` | order-reader | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `check_resource_bulk.unknown_tenant_id.denied` | order-reader | `POST /access/v1/check/resource/bulk` | ORDER | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_resource_bulk.wrong_address.404` | admin | `POST /access/v1/check/resource/bul` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_filter.calculation_result_present` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `check_filter.unknown_type.deny` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.deny_all_fields` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.known_resource.not_null` | order-reader | `POST /access/v1/check/filter` | ATTACHMENT | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `check_filter.missing_operation` | order-reader | `POST /access/v1/check/filter` | ATTACHMENT | - | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `check_filter.tenant_id_ignored` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
+| `check_filter.unknown_tenant_id.deny` | admin | `POST /access/v1/check/filter` | NONEXISTENT | READ | ROLE_ADMINISTRATOR |
 | `check_filter.no_token.401` | n/a | `POST /access/v1/check/filter` | ORDER | READ | none |
 | `check_filter.missing_resource_type.400` | admin | `POST /access/v1/check/filter` | - | READ | ROLE_ADMINISTRATOR |
 | `check_filter.wrong_address.404` | admin | `POST /access/v1/check/filte` | ORDER | READ | ROLE_ADMINISTRATOR |
@@ -110,13 +110,11 @@ and every catalog entry must appear in this table. Validation tests enforce bidi
 | `wildcard_access.upload_wildcard_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `wildcard_access.all_all.no_predicates` | admin | `POST /access/v1/check/filter` | ORDER | READ | ROLE_ADMINISTRATOR |
 | `wildcard_access.all_all.no_deny_reason` | admin | `POST /access/v1/check/resource` | WC_EXACT_ONLY | READ | ROLE_ADMINISTRATOR |
-| `wildcard_access.all_op.reader_delete_denied` | order-reader | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_any_op` | order-reader | `POST /access/v1/check/filter` | WC_RT_TARGET | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.rt_all.reader_other_rt_denied` | order-reader | `POST /access/v1/check/resource` | OTHER_TYPE | DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
-| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,INVOICE | DELETE,READ | ROLE_ORDER_MANAGEMENT_RO_USER |
+| `wildcard_access.mixed.partial_wildcard` | order-reader | `POST /access/v1/check/resource/bulk` | WC_RT_TARGET,OTHER_TYPE | DELETE,DELETE | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.legacy.check_resource_all_all` | admin | `POST /access/v1/check/resource` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
 | `wildcard_access.legacy.check_resource_bulk_all_all` | admin | `POST /access/v1/check/resource/bulk` | UNKNOWN_TYPE | DELETE | ROLE_ADMINISTRATOR |
-| `wildcard_access.legacy.check_filter_all_op` | order-reader | `POST /access/v1/check/filter` | UNKNOWN_TYPE | READ | ROLE_ORDER_MANAGEMENT_RO_USER |
 | `wildcard_access.restore_original_policies` | n/a | `PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}` | - | - | none |
 | `m2m_keycloak.pull_succeeds_with_keycloak_token` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |
 | `m2m_keycloak.agent_functional_after_token_refresh` | admin | `POST /access/v1/check/resource` | ATTACHMENT | READ | ROLE_ADMINISTRATOR |

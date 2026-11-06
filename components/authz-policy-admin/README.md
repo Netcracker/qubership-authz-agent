@@ -30,6 +30,41 @@ PUT  /access/v1/simplifiedPolicies/domainPIPs/{domainName}
 PUT body for policies: a JSON array of simplified-policy objects.
 PUT body for PIPs:     a JSON array of simplified-PIP objects.
 
+A PUT that access-control would refuse is answered with 400 and
+`{"error": "<reason>"}`, naming the item and the field, and stores nothing.
+The stub checks a subset of access-control's rules:
+
+- a PIP name is `subject.` followed by dot-separated attributes of letters,
+  digits, and underscores, none starting with a digit;
+- a PIP field holds the JSON shape access-control binds it to: `headers`,
+  `defaultValue`, and the other text, number, and boolean fields take no
+  array or object, so `headers` is one text of comma-separated header names,
+  and `customMapping` and `productMapping` take an object;
+- a PIP has the fields its `pipType` reads: a `url` (or a `beanName` for
+  `GENERAL`), a `resourceType` for `FILTERED`, a `claim` for `TOKEN`, a
+  `jsonPath` for `type` `JSON`; a `GENERAL` PIP calls with `GET` or `POST`, and
+  no PIP reads or forwards the `Authorization` or `Tenant` header;
+- a `${subject.<name>}` reference in a PIP names what access-control resolves:
+  only `${subject.id}` in a `url`, and a built-in subject attribute or a
+  `TOKEN` or `HEADER` PIP in a request attribute or a mapping key;
+- a policy has `component`, `resourceType`, `operation`, and non-empty
+  `roles`, an `id` that is a UUID, and `predicates` with a `mongodbPredicate`;
+- a policy `condition` is absent, `null`, a boolean, or a non-empty text that
+  the agent's condition parser accepts, and each operator in it takes the
+  operands access-control pairs with it, so `subject.x MATCH 5` and
+  `subject.roles == 'R'` are refused. With
+  `AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS` set, the condition also reads
+  only PIPs the tenant has declared.
+
+A PIP name declared twice in one upload, or in another domain of the same
+tenant, is answered with 409. An upload these checks accept may still be one
+access-control refuses.
+
+Each tenant keeps its own collections. The tenant of a request is the
+`tenant_id` query parameter, else the `Tenant` header, else `default`, so a
+PUT replaces only what the same tenant uploaded for that domain. A tenant
+other than letters, digits, dot, underscore, and dash is refused with 400.
+
 The API is **unauthenticated**.  Deploy `authz-policy-admin` only in
 development and test namespaces, never in a namespace that is reachable by
 untrusted callers.
@@ -46,7 +81,10 @@ GET  /access/v3/config/pips
 
 Both require an `Authorization` header (the bearer token that the agent holds;
 the value is not validated, only presence-checked).  They return the union of
-all domains.
+all tenants and domains, and each policy set and PIP carries the tenant that
+uploaded it in `tenantId`; the `default` tenant is exported as
+`AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID`.  An empty store exports `"policySets": []` and
+`"pips": []`.
 
 ### Health / status
 
@@ -66,6 +104,7 @@ Returns a JSON object with:
 }
 ```
 
+A domain of a tenant other than `default` is listed as `<tenant>/<domain>`.
 `hash` and `policiesHash` are the same value; `hash` is kept for callers
 written against an earlier version of the stub.  This endpoint is also used
 by the Helm chart probes and the Docker Compose health checks.
@@ -76,13 +115,18 @@ by the Helm chart probes and the Docker Compose health checks.
 | --- | --- | --- |
 | `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_POLICY_ADMIN_PORT` | `18090` | TCP port to listen on |
+| `AUTHZ_POLICY_ADMIN_DEFAULT_TENANT_ID` | `default` | `tenantId` of the `default` tenant in the v3 export. Set it to the ID the agent resolves its default tenant to |
+| `AUTHZ_POLICY_ADMIN_REQUIRE_DECLARED_PIPS` | `false` | `true` refuses a policy whose condition reads a PIP the tenant has not declared in any domain, as access-control does. The test suites upload policies before their PIPs and leave it off |
 | `AUTHZ_POLICY_ADMIN_DATA_DIR` | `` (empty) | Directory for persistence. Empty means in-memory only (data lost on restart). The Helm chart always sets this to the PVC mount path. |
 
 ## Volumes and persistence
 
 When `AUTHZ_POLICY_ADMIN_DATA_DIR` is set, policies and PIPs are persisted to
 disk so that a restart reloads the last uploaded state.  Data is stored as
-JSON files under that directory, one file per domain per collection.
+JSON files under that directory, one file per tenant, domain, and collection:
+`policies-<domain>.json` for the `default` tenant and
+`policies-<tenant>@<domain>.json` for another tenant, and the same with the
+`pips-` prefix.
 
 In the Helm chart:
 

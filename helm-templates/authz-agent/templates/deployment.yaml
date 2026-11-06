@@ -189,10 +189,6 @@ spec:
             {{- end }}
             - name: AUTHZ_ENTITLEMENTS_URL
               value: '{{ .Values.AUTHZ_ENTITLEMENTS_URL }}'
-            - name: AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT }}'
-            - name: AUTHZ_ENTITLEMENTS_HTTP_RETRIES
-              value: '{{ .Values.AUTHZ_ENTITLEMENTS_HTTP_RETRIES }}'
             - name: AUTHZ_DECISION_LOG_FILE
               value: '{{ printf "%s/decision-logs.jsonl" (trimSuffix "/" .Values.AUTHZ_DECISION_LOG_PATH) }}'
             - name: AUTHZ_DECISION_LOG_HEADERS
@@ -213,7 +209,7 @@ spec:
               readOnly: true
             {{- end }}
           # /health answers once the trusted providers meet the bootstrap
-          # rules, and /ready once the policies have loaded as well, so a Pod
+          # rules, and /ready once every tenant has a snapshot as well, so a Pod
           # waiting for its policy source is held out of the Service instead
           # of being restarted.
           readinessProbe:

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -34,6 +35,14 @@ const maxBodyBytes = 10 << 20
 // namespaces.
 type server struct {
 	st *store
+	// defaultTenantID is the tenantId of the default tenant in the export.
+	defaultTenantID string
+	// requireDeclaredPIPs refuses a policy whose condition reads a PIP that
+	// the tenant has not declared yet, as access-control does.
+	requireDeclaredPIPs bool
+	// uploads serializes the uploads, so that the checks of one read what the
+	// tenant declared before it and no other upload commits in between.
+	uploads sync.Mutex
 }
 
 func (s *server) routes(mux *http.ServeMux) {
@@ -63,15 +72,15 @@ func (s *server) routes(mux *http.ServeMux) {
 // ── Simplified-policy API ─────────────────────────────────────────────────────
 
 func (s *server) handleGetDomainPolicies(w http.ResponseWriter, r *http.Request) {
-	domain, ok := pathDomain(w, r)
+	tenant, domain, ok := requestScope(w, r)
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, s.st.DomainPolicies(domain))
+	writeJSON(w, http.StatusOK, s.st.DomainPolicies(tenant, domain))
 }
 
 func (s *server) handlePutDomainPolicies(w http.ResponseWriter, r *http.Request) {
-	domain, ok := pathDomain(w, r)
+	tenant, domain, ok := requestScope(w, r)
 	if !ok {
 		return
 	}
@@ -79,16 +88,33 @@ func (s *server) handlePutDomainPolicies(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
+	s.uploads.Lock()
+	defer s.uploads.Unlock()
+	objects, err := decodeUpload(raw)
+	if err == nil {
+		var declared map[string]bool
+		if s.requireDeclaredPIPs {
+			declared = s.st.TenantPIPNames(tenant)
+		}
+		if why := validatePolicies(objects, declared); why != nil {
+			writeJSON(w, why.status, map[string]string{"error": why.reason})
+			return
+		}
+		raw, err = coerceTexts(raw, objects, policyTexts, false)
+	}
 	var items []simplifiedPolicy
-	if err := json.Unmarshal(raw, &items); err != nil {
+	if err == nil {
+		err = json.Unmarshal(raw, &items)
+	}
+	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
-	if err := s.st.SetDomainPolicies(domain, items, raw); err != nil {
+	if err := s.st.SetDomainPolicies(tenant, domain, items, raw); err != nil {
 		// The upload did not reach disk, so it is not committed in memory
 		// either. Telling the caller beats a 200 that quietly evaporates on
 		// the next restart.
-		logger.Errorf("policy upload for domain %q rejected: %v", domain, err)
+		logger.Errorf("policy upload of tenant %q for domain %q rejected: %v", tenant, domain, err)
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -100,15 +126,15 @@ func (s *server) handlePutDomainPolicies(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *server) handleGetDomainPIPs(w http.ResponseWriter, r *http.Request) {
-	domain, ok := pathDomain(w, r)
+	tenant, domain, ok := requestScope(w, r)
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, s.st.DomainPIPs(domain))
+	writeJSON(w, http.StatusOK, s.st.DomainPIPs(tenant, domain))
 }
 
 func (s *server) handlePutDomainPIPs(w http.ResponseWriter, r *http.Request) {
-	domain, ok := pathDomain(w, r)
+	tenant, domain, ok := requestScope(w, r)
 	if !ok {
 		return
 	}
@@ -116,13 +142,27 @@ func (s *server) handlePutDomainPIPs(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	s.uploads.Lock()
+	defer s.uploads.Unlock()
+	objects, err := decodeUpload(raw)
+	if err == nil {
+		trimmed := trimPIPEnums(objects)
+		if why := validatePIPs(objects, domain, s.st.TenantPIPs(tenant)); why != nil {
+			writeJSON(w, why.status, map[string]string{"error": why.reason})
+			return
+		}
+		raw, err = coerceTexts(raw, objects, pipTexts, trimmed)
+	}
 	var items []simplifiedPIP
-	if err := json.Unmarshal(raw, &items); err != nil {
+	if err == nil {
+		err = json.Unmarshal(raw, &items)
+	}
+	if err != nil {
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusBadRequest)
 		return
 	}
-	if err := s.st.SetDomainPIPs(domain, items, raw); err != nil {
-		logger.Errorf("PIP upload for domain %q rejected: %v", domain, err)
+	if err := s.st.SetDomainPIPs(tenant, domain, items, raw); err != nil {
+		logger.Errorf("PIP upload of tenant %q for domain %q rejected: %v", tenant, domain, err)
 		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
@@ -144,7 +184,7 @@ func (s *server) handleV3PolicySets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, v3PolicySetsResponse{
 		Hash:                      hash,
 		LastModificationTimestamp: timestamp(),
-		PolicySets:                toV3PolicySets(policies),
+		PolicySets:                toV3PolicySets(policies, s.defaultTenantID),
 	})
 }
 
@@ -157,7 +197,7 @@ func (s *server) handleV3PIPs(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, v3PIPsResponse{
 		Hash:                      hash,
 		LastModificationTimestamp: timestamp(),
-		PIPs:                      toV3PIPs(pips),
+		PIPs:                      toV3PIPs(pips, s.defaultTenantID),
 	})
 }
 
@@ -199,6 +239,28 @@ func pathDomain(w http.ResponseWriter, r *http.Request) (string, bool) {
 		return "", false
 	}
 	return domain, true
+}
+
+// requestScope returns the tenant and the domain of a simplified-API request.
+// The tenant is the tenant_id query parameter, else the Tenant header, else
+// the default tenant, the order access-control reads them in.
+func requestScope(w http.ResponseWriter, r *http.Request) (tenant, domain string, ok bool) {
+	domain, ok = pathDomain(w, r)
+	if !ok {
+		return "", "", false
+	}
+	tenant = r.URL.Query().Get("tenant_id")
+	if tenant == "" {
+		tenant = r.Header.Get("Tenant")
+	}
+	if tenant == "" {
+		tenant = defaultTenant
+	}
+	if !validDomain(tenant) {
+		http.Error(w, `{"error":"invalid tenant: allowed characters are letters, digits, dot, underscore and dash"}`, http.StatusBadRequest)
+		return "", "", false
+	}
+	return tenant, domain, true
 }
 
 func readBody(w http.ResponseWriter, r *http.Request) ([]byte, bool) {

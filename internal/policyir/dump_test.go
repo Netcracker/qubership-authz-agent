@@ -65,7 +65,7 @@ func TestTreeDump(t *testing.T) {
 							{Access{Operation: "EDIT"}, Access{Denied: true, Operation: "DELETE"}},
 							{
 								Compare{Op: OpEQ, Left: PIPRef{Name: "subject.region.code"}, Right: PassValue{Var: "v", Key: "region"}},
-								Compare{Op: OpEQ, Left: Subject{Attr: SubjectID}, Right: Unsupported{Form: FormJSONPath, Text: "resource.a[:]"}},
+								Compare{Op: OpEQ, Left: Subject{Attr: SubjectID}, Right: Unsupported{Form: FormJSONPath, Text: "resource.a[0:2:1]"}},
 								Compare{Op: OpContains, Left: Bool{Value: true}, Right: PIPRef{Name: "subject.owners.filtered", Filtered: true}},
 							},
 							{
@@ -104,7 +104,7 @@ set "s1" name="orders" domain="d" algorithm=DENY_OVERRIDES
   policy "p1" name="P" algorithm=absent
     rule "r1" name="R" effect=ALLOW
       target[rule_target]: operation IN ["READ", "EDIT"] raw="'READ','EDIT'"
-      condition[rule_condition]: resource.amount GE 12.30 AND subject.roles IS_NOT_EMPTY OR subject allowed "EDIT" on resource AND subject denied "DELETE" on resource OR pip("subject.region.code") EQ pass("v")["region"] AND subject.id EQ unsupported(jsonpath "resource.a[:]") AND true CONTAINS pip("subject.owners.filtered") FILTERED "" OR resource['path'] NOT_MATCH pattern("/api/*") AND subject.entitledResources.of("order").as["id", "owner"] IS_SUBSET resource.null AND unsupported(jsonpath "x.y")
+      condition[rule_condition]: resource.amount GE 12.30 AND subject.roles IS_NOT_EMPTY OR subject allowed "EDIT" on resource AND subject denied "DELETE" on resource OR pip("subject.region.code") EQ pass("v")["region"] AND subject.id EQ unsupported(jsonpath "resource.a[0:2:1]") AND true CONTAINS pip("subject.owners.filtered") FILTERED "" OR resource['path'] NOT_MATCH pattern("/api/*") AND subject.entitledResources.of("order").as["id", "owner"] IS_SUBSET resource.null AND unsupported(jsonpath "x.y")
       predicate rsql "r==1"
       predicate sql "r = 1"
       predicate mongodb "{\"r\": 1}"
@@ -138,6 +138,41 @@ func TestFormatOperandQuotesAPathOutsidePrintableASCII(t *testing.T) {
 			t.Parallel()
 			if got := FormatOperand(Resource{Path: tc.path}); got != tc.want {
 				t.Errorf("FormatOperand(Resource{Path: %q}) = %s, want %s", tc.path, got, tc.want)
+			}
+		})
+	}
+}
+
+// FormatConditionBrief leaves out the raw token of a list only where the
+// token is the items written back as a policy writes them, with ", " between
+// them; any other spelling stays, because it may decide a comparison.
+func TestFormatConditionBriefKeepsOnlyARawTokenThatDiffersFromTheItems(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		raw   string
+		items []Literal
+		want  string
+	}{
+		{"strings in single quotes", "'a', 'b'", []Literal{String{Value: "a"}, String{Value: "b"}},
+			`resource.x IN ["a", "b"]`},
+		{"numbers", "1, 2.50", []Literal{Number{Text: "1"}, Number{Text: "2.50"}}, `resource.x IN [1, 2.50]`},
+		{"no space after the comma", "'a','b'", []Literal{String{Value: "a"}, String{Value: "b"}},
+			`resource.x IN ["a", "b"] raw="'a','b'"`},
+		{"double quotes", `"a", "b"`, []Literal{String{Value: "a"}, String{Value: "b"}},
+			`resource.x IN ["a", "b"] raw="\"a\", \"b\""`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			list, err := NewList(tc.raw, tc.items...)
+			if err != nil {
+				t.Fatalf("NewList(%q): %v", tc.raw, err)
+			}
+			cond := &Condition{Disjuncts: [][]Atom{{Compare{Op: OpIn, Left: Resource{Path: ".x"}, Right: list}}}}
+			if got := FormatConditionBrief(cond); got != tc.want {
+				t.Errorf("FormatConditionBrief(IN, raw %q) = %s, want %s", tc.raw, got, tc.want)
 			}
 		})
 	}

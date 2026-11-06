@@ -21,6 +21,7 @@ import (
 	"authz-agent/components/authz-agent/internal/authn"
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
+	"authz-agent/internal/regobuiltins"
 )
 
 func fromMap(values map[string]string) lookup {
@@ -125,14 +126,22 @@ func TestLoadConfig_MalformedNumbersKeepTheDefaults(t *testing.T) {
 	}
 }
 
-// TestLoadConfig_NDBuiltinCache: the builtin calls are recorded unless the
-// environment turns the cache off, since a decision log without them cannot
-// say which PIP answers the decision rests on.
-func TestLoadConfig_NDBuiltinCache(t *testing.T) {
-	if cfg := loadConfig(fromMap(nil)); !cfg.NDBuiltinCache {
-		t.Error("the builtin calls must be recorded by default")
+// TestLoadConfig_DecisionPath: the default tenant, the timeout of a PIP
+// call, and the entitlements service, each by default and from the
+// environment.
+func TestLoadConfig_DecisionPath(t *testing.T) {
+	cfg := loadConfig(fromMap(map[string]string{}))
+	if cfg.DefaultTenant != "default" || cfg.PIPTimeout != regobuiltins.DefaultTimeout || cfg.EntitlementsURL != "" {
+		t.Errorf("defaults: tenant %q, timeout %v, entitlements %q; want default, %v, none",
+			cfg.DefaultTenant, cfg.PIPTimeout, cfg.EntitlementsURL, regobuiltins.DefaultTimeout)
 	}
-	if cfg := loadConfig(fromMap(map[string]string{"authz.nd.builtin.cache": "false"})); cfg.NDBuiltinCache {
-		t.Error("authz.nd.builtin.cache=false must stop the recording")
+	cfg = loadConfig(fromMap(map[string]string{
+		"authz.default.tenant":   " acme ",
+		"authz.pip.timeout":      "5",
+		"authz.entitlements.url": " http://ent:8080 ",
+	}))
+	if cfg.DefaultTenant != "acme" || cfg.PIPTimeout != 5*time.Second || cfg.EntitlementsURL != "http://ent:8080" {
+		t.Errorf("from env: tenant %q, timeout %v, entitlements %q; want acme, 5s, http://ent:8080",
+			cfg.DefaultTenant, cfg.PIPTimeout, cfg.EntitlementsURL)
 	}
 }

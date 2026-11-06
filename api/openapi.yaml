@@ -55,9 +55,8 @@ paths:
       summary: Legacy v1 OLS single-resource check.
       description: |
         Returns a JSON boolean literal (`true` or `false`) reflecting the
-        OLS decision for a single `(type, operation, resource)`. The
-        `tenant_id` query parameter is accepted for legacy thin-client
-        compatibility but does not influence the decision.
+        OLS decision for a single `(type, operation, resource)` in the
+        tenant that `tenant_id` names.
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
@@ -295,8 +294,8 @@ paths:
         Driven entirely by query parameters (`resourceType`, `operation`);
         the JSON body is reserved for legacy back-compat and must be
         present but is unused. Always returns the six-field
-        `CheckFilterResponse` shape on `200`. `customFilterCondition` is
-        JSON `null` on the simplified-policy path.
+        `CheckFilterResponse` shape on `200`; a field of a dialect without
+        a predicate is JSON `null`.
       parameters:
         - $ref: '#/components/parameters/IncomingTokenHeader'
         - $ref: '#/components/parameters/AuthorizationTypeHeader'
@@ -699,7 +698,11 @@ components:
       name: tenant_id
       in: query
       required: false
-      description: Accepted for legacy thin-client compatibility; does not influence the decision.
+      description: |
+        ID of the tenant whose policies decide the request. Without it the
+        `Tenant` header names the tenant, and without both the agent's
+        default tenant decides. A tenant with no published policies denies
+        the request.
       schema:
         type: string
     ObligationsQuery:
@@ -821,17 +824,30 @@ components:
           enum: [ALLOW, DENY, USE_FILTER_CONDITION]
         filterCondition:
           type: string
-          description: Always empty on the simplified-policy path.
+          nullable: true
+          description: The condition in QueryDSL; `null` without a QueryDSL predicate.
         mongodbFilterCondition:
           type: string
+          nullable: true
+          description: The condition in MongoDB; `null` without a MongoDB predicate.
         rsqlFilterCondition:
           type: string
+          nullable: true
+          description: The condition in RSQL; `null` without an RSQL predicate.
         sqlFilterCondition:
           type: string
-        customFilterCondition:
-          type: string
           nullable: true
-          description: JSON `null` on the simplified-policy path; populated only by legacy full-policy custom-condition payloads.
+          description: The condition in SQL; `null` without an SQL predicate.
+        customFilterCondition:
+          type: object
+          nullable: true
+          description: The custom predicates as `logic`, joined by `AND`, `OR` and `NOT`, and their `data`; `null` without a custom predicate.
+          required: [logic, data]
+          properties:
+            logic: {}
+            data:
+              type: object
+              additionalProperties: true
     ApiVersionResponse:
       type: object
       additionalProperties: false
@@ -864,8 +880,8 @@ components:
         status:
           type: string
           enum: [healthy]
-        policyConversion:
-          $ref: '#/components/schemas/PolicyConversionStats'
+        snapshots:
+          $ref: '#/components/schemas/SnapshotsHealth'
     HealthUnhealthyResponse:
       type: object
       additionalProperties: false
@@ -900,49 +916,92 @@ components:
             than silently clearing thresholds.
         bootstrap:
           $ref: '#/components/schemas/BootstrapHealthDetails'
-        policyConversion:
-          $ref: '#/components/schemas/PolicyConversionStats'
-    PolicyConversionStats:
+        snapshots:
+          $ref: '#/components/schemas/SnapshotsHealth'
+    SnapshotsHealth:
       type: object
       additionalProperties: false
-      required: [policySets, policySetsSkipped, rules, rulesSkipped, rulesDenySkipped, policies]
+      required: [tenants]
       description: |
-        Counts from the most recent conversion of the access-control policy
-        set into the OPA document. Present only after the first successful pull.
-
-        The skipped counters are the load-bearing part. A pull that fetched
-        1294 policy sets and converted none of them succeeds by every other
-        measure — `status: healthy` and `policiesLoaded: true` both hold —
-        and from the outside it looks like an authorization outage, because
-        every decision denies. These counts are what distinguishes the two,
-        for an operator reading the body and for monitoring scraping it.
-
-        Readiness is deliberately NOT gated on them: a partial data problem
-        must not turn into an outage.
+        State of the policies generated for each tenant of the last export.
       properties:
-        policySets:
-          type: integer
-          description: Policy sets present in the fetched payload.
-        policySetsSkipped:
-          type: integer
+        loadedAt:
+          type: string
+          description: Time of the last completed load; absent before one.
+        tenants:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantSnapshotHealth'
+        orphans:
+          type: array
+          items:
+            type: string
+          description: Elements of the export that name no tenant.
+    TenantSnapshotHealth:
+      type: object
+      additionalProperties: false
+      required: [tenant, ready]
+      properties:
+        tenant:
+          type: string
+        ready:
+          type: boolean
           description: |
-            Policy sets from which no rule could be converted. Non-zero means
-            part of the authorization model is missing from OPA.
-        rules:
-          type: integer
-          description: Rules converted into the OPA document.
-        rulesSkipped:
-          type: integer
+            Whether the tenant has a published snapshot. A tenant that is
+            not ready denies every request.
+        snapshot:
+          type: string
+        publishedAt:
+          type: string
+        failures:
+          type: array
           description: |
-            Rules dropped because their target did not parse. Fail-closed:
-            an unrecognised role target skips the policy rather than granting
-            open access.
-        rulesDenySkipped:
-          type: integer
-          description: DENY-effect rules skipped; the converter emits ALLOW rules only.
-        policies:
-          type: integer
-          description: Simplified policies produced by the conversion.
+            Parts of the published snapshot that answer as a failed source;
+            the rest of the tenant is served.
+          items:
+            type: object
+            additionalProperties: false
+            required: [reason]
+            properties:
+              set:
+                type: string
+              pip:
+                type: string
+              reason:
+                type: string
+        rejected:
+          type: object
+          additionalProperties: false
+          required: [at, stage, reason]
+          description: |
+            Why the tenant's latest candidate was not published; absent when
+            the published snapshot is the latest candidate.
+          properties:
+            at:
+              type: string
+            stage:
+              type: string
+              enum: [export, unsupported, generate, compile]
+            reason:
+              type: string
+            forms:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [where, form, text]
+                properties:
+                  where:
+                    type: string
+                  form:
+                    type: string
+                  text:
+                    type: string
+        dropped:
+          type: array
+          items:
+            type: string
+          description: What the tenant's tree leaves out of the export.
     BootstrapHealthDetails:
       type: object
       additionalProperties: false

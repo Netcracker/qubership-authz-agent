@@ -57,7 +57,7 @@ var Catalog = []StepEntry{
 	{"check_resource.incoming_token_used_for_subject", userOrderReader, epCheckResource, "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_resource.expired_authorization.401", userOrderReader, epCheckResource, "ATTACHMENT", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER (expired)"},
 	{"check_resource.no_token.401", "n/a", epCheckResource, "ATTACHMENT", "READ", "none"},
-	{"check_resource.tenant_id_ignored", userOrderReader, epCheckResource, "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"check_resource.unknown_tenant_id.deny", userOrderReader, epCheckResource, "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_resource.tenant_id_absent", userOrderReader, epCheckResource, "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_resource.null_body.400", "admin", epCheckResource, "-", "-", "ROLE_ADMINISTRATOR"},
 	{"check_resource.boolean_response", "admin", epCheckResource, "ATTACHMENT", "READ", "ROLE_ADMINISTRATOR"},
@@ -82,7 +82,7 @@ var Catalog = []StepEntry{
 	{"check_resource_bulk.no_id_empty", "admin", epCheckResourceBulk, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_resource_bulk.missing_type_op.400", "admin", epCheckResourceBulk, "-", "-", "ROLE_ADMINISTRATOR"},
 	{"check_resource_bulk.duplicate_ids.400", "admin", epCheckResourceBulk, "ORDER", "READ,DELETE", "ROLE_ADMINISTRATOR"},
-	{"check_resource_bulk.tenant_id_ignored", userOrderReader, epCheckResourceBulk, "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"check_resource_bulk.unknown_tenant_id.denied", userOrderReader, epCheckResourceBulk, "ORDER", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_resource_bulk.wrong_address.404", "admin", "POST /access/v1/check/resource/bul", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 
 	// ── check_filter ─────────────────────────────────────────────────────
@@ -91,7 +91,7 @@ var Catalog = []StepEntry{
 	{"check_filter.deny_all_fields", "admin", epCheckFilter, "NONEXISTENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.known_resource.not_null", userOrderReader, epCheckFilter, "ATTACHMENT", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"check_filter.missing_operation", userOrderReader, epCheckFilter, "ATTACHMENT", "-", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"check_filter.tenant_id_ignored", "admin", epCheckFilter, "NONEXISTENT", "READ", "ROLE_ADMINISTRATOR"},
+	{"check_filter.unknown_tenant_id.deny", "admin", epCheckFilter, "NONEXISTENT", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.no_token.401", "n/a", epCheckFilter, "ORDER", "READ", "none"},
 	{"check_filter.missing_resource_type.400", "admin", epCheckFilter, "-", "READ", "ROLE_ADMINISTRATOR"},
 	{"check_filter.wrong_address.404", "admin", "POST /access/v1/check/filte", "ORDER", "READ", "ROLE_ADMINISTRATOR"},
@@ -160,13 +160,11 @@ var Catalog = []StepEntry{
 	{"wildcard_access.upload_wildcard_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
 	{"wildcard_access.all_all.no_predicates", "admin", epCheckFilter, "ORDER", "READ", "ROLE_ADMINISTRATOR"},
 	{"wildcard_access.all_all.no_deny_reason", "admin", epCheckResource, "WC_EXACT_ONLY", "READ", "ROLE_ADMINISTRATOR"},
-	{"wildcard_access.all_op.reader_delete_denied", userOrderReader, epCheckResource, "UNKNOWN_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.rt_all.reader_any_op", userOrderReader, epCheckFilter, "WC_RT_TARGET", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.rt_all.reader_other_rt_denied", userOrderReader, epCheckResource, "OTHER_TYPE", "DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
-	{"wildcard_access.mixed.partial_wildcard", userOrderReader, epCheckResourceBulk, "WC_RT_TARGET,INVOICE", "DELETE,READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
+	{"wildcard_access.mixed.partial_wildcard", userOrderReader, epCheckResourceBulk, "WC_RT_TARGET,OTHER_TYPE", "DELETE,DELETE", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.legacy.check_resource_all_all", "admin", epCheckResource, "UNKNOWN_TYPE", "DELETE", "ROLE_ADMINISTRATOR"},
 	{"wildcard_access.legacy.check_resource_bulk_all_all", "admin", epCheckResourceBulk, "UNKNOWN_TYPE", "DELETE", "ROLE_ADMINISTRATOR"},
-	{"wildcard_access.legacy.check_filter_all_op", userOrderReader, epCheckFilter, "UNKNOWN_TYPE", "READ", "ROLE_ORDER_MANAGEMENT_RO_USER"},
 	{"wildcard_access.restore_original_policies", "n/a", "PUT /access/v1/simplifiedPolicies/domainPolicies/{domain}", "-", "-", "none"},
 
 	// ── m2m_keycloak ────────────────────────────────────────────────────

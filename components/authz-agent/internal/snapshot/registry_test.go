@@ -1,0 +1,487 @@
+// Copyright 2024-2026 Netcracker Technology Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package snapshot
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
+	"strings"
+	"sync/atomic"
+	"testing"
+
+	"authz-agent/internal/jsonvalue"
+	"authz-agent/internal/regobuiltins"
+	"authz-agent/internal/regogen"
+	"authz-agent/internal/regogen/spectables"
+)
+
+type quiet struct{}
+
+func (quiet) Infof(string, ...any) {}
+func (quiet) Warnf(string, ...any) {}
+
+var table *spectables.Table
+
+func tab(t *testing.T) *spectables.Table {
+	t.Helper()
+	if table == nil {
+		var err error
+		if table, err = regogen.DefaultTable(); err != nil {
+			t.Fatalf("DefaultTable: %v", err)
+		}
+	}
+	return table
+}
+
+// set is a policy set of tenant whose one rule allows the operation read on
+// the resource type doc where condition holds.
+func set(tenant, condition string) string {
+	return fmt.Sprintf(`{"policySetId": "s-%[1]s", "name": "s", "status": "ACTIVE", "tenantId": %[1]q,
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": %[1]q, "rules": [{"ruleId": "r", "target": "operation == 'read'",
+				"condition": %[2]q, "effect": "ALLOW", "tenantId": %[1]q}]}]}`, tenant, condition)
+}
+
+// documents are the v3 policy-sets and PIPs documents of sets and pips.
+func documents(pips string, sets ...string) (policySets, pipsDoc []byte) {
+	return []byte(`{"policySets": [` + strings.Join(sets, ",") + `]}`), []byte(`{"pips": [` + pips + `]}`)
+}
+
+// loadSnapshots is [Registry.LoadSnapshots] of sets, with no PIP.
+func loadSnapshots(r *Registry, sets ...string) error {
+	policySets, pips := documents(``, sets...)
+	return r.LoadSnapshots(context.Background(), policySets, pips)
+}
+
+func load(t *testing.T, r *Registry, pips string, sets ...string) LoadSummary {
+	t.Helper()
+	policySets, pipsDoc := documents(pips, sets...)
+	sum, err := r.Load(context.Background(), policySets, pipsDoc)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	return sum
+}
+
+// readDoc is a request of the user u1 to read a doc whose member a is a.
+func readDoc(t *testing.T, tenant, a string, items int) Request {
+	t.Helper()
+	return readDocAs(t, "u1", tenant, a, items)
+}
+
+// readDocAs is readDoc of the user sub.
+func readDocAs(t *testing.T, sub, tenant, a string, items int) Request {
+	t.Helper()
+	claims, err := jsonvalue.Decode([]byte(`{"sub": "` + sub + `", "preferred_username": "alice",
+		"realm_access": {"roles": ["R"]}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := Request{Tenant: tenant, Claims: claims.(*jsonvalue.Object), Headers: map[string]string{}}
+	for range items {
+		req.Items = append(req.Items, regogen.Body{Operation: "read", ResourceType: "doc",
+			Resource: mustObject(t, `{"a": "`+a+`"}`), HasResource: true})
+	}
+	return req
+}
+
+func mustObject(t *testing.T, s string) jsonvalue.Value {
+	t.Helper()
+	v, err := jsonvalue.Decode([]byte(s))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return v
+}
+
+func decide(t *testing.T, r *Registry, req Request) []Result {
+	t.Helper()
+	got, err := r.Decide(context.Background(), req)
+	if err != nil {
+		t.Fatalf("Decide(%s): %v", req.Tenant, err)
+	}
+	return got
+}
+
+func tenantHealth(r *Registry, tenant string) (TenantHealth, bool) {
+	for _, th := range r.Health().Tenants {
+		if th.Tenant == tenant {
+			return th, true
+		}
+	}
+	return TenantHealth{}, false
+}
+
+// A tenant is decided by the sets that carry its tenantId alone: a set of
+// tenant a that allows every doc allows nothing in tenant b, and a tenant
+// the export does not name denies with the reason that names it.
+func TestEachTenantIsDecidedByItsOwnPolicies(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, set("a", "true"), set("b", "resource.a == 'x'"))
+
+	for _, tc := range []struct {
+		tenant, a string
+		want      Result
+	}{
+		{"a", "y", Result{Allowed: true}},
+		{"b", "y", Result{Reason: ReasonDenied}},
+		{"b", "x", Result{Allowed: true}},
+		{"c", "x", Result{Reason: "no policies are published for tenant c"}},
+	} {
+		if got := decide(t, r, readDoc(t, tc.tenant, tc.a, 1)); got[0] != tc.want {
+			t.Errorf("Decide(tenant %s, a=%s) = %+v, want %+v", tc.tenant, tc.a, got[0], tc.want)
+		}
+	}
+}
+
+// broken is a condition the agent's parser refuses, which rejects the
+// candidate of its tenant as a whole.
+const broken = "resource.a =="
+
+// A tenant whose new candidate is refused keeps answering from its previous
+// snapshot and names the refusal in its health, while another tenant of the
+// same load is published.
+func TestARefusedCandidateKeepsThePreviousSnapshot(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, set("a", "true"), set("b", "resource.a == 'x'"))
+	sum := load(t, r, ``, set("a", broken), set("b", "true"))
+
+	if sum.Rejected != 1 || sum.Generated != 1 {
+		t.Errorf("Load summary = %+v, want 1 refused and 1 generated", sum)
+	}
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(tenant a) = %+v, want allowed by the previous snapshot", got[0])
+	}
+	if got := decide(t, r, readDoc(t, "b", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(tenant b) = %+v, want allowed by the new snapshot", got[0])
+	}
+	th, _ := tenantHealth(r, "a")
+	if !th.Ready || th.Rejected == nil || th.Rejected.Stage != "unsupported" || len(th.Rejected.Forms) == 0 {
+		t.Errorf("health of a = %+v, want ready with a refusal at stage unsupported naming the form", th)
+	}
+}
+
+// On its first load a refused tenant has no snapshot: it is not ready and
+// denies every request, and the other tenants are served.
+func TestATenantRefusedOnItsFirstLoadIsNotServed(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, set("a", broken), set("b", "true"))
+
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); got[0].Allowed || got[0].Reason != "no policies are published for tenant a" {
+		t.Errorf("Decide(tenant a) = %+v, want denied as unpublished", got[0])
+	}
+	if got := decide(t, r, readDoc(t, "b", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide(tenant b) = %+v, want allowed", got[0])
+	}
+	if th, _ := tenantHealth(r, "a"); th.Ready || th.Rejected == nil {
+		t.Errorf("health of a = %+v, want not ready with the refusal", th)
+	}
+}
+
+// LoadSnapshots fails with a *RefusedError for as long as a tenant's latest
+// candidate is refused: on the load that refuses it, on a load of the same
+// documents, and on a load that changes only another tenant. The load that
+// publishes the tenant's new tree succeeds.
+func TestLoadSnapshotsFailsWhileACandidateIsRefused(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	if err := loadSnapshots(r, set("a", "true"), set("b", "true")); err != nil {
+		t.Fatalf("LoadSnapshots of two valid tenants = %v, want nil", err)
+	}
+	steps := []struct {
+		name string
+		sets []string
+	}{
+		{"the refusing load", []string{set("a", broken), set("b", "true")}},
+		{"the same documents again", []string{set("a", broken), set("b", "true")}},
+		{"a change to another tenant", []string{set("a", broken), set("b", "resource.a == 'x'")}},
+	}
+	for _, step := range steps {
+		err := loadSnapshots(r, step.sets...)
+		var refused *RefusedError
+		if !errors.As(err, &refused) {
+			t.Errorf("LoadSnapshots after %s = %v, want a *RefusedError", step.name, err)
+			continue
+		}
+		if len(refused.Tenants) != 1 || refused.Tenants[0].Tenant != "a" || !refused.Tenants[0].Served ||
+			refused.Tenants[0].Stage != "unsupported" {
+			t.Errorf("LoadSnapshots after %s refused %+v, want tenant a served by its previous snapshot at stage unsupported",
+				step.name, refused.Tenants)
+		}
+		if !strings.Contains(err.Error(), "tenant a: candidate snapshot refused, the previous snapshot stays: unsupported: ") {
+			t.Errorf("LoadSnapshots after %s = %q, want the tenant, what it keeps, and the stage", step.name, err)
+		}
+		if got := refused.Unserved(); got != nil {
+			t.Errorf("Unserved() after %s = %q, want none: tenant a keeps its previous snapshot", step.name, got)
+		}
+	}
+	if err := loadSnapshots(r, set("a", "true"), set("b", "true")); err != nil {
+		t.Errorf("LoadSnapshots after tenant a is repaired = %v, want nil", err)
+	}
+}
+
+// A tenant refused on its first load is named as not served.
+func TestLoadSnapshotsNamesARefusedTenantWithNoSnapshotAsNotServed(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+
+	err := loadSnapshots(r, set("a", broken), set("b", "true"))
+
+	var refused *RefusedError
+	if !errors.As(err, &refused) || len(refused.Tenants) != 1 || refused.Tenants[0].Served {
+		t.Fatalf("LoadSnapshots = %v, want a *RefusedError naming tenant a as not served", err)
+	}
+	if !strings.Contains(err.Error(), "tenant a: candidate snapshot refused, the tenant is not served: ") {
+		t.Errorf("LoadSnapshots = %q, want the tenant and that it is not served", err)
+	}
+	if got := refused.Unserved(); !reflect.DeepEqual(got, []string{"a"}) {
+		t.Errorf("Unserved() = %q, want [a]", got)
+	}
+	if _, ok := r.Snapshot("b"); !ok {
+		t.Error("tenant b has no snapshot, want it published beside the refusal")
+	}
+}
+
+// Refused tenants are named in the order of their IDs, and a load of the
+// same documents, which the registry skips, names them with the same text.
+// The pull reports a refusal only when its text changes, so a text that
+// differed between the two loads would be reported on every pull.
+func TestLoadSnapshotsNamesRefusedTenantsInOrderAcrossLoads(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	first := loadSnapshots(r, set("b", broken), set("c", "true"), set("a", broken))
+	second := loadSnapshots(r, set("b", broken), set("c", "true"), set("a", broken))
+
+	var refused *RefusedError
+	if !errors.As(first, &refused) {
+		t.Fatalf("LoadSnapshots = %v, want a *RefusedError", first)
+	}
+	var tenants []string
+	for _, tr := range refused.Tenants {
+		tenants = append(tenants, tr.Tenant)
+	}
+	if !reflect.DeepEqual(tenants, []string{"a", "b"}) {
+		t.Errorf("refused tenants = %q, want [a b]", tenants)
+	}
+	if second == nil || second.Error() != first.Error() {
+		t.Errorf("LoadSnapshots of the same documents =\n%v\nwant\n%v", second, first)
+	}
+}
+
+// A load in which a tenant's tree is unchanged keeps the tenant's snapshot
+// as it was, and an unchanged refused tree is neither generated nor counted
+// as refused again.
+func TestAnUnchangedTreeIsNotGeneratedAgain(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, ``, set("a", "true"), set("b", broken))
+	before, _ := r.Snapshot("a")
+	sum := load(t, r, ``, set("a", "true"), set("b", broken), set("c", "true"))
+
+	if after, _ := r.Snapshot("a"); after != before {
+		t.Errorf("snapshot of a after an unchanged load = %p, want the same %p", after, before)
+	}
+	if sum.Kept != 1 || sum.Generated != 1 || sum.Rejected != 0 {
+		t.Errorf("Load summary = %+v, want a kept, c generated, and b not refused again", sum)
+	}
+}
+
+// pipServer answers every call with body and counts the calls.
+func pipServer(t *testing.T, status int, body string) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var calls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(status)
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(srv.Close)
+	return srv, &calls
+}
+
+func pipRegistry(t *testing.T) *Registry {
+	t.Helper()
+	return New(Config{HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+}
+
+func generalPIP(url, cacheable string) string {
+	return `{"tenantId": "a", "name": "subject.g", "pipType": "GENERAL", "url": "` + url +
+		`", "httpMethod": "GET"` + cacheable + `}`
+}
+
+// The items of one bulk request share one call of the PIP, and the next
+// decision request calls it again, though the PIP declares itself
+// cacheable: no answer outlives its decision request.
+func TestTheItemsOfABulkRequestShareOneCall(t *testing.T) {
+	srv, calls := pipServer(t, http.StatusOK, `["x"]`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, `, "cacheable": true`), set("a", "subject.g == 'x'"))
+
+	decide(t, r, readDoc(t, "a", "y", 5))
+	if n := calls.Load(); n != 1 {
+		t.Errorf("calls of the PIP for a bulk of 5 = %d, want 1", n)
+	}
+	decide(t, r, readDoc(t, "a", "y", 1))
+	if n := calls.Load(); n != 2 {
+		t.Errorf("calls of the PIP after the next request = %d, want 2", n)
+	}
+}
+
+// A panic while an item of a bulk request is evaluated on a worker reaches
+// the caller of Decide, whose goroutine the server recovers, instead of
+// ending the process on the worker.
+func TestAPanicInABulkItemReachesTheCaller(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["x"]`)
+	r := New(Config{BulkWorkers: 4, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { panic("token exploded") }}}, tab(t), quiet{})
+	load(t, r, generalPIP(srv.URL, ``), set("a", "subject.g == 'x'"))
+
+	defer func() {
+		if p := recover(); p == nil || !strings.Contains(fmt.Sprint(p), "token exploded") {
+			t.Errorf("Decide of a bulk of 5 panicked with %v, want the worker's panic, token exploded", p)
+		}
+	}()
+	_, _ = r.Decide(context.Background(), readDoc(t, "a", "y", 5))
+}
+
+// A denial that rests on a source the agent cannot read names it.
+func TestADenialOnAnUnreadSourceNamesIt(t *testing.T) {
+	for _, tc := range []struct {
+		name, pips, set, want string
+	}{
+		{"an undeclared PIP", ``, set("a", "subject.entitledResources == 'x'"),
+			ReasonUnknown + ": subject.entitledResources"},
+		{"entitlements without the service's URL", ``,
+			set("a", "subject.entitledResources.of('doc').as('owner') CONTAINS resource.a"),
+			ReasonUnknown + `: ["ent","doc",["owner"]]`},
+		{"a permission scope without a PERMISSION_SCOPE PIP", ``, scopeSet("a"), ReasonUnknown + ": subject.permissionScope"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, tc.pips, tc.set)
+
+			got := decide(t, r, readDoc(t, "a", "y", 1))
+
+			if want := (Result{Reason: tc.want}); got[0] != want {
+				t.Errorf("Decide = %+v, want %+v", got[0], want)
+			}
+		})
+	}
+}
+
+// A denial that rests on a PIP whose call failed names the PIP.
+func TestADenialOnAFailedPIPNamesIt(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusInternalServerError, `oops`)
+	r := pipRegistry(t)
+	load(t, r, generalPIP(srv.URL, ""), set("a", "subject.g == 'x'"))
+
+	got := decide(t, r, readDoc(t, "a", "y", 1))
+
+	if want := (Result{Reason: "PIP resolution failed: subject.g"}); got[0] != want {
+		t.Errorf("Decide = %+v, want %+v", got[0], want)
+	}
+}
+
+// scopeSet is a policy set of tenant that iterates over the permission
+// scope and allows the operation read on a doc whose member a is a domain
+// of the pass.
+func scopeSet(tenant string) string {
+	return fmt.Sprintf(`{"policySetId": "s-%[1]s", "name": "s", "status": "ACTIVE", "tenantId": %[1]q,
+		"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+		"iterate": {"foreach": "subject.permissionScope", "combiningAlgorithm": "DENY_UNLESS_PERMIT"},
+		"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_UNLESS_PERMIT",
+			"tenantId": %[1]q, "rules": [{"ruleId": "r", "target": "operation == 'read'",
+				"condition": "subject.permissionScope.domain CONTAINS resource.a", "effect": "ALLOW", "tenantId": %[1]q}]}]}`,
+		tenant)
+}
+
+// A role the tenant's MAPPING PIP maps grants its permissions, which a
+// condition on subject.permissions reads.
+func TestTheMappingTablesGrantPermissions(t *testing.T) {
+	r := New(Config{}, tab(t), quiet{})
+	load(t, r, `{"tenantId": "a", "name": "subject.permissions", "pipType": "MAPPING",
+		"customMapping": {"subject.roles": {"r": ["p1"]}}}`,
+		set("a", "subject.permissions CONTAINS 'p1'"), set("b", "subject.permissions CONTAINS 'p1'"))
+
+	if got := decide(t, r, readDoc(t, "a", "y", 1)); !got[0].Allowed {
+		t.Errorf("Decide with the role R mapped to p1 = %+v, want allowed", got[0])
+	}
+	if got := decide(t, r, readDoc(t, "b", "y", 1)); got[0] != (Result{Reason: ReasonDenied}) {
+		t.Errorf("Decide in a tenant without the mapping = %+v, want %+v", got[0], Result{Reason: ReasonDenied})
+	}
+}
+
+// countingServer answers every POST of path with body, any other request
+// with 404, and counts the requests.
+func countingServer(t *testing.T, path, body string) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var calls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		if r.Method != http.MethodPost || r.URL.Path != path {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		_, _ = w.Write([]byte(body))
+	}))
+	t.Cleanup(srv.Close)
+	return srv, &calls
+}
+
+// The items of a bulk request share one call of the entitlements service.
+func TestTheEntitlementsServiceIsCalledOncePerRequest(t *testing.T) {
+	srv, calls := countingServer(t, "/api/v3/user-entitlements/user/u1", `{"entitlements": [{"resourceType": "doc",
+		"references": [{"name": "owner", "resources": [{"resourceId": "y"}]}]}]}`)
+	r := New(Config{Entitlements: srv.URL, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+	load(t, r, ``, set("a", "subject.entitledResources.of('doc').as('owner') CONTAINS resource.a"))
+
+	got := decide(t, r, readDoc(t, "a", "y", 3))
+
+	if !got[0].Allowed || !got[2].Allowed {
+		t.Errorf("Decide of the entitled doc y = %+v, want every item allowed", got)
+	}
+	if n := calls.Load(); n != 1 {
+		t.Errorf("calls of the entitlements service = %d, want 1", n)
+	}
+	if got := decide(t, r, readDoc(t, "a", "z", 1)); got[0].Allowed {
+		t.Errorf("Decide of the doc z the service does not grant = %+v, want denied", got[0])
+	}
+}
+
+// The items of a bulk request share one read of the permission scope, at
+// the url of the tenant's PERMISSION_SCOPE PIP.
+func TestThePermissionScopeIsReadOncePerRequest(t *testing.T) {
+	srv, calls := countingServer(t, "/api/v1/permission-scope/user/u1/policies",
+		`{"permissionScope": [{"policies": [{"scopeItems": [{"key": "domain", "values": [{"id": "y"}]}]}]}]}`)
+	r := New(Config{HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { return "own", nil }}}, tab(t), quiet{})
+	load(t, r, `{"tenantId": "a", "name": "subject.permissionScope", "pipType": "PERMISSION_SCOPE", "url": "`+srv.URL+`"}`,
+		scopeSet("a"))
+
+	got := decide(t, r, readDoc(t, "a", "y", 2))
+
+	if !got[0].Allowed || !got[1].Allowed {
+		t.Errorf("Decide of the doc y in the scope = %+v, want every item allowed", got)
+	}
+	if n := calls.Load(); n != 1 {
+		t.Errorf("reads of the permission scope = %d, want 1", n)
+	}
+	if got := decide(t, r, readDoc(t, "a", "z", 1)); got[0].Allowed {
+		t.Errorf("Decide of the doc z outside the scope = %+v, want denied", got[0])
+	}
+}

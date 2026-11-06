@@ -23,8 +23,8 @@ import (
 
 // ── Simplified input types ────────────────────────────────────────────────────
 
-// simplifiedPolicy mirrors internal/simplifiedpolicies.Policy (only the
-// fields the stub uses for v3 export conversion).
+// simplifiedPolicy is an access-control simplified policy, with the fields
+// the stub uses for v3 export conversion.
 //
 // Predicate is not a field of an access-control simplified policy: it is the
 // querydsl template that access-control keeps in the predicate field of a v3
@@ -32,6 +32,8 @@ import (
 // test can deliver a querydsl predicate without a regular policy set, which
 // the stub has no endpoint for.
 type simplifiedPolicy struct {
+	// Tenant is the tenant that uploaded the policy, from the request.
+	Tenant           string `json:"-"`
 	Component        string `json:"component"`
 	ResourceType     string `json:"resourceType"`
 	Operation        string `json:"operation"`
@@ -43,22 +45,24 @@ type simplifiedPolicy struct {
 	Roles            []any  `json:"roles,omitempty"`
 }
 
-// simplifiedPIP mirrors internal/pips.SimplifiedPIP (fields used by
-// the stub for v3 export conversion).
+// simplifiedPIP is an access-control simplified PIP, with the fields the
+// stub uses for v3 export conversion.
 type simplifiedPIP struct {
-	Name              string            `json:"name"`
-	PipType           string            `json:"pipType,omitempty"`
-	URL               string            `json:"url,omitempty"`
-	HTTPMethod        string            `json:"httpMethod,omitempty"`
-	Header            string            `json:"header,omitempty"`
-	Claim             string            `json:"claim,omitempty"`
-	BeanName          string            `json:"beanName,omitempty"`
-	DefaultValue      json.RawMessage   `json:"defaultValue,omitempty"`
-	Domain            string            `json:"domain,omitempty"`
-	RequestAttributes map[string]string `json:"requestAttributes,omitempty"`
-	Headers           json.RawMessage   `json:"headers,omitempty"`
-	Type              string            `json:"type,omitempty"`
-	JsonPath          string            `json:"jsonPath,omitempty"`
+	// Tenant is the tenant that uploaded the PIP, from the request.
+	Tenant            string                     `json:"-"`
+	Name              string                     `json:"name"`
+	PipType           string                     `json:"pipType,omitempty"`
+	URL               string                     `json:"url,omitempty"`
+	HTTPMethod        string                     `json:"httpMethod,omitempty"`
+	Header            string                     `json:"header,omitempty"`
+	Claim             string                     `json:"claim,omitempty"`
+	BeanName          string                     `json:"beanName,omitempty"`
+	DefaultValue      json.RawMessage            `json:"defaultValue,omitempty"`
+	Domain            string                     `json:"domain,omitempty"`
+	RequestAttributes map[string]json.RawMessage `json:"requestAttributes,omitempty"`
+	Headers           json.RawMessage            `json:"headers,omitempty"`
+	Type              string                     `json:"type,omitempty"`
+	JsonPath          string                     `json:"jsonPath,omitempty"`
 
 	// ── PDP contract extension (authz-agent-ADR-0066..0069) ──────────────
 	// These four fields do NOT exist in access-control: its authoritative
@@ -128,20 +132,20 @@ type v3PIPsResponse struct {
 }
 
 type v3PIP struct {
-	Name              string            `json:"name"`
-	PipType           string            `json:"pipType"`
-	URL               string            `json:"url,omitempty"`
-	HTTPMethod        string            `json:"httpMethod,omitempty"`
-	Header            string            `json:"header,omitempty"`
-	Claim             string            `json:"claim,omitempty"`
-	BeanName          string            `json:"beanName,omitempty"`
-	DefaultValue      json.RawMessage   `json:"defaultValue,omitempty"`
-	Domain            string            `json:"domain"`
-	TenantID          string            `json:"tenantId"`
-	Type              string            `json:"type,omitempty"`
-	JsonPath          string            `json:"jsonPath,omitempty"`
-	RequestAttributes map[string]string `json:"requestAttributes,omitempty"`
-	Headers           json.RawMessage   `json:"headers,omitempty"`
+	Name              string                     `json:"name"`
+	PipType           string                     `json:"pipType"`
+	URL               string                     `json:"url,omitempty"`
+	HTTPMethod        string                     `json:"httpMethod,omitempty"`
+	Header            string                     `json:"header,omitempty"`
+	Claim             string                     `json:"claim,omitempty"`
+	BeanName          string                     `json:"beanName,omitempty"`
+	DefaultValue      json.RawMessage            `json:"defaultValue,omitempty"`
+	Domain            string                     `json:"domain"`
+	TenantID          string                     `json:"tenantId"`
+	Type              string                     `json:"type,omitempty"`
+	JsonPath          string                     `json:"jsonPath,omitempty"`
+	RequestAttributes map[string]json.RawMessage `json:"requestAttributes,omitempty"`
+	Headers           json.RawMessage            `json:"headers,omitempty"`
 
 	// Extension fields, mirrored from the northbound shape — see the note on
 	// simplifiedPIP. Real access-control never emits these.
@@ -158,9 +162,9 @@ type v3PIP struct {
 // then by (roles) → Policy, then each (operation, condition, rsqlPredicate)
 // becomes one Rule.  This mirrors what access-control creates when a SIMPLIFIED
 // policy is uploaded via the simplified API.
-func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
+func toV3PolicySets(items []simplifiedPolicy, defaultTenantID string) []v3PolicySet {
 	// Group by (domain/component, resourceType).
-	type psKey struct{ domain, resourceType string }
+	type psKey struct{ tenant, domain, resourceType string }
 	type pKey struct{ roles string }
 	type ruleVal struct {
 		operation        string
@@ -176,7 +180,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 	psMap := make(map[psKey]map[pKey][]ruleVal)
 
 	for _, p := range items {
-		pk := psKey{domain: p.Component, resourceType: p.ResourceType}
+		pk := psKey{tenant: exportTenant(p.Tenant, defaultTenantID), domain: p.Component, resourceType: p.ResourceType}
 		if _, seen := psMap[pk]; !seen {
 			psOrder = append(psOrder, pk)
 			psMap[pk] = make(map[pKey][]ruleVal)
@@ -192,7 +196,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 		})
 	}
 
-	var result []v3PolicySet
+	result := make([]v3PolicySet, 0, len(psMap))
 	for _, pk := range psOrder {
 		policyMap := psMap[pk]
 
@@ -243,7 +247,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 			Status:             "ACTIVE",
 			Target:             resourceTypeTarget(pk.resourceType),
 			CombiningAlgorithm: "DENY_UNLESS_PERMIT",
-			TenantID:           pk.domain,
+			TenantID:           pk.tenant,
 			Policies:           v3Policies,
 		})
 	}
@@ -251,7 +255,7 @@ func toV3PolicySets(items []simplifiedPolicy) []v3PolicySet {
 }
 
 // toV3PIPs converts simplified PIPs to v3 export shape.
-func toV3PIPs(items []simplifiedPIP) []v3PIP {
+func toV3PIPs(items []simplifiedPIP, defaultTenantID string) []v3PIP {
 	result := make([]v3PIP, 0, len(items))
 	for _, p := range items {
 		domain := p.Domain
@@ -268,7 +272,7 @@ func toV3PIPs(items []simplifiedPIP) []v3PIP {
 			BeanName:          p.BeanName,
 			DefaultValue:      p.DefaultValue,
 			Domain:            domain,
-			TenantID:          domain,
+			TenantID:          exportTenant(p.Tenant, defaultTenantID),
 			Type:              p.Type,
 			JsonPath:          p.JsonPath,
 			RequestAttributes: p.RequestAttributes,
@@ -280,6 +284,15 @@ func toV3PIPs(items []simplifiedPIP) []v3PIP {
 		})
 	}
 	return result
+}
+
+// exportTenant is the tenantId the export gives an item of tenant: the
+// default tenant, and an item no upload stamped, take defaultTenantID.
+func exportTenant(tenant, defaultTenantID string) string {
+	if tenant == "" || tenant == defaultTenant {
+		return defaultTenantID
+	}
+	return tenant
 }
 
 // resourceTypeTarget converts a simplified resourceType to a v3 target expression.

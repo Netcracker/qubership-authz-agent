@@ -31,6 +31,10 @@
 //     kind is a [jsonpath.Kind] and rec is present for three kinds: for one
 //     and many it is the record of the selected value or of the list of
 //     selected values, and for toolarge a record in state ERROR.
+//   - nc.http.send(request) sends one HTTP request with the agent's own
+//     token and a timeout, and returns its response; the one built-in that
+//     reaches the network, through the [HTTP] of the query's context, with
+//     answers kept for one decision request by [WithCalls].
 //
 // Nothing is registered globally. A compiler takes [Capabilities], a query
 // takes [Options], and an OPA test runner takes the same functions through the
@@ -107,6 +111,8 @@ func All() []Builtin {
 		{valueDecl, rego.Function1(function(valueDecl), value)},
 		{compareDecl, rego.Function2(function(compareDecl), compare)},
 		{jsonpathDecl, rego.Function2(function(jsonpathDecl), selectPath)},
+		{httpSendDecl, rego.Function1(&rego.Function{Name: httpSendDecl.Name, Decl: httpSendDecl.Decl,
+			Nondeterministic: true}, httpSend)},
 	}
 }
 
@@ -210,6 +216,15 @@ func (d *Documents) Context(ctx context.Context) context.Context {
 // convertedKey keys the JSON of an object or a list in the query's built-in
 // cache.
 type convertedKey struct{ v ast.Value }
+
+// JSONOf returns the JSON of the argument t of a built-in function, as nc.value
+// and nc.jsonpath read it: an object or a list that a [Documents] in the
+// query's context built as the JSON it was built from.
+func JSONOf(bctx rego.BuiltinContext, t *ast.Term) (jsonvalue.Value, error) { return jsonOf(bctx, t) }
+
+// CompilePath returns the compiled path s, as nc.jsonpath compiles and keeps
+// it.
+func CompilePath(s string) (*jsonpath.Path, error) { return compilePath(s) }
 
 // jsonOf returns the JSON of t. An object or a list that a [Documents] in the
 // query's context built, at any depth, is the JSON it was built from; any
