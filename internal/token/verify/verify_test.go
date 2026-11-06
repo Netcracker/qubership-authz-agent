@@ -43,9 +43,6 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	if got := string(tok.Payload()); got != payload {
 		t.Errorf("Payload() = %s, want %s", got, payload)
 	}
-	if got := tok.Raw(); got != raw {
-		t.Errorf("Raw() = %q, want the token Verify received, %q", got, raw)
-	}
 	if got := tok.ProviderID(); got != "realm" {
 		t.Errorf("ProviderID() = %q, want %q", got, "realm")
 	}
@@ -57,6 +54,19 @@ func TestVerify_ReturnsAValidTokenAsSigned(t *testing.T) {
 	}
 	if got, want := tok.Expiry(), time.Unix(1792069200, 0); !got.Equal(want) {
 		t.Errorf("Expiry() = %s, want %s", got, want)
+	}
+}
+
+// The result reaches the code that builds a policy input, and a compact token is
+// a credential that anyone who reads it can present. %+v prints every field,
+// unexported ones included.
+func TestVerify_ReturnsAResultThatHoldsNoCompactToken(t *testing.T) {
+	s := newSigner(t, "k1", &keys.Provider{ID: "realm/r"})
+	v, _ := newVerifier(newFakeKeys(s))
+	raw := s.sign(t, claimsAt(start, nil))
+	tok := mustVerify(t, v, raw)
+	if got := fmt.Sprintf("%+v", *tok); strings.Contains(got, raw) {
+		t.Errorf("Verify() result holds the compact token: %s", got)
 	}
 }
 
