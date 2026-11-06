@@ -1,0 +1,30 @@
+---
+# Codecov settings: https://docs.codecov.com/docs/codecovyml-reference
+# Validate a change with:
+#   curl -X POST --data-binary @codecov.yml https://codecov.io/validate
+
+coverage:
+  status:
+    # These statuses only report and never fail a pull request.  Sonar's
+    # quality gate checks coverage on new code, on main and on pull requests
+    # from this repository.
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+fixes:
+  # go test -coverprofile records import paths, and every module path in this
+  # repository starts with authz-agent rather than the repository name, so
+  # stripping that prefix leaves the path from the repository root.
+  - "authz-agent/::"
+
+ignore:
+  # The shared Go build uploads one profile per module.  The four test modules
+  # under test/ have profiles that cover only their own code, so their uploads
+  # are empty after this rule, and Codecov marks them as errors and leaves them
+  # out of the report.  after_n_builds stays unset: Codecov waits for uploads
+  # it has received and processed, and it may never count the errored ones.
+  - "test/**"

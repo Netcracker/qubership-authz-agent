@@ -1,5 +1,7 @@
 # qubership-authz-agent
 
+[![codecov](https://codecov.io/gh/Netcracker/qubership-authz-agent/graph/badge.svg)](https://codecov.io/gh/Netcracker/qubership-authz-agent)
+
 An OPA-based authorization service for Kubernetes.  The deliverable is a
 **Helm chart** that assembles the agent Pod: one container, `authz-agent`, a Go
 service carrying the policy engine as a library, the check API, and the loops

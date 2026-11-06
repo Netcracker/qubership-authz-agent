@@ -33,8 +33,9 @@ AUTHZ_TENANT_MANAGER_URL: ""
 
 # The suite seeds policies and PIPs through the authz-policy-admin stub,
 # installed from its own chart with policy-admin-values.yaml in this directory,
-# and waits PARITY_PULL_SETTLE_SECONDS (2 by default) after each write; the
-# agent pulls them from the stub's Service.
+# and after each write asks the agent to pull at PARITY_AGENT_PULL_URL, or waits
+# PARITY_PULL_SETTLE_SECONDS (2 by default) where it cannot; the agent pulls
+# them from the stub's Service.
 AUTHZ_PAP_CLIENT_SOURCE_URL: http://authz-policy-admin:18090
 AUTHZ_PAP_CLIENT_PULL_INTERVAL: 1
 

@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -345,5 +346,98 @@ func TestLoad_PinsTheEntitlements(t *testing.T) {
 	entitlements, _ := remote["entitlements"].(map[string]any)
 	if !reflect.DeepEqual(entitlements["url"], "http://entitlements:8080") {
 		t.Errorf("data.pips.remote.entitlements = %v, want the pinned URL", entitlements)
+	}
+}
+
+// TestPullNow_StoresTheDocumentsOfALaterChangeLast: a load that fetched the
+// policy sets before a change at the source is still running when PullNow is
+// called; PullNow waits for it, and the policies fetched after the change
+// are stored last.
+func TestPullNow_StoresTheDocumentsOfALaterChangeLast(t *testing.T) {
+	var role atomic.Value
+	role.Store("ROLE_V1")
+	fetched := make(chan struct{})
+	release := make(chan struct{})
+	var held atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/access/v3/config/policySets":
+			body := strings.ReplaceAll(policySets, "ROLE_TEST", role.Load().(string))
+			if held.CompareAndSwap(false, true) {
+				close(fetched)
+				<-release
+			}
+			_, _ = w.Write([]byte(body))
+		case "/access/v3/config/pips":
+			_, _ = w.Write([]byte(pipsResponse))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	var releaseOnce sync.Once
+	defer srv.Close()
+	defer releaseOnce.Do(func() { close(release) })
+	st := &store{}
+	p := New(Config{SourceURL: srv.URL, Interval: time.Hour}, st, nil, quiet{})
+
+	earlier := make(chan error, 1)
+	go func() { earlier <- p.PullOnce(context.Background()) }()
+	<-fetched
+	role.Store("ROLE_V2")
+	now := make(chan error, 1)
+	go func() { now <- p.PullNow(context.Background()) }()
+	// A PullNow that does not wait for the earlier load returns here, before
+	// the earlier load stores the policy sets it fetched first.
+	select {
+	case err := <-now:
+		now <- err
+	case <-time.After(100 * time.Millisecond):
+	}
+	releaseOnce.Do(func() { close(release) })
+
+	if err := <-earlier; err != nil {
+		t.Fatalf("the earlier PullOnce() = %v", err)
+	}
+	if err := <-now; err != nil {
+		t.Fatalf("PullNow() = %v", err)
+	}
+	if got, want := storedRoles(t, st), []string{"ROLE_V1", "ROLE_V2"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("roles of the stored policies, in store order = %q, want %q", got, want)
+	}
+}
+
+// storedRoles returns, for every document stored at policies in store order,
+// which of ROLE_V1 and ROLE_V2 it names.
+func storedRoles(t *testing.T, st *store) []string {
+	t.Helper()
+	st.mu.Lock()
+	defer st.mu.Unlock()
+	var roles []string
+	for _, doc := range st.puts["policies"] {
+		raw, err := json.Marshal(doc)
+		if err != nil {
+			t.Fatal(err)
+		}
+		switch {
+		case strings.Contains(string(raw), "ROLE_V1"):
+			roles = append(roles, "ROLE_V1")
+		case strings.Contains(string(raw), "ROLE_V2"):
+			roles = append(roles, "ROLE_V2")
+		default:
+			roles = append(roles, "neither: "+string(raw))
+		}
+	}
+	return roles
+}
+
+func TestPullNow_WithoutASourceURLLoadsNothing(t *testing.T) {
+	st := &store{}
+	p := New(Config{Interval: time.Hour}, st, nil, quiet{})
+
+	err := p.PullNow(context.Background())
+
+	if err == nil || !strings.Contains(err.Error(), "source URL empty") || st.count("policies") != 0 || p.Status().PoliciesLoaded {
+		t.Errorf("PullNow() = %v, %d policies stored, Status() = %+v; want the empty source URL reported, nothing stored, not loaded",
+			err, st.count("policies"), p.Status())
 	}
 }
