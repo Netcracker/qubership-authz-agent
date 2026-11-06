@@ -279,6 +279,27 @@ func TestHTTPSend_OneCallPerRequestOfADecision(t *testing.T) {
 	}
 }
 
+// A string of the request that Rego prints with an escape JSON does not
+// have, such as \x7f for U+007F, reaches the PIP as JSON. The request used
+// to be read from Rego's text of it, and such a string failed the function
+// before any call.
+func TestHTTPSend_SendsAControlCharacterInTheBody(t *testing.T) {
+	var body string
+	srv, calls := pipServer(t, func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		body = string(b)
+		_, _ = w.Write([]byte(`[]`))
+	})
+	ctx := (&HTTP{Token: ownToken}).Context(context.Background())
+
+	if _, err := sendEval(t, ctx, `nc.http.send({"method": "POST", "url": "`+srv.URL+`", "body": {"id": "a\u007fb"}})`); err != nil {
+		t.Fatal(err)
+	}
+	if want := "{\"id\":\"a\x7fb\"}"; calls.Load() != 1 || body != want {
+		t.Errorf("the PIP received %d calls, the last with body %q; want 1 call with %q", calls.Load(), body, want)
+	}
+}
+
 func TestHTTPSend_RefusesARequestOfAnotherShape(t *testing.T) {
 	ctx := (&HTTP{Token: ownToken}).Context(context.Background())
 	tests := []struct{ name, req, want string }{
