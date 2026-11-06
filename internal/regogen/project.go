@@ -235,8 +235,8 @@ func record(r *Ref, v Resolved) Record {
 			// folds
 			rec.TextKey = lv.Key
 		default:
-			tk := legacyvalue.Fold(structureText(v.Value))
-			rec.TextKey = &tk
+			textKey := legacyvalue.Fold(structureText(v.Value))
+			rec.TextKey = &textKey
 		}
 		if r.reads(fieldEqualityKey) {
 			rec.EqualityKey = lv.Structure
@@ -270,15 +270,15 @@ func (rec *Record) subset(r *Ref, v jsonvalue.Value) {
 }
 
 // elementTokens returns the ElementTokens and ElementTokensWithText of a
-// value, a list or a value read as a list of one; lv is its legacyvalue.Of. Where no element is a list or an
-// object, eb is ea itself.
-func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (ea, eb []string) {
+// value, a list or a value read as a list of one; lv is its legacyvalue.Of.
+// Where no element is a list or an object, withText is tokens itself.
+func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (tokens, withText []string) {
 	l, ok := v.([]jsonvalue.Value)
 	elems := lv.Elements
 	if !ok {
 		l, elems = []jsonvalue.Value{v}, []legacyvalue.Record{lv}
 	}
-	ea = []string{}
+	tokens = []string{}
 	for i, e := range l {
 		t, ok := "", false
 		switch e.(type) {
@@ -289,23 +289,23 @@ func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (ea, eb []string) {
 			t, ok = eqToken(e)
 		}
 		if ok {
-			ea = append(ea, t)
-			if eb != nil {
-				eb = append(eb, t)
+			tokens = append(tokens, t)
+			if withText != nil {
+				withText = append(withText, t)
 			}
 		}
 		switch e.(type) {
 		case []jsonvalue.Value, *jsonvalue.Object:
-			if eb == nil {
-				eb = slices.Clone(ea)
+			if withText == nil {
+				withText = slices.Clone(tokens)
 			}
-			eb = append(eb, "t:"+legacyvalue.Fold(structureText(e)))
+			withText = append(withText, "t:"+legacyvalue.Fold(structureText(e)))
 		}
 	}
-	if eb == nil {
-		eb = ea
+	if withText == nil {
+		withText = tokens
 	}
-	return ea, eb
+	return tokens, withText
 }
 
 // eqToken returns the token two elements are equal by when neither is a
@@ -512,9 +512,9 @@ func (r Record) term() *ast.Term {
 		o.Insert(strTerm(fieldLength), ast.IntNumberTerm(*r.Length))
 	}
 	if r.ElementTokens != nil {
-		ea := keysTerm(r.ElementTokens)
-		o.Insert(strTerm(fieldElementTokens), ea)
-		o.Insert(strTerm(fieldElementTokensWithText), r.ebTerm(ea))
+		tokens := keysTerm(r.ElementTokens)
+		o.Insert(strTerm(fieldElementTokens), tokens)
+		o.Insert(strTerm(fieldElementTokensWithText), r.withTextTerm(tokens))
 	}
 	if r.Number != nil {
 		o.Insert(strTerm(fieldNumber), orderKey(*r.Number))
@@ -732,12 +732,12 @@ func fieldObjects(refs []*Ref, rec func(*Ref) (Record, bool)) map[string]ast.Obj
 	return fields
 }
 
-// ebTerm returns the term of ElementTokensWithText, which is ea where
-// ElementTokensWithText is ElementTokens itself (elementTokens).
-func (rec Record) ebTerm(ea *ast.Term) *ast.Term {
+// withTextTerm returns the term of ElementTokensWithText, which is tokens,
+// the term of ElementTokens, where the two are one slice (elementTokens).
+func (rec Record) withTextTerm(tokens *ast.Term) *ast.Term {
 	toks, withText := rec.ElementTokens, rec.ElementTokensWithText
 	if len(withText) == len(toks) && (len(toks) == 0 || &withText[0] == &toks[0]) {
-		return ea
+		return tokens
 	}
 	return keysTerm(rec.ElementTokensWithText)
 }
@@ -773,12 +773,12 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 		put(fieldLength, ast.IntNumberTerm(*rec.Length))
 	}
 	if rec.ElementTokens != nil && emit.has(fieldElementTokens, fieldElementTokensWithText) {
-		ea := keysTerm(rec.ElementTokens)
+		tokens := keysTerm(rec.ElementTokens)
 		if emit.has(fieldElementTokens) {
-			put(fieldElementTokens, ea)
+			put(fieldElementTokens, tokens)
 		}
 		if emit.has(fieldElementTokensWithText) {
-			put(fieldElementTokensWithText, rec.ebTerm(ea))
+			put(fieldElementTokensWithText, rec.withTextTerm(tokens))
 		}
 	}
 	if rec.Number != nil && emit.has(fieldNumber) {

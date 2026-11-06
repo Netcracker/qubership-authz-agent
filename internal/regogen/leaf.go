@@ -117,11 +117,11 @@ func (s *side) at(p point) clause {
 	}
 	if p.st != spectables.StateValue {
 		return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldState), p.st),
-			fact: fact{ref: s.ref.ID, field: 's', val: string(p.st)},
+			fact: fact{ref: s.ref.ID, field: factState, val: string(p.st)},
 			test: refTest(s, &test{kind: "state", val: string(p.st)})}})
 	}
 	return conj(s.bind(), clause{{cls: s.cls(clsCheck), text: fmt.Sprintf("%s == %q", s.field(fieldClass), p.cl),
-		fact: fact{ref: s.ref.ID, field: 't', val: string(p.cl)}, test: refTest(s, &test{kind: "cls", val: string(p.cl)})}})
+		fact: fact{ref: s.ref.ID, field: factClass, val: string(p.cl)}, test: refTest(s, &test{kind: "cls", val: string(p.cl)})}})
 }
 
 // compare builds the rails of a comparison from the specification's cells.
@@ -281,7 +281,7 @@ func joinClasses(d dnf, s *side) dnf {
 	var groups []*joined
 	byRest := map[string]int{}
 	for _, c := range d {
-		at := slices.IndexFunc(c, func(e expr) bool { return e.fact.field == 't' && e.fact.ref == s.ref.ID })
+		at := slices.IndexFunc(c, func(e expr) bool { return e.fact.field == factClass && e.fact.ref == s.ref.ID })
 		if at < 0 || c[at].fact.vals != nil {
 			out, groups = append(out, c), append(groups, nil)
 			continue
@@ -301,7 +301,7 @@ func joinClasses(d dnf, s *side) dnf {
 		slices.Sort(j.classes)
 		c := slices.Clone(out[k])
 		c[j.at] = expr{cls: c[j.at].cls, text: s.field(fieldClass) + " in " + setLit(j.classes),
-			fact: fact{ref: s.ref.ID, field: 't', vals: j.classes}, test: refTest(s, &test{kind: "clsin", set: j.classes})}
+			fact: fact{ref: s.ref.ID, field: factClass, vals: j.classes}, test: refTest(s, &test{kind: "clsin", set: j.classes})}
 		out[k] = c
 	}
 	return out
@@ -585,7 +585,7 @@ func constCompare(op spectables.Operator, L, R *side) (bool, bool) {
 			return slices.Contains(R.lit.keys, L.lit.key), true
 		}
 	case spectables.OpIsSubset:
-		t := &test{kind: "subset", sets: L.lit.sa, set: R.lit.sb}
+		t := &test{kind: "subset", sets: L.lit.subsetLeft, set: R.lit.subsetRight}
 		return t.subsetHolds(nil), true
 	case spectables.OpLT, spectables.OpLE, spectables.OpGT, spectables.OpGE:
 		if isScalar(L.lit.class) && isScalar(R.lit.class) {
@@ -597,7 +597,7 @@ func constCompare(op spectables.Operator, L, R *side) (bool, bool) {
 			if err != nil {
 				return false, false
 			}
-			return regexp.MustCompile(rx).MatchString(L.lit.raw), true
+			return regexp.MustCompile(rx).MatchString(L.lit.text), true
 		}
 	}
 	return false, false
@@ -610,7 +610,7 @@ func withoutValueFacts(d dnf, L *side, oddL bool, R *side, oddR bool) dnf {
 	for i, c := range d {
 		nc := make(clause, len(c))
 		for j, e := range c {
-			if e.fact.field == 'v' && (oddL && L.ref != nil && e.fact.ref == L.ref.ID ||
+			if e.fact.field == factValue && (oddL && L.ref != nil && e.fact.ref == L.ref.ID ||
 				oddR && R != nil && R.ref != nil && e.fact.ref == R.ref.ID) {
 				e.fact = fact{}
 			}

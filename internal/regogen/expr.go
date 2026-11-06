@@ -57,12 +57,22 @@ type expr struct {
 // all (state VALUE).
 type fact struct {
 	ref   string
-	field byte // 's' state, 't' class, 'v' a value; 0 for no fact
+	field factField
 	val   string
-	// vals are the classes a field 't' allows when there are several; val is
-	// then empty.
+	// vals are the classes a factClass allows when there are several; val
+	// is then empty.
 	vals []string
 }
+
+// factField is what a fact requires of its reference.
+type factField byte
+
+// The fields of a fact; the zero factField is no fact.
+const (
+	factState factField = iota + 1
+	factClass
+	factValue
+)
 
 // clause is a conjunction of expressions without repeats.
 type clause []expr
@@ -148,11 +158,11 @@ func prod(a, b dnf, prune bool) dnf {
 func consistent(c clause) bool {
 	type slot struct {
 		ref   string
-		field byte
+		field factField
 	}
 	seen := map[slot]string{}
 	classes := map[string][]string{}
-	set := func(ref string, field byte, v string) bool {
+	set := func(ref string, field factField, v string) bool {
 		k := slot{ref, field}
 		if old, ok := seen[k]; ok {
 			return old == v
@@ -163,12 +173,12 @@ func consistent(c clause) bool {
 	for _, e := range c {
 		f := e.fact
 		switch f.field {
-		case 's':
-			if !set(f.ref, 's', f.val) {
+		case factState:
+			if !set(f.ref, factState, f.val) {
 				return false
 			}
-		case 't':
-			if !set(f.ref, 's', "VALUE") {
+		case factClass:
+			if !set(f.ref, factState, "VALUE") {
 				return false
 			}
 			vs := f.vals
@@ -182,8 +192,8 @@ func consistent(c clause) bool {
 				}
 			}
 			classes[f.ref] = vs
-		case 'v':
-			if !set(f.ref, 's', "VALUE") {
+		case factValue:
+			if !set(f.ref, factState, "VALUE") {
 				return false
 			}
 		}

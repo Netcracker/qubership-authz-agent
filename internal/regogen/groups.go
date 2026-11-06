@@ -433,13 +433,13 @@ func (e *groupEval) file(slot int) {
 		}
 	}
 	s := e.ix.sources[slices.IndexFunc(e.ix.sources, func(s keySource) bool { return s.slot == slot })]
-	var ks []string
+	var keys []string
 	if s.ri < 0 {
-		ks = e.in.FoldedRoles
+		keys = e.in.FoldedRoles
 	} else if r, ok := e.rec(s.ri); ok {
-		ks = r.list(s.field)
+		keys = r.list(s.field)
 	}
-	for _, v := range ks {
+	for _, v := range keys {
 		add(v)
 	}
 }
@@ -478,17 +478,17 @@ func (e *groupEval) rec(i int) (*Record, bool) {
 	return &e.recs[i], true
 }
 
-// contains reports whether ks, the list in the slot listSlot names, holds k.
+// contains reports whether keys, the list in the slot listSlot names, holds k.
 // A list longer than eight keys is looked up in a set that the first lookup
 // builds.
-func (e *groupEval) contains(slot int, ks []string, k string) bool {
-	if len(ks) <= 8 {
-		return slices.Contains(ks, k)
+func (e *groupEval) contains(slot int, keys []string, k string) bool {
+	if len(keys) <= 8 {
+		return slices.Contains(keys, k)
 	}
 	set := e.sets[slot]
 	if set == nil {
-		set = make(map[string]struct{}, len(ks))
-		for _, x := range ks {
+		set = make(map[string]struct{}, len(keys))
+		for _, x := range keys {
 			set[x] = struct{}{}
 		}
 		e.sets[slot] = set
@@ -558,15 +558,15 @@ func (t *test) holds(e *groupEval) bool {
 	if t.kind == "noop" {
 		return true
 	}
-	var ks []string
+	var keys []string
 	var k *string
 	var st, cl string
-	var n0 bool
+	var hasNull bool
 	var num *jsonvalue.Decimal
 	if t.ref == memberFoldedRoles {
-		ks = e.in.FoldedRoles
+		keys = e.in.FoldedRoles
 	} else if r, ok := e.rec(t.ri); ok {
-		ks, k, st, cl, n0, num = r.list(t.field), r.Key, r.State, r.Class, r.HasNull, r.Number
+		keys, k, st, cl, hasNull, num = r.list(t.field), r.Key, r.State, r.Class, r.HasNull, r.Number
 	}
 	in2 := func() ([]string, *string) {
 		if r, ok := e.rec(t.ri2); ok {
@@ -576,9 +576,9 @@ func (t *test) holds(e *groupEval) bool {
 	}
 	switch t.kind {
 	case "has":
-		return e.contains(t.slot, ks, t.val)
+		return e.contains(t.slot, keys, t.val)
 	case "nothas":
-		return !e.contains(t.slot, ks, t.val)
+		return !e.contains(t.slot, keys, t.val)
 	case "eq":
 		return k != nil && *k == t.val
 	case "ne":
@@ -588,9 +588,9 @@ func (t *test) holds(e *groupEval) bool {
 	case "notin":
 		return k == nil || !slices.Contains(t.set, *k)
 	case "none":
-		return ks != nil && !slices.ContainsFunc(t.set, func(x string) bool { return e.contains(t.slot, ks, x) })
+		return keys != nil && !slices.ContainsFunc(t.set, func(x string) bool { return e.contains(t.slot, keys, x) })
 	case "non0":
-		return !n0
+		return !hasNull
 	case "rel":
 		return relHolds(t.val, num, t.num)
 	case "relref":
@@ -610,23 +610,23 @@ func (t *test) holds(e *groupEval) bool {
 	case "clsin":
 		return slices.Contains(t.set, cl)
 	case "eqref", "neref", "inref", "notinref":
-		ks2, k2 := in2()
+		keys2, k2 := in2()
 		switch t.kind {
 		case "eqref":
 			return k != nil && k2 != nil && *k == *k2
 		case "neref":
 			return k != nil && k2 != nil && *k != *k2
 		case "inref":
-			return k != nil && ks2 != nil && e.contains(t.slot2, ks2, *k)
+			return k != nil && keys2 != nil && e.contains(t.slot2, keys2, *k)
 		default:
-			return k == nil || ks2 == nil || !e.contains(t.slot2, ks2, *k)
+			return k == nil || keys2 == nil || !e.contains(t.slot2, keys2, *k)
 		}
 	case "overlap":
-		ks2, _ := in2()
-		return ks != nil && ks2 != nil && slices.ContainsFunc(ks, func(x string) bool { return e.contains(t.slot2, ks2, x) })
+		keys2, _ := in2()
+		return keys != nil && keys2 != nil && slices.ContainsFunc(keys, func(x string) bool { return e.contains(t.slot2, keys2, x) })
 	case "disjoint":
-		ks2, _ := in2()
-		return ks != nil && !(ks2 != nil && slices.ContainsFunc(ks, func(x string) bool { return e.contains(t.slot2, ks2, x) }))
+		keys2, _ := in2()
+		return keys != nil && !(keys2 != nil && slices.ContainsFunc(keys, func(x string) bool { return e.contains(t.slot2, keys2, x) }))
 	}
 	panic("unknown test " + t.kind)
 }
