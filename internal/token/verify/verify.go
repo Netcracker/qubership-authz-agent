@@ -68,8 +68,13 @@ const (
 	CodeIssuerUnknown Code = "TOKEN_ISSUER_UNKNOWN"
 	// CodeKIDMissing marks a token whose header has no kid, or an empty one.
 	CodeKIDMissing Code = "TOKEN_KID_MISSING"
-	// CodeKIDUnknown marks a token whose kid no loaded key of its issuer has.
+	// CodeKIDUnknown marks a token whose kid no loaded key of its issuer has,
+	// and the source of its issuer has answered; see [CodeKeysUnavailable].
 	CodeKIDUnknown Code = "TOKEN_KID_UNKNOWN"
+	// CodeKeysUnavailable marks a token that no loaded key matches, while the
+	// last load got no answer about the keys of its issuer, as in an outage
+	// of the Keycloak. A retry can succeed.
+	CodeKeysUnavailable Code = "TOKEN_KEYS_UNAVAILABLE"
 	// CodeSignatureInvalid marks a token whose signature does not verify
 	// with the key its header selects.
 	CodeSignatureInvalid Code = "TOKEN_SIGNATURE_INVALID"
@@ -237,7 +242,8 @@ func (t *Token) Expiry() time.Time { return t.expiry }
 
 // KeyFinder finds the signing key a token asks for; [*keys.Set] implements it.
 // Both methods report a key they cannot return with [keys.ErrIssuerUnknown] or
-// [keys.ErrKeyUnknown].
+// [keys.ErrKeyUnknown]. LookupOrReload also reports
+// [keys.ErrKeysUnavailable].
 type KeyFinder interface {
 	// Lookup returns the key q names from the keys already loaded, without
 	// waiting.
@@ -321,7 +327,7 @@ func New(source KeyFinder, opts Options) *Verifier {
 // When no loaded key matches, Verify waits for the reload that
 // [KeyFinder.LookupOrReload] may start, until the reload ends or ctx ends.
 // When ctx ends first, the key is looked up among the keys loaded by then, and
-// a token still without a key is refused with [CodeKIDUnknown], not with
+// a token still without a key is refused with [CodeKeysUnavailable], not with
 // ctx.Err().
 //
 // A token verified earlier that has not expired is served from the cache,
@@ -427,6 +433,9 @@ func (v *Verifier) checkClaims(payload []byte, query keys.Query, claims map[stri
 func lookupFailure(q keys.Query, err error) *Error {
 	if errors.Is(err, keys.ErrIssuerUnknown) {
 		return fail(CodeIssuerUnknown, "iss %s names no trusted provider and no Keycloak realm", short(q.Issuer))
+	}
+	if errors.Is(err, keys.ErrKeysUnavailable) {
+		return fail(CodeKeysUnavailable, "the keys of iss %s cannot be loaded, so the token cannot be checked", short(q.Issuer))
 	}
 	return fail(CodeKIDUnknown, "no key of iss %s has kid %s", short(q.Issuer), short(q.KID))
 }

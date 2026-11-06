@@ -125,8 +125,8 @@ func TestLookupOrReload_WaitsThreeSecondsForAReloadByDefault(t *testing.T) {
 		transport.setHold(hold)
 		start := time.Now()
 		_, err := set.LookupOrReload(t.Context(), Query{Issuer: iss("cloud-common"), KID: "rotated"})
-		if !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeyUnknown)
+		if !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeysUnavailable)
 		}
 		if got := time.Since(start); got != 3*time.Second {
 			t.Errorf("LookupOrReload() returned after %s, want 3s", got)

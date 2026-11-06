@@ -46,27 +46,31 @@ type onDemand struct {
 // running reload ends or ctx ends. With no reload running and none allowed to
 // start, it returns at once. The reload runs with the values of ctx but not
 // with its deadline or cancellation, so it goes on for the other callers
-// after ctx ends.
-func (o *onDemand) wait(ctx context.Context) {
+// after ctx ends. It reports false when loads refused the reload or ctx ended
+// first, because this caller was owed a load and did not get its result. With
+// a reload not due yet it reports true: the result of the last load stands.
+func (o *onDemand) wait(ctx context.Context) bool {
 	o.mu.Lock()
 	running := o.running
 	if running == nil {
 		now := o.now()
 		if !o.spaced(now) {
 			o.mu.Unlock()
-			return
+			return true
 		}
 		if !o.loads.take(now) {
 			o.mu.Unlock()
 			o.refused(now)
-			return
+			return false
 		}
 		running = o.start(ctx, now)
 	}
 	o.mu.Unlock()
 	select {
 	case <-running:
+		return true
 	case <-ctx.Done():
+		return false
 	}
 }
 

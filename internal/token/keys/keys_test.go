@@ -560,11 +560,11 @@ func TestRefresh_AJWKSWithoutAUsableKeyRemovesTheProvidersKeys(t *testing.T) {
 		wantKept bool
 	}{
 		{"JWKS whose keys array is empty", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": []}`) }, false},
-		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, false},
 		{"JWKS whose only key is an encryption key", func(t *testing.T, idp *fakeIdP) {
 			idp.publish(ecJWK(t, "enc", map[string]any{"use": "enc"}))
 		}, false},
 		{"JWKS without a keys array", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{}`) }, true},
+		{"JWKS whose keys is null", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, true},
 		{"JWKS whose keys is an object", func(t *testing.T, idp *fakeIdP) { idp.setJWKS(`{"keys": {}}`) }, true},
 	}
 	for _, tt := range tests {
@@ -792,6 +792,181 @@ func TestLookupOrReload_ReloadsAProviderAtMostOnceAMinute(t *testing.T) {
 	lookup(60*time.Second, "key-2", true, 3)
 }
 
+// Every case has loaded keys before the reload, and each row shows what that
+// reload gets. TestLookupOrReload_TakesA404AsAnAnswerOnlyForARealmWithNoKeys
+// covers the 404 of a realm.
+func TestLookupOrReload_ReportsKeysAsUnavailableOnlyWhenTheSourceGaveNoAnswer(t *testing.T) {
+	tests := []struct {
+		name   string
+		reload func(idp *fakeIdP)
+		want   error
+	}{
+		{"server error", func(idp *fakeIdP) { idp.setStatus(http.StatusServiceUnavailable) }, ErrKeysUnavailable},
+		{"refused request", func(idp *fakeIdP) { idp.setStatus(http.StatusForbidden) }, ErrKeysUnavailable},
+		{"no connection", func(idp *fakeIdP) { idp.srv.Close() }, ErrKeysUnavailable},
+		{"JWKS that is not JSON", func(idp *fakeIdP) { idp.setJWKS("not json") }, ErrKeysUnavailable},
+		{"JWKS whose keys is null", func(idp *fakeIdP) { idp.setJWKS(`{"keys": null}`) }, ErrKeysUnavailable},
+		{"404 from a provider", func(idp *fakeIdP) { idp.setStatus(http.StatusNotFound) }, ErrKeysUnavailable},
+		{"JWKS without a usable key", func(idp *fakeIdP) { idp.setJWKS(`{"keys": []}`) }, ErrKeyUnknown},
+		{"JWKS without the key", func(*fakeIdP) {}, ErrKeyUnknown},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			idp := newIdP(t, ecJWK(t, "key-1", nil))
+			provider := issuer("realm", idp)
+			set := mustLoad(t, testOptions(), provider)
+			tt.reload(idp)
+			if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "rotated"}); !errors.Is(err, tt.want) {
+				t.Errorf("LookupOrReload() error = %v, want %v", err, tt.want)
+			}
+		})
+	}
+}
+
+// A provider that never loaded a key has no key to keep, so only the rule for a
+// provider makes its 404 no answer.
+func TestLookupOrReload_TakesA404OfAProviderWithNoKeysAsNoAnswer(t *testing.T) {
+	idp := newIdP(t)
+	idp.setStatus(http.StatusNotFound)
+	provider := issuer("realm", idp)
+	set := mustNew(t, Config{Providers: []Provider{provider}}, testOptions())
+	if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "k1"}); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeysUnavailable)
+	}
+}
+
+// sequencedJWKS answers discovery at once and each JWKS request from bodies,
+// by the order of arrival, and holds a request whose gate is set. A request
+// reports its number on arrived before it is held.
+type sequencedJWKS struct {
+	srv     *httptest.Server
+	bodies  map[int][]byte
+	status  map[int]int
+	gates   map[int]chan struct{}
+	arrived chan int
+
+	mu sync.Mutex
+	n  int
+}
+
+func newSequencedJWKS(t *testing.T) *sequencedJWKS {
+	t.Helper()
+	s := &sequencedJWKS{bodies: map[int][]byte{}, status: map[int]int{}, gates: map[int]chan struct{}{}, arrived: make(chan int, 16)}
+	s.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
+			_ = json.NewEncoder(w).Encode(map[string]string{"jwks_uri": s.srv.URL + "/jwks"})
+			return
+		}
+		s.mu.Lock()
+		s.n++
+		i := s.n
+		s.mu.Unlock()
+		s.arrived <- i
+		if gate := s.gates[i]; gate != nil {
+			<-gate
+		}
+		if status := s.status[i]; status != 0 {
+			w.WriteHeader(status)
+			return
+		}
+		_, _ = w.Write(s.bodies[i])
+	}))
+	t.Cleanup(s.srv.Close)
+	return s
+}
+
+func jwksOf(t *testing.T, keys ...json.RawMessage) []byte {
+	t.Helper()
+	body, err := json.Marshal(map[string]any{"keys": keys})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return body
+}
+
+// A scheduled Refresh holds the lock of the source while it stores two RSA keys,
+// and the reload that their kid starts queues behind it. The wait can end before
+// that reload does, or the reload can fail. Neither says that the keys cannot be
+// loaded, because they have just arrived.
+func TestLookupOrReload_FindsAKeyThatARefreshBroughtDuringTheWait(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     int
+		held       bool
+		reloadWait time.Duration
+	}{
+		{"the wait runs out", 0, true, 300 * time.Millisecond},
+		{"the reload fails", http.StatusServiceUnavailable, false, 5 * time.Second},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := newSequencedJWKS(t)
+			two := jwksOf(t, rsaJWK(t, 2048, "r1", nil), rsaJWK(t, 2048, "r2", nil))
+			server.bodies[1], server.bodies[2], server.bodies[3] = jwksOf(t, ecJWK(t, "ec", nil)), two, two
+			server.status[3] = tt.status
+			refreshGate, reloadGate := make(chan struct{}), make(chan struct{})
+			server.gates[2] = refreshGate
+			if tt.held {
+				server.gates[3] = reloadGate
+			}
+			t.Cleanup(sync.OnceFunc(func() { close(reloadGate) }))
+			opts := testOptions()
+			opts.ReloadWait = tt.reloadWait
+			provider := Provider{ID: "p", Issuer: server.srv.URL}
+			set := mustLoad(t, opts, provider)
+			<-server.arrived
+
+			refreshed := make(chan error, 1)
+			go func() { refreshed <- set.Refresh(t.Context()) }()
+			<-server.arrived
+			looked := make(chan error, 1)
+			go func() {
+				_, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "r1"})
+				looked <- err
+			}()
+			src := set.providers[provider.Issuer]
+			waitFor(t, "the reload for the token to start", func() bool {
+				src.onDemand.mu.Lock()
+				defer src.onDemand.mu.Unlock()
+				return src.onDemand.running != nil
+			})
+			close(refreshGate)
+			if err := <-refreshed; err != nil {
+				t.Fatalf("Refresh() error = %v", err)
+			}
+			if err := <-looked; err != nil {
+				t.Errorf("LookupOrReload() error = %v, want none", err)
+			}
+		})
+	}
+}
+
+// The lookup at 59 s falls in the minute in which no reload starts, so it has
+// only the answer of the failed load. A key already loaded stays usable
+// throughout, and the load at 60 s answers.
+func TestLookupOrReload_ReportsKeysAsUnavailableUntilALoadAnswers(t *testing.T) {
+	idp := newIdP(t, ecJWK(t, "key-1", nil))
+	first := time.Date(2026, 11, 5, 12, 0, 0, 0, time.UTC)
+	now := first
+	opts := testOptions()
+	opts.now = func() time.Time { return now }
+	provider := issuer("realm", idp)
+	set := mustLoad(t, opts, provider)
+	idp.setStatus(http.StatusServiceUnavailable)
+	lookup := func(at time.Duration, kid string, want error) {
+		t.Helper()
+		now = first.Add(at)
+		if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: kid}); !errors.Is(err, want) {
+			t.Errorf("%s after the outage began, LookupOrReload(%q) error = %v, want %v", at, kid, err, want)
+		}
+	}
+	lookup(0, "rotated", ErrKeysUnavailable)
+	lookup(59*time.Second, "rotated", ErrKeysUnavailable)
+	lookup(59*time.Second, "key-1", nil)
+	idp.setStatus(0)
+	lookup(60*time.Second, "rotated", ErrKeyUnknown)
+}
+
 // The JWKS response is held, so the reload the call starts is still running
 // when the call returns.
 func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
@@ -812,8 +987,8 @@ func TestLookupOrReload_StopsWaitingWhenItsContextEnds(t *testing.T) {
 	}()
 	select {
 	case err := <-returned:
-		if !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload(%q) with an ended context error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
+		if !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload(%q) with an ended context error = %v while the reload was held, want %v", "key-2", err, ErrKeysUnavailable)
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatalf("LookupOrReload(%q) with an ended context did not return within 5 s while the reload was held", "key-2")
@@ -834,8 +1009,8 @@ func TestLookupOrReload_StopsWaitingAfterTheReloadWait(t *testing.T) {
 	idp.setGate(gate)
 	release := sync.OnceFunc(func() { close(gate) })
 	t.Cleanup(release)
-	if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeyUnknown) {
-		t.Errorf("LookupOrReload(%q) error = %v while the reload was held, want %v", "key-2", err, ErrKeyUnknown)
+	if _, err := set.LookupOrReload(t.Context(), Query{Issuer: provider.Issuer, KID: "key-2"}); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload(%q) error = %v while the reload was held, want %v", "key-2", err, ErrKeysUnavailable)
 	}
 	release()
 	waitFor(t, "the reload to load key-2", func() bool { return loaded(set, provider, "key-2") })

@@ -137,12 +137,16 @@ func newClient(label string, base func() (*x509.CertPool, error), caFile string,
 // A reload that gets it removes the keys of the source.
 var errNoUsableKey = errors.New("no usable signing key")
 
+// errNotFound reports a 404, which a realm that does not exist answers.
+var errNotFound = errors.New("not found")
+
 // fetch downloads the provider's JWKS, through discovery unless the provider
 // names a JWKSURI, and returns its signing keys. It fails when a request
-// fails or answers a status other than 2xx, when a document is not the JSON
-// it should be, when discovery names an address that is not https for a
-// provider that sends a token, and when the JWKS lists two different keys
-// under one kid; a JWKS without a usable signing key fails with errNoUsableKey.
+// fails or answers a status other than 2xx, a 404 with errNotFound, when a
+// document is not the JSON it should be, when discovery names an address that
+// is not https for a provider that sends a token, and when the JWKS lists two
+// different keys under one kid; a JWKS without a usable signing key fails with
+// errNoUsableKey.
 func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 	uri := f.provider.JWKSURI
 	if uri == "" {
@@ -178,7 +182,7 @@ func (f *fetcher) fetch(ctx context.Context) ([]Key, error) {
 
 // get returns the body of a 2xx response to a GET of url, with the bearer
 // token of the provider's TokenFile when it has one. Any other status,
-// a redirect included, is an error.
+// a redirect included, is an error, and a 404 wraps errNotFound.
 func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -200,6 +204,9 @@ func (f *fetcher) get(ctx context.Context, url string) ([]byte, error) {
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
 	if err != nil {
 		return nil, fmt.Errorf("GET %s: read body: %w", url, err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("GET %s: HTTP 404: %w", url, errNotFound)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return nil, fmt.Errorf("GET %s: HTTP %d", url, resp.StatusCode)
@@ -224,10 +231,9 @@ func readToken(path string) (string, error) {
 
 // parseJWKS returns the signing keys of a JWKS document. A key that cannot
 // sign a token the service accepts is skipped with a warning, and the same
-// key listed twice under one kid is kept once. A keys member that is null
-// counts as an empty array, the way a Go server writes an empty key set;
-// one that is missing or holds another value is an error, and so is a JWKS
-// left with no usable signing key, which fails with errNoUsableKey.
+// key listed twice under one kid is kept once. A keys member that is missing
+// or not an array, null included, is an error, and so is a JWKS left with no
+// usable signing key, which fails with errNoUsableKey.
 func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 	var doc struct {
 		Keys json.RawMessage `json:"keys"`
@@ -241,6 +247,9 @@ func (f *fetcher) parseJWKS(body []byte) ([]Key, error) {
 	var entries []json.RawMessage
 	if err := json.Unmarshal(doc.Keys, &entries); err != nil {
 		return nil, fmt.Errorf("keys is not an array: %w", err)
+	}
+	if entries == nil {
+		return nil, errors.New("keys is null, not an array")
 	}
 	var out []Key
 	thumbprints := make(map[string][]byte, len(entries))

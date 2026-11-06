@@ -367,6 +367,43 @@ func TestLookupOrReload_CallersOfANewRealmShareOneLoad(t *testing.T) {
 	}
 }
 
+// The first load of a realm meets an outage of Keycloak, the case an operator
+// has to tell from invented tokens. The lookup at 59 s has only that answer.
+func TestLookupOrReload_ReportsKeysAsUnavailableWhenTheFirstLoadOfARealmFails(t *testing.T) {
+	kc := newKeycloak(t)
+	kc.setStatus(http.StatusServiceUnavailable)
+	set, clock := keycloakSet(t, kc, testOptions())
+	if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload() on the first load: error = %v, want %v", err, ErrKeysUnavailable)
+	}
+	clock.advance(59 * time.Second)
+	if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload() at 59 s: error = %v, want %v", err, ErrKeysUnavailable)
+	}
+}
+
+// The first load of the realm is held past the wait and then brings the key, so
+// the refusal said that the key could not be loaded, not that it does not exist.
+func TestLookupOrReload_ReportsKeysAsUnavailableWhenTheFirstLoadOutlastsTheWait(t *testing.T) {
+	kc := newKeycloak(t)
+	kc.publish("tenant-1", ecJWK(t, "k1", nil))
+	gate := make(chan struct{})
+	kc.setGate(gate)
+	release := sync.OnceFunc(func() { close(gate) })
+	t.Cleanup(release)
+	opts := testOptions()
+	opts.ReloadWait = 20 * time.Millisecond
+	set, _ := keycloakSet(t, kc, opts)
+	if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeysUnavailable)
+	}
+	release()
+	waitFor(t, "the load that outlasted the wait", func() bool {
+		_, err := set.Lookup(Query{Issuer: iss("tenant-1"), KID: "k1"})
+		return err == nil
+	})
+}
+
 // A realm that does not exist answers 404. The second lookup, 59 s later, sends
 // no request, and the third, a minute after the first, does.
 func TestLookupOrReload_AsksAgainForARealmThatFailedOnlyAfterAMinute(t *testing.T) {
@@ -409,8 +446,8 @@ func TestLookupOrReload_StartsAtMostTenLoadsAMinute(t *testing.T) {
 	}
 	for _, step := range []time.Duration{0, 59 * time.Second} {
 		clock.advance(step)
-		if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeyUnknown) {
-			t.Errorf("LookupOrReload() %s after the ceiling was reached: error = %v, want %v", step, err, ErrKeyUnknown)
+		if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeysUnavailable) {
+			t.Errorf("LookupOrReload() %s after the ceiling was reached: error = %v, want %v", step, err, ErrKeysUnavailable)
 		}
 		if got := kc.loadsOf("tenant-1"); got != 0 {
 			t.Errorf("discovery requests %s after the ceiling was reached = %d, want 0", step, got)
@@ -437,8 +474,8 @@ func TestLookupOrReload_ACeilingOfLoadsCoversTheReloadOfAKnownRealm(t *testing.T
 	clock.advance(30 * time.Second)
 	_, _ = lookupRealm(t, set, "invented-last")
 	q := Query{Issuer: iss("tenant-1"), KID: "rotated"}
-	if _, err := set.LookupOrReload(t.Context(), q); !errors.Is(err, ErrKeyUnknown) {
-		t.Errorf("LookupOrReload(%+v) error = %v, want %v", q, err, ErrKeyUnknown)
+	if _, err := set.LookupOrReload(t.Context(), q); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload(%+v) error = %v, want %v", q, err, ErrKeysUnavailable)
 	}
 	if got := kc.loadsOf("tenant-1"); got != 1 {
 		t.Errorf("discovery requests at the ceiling = %d, want 1", got)
@@ -525,8 +562,8 @@ func TestLookupOrReload_KeepsNoMoreRealmsThanTheLimit(t *testing.T) {
 		}
 	}
 	clock.advance(time.Hour)
-	if _, err := lookupRealm(t, set, "c"); !errors.Is(err, ErrKeyUnknown) {
-		t.Errorf("LookupOrReload(realm %q) error = %v, want %v", "c", err, ErrKeyUnknown)
+	if _, err := lookupRealm(t, set, "c"); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload(realm %q) error = %v, want %v", "c", err, ErrKeysUnavailable)
 	}
 	if got := kc.loadsOf("c"); got != 0 {
 		t.Errorf("discovery requests for realm %q = %d, want 0", "c", got)
@@ -550,8 +587,8 @@ func TestLookupOrReload_ANewRealmTakesThePlaceOfARealmThatFailedAMinuteAgo(t *te
 	}
 	_, _ = lookupRealm(t, set, "ghost")
 	clock.advance(59 * time.Second)
-	if _, err := lookupRealm(t, set, "b"); !errors.Is(err, ErrKeyUnknown) {
-		t.Errorf("LookupOrReload(realm %q) 59 s after the failure: error = %v, want %v", "b", err, ErrKeyUnknown)
+	if _, err := lookupRealm(t, set, "b"); !errors.Is(err, ErrKeysUnavailable) {
+		t.Errorf("LookupOrReload(realm %q) 59 s after the failure: error = %v, want %v", "b", err, ErrKeysUnavailable)
 	}
 	clock.advance(time.Second)
 	if _, err := lookupRealm(t, set, "b"); err != nil {
@@ -576,6 +613,57 @@ func TestRefresh_ARealmThatDisappearsKeepsItsKeys(t *testing.T) {
 	_, _ = lookupRealm(t, set, "ghost")
 	if _, err := set.Lookup(Query{Issuer: iss("tenant-1"), KID: "k1"}); err != nil {
 		t.Errorf("Lookup() after the realm disappeared: error = %v", err)
+	}
+}
+
+// A realm that holds keys existed a moment ago, so its 404 says nothing about the
+// key a token asks for, while the 404 of a realm that holds none is how a token
+// with an invented realm ends. The load runs a minute after the first one, when
+// a token may start it.
+func TestLookupOrReload_TakesA404AsAnAnswerOnlyForARealmWithNoKeys(t *testing.T) {
+	tests := []struct {
+		name  string
+		realm string
+		want  error
+	}{
+		{"realm that holds keys", "tenant-1", ErrKeysUnavailable},
+		{"realm that holds none", "ghost", ErrKeyUnknown},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kc := newKeycloak(t)
+			kc.publish("tenant-1", ecJWK(t, "k1", nil))
+			set, clock := keycloakSet(t, kc, testOptions())
+			if _, err := lookupRealm(t, set, "tenant-1"); err != nil {
+				t.Fatalf("LookupOrReload() error = %v", err)
+			}
+			kc.remove("tenant-1")
+			clock.advance(time.Minute)
+			_, err := set.LookupOrReload(t.Context(), Query{Issuer: iss(tt.realm), KID: "rotated"})
+			if !errors.Is(err, tt.want) {
+				t.Errorf("LookupOrReload(realm %s) error = %v, want %v", tt.realm, err, tt.want)
+			}
+		})
+	}
+}
+
+// A JWKS without a usable key removed the keys of the realm, so the realm holds
+// none when the 404 arrives, although it loaded keys once.
+func TestLookupOrReload_TakesA404AsAnAnswerForARealmThatLostItsKeys(t *testing.T) {
+	kc := newKeycloak(t)
+	kc.publish("tenant-1", ecJWK(t, "k1", nil))
+	set, clock := keycloakSet(t, kc, testOptions())
+	if _, err := lookupRealm(t, set, "tenant-1"); err != nil {
+		t.Fatalf("LookupOrReload() error = %v", err)
+	}
+	kc.publish("tenant-1", ecJWK(t, "enc", map[string]any{"use": "enc"}))
+	if err := set.Refresh(t.Context()); err == nil {
+		t.Fatalf("Refresh() error = nil, want the JWKS without a usable key")
+	}
+	kc.remove("tenant-1")
+	clock.advance(time.Minute)
+	if _, err := lookupRealm(t, set, "tenant-1"); !errors.Is(err, ErrKeyUnknown) {
+		t.Errorf("LookupOrReload() error = %v, want %v", err, ErrKeyUnknown)
 	}
 }
 
