@@ -324,8 +324,8 @@ func resolveRequest(m *regogen.Module, q request, rq *regogen.Request, in *regog
 		return res, err
 	}
 	res.in = got
-	if !slices.Equal(in.SRoles, got.SRoles) {
-		res.diff = append(res.diff, fmt.Sprintf("sroles: spec %q, projection %q", in.SRoles, got.SRoles))
+	if !slices.Equal(in.FoldedRoles, got.FoldedRoles) {
+		res.diff = append(res.diff, fmt.Sprintf("sroles: spec %q, projection %q", in.FoldedRoles, got.FoldedRoles))
 	}
 	if in.M2M != got.M2M {
 		res.diff = append(res.diff, fmt.Sprintf("m2m: spec %v, projection %v", in.M2M, got.M2M))

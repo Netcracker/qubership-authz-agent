@@ -220,15 +220,15 @@ func EvalGroups(m *Module, in *Input) []string {
 		}
 	}
 	try(ix.always)
-	for _, r := range in.SRoles {
+	for _, r := range in.FoldedRoles {
 		try(ix.byKey["has\x00"+memberFoldedRoles+"\x00"+r])
 	}
 	for id, rec := range in.Records {
-		for _, k := range rec.KS {
+		for _, k := range rec.ElementKeys {
 			try(ix.byKey["has\x00"+id+"\x00"+k])
 		}
-		if rec.K != nil {
-			try(ix.byKey["eq\x00"+id+"\x00"+*rec.K])
+		if rec.Key != nil {
+			try(ix.byKey["eq\x00"+id+"\x00"+*rec.Key])
 		}
 	}
 	slices.Sort(out)
@@ -435,7 +435,7 @@ func (e *groupEval) file(slot int) {
 	s := e.ix.sources[slices.IndexFunc(e.ix.sources, func(s keySource) bool { return s.slot == slot })]
 	var ks []string
 	if s.ri < 0 {
-		ks = e.in.SRoles
+		ks = e.in.FoldedRoles
 	} else if r, ok := e.rec(s.ri); ok {
 		ks = r.list(s.field)
 	}
@@ -564,13 +564,13 @@ func (t *test) holds(e *groupEval) bool {
 	var n0 bool
 	var num *jsonvalue.Decimal
 	if t.ref == memberFoldedRoles {
-		ks = e.in.SRoles
+		ks = e.in.FoldedRoles
 	} else if r, ok := e.rec(t.ri); ok {
-		ks, k, st, cl, n0, num = r.list(t.field), r.K, r.S, r.T, r.N0, r.N
+		ks, k, st, cl, n0, num = r.list(t.field), r.Key, r.State, r.Class, r.HasNull, r.Number
 	}
 	in2 := func() ([]string, *string) {
 		if r, ok := e.rec(t.ri2); ok {
-			return r.list(t.field2), r.K
+			return r.list(t.field2), r.Key
 		}
 		return nil, nil
 	}
@@ -596,7 +596,7 @@ func (t *test) holds(e *groupEval) bool {
 	case "relref":
 		var n2 *jsonvalue.Decimal
 		if r, ok := e.rec(t.ri2); ok {
-			n2 = r.N
+			n2 = r.Number
 		}
 		return relHolds(t.val, num, n2)
 	case "nonum":
@@ -631,14 +631,15 @@ func (t *test) holds(e *groupEval) bool {
 	panic("unknown test " + t.kind)
 }
 
-// list returns the list field f of the record: KS when f is empty, or EA
-// for element_tokens and EB for element_tokens_with_text.
+// list returns the list field f of the record: ElementKeys when f is empty,
+// ElementTokens for element_tokens, or ElementTokensWithText for
+// element_tokens_with_text.
 func (r Record) list(f string) []string {
 	switch f {
 	case fieldElementTokens:
-		return r.EA
+		return r.ElementTokens
 	case fieldElementTokensWithText:
-		return r.EB
+		return r.ElementTokensWithText
 	}
-	return r.KS
+	return r.ElementKeys
 }
