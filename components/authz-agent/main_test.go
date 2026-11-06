@@ -20,8 +20,10 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -54,6 +56,31 @@ func newEngine(t *testing.T) *engine.Engine {
 // not loaded, unhealthy with the trusted providers' reason when their
 // bootstrap failed, and healthy and loaded once both are in order; a
 // disabled pull counts as loaded.
+// refusingLoader refuses tenant a, which has no previous snapshot, on every
+// load.
+type refusingLoader struct{}
+
+func (refusingLoader) LoadSnapshots(context.Context, []byte, []byte) error {
+	return &snapshot.RefusedError{Tenants: []snapshot.TenantRefusal{{Tenant: "a", Stage: "compile", Reason: "broken"}}}
+}
+
+func TestReportNamesTheTenantsWithoutASnapshot(t *testing.T) {
+	src := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer src.Close()
+	p := pull.New(pull.Config{SourceURL: src.URL, Interval: time.Hour, Snapshots: refusingLoader{}}, nil, quiet{})
+	if err := p.PullNow(context.Background()); err != nil {
+		t.Fatalf("PullNow() = %v", err)
+	}
+
+	r := report(nil, p, snapshot.New(snapshot.Config{}, nil, quiet{}))
+
+	if r.Loaded || !reflect.DeepEqual(r.Waiting, []string{"a"}) {
+		t.Errorf("report = %+v, want not loaded and waiting for [a]", r)
+	}
+}
+
 func TestReport(t *testing.T) {
 	eng := newEngine(t)
 	idle := pull.New(pull.Config{}, nil, quiet{})

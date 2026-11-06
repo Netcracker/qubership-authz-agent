@@ -185,7 +185,7 @@ spec:
               readOnly: true
             {{- end }}
           # /health answers once the trusted providers meet the bootstrap
-          # rules, and /ready once the policies have loaded as well, so a Pod
+          # rules, and /ready once every tenant has a snapshot as well, so a Pod
           # waiting for its policy source is held out of the Service instead
           # of being restarted.
           readinessProbe:

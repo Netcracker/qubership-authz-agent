@@ -65,9 +65,11 @@ Every line carries the request id under `request_id`, the same id the response c
 then. Its `snapshots` member lists each tenant of the last policy load: whether it is `ready`, the snapshot it answers
 from, the sets and PIPs that answer as failed, and the `rejected` reason of a candidate that was not published. A tenant
 keeps its previous snapshot when a new candidate is rejected; a tenant rejected on its first load is not ready and
-denies every check request. `GET /ready`, on the internal port, adds the policies: 503 with the reason `policies not
-loaded yet` and the same details until they have loaded once, 200 `{"status":"ready"}` after. A pull that fails later
-keeps the loaded policies and both verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an
+denies every check request. `GET /ready`, on the internal port, adds the policies: 503 with the same details until a
+load gives every tenant the source names a snapshot, then 200 `{"status":"ready"}`. The 503 reason is `no snapshot
+accepted yet for tenants <tenants>` while a tenant rejected on its first load holds readiness back, and `policies not
+loaded yet` before any load. Once ready, the service stays ready: a pull that fails later, or a later load that rejects
+a tenant, keeps the published snapshots and both verdicts. An empty `AUTHZ_PAP_CLIENT_SOURCE_URL` or an
 `AUTHZ_PAP_CLIENT_PULL_INTERVAL` of `0` disables the pull, and `/ready` then answers 200 as soon as the trusted
 providers meet the bootstrap rules, with no policies loaded.
 
