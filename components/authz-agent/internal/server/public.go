@@ -32,6 +32,7 @@ import (
 // the Envoy path matches did; the check routes then read the body, and the
 // filter routes the query, whatever the method.
 func (s *Server) RegisterPublic(app *fiber.App) {
+	app.Use(s.recoverPanic)
 	app.Use(s.requestID)
 	app.All("/access/v1/check/resource/bulk/operations", s.checkResourceBulkOperations(false))
 	app.All("/preview/v1/check/resource/bulk/operations", s.checkResourceBulkOperations(false))
