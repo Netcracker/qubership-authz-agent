@@ -47,11 +47,11 @@ type doc = map[string]any
 func completeTable() doc { return fixtureTable(eqLines()) }
 
 // eqLines returns the lines of EQ(res:path, lit:str) in completeTable, in
-// legacy's outcomes, where res:path has the points VALUE/s, VALUE/l, and NULL,
-// and lit:str the point VALUE/s. Every place has four lines: the row of NULL
-// answers F under OR, ERR in a pass of iterate, and otherwise T for DENY and F
-// for ALLOW. The row of VALUE/s answers by value (code a) and the row of
-// VALUE/l ERR, except bad_request in place rule_target.
+// legacy's outcomes, where res:path has the points VALUE/string, VALUE/list,
+// and NULL, and lit:str the point VALUE/string. Every place has four lines: the
+// row of NULL answers F under OR, ERR in a pass of iterate, and otherwise T for
+// DENY and F for ALLOW. The row of VALUE/string answers by value (code a) and
+// the row of VALUE/list ERR, except bad_request in place rule_target.
 func eqLines() []string {
 	var lines []string
 	for _, place := range []string{"simplified", "rule_condition", "rule_target", "policy_target", "set_target"} {
@@ -82,17 +82,17 @@ func negatesDoc() doc {
 
 // fixtureTable covers every combination with one line of code F, except
 // EQ(res:path, lit:str), which takes eq when eq is not nil. Every kind has the
-// points VALUE/s and NULL, except res:path with VALUE/s, VALUE/l, and NULL,
-// and lit:str and pattern with VALUE/s alone. The agent maps ABORT to F and ERR
-// to U, and subj.name is an alias of subj.id.
+// points VALUE/string and NULL, except res:path with VALUE/string, VALUE/list,
+// and NULL, and lit:str and pattern with VALUE/string alone. The agent maps
+// ABORT to F and ERR to U, and subj.name is an alias of subj.id.
 func fixtureTable(eq []string) doc {
 	kinds := doc{}
 	for _, k := range fixtureKinds {
-		kinds[k] = doc{"states": []any{"VALUE", "NULL"}, "classes": []any{"s"}}
+		kinds[k] = doc{"states": []any{"VALUE", "NULL"}, "classes": []any{"string"}}
 	}
-	kinds["res:path"] = doc{"states": []any{"VALUE", "NULL"}, "classes": []any{"s", "l"}}
-	kinds["lit:str"] = doc{"states": []any{"VALUE"}, "classes": []any{"s"}}
-	kinds["pattern"] = doc{"states": []any{"VALUE"}, "classes": []any{"s"}}
+	kinds["res:path"] = doc{"states": []any{"VALUE", "NULL"}, "classes": []any{"string", "list"}}
+	kinds["lit:str"] = doc{"states": []any{"VALUE"}, "classes": []any{"string"}}
+	kinds["pattern"] = doc{"states": []any{"VALUE"}, "classes": []any{"string"}}
 
 	var cells []any
 	for _, op := range fixtureOps {
@@ -113,7 +113,7 @@ func fixtureTable(eq []string) doc {
 		}
 	}
 	return doc{
-		"schema_version": 4,
+		"schema_version": 5,
 		"spec_tag":       "r99",
 		"negates":        negatesDoc(),
 		"knobs": doc{"fold": "java", "eq_numeric": false, "list_eq_by_value": true, "subset_fold": false,
@@ -348,9 +348,9 @@ func TestLookupRefusesAKeyOutsideTheTable(t *testing.T) {
 }
 
 // The grid of a line has a row per left point and a code per right point, the
-// points in the order of the domains: res:path VALUE/s, VALUE/l, NULL on the
-// left, operation VALUE/s, NULL on the right. A single row stands for every
-// left point.
+// points in the order of the domains: res:path VALUE/string, VALUE/list, NULL
+// on the left, operation VALUE/string, NULL on the right. A single row stands
+// for every left point.
 func TestLookupReadsTheGridByLeftRowAndRightColumn(t *testing.T) {
 	t.Parallel()
 	d := completeTable()
@@ -493,8 +493,8 @@ func TestLoadRejectsAnInvalidTable(t *testing.T) {
 		},
 		{
 			name:  "the schema version of the earlier export",
-			edit:  func(d doc) { d["schema_version"] = 3 },
-			names: "schema_version is 3, want 4",
+			edit:  func(d doc) { d["schema_version"] = 4 },
+			names: "schema_version is 4, want 5",
 		},
 		{
 			name:  "the cells of the earlier export",
@@ -639,11 +639,11 @@ func TestLoadRejectsAnInvalidTable(t *testing.T) {
 		},
 
 		{
-			name: "the class x, which the format splits into xn, xl, and xo",
+			name: "a class spelled by its schema version 4 code",
 			edit: func(d doc) {
-				d["kinds"].(doc)["res:path"] = doc{"states": []any{"VALUE", "NULL"}, "classes": []any{"s", "l", "x"}}
+				d["kinds"].(doc)["res:path"] = doc{"states": []any{"VALUE", "NULL"}, "classes": []any{"string", "list", "xl"}}
 			},
-			names: `operand kind res:path: class "x" is unknown or repeated`,
+			names: `operand kind res:path: class "xl" is unknown or repeated`,
 		},
 		{
 			name:  "a domain for an unknown operand kind",
@@ -727,7 +727,7 @@ func TestLoadRejectsADocumentThatIsNotOneTable(t *testing.T) {
 		name  string
 		input string
 	}{
-		{name: "malformed JSON", input: `{"schema_version": 4,`},
+		{name: "malformed JSON", input: `{"schema_version": 5,`},
 		{name: "data after the table", input: string(complete) + ` {}`},
 	}
 	for _, tt := range tests {
@@ -763,9 +763,9 @@ func TestLoadAcceptsTheExportNamedBySpectablesExport(t *testing.T) {
 }
 
 // eqPositive is the line of EQ(res:path, lit:str) the derivation tests start
-// from, in legacy's outcomes: T or ABORT by value on VALUE/s (code b), ERR on
-// VALUE/l, and T on NULL. A line the tests tell apart from its source answers
-// ERR, which no mirror produces.
+// from, in legacy's outcomes: T or ABORT by value on VALUE/string (code b), ERR
+// on VALUE/list, and T on NULL. A line the tests tell apart from its source
+// answers ERR, which no mirror produces.
 const eqPositive = "EQ res:path lit:str b E T"
 
 func TestLoadDerivesTheCellsATableLeavesOut(t *testing.T) {

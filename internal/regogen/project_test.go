@@ -55,10 +55,10 @@ func TestStructureText(t *testing.T) {
 }
 
 // The record of a value carries the folded text a string compares it by
-// (TK), the tokens of its elements (EA), and those tokens with the folded
-// text of each nested list or object after the element's own token (EB). A
-// list with a number or null is not a list of strings, whose text TK takes
-// from the folded Java text.
+// (TextKey), the tokens of its elements (ElementTokens), and those tokens
+// with the folded text of each nested list or object after the element's own
+// token (ElementTokensWithText). A list with a number or null is not a list
+// of strings, whose text TextKey takes from the folded Java text.
 func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 	for _, tc := range []struct {
 		value, tk string
@@ -79,11 +79,11 @@ func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 			}
 			rec := record(&Ref{}, Resolved{State: spectables.StateValue, Value: v})
 			tk := ""
-			if rec.TK != nil {
-				tk = *rec.TK
+			if rec.TextKey != nil {
+				tk = *rec.TextKey
 			}
-			if tk != tc.tk || !slices.Equal(rec.EA, tc.ea) || !slices.Equal(rec.EB, tc.eb) {
-				t.Errorf("record(%s): tk %q, ea %q, eb %q; want tk %q, ea %q, eb %q", tc.value, tk, rec.EA, rec.EB,
+			if tk != tc.tk || !slices.Equal(rec.ElementTokens, tc.ea) || !slices.Equal(rec.ElementTokensWithText, tc.eb) {
+				t.Errorf("record(%s): tk %q, ea %q, eb %q; want tk %q, ea %q, eb %q", tc.value, tk, rec.ElementTokens, rec.ElementTokensWithText,
 					tc.tk, tc.ea, tc.eb)
 			}
 		})
@@ -98,7 +98,7 @@ func TestRecordReadsTheTokensOfTheElements(t *testing.T) {
 func TestAListTokenGrowsByAFixedLengthPerLevelOfNesting(t *testing.T) {
 	value := `[[[[[[[[[[[[[[[["\""]]]]]]]]]]]]]]]]`
 	ea, sa := recordTokens(t, value)
-	for name, token := range map[string]string{"ea": ea[0], "sa": sa[len(sa)-1]} {
+	for name, token := range map[string]string{fieldElementTokens: ea[0], fieldSubsetLeft: sa[len(sa)-1]} {
 		if len(token) != 66 {
 			t.Errorf("record(%s): the %s token is %d bytes, want 66: %.80q", value, name, len(token), token)
 		}
@@ -106,10 +106,10 @@ func TestAListTokenGrowsByAFixedLengthPerLevelOfNesting(t *testing.T) {
 }
 
 // Two lists have one element token exactly when the operator reads them as
-// equal: the collection operators (EA) fold case, and IS SUBSET (SA) does
-// not. A string that holds a quote and a comma, or a comma and what follows
-// it in the token of the next element, or that spells the token of a list,
-// stays apart from the lists it looks like.
+// equal: the collection operators (ElementTokens) fold case, and IS SUBSET
+// (SubsetLeft) does not. A string that holds a quote and a comma, or a comma
+// and what follows it in the token of the next element, or that spells the
+// token of a list, stays apart from the lists it looks like.
 func TestNestedListsShareAnElementTokenOnlyWhenEqual(t *testing.T) {
 	for _, tc := range []struct {
 		name, a, b       string
@@ -136,8 +136,9 @@ func TestNestedListsShareAnElementTokenOnlyWhenEqual(t *testing.T) {
 	}
 }
 
-// A list that holds null at any depth has no element token: its EA is empty,
-// and its SA holds the token of its text alone. The same list with a string
+// A list that holds null at any depth has no element token: its
+// ElementTokens is empty, and its SubsetLeft holds the token of its text
+// alone. The same list with a string
 // in place of the null has both.
 func TestAListWithANullAtAnyDepthHasNoElementToken(t *testing.T) {
 	for _, tc := range []struct {
@@ -156,8 +157,8 @@ func TestAListWithANullAtAnyDepthHasNoElementToken(t *testing.T) {
 	}
 }
 
-// recordTokens returns the EA of the list value and the SA of its first
-// element, whose last token is the token of the element's value.
+// recordTokens returns the ElementTokens of the list value and the
+// SubsetLeft of its first element, whose last token is the token of the element's value.
 func recordTokens(t *testing.T, value string) (ea, sa []string) {
 	t.Helper()
 	v, err := jsonvalue.Decode([]byte(value))
@@ -165,7 +166,7 @@ func recordTokens(t *testing.T, value string) (ea, sa []string) {
 		t.Fatalf("jsonvalue.Decode(%s): %v", value, err)
 	}
 	rec := record(&Ref{Subset: true}, Resolved{State: spectables.StateValue, Value: v})
-	return rec.EA, rec.SA[0]
+	return rec.ElementTokens, rec.SubsetLeft[0]
 }
 
 // A record holds a field that is costly to build, the keys, the text, the
@@ -216,12 +217,12 @@ func TestARecordHoldsTheFieldsTheModuleReads(t *testing.T) {
 			// a copy, so that reading the expressions marks no field
 			r := *m.Refs[i]
 			s := &side{ref: &r}
-			for f, has := range map[string][2]bool{"ks": {rec.KS != nil, whole.KS != nil},
-				"tk": {rec.TK != nil, whole.TK != nil}, "o": {rec.O != nil, whole.O != nil},
-				"ea": {rec.EA != nil, whole.EA != nil}} {
+			for f, has := range map[string][2]bool{fieldElementKeys: {rec.ElementKeys != nil, whole.ElementKeys != nil},
+				fieldTextKey: {rec.TextKey != nil, whole.TextKey != nil}, fieldEqualityKey: {rec.EqualityKey != nil, whole.EqualityKey != nil},
+				fieldElementTokens: {rec.ElementTokens != nil, whole.ElementTokens != nil}} {
 				reads := strings.Contains(m.Text, s.field(f))
-				if f == "ea" {
-					reads = reads || strings.Contains(m.Text, s.field("eb"))
+				if f == fieldElementTokens {
+					reads = reads || strings.Contains(m.Text, s.field(fieldElementTokensWithText))
 				}
 				if has[0] != (reads && has[1]) {
 					t.Errorf("the module reads %s of %s: %v, the record of every field holds it: %v, "+
@@ -249,23 +250,23 @@ func TestTheInputCarriesTheFieldsTheTextReads(t *testing.T) {
 			t.Fatalf("Generate: %v", err)
 		}
 		in := mustProject(t, m, req)
-		if in.Records[id].KS == nil {
+		if in.Records[id].ElementKeys == nil {
 			t.Errorf("groups %v: the record of %s holds no keys", groups, id)
 		}
-		ks := in.Value().(ast.Object).Get(ast.StringTerm("ks")).Value.(ast.Object).Get(ast.StringTerm(id))
-		reads := strings.Contains(m.Text, "input.ks"+refIndex(id))
+		ks := in.Value().(ast.Object).Get(ast.StringTerm(fieldElementKeys)).Value.(ast.Object).Get(ast.StringTerm(id))
+		reads := strings.Contains(m.Text, "input."+fieldElementKeys+refIndex(id))
 		if (ks != nil) != reads {
-			t.Errorf("groups %v: the text reads input.ks of %s: %v, the input carries it: %v", groups, id, reads,
+			t.Errorf("groups %v: the text reads input.element_keys of %s: %v, the input carries it: %v", groups, id, reads,
 				ks != nil)
 		}
 		if reads == groups {
-			t.Errorf("groups %v: the text reads input.ks of %s: %v", groups, id, reads)
+			t.Errorf("groups %v: the text reads input.element_keys of %s: %v", groups, id, reads)
 		}
 	}
 }
 
 // markEmitted sets each field the text reads of the reference it reads it
-// of, and no other: every field name, n0 and nseg among them, after input
+// of, and no other: every field name, has_null and segment_count among them, after input
 // and after p, the record of a pass value, with the index of a name that is
 // an identifier and of one that is not. A field read with no index is set
 // for every reference.
@@ -273,20 +274,20 @@ func TestMarkEmittedSetsTheFieldsTheTextReads(t *testing.T) {
 	x, ab := &Ref{ID: "x"}, &Ref{ID: "a.b<"}
 	for _, f := range recordFields {
 		for _, text := range []string{
-			"input." + f + refIndex(x.ID) + " == 1\n  not input.s" + refIndex(ab.ID),
-			"some p in input.ps\n  p." + f + refIndex(x.ID) + "[0]\n  p.s" + refIndex(ab.ID),
+			"input." + f + refIndex(x.ID) + " == 1\n  not input.state" + refIndex(ab.ID),
+			"some p in input.scope_passes\n  p." + f + refIndex(x.ID) + "[0]\n  p.state" + refIndex(ab.ID),
 		} {
 			markEmitted([]*Ref{x, ab}, text)
 			if want := fieldsKnown | fieldBit(f); x.emit != want {
 				t.Errorf("%q: emit of x %b, want %b", text, x.emit, want)
 			}
-			if want := fieldsKnown | fieldBit("s"); ab.emit != want {
+			if want := fieldsKnown | fieldBit(fieldState); ab.emit != want {
 				t.Errorf("%q: emit of %s %b, want %b", text, ab.ID, ab.emit, want)
 			}
 		}
 	}
-	markEmitted([]*Ref{x, ab}, "count(input.ks) > 0")
-	if want := fieldsKnown | fieldBit("ks"); x.emit != want || ab.emit != want {
-		t.Errorf("input.ks with no index: emit %b and %b, want %b for both", x.emit, ab.emit, want)
+	markEmitted([]*Ref{x, ab}, "count(input.element_keys) > 0")
+	if want := fieldsKnown | fieldBit(fieldElementKeys); x.emit != want || ab.emit != want {
+		t.Errorf("input.element_keys with no index: emit %b and %b, want %b for both", x.emit, ab.emit, want)
 	}
 }

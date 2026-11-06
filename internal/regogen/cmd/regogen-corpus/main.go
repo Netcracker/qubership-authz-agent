@@ -247,9 +247,9 @@ func resolvedValues(vals map[string][3]json.RawMessage) (map[string]regogen.Reso
 			return nil, err
 		}
 		res := regogen.Resolved{State: spectables.State(st)}
-		var hl bool
-		_ = json.Unmarshal(v[2], &hl)
-		res.HeaderList = hl
+		var pipList bool
+		_ = json.Unmarshal(v[2], &pipList)
+		res.PIPList = pipList
 		var text *string
 		if err := json.Unmarshal(v[1], &text); err != nil {
 			return nil, err
@@ -324,8 +324,8 @@ func resolveRequest(m *regogen.Module, q request, rq *regogen.Request, in *regog
 		return res, err
 	}
 	res.in = got
-	if !slices.Equal(in.SRoles, got.SRoles) {
-		res.diff = append(res.diff, fmt.Sprintf("sroles: spec %q, projection %q", in.SRoles, got.SRoles))
+	if !slices.Equal(in.FoldedRoles, got.FoldedRoles) {
+		res.diff = append(res.diff, fmt.Sprintf("sroles: spec %q, projection %q", in.FoldedRoles, got.FoldedRoles))
 	}
 	if in.M2M != got.M2M {
 		res.diff = append(res.diff, fmt.Sprintf("m2m: spec %v, projection %v", in.M2M, got.M2M))

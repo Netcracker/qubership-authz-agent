@@ -203,11 +203,11 @@ type gen struct {
 	factorIDs map[string]int
 
 	// sources holds what the comments say of each node, by label; shared
-	// holds the rules several nodes may read, and ruleAtoms the comparisons
-	// their clauses came from.
+	// holds the rules several nodes may read, and ruleHeads the comment
+	// lines of a condition rail: the condition and the outcome it holds at.
 	sources   map[string]nodeSource
 	shared    map[string]bool
-	ruleAtoms map[string][]string
+	ruleHeads map[string][]string
 
 	stats Stats
 	// pass is set while the generator translates the subtree of an iterate
@@ -298,7 +298,7 @@ func newGen(tree *policyir.Tree, tab *spectables.Table, opt Options) (*gen, erro
 		condMemo: map[string]*cond{}, decNames: map[string]string{}, decRoots: map[string]*node{},
 		groups: map[string]Group{}, groupIDs: map[string]string{}, factorIDs: map[string]int{},
 		params: map[string]bool{}, uncertainMemo: map[*node]bool{},
-		sources: map[string]nodeSource{}, shared: map[string]bool{}, ruleAtoms: map[string][]string{}, light: map[string]bool{},
+		sources: map[string]nodeSource{}, shared: map[string]bool{}, ruleHeads: map[string][]string{}, light: map[string]bool{},
 		hashedKeys: map[string]string{}}
 	g.stats.NoTemplate = map[string]int{}
 	if fs := tree.Unsupported(); len(fs) > 0 {
@@ -494,8 +494,8 @@ func (g *gen) simplified(sg *policyir.SimplifiedGroup, label string) (*node, err
 			if err != nil {
 				return nil, err
 			}
-			r.read |= fieldBit("k")
-			m = conj(m, clause{{cls: clsIndexEq, text: "input.k" + refIndex(r.ID) + " == " + lit(g.fold(sg.ResourceType)),
+			r.read |= fieldBit(fieldKey)
+			m = conj(m, clause{{cls: clsIndexEq, text: "input." + fieldKey + refIndex(r.ID) + " == " + lit(g.fold(sg.ResourceType)),
 				src: simpSrc("resourceType == " + lit(sg.ResourceType))}})
 		}
 		op := p.Operation
@@ -508,14 +508,14 @@ func (g *gen) simplified(sg *policyir.SimplifiedGroup, label string) (*node, err
 			if err != nil {
 				return nil, err
 			}
-			r.read |= fieldBit("k")
-			m = conj(m, clause{{cls: clsIndexEq, text: "input.k" + refIndex(r.ID) + " == " + lit(g.fold(op)),
+			r.read |= fieldBit(fieldKey)
+			m = conj(m, clause{{cls: clsIndexEq, text: "input." + fieldKey + refIndex(r.ID) + " == " + lit(g.fold(op)),
 				src: simpSrc("operation == " + lit(op))}})
 		}
 		var roles dnf
 		for _, r := range p.Roles {
-			roles = append(roles, clause{{cls: clsIndexIn, text: lit(g.fold(r)) + " in input.sroles",
-				test: &test{kind: "has", ref: "sroles", val: g.fold(r)}, src: simpSrc("role " + lit(r))}})
+			roles = append(roles, clause{{cls: clsIndexIn, text: lit(g.fold(r)) + " in input." + memberFoldedRoles,
+				test: &test{kind: "has", ref: memberFoldedRoles, val: g.fold(r)}, src: simpSrc("role " + lit(r))}})
 		}
 		roles = union(roles)
 		// a simplified policy without a condition grants by its operation and
@@ -578,7 +578,7 @@ func (g *gen) set(s *policyir.PolicySet, label, parent string) (*node, error) {
 	saved := g.where
 	defer func() { g.where = saved }()
 	g.where = whereNow{set: s.ID, label: label}
-	g.source(label, parent, fmt.Sprintf("set %q %q, %s", s.ID, commentLine(s.Name), s.Algorithm),
+	g.source(label, parent, nodeHead("set", s.ID, s.Name, string(s.Algorithm)),
 		"target: "+condText(s.Target))
 	tgt, err := g.cond(s.Target, spectables.PlaceSetTarget, "")
 	if err != nil {
@@ -639,7 +639,7 @@ func (g *gen) setKids(n *node, s *policyir.PolicySet, label string) error {
 func (g *gen) policy(p *policyir.Policy, label, parent string) (*node, error) {
 	set := g.where.set
 	g.where = whereNow{set: set, policy: p.ID, label: label}
-	g.source(label, parent, fmt.Sprintf("policy %q %q, %s", p.ID, commentLine(p.Name), p.Algorithm),
+	g.source(label, parent, nodeHead("policy", p.ID, p.Name, string(p.Algorithm)),
 		"target: "+condText(p.Target))
 	tgt, err := g.cond(p.Target, spectables.PlacePolicyTarget, "")
 	if err != nil {
@@ -649,7 +649,7 @@ func (g *gen) policy(p *policyir.Policy, label, parent string) (*node, error) {
 	for j, r := range p.Rules {
 		rl := fmt.Sprintf("%s_r%d", label, j+1)
 		g.where = whereNow{set: set, policy: p.ID, rule: r.ID, label: rl}
-		g.source(rl, label, fmt.Sprintf("rule %q %q, %s", r.ID, commentLine(r.Name), r.Effect),
+		g.source(rl, label, nodeHead("rule", r.ID, r.Name, string(r.Effect)),
 			"target: "+condText(r.Target), "condition: "+condText(r.Condition))
 		rt, err := g.cond(r.Target, spectables.PlaceRuleTarget, "")
 		if err != nil {
@@ -679,6 +679,8 @@ type cond struct {
 	three  bool
 	t, f   dnf
 	done   bool
+	// text is the condition as its rails' comments name it.
+	text string
 	// refs are the references the condition reads, set in the generator
 	// for check/filter only.
 	refs []*Ref
@@ -705,7 +707,7 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 	if effect == policyir.EffectDeny {
 		ctx.Effect = spectables.EffectDeny
 	}
-	cc := &cond{g: g}
+	cc := &cond{g: g, text: condText(c)}
 	g.where.place = place
 	var outer map[*Ref]bool
 	if g.filter {
@@ -735,8 +737,9 @@ func (g *gen) cond(c *policyir.Condition, place spectables.Place, effect policyi
 				}
 				return nil, fmt.Errorf("%s: %w", policyir.FormatCondition(c), err)
 			}
-			src := &exprSrc{node: g.where.label, atom: atomText(a)}
-			l.t, l.f = stamp(l.t, src), stamp(l.f, src)
+			atom := atomText(a)
+			l.t = stamp(l.t, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeT})
+			l.f = stamp(l.f, &exprSrc{node: g.where.label, atom: atom, outcome: spectables.OutcomeF})
 			g.stats.Leaves++
 			cc.three = cc.three || l.threeValued
 			leaves = append(leaves, l)
@@ -760,8 +763,8 @@ func (g *gen) leaf(a policyir.Atom, ctx spectables.Context) (leafRails, error) {
 	case policyir.IsM2M:
 		t := &test{kind: "m2m", val: "true"}
 		f := &test{kind: "m2m", val: "false"}
-		return leafRails{t: dnf{{{cls: clsIndexEq, text: "input.m2m == true", test: t}}},
-			f: dnf{{{cls: clsIndexEq, text: "input.m2m == false", test: f}}}, subjectOnly: true}, nil
+		return leafRails{t: dnf{{{cls: clsIndexEq, text: "input." + memberM2M + " == true", test: t}}},
+			f: dnf{{{cls: clsIndexEq, text: "input." + memberM2M + " == false", test: f}}}, subjectOnly: true}, nil
 	case policyir.Access:
 		if g.pass {
 			// legacy reads the decision for the operation in the current
@@ -921,14 +924,35 @@ func (c *cond) notF() dnf {
 	if !c.three {
 		return c.T()
 	}
-	return c.g.refRule(c.F(), "c", true)
+	return c.railRule(c.F(), spectables.OutcomeF)
+}
+
+// railRule returns the negation of a rule that holds the rail d of the
+// condition, where the condition's outcome is o, and names the condition
+// and o in the rule's comment.
+func (c *cond) railRule(d dnf, o spectables.Outcome) dnf {
+	prefix := prefixRailF
+	if o == spectables.OutcomeT {
+		prefix = prefixRailT
+	}
+	r := c.g.refRule(d, prefix, true)
+	if len(r) == 1 && len(r[0]) == 1 && r[0][0].rule != "" {
+		name := r[0][0].rule
+		word := map[spectables.Outcome]string{spectables.OutcomeT: "true", spectables.OutcomeF: "false"}[o]
+		head := name + ": holds where " + c.text + " is " + word
+		if !slices.Contains(c.g.ruleHeads[name], head) {
+			c.g.ruleHeads[name] = append(c.g.ruleHeads[name], head)
+			slices.Sort(c.g.ruleHeads[name])
+		}
+	}
+	return r
 }
 
 func (c *cond) U() dnf {
 	if c.isTrue != nil || !c.three {
 		return dnfFalse
 	}
-	return prod(c.g.refRule(c.T(), "c", true), c.g.refRule(c.F(), "c", true), true)
+	return prod(c.railRule(c.T(), spectables.OutcomeT), c.railRule(c.F(), spectables.OutcomeF), true)
 }
 
 // -- rules --------------------------------------------------------------------
@@ -953,11 +977,24 @@ func (g *gen) call(name string) string {
 	return name
 }
 
+// The prefixes of the rules that any node may read, named by a hash of their
+// clauses: a factor moved out of a product, and the true and the false rail
+// of a condition.
+const (
+	prefixAnd   = "and"
+	prefixRailT = "rail_t"
+	prefixRailF = "rail_f"
+)
+
+// hashedPrefix reports whether the rules of prefix are named by a hash.
+func hashedPrefix(prefix string) bool {
+	return prefix == prefixAnd || prefix == prefixRailT || prefix == prefixRailF
+}
+
 // refRule returns a one-clause disjunction that reads a rule with these
 // clauses, or its negation. The rule of a node is named by prefix and a
-// counter; a product (prefix m) or a condition rail (prefix c), which any node
-// may read, by prefix and a hash of its clauses, and its comment lists the
-// comparisons of every reader.
+// counter; a factor of a product or a condition rail, which any node may
+// read, by prefix and a hash of its clauses (hashedPrefix).
 func (g *gen) refRule(d dnf, prefix string, negate bool) dnf {
 	switch {
 	case d.isTrue() && negate, d.isFalse() && !negate:
@@ -968,26 +1005,18 @@ func (g *gen) refRule(d dnf, prefix string, negate bool) dnf {
 	k := fmt.Sprintf("%s|%t|%s", prefix, g.pass, d.key())
 	name, ok := g.memo[k]
 	if !ok {
-		if prefix == "m" || prefix == "c" {
+		if hashedPrefix(prefix) {
 			name = g.rule(g.hashed(prefix, k), d)
 		} else {
 			name = g.rule(g.fresh(prefix), d)
 		}
 		g.memo[k] = name
-		if prefix == "c" {
+		if prefix == prefixRailT || prefix == prefixRailF {
 			g.light[name] = true
 		}
 	}
-	if prefix == "m" || prefix == "c" {
-		// several nodes read the rule: its comment names the comparisons
-		// of every reader, in an order no reader decides
+	if hashedPrefix(prefix) {
 		g.shared[name] = true
-		for _, a := range atoms(d) {
-			if !slices.Contains(g.ruleAtoms[name], a) {
-				g.ruleAtoms[name] = append(g.ruleAtoms[name], a)
-			}
-		}
-		slices.Sort(g.ruleAtoms[name])
 	}
 	text := g.call(name)
 	if negate {
@@ -1007,16 +1036,16 @@ func (g *gen) product(a, b dnf) dnf {
 		x, y := p[0], p[1]
 		if len(y) > g.opt.RefFanout && g.refsNodeRule(x) {
 			g.stats.Materialized++
-			return prod(x, g.refRule(y, "m", false), true)
+			return prod(x, g.refRule(y, prefixAnd, false), true)
 		}
 	}
 	if len(a) > 1 && len(b) > 1 && len(a)*len(b) > g.opt.ProductLimit {
 		g.stats.Materialized++
 		ga, gb := guarded(a), guarded(b)
 		if ga && !gb || ga == gb && len(b) > len(a) {
-			b = g.refRule(b, "m", false)
+			b = g.refRule(b, prefixAnd, false)
 		} else {
-			a = g.refRule(a, "m", false)
+			a = g.refRule(a, prefixAnd, false)
 		}
 	}
 	return prod(a, b, true)
@@ -1322,8 +1351,8 @@ func clauseText(name string, c clause) string {
 	b.WriteString(name + " if {\n")
 	for _, e := range es {
 		b.WriteString("\t" + e.text)
-		if c := lineComment(e); c != "" {
-			b.WriteString(" # " + commentLine(c))
+		if e.cell != "" {
+			b.WriteString(" # " + commentLine(e.cell))
 		}
 		b.WriteString("\n")
 	}
@@ -1389,9 +1418,13 @@ func (g *gen) writeRules(b *strings.Builder, cm *commenter, used map[string]bool
 		}
 		b.WriteString("\n")
 		cm.last = ""
+		heads := g.ruleHeads[name]
 		if g.shared[name] {
-			for _, a := range g.ruleAtoms[name] {
-				b.WriteString("# " + commentLine(a) + "\n")
+			if heads == nil {
+				heads = []string{name + ": clauses of " + strings.Join(dnfNodes(body), ", ")}
+			}
+			for _, h := range heads {
+				b.WriteString("# " + commentLine(h) + "\n")
 			}
 		}
 		if len(body) == 0 {
@@ -1408,8 +1441,15 @@ func (g *gen) writeRules(b *strings.Builder, cm *commenter, used map[string]bool
 			clauses++
 		}
 		for _, c := range body {
-			if !g.shared[name] {
+			switch {
+			case !g.shared[name]:
 				cm.clause(c)
+			case g.ruleHeads[name] == nil:
+				// a product: each clause names where it came from, and its
+				// rule's comment does not
+				if line := clauseComment(c); line != "" {
+					b.WriteString("# " + commentLine(line) + "\n")
+				}
 			}
 			if len(c) == 0 && g.params[name] {
 				b.WriteString(clauseText(strings.TrimSuffix(target, "(p)")+"(_)", c))

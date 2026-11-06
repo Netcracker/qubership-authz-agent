@@ -95,8 +95,8 @@ func relTemplate(op spectables.Operator, L, R *side, b *tb) (tpl, bool) {
 			}
 			return orderKey(*s.lit.num).String(), true
 		}
-		b.use(s, "nk")
-		return s.field("nk"), true
+		b.use(s, fieldNumber)
+		return s.field(fieldNumber), true
 	}
 	l, okL := operand(L)
 	r, okR := operand(R)
@@ -116,13 +116,23 @@ func relTemplate(op spectables.Operator, L, R *side, b *tb) (tpl, bool) {
 	// The false rail is the complementary comparison, and a side without a
 	// number: OPA leaves "not a < b" undefined, not true, when a is missing.
 	co := relComplement[op]
+	// the comment writes a literal's number, which its key hides
+	cell := func(o spectables.Operator) string {
+		switch {
+		case L.ref == nil:
+			return L.lit.num.String() + " " + relText[o]
+		case R.ref == nil:
+			return relText[o] + " " + R.lit.num.String()
+		}
+		return ""
+	}
 	out.t = dnf{conj(bind, clause{{cls: c, text: fmt.Sprintf("%s %s %s", l, relText[op], r), fact: vfact(ref),
-		test: relTest(op, L, R)}})}
+		test: relTest(op, L, R), cell: cell(op)}})}
 	out.f = dnf{conj(bind, clause{{cls: c, text: fmt.Sprintf("%s %s %s", l, relText[co], r), fact: vfact(ref),
-		test: relTest(co, L, R)}})}
+		test: relTest(co, L, R), cell: cell(co)}})}
 	for _, s := range []*side{L, R} {
 		if s.ref != nil {
-			out.f = append(out.f, conj(bind, clause{{cls: c, text: "not " + s.field("nk"), fact: vfact(s),
+			out.f = append(out.f, conj(bind, clause{{cls: c, text: "not " + s.field(fieldNumber), fact: vfact(s),
 				test: refTest(s, &test{kind: "nonum"})}}))
 		}
 	}

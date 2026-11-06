@@ -164,17 +164,17 @@ func subsetTemplate(L, R *side, b *tb) (tpl, bool) {
 	var la, rb string
 	if L.ref != nil {
 		L.ref.Subset = true
-		b.use(L, "sa")
-		la = L.field("sa")
+		b.use(L, fieldSubsetLeft)
+		la = L.field(fieldSubsetLeft)
 	} else {
-		la = setsLit(L.lit.sa)
+		la = setsLit(L.lit.subsetLeft)
 	}
 	if R.ref != nil {
 		R.ref.Subset = true
-		b.use(R, "sb")
-		rb = R.field("sb")
+		b.use(R, fieldSubsetRight)
+		rb = R.field(fieldSubsetRight)
 	} else {
-		rb = setLit(R.lit.sb)
+		rb = setLit(R.lit.subsetRight)
 	}
 	c := clsCheck
 	if L.ref != nil && L.ref.Network || R.ref != nil && R.ref.Network {
@@ -227,12 +227,12 @@ func subsetTest(L, R *side, kind string) *test {
 	if L.ref != nil {
 		t.ref = L.ref.ID
 	} else {
-		t.sets = L.lit.sa
+		t.sets = L.lit.subsetLeft
 	}
 	if R.ref != nil {
-		t.ref2, t.field2 = R.ref.ID, "sb"
+		t.rightRef, t.rightField = R.ref.ID, fieldSubsetRight
 	} else {
-		t.set = R.lit.sb
+		t.set = R.lit.subsetRight
 	}
 	return t
 }
@@ -242,11 +242,11 @@ func subsetTest(L, R *side, kind string) *test {
 func (t *test) subsetHolds(e *groupEval) bool {
 	la, okL := t.sets, t.sets != nil
 	if t.ref != "" {
-		r, ok := e.rec(t.ri)
+		r, ok := e.rec(t.refIndex)
 		if !ok {
 			return false
 		}
-		la, okL = r.SA, r.SA != nil
+		la, okL = r.SubsetLeft, r.SubsetLeft != nil
 	}
 	if !okL {
 		return false
@@ -258,19 +258,19 @@ func (t *test) subsetHolds(e *groupEval) bool {
 		return len(la) == 0
 	}
 	rb, okR := t.set, t.set != nil
-	if t.ref2 != "" {
-		r, ok := e.rec(t.ri2)
+	if t.rightRef != "" {
+		r, ok := e.rec(t.rightRefIndex)
 		if !ok {
 			return false
 		}
-		rb, okR = r.SB, r.SB != nil
+		rb, okR = r.SubsetRight, r.SubsetRight != nil
 	}
 	if !okR {
 		return false
 	}
 	in := func(x string) bool { return slices.Contains(rb, x) }
-	if t.ref2 != "" {
-		in = func(x string) bool { return e.contains(t.slot2, rb, x) }
+	if t.rightRef != "" {
+		in = func(x string) bool { return e.contains(t.rightSlot, rb, x) }
 	}
 	unmatched := func(e []string) bool { return !slices.ContainsFunc(e, in) }
 	if t.kind == "subset" {

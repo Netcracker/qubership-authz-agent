@@ -142,3 +142,38 @@ func TestFormatOperandQuotesAPathOutsidePrintableASCII(t *testing.T) {
 		})
 	}
 }
+
+// FormatConditionBrief leaves out the raw token of a list only where the
+// token is the items written back as a policy writes them, with ", " between
+// them; any other spelling stays, because it may decide a comparison.
+func TestFormatConditionBriefKeepsOnlyARawTokenThatDiffersFromTheItems(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name  string
+		raw   string
+		items []Literal
+		want  string
+	}{
+		{"strings in single quotes", "'a', 'b'", []Literal{String{Value: "a"}, String{Value: "b"}},
+			`resource.x IN ["a", "b"]`},
+		{"numbers", "1, 2.50", []Literal{Number{Text: "1"}, Number{Text: "2.50"}}, `resource.x IN [1, 2.50]`},
+		{"no space after the comma", "'a','b'", []Literal{String{Value: "a"}, String{Value: "b"}},
+			`resource.x IN ["a", "b"] raw="'a','b'"`},
+		{"double quotes", `"a", "b"`, []Literal{String{Value: "a"}, String{Value: "b"}},
+			`resource.x IN ["a", "b"] raw="\"a\", \"b\""`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			list, err := NewList(tc.raw, tc.items...)
+			if err != nil {
+				t.Fatalf("NewList(%q): %v", tc.raw, err)
+			}
+			cond := &Condition{Disjuncts: [][]Atom{{Compare{Op: OpIn, Left: Resource{Path: ".x"}, Right: list}}}}
+			if got := FormatConditionBrief(cond); got != tc.want {
+				t.Errorf("FormatConditionBrief(IN, raw %q) = %s, want %s", tc.raw, got, tc.want)
+			}
+		})
+	}
+}

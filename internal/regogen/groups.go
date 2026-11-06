@@ -29,29 +29,34 @@ import (
 // negated one passes.
 type test struct {
 	kind string // a case of test.holds
-	ref  string // sroles for the roles a simplified policy matches
+	ref  string // folded_roles for the roles a simplified policy matches
 	val  string
 	set  []string // a literal's keys; for IS SUBSET, the tokens of a literal on the right; for clsin, the classes
-	ref2 string
-	// field and field2 name the list of the record of ref and of ref2 that
-	// has, nothas, none, overlap, and disjoint read: ks when empty, or ea or
-	// eb; field2 is sb for the right of IS SUBSET.
-	field, field2 string
+	// rightRef is the reference on the right of a comparison of two
+	// references, empty for a comparison with a literal.
+	rightRef string
+	// field and rightField name the list of the record of ref and of rightRef
+	// that has, nothas, none, overlap, and disjoint read: element_keys when
+	// empty, or element_tokens or element_tokens_with_text; rightField is
+	// subset_right for the right of IS SUBSET.
+	field, rightField string
 	// num is the literal number rel compares with.
 	num *jsonvalue.Decimal
 	// sets are the tokens of the elements of a literal on the left of IS
 	// SUBSET.
 	sets [][]string
-	// ri and ri2 number ref and ref2 among the references of the module's
-	// groups, -1 for none and for sroles, and slot and slot2 number the
-	// lists of ref and ref2 that field and field2 name (listSlot).
+	// refIndex and rightRefIndex number ref and rightRef among the references
+	// of the module's groups, -1 for none and for folded_roles, and slot and
+	// rightSlot number the lists of ref and rightRef that field and rightField
+	// name (listSlot).
 	// groupIndex sets them for the tests of the factors it holds.
-	ri, ri2, slot, slot2 int
+	refIndex, rightRefIndex, slot, rightSlot int
 }
 
 // Group is a subject group: a conjunction of factors, each a disjunction of
-// clauses of tests. The module reads it as "g_<hash>" in input.g, where
-// <hash> is the first 12 hex digits of the SHA-256 of its factors.
+// clauses of tests. The module reads it as "g_<hash>" in
+// input.subject_groups, where <hash> is the first 12 hex digits of the SHA-256
+// of its factors.
 type Group struct {
 	Factors [][][]*test
 	// factorIDs numbers each factor among the factors of the module's
@@ -135,7 +140,7 @@ func (g *gen) group(factors ...dnf) dnf {
 		all = append(all, x.d...)
 	}
 	slices.Sort(as)
-	return dnf{{{cls: clsIndexIn, text: lit(id) + " in input.g", cell: "group: " + strings.Join(slices.Compact(as), "; "),
+	return dnf{{{cls: clsIndexIn, text: lit(id) + " in input." + memberSubjectGroups, cell: "group: " + strings.Join(slices.Compact(as), "; "),
 		src: &exprSrc{nodes: dnfNodes(all)}}}}
 }
 
@@ -218,15 +223,15 @@ func EvalGroups(m *Module, in *Input) []string {
 		}
 	}
 	try(ix.always)
-	for _, r := range in.SRoles {
-		try(ix.byKey["has\x00sroles\x00"+r])
+	for _, r := range in.FoldedRoles {
+		try(ix.byKey["has\x00"+memberFoldedRoles+"\x00"+r])
 	}
 	for id, rec := range in.Records {
-		for _, k := range rec.KS {
+		for _, k := range rec.ElementKeys {
 			try(ix.byKey["has\x00"+id+"\x00"+k])
 		}
-		if rec.K != nil {
-			try(ix.byKey["eq\x00"+id+"\x00"+*rec.K])
+		if rec.Key != nil {
+			try(ix.byKey["eq\x00"+id+"\x00"+*rec.Key])
 		}
 	}
 	slices.Sort(out)
@@ -253,7 +258,7 @@ type groupIndex struct {
 	factors [][][]*test
 	byKey   map[string][]int
 	always  []int
-	// refs lists the references the tests read; test.ri and test.ri2 index
+	// refs lists the references the tests read; test.refIndex and test.rightRefIndex index
 	// it.
 	refs []string
 	// slots holds the slots of clauseKey that the clauses of a keyed factor
@@ -281,8 +286,8 @@ type factorClause struct{ f, c int }
 
 // keySource names where the input's list in one slot is.
 type keySource struct {
-	slot, ri int
-	field    string
+	slot, refIndex int
+	field          string
 }
 
 // key returns the clauseKey of a test that requires a key among a list's
@@ -301,7 +306,7 @@ func (m *Module) groupIndex() *groupIndex {
 		factorIDs := map[int]int{}
 		refIDs := map[string]int{}
 		refID := func(ref string) int {
-			if ref == "" || ref == "sroles" {
+			if ref == "" || ref == memberFoldedRoles {
 				return -1
 			}
 			i, ok := refIDs[ref]
@@ -325,8 +330,8 @@ func (m *Module) groupIndex() *groupIndex {
 					var slots []int
 					for _, c := range f {
 						for _, t := range c {
-							t.ri, t.ri2 = refID(t.ref), refID(t.ref2)
-							t.slot, t.slot2 = listSlot(t.ri, t.field), listSlot(t.ri2, t.field2)
+							t.refIndex, t.rightRefIndex = refID(t.ref), refID(t.rightRef)
+							t.slot, t.rightSlot = listSlot(t.refIndex, t.field), listSlot(t.rightRefIndex, t.rightField)
 						}
 						for _, t := range c {
 							if k, ok := t.key(); ok {
@@ -335,7 +340,7 @@ func (m *Module) groupIndex() *groupIndex {
 									slots = append(slots, k.slot)
 								}
 								if !slices.ContainsFunc(ix.sources, func(s keySource) bool { return s.slot == k.slot }) {
-									ix.sources = append(ix.sources, keySource{k.slot, t.ri, t.field})
+									ix.sources = append(ix.sources, keySource{k.slot, t.refIndex, t.field})
 								}
 								break
 							}
@@ -431,13 +436,13 @@ func (e *groupEval) file(slot int) {
 		}
 	}
 	s := e.ix.sources[slices.IndexFunc(e.ix.sources, func(s keySource) bool { return s.slot == slot })]
-	var ks []string
-	if s.ri < 0 {
-		ks = e.in.SRoles
-	} else if r, ok := e.rec(s.ri); ok {
-		ks = r.list(s.field)
+	var keys []string
+	if s.refIndex < 0 {
+		keys = e.in.FoldedRoles
+	} else if r, ok := e.rec(s.refIndex); ok {
+		keys = r.list(s.field)
 	}
-	for _, v := range ks {
+	for _, v := range keys {
 		add(v)
 	}
 }
@@ -476,17 +481,17 @@ func (e *groupEval) rec(i int) (*Record, bool) {
 	return &e.recs[i], true
 }
 
-// contains reports whether ks, the list in the slot listSlot names, holds k.
+// contains reports whether keys, the list in the slot listSlot names, holds k.
 // A list longer than eight keys is looked up in a set that the first lookup
 // builds.
-func (e *groupEval) contains(slot int, ks []string, k string) bool {
-	if len(ks) <= 8 {
-		return slices.Contains(ks, k)
+func (e *groupEval) contains(slot int, keys []string, k string) bool {
+	if len(keys) <= 8 {
+		return slices.Contains(keys, k)
 	}
 	set := e.sets[slot]
 	if set == nil {
-		set = make(map[string]struct{}, len(ks))
-		for _, x := range ks {
+		set = make(map[string]struct{}, len(keys))
+		for _, x := range keys {
 			set[x] = struct{}{}
 		}
 		e.sets[slot] = set
@@ -495,20 +500,20 @@ func (e *groupEval) contains(slot int, ks []string, k string) bool {
 	return ok
 }
 
-// listSlot numbers the list a test reads: the field of the record of ri, or
-// the subject's roles.
-func listSlot(ri int, field string) int {
+// listSlot numbers the list a test reads: the field of the record that
+// refIndex numbers, or the subject's roles.
+func listSlot(refIndex int, field string) int {
 	switch {
-	case ri < 0:
+	case refIndex < 0:
 		return 0
-	case field == "ea":
-		return 4*ri + 2
-	case field == "eb":
-		return 4*ri + 3
-	case field == "sb":
-		return 4*ri + 4
+	case field == fieldElementTokens:
+		return 4*refIndex + 2
+	case field == fieldElementTokensWithText:
+		return 4*refIndex + 3
+	case field == fieldSubsetRight:
+		return 4*refIndex + 4
 	}
-	return 4*ri + 1
+	return 4*refIndex + 1
 }
 
 func (e *groupEval) groupHolds(fs []int) bool {
@@ -556,27 +561,27 @@ func (t *test) holds(e *groupEval) bool {
 	if t.kind == "noop" {
 		return true
 	}
-	var ks []string
+	var keys []string
 	var k *string
 	var st, cl string
-	var n0 bool
+	var hasNull bool
 	var num *jsonvalue.Decimal
-	if t.ref == "sroles" {
-		ks = e.in.SRoles
-	} else if r, ok := e.rec(t.ri); ok {
-		ks, k, st, cl, n0, num = r.list(t.field), r.K, r.S, r.T, r.N0, r.N
+	if t.ref == memberFoldedRoles {
+		keys = e.in.FoldedRoles
+	} else if r, ok := e.rec(t.refIndex); ok {
+		keys, k, st, cl, hasNull, num = r.list(t.field), r.Key, r.State, r.Class, r.HasNull, r.Number
 	}
-	in2 := func() ([]string, *string) {
-		if r, ok := e.rec(t.ri2); ok {
-			return r.list(t.field2), r.K
+	right := func() ([]string, *string) {
+		if r, ok := e.rec(t.rightRefIndex); ok {
+			return r.list(t.rightField), r.Key
 		}
 		return nil, nil
 	}
 	switch t.kind {
 	case "has":
-		return e.contains(t.slot, ks, t.val)
+		return e.contains(t.slot, keys, t.val)
 	case "nothas":
-		return !e.contains(t.slot, ks, t.val)
+		return !e.contains(t.slot, keys, t.val)
 	case "eq":
 		return k != nil && *k == t.val
 	case "ne":
@@ -586,17 +591,17 @@ func (t *test) holds(e *groupEval) bool {
 	case "notin":
 		return k == nil || !slices.Contains(t.set, *k)
 	case "none":
-		return ks != nil && !slices.ContainsFunc(t.set, func(x string) bool { return e.contains(t.slot, ks, x) })
+		return keys != nil && !slices.ContainsFunc(t.set, func(x string) bool { return e.contains(t.slot, keys, x) })
 	case "non0":
-		return !n0
+		return !hasNull
 	case "rel":
 		return relHolds(t.val, num, t.num)
 	case "relref":
-		var n2 *jsonvalue.Decimal
-		if r, ok := e.rec(t.ri2); ok {
-			n2 = r.N
+		var rightNum *jsonvalue.Decimal
+		if r, ok := e.rec(t.rightRefIndex); ok {
+			rightNum = r.Number
 		}
-		return relHolds(t.val, num, n2)
+		return relHolds(t.val, num, rightNum)
 	case "nonum":
 		return num == nil
 	case "subset", "unmatched", "nonempty", "emptyleft":
@@ -608,35 +613,36 @@ func (t *test) holds(e *groupEval) bool {
 	case "clsin":
 		return slices.Contains(t.set, cl)
 	case "eqref", "neref", "inref", "notinref":
-		ks2, k2 := in2()
+		rightKeys, rightKey := right()
 		switch t.kind {
 		case "eqref":
-			return k != nil && k2 != nil && *k == *k2
+			return k != nil && rightKey != nil && *k == *rightKey
 		case "neref":
-			return k != nil && k2 != nil && *k != *k2
+			return k != nil && rightKey != nil && *k != *rightKey
 		case "inref":
-			return k != nil && ks2 != nil && e.contains(t.slot2, ks2, *k)
+			return k != nil && rightKeys != nil && e.contains(t.rightSlot, rightKeys, *k)
 		default:
-			return k == nil || ks2 == nil || !e.contains(t.slot2, ks2, *k)
+			return k == nil || rightKeys == nil || !e.contains(t.rightSlot, rightKeys, *k)
 		}
 	case "overlap":
-		ks2, _ := in2()
-		return ks != nil && ks2 != nil && slices.ContainsFunc(ks, func(x string) bool { return e.contains(t.slot2, ks2, x) })
+		rightKeys, _ := right()
+		return keys != nil && rightKeys != nil && slices.ContainsFunc(keys, func(x string) bool { return e.contains(t.rightSlot, rightKeys, x) })
 	case "disjoint":
-		ks2, _ := in2()
-		return ks != nil && !(ks2 != nil && slices.ContainsFunc(ks, func(x string) bool { return e.contains(t.slot2, ks2, x) }))
+		rightKeys, _ := right()
+		return keys != nil && !(rightKeys != nil && slices.ContainsFunc(keys, func(x string) bool { return e.contains(t.rightSlot, rightKeys, x) }))
 	}
 	panic("unknown test " + t.kind)
 }
 
-// list returns the list field f of the record: ks when f is empty, or ea or
-// eb.
+// list returns the list field f of the record: ElementKeys when f is empty,
+// ElementTokens for element_tokens, or ElementTokensWithText for
+// element_tokens_with_text.
 func (r Record) list(f string) []string {
 	switch f {
-	case "ea":
-		return r.EA
-	case "eb":
-		return r.EB
+	case fieldElementTokens:
+		return r.ElementTokens
+	case fieldElementTokensWithText:
+		return r.ElementTokensWithText
 	}
-	return r.KS
+	return r.ElementKeys
 }

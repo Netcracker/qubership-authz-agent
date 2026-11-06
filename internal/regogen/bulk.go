@@ -30,7 +30,8 @@ type Bulk struct {
 	// items holds the references each item resolves from its body.
 	items []*Ref
 	// fields holds the maps of [fieldMaps] over the shared records, and top
-	// the members sroles, m2m, g, ps, and psf of the input.
+	// the members folded_roles, m2m, subject_groups, scope_passes, and
+	// scope_failed of the input.
 	fields map[string]*ast.Term
 	top    [][2]*ast.Term
 	// m and req are the module and the shared request, which the calls of
@@ -91,15 +92,15 @@ func NewBulk(m *Module, req Request) (*Bulk, error) {
 // read the resource.
 func (b *Bulk) Item(body Body) *Input {
 	in := &Input{
-		Records:     make(map[string]Record, len(b.items)),
-		SRoles:      b.in.SRoles,
-		M2M:         b.in.M2M,
-		G:           b.in.G,
-		Passes:      b.in.Passes,
-		ScopeFailed: b.in.ScopeFailed,
-		refs:        b.in.refs,
-		docs:        regobuiltins.NewDocuments(),
-		bulk:        b,
+		Records:       make(map[string]Record, len(b.items)),
+		FoldedRoles:   b.in.FoldedRoles,
+		M2M:           b.in.M2M,
+		SubjectGroups: b.in.SubjectGroups,
+		Passes:        b.in.Passes,
+		ScopeFailed:   b.in.ScopeFailed,
+		refs:          b.in.refs,
+		docs:          regobuiltins.NewDocuments(),
+		bulk:          b,
 	}
 	if body.HasResource {
 		in.resource = body.Resource
@@ -151,7 +152,7 @@ func (b *Bulk) value(in *Input) ast.Value {
 		o.Insert(kv[0], kv[1])
 	}
 	if in.calls != nil {
-		o.Insert(strTerm("pq"), ast.NewTerm(in.calls))
+		o.Insert(strTerm(memberPIPRequests), ast.NewTerm(in.calls))
 	}
 	if b.in.resourceMember() {
 		res := ast.NullTerm()
@@ -159,7 +160,7 @@ func (b *Bulk) value(in *Input) ast.Value {
 			// a jsonvalue.Value always has a term
 			res, _ = in.docs.Term(in.resource)
 		}
-		o.Insert(strTerm("resource"), res)
+		o.Insert(strTerm(memberResource), res)
 	}
 	return o
 }

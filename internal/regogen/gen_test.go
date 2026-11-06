@@ -1536,7 +1536,7 @@ func TestASubjectGroupIsAnsweredForEachInputAlone(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Project: %v", err)
 			}
-			groups[i] = in.G
+			groups[i] = in.SubjectGroups
 		}
 	}
 	var wg sync.WaitGroup
@@ -1712,19 +1712,19 @@ func TestAJoinedClassCheckAdmitsOnlyTheClassesItJoins(t *testing.T) {
 // A clause holds only where one class satisfies every class check of a
 // reference in it, a check that allows several classes included.
 func TestAClauseNeedsAClassEveryClassCheckAllows(t *testing.T) {
-	one := func(cl string) expr { return expr{fact: fact{ref: "r1", field: 't', val: cl}} }
-	some := func(cls ...string) expr { return expr{fact: fact{ref: "r1", field: 't', vals: cls}} }
+	one := func(cl string) expr { return expr{fact: fact{ref: "r1", field: factClass, val: cl}} }
+	some := func(cls ...string) expr { return expr{fact: fact{ref: "r1", field: factClass, vals: cls}} }
 	for _, tc := range []struct {
 		name string
 		c    clause
 		want bool
 	}{
-		{"a class among those allowed", clause{some("l", "n", "s"), one("s")}, true},
-		{"a class outside those allowed", clause{some("l", "n", "s"), one("xo")}, false},
-		{"two sets that share a class", clause{some("l", "n"), some("n", "xo")}, true},
-		{"two sets that share no class", clause{some("l", "n", "s"), some("xl", "xo")}, false},
-		{"a set and a class of another reference", clause{some("l", "n"),
-			{fact: fact{ref: "r2", field: 't', val: "xo"}}}, true},
+		{"a class among those allowed", clause{some("list", "scalar", "string"), one("string")}, true},
+		{"a class outside those allowed", clause{some("list", "scalar", "string"), one("object")}, false},
+		{"two sets that share a class", clause{some("list", "scalar"), some("scalar", "object")}, true},
+		{"two sets that share no class", clause{some("list", "scalar", "string"), some("nested_list", "object")}, false},
+		{"a set and a class of another reference", clause{some("list", "scalar"),
+			{fact: fact{ref: "r2", field: factClass, val: "object"}}}, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := consistent(tc.c); got != tc.want {
@@ -1866,7 +1866,7 @@ func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
 				"tenantId": "t1", "rules": [{"ruleId": "r1", "target": "true",
 					"condition": %q, "effect": "DENY", "tenantId": "t1"}]}]}`, id, condition)
 	}
-	shared := regexp.MustCompile(`(?m)^c_[0-9a-f]{12}\b`)
+	shared := regexp.MustCompile(`(?m)^rail_[tf]_[0-9a-f]{12}\b`)
 	names := func(sets ...string) []string {
 		t.Helper()
 		exp, err := policyir.FromRegular([]byte(`{"policySets": [`+strings.Join(sets, ", ")+`]}`),
@@ -1878,7 +1878,7 @@ func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Generate: %v", err)
 		}
-		if !strings.Contains(m.Text, "\n# pip(\"subject.g\") EQ ") {
+		if !regexp.MustCompile(`\n# rail_[tf]_[0-9a-f]{12}: holds where pip\("subject\.g"\) EQ `).MatchString(m.Text) {
 			t.Errorf("the module names no comparison above a shared rule; module:\n%s", m.Text)
 		}
 		got := shared.FindAllString(m.Text, -1)
@@ -1897,9 +1897,9 @@ func TestASharedRuleKeepsItsNameWhenAnotherSetIsAdded(t *testing.T) {
 // than read each other's clauses.
 func TestTwoBodiesWithOneHashedNameFailTheGeneration(t *testing.T) {
 	g := &gen{hashedKeys: map[string]string{}}
-	name := g.hashed("m", "a")
+	name := g.hashed(prefixAnd, "a")
 	g.hashedKeys[name] = "b"
-	g.hashed("m", "a")
+	g.hashed(prefixAnd, "a")
 	want := "two different bodies share the name " + name
 	if g.collision == nil || g.collision.Error() != want {
 		t.Errorf("collision = %v, want %s", g.collision, want)
@@ -2028,8 +2028,8 @@ func TestADecisionForAnotherOperationDoesNotMaterializeAProduct(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	if n := strings.Count(m.Text, "\nm_"); n != 0 {
-		t.Errorf("the module has %d m_ rules, want none; module:\n%s", n, m.Text)
+	if n := strings.Count(m.Text, "\n"+prefixAnd+"_"); n != 0 {
+		t.Errorf("the module has %d and_ rules, want none; module:\n%s", n, m.Text)
 	}
 }
 
@@ -2075,7 +2075,7 @@ func TestASubjectGroupIsNamedByItsContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Generate: %v", err)
 	}
-	re := regexp.MustCompile(`(?m)^\t"(g_[0-9a-f]{12})" in input\.g # group: subject\.roles CONTAINS_ANY \["reader"\]$`)
+	re := regexp.MustCompile(`(?m)^\t"(g_[0-9a-f]{12})" in input\.subject_groups # group: subject\.roles CONTAINS_ANY \["reader"\]$`)
 	g := re.FindStringSubmatch(m.Text)
 	if g == nil {
 		t.Fatalf("the module has no membership of a group named by its content; module:\n%s", m.Text)
@@ -2106,8 +2106,8 @@ func TestNaturalCompareOrdersARunOfDigitsByItsNumber(t *testing.T) {
 
 // The module names, above the clauses read from a rule, the rule's label and,
 // at its first clause, the IDs, names, targets, and condition of the rule and
-// of the policy and the set above it. A check of a state ends with the
-// comparison it belongs to, the point it tests, and the outcome there.
+// of the policy and the set above it; a node without a name shows its ID
+// alone.
 func TestTheModuleNamesThePolicyEachClauseCameFrom(t *testing.T) {
 	m, err := Generate(tenantWithSet(t, "DENY_UNLESS_PERMIT", "ALLOW", "resource.a IS EMPTY"), table(t), DefaultOptions())
 	if err != nil {
@@ -2115,14 +2115,101 @@ func TestTheModuleNamesThePolicyEachClauseCameFrom(t *testing.T) {
 	}
 	for _, want := range []string{
 		"# set_s1: set \"s1\" \"s1\", DENY_UNLESS_PERMIT\n#   target: resourceType EQ \"doc\"\n" +
-			"# set_s1_p1: policy \"p1\" \"\", DENY_UNLESS_PERMIT\n#   target: TRUE\n" +
-			"# set_s1_p1_r1: rule \"r1\" \"\", ALLOW\n#   target: operation EQ \"read\"\n" +
+			"# set_s1_p1: policy \"p1\", DENY_UNLESS_PERMIT\n#   target: TRUE\n" +
+			"# set_s1_p1_r1: rule \"r1\", ALLOW\n#   target: operation EQ \"read\"\n" +
 			"#   condition: resource.a IS_EMPTY\n# set_s1_p1_r1\nallow if {\n",
-		`input.s["resource.a"] == "EMPTY_COLL" # resource.a IS_EMPTY: EMPTY_COLL -> T` + "\n",
 	} {
 		if !strings.Contains(m.Text, want) {
 			t.Errorf("the module lacks\n%s\nmodule:\n%s", want, m.Text)
 		}
+	}
+}
+
+// A rule that holds a rail of a condition names the condition above it, and
+// its prefix, rail_t_ or rail_f_, says whether it holds where the condition is
+// true or false, so a reader of "not rail_f_<hash>" in a DENY rule learns which
+// outcome the negation leaves. The false rail of pip("subject.g") EQ "x" holds
+// where the PIP's key is not "x".
+func TestAConditionRailNamesTheConditionAndTheOutcomeItHoldsAt(t *testing.T) {
+	m, err := Generate(tenantWithSetAndPIPs(t, "PERMIT_UNLESS_DENY", "DENY", "subject.g == 'x'",
+		`{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`), table(t), DefaultOptions())
+	if err != nil {
+		t.Fatalf("Generate: %v", err)
+	}
+	head := regexp.MustCompile(`(?m)^# (rail_f_[0-9a-f]{12}): holds where pip\("subject\.g"\) EQ "x" is false\n`).
+		FindStringSubmatchIndex(m.Text)
+	if head == nil {
+		t.Fatalf("the module names no false rail of the condition; module:\n%s", m.Text)
+	}
+	name := m.Text[head[2]:head[3]]
+	rule, _, _ := strings.Cut(m.Text[head[1]:], "\n\n")
+	if !strings.Contains(rule, `.key != "x"`) {
+		t.Errorf("rule %s, named the false rail, has no clause where the key is not \"x\":\n%s", name, rule)
+	}
+	if !strings.Contains(m.Text, "not "+name+"\n") {
+		t.Errorf("no rule reads not %s; module:\n%s", name, m.Text)
+	}
+}
+
+// A product that a rule moves out into and_<hash> names the nodes it came from,
+// and each of its clauses names its node and the outcome it requires of each
+// comparison, which the clause itself does not show: T where the clause comes
+// from the comparison's true rail, F where it comes from the false one.
+func TestAClauseOfASharedProductNamesItsNodeAndTheOutcomesItRequires(t *testing.T) {
+	const pip = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`
+	cases := []struct {
+		name, effect, condition, pips, want string
+	}{
+		{"the true rail of an ALLOW condition", "ALLOW", "resource.a == 'x' AND resource.b IN 'y', 'z'", "",
+			`# set_s1_p1_r1: resource\.a EQ "x" -> T\n`},
+		{"the false rail of a DENY condition", "DENY", "subject.g == 'x' OR resource.b IN 'y', 'z'", pip,
+			`# set_s1_p1_r1: pip\("subject\.g"\) EQ "x" -> F\n`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			opt := DefaultOptions()
+			opt.ProductLimit = 1
+			algorithm := map[string]string{"ALLOW": "DENY_UNLESS_PERMIT", "DENY": "PERMIT_UNLESS_DENY"}[tc.effect]
+			m, err := Generate(tenantWithSetAndPIPs(t, algorithm, tc.effect, tc.condition, tc.pips), table(t), opt)
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			want := regexp.MustCompile(`(?m)^# (and_[0-9a-f]{12}): clauses of set_s1_p1_r1\n` + tc.want +
+				`(and_[0-9a-f]{12}) if \{\n`)
+			if got := want.FindStringSubmatch(m.Text); got == nil || got[1] != got[2] {
+				t.Errorf("the module lacks a product named by its node and outcome, %s; module:\n%s", want, m.Text)
+			}
+		})
+	}
+}
+
+// A comparison of a number with a literal reads the number's order key, a
+// list a reader cannot read as the literal, so the line ends with the
+// literal's number and the operator, on the literal's side of it.
+func TestAComparisonWithANumberNamesTheLiteral(t *testing.T) {
+	const pip = `{"name": "subject.g", "pipType": "GENERAL", "url": "http://g"}`
+	cases := []struct {
+		name, effect, condition, pips, want string
+	}{
+		{"a literal on the right", "ALLOW", "resource.a < 5", "",
+			`(?m)^\tinput\.number\["resource\.a"\] < \[[^\]]*\] # < 5$`},
+		{"a literal on the left", "ALLOW", "5 < resource.a", "",
+			`(?m)^\t\[[^\]]*\] < input\.number\["resource\.a"\] # 5 <$`},
+		{"the false rail", "DENY", "subject.g < 5", pip,
+			`(?m)^\tp_subject_g\.number >= \[[^\]]*\] # >= 5$`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			algorithm := map[string]string{"ALLOW": "DENY_UNLESS_PERMIT", "DENY": "PERMIT_UNLESS_DENY"}[tc.effect]
+			m, err := Generate(tenantWithSetAndPIPs(t, algorithm, tc.effect, tc.condition, tc.pips), table(t),
+				DefaultOptions())
+			if err != nil {
+				t.Fatalf("Generate: %v", err)
+			}
+			if want := regexp.MustCompile(tc.want); !want.MatchString(m.Text) {
+				t.Errorf("the module lacks %s; module:\n%s", want, m.Text)
+			}
+		})
 	}
 }
 
@@ -2782,7 +2869,7 @@ func TestAResourcePathTakesTheStateOfItsSelection(t *testing.T) {
 			if err != nil {
 				t.Fatalf("JSONPathRecord: %v", err)
 			}
-			if got := rec.Get(ast.StringTerm("s")); got == nil || got.Value.Compare(ast.String(tc.want)) != 0 {
+			if got := rec.Get(ast.StringTerm(fieldState)); got == nil || got.Value.Compare(ast.String(tc.want)) != 0 {
 				t.Errorf("state of %s over %s = %v, want %s", tc.path, tc.doc, got, tc.want)
 			}
 		})

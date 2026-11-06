@@ -7,7 +7,7 @@
   "required": ["schema_version", "spec_tag", "negates", "knobs", "kinds", "nodes", "leaf", "aliases", "codes", "cells"],
   "properties": {
     "schema_version": {
-      "const": 4
+      "const": 5
     },
     "spec_tag": {
       "type": "string",
@@ -83,8 +83,8 @@
       "enum": ["VALUE", "ABSENT", "NULL", "PIP_EMPTY", "EMPTY_COLL", "EMPTY_SEL", "INDEX_OOB", "PIP_NULL", "ERROR", "SINGLE_ODD", "SCALAR_ODD", "SCOPE_OUTSIDE"]
     },
     "class": {
-      "enum": ["s", "n", "l", "hl", "xn", "xl", "xo", "z"],
-      "description": "s a string; n a number or a boolean; l a list of scalars; hl a list of scalars from a HEADER or GENERAL PIP; xn a list with a null element; xl a list with a list or an object element and no null element; xo an object; z a null value in state VALUE."
+      "enum": ["string", "scalar", "list", "pip_list", "list_with_null", "nested_list", "object", "null"],
+      "description": "string a string; scalar a number or a boolean; list a list of scalars; pip_list a list of several scalars that a HEADER, GENERAL, or FILTERED PIP builds from its answer; list_with_null a list with a null element; nested_list a list with a list or an object element and no null element; object an object; null a null value in state VALUE."
     },
     "valueRule": {
       "enum": ["eq", "list_eq", "structure_text_left", "array_eq", "object_eq", "rel", "empty", "in_any", "contains_any", "contains_right_attribute_list", "subset", "match", "null_element_ends", "right_list_scalar_ops", "single_odd", "scalar_odd_rel"]

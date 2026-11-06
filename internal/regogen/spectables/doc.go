@@ -33,7 +33,7 @@
 //
 // The table is one JSON document. Its top level carries:
 //
-//   - schema_version: 4.
+//   - schema_version: 5.
 //   - spec_tag: the tag of the specification commit the tables were computed
 //     from, such as r65. A changed decision changes a knob, the
 //     specification gets a new tag, and the table is regenerated under it.

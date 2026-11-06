@@ -36,10 +36,10 @@ import (
 // A GENERAL or FILTERED PIP is a function of the module, pip_<Var>, which a
 // clause binds the PIP's record from where it reads the PIP:
 //
-//	pip_<Var> := nc.pip.record(q, pip_send(q), {...}) if q := input.pq[<ID>]
+//	pip_<Var> := nc.pip.record(q, pip_send(q), {...}) if q := input.pip_requests[<ID>]
 //
-// Go builds q before the query: the request nc.http.send sends, or {"s":
-// <state>} where the agent makes no call, so the network is reached only from
+// Go builds q before the query: the request nc.http.send sends, or
+// {"state": <state>} where the agent makes no call, so the network is reached only from
 // a clause that needs the PIP. nc.pip.record reads the response as the
 // specification's general_value and resolve_pip do under the agent profile
 // and returns the record. The rules of the request and of the response follow
@@ -48,10 +48,7 @@ import (
 
 // pipSendText is the function every module with a GENERAL or FILTERED PIP
 // carries, after a blank line.
-const pipSendText = `pip_send(q) := null if q.s
-
-pip_send(q) := nc.http.send(q) if not q.s
-`
+const pipSendText = "pip_send(q) := null if q." + queryState + "\n\npip_send(q) := nc.http.send(q) if not q." + queryState + "\n"
 
 // pipText returns the function of the PIP of r.
 func pipText(r *Ref) string {
@@ -60,7 +57,7 @@ func pipText(r *Ref) string {
 		jp = lit(r.pipPath)
 	}
 	return fmt.Sprintf("pip_%s := nc.pip.record(q, pip_send(q), {\"read\": %d, \"seg\": %t, \"subset\": %t, \"jp\": %s}) "+
-		"if q := input.pq[%s]\n\n", r.Var, r.read, r.Segments, r.Subset, jp, lit(r.ID))
+		"if q := input.%s[%s]\n\n", r.Var, r.read, r.Segments, r.Subset, jp, memberPIPRequests, lit(r.ID))
 }
 
 // pipPath returns the path nc.pip.record selects from the body of the
@@ -145,7 +142,7 @@ func pipPlaceholders(decl *policyir.PIP, pips func(string) (*policyir.PIP, bool)
 }
 
 // pipCall returns the q of the PIP of r on req: the request object of
-// nc.http.send, or {"s": state} for a call the agent does not make.
+// nc.http.send, or {"state": state} for a call the agent does not make.
 func pipCall(r *Ref, req *Request, pips func(string) (*policyir.PIP, bool)) *ast.Term {
 	decl := r.pip
 	if st, refused := remoteRefused(req); refused {
@@ -231,8 +228,12 @@ func mapsKeys(m map[string]string) func(func(string) bool) {
 	}
 }
 
+// queryState names the member of the q of a call the agent does not make that
+// holds the state of its record.
+const queryState = "state"
+
 func stateCall(st spectables.State) *ast.Term {
-	return ast.ObjectTerm(ast.Item(ast.StringTerm("s"), ast.StringTerm(string(st))))
+	return ast.ObjectTerm(ast.Item(ast.StringTerm(queryState), ast.StringTerm(string(st))))
 }
 
 // remoteRefused returns the state of a GENERAL or FILTERED PIP the agent
@@ -388,7 +389,7 @@ func pipRecordFunction() func(*rego.Rego) {
 			if err != nil {
 				return nil, err
 			}
-			if s := q.Get(ast.StringTerm("s")); s != nil {
+			if s := q.Get(ast.StringTerm(queryState)); s != nil {
 				st, ok := s.Value.(ast.String)
 				if !ok {
 					return nil, fmt.Errorf("nc.pip.record: the state %v is not a string", s)
@@ -502,7 +503,7 @@ func pipResolve(bctx rego.BuiltinContext, resp *ast.Term, jp string) (Resolved, 
 		case 1:
 			return Resolved{State: spectables.StateValue, Value: l[0]}, nil
 		}
-		return Resolved{State: spectables.StateValue, Value: l, HeaderList: true}, nil
+		return Resolved{State: spectables.StateValue, Value: l, PIPList: true}, nil
 	}
 	return Resolved{State: spectables.StateValue, Value: v}, nil
 }

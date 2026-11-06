@@ -34,9 +34,12 @@ import (
 // Resolved is the value of one operand on a request, as the specification's
 // Ctx.resolve gives it: a state and, in state VALUE, the value.
 type Resolved struct {
-	State      spectables.State
-	Value      jsonvalue.Value
-	HeaderList bool // a HEADER or GENERAL list, class hl
+	State spectables.State
+	Value jsonvalue.Value
+	// PIPList marks a list of several values that a HEADER, GENERAL, or
+	// FILTERED PIP builds; it has class pip_list when its elements are
+	// scalars.
+	PIPList bool
 }
 
 // Request is what the projection reads of a check/resource request: the
@@ -83,42 +86,44 @@ type Scope struct {
 	grants []map[string][]jsonvalue.Value
 }
 
-// Record is the value record of a reference, as the module reads it. KS, TK,
-// O, EA, and EB are set only where the module reads them ([Ref.read]).
+// Record is the value record of a reference, as the module reads it.
+// ElementKeys, TextKey, EqualityKey, ElementTokens, and ElementTokensWithText
+// are set only where the module reads them ([Ref.read]).
 type Record struct {
-	S    string
-	T    string
-	K    *string
-	KS   []string
-	Raw  *string
-	Segs []string
-	// N0 is set for a list that holds a null element; its keys leave the
+	State       string
+	Class       string
+	Key         *string
+	ElementKeys []string
+	Text        *string
+	Segments    []string
+	// HasNull is set for a list that holds a null element; its keys leave the
 	// null out.
-	N0 bool
-	// TK is the key of the text a string equals a list or an object by
+	HasNull bool
+	// TextKey is the key of the text a string equals a list or an object by
 	// (structureText).
-	TK *string
-	// Len is the number of elements of a list, null elements included.
-	Len *int
-	// O is the key two lists are equal by, their typed elements as a set, and
-	// the key two objects are equal by, member by member.
-	O *string
-	// EA and EB hold the tokens of the elements of a list, or of a value
-	// read as a list of one, such that two elements are equal under the
-	// collection operators exactly when the EA of one meets the EB of the
-	// other: EA holds the token of the element's value (eqToken), and EB
-	// adds, for a list or an object, the token of its text, which a string
-	// equals it by.
-	EA, EB []string
-	// N is the number <, <=, >, and >= compare a string or a scalar by, nil
-	// for a value they read as no number.
-	N *jsonvalue.Decimal
-	// SA holds the tokens of each element of the value read as a list, and
-	// SB those of all its elements, as IS SUBSET compares them on the left
-	// and on the right (subsetLeft, subsetRight); set when the module reads
-	// them.
-	SA [][]string
-	SB []string
+	TextKey *string
+	// Length is the number of elements of a list, null elements included.
+	Length *int
+	// EqualityKey is the key two lists are equal by, their typed elements as
+	// a set, and the key two objects are equal by, member by member.
+	EqualityKey *string
+	// ElementTokens and ElementTokensWithText hold the tokens of the
+	// elements of a list, or of a value read as a list of one, such that two
+	// elements are equal under the collection operators exactly when the
+	// ElementTokens of one meets the ElementTokensWithText of the other:
+	// ElementTokens holds the token of the element's value (eqToken), and
+	// ElementTokensWithText adds, for a list or an object, the token of its
+	// text, which a string equals it by.
+	ElementTokens, ElementTokensWithText []string
+	// Number is the number <, <=, >, and >= compare a string or a scalar by,
+	// nil for a value they read as no number.
+	Number *jsonvalue.Decimal
+	// SubsetLeft holds the tokens of each element of the value read as a
+	// list, and SubsetRight those of all its elements, as IS SUBSET compares
+	// them on the left and on the right (subsetLeft, subsetRight); set when
+	// the module reads them.
+	SubsetLeft  [][]string
+	SubsetRight []string
 }
 
 // Input is the projection of a request into the input of a module.
@@ -126,10 +131,10 @@ type Input struct {
 	// Records holds the record of each reference by its ID, network PIPs
 	// included, pass values and lazy paths not. The input of an item of a
 	// bulk request holds the item's own records only ([Bulk.Item]).
-	Records map[string]Record
-	SRoles  []string
-	M2M     bool
-	G       []string
+	Records       map[string]Record
+	FoldedRoles   []string
+	M2M           bool
+	SubjectGroups []string
 	// Passes holds the records of the pass values of each pass, by
 	// reference ID; ScopeFailed is [Scope.Failed].
 	Passes      []map[string]Record
@@ -138,9 +143,9 @@ type Input struct {
 	docs        *regobuiltins.Documents
 	refs        []*Ref
 	// calls holds the q of each GENERAL or FILTERED PIP by reference ID,
-	// the member pq of the input; nil for a module without one. pipValues
-	// holds the values [Request.Values] gave those PIPs, by reference ID,
-	// which [ReplayTransport] answers their calls with.
+	// the member pip_requests of the input; nil for a module without one.
+	// pipValues holds the values [Request.Values] gave those PIPs, by
+	// reference ID, which [ReplayTransport] answers their calls with.
 	calls     ast.Object
 	pipValues map[string]Resolved
 	// bulk is set on the input of an item of a bulk request, whose Records
@@ -158,8 +163,12 @@ func class(v jsonvalue.Value, lv legacyvalue.Record) spectables.Class {
 	case lv.State == legacyvalue.StateEmptyColl:
 		// the whole resource can be an empty list in state VALUE
 		return spectables.ClassList
-	case lv.Class != legacyvalue.ClassOther:
-		return spectables.Class(lv.Class)
+	case lv.Class == legacyvalue.ClassString:
+		return spectables.ClassString
+	case lv.Class == legacyvalue.ClassScalar:
+		return spectables.ClassScalar
+	case lv.Class == legacyvalue.ClassList:
+		return spectables.ClassList
 	}
 	if _, ok := v.(*jsonvalue.Object); ok {
 		return spectables.ClassObject
@@ -168,20 +177,20 @@ func class(v jsonvalue.Value, lv legacyvalue.Record) spectables.Class {
 }
 
 func record(r *Ref, v Resolved) Record {
-	rec := Record{S: string(v.State)}
+	rec := Record{State: string(v.State)}
 	if v.State == spectables.StateSingleOdd {
 		// a one-element GENERAL list of null, a boolean, or an object: the
 		// collection operators read it as a list
 		lv := legacyvalue.OfParts(v.Value, r.parts())
-		if r.reads("ks") {
-			rec.KS = lv.Keys
-			if rec.KS == nil {
-				rec.KS = []string{}
+		if r.reads(fieldElementKeys) {
+			rec.ElementKeys = lv.Keys
+			if rec.ElementKeys == nil {
+				rec.ElementKeys = []string{}
 			}
 		}
-		rec.N0 = lv.State == legacyvalue.StateNullElement
-		if r.reads("ea", "eb") {
-			rec.EA, rec.EB = elementTokens(v.Value, lv)
+		rec.HasNull = lv.State == legacyvalue.StateNullElement
+		if r.reads(fieldElementTokens, fieldElementTokensWithText) {
+			rec.ElementTokens, rec.ElementTokensWithText = elementTokens(v.Value, lv)
 		}
 		rec.subset(r, v.Value)
 		return rec
@@ -190,86 +199,86 @@ func record(r *Ref, v Resolved) Record {
 		return rec
 	}
 	if v.Value == nil {
-		rec.T = string(spectables.ClassNull)
+		rec.Class = string(spectables.ClassNull)
 		rec.subset(r, nil)
 		return rec
 	}
 	lv := legacyvalue.OfParts(v.Value, r.parts())
 	cl := class(v.Value, lv)
-	if cl == spectables.ClassList && v.HeaderList {
-		cl = spectables.ClassHeaderList
+	if cl == spectables.ClassList && v.PIPList {
+		cl = spectables.ClassPIPList
 	}
-	rec.T = string(cl)
-	if r.reads("ea", "eb") {
-		rec.EA, rec.EB = elementTokens(v.Value, lv)
+	rec.Class = string(cl)
+	if r.reads(fieldElementTokens, fieldElementTokensWithText) {
+		rec.ElementTokens, rec.ElementTokensWithText = elementTokens(v.Value, lv)
 	}
 	rec.subset(r, v.Value)
 	switch cl {
 	case spectables.ClassString, spectables.ClassScalar:
-		rec.K = lv.Key
-		if r.reads("ks") {
-			rec.KS = []string{*lv.Key}
+		rec.Key = lv.Key
+		if r.reads(fieldElementKeys) {
+			rec.ElementKeys = []string{*lv.Key}
 		}
-		rec.N = lv.Number
+		rec.Number = lv.Number
 	default:
-		if r.reads("ks") {
-			rec.KS = lv.Keys
-			if rec.KS == nil {
-				rec.KS = []string{}
+		if r.reads(fieldElementKeys) {
+			rec.ElementKeys = lv.Keys
+			if rec.ElementKeys == nil {
+				rec.ElementKeys = []string{}
 			}
 		}
-		rec.N0 = lv.State == legacyvalue.StateNullElement
+		rec.HasNull = lv.State == legacyvalue.StateNullElement
 		switch l, ok := v.Value.([]jsonvalue.Value); {
-		case !r.reads("tk"):
+		case !r.reads(fieldTextKey):
 		case ok && len(l) > 0 && allStrings(l):
 			// structureText of a list of strings is its Java text, which k
 			// folds
-			rec.TK = lv.Key
+			rec.TextKey = lv.Key
 		default:
-			tk := legacyvalue.Fold(structureText(v.Value))
-			rec.TK = &tk
+			textKey := legacyvalue.Fold(structureText(v.Value))
+			rec.TextKey = &textKey
 		}
-		if r.reads("o") {
-			rec.O = lv.Structure
+		if r.reads(fieldEqualityKey) {
+			rec.EqualityKey = lv.Structure
 		}
 		if l, ok := v.Value.([]jsonvalue.Value); ok {
 			n := len(l)
-			rec.Len = &n
+			rec.Length = &n
 		}
-		if lv.State == legacyvalue.StateEmptyColl && r.reads("o") {
+		if lv.State == legacyvalue.StateEmptyColl && r.reads(fieldEqualityKey) {
 			// the record of an empty list carries no structure key; it is []
 			empty := "[]"
-			rec.O = &empty
+			rec.EqualityKey = &empty
 		}
 	}
 	if s, ok := v.Value.(string); ok {
-		rec.Raw = &s
+		rec.Text = &s
 		if r.Segments {
-			rec.Segs = strings.Split(s, "/")
+			rec.Segments = strings.Split(s, "/")
 		}
 	}
 	return rec
 }
 
-// subset sets SA and SB for a reference that IS SUBSET reads.
+// subset sets SubsetLeft and SubsetRight for a reference that IS SUBSET reads.
 func (rec *Record) subset(r *Ref, v jsonvalue.Value) {
 	if !r.Subset {
 		return
 	}
-	rec.SA = subsetLeft(v, inputNumberText)
-	rec.SB = subsetRight(v, inputNumberText, subsetOneValue(r.Kind))
+	rec.SubsetLeft = subsetLeft(v, inputNumberText)
+	rec.SubsetRight = subsetRight(v, inputNumberText, subsetOneValue(r.Kind))
 }
 
-// elementTokens returns the EA and EB of a value, a list or a value read as
-// a list of one; lv is its legacyvalue.Of. Where no element is a list or an
-// object, eb is ea itself.
-func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (ea, eb []string) {
+// elementTokens returns the ElementTokens and ElementTokensWithText of a
+// value, a list or a value read as a list of one; lv is its legacyvalue.Of.
+// Where no element is a list or an object, withText is tokens itself.
+func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (tokens, withText []string) {
 	l, ok := v.([]jsonvalue.Value)
 	elems := lv.Elements
 	if !ok {
 		l, elems = []jsonvalue.Value{v}, []legacyvalue.Record{lv}
 	}
-	ea = []string{}
+	tokens = []string{}
 	for i, e := range l {
 		t, ok := "", false
 		switch e.(type) {
@@ -280,23 +289,23 @@ func elementTokens(v jsonvalue.Value, lv legacyvalue.Record) (ea, eb []string) {
 			t, ok = eqToken(e)
 		}
 		if ok {
-			ea = append(ea, t)
-			if eb != nil {
-				eb = append(eb, t)
+			tokens = append(tokens, t)
+			if withText != nil {
+				withText = append(withText, t)
 			}
 		}
 		switch e.(type) {
 		case []jsonvalue.Value, *jsonvalue.Object:
-			if eb == nil {
-				eb = slices.Clone(ea)
+			if withText == nil {
+				withText = slices.Clone(tokens)
 			}
-			eb = append(eb, "t:"+legacyvalue.Fold(structureText(e)))
+			withText = append(withText, "t:"+legacyvalue.Fold(structureText(e)))
 		}
 	}
-	if eb == nil {
-		eb = ea
+	if withText == nil {
+		withText = tokens
 	}
-	return ea, eb
+	return tokens, withText
 }
 
 // eqToken returns the token two elements are equal by when neither is a
@@ -361,7 +370,7 @@ func Project(m *Module, req Request) (*Input, error) {
 		in.resource = req.Body.Resource
 	}
 	for _, r := range req.Roles {
-		in.SRoles = append(in.SRoles, legacyvalue.Fold(r))
+		in.FoldedRoles = append(in.FoldedRoles, legacyvalue.Fold(r))
 	}
 	for _, r := range m.Refs {
 		if r.Pass || r.Path != "" {
@@ -408,7 +417,7 @@ func Project(m *Module, req Request) (*Input, error) {
 	if err := in.setCalls(m, &req); err != nil {
 		return nil, err
 	}
-	in.G = EvalGroups(m, in)
+	in.SubjectGroups = EvalGroups(m, in)
 	return in, nil
 }
 
@@ -457,7 +466,8 @@ func strsTerm(ss []string) *ast.Term {
 }
 
 // keysTerm is the term of a list the module only tests membership in or
-// iterates, ks, ea, eb, or sb: a Rego set, so that x in it costs one lookup
+// iterates, element_keys, element_tokens, element_tokens_with_text, or
+// subset_right: a Rego set, so that x in it costs one lookup
 // and not a scan of the list.
 func keysTerm(ss []string) *ast.Term {
 	ts := make([]*ast.Term, len(ss))
@@ -476,53 +486,53 @@ func setsTerm(sets [][]string) *ast.Term {
 }
 
 func (r Record) term() *ast.Term {
-	o := ast.NewObject([2]*ast.Term{strTerm("s"), strTerm(r.S)})
-	if r.T != "" {
-		o.Insert(strTerm("t"), strTerm(r.T))
+	o := ast.NewObject([2]*ast.Term{strTerm(fieldState), strTerm(r.State)})
+	if r.Class != "" {
+		o.Insert(strTerm(fieldClass), strTerm(r.Class))
 	}
-	if r.K != nil {
-		o.Insert(strTerm("k"), strTerm(*r.K))
+	if r.Key != nil {
+		o.Insert(strTerm(fieldKey), strTerm(*r.Key))
 	}
-	if r.KS != nil {
-		o.Insert(strTerm("ks"), keysTerm(r.KS))
+	if r.ElementKeys != nil {
+		o.Insert(strTerm(fieldElementKeys), keysTerm(r.ElementKeys))
 	}
-	if r.Raw != nil {
-		o.Insert(strTerm("raw"), strTerm(*r.Raw))
+	if r.Text != nil {
+		o.Insert(strTerm(fieldText), strTerm(*r.Text))
 	}
-	if r.N0 {
-		o.Insert(strTerm("n0"), ast.BooleanTerm(true))
+	if r.HasNull {
+		o.Insert(strTerm(fieldHasNull), ast.BooleanTerm(true))
 	}
-	if r.TK != nil {
-		o.Insert(strTerm("tk"), strTerm(*r.TK))
+	if r.TextKey != nil {
+		o.Insert(strTerm(fieldTextKey), strTerm(*r.TextKey))
 	}
-	if r.O != nil {
-		o.Insert(strTerm("o"), strTerm(*r.O))
+	if r.EqualityKey != nil {
+		o.Insert(strTerm(fieldEqualityKey), strTerm(*r.EqualityKey))
 	}
-	if r.Len != nil {
-		o.Insert(strTerm("ln"), ast.IntNumberTerm(*r.Len))
+	if r.Length != nil {
+		o.Insert(strTerm(fieldLength), ast.IntNumberTerm(*r.Length))
 	}
-	if r.EA != nil {
-		ea := keysTerm(r.EA)
-		o.Insert(strTerm("ea"), ea)
-		o.Insert(strTerm("eb"), r.ebTerm(ea))
+	if r.ElementTokens != nil {
+		tokens := keysTerm(r.ElementTokens)
+		o.Insert(strTerm(fieldElementTokens), tokens)
+		o.Insert(strTerm(fieldElementTokensWithText), r.withTextTerm(tokens))
 	}
-	if r.N != nil {
-		o.Insert(strTerm("nk"), orderKey(*r.N))
+	if r.Number != nil {
+		o.Insert(strTerm(fieldNumber), orderKey(*r.Number))
 	}
-	if r.SA != nil {
-		o.Insert(strTerm("sa"), setsTerm(r.SA))
-		o.Insert(strTerm("sb"), keysTerm(r.SB))
+	if r.SubsetLeft != nil {
+		o.Insert(strTerm(fieldSubsetLeft), setsTerm(r.SubsetLeft))
+		o.Insert(strTerm(fieldSubsetRight), keysTerm(r.SubsetRight))
 	}
 	return ast.NewTerm(o)
 }
 
-// Value returns the input as a Rego value: maps s, t, k, ks, raw, seg, eseg,
-// nseg, n0, tk, o, ln, ea, eb, nk, sa, and sb from a reference ID to a field of
-// its record, then sroles, m2m, g, ps (the passes, each with the same maps of
-// its pass values), psf, for a module with a lazily read resource path
-// resource, the document, and for a module with a GENERAL or FILTERED PIP pq,
-// the requests of its calls. A network PIP's record is not in it: its
-// function pip_<Var>, or nc.pip, returns it.
+// Value returns the input as a Rego value: the maps [recordFields] from a
+// reference ID to a field of its record, then folded_roles, m2m,
+// subject_groups, scope_passes (the passes, each with the same maps of its
+// pass values), scope_failed, for a module with a lazily read resource path
+// resource, the document, and for a module with a GENERAL or FILTERED PIP
+// pip_requests, the requests of its calls. A network PIP's record is not in
+// it: its function pip_<Var>, or nc.pip, returns it.
 func (in *Input) Value() ast.Value {
 	if in.bulk != nil {
 		return in.bulk.value(in)
@@ -540,10 +550,10 @@ func (in *Input) Value() ast.Value {
 			// a jsonvalue.Value always has a term
 			res, _ = in.docs.Term(in.resource)
 		}
-		o.Insert(strTerm("resource"), res)
+		o.Insert(strTerm(memberResource), res)
 	}
 	if in.calls != nil {
-		o.Insert(strTerm("pq"), ast.NewTerm(in.calls))
+		o.Insert(strTerm(memberPIPRequests), ast.NewTerm(in.calls))
 	}
 	return o
 }
@@ -554,8 +564,8 @@ func (in *Input) resourceMember() bool {
 	return slices.ContainsFunc(in.refs, func(r *Ref) bool { return r.Path != "" })
 }
 
-// subjectMembers returns the members sroles, m2m, g, ps, and psf of the
-// input's Value.
+// subjectMembers returns the members folded_roles, m2m, subject_groups,
+// scope_passes, and scope_failed of the input's Value.
 func (in *Input) subjectMembers() [][2]*ast.Term {
 	passes := make([]*ast.Term, len(in.Passes))
 	for i, pass := range in.Passes {
@@ -565,11 +575,11 @@ func (in *Input) subjectMembers() [][2]*ast.Term {
 		}))
 	}
 	return [][2]*ast.Term{
-		{strTerm("sroles"), strsTerm(in.SRoles)},
-		{strTerm("m2m"), ast.BooleanTerm(in.M2M)},
-		{strTerm("g"), strsTerm(in.G)},
-		{strTerm("ps"), ast.ArrayTerm(passes...)},
-		{strTerm("psf"), ast.BooleanTerm(in.ScopeFailed)},
+		{strTerm(memberFoldedRoles), strsTerm(in.FoldedRoles)},
+		{strTerm(memberM2M), ast.BooleanTerm(in.M2M)},
+		{strTerm(memberSubjectGroups), strsTerm(in.SubjectGroups)},
+		{strTerm(memberScopePasses), ast.ArrayTerm(passes...)},
+		{strTerm(memberScopeFailed), ast.BooleanTerm(in.ScopeFailed)},
 	}
 }
 
@@ -583,9 +593,44 @@ func fieldMaps(refs []*Ref, rec func(*Ref) (Record, bool)) ast.Object {
 	return o
 }
 
+// The names of the fields of a value record, each also the name of the map of
+// [fieldMaps] from a reference ID to that field of its record. A module reads
+// them as input.<field>, p.<field> in a pass, or p_<Var>.<field>.
+const (
+	fieldState                 = "state"
+	fieldClass                 = "class"
+	fieldKey                   = "key"
+	fieldElementKeys           = "element_keys"
+	fieldText                  = "text"
+	fieldSegments              = "segments"
+	fieldSegmentsFromEnd       = "segments_from_end"
+	fieldSegmentCount          = "segment_count"
+	fieldHasNull               = "has_null"
+	fieldTextKey               = "text_key"
+	fieldEqualityKey           = "equality_key"
+	fieldLength                = "length"
+	fieldElementTokens         = "element_tokens"
+	fieldElementTokensWithText = "element_tokens_with_text"
+	fieldNumber                = "number"
+	fieldSubsetLeft            = "subset_left"
+	fieldSubsetRight           = "subset_right"
+)
+
+// The names of the members of the input besides the maps of [fieldMaps].
+const (
+	memberFoldedRoles   = "folded_roles"
+	memberM2M           = "m2m"
+	memberSubjectGroups = "subject_groups"
+	memberScopePasses   = "scope_passes"
+	memberScopeFailed   = "scope_failed"
+	memberResource      = "resource"
+	memberPIPRequests   = "pip_requests"
+)
+
 // recordFields names the maps of [fieldMaps].
-var recordFields = []string{"s", "t", "k", "ks", "raw", "seg", "eseg", "nseg", "n0", "tk", "o", "ln", "ea", "eb",
-	"nk", "sa", "sb"}
+var recordFields = []string{fieldState, fieldClass, fieldKey, fieldElementKeys, fieldText, fieldSegments,
+	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqualityKey, fieldLength,
+	fieldElementTokens, fieldElementTokensWithText, fieldNumber, fieldSubsetLeft, fieldSubsetRight}
 
 // fieldSet holds names of recordFields, one bit each, and fieldsKnown.
 type fieldSet uint32
@@ -622,7 +667,7 @@ func (r *Ref) reads(fs ...string) bool { return r.read.has(fs...) }
 // fieldReadRE matches a read of a record field in the text of a module:
 // input.<field> or p.<field>, the record of a pass value, then the index of
 // the reference where the text names one.
-var fieldReadRE = regexp.MustCompile(`\b(?:input|p)\.([a-z][a-z0-9]*)(\.[A-Za-z_][A-Za-z0-9_]*|\["(?:[^"\\]|\\.)*"\])?`)
+var fieldReadRE = regexp.MustCompile(`\b(?:input|p)\.([a-z][a-z0-9_]*)(\.[A-Za-z_][A-Za-z0-9_]*|\["(?:[^"\\]|\\.)*"\])?`)
 
 // markEmitted sets the emit of each reference to the fields that texts read
 // of its record. A field read with no index, of whichever reference, is set
@@ -657,16 +702,16 @@ func (r *Ref) parts() legacyvalue.Parts {
 		return legacyvalue.AllParts
 	}
 	var p legacyvalue.Parts
-	if r.reads("tk") {
+	if r.reads(fieldTextKey) {
 		p |= legacyvalue.PartKey
 	}
-	if r.reads("ks") {
+	if r.reads(fieldElementKeys) {
 		p |= legacyvalue.PartKeys
 	}
-	if r.reads("o") {
+	if r.reads(fieldEqualityKey) {
 		p |= legacyvalue.PartStructure
 	}
-	if r.reads("ea", "eb") {
+	if r.reads(fieldElementTokens, fieldElementTokensWithText) {
 		p |= legacyvalue.PartElements
 	}
 	return p
@@ -687,76 +732,77 @@ func fieldObjects(refs []*Ref, rec func(*Ref) (Record, bool)) map[string]ast.Obj
 	return fields
 }
 
-// ebTerm returns the term of EB, which is ea where EB is EA itself
-// (elementTokens).
-func (rec Record) ebTerm(ea *ast.Term) *ast.Term {
-	if len(rec.EB) == len(rec.EA) && (len(rec.EA) == 0 || &rec.EB[0] == &rec.EA[0]) {
-		return ea
+// withTextTerm returns the term of ElementTokensWithText, which is tokens,
+// the term of ElementTokens, where the two are one slice (elementTokens).
+func (rec Record) withTextTerm(tokens *ast.Term) *ast.Term {
+	toks, withText := rec.ElementTokens, rec.ElementTokensWithText
+	if len(withText) == len(toks) && (len(toks) == 0 || &withText[0] == &toks[0]) {
+		return tokens
 	}
-	return keysTerm(rec.EB)
+	return keysTerm(rec.ElementTokensWithText)
 }
 
 // fields gives put each entry of the record in the maps of [fieldMaps] that
 // emit holds: the name of the map and the value under the reference's ID.
 func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
-	if emit.has("s") {
-		put("s", strTerm(rec.S))
+	if emit.has(fieldState) {
+		put(fieldState, strTerm(rec.State))
 	}
-	if rec.T != "" && emit.has("t") {
-		put("t", strTerm(rec.T))
+	if rec.Class != "" && emit.has(fieldClass) {
+		put(fieldClass, strTerm(rec.Class))
 	}
-	if rec.K != nil && emit.has("k") {
-		put("k", strTerm(*rec.K))
+	if rec.Key != nil && emit.has(fieldKey) {
+		put(fieldKey, strTerm(*rec.Key))
 	}
-	if rec.KS != nil && emit.has("ks") {
-		put("ks", keysTerm(rec.KS))
+	if rec.ElementKeys != nil && emit.has(fieldElementKeys) {
+		put(fieldElementKeys, keysTerm(rec.ElementKeys))
 	}
-	if rec.Raw != nil && emit.has("raw") {
-		put("raw", strTerm(*rec.Raw))
+	if rec.Text != nil && emit.has(fieldText) {
+		put(fieldText, strTerm(*rec.Text))
 	}
-	if rec.N0 && emit.has("n0") {
-		put("n0", ast.BooleanTerm(true))
+	if rec.HasNull && emit.has(fieldHasNull) {
+		put(fieldHasNull, ast.BooleanTerm(true))
 	}
-	if rec.TK != nil && emit.has("tk") {
-		put("tk", strTerm(*rec.TK))
+	if rec.TextKey != nil && emit.has(fieldTextKey) {
+		put(fieldTextKey, strTerm(*rec.TextKey))
 	}
-	if rec.O != nil && emit.has("o") {
-		put("o", strTerm(*rec.O))
+	if rec.EqualityKey != nil && emit.has(fieldEqualityKey) {
+		put(fieldEqualityKey, strTerm(*rec.EqualityKey))
 	}
-	if rec.Len != nil && emit.has("ln") {
-		put("ln", ast.IntNumberTerm(*rec.Len))
+	if rec.Length != nil && emit.has(fieldLength) {
+		put(fieldLength, ast.IntNumberTerm(*rec.Length))
 	}
-	if rec.EA != nil && emit.has("ea", "eb") {
-		ea := keysTerm(rec.EA)
-		if emit.has("ea") {
-			put("ea", ea)
+	if rec.ElementTokens != nil && emit.has(fieldElementTokens, fieldElementTokensWithText) {
+		tokens := keysTerm(rec.ElementTokens)
+		if emit.has(fieldElementTokens) {
+			put(fieldElementTokens, tokens)
 		}
-		if emit.has("eb") {
-			put("eb", rec.ebTerm(ea))
-		}
-	}
-	if rec.N != nil && emit.has("nk") {
-		put("nk", orderKey(*rec.N))
-	}
-	if rec.SA != nil {
-		if emit.has("sa") {
-			put("sa", setsTerm(rec.SA))
-		}
-		if emit.has("sb") {
-			put("sb", keysTerm(rec.SB))
+		if emit.has(fieldElementTokensWithText) {
+			put(fieldElementTokensWithText, rec.withTextTerm(tokens))
 		}
 	}
-	if rec.Segs != nil {
-		if emit.has("seg") {
-			put("seg", strsTerm(rec.Segs))
+	if rec.Number != nil && emit.has(fieldNumber) {
+		put(fieldNumber, orderKey(*rec.Number))
+	}
+	if rec.SubsetLeft != nil {
+		if emit.has(fieldSubsetLeft) {
+			put(fieldSubsetLeft, setsTerm(rec.SubsetLeft))
 		}
-		if emit.has("eseg") {
-			rev := slices.Clone(rec.Segs)
+		if emit.has(fieldSubsetRight) {
+			put(fieldSubsetRight, keysTerm(rec.SubsetRight))
+		}
+	}
+	if rec.Segments != nil {
+		if emit.has(fieldSegments) {
+			put(fieldSegments, strsTerm(rec.Segments))
+		}
+		if emit.has(fieldSegmentsFromEnd) {
+			rev := slices.Clone(rec.Segments)
 			slices.Reverse(rev)
-			put("eseg", strsTerm(rev))
+			put(fieldSegmentsFromEnd, strsTerm(rev))
 		}
-		if emit.has("nseg") {
-			put("nseg", ast.IntNumberTerm(len(rec.Segs)))
+		if emit.has(fieldSegmentCount) {
+			put(fieldSegmentCount, ast.IntNumberTerm(len(rec.Segments)))
 		}
 	}
 }
