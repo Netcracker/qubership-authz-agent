@@ -252,11 +252,12 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # an iterate, <node>_pass_<b><x>(p) is that bound in pass p.
 # dec_<operation>_<depth>_<b><x> is that bound of the decision for another
 # operation (subject allowed or denied), read from a copy of the tree whose
-# nodes are named dec_<operation>_<depth>_<label>. m_<hash> and c_<hash> hold
-# a product or a condition rail that several clauses share, and g_<hash> in
-# input.subject_groups a subject group; <hash> is the first 12 hex digits of
-# the SHA-256 of what they hold. <rule>__body holds the clauses of a long
-# rule.
+# nodes are named dec_<operation>_<depth>_<label>. and_<hash> holds a factor
+# of an AND that is not multiplied out into the clauses, rail_t_<hash> and
+# rail_f_<hash> the clauses where a condition is true and where it is false (a
+# rule reads them negated), and g_<hash> in input.subject_groups a subject
+# group; <hash> is the first 12 hex digits of the SHA-256 of what they hold,
+# so any node may read them. <rule>__body holds the clauses of a long rule.
 #
 # input.<field>[<operand>] is a field of the value record of an operand,
 # keyed by the operand as a policy writes it: state, class, key,
@@ -267,8 +268,8 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # objects are equal by, length, element_tokens the tokens of the elements and
 # element_tokens_with_text those and the token of the text of a list or an
 # object element, number the key < and > compare a number by, a list that
-# sorts as the numbers do, subset_left and subset_right the tokens IS SUBSET reads on the
-# left and on the right. A token is a key with its kind: t: text, o: object,
+# sorts as the numbers do, subset_left and subset_right the tokens IS SUBSET
+# reads on the left and on the right. A token is a key with its kind: t: text, o: object,
 # l:[...] list, and in the tokens of IS SUBSET also s: string and b: boolean.
 # A class is string, scalar (a number or a boolean), list, pip_list (a list
 # of several values a HEADER, GENERAL, or FILTERED PIP builds),
@@ -279,10 +280,9 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # an iterate over the permission scope, and input.scope_failed whether
 # reading the scope failed.
 #
-# A comment above c_<hash> names the condition and whether the rule holds
-# where the condition is true or where it is false; a comment above each
-# clause of m_<hash> names the nodes it came from and the outcome it
-# requires of each comparison.
+# A comment above rail_t_<hash> or rail_f_<hash> names the condition; a
+# comment above each clause of and_<hash> names the nodes it came from and the
+# outcome it requires of each comparison.
 `
 
 // commenter writes the comments above the clauses of one module text.

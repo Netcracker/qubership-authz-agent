@@ -516,7 +516,7 @@ func valueTemplate(op spectables.Operator, L, R *side, cl, cr spectables.Class) 
 				b.use(R, p[1])
 				pair := func(kind string) *test {
 					if t := pairTest(kind, L, R); t != nil {
-						t.field, t.field2 = p[0], p[1]
+						t.field, t.rightField = p[0], p[1]
 						return t
 					}
 					return nil
@@ -692,5 +692,5 @@ func pairTest(kind string, L, R *side) *test {
 	if L.ref == nil || R.ref == nil || L.ref.Network || R.ref.Network {
 		return nil
 	}
-	return &test{kind: kind, ref: L.ref.ID, ref2: R.ref.ID}
+	return &test{kind: kind, ref: L.ref.ID, rightRef: R.ref.ID}
 }
