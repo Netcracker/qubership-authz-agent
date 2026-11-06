@@ -60,8 +60,8 @@ BENCH_REPORT_LATEST = os.path.join(REPORTS_DIR, "bench-report-latest.md")
 RPS_LEVELS = (100, 200, 300, 400, 500, 1000)
 
 # One measured container since authz-agent-ADR-0080: the agent carries the
-# public surface, the engine, and the decision log in one process, where this
-# stand used to measure envoy, opa, and decision-log-collector separately.
+# public surface and the engine in one process, where this stand used to
+# measure envoy, opa, and decision-log-collector separately.
 SERVICES = ("authz-agent",)
 SERVICE_SHORT = {"authz-agent": "agent"}
 
@@ -381,8 +381,7 @@ def render_methodology(mode: str) -> list[str]:
     else:  # opa-direct
         mode_desc = ("requests skip the public surface and reach "
                      "`POST /access/v1/authorize` on the internal listener, "
-                     "`authz-agent:8181`. The decision log is written either "
-                     "way, so its pressure stays part of the cost surface.")
+                     "`authz-agent:8181`.")
     return [
         "## Methodology",
         "",

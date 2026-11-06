@@ -93,7 +93,7 @@ vars.put("auth_token", token)
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{"input":{"authorizationToken":"Bearer ${auth_token}","authorizationType":"","requestHeaders":{},"decisionLogPipTrace":true,"resources":[{"resourceType":"${resourceType}","operation":"${operation}","resource":${resourceJson}}],"subject":"Bearer ${auth_token}","ignoreRls":false}}</stringProp>
+                <stringProp name="Argument.value">{"input":{"authorizationToken":"Bearer ${auth_token}","authorizationType":"","requestHeaders":{},"resources":[{"resourceType":"${resourceType}","operation":"${operation}","resource":${resourceJson}}],"subject":"Bearer ${auth_token}","ignoreRls":false}}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -181,7 +181,7 @@ vars.put("auth_token", token)
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">{"input":{"authorizationToken":"Bearer ${auth_token}","authorizationType":"","requestHeaders":{},"decisionLogPipTrace":true,"resources":[{"resourceType":"${resourceType}","operation":"${operation}","resource":{}}],"subject":"Bearer ${auth_token}","ignoreRls":false}}</stringProp>
+                <stringProp name="Argument.value">{"input":{"authorizationToken":"Bearer ${auth_token}","authorizationType":"","requestHeaders":{},"resources":[{"resourceType":"${resourceType}","operation":"${operation}","resource":{}}],"subject":"Bearer ${auth_token}","ignoreRls":false}}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -272,7 +272,6 @@ def body = new JsonBuilder([
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: [:],
-    decisionLogPipTrace: true,
     resources: resources,
     subject: "Bearer " + token,
     ignoreRls: false

@@ -28,7 +28,6 @@ import (
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/storage"
 	"github.com/open-policy-agent/opa/v1/storage/inmem"
-	"github.com/open-policy-agent/opa/v1/topdown/builtins"
 	"github.com/open-policy-agent/opa/v1/topdown/cache"
 )
 
@@ -112,17 +111,13 @@ func (e *Engine) prepare(ctx context.Context, q string) (rego.PreparedEvalQuery,
 }
 
 // Eval evaluates the document at segments with the given input. ok is false
-// when the document is undefined. ndbc, when not nil, records the results of
-// the non-deterministic builtins the evaluation called, for the decision log.
-func (e *Engine) Eval(ctx context.Context, segments []string, input any, ndbc builtins.NDBCache) (any, bool, error) {
+// when the document is undefined.
+func (e *Engine) Eval(ctx context.Context, segments []string, input any) (any, bool, error) {
 	pq, err := e.prepare(ctx, Query(segments))
 	if err != nil {
 		return nil, false, err
 	}
 	opts := []rego.EvalOption{}
-	if ndbc != nil {
-		opts = append(opts, rego.EvalNDBuiltinCache(ndbc))
-	}
 	if input != nil {
 		opts = append(opts, rego.EvalInput(input))
 	}

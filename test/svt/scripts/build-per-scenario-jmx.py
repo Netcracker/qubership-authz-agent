@@ -117,7 +117,7 @@ def _write_text(path: str, content: str, *, make_executable: bool = False) -> No
 #
 # The opa-direct body wraps the canonical decision input in `{"input":
 # {...}}` and adds `authorizationToken` / `authorizationType` /
-# `requestHeaders` / `decisionLogPipTrace`, matching the shape proven by
+# `requestHeaders`, matching the shape proven by
 # tests/svt/load-tests/opa-direct/mixed/1000rps/test.jmx. For header-PIP
 # scenarios, the headers are also embedded in `input.requestHeaders`
 # because OPA only sees the POST body (the HTTP HeaderManager entries
@@ -158,7 +158,6 @@ if (mode == "canonical") {{
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: {req_headers_map},
-    decisionLogPipTrace: true,
     resources: [[resourceType: rt, operation: op, resource: [:]]],
     subject: "Bearer " + token,
     ignoreRls: true
@@ -207,7 +206,6 @@ if (mode == "canonical") {{
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: {req_headers_map},
-    decisionLogPipTrace: true,
     resources: resources,
     subject: "Bearer " + token,
     ignoreRls: true
@@ -245,7 +243,6 @@ if (mode == "canonical") {{
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: {req_headers_map},
-    decisionLogPipTrace: true,
     resources: [[resourceType: rt, operation: op, resource: [:]]],
     subject: "Bearer " + token,
     ignoreRls: false
@@ -284,7 +281,6 @@ if (mode == "canonical") {{
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: {req_headers_map},
-    decisionLogPipTrace: true,
     resources: [[resourceType: rt, operation: op, resource: [:]]],
     subject: "Bearer " + token,
     ignoreRls: false
@@ -322,7 +318,6 @@ if (mode == "canonical") {{
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: {req_headers_map},
-    decisionLogPipTrace: true,
     resources: [[resourceType: rt, operation: op, resource: [:]]],
     subject: "Bearer " + token,
     ignoreRls: false
@@ -371,7 +366,6 @@ if (mode == "canonical") {{
     authorizationToken: "Bearer " + token,
     authorizationType: "",
     requestHeaders: {req_headers_map},
-    decisionLogPipTrace: true,
     resources: resources,
     subject: "Bearer " + token,
     ignoreRls: false
@@ -699,9 +693,9 @@ per-scenario
 Single-thread-group plan exercising the `{scenario}` bench-report scenario.
 The `${{MODE}}` switch selects:
 
-- `canonical`  → Envoy → OPA → decision-log-collector: `POST /access/v1/authorize`
-- `legacy`     → Envoy → OPA → decision-log-collector: `POST {legacy_endpoint}`
-- `opa-direct` → OPA → decision-log-collector (Envoy bypassed):
+- `canonical`  → Envoy → OPA: `POST /access/v1/authorize`
+- `legacy`     → Envoy → OPA: `POST {legacy_endpoint}`
+- `opa-direct` → OPA (Envoy bypassed):
   `POST /access/v1/authorize` on the internal listener, `authz-agent:8181`
 
 The shared per-scenario JMX lives at

@@ -13,16 +13,15 @@
 # run before this profile is used for a production install.
 #
 # The agent evaluates every request as OPA did, terminates the client's
-# connection as Envoy did, and runs the pull loop, the token renewal, and the
-# decision-log upload beside them, so it takes what the five containers it
-# replaced took between them (authz-agent-ADR-0080).
+# connection as Envoy did, and runs the pull loop and the token renewal beside
+# them, so it takes what the five containers it replaced took between them
+# (authz-agent-ADR-0080).
 CPU_REQUEST: 7500m
 CPU_LIMIT: "15"
 MEMORY_REQUEST: 3584Mi
 MEMORY_LIMIT: 13Gi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 512Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 4Gi
-AUTHZ_DECISION_LOG_SIZE_LIMIT: 2Gi
 # The autoscaler keeps at least two Pods, and REPLICAS matches that floor so a
 # helm upgrade does not drop the Deployment to one Pod until the autoscaler
 # reconciles. The scaling policies and windows are the values dbaas-operator's

@@ -114,8 +114,8 @@ func entitlementsResponse(refs map[string]map[string][]string) map[string]interf
 // passed in to the authz-policy-admin control surface and waits for the pull loop.
 // UploadPoliciesToACStub replaces the full policy set so we must merge
 // the ENT entries with the baseline to avoid wiping the policies that
-// other Test* methods depend on (TestPIPDenyReason, TestPIPGeneralActivation,
-// TestPIPJsonPathExtraction, TestZZDecisionLogsCatalogCoverage, etc.).
+// other Test* methods depend on (TestPIPFailureDenies, TestPIPGeneralActivation,
+// TestPIPJsonPathExtraction, etc.).
 //
 // The `policies` argument is a JSON array string containing the ENT
 // policy objects this test step wants to exercise. The baseline is

@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"authz-agent/components/authz-agent/internal/authn"
-	"authz-agent/components/authz-agent/internal/decisionlog"
 	"authz-agent/components/authz-agent/internal/m2m"
 	"authz-agent/components/authz-agent/internal/pull"
 )
@@ -34,16 +33,6 @@ type config struct {
 	Addr string
 	// PublicAddr is the listen address of the surface the clients call.
 	PublicAddr string
-	// DecisionLogs configures the delivery: an empty URL disables the
-	// upload, and DecisionLogFile stores the decisions instead.
-	DecisionLogs decisionlog.Config
-	// DecisionLogFile stores the decisions in the service instead of
-	// uploading them; empty uploads.
-	DecisionLogFile string
-	// NDBuiltinCache records the non-deterministic builtin calls of a
-	// decision, the PIP requests and their responses, into its event, as
-	// OPA's nd_builtin_cache does.
-	NDBuiltinCache bool
 	// Authn configures the trusted providers; an empty File disables them.
 	Authn authn.Config
 	// Pull configures the policy pull; [pull.Config] says what disables it.
@@ -59,15 +48,8 @@ type lookup func(key, fallback string) string
 // loadConfig builds the configuration from the environment.
 func loadConfig(get lookup) config {
 	return config{
-		NDBuiltinCache: boolean(get, "authz.nd.builtin.cache", true),
-		Addr:           get("authz.http.addr", "0.0.0.0:8181"),
-		PublicAddr:     get("authz.public.addr", "0.0.0.0:8080"),
-		DecisionLogs: decisionlog.Config{
-			URL:     get("authz.decision.log.url", ""),
-			Headers: splitList(get("authz.decision.log.headers", "")),
-			Labels:  map[string]string{"id": "authz-agent"},
-		},
-		DecisionLogFile: get("authz.decision.log.file", ""),
+		Addr:       get("authz.http.addr", "0.0.0.0:8181"),
+		PublicAddr: get("authz.public.addr", "0.0.0.0:8080"),
 		Authn: authn.Config{
 			File:             get("authz.trusted.providers.file", authn.DefaultFile),
 			Required:         boolean(get, "authz.jwks.bootstrap.required", true),
@@ -90,16 +72,6 @@ func loadConfig(get lookup) config {
 			WatchInterval:    m2m.DefaultWatchInterval,
 		},
 	}
-}
-
-func splitList(s string) []string {
-	var out []string
-	for _, part := range strings.Split(s, ",") {
-		if part = strings.TrimSpace(part); part != "" {
-			out = append(out, part)
-		}
-	}
-	return out
 }
 
 // seconds reads a whole number of seconds; a value that is not one keeps

@@ -485,7 +485,7 @@ fi
 # them from have to be mounted.
 for env_name in AUTHZ_PUBLIC_ADDR AUTHZ_HTTP_ADDR \
   AUTHZ_TRUSTED_PROVIDERS_FILE AUTHZ_JWKS_BOOTSTRAP_REQUIRED AUTHZ_PAP_CLIENT_SOURCE_URL \
-  AUTHZ_PAP_CLIENT_PULL_INTERVAL AUTHZ_ENTITLEMENTS_URL AUTHZ_DECISION_LOG_FILE AUTHZ_DECISION_LOG_HEADERS; do
+  AUTHZ_PAP_CLIENT_PULL_INTERVAL AUTHZ_ENTITLEMENTS_URL; do
   if [[ "${all_manifests}" == *"name: ${env_name}"* ]]; then
     pass "the agent Pod sets ${env_name}"
   else
@@ -527,23 +527,11 @@ else
   fail "the agent Pod does not separate the readiness and liveness probes"
 fi
 
-# The drain has to fit inside the grace period: five seconds for each of the
-# two surfaces, then the decision-log drain, which on the path this chart
-# renders is bounded by the writes to the volume. The template says why the
-# default of thirty is not enough.
-if [[ "${all_manifests}" == *"terminationGracePeriodSeconds: 45"* ]]; then
-  pass "the agent Pod keeps a grace period longer than its drain"
+# The storage limit is what stands between a long-running Pod and a full node.
+if [[ "${all_manifests}" == *"ephemeral-storage:"* ]]; then
+  pass "the agent Pod declares its ephemeral storage"
 else
-  fail "the agent Pod leaves the grace period at the default"
-fi
-
-# The decision log is the only thing the container writes, and nothing rotates
-# it, so the storage limit and the volume's own cap are what stand between a
-# long-running Pod and a full node.
-if [[ "${all_manifests}" == *"ephemeral-storage:"* && "${all_manifests}" == *"sizeLimit:"* ]]; then
-  pass "the agent Pod declares its ephemeral storage and caps the decision-log volume"
-else
-  fail "the agent Pod leaves its ephemeral storage or the decision-log volume uncapped"
+  fail "the agent Pod leaves its ephemeral storage undeclared"
 fi
 
 # subPath breaks ConfigMap and Secret propagation: the kubelet swaps the

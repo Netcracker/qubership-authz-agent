@@ -103,9 +103,8 @@ REQUEST_FIELDS = [
     "headerFilterMode",
 ]
 
-# One measured container since authz-agent-ADR-0080: the public surface, the
-# engine, and the decision log are one process, so there is nothing left to
-# split the cost between.
+# One measured container since authz-agent-ADR-0080: the public surface and the
+# engine are one process, so there is nothing left to split the cost between.
 PROM_QUERIES = {
     "agent_cpu": 'sum(rate(container_cpu_usage_seconds_total{name=~".*authz-agent.*"}[30s]))',
     "agent_mem": 'sum(container_memory_working_set_bytes{name=~".*authz-agent.*"})',

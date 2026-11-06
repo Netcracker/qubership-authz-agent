@@ -8,10 +8,7 @@ info:
     This contract covers the public listener, port 8080
     (`AUTHZ_PUBLIC_ADDR`). It carries the public authorization surface
     (the access-control check API: v1, v2, and preview), `/api-version`
-    and `/health`, and the internal admin surface
-    (`/internal/v1/decision-logs`). The internal admin endpoint is
-    isolated by URL prefix only. The two `servers` entries below
-    distinguish the two intents.
+    and `/health`.
 
     A second listener, port 8181 (`AUTHZ_HTTP_ADDR`), serves the probes
     the chart configures (`/health`, `/ready`), `/api-version`, and the
@@ -25,9 +22,7 @@ info:
         optional supplements, not standalone auth schemes.
       - `additionalProperties` is set explicitly on every schema. Open
         shapes (`additionalProperties: true`) are limited to the
-        per-resource attribute bag (`resource`) and to the response of
-        `GET /internal/v1/decision-logs`, which is a stream of OPA-emitted
-        objects whose internal layout is not part of this contract.
+        per-resource attribute bag (`resource`).
       - `info.version` mirrors the authz-agent release version. The
         canonical source-of-truth is
         `helm-templates/authz-agent/Chart.yaml` (`version` field). The
@@ -36,13 +31,9 @@ info:
 servers:
   - url: http://localhost:8080
     description: Public authorization surface, reached from the host through a port-forward to the agent Service (`docs/local-integration-tests.md`).
-  - url: http://localhost:8080
-    description: Internal admin surface; same listener, segregated by the `/internal/v1/` URL prefix.
 tags:
   - name: public
     description: Authorization decision endpoints reachable by every workload via the public ingress.
-  - name: internal-admin
-    description: Operator endpoints (decision-log retrieval).
   - name: meta
     description: Service metadata endpoints (`/api-version`, `/health`).
 security:
@@ -639,35 +630,6 @@ paths:
                 bootstrap_threshold:
                   summary: Strict-mode JWKS bootstrap threshold not met.
                   value: { "message": "bootstrap threshold not met", "details": { "opaReady": true, "bootstrap": { "mode": "strict", "successCount": 0, "requiredCount": 1 } } }
-  /internal/v1/decision-logs:
-    get:
-      operationId: internal_v1_decision_logs_get
-      tags: [internal-admin]
-      summary: Download accumulated OPA decision logs.
-      description: |
-        Returns the NDJSON stream of the decisions the agent recorded. The
-        body may be empty when no decisions have been emitted yet. The
-        per-line object shape is OPA-defined and not part of this contract.
-      security: []
-      responses:
-        '200':
-          description: NDJSON stream of decision events (possibly empty).
-          content:
-            application/x-ndjson:
-              schema:
-                type: string
-              examples:
-                sample_line:
-                  summary: One sanitized decision-log line (placeholder token).
-                  value: |
-                    { "decision_id":"a1b2c3d4-0000-0000-0000-000000000000","path":"authorize","input":{ "authorizationToken":"Bearer <test-jwt-for-admin>","resources":[{ "resourceType":"ATTACHMENT","operation":"READ" }] },"result":{ "rlsIgnored":false,"results":[{ "isAllowed":true,"operation":"READ","resourceType":"ATTACHMENT" }] },"nd_builtin_cache":true,"timestamp":"2026-06-08T00:00:00Z" }
-            text/plain:
-              schema:
-                type: string
-              examples:
-                empty:
-                  summary: No decisions emitted yet.
-                  value: ""
 components:
   securitySchemes:
     bearerAuth:

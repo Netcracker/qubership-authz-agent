@@ -45,8 +45,8 @@ APPLICATION_NAME: 'Platform-Core-Security'
 # kind cluster), where `helm install` fails on the unknown kind.
 MONITORING_ENABLED: true
 # Read-only root file system for the container, on Kubernetes; on OpenShift the
-# template leaves it writable, as the platform's charts do. The decision log is
-# the one thing the agent writes, and it goes to an emptyDir.
+# template leaves it writable, as the platform's charts do. The agent writes
+# nothing to its file system.
 READONLY_CONTAINER_FILE_SYSTEM_ENABLED: true
 # The app.kubernetes.io/managed-by label of every object but the Pod template.
 # Cloud-Deployer overrides it (argocd installs set `argocd`).
@@ -292,11 +292,6 @@ AUTHZ_ENTITLEMENTS_URL: ''
 AUTHZ_ENTITLEMENTS_HTTP_TIMEOUT: 5
 AUTHZ_ENTITLEMENTS_HTTP_RETRIES: 3
 
-# The decisions are written to ephemeral container storage and are lost on a
-# Pod restart. See the handover Next Steps "decision-log collector sink
-# productionisation" before any production deploy.
-AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
-
 # Autoscaling is set per environment by the resource profiles: REPLICAS and the
 # HPA_* keys have no default here. The HorizontalPodAutoscaler is the platform's
 # template and is rendered on every install; with HPA_ENABLED unset or false,
@@ -310,11 +305,7 @@ AUTHZ_DECISION_LOG_PATH: /var/log/authz-agent/decisions/
 # deployer's PROFILE parameter selects one of `resource-profiles/` (dev, dev-ha,
 # prod, prod-nonha); by hand, pass the file with `-f`.
 
-# The decision log is the only thing the container writes, to an emptyDir that
-# nothing rotates, so the storage limit and the volume's own sizeLimit are what
-# keep a long-running Pod from filling the node's disk. The volume is capped
-# below the container's limit, so the kubelet evicts on the volume rather than
-# on the sum of the writable layers.
+# The storage limit keeps a long-running Pod from filling the node's disk with
+# its writable layer and container logs.
 AUTHZ_AGENT_EPHEMERAL_STORAGE_REQUEST: 64Mi
 AUTHZ_AGENT_EPHEMERAL_STORAGE_LIMIT: 512Mi
-AUTHZ_DECISION_LOG_SIZE_LIMIT: 256Mi

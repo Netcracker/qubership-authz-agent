@@ -8,9 +8,6 @@ in ADR 0080 under `docs/decisions`.
 
 - `internal/engine`: compiles the embedded policies (`policies/`), keeps the data documents in an in-memory store,
   and evaluates decisions.
-- `internal/decisionlog`: emits decision events in the shape of OPA's decision log, and either uploads them to the
-  collector in gzip batches or stores them in the service, with the signature of every JWT removed, for
-  `GET /internal/v1/decision-logs`; the queue is drained on shutdown.
 - `internal/authn`: the trusted providers. At start it fetches every provider's signing keys, through OIDC discovery
   or from a `jwksUri`, and publishes them as `data.authn`, indexed by key id and by provider; it reloads the file
   when it changes, and its outcome drives `/health` under the bootstrap rules: strict mode wants every provider,
@@ -24,9 +21,9 @@ in ADR 0080 under `docs/decisions`.
 - `internal/legacy`: the check routes of the legacy access-control API. Each route's body and headers become the
   input of the `authorize` decision, and the decision becomes the response shape of that route.
 - `internal/server`: the routes, on two listeners. The public surface carries the nine check routes,
-  `GET /api-version`, `/health`, `GET /internal/v1/decision-logs`, and `404 {"message":"not found"}` for every
-  other path. The internal surface carries `/health`, `/ready`, `/api-version`, and `/prometheus`. No route reads
-  or writes a store document: only the loops in the process write the store.
+  `GET /api-version`, `/health`, and `404 {"message":"not found"}` for every other path. The internal surface
+  carries `/health`, `/ready`, `/api-version`, and `/prometheus`. No route reads or writes a store document: only
+  the loops in the process write the store.
 - `main.go` and `config.go`: configuration from the environment through configloader.
 
 The chart assembles the agent Pod as this one container.
@@ -38,10 +35,6 @@ The chart assembles the agent Pod as this one container.
 | `LOGGING_LEVEL_ROOT` | `info` | Level of the platform logger; the chart sets it from its `LOG_LEVEL` value |
 | `AUTHZ_PUBLIC_ADDR` | `0.0.0.0:8080` | Listen address of the public surface |
 | `AUTHZ_HTTP_ADDR` | `0.0.0.0:8181` | Listen address of the internal surface: the probes, the metrics, and `/api-version` |
-| `AUTHZ_ND_BUILTIN_CACHE` | `true` | Record the non-deterministic builtin calls of a decision, the PIP requests and their responses, into its decision-log event |
-| `AUTHZ_DECISION_LOG_FILE` | empty | NDJSON file the decisions are stored in and `GET /internal/v1/decision-logs` serves; empty uploads them instead |
-| `AUTHZ_DECISION_LOG_URL` | empty | Collector base URL, where the decisions go and where `GET /internal/v1/decision-logs` is relayed when they are not stored; empty disables both |
-| `AUTHZ_DECISION_LOG_HEADERS` | empty | Comma-separated request headers recorded per decision |
 | `AUTHZ_TRUSTED_PROVIDERS_FILE` | `/etc/authz/trusted-providers.json` | The trusted providers; empty runs without them |
 | `AUTHZ_JWKS_BOOTSTRAP_REQUIRED` | `true` | Strict mode: every provider has to bootstrap; `false` wants one |
 | `AUTHZ_JWKS_HTTP_TIMEOUT` | `5` | Seconds per discovery or JWKS request |
@@ -61,11 +54,10 @@ default.
 
 The policy source is the only way policies reach the agent.
 
-At the default level the service reports what it could not do: a policy that failed to evaluate, a document it
-could not store, a collector that did not answer. `debug` adds a line per decision, per rejected legacy request, per
-unmatched route and per policy load. A decision that denies its caller is not reported at either level: it is the
-answer the policy gave, and the decision log is where decisions are recorded.
-Every line carries the request id under `request_id`, the same id the decision log records.
+At the default level the service reports what it could not do: a policy that failed to evaluate or a document it
+could not store. `debug` adds a line per decision, per rejected legacy request, per unmatched route and per policy
+load. A decision that denies its caller is not reported at either level: it is the answer the policy gave.
+Every line carries the request id under `request_id`, the same id the response carries in `X-Request-Id`.
 
 `GET /health` is 200 with the counts of the last policy conversion once the trusted providers meet the bootstrap
 rules, and 503 with the reason and its details until then. `GET /ready`, on the internal port, adds the policies:

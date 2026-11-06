@@ -119,7 +119,6 @@ def base_input(resources, ignore_rls, request_headers=None):
             "authorizationToken": "Bearer __TOKEN__",
             "authorizationType": "",
             "requestHeaders": request_headers or {},
-            "decisionLogPipTrace": True,
             "resources": resources,
             "subject": "Bearer __TOKEN__",
             "ignoreRls": ignore_rls,

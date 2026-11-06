@@ -78,16 +78,15 @@ var reachabilityWhitelist = map[responseTriple]string{
 }
 
 // TestZZZResponseReachabilityCoverage is the response-reachability
-// lint. It runs last in the suite (lexicographically after
-// TestZZDecisionLogsCatalogCoverage) so the conformance hook's exercised-set is
-// fully populated by every prior step. It closes the reverse direction the
+// lint. It runs last in the suite, lexicographically after every other test,
+// so the conformance hook's exercised-set is fully populated by every prior
+// step. It closes the reverse direction the
 // forward-only validator cannot: every (path, method, status) response declared
 // in the OpenAPI document must have been exercised by at least one runtime
 // exchange or be explicitly whitelisted with a reason.
 //
 // Gated to the full-suite invocation (FULL_RUNTIME_SUITE=true): a filtered run
-// leaves the exercised-set incomplete and would false-flag — the same
-// constraint TestZZDecisionLogsCatalogCoverage lives under.
+// leaves the exercised-set incomplete and would false-flag.
 func (s *RuntimeSuite) TestZZZResponseReachabilityCoverage() {
 	if os.Getenv("FULL_RUNTIME_SUITE") != "true" {
 		s.T().Skip("response-reachability lint requires the full suite (FULL_RUNTIME_SUITE=true)")

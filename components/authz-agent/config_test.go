@@ -39,20 +39,12 @@ func TestLoadConfig_EnvironmentOnly(t *testing.T) {
 	if cfg.Addr != "0.0.0.0:8181" || cfg.PublicAddr != "0.0.0.0:8080" {
 		t.Fatalf("default addresses: %+v", cfg)
 	}
-	if cfg.DecisionLogs.URL != "" {
-		t.Fatalf("defaults: %+v", cfg)
-	}
 	cfg = loadConfig(fromMap(map[string]string{
-		"authz.http.addr":            ":9090",
-		"authz.public.addr":          ":9091",
-		"authz.decision.log.url":     "http://collector:8183",
-		"authz.decision.log.headers": "x-request-id,x-authz-original-path",
+		"authz.http.addr":   ":9090",
+		"authz.public.addr": ":9091",
 	}))
 	if cfg.Addr != ":9090" || cfg.PublicAddr != ":9091" {
 		t.Fatalf("addresses from env: %+v", cfg)
-	}
-	if cfg.DecisionLogs.URL != "http://collector:8183" || len(cfg.DecisionLogs.Headers) != 2 || cfg.DecisionLogs.Labels["id"] != "authz-agent" {
-		t.Fatalf("decision logs from env: %+v", cfg.DecisionLogs)
 	}
 }
 
@@ -75,9 +67,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.M2M != wantM2M {
 		t.Errorf("default m2m = %+v, want %+v", cfg.M2M, wantM2M)
 	}
-	if cfg.DecisionLogFile != "" {
-		t.Errorf("default decision log file %q, want none", cfg.DecisionLogFile)
-	}
 	cfg = loadConfig(fromMap(map[string]string{
 		"authz.trusted.providers.file":            "/p.json",
 		"authz.jwks.bootstrap.required":           "off",
@@ -92,7 +81,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 		"authz.m2m.client.id.file":                "/id",
 		"authz.m2m.client.secret.file":            "/secret",
 		"authz.m2m.renew.before.seconds":          "30",
-		"authz.decision.log.file":                 "/var/log/authz/decision-logs.jsonl",
 	}))
 	if cfg.Authn.File != "/p.json" || cfg.Authn.Required || cfg.Authn.HTTPTimeout != 2*time.Second || cfg.Authn.HTTPRetries != 20 ||
 		cfg.Authn.ReloadInterval != 0 || cfg.Authn.TenantManagerURL != "" {
@@ -104,9 +92,6 @@ func TestLoadConfig_LoopsOnTheServicesOwn(t *testing.T) {
 	if cfg.M2M.TokenURL != "http://idp/token" || cfg.M2M.ClientIDFile != "/id" || cfg.M2M.ClientSecretFile != "/secret" ||
 		cfg.M2M.RenewBefore != 30*time.Second || cfg.M2M.TokenFile != "/t" {
 		t.Errorf("m2m from env = %+v", cfg.M2M)
-	}
-	if cfg.DecisionLogFile != "/var/log/authz/decision-logs.jsonl" {
-		t.Errorf("decision log file %q from env", cfg.DecisionLogFile)
 	}
 }
 
@@ -122,17 +107,5 @@ func TestLoadConfig_MalformedNumbersKeepTheDefaults(t *testing.T) {
 	}))
 	if cfg.Authn.HTTPTimeout != authn.DefaultHTTPTimeout || cfg.Authn.HTTPRetries != authn.DefaultHTTPRetries || !cfg.Authn.Required || cfg.Pull.Interval != pull.DefaultInterval {
 		t.Errorf("malformed values: %+v %+v, want the defaults", cfg.Authn, cfg.Pull)
-	}
-}
-
-// TestLoadConfig_NDBuiltinCache: the builtin calls are recorded unless the
-// environment turns the cache off, since a decision log without them cannot
-// say which PIP answers the decision rests on.
-func TestLoadConfig_NDBuiltinCache(t *testing.T) {
-	if cfg := loadConfig(fromMap(nil)); !cfg.NDBuiltinCache {
-		t.Error("the builtin calls must be recorded by default")
-	}
-	if cfg := loadConfig(fromMap(map[string]string{"authz.nd.builtin.cache": "false"})); cfg.NDBuiltinCache {
-		t.Error("authz.nd.builtin.cache=false must stop the recording")
 	}
 }
