@@ -18,9 +18,11 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/open-policy-agent/opa/v1/rego"
 
@@ -116,22 +118,37 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 		}
 	}
 	errs := make([]error, len(inputs))
-	eval := func(i int) {
-		out[i], errs[i] = r.evalItem(ctx, s, inputs[i], unread)
-	}
 	if len(inputs) <= 1 || r.cfg.BulkWorkers <= 1 {
 		for i := range inputs {
-			eval(i)
+			out[i], errs[i] = r.evalItem(ctx, s, inputs[i], unread)
 		}
 	} else {
+		// A panic on a worker would end the process, so the worker keeps it
+		// and Decide raises it again on the caller's goroutine, which the
+		// server recovers. The worker also cancels the items still being
+		// evaluated: a call of a PIP it made is never answered, and the
+		// workers waiting for it stop at the cancellation.
+		wctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 		next := make(chan int)
 		var wg sync.WaitGroup
+		var panicked atomic.Pointer[string]
 		for range min(r.cfg.BulkWorkers, len(inputs)) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				defer func() {
+					if p := recover(); p != nil {
+						text := fmt.Sprintf("%v\n%s", p, debug.Stack())
+						panicked.CompareAndSwap(nil, &text)
+						cancel()
+						for range next {
+							// drained, so that the feeding loop is not blocked
+						}
+					}
+				}()
 				for i := range next {
-					eval(i)
+					out[i], errs[i] = r.evalItem(wctx, s, inputs[i], unread)
 				}
 			}()
 		}
@@ -140,6 +157,9 @@ func (r *Registry) Decide(ctx context.Context, req Request) ([]Result, error) {
 		}
 		close(next)
 		wg.Wait()
+		if p := panicked.Load(); p != nil {
+			panic("a bulk item panicked on a worker: " + *p)
+		}
 	}
 	for _, err := range errs {
 		if err != nil {

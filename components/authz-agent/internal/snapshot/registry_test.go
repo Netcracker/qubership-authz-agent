@@ -341,6 +341,23 @@ func TestTheItemsOfABulkRequestShareOneCall(t *testing.T) {
 	}
 }
 
+// A panic while an item of a bulk request is evaluated on a worker reaches
+// the caller of Decide, whose goroutine the server recovers, instead of
+// ending the process on the worker.
+func TestAPanicInABulkItemReachesTheCaller(t *testing.T) {
+	srv, _ := pipServer(t, http.StatusOK, `["x"]`)
+	r := New(Config{BulkWorkers: 4, HTTP: &regobuiltins.HTTP{Client: &http.Client{},
+		Token: func() (string, error) { panic("token exploded") }}}, tab(t), quiet{})
+	load(t, r, generalPIP(srv.URL, ``), set("a", "subject.g == 'x'"))
+
+	defer func() {
+		if p := recover(); p == nil || !strings.Contains(fmt.Sprint(p), "token exploded") {
+			t.Errorf("Decide of a bulk of 5 panicked with %v, want the worker's panic, token exploded", p)
+		}
+	}()
+	_, _ = r.Decide(context.Background(), readDoc(t, "a", "y", 5))
+}
+
 // A denial that rests on a source the agent cannot read names it.
 func TestADenialOnAnUnreadSourceNamesIt(t *testing.T) {
 	for _, tc := range []struct {
