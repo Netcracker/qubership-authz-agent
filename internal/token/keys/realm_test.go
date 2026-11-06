@@ -650,7 +650,7 @@ func TestRun_LoadsARequiredRealmAndReadinessWaitsForEveryRequiredSource(t *testi
 	idp.setStatus(http.StatusServiceUnavailable)
 	cfg := Config{
 		Keycloak:  &Keycloak{URL: kc.srv.URL, RequiredRealms: []string{"cloud-common"}},
-		Providers: []Provider{issuer("kubernetes", idp)},
+		Providers: []Provider{issuer("trusted", idp)},
 	}
 	set := mustNew(t, cfg, testOptions())
 	ctx, cancel := context.WithCancel(t.Context())

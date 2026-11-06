@@ -15,11 +15,13 @@
 package keys
 
 import (
+	"bytes"
 	"context"
 	"crypto/elliptic"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -308,8 +310,7 @@ func TestRefresh_TokenFileIsReadOnEveryRequest(t *testing.T) {
 }
 
 // Each redirect target listens on the same host at another port, where an
-// HTTP client still forwards an Authorization header. Only the JWKS request
-// carries a token: a provider without a jwksUri cannot have a tokenFile.
+// HTTP client still forwards an Authorization header.
 func TestRefresh_DoesNotFollowARedirect(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -337,6 +338,105 @@ func TestRefresh_DoesNotFollowARedirect(t *testing.T) {
 				t.Errorf("Authorization at the redirect target = %q, want none", got)
 			}
 		})
+	}
+}
+
+// clusterAPIServer answers discovery and the JWKS in memory, because a test
+// server cannot listen on an in-cluster name. It keeps the address and the
+// Authorization header of each request.
+type clusterAPIServer struct {
+	jwksURI string
+	jwks    []byte
+	// redirect, when set, answers the next request with a 302 to this address.
+	redirect string
+	urls     []string
+	headers  []string
+}
+
+func (s *clusterAPIServer) RoundTrip(r *http.Request) (*http.Response, error) {
+	s.urls = append(s.urls, r.URL.String())
+	s.headers = append(s.headers, r.Header.Get("Authorization"))
+	if s.redirect != "" {
+		header := http.Header{"Location": {s.redirect}}
+		s.redirect = ""
+		return &http.Response{StatusCode: http.StatusFound, Header: header, Body: http.NoBody, Request: r}, nil
+	}
+	body := s.jwks
+	if strings.HasSuffix(r.URL.Path, "/.well-known/openid-configuration") {
+		body = []byte(`{"jwks_uri": "` + s.jwksURI + `"}`)
+	}
+	return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(body)), Request: r}, nil
+}
+
+// The jwks_uri is the address a standard API server names by default, which is
+// not an in-cluster name, so a token limited to those names fails the test.
+func TestFetch_SendsTheTokenWithDiscoveryOfTheClusterAPIServer(t *testing.T) {
+	const issuer = "https://kubernetes.default.svc.cluster.local"
+	server := &clusterAPIServer{jwksURI: "https://10.0.0.1:6443/openid/v1/jwks",
+		jwks: []byte(`{"keys": [` + string(ecJWK(t, "k1", nil)) + `]}`)}
+	f := &fetcher{client: &http.Client{Transport: server}, log: &warnRecorder{},
+		provider: &Provider{ID: "k8s", Issuer: issuer, TokenFile: writeFile(t, "token", "sa-token\n")}}
+	keys, err := f.fetch(t.Context())
+	if err != nil {
+		t.Fatalf("fetch() error = %v", err)
+	}
+	if len(keys) != 1 {
+		t.Errorf("fetch() returned %d keys, want 1", len(keys))
+	}
+	wantURLs := []string{issuer + "/.well-known/openid-configuration", server.jwksURI}
+	if !slices.Equal(server.urls, wantURLs) {
+		t.Errorf("requests = %q, want %q", server.urls, wantURLs)
+	}
+	wantHeaders := []string{"Bearer sa-token", "Bearer sa-token"}
+	if !slices.Equal(server.headers, wantHeaders) {
+		t.Errorf("Authorization headers = %q, want %q", server.headers, wantHeaders)
+	}
+}
+
+// The redirect target is on the same host, where an HTTP client still forwards
+// an Authorization header, so only the client of newClient keeps the token from
+// it.
+func TestFetch_DoesNotFollowARedirectOfDiscoveryWithTheToken(t *testing.T) {
+	const issuer = "https://kubernetes.default.svc"
+	server := &clusterAPIServer{redirect: issuer + ":6443/.well-known/openid-configuration"}
+	client, err := newClient("provider \"k8s\" caFile", emptyCertPool, "", time.Second)
+	if err != nil {
+		t.Fatalf("newClient() error = %v", err)
+	}
+	client.Transport = server
+	f := &fetcher{client: client, log: &warnRecorder{},
+		provider: &Provider{ID: "k8s", Issuer: issuer, TokenFile: writeFile(t, "token", "sa-token")}}
+	if _, err := f.fetch(t.Context()); err == nil || !strings.Contains(err.Error(), "HTTP 302") {
+		t.Errorf("fetch() error = %v, want the HTTP 302 of the redirect", err)
+	}
+	if want := []string{issuer + "/.well-known/openid-configuration"}; !slices.Equal(server.urls, want) {
+		t.Errorf("requests = %q, want %q", server.urls, want)
+	}
+}
+
+// A jwks_uri over http would put the token on the wire in clear text. The
+// control sends no token, so the same answer is accepted there.
+func TestFetch_RefusesToSendTheTokenToAnHTTPJWKSURI(t *testing.T) {
+	const jwksURI = "http://10.0.0.1:8080/openid/v1/jwks"
+	jwks := []byte(`{"keys": [` + string(ecJWK(t, "k1", nil)) + `]}`)
+	server := &clusterAPIServer{jwksURI: jwksURI, jwks: jwks}
+	f := &fetcher{client: &http.Client{Transport: server}, log: &warnRecorder{},
+		provider: &Provider{ID: "k8s", Issuer: "https://kubernetes.default.svc", TokenFile: writeFile(t, "token", "sa-token")}}
+	if _, err := f.fetch(t.Context()); err == nil || !strings.Contains(err.Error(), "has to be https") {
+		t.Errorf("fetch() error = %v, want one that names https", err)
+	}
+	if slices.Contains(server.urls, jwksURI) {
+		t.Errorf("requests = %q, want none to %q", server.urls, jwksURI)
+	}
+
+	control := &clusterAPIServer{jwksURI: jwksURI, jwks: jwks}
+	withoutToken := &fetcher{client: &http.Client{Transport: control}, log: &warnRecorder{},
+		provider: &Provider{ID: "idp", Issuer: "https://idp.example"}}
+	if _, err := withoutToken.fetch(t.Context()); err != nil {
+		t.Errorf("fetch() without a token error = %v, want none", err)
+	}
+	if got := strings.Join(control.headers, ""); got != "" {
+		t.Errorf("Authorization headers without a token = %q, want none", got)
 	}
 }
 
