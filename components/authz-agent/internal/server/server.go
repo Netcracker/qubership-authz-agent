@@ -20,6 +20,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"runtime/debug"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -89,6 +90,7 @@ func Register(app *fiber.App, eng *engine.Engine, opts Options) *Server {
 		opts.Log = discardLogger{}
 	}
 	s := &Server{engine: eng, opts: opts}
+	app.Use(s.recoverPanic)
 	app.Get("/health", s.health)
 	app.Get("/ready", s.ready)
 	app.Get("/api-version", apiVersion)
@@ -197,6 +199,19 @@ func unavailable(c *fiber.Ctx, report Report) error {
 func apiVersion(c *fiber.Ctx) error {
 	c.Set(fiber.HeaderContentType, fiber.MIMEApplicationJSON)
 	return c.SendString(LegacyAPIVersion)
+}
+
+// recoverPanic answers 500 to a request whose handler panicked and reports
+// the panic with its stack, so that one request cannot stop the process and
+// the checks of every tenant with it.
+func (s *Server) recoverPanic(c *fiber.Ctx) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.opts.Log.ErrorC(c.UserContext(), "%s %s panicked, answered 500: %v\n%s", c.Method(), c.Path(), r, debug.Stack())
+			err = opaError(c, http.StatusInternalServerError, "internal_error", "internal error")
+		}
+	}()
+	return c.Next()
 }
 
 // opaError writes an error body in the shape of OPA's REST API.
