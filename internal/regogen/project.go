@@ -34,9 +34,12 @@ import (
 // Resolved is the value of one operand on a request, as the specification's
 // Ctx.resolve gives it: a state and, in state VALUE, the value.
 type Resolved struct {
-	State      spectables.State
-	Value      jsonvalue.Value
-	HeaderList bool // a HEADER or GENERAL list, class hl
+	State spectables.State
+	Value jsonvalue.Value
+	// PIPList marks a list of several values that a HEADER, GENERAL, or
+	// FILTERED PIP builds; it has class pip_list when its elements are
+	// scalars.
+	PIPList bool
 }
 
 // Request is what the projection reads of a check/resource request: the
@@ -158,8 +161,12 @@ func class(v jsonvalue.Value, lv legacyvalue.Record) spectables.Class {
 	case lv.State == legacyvalue.StateEmptyColl:
 		// the whole resource can be an empty list in state VALUE
 		return spectables.ClassList
-	case lv.Class != legacyvalue.ClassOther:
-		return spectables.Class(lv.Class)
+	case lv.Class == legacyvalue.ClassString:
+		return spectables.ClassString
+	case lv.Class == legacyvalue.ClassScalar:
+		return spectables.ClassScalar
+	case lv.Class == legacyvalue.ClassList:
+		return spectables.ClassList
 	}
 	if _, ok := v.(*jsonvalue.Object); ok {
 		return spectables.ClassObject
@@ -196,8 +203,8 @@ func record(r *Ref, v Resolved) Record {
 	}
 	lv := legacyvalue.OfParts(v.Value, r.parts())
 	cl := class(v.Value, lv)
-	if cl == spectables.ClassList && v.HeaderList {
-		cl = spectables.ClassHeaderList
+	if cl == spectables.ClassList && v.PIPList {
+		cl = spectables.ClassPIPList
 	}
 	rec.T = string(cl)
 	if r.reads(fieldElementTokens, fieldElementTokensWithText) {
@@ -479,7 +486,7 @@ func setsTerm(sets [][]string) *ast.Term {
 func (r Record) term() *ast.Term {
 	o := ast.NewObject([2]*ast.Term{strTerm(fieldState), strTerm(r.S)})
 	if r.T != "" {
-		o.Insert(strTerm(fieldClass), strTerm(regoClass(spectables.Class(r.T))))
+		o.Insert(strTerm(fieldClass), strTerm(r.T))
 	}
 	if r.K != nil {
 		o.Insert(strTerm(fieldKey), strTerm(*r.K))
@@ -618,29 +625,6 @@ const (
 	memberPIPRequests   = "pip_requests"
 )
 
-// regoClasses names each value class as a module reads it in the field class
-// of a record; the specification's tables spell the class by its code.
-var regoClasses = map[spectables.Class]string{
-	spectables.ClassString:      "string",
-	spectables.ClassScalar:      "scalar",
-	spectables.ClassList:        "list",
-	spectables.ClassHeaderList:  "header_list",
-	spectables.ClassNullElement: "list_with_null",
-	spectables.ClassNested:      "nested_list",
-	spectables.ClassObject:      "object",
-	spectables.ClassNull:        "null",
-}
-
-// regoClass returns the name of the class with code c in a module and its
-// input, and panics on a code [spectables.Classes] lacks.
-func regoClass(c spectables.Class) string {
-	name, ok := regoClasses[c]
-	if !ok {
-		panic("regogen: no value class " + string(c))
-	}
-	return name
-}
-
 // recordFields names the maps of [fieldMaps].
 var recordFields = []string{fieldState, fieldClass, fieldKey, fieldElementKeys, fieldText, fieldSegments,
 	fieldSegmentsFromEnd, fieldSegmentCount, fieldHasNull, fieldTextKey, fieldEqualityKey, fieldLength,
@@ -762,7 +746,7 @@ func (rec Record) fields(emit fieldSet, put func(field string, v *ast.Term)) {
 		put(fieldState, strTerm(rec.S))
 	}
 	if rec.T != "" && emit.has(fieldClass) {
-		put(fieldClass, strTerm(regoClass(spectables.Class(rec.T))))
+		put(fieldClass, strTerm(rec.T))
 	}
 	if rec.K != nil && emit.has(fieldKey) {
 		put(fieldKey, strTerm(*rec.K))

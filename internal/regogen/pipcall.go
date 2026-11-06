@@ -503,7 +503,7 @@ func pipResolve(bctx rego.BuiltinContext, resp *ast.Term, jp string) (Resolved, 
 		case 1:
 			return Resolved{State: spectables.StateValue, Value: l[0]}, nil
 		}
-		return Resolved{State: spectables.StateValue, Value: l, HeaderList: true}, nil
+		return Resolved{State: spectables.StateValue, Value: l, PIPList: true}, nil
 	}
 	return Resolved{State: spectables.StateValue, Value: v}, nil
 }

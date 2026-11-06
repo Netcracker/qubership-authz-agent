@@ -25,7 +25,7 @@ import (
 )
 
 // SchemaVersion is the version of the table format [Load] reads.
-const SchemaVersion = 4
+const SchemaVersion = 5
 
 // maxProblems bounds how many problems an error from [Load] spells out.
 const maxProblems = 20

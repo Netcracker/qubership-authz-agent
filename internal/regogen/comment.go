@@ -270,13 +270,14 @@ const legend = `# Generated from the policies of one tenant; the comments name t
 # sorts as the numbers do, subset_left and subset_right the tokens IS SUBSET reads on the
 # left and on the right. A token is a key with its kind: t: text, o: object,
 # l:[...] list, and in the tokens of IS SUBSET also s: string and b: boolean.
-# A class is string, scalar (a number or a boolean), list, header_list (a
-# list from a header), list_with_null, nested_list (a list with a list or an
-# object element), object, or null. input.folded_roles holds the folded
-# roles, input.subject_groups the subject groups the request is in,
-# input.m2m whether the subject is machine-to-machine, input.scope_passes the
-# passes of an iterate over the permission scope, and input.scope_failed
-# whether reading the scope failed.
+# A class is string, scalar (a number or a boolean), list, pip_list (a list
+# of several values a HEADER, GENERAL, or FILTERED PIP builds),
+# list_with_null, nested_list (a list with a list or an object element),
+# object, or null. input.folded_roles holds the folded roles,
+# input.subject_groups the subject groups the request is in, input.m2m
+# whether the subject is machine-to-machine, input.scope_passes the passes of
+# an iterate over the permission scope, and input.scope_failed whether
+# reading the scope failed.
 #
 # A comment above c_<hash> names the condition and whether the rule holds
 # where the condition is true or where it is false; a comment above each

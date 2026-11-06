@@ -247,9 +247,9 @@ func resolvedValues(vals map[string][3]json.RawMessage) (map[string]regogen.Reso
 			return nil, err
 		}
 		res := regogen.Resolved{State: spectables.State(st)}
-		var hl bool
-		_ = json.Unmarshal(v[2], &hl)
-		res.HeaderList = hl
+		var pipList bool
+		_ = json.Unmarshal(v[2], &pipList)
+		res.PIPList = pipList
 		var text *string
 		if err := json.Unmarshal(v[1], &text); err != nil {
 			return nil, err
