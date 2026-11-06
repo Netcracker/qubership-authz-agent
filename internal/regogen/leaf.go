@@ -127,8 +127,10 @@ func (s *side) at(p point) clause {
 // compare builds the rails of a comparison from the specification's cells.
 // Every point of the operands' domains gets the outcome of its cell: a constant
 // becomes a clause of the operands' states, and a cell whose outcome depends on
-// the values becomes the template of the operator. A cell that is unsupported,
-// a bad request, or value-dependent without a template is a generation error.
+// the values becomes the template of the operator. The ERROR point of a source
+// that failed gets the outcome [failedCells] gives it instead. A cell that is
+// unsupported, a bad request, or value-dependent without a template is a
+// generation error.
 func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, error) {
 	leafText := func() string {
 		leaf := policyir.FormatOperand(c.Left) + " " + opText(spectables.Operator(c.Op))
@@ -188,6 +190,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		}
 	}
 	g.stats.Lookups += len(lps) * len(rps)
+	failedCells(cells, L, lps, R, rps)
 
 	var rails leafRails
 	// add puts c on the rail of outcome o
@@ -262,6 +265,89 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 	}
 	rails.subjectOnly = sideSubjectOnly(L) && (R == nil || sideSubjectOnly(R))
 	return rails, nil
+}
+
+// failedCells replaces the cell of each point where a side's source failed
+// ([side.failed]): the source has no value, so the point gets the outcome
+// every value of the source gives against the other side's point, and U
+// where the values give different outcomes or depend on the value. A rule
+// over a failed source is then unknown wherever its outcome depends on the
+// source (LI-2), whatever outcome the table gives the failure itself. A
+// point where both sides failed is U.
+func failedCells(cells [][]spectables.Cell, L *side, lps []point, R *side, rps []point) {
+	failedL := make([]bool, len(lps))
+	for i, p := range lps {
+		failedL[i] = L.failed(p)
+	}
+	failedR := make([]bool, len(rps))
+	for j, p := range rps {
+		failedR[j] = R != nil && R.failed(p)
+	}
+	unknown := spectables.Cell{Outcome: spectables.OutcomeU}
+	// valueOutcome is the one constant outcome of the cells at, or U
+	valueOutcome := func(at [][2]int) spectables.Cell {
+		var o spectables.Outcome
+		for _, ij := range at {
+			c := cells[ij[0]][ij[1]]
+			if c.Outcome != spectables.OutcomeT && c.Outcome != spectables.OutcomeF || o != "" && c.Outcome != o {
+				return unknown
+			}
+			o = c.Outcome
+		}
+		if o == "" {
+			return unknown
+		}
+		return spectables.Cell{Outcome: o}
+	}
+	out := make([][]spectables.Cell, len(cells))
+	for i := range cells {
+		out[i] = slices.Clone(cells[i])
+		for j := range cells[i] {
+			var at [][2]int
+			switch {
+			case failedL[i] && failedR[j]:
+				out[i][j] = unknown
+				continue
+			case failedL[i]:
+				for k := range lps {
+					if !failedL[k] {
+						at = append(at, [2]int{k, j})
+					}
+				}
+			case failedR[j]:
+				for k := range rps {
+					if !failedR[k] {
+						at = append(at, [2]int{i, k})
+					}
+				}
+			default:
+				continue
+			}
+			if cells[i][j].Outcome != spectables.OutcomeU {
+				out[i][j] = valueOutcome(at)
+			}
+		}
+	}
+	for i := range cells {
+		copy(cells[i], out[i])
+	}
+}
+
+// failed reports whether the side at p is a source that failed: the ERROR
+// state of a GENERAL or FILTERED PIP and of subject.entitledResources, whose
+// call failed, and of a resource path without a dot at its end, whose
+// selection stopped as too large.
+func (s *side) failed(p point) bool {
+	if s.ref == nil || p.st != spectables.StateError {
+		return false
+	}
+	switch s.ref.Kind {
+	case spectables.KindPIPGeneral, spectables.KindPIPFiltered, spectables.KindEntitled:
+		return true
+	case spectables.KindResPath, spectables.KindResNested, spectables.KindResJSONPath:
+		return s.ref.dotState == ""
+	}
+	return false
 }
 
 // joinClasses replaces each set of clauses of d that are equal except for the
