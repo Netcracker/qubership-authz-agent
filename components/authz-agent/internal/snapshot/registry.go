@@ -191,6 +191,18 @@ func (e *RefusedError) Error() string {
 // Partial reports that the load published the tenants e does not name.
 func (e *RefusedError) Partial() bool { return true }
 
+// Unserved returns the refused tenants that have no previous snapshot and
+// deny every request, in the order of e.Tenants.
+func (e *RefusedError) Unserved() []string {
+	var out []string
+	for _, t := range e.Tenants {
+		if !t.Served {
+			out = append(out, t.Tenant)
+		}
+	}
+	return out
+}
+
 // Load builds a candidate snapshot of every tenant in the documents of
 // GET /access/v3/config/policySets and GET /access/v3/config/pips, and
 // publishes each tenant whose candidate compiles. A tenant whose tree is

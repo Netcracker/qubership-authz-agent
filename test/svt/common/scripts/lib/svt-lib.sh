@@ -85,10 +85,10 @@ svt_wait_for_public_health() {
 }
 
 # The agent serves /ready on its internal listener once the trusted providers
-# have bootstrapped and the policies have loaded once; the port is not
-# published, so the probe runs from a container on the compose network. The
-# image carries no shell utility, hence the one-shot curl container rather than
-# `compose exec`.
+# have bootstrapped and every tenant of the policy source has a snapshot; the
+# port is not published, so the probe runs from a container on the compose
+# network. The image carries no shell utility, hence the one-shot curl
+# container rather than `compose exec`.
 svt_wait_for_backend_health() {
   local attempts="${1:-90}"
   local delay_seconds="${2:-2}"

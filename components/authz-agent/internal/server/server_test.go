@@ -118,6 +118,16 @@ func TestReady_WaitsForThePolicies(t *testing.T) {
 	}
 }
 
+func TestReady_NamesTheTenantsWithoutASnapshot(t *testing.T) {
+	app, _ := newApp(t, func() Report { return Report{Healthy: true, Waiting: []string{"a", "b"}} })
+
+	code, body, _ := do(t, app, http.MethodGet, "/ready", "", nil)
+
+	if want := "no snapshot accepted yet for tenants a, b"; code != 503 || body["message"] != want {
+		t.Errorf("GET /ready = %d %v, want 503 %q", code, body, want)
+	}
+}
+
 // TestHealth_ReportsTheLoops: /health is 200 when the report is healthy, 503 with the reason and its details when it
 // is not, and 200 without details when there is no report.
 func TestHealth_ReportsTheLoops(t *testing.T) {

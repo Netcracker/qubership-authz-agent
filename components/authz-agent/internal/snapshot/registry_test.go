@@ -227,6 +227,9 @@ func TestLoadSnapshotsFailsWhileACandidateIsRefused(t *testing.T) {
 		if !strings.Contains(err.Error(), "tenant a: candidate snapshot refused, the previous snapshot stays: unsupported: ") {
 			t.Errorf("LoadSnapshots after %s = %q, want the tenant, what it keeps, and the stage", step.name, err)
 		}
+		if got := refused.Unserved(); got != nil {
+			t.Errorf("Unserved() after %s = %q, want none: tenant a keeps its previous snapshot", step.name, got)
+		}
 	}
 	if err := loadSnapshots(r, set("a", "true"), set("b", "true")); err != nil {
 		t.Errorf("LoadSnapshots after tenant a is repaired = %v, want nil", err)
@@ -245,6 +248,9 @@ func TestLoadSnapshotsNamesARefusedTenantWithNoSnapshotAsNotServed(t *testing.T)
 	}
 	if !strings.Contains(err.Error(), "tenant a: candidate snapshot refused, the tenant is not served: ") {
 		t.Errorf("LoadSnapshots = %q, want the tenant and that it is not served", err)
+	}
+	if got := refused.Unserved(); !reflect.DeepEqual(got, []string{"a"}) {
+		t.Errorf("Unserved() = %q, want [a]", got)
 	}
 	if _, ok := r.Snapshot("b"); !ok {
 		t.Error("tenant b has no snapshot, want it published beside the refusal")

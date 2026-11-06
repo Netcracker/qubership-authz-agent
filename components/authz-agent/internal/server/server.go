@@ -20,6 +20,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -109,6 +110,9 @@ type Report struct {
 	// a required provider is missing.
 	Bootstrap *authn.Details
 	Loaded    bool
+	// Waiting names the tenants whose policies keep Loaded unset, because
+	// the source names them and no snapshot of theirs was accepted.
+	Waiting []string
 	// Snapshots is the state of every tenant's generated policies, nil
 	// without a registry.
 	Snapshots *snapshot.Health
@@ -156,7 +160,8 @@ func (s *Server) health(c *fiber.Ctx) error {
 }
 
 // ready is the readiness answer: 200 {"status":"ready"} once the service
-// is healthy and the policies have loaded, 503 with the reason otherwise.
+// is healthy and the policies have loaded, 503 with the reason otherwise;
+// the reason names the tenants of [Report.Waiting].
 func (s *Server) ready(c *fiber.Ctx) error {
 	if s.opts.Health == nil {
 		return c.JSON(fiber.Map{"status": "ready"})
@@ -167,6 +172,9 @@ func (s *Server) ready(c *fiber.Ctx) error {
 	}
 	if !report.Loaded {
 		report.Message = "policies not loaded yet"
+		if len(report.Waiting) > 0 {
+			report.Message = "no snapshot accepted yet for tenants " + strings.Join(report.Waiting, ", ")
+		}
 		return unavailable(c, report)
 	}
 	return c.JSON(fiber.Map{"status": "ready"})
