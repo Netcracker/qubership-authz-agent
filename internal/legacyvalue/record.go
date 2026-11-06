@@ -19,8 +19,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/open-policy-agent/opa/v1/ast"
-
 	"authz-agent/internal/jsonvalue"
 )
 
@@ -80,8 +78,8 @@ const (
 // Every field but State is set only where the value has it; a record in any
 // state other than VALUE and NULL_ELEMENT carries State alone.
 //
-// [Record.Term] writes the record as a Rego object; each field comment starts
-// with the key it has there.
+// Each field comment starts with a short name for the field, by which other
+// comments and ADR-0083 refer to it.
 type Record struct {
 	// s: the state.
 	State State
@@ -115,12 +113,12 @@ type Record struct {
 	// number is keyed by its Number, or by its [NumberText] where it has none,
 	// so {"a": 1}, {"a": 1.0}, and {"a": 1e0} share one (ADR-0083).
 	Structure *string
-	// n or nl: the number new BigDecimal(ck) reads, set for a number and for
+	// n: the number new BigDecimal(ck) reads, set for a number and for
 	// a string that BigDecimal reads; <, <=, >, and >= compare it, and so does
 	// == between a number and a number or a string. A fraction or an exponent
 	// has the value of its Double, so 1e-400 is 0, and 1e400, whose ck is
 	// Infinity, has none. It is normalized, so two equal numbers have the same
-	// Number. [Record.Term] decides between n and nl.
+	// Number.
 	Number *jsonvalue.Decimal
 	// e: the records of the elements of a list, null elements included. An
 	// element record has no e of its own: a list nested in an element compares
@@ -256,93 +254,6 @@ func classify(r *Record, e jsonvalue.Value) bool {
 		r.Class = ClassOther
 	}
 	return false
-}
-
-// Term returns the record as a Rego object with the keys s, t, j, k, ck, ks, o,
-// n, nl, and e, leaving out every field the record does not set. A record
-// with a Number carries exactly one of n and nl. n, a Rego number with the
-// text of [jsonvalue.Decimal.String], is written for a
-// [jsonvalue.Decimal.Short] number, which Rego's own operators compare
-// exactly. Any other number is written as nl: true and no n, and generated
-// code compares the record with nc.decimal.compare, which reads the number
-// from ck. OPA's own comparison panics on an exponent of ten million or more
-// and takes milliseconds well below that.
-func (r Record) Term() *ast.Term {
-	obj := ast.NewObjectWithCapacity(8)
-	obj.Insert(keyTerms.s, constTerm(string(r.State)))
-	if r.Class != "" {
-		obj.Insert(keyTerms.t, constTerm(string(r.Class)))
-		obj.Insert(keyTerms.j, constTerm(string(r.Type)))
-	}
-	var k *ast.Term
-	if r.Key != nil {
-		k = ast.StringTerm(*r.Key)
-		ck := k
-		if *r.CaseKey != *r.Key {
-			ck = ast.StringTerm(*r.CaseKey)
-		}
-		obj.Insert(keyTerms.k, k)
-		obj.Insert(keyTerms.ck, ck)
-	}
-	if r.Keys != nil {
-		keys := make([]*ast.Term, len(r.Keys))
-		for i, key := range r.Keys {
-			if k != nil && key == *r.Key {
-				keys[i] = k
-			} else {
-				keys[i] = ast.StringTerm(key)
-			}
-		}
-		obj.Insert(keyTerms.ks, ast.ArrayTerm(keys...))
-	}
-	if r.Structure != nil {
-		obj.Insert(keyTerms.o, ast.StringTerm(*r.Structure))
-	}
-	if r.Number != nil {
-		if r.Number.Short() {
-			obj.Insert(keyTerms.n, ast.NewTerm(ast.Number(r.Number.String())))
-		} else {
-			obj.Insert(keyTerms.nl, ast.InternedTerm(true))
-		}
-	}
-	if r.Elements != nil {
-		elems := make([]*ast.Term, len(r.Elements))
-		for i, e := range r.Elements {
-			elems[i] = e.Term()
-		}
-		obj.Insert(keyTerms.e, ast.ArrayTerm(elems...))
-	}
-	return ast.NewTerm(obj)
-}
-
-// keyTerms holds the keys of the object [Record.Term] writes. A query reads
-// the terms and does not change them, so every record shares them.
-var keyTerms = struct{ s, t, j, k, ck, ks, o, n, nl, e *ast.Term }{
-	ast.StringTerm("s"), ast.StringTerm("t"), ast.StringTerm("j"), ast.StringTerm("k"), ast.StringTerm("ck"),
-	ast.StringTerm("ks"), ast.StringTerm("o"), ast.StringTerm("n"), ast.StringTerm("nl"), ast.StringTerm("e"),
-}
-
-// constTerms holds a term for each state, class, and type.
-var constTerms = func() map[string]*ast.Term {
-	m := map[string]*ast.Term{}
-	for _, v := range []string{
-		string(StateValue), string(StateNullElement), string(StateAbsent), string(StateNull),
-		string(StatePIPEmpty), string(StateEmptyColl), string(StateEmptySel), string(StateIndexOOB),
-		string(StatePIPNull), string(StateError),
-		string(ClassString), string(ClassScalar), string(ClassList), string(ClassOther),
-		string(TypeString), string(TypeNumber), string(TypeBoolean), string(TypeArray), string(TypeObject),
-	} {
-		m[v] = ast.StringTerm(v)
-	}
-	return m
-}()
-
-// constTerm returns the term of a state, a class, or a type.
-func constTerm(v string) *ast.Term {
-	if t, ok := constTerms[v]; ok {
-		return t
-	}
-	return ast.StringTerm(v)
 }
 
 // structureKey returns a text of v in which every object lists its members in
