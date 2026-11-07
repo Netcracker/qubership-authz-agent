@@ -67,6 +67,37 @@ jayway-suite-calls:
 	    -PrecorderOut="$(abspath $(JAYWAY_SUITE_CALLS))" \
 	    :json-path:test :json-path-assert:test
 
+# mutation-diff: run mutago on the Go lines that the working tree changes since
+# the merge base of HEAD and MUTATION_BASE (origin/main by default), and list
+# every mutant on them that no test kills, also in mutago-agentic.json. Fails
+# when one survives and when the run does not complete, and the last lines of
+# the output say which; errored mutants do not fail it. File and mutator
+# settings are in .mutago.yml. See "Mutation testing of a change" in README.md.
+MUTAGO_VERSION := v2.10.40
+MUTATION_TIMEOUT ?= 120
+# mutago parses the output of a plain git diff (quality-gates/mutago#353), so
+# the settings that change its colors, prefixes, or paths are overridden for
+# the run, after any GIT_CONFIG_* entries the caller exported. diff.external
+# cannot be overridden this way.
+MUTATION_GIT_CONFIG := color.diff=false diff.mnemonicPrefix=false diff.noprefix=false \
+	diff.srcPrefix=a/ diff.dstPrefix=b/ diff.relative=false
+
+# mutago writes mutago-agentic.json only when the run completes, so the report
+# of an earlier run goes first. A baseline file that does not exist keeps a
+# mutago-baseline.json in the checkout from accepting a survivor.
+mutation-diff:
+	@rm -f mutago-agentic.json; \
+	n=$${GIT_CONFIG_COUNT:-0}; \
+	for setting in $(MUTATION_GIT_CONFIG); do \
+	  export "GIT_CONFIG_KEY_$$n=$${setting%%=*}" "GIT_CONFIG_VALUE_$$n=$${setting#*=}"; \
+	  n=$$((n + 1)); \
+	done; \
+	export GIT_CONFIG_COUNT=$$n; \
+	unset GIT_EXTERNAL_DIFF; \
+	go run github.com/quality-gates/mutago/v2/cmd/mutago@$(MUTAGO_VERSION) --config=.mutago.yml \
+	  --baseline="$$(mktemp -u)" --git-diff-lines --git-diff-base=$(or $(MUTATION_BASE),origin/main) \
+	  --exec-timeout=$(MUTATION_TIMEOUT) --fail-on-escaped --quiet --logger-agentic-json ./...
+
 # ── kind end-to-end ──────────────────────────────────────────────────────────
 # Install the chart on a kind cluster and run the runtime suite against it.
 # `make e2e` runs every step; CI calls the same targets one by one. See
@@ -279,4 +310,4 @@ parity-logs:
 	kind export logs --name $(KIND_CLUSTER) $(E2E_ARTIFACTS)/parity/cluster
 	$(PARITY_KUBECTL) get events --sort-by=.lastTimestamp > $(E2E_ARTIFACTS)/parity/events.txt
 
-.PHONY: lint install-hooks test-jayway jayway-suite-calls e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
+.PHONY: lint install-hooks test-jayway jayway-suite-calls mutation-diff e2e e2e-cluster e2e-images test-stand-files e2e-harness e2e-install e2e-suite e2e-restart e2e-logs e2e-down parity parity-harness parity-install parity-suite parity-restart parity-logs
