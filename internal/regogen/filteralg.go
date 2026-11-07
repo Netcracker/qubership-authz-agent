@@ -350,6 +350,12 @@ func (e *filterEval) policy(n *fnode, pass int, prefix string) (pair, error) {
 			denyAll = true
 			continue
 		}
+		if t.v == -1 && r.tgt.rowThree {
+			// and so does one the check may leave undefined on a row, or on
+			// this request
+			denyUnknown = true
+			continue
+		}
 		if r.effect != "ALLOW" && r.effect != "DENY" {
 			continue
 		}

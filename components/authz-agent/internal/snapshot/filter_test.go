@@ -382,6 +382,35 @@ func TestAPolicyOverTheResourceThatDeniesNoRowDoesNotApply(t *testing.T) {
 	}
 }
 
+// A rule whose target the check may leave undefined on a row, such as a
+// path with a trailing dot, denies that row in the check, whatever its
+// effect, and so the filter gives it denied rows it cannot name. An ALLOW
+// rule over such a target used to be dropped, and the filter allowed the
+// rows of the policy beside it. A target over a path of keys, which the check
+// reads as true or false on every row, is the control.
+func TestARuleTargetTheCheckMayLeaveUndefinedDenies(t *testing.T) {
+	for _, tc := range []struct{ policyTarget, ruleTarget, want string }{
+		{"true", "resource.a. == 1", deny},
+		{"resource.secret == 1", "resource.a. == 1", deny},
+		{"true", "resource.a == 1", allow},
+		{"resource.secret == 1", "resource.a == 1", allow},
+	} {
+		t.Run(tc.policyTarget+" "+tc.ruleTarget, func(t *testing.T) {
+			r := New(Config{}, tab(t), quiet{})
+			load(t, r, ``, fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE", "tenantId": "a",
+				"target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+					{"policyId": "q", "target": %q, "combiningAlgorithm": "PERMIT_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "r", "target": %q, "effect": "ALLOW", "tenantId": "a"}]}]}`,
+				tc.policyTarget, tc.ruleTarget))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
 // A policy whose target reads the resource and whose DENY rule reads a PIP
 // whose call failed denies the rows the filter cannot name, not the whole
 // request: under PERMIT_OVERRIDES the policy beside it still allows, as in
@@ -402,6 +431,34 @@ func TestAFailedSourceBelowATargetOverTheResourceDeniesOnlyItsRows(t *testing.T)
 					{"policyId": "q", "target": "resource.secret == 1", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
 					"rules": [{"ruleId": "deny", "target": "true", "condition": "subject.g == 'blocked'", "effect": "DENY",
 					"tenantId": "a"}]}]}`, tc.setAlg))
+			if got := filterOf(t, r, "a", "read"); got != tc.want {
+				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
+			}
+		})
+	}
+}
+
+// A rule target over a PIP that the answer of the PIP leaves undefined, such
+// as a list with a null element, makes the check deny every row, whatever the
+// effect of the rule, so the filter denies too; an answer that makes the
+// target true allows. A target over the resource and such a PIP is decided
+// before any request, so it denies even where the PIP answers ["x"] and the
+// check allows: the filter then admits fewer rows than the check.
+func TestARuleTargetOverAPIPTheCheckMayLeaveUndefinedDenies(t *testing.T) {
+	for _, tc := range []struct{ answer, ruleTarget, want string }{
+		{`[null]`, "subject.g == 'x'", deny},
+		{`["x"]`, "subject.g == 'x'", allow},
+		{`["x"]`, "resource.a == '1' AND subject.g == 'x'", deny},
+	} {
+		t.Run(tc.answer+" "+tc.ruleTarget, func(t *testing.T) {
+			srv, _ := pipServer(t, http.StatusOK, tc.answer)
+			r := pipRegistry(t)
+			load(t, r, generalPIP(srv.URL, ""), fmt.Sprintf(`{"policySetId": "s", "name": "s", "status": "ACTIVE",
+				"tenantId": "a", "target": "resourceType == 'doc'", "combiningAlgorithm": "DENY_OVERRIDES",
+				"policies": [{"policyId": "p", "target": "true", "combiningAlgorithm": "DENY_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "allow", "target": "true", "effect": "ALLOW", "tenantId": "a"}]},
+					{"policyId": "q", "target": "true", "combiningAlgorithm": "PERMIT_OVERRIDES", "tenantId": "a",
+					"rules": [{"ruleId": "r", "target": %q, "effect": "ALLOW", "tenantId": "a"}]}]}`, tc.ruleTarget))
 			if got := filterOf(t, r, "a", "read"); got != tc.want {
 				t.Errorf("Filter(doc, read) = %s, want %s", got, tc.want)
 			}
