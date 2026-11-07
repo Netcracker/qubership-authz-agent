@@ -30,9 +30,11 @@ package regogen
 //	tp   [key, i]: true in pass i of an iterate
 //	fp   [key, i]: false in pass i
 //
-// A key is in t only where the targets of its ancestors are true as well,
-// which lets the rule index of OPA skip the subtrees of other resource types.
-// Go reads a status only below ancestors whose targets are true. A two-valued
+// A key is in t only where no target of its ancestors is false, which lets
+// the rule index of OPA skip the subtrees of other resource types. Below a
+// target that is unknown the keys are still answered, so Go can tell whether
+// the node denies some row where its target holds. Go reads a status only
+// below ancestors whose targets are not false. A two-valued
 // status that is not in t is false; a three-valued one in neither set is
 // unknown.
 
@@ -54,8 +56,9 @@ type status struct {
 	// constant, whose value is konst.
 	key   string
 	konst bool
-	// three is set when the status may be unknown.
-	three bool
+	// three is set when the status may be unknown, and rowThree when it
+	// may be unknown on a request of check/resource too.
+	three, rowThree bool
 	// pass is set for a status inside an iterate, which the module answers
 	// per pass.
 	pass bool
@@ -180,7 +183,7 @@ func (fg *filterGen) status(key string, prefix dnf, c *cond) status {
 		return status{konst: *c.isTrue && !prefix.isFalse()}
 	}
 	g := fg.g
-	s := status{key: key, three: c.three, pass: g.pass, refs: c.refs}
+	s := status{key: key, three: c.three, rowThree: c.rowThree, pass: g.pass, refs: c.refs}
 	fg.order = append(fg.order, key)
 	fg.t[key] = g.product(prefix, c.T())
 	if c.three {
@@ -243,14 +246,14 @@ func (fg *filterGen) set(n *node, s *policyir.PolicySet, prefix dnf) *fnode {
 	case kindUnknown:
 		return f
 	case kindIterate:
-		inner := g.product(prefix, n.tgt.T())
+		inner := g.product(prefix, n.tgt.notF())
 		saved := g.pass
 		g.pass = true
 		f.kids = []*fnode{fg.setKids(n.kids[0], s, inner)}
 		g.pass = saved
 		return f
 	}
-	inner := g.product(prefix, n.tgt.T())
+	inner := g.product(prefix, n.tgt.notF())
 	for i, k := range n.kids {
 		if i < len(s.Policies) {
 			f.kids = append(f.kids, fg.policy(k, s.Policies[i], inner))
@@ -278,7 +281,7 @@ func (fg *filterGen) setKids(n *node, s *policyir.PolicySet, prefix dnf) *fnode 
 // policy returns the node of policy n, translated from p.
 func (fg *filterGen) policy(n *node, p *policyir.Policy, prefix dnf) *fnode {
 	f := &fnode{kind: kindPolicy, alg: n.alg, tgt: fg.status(n.id+".t", prefix, n.tgt)}
-	inner := fg.g.product(prefix, n.tgt.T())
+	inner := fg.g.product(prefix, n.tgt.notF())
 	for j, k := range n.kids {
 		r := p.Rules[j]
 		f.kids = append(f.kids, &fnode{kind: kindRule, effect: k.effect, preds: r.Predicates, ruleID: r.ID,

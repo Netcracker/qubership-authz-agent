@@ -391,7 +391,8 @@ var regoKeywords = map[string]bool{"as": true, "contains": true, "default": true
 	"false": true, "if": true, "import": true, "in": true, "not": true, "null": true, "package": true,
 	"some": true, "true": true, "with": true}
 
-// ref returns the reference of an operand, creating it on first use.
+// ref returns the reference of an operand, creating it on first use. While
+// the generator probes, a new reference is returned without being recorded.
 func (g *gen) ref(o policyir.Operand, kind spectables.Kind, network bool) (*Ref, error) {
 	var key string
 	switch o.(type) {
@@ -407,7 +408,7 @@ func (g *gen) ref(o policyir.Operand, kind spectables.Kind, network bool) (*Ref,
 		key = k
 	}
 	if r, ok := g.refs[key]; ok {
-		if g.touched != nil {
+		if g.touched != nil && !g.probe {
 			g.touched[r] = true
 		}
 		return r, nil
@@ -431,10 +432,9 @@ func (g *gen) ref(o policyir.Operand, kind spectables.Kind, network bool) (*Ref,
 		return nil, err
 	}
 	v := refVar(id)
-	if other, ok := g.vars[v]; ok {
+	if other, ok := g.vars[v]; ok && !g.probe {
 		return nil, fmt.Errorf("operands %s and %s share the variable name %s", other, id, v)
 	}
-	g.vars[v] = id
 	_, pass := o.(policyir.PassValue)
 	r := &Ref{ID: id, Var: v, Key: key, Kind: kind, Network: network, Pass: pass, read: fieldsKnown, domain: dom}
 	if res, ok := o.(policyir.Resource); ok {
@@ -444,6 +444,10 @@ func (g *gen) ref(o policyir.Operand, kind spectables.Kind, network bool) (*Ref,
 			return nil, err
 		}
 	}
+	if g.probe {
+		return r, nil
+	}
+	g.vars[v] = id
 	g.refs[key] = r
 	g.refList = append(g.refList, r)
 	if g.touched != nil {
@@ -471,7 +475,7 @@ func (g *gen) side(o policyir.Operand) (*side, error) {
 		}
 	case policyir.Subject:
 		if o.Attr == policyir.SubjectPermissionScope {
-			if g.touched != nil {
+			if g.touched != nil && !g.probe {
 				g.touched[scopeOutside] = true
 			}
 			return &side{kind: spectables.KindSubjPermissionScope, fixed: spectables.StateScopeOutside}, nil

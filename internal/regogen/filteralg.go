@@ -72,7 +72,8 @@ var (
 )
 
 // errDenyAll ends the evaluation: the whole filter is DENY, as legacy answers
-// when a source a rule needs fails.
+// when a source a rule needs fails. Below a target that is unknown,
+// [filterEval.node] turns it into denied rows that are unknown instead.
 var errDenyAll = errors.New("filter: deny all")
 
 // unionRows is the union of xs. Every row but those of g, joined with the
@@ -252,16 +253,38 @@ func (e *filterEval) simplified(n *fnode) (pair, error) {
 // pass evaluates.
 func (e *filterEval) node(n *fnode, pass int, prefix string) (pair, error) {
 	// an undefined target makes its node deny, as in the check: everywhere
-	// over a failed source, and on rows the filter cannot name over the
-	// resource, where the node also allows rows it cannot name
-	switch t := e.status(n.tgt, pass); {
+	// over a failed source, and on the rows the filter cannot name where the
+	// check may leave the target undefined too
+	t := e.status(n.tgt, pass)
+	switch {
 	case t.v == 0:
 		return pair{}, nil
 	case t.v == -1 && t.err:
 		return pair{d: allRows}, nil
-	case t.v == -1:
+	case t.v == -1 && n.tgt.rowThree:
 		return pair{d: rows{kind: rowsUnknown}}, nil
 	}
+	p, err := e.body(n, pass, prefix)
+	if t.v == -1 && errors.Is(err, errDenyAll) {
+		// the body denies every row, which the node does only where its
+		// target holds
+		return pair{d: rows{kind: rowsUnknown}}, nil
+	}
+	if err != nil || t.v == 1 {
+		return p, err
+	}
+	// the check reads the target as true or false on every row, so the node
+	// is the body on the rows the filter cannot name where the target holds:
+	// it denies some of those rows if the body denies any row, and allows
+	// none the filter can name
+	if p.d.kind == rowsNone {
+		return pair{}, nil
+	}
+	return pair{d: rows{kind: rowsUnknown}}, nil
+}
+
+// body evaluates node n as node does where its target holds.
+func (e *filterEval) body(n *fnode, pass int, prefix string) (pair, error) {
 	switch n.kind {
 	case kindUnknown:
 		return pair{d: rows{kind: rowsUnknown}}, nil

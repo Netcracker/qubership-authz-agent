@@ -33,6 +33,9 @@ var errUndeclared = errors.New("the PIP is not declared")
 type leafRails struct {
 	t, f        dnf
 	threeValued bool
+	// twoValuedPerRow is set, in check/filter, on a leaf over the resource
+	// that check/resource never leaves undefined.
+	twoValuedPerRow bool
 	// subjectOnly is set when every expression reads only the subject's
 	// projected attributes, so that the leaf can join a subject group.
 	subjectOnly bool
@@ -143,9 +146,9 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		// check/filter has no resource: what a comparison over it gives
 		// row by row is the predicate's part of the answer
 		g.reportLeaf(leafText(), nil)
-		return leafRails{threeValued: true}, nil
+		return leafRails{threeValued: true, twoValuedPerRow: g.twoValuedPerRow(c, ctx)}, nil
 	}
-	L, err := g.side(c.Left)
+	L, R, lps, rps, cells, err := g.cells(c, ctx)
 	if err != nil {
 		if errors.Is(err, errUndeclared) {
 			g.reportLeaf(leafText(), nil)
@@ -153,44 +156,7 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 		}
 		return leafRails{}, err
 	}
-	var R *side
-	if c.Right != nil {
-		if R, err = g.side(c.Right); err != nil {
-			if errors.Is(err, errUndeclared) {
-				g.reportLeaf(leafText(), nil)
-				return leafRails{threeValued: true}, nil
-			}
-			return leafRails{}, err
-		}
-	}
 	op := spectables.Operator(c.Op)
-	lps := L.points()
-	rps := []point{{}}
-	if R != nil {
-		rps = R.points()
-	}
-	cells := make([][]spectables.Cell, len(lps))
-	for i, lp := range lps {
-		cells[i] = make([]spectables.Cell, len(rps))
-		for j, rp := range rps {
-			key := spectables.Key{Op: op, Left: lp.spec(L.kind), Context: ctx}
-			if R != nil {
-				key.Right = rp.spec(R.kind)
-			}
-			cell, err := g.tab.Lookup(key)
-			if err != nil {
-				return leafRails{}, err
-			}
-			switch cell.Outcome {
-			case spectables.OutcomeUnsupported, spectables.OutcomeBadRequest:
-				return leafRails{}, gap(FormSpecification, fmt.Errorf("%s(%s %v, %s %v) at %s: the specification answers %s",
-					op, L.kind, lp, kindOf(R), rps[j], ctx.Place, cell.Outcome))
-			}
-			cells[i][j] = cell
-		}
-	}
-	g.stats.Lookups += len(lps) * len(rps)
-	failedCells(cells, L, lps, R, rps)
 
 	var rails leafRails
 	// add puts c on the rail of outcome o
@@ -265,6 +231,74 @@ func (g *gen) compare(c policyir.Compare, ctx spectables.Context) (leafRails, er
 	}
 	rails.subjectOnly = sideSubjectOnly(L) && (R == nil || sideSubjectOnly(R))
 	return rails, nil
+}
+
+// cells looks up the cell of each pair of points of comparison c's operands,
+// with the outcome [failedCells] gives the points of a failed source. An
+// operand of an undeclared PIP gives errUndeclared.
+func (g *gen) cells(c policyir.Compare, ctx spectables.Context) (L, R *side, lps, rps []point, cells [][]spectables.Cell, err error) {
+	if L, err = g.side(c.Left); err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
+	if c.Right != nil {
+		if R, err = g.side(c.Right); err != nil {
+			return nil, nil, nil, nil, nil, err
+		}
+	}
+	op := spectables.Operator(c.Op)
+	lps, rps = L.points(), []point{{}}
+	if R != nil {
+		rps = R.points()
+	}
+	cells = make([][]spectables.Cell, len(lps))
+	for i, lp := range lps {
+		cells[i] = make([]spectables.Cell, len(rps))
+		for j, rp := range rps {
+			key := spectables.Key{Op: op, Left: lp.spec(L.kind), Context: ctx}
+			if R != nil {
+				key.Right = rp.spec(R.kind)
+			}
+			cell, lerr := g.tab.Lookup(key)
+			if lerr != nil {
+				return nil, nil, nil, nil, nil, lerr
+			}
+			switch cell.Outcome {
+			case spectables.OutcomeUnsupported, spectables.OutcomeBadRequest:
+				return nil, nil, nil, nil, nil, gap(FormSpecification, fmt.Errorf("%s(%s %v, %s %v) at %s: the specification answers %s",
+					op, L.kind, lp, kindOf(R), rps[j], ctx.Place, cell.Outcome))
+			}
+			cells[i][j] = cell
+		}
+	}
+	if !g.probe {
+		g.stats.Lookups += len(lps) * len(rps)
+	}
+	failedCells(cells, L, lps, R, rps)
+	return L, R, lps, rps, cells, nil
+}
+
+// twoValuedPerRow reports whether comparison c is true or false on every
+// request of check/resource, which reads the resource, so that it is unknown
+// in check/filter only on the rows the filter cannot name. A comparison whose
+// cells cannot be looked up counts as one that may be undefined. Its
+// operands' references are built for the lookup alone: the module of the
+// filter does not read them.
+func (g *gen) twoValuedPerRow(c policyir.Compare, ctx spectables.Context) bool {
+	g.probe = true
+	defer func() { g.probe = false }()
+	_, _, _, _, cells, err := g.cells(c, ctx)
+	if err != nil {
+		return false
+	}
+	for _, row := range cells {
+		for _, cell := range row {
+			if cell.Outcome == spectables.OutcomeU ||
+				cell.Outcome == spectables.OutcomeByValue && slices.Contains(cell.Outcomes, spectables.OutcomeU) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // failedCells replaces the cell of each point where a side's source failed
